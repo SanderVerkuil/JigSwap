@@ -82,10 +82,23 @@ export function filtersFromSearch(search: MyPuzzlesSearch): MyPuzzlesFilters {
   };
 }
 
+// Whether this view needs the whole library to answer: a search, a sort other than newest first and
+// the status pills all do. Only whose copies it is can be read a window at a time.
+export const viewNeedsWholeLibrary = (filters: MyPuzzlesFilters): boolean =>
+  filters.q !== "" || filters.status !== "all" || filters.sort !== "recent";
+
+// What filtering and sorting read: a lean library.myLibraryIndex row, or a full row.
 type LibraryCopy = Pick<
   OwnedCopyView,
-  "_id" | "availability" | "createdAt" | "puzzle" | "snapshot"
->;
+  "_id" | "availability" | "createdAt" | "snapshot"
+> & {
+  puzzle?: {
+    title: string;
+    brand?: string;
+    pieceCount: number;
+    tags?: string[];
+  } | null;
+};
 
 // Lowercased, accents stripped, so "creme" finds "Crème" and "Tirol" finds "tïrol".
 const fold = (text: string): string =>

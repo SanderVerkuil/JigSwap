@@ -538,6 +538,8 @@
       "completed": "Completed"
     },
     "resultCount": "{count} of {total} puzzles",
+    "showMore": "Show more",
+    "rowsAtMax": "Showing the first {max} puzzles. Search or filter to find the rest.",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",

@@ -30,6 +30,8 @@ const mocks = vi.hoisted(() => {
   const listeners = new Set<() => void>();
   return {
     queries: {} as Record<string, unknown>,
+    // The arguments each query was last asked with ("skip" when it wasn't wanted).
+    asked: {} as Record<string, unknown>,
     mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
     navigate: vi.fn<(options: { replace?: boolean }) => void>(),
     location: {
@@ -51,10 +53,14 @@ const mocks = vi.hoisted(() => {
 // Queries resolve from `mocks.queries` by function name; anything else stays unresolved.
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQuery: (options: { queryKey: unknown[] }) => ({
-    data: mocks.queries[options.queryKey[1] as string],
-    isPending: !((options.queryKey[1] as string) in mocks.queries),
-  }),
+  useQuery: (options: { queryKey: unknown[] }) => {
+    mocks.asked[options.queryKey[1] as string] = options.queryKey[2];
+    return {
+      data: mocks.queries[options.queryKey[1] as string],
+      isPending: !((options.queryKey[1] as string) in mocks.queries),
+      isPlaceholderData: false,
+    };
+  },
 }));
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
@@ -151,20 +157,31 @@ const renderPage = ({
   household = null,
   lentOut = [],
   search = {},
+  firstRows = copies,
+  hasMore = false,
 }: {
   copies: OwnedCopyView[];
   household?: { householdId: string; name?: string } | null;
   lentOut?: LoanView[];
   search?: SearchParams;
+  // The first rows, when they are fewer than the library; `total` is what the counters say.
+  firstRows?: OwnedCopyView[];
+  hasMore?: boolean;
 }) => {
   mocks.location.set(search);
   mocks.queries = {
     [getFunctionName(gateway.identity.byClerkId)]: { _id: "me" },
-    [getFunctionName(gateway.library.ownedByOwner)]: copies,
-    [getFunctionName(gateway.household.copies)]: [],
+    [getFunctionName(gateway.library.myLibraryWindow)]: {
+      rows: firstRows,
+      hasMore,
+      matched: copies.length,
+      total: copies.length,
+    },
+    [getFunctionName(gateway.library.myLibraryIndex)]: copies,
+    [getFunctionName(gateway.library.myLibraryCopies)]: copies,
     [getFunctionName(gateway.household.mine)]: household,
     [getFunctionName(gateway.lending.lentOut)]: lentOut,
-    [getFunctionName(gateway.solving.myCompletions)]: [],
+    [getFunctionName(gateway.solving.mySolveStates)]: [],
   };
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
@@ -347,5 +364,74 @@ describe("My Puzzles URL state", () => {
       ).value,
     ).toBe("");
     expect(titles()).toEqual(["Alpen", "De Kattenshow", "Lam Gelegd"]);
+  });
+});
+
+describe("My Puzzles paging", () => {
+  const library = Array.from({ length: 60 }, (_, i) =>
+    copy(`c${i}`, `Puzzle ${i}`, { createdAt: 60 - i }),
+  );
+  const firstRows = library.slice(0, 48);
+  const WINDOW = getFunctionName(gateway.library.myLibraryWindow);
+  const INDEX = getFunctionName(gateway.library.myLibraryIndex);
+  const COPIES = getFunctionName(gateway.library.myLibraryCopies);
+
+  it("a plain list reads the first rows and never the whole library", () => {
+    renderPage({ copies: library, firstRows, hasMore: true });
+    expect(mocks.asked[INDEX]).toBe("skip");
+    expect(mocks.asked[WINDOW]).toEqual({ owner: "all", limit: 48 });
+    expect(screen.getAllByText(/^Puzzle \d+$/)).toHaveLength(48);
+    // The count is the library's, not what's loaded so far.
+    expect(screen.getByText("60 of 60 puzzles")).toBeTruthy();
+  });
+
+  it("Show more asks for a longer window and keeps the rest of the view", () => {
+    renderPage({ copies: library, firstRows, hasMore: true });
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    expect(mocks.asked[WINDOW]).toEqual({ owner: "all", limit: 96 });
+    expect(mocks.location.get()).toEqual({});
+  });
+
+  it("offers no Show more once the list is all there", () => {
+    renderPage({ copies: library.slice(0, 3) });
+    expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+  });
+
+  it("the whose filter goes to the server and stays a plain list", () => {
+    renderPage({
+      copies: library,
+      firstRows,
+      search: { owner: "mine" },
+    });
+    expect(mocks.asked[INDEX]).toBe("skip");
+    expect(mocks.asked[WINDOW]).toMatchObject({ owner: "mine" });
+  });
+
+  it.each([
+    ["a search", { q: "Puzzle" }],
+    ["a sort", { sort: "title" }],
+    ["a status pill", { status: "forTrade" }],
+  ])("%s works over the index, whatever is loaded", (_, search) => {
+    renderPage({ copies: library, firstRows, search });
+    expect(mocks.asked[INDEX]).toEqual({});
+    expect(mocks.asked[WINDOW]).toBe("skip");
+  });
+
+  it("joins only the first matches of a whole-library view", () => {
+    renderPage({ copies: library, search: { q: "Puzzle" } });
+    const asked = mocks.asked[COPIES] as { copyIds: string[] };
+    expect(asked.copyIds).toHaveLength(48);
+    // Every match still counts.
+    expect(screen.getByText("60 of 60 puzzles")).toBeTruthy();
+  });
+
+  it("selection reads the index, so Select all covers what isn't loaded yet", () => {
+    renderPage({ copies: library, firstRows, hasMore: true });
+    expect(mocks.asked[INDEX]).toBe("skip");
+
+    fireEvent.click(screen.getByRole("button", { name: "Select" }));
+    expect(mocks.asked[INDEX]).toEqual({});
+    fireEvent.click(screen.getByRole("button", { name: "Select all (60)" }));
+    expect(screen.getByText("60 selected")).toBeTruthy();
   });
 });

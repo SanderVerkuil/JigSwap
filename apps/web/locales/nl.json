@@ -538,6 +538,8 @@
       "completed": "Voltooid"
     },
     "resultCount": "{count} van {total} puzzels",
+    "showMore": "Meer tonen",
+    "rowsAtMax": "Je ziet de eerste {max} puzzels. Zoek of filter om de rest te vinden.",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",

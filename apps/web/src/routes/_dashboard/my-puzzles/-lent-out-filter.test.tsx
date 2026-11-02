@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { LIBRARY_PAGE_SIZE } from "@/components/library/use-library-rows";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { LoanView } from "@jigswap/contracts";
@@ -77,7 +78,7 @@ vi.mock("@/components/ui/puzzle-card", () => ({
   ),
 }));
 
-type OwnedCopies = FunctionReturnType<typeof gateway.library.ownedByOwner>;
+type Index = FunctionReturnType<typeof gateway.library.myLibraryIndex>;
 
 const copy = (id: string, title: string, forLend: boolean) => ({
   _id: id,
@@ -118,18 +119,33 @@ const renderPage = (locale: "en" | "nl" = "en") => {
     convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
     { _id: "u_me" },
   );
+  const copies = [
+    copy("copy-a", "Harbour Lights", true),
+    copy("copy-b", "Tulip Fields", false),
+    copy("copy-c", "Night Market", false),
+  ];
+  // The plain list (the first rows) and the lean index the pills filter.
   seed(
-    convexQuery(gateway.library.ownedByOwner, {
-      ownerId: "u_me" as Id<"users">,
-      includeUnavailable: true,
+    convexQuery(gateway.library.myLibraryWindow, {
+      owner: "all",
+      limit: LIBRARY_PAGE_SIZE,
     }).queryKey,
-    [
-      copy("copy-a", "Harbour Lights", true),
-      copy("copy-b", "Tulip Fields", false),
-      copy("copy-c", "Night Market", false),
-    ] as unknown as OwnedCopies,
+    { rows: copies, hasMore: false, matched: 3, total: 3 },
   );
-  seed(convexQuery(gateway.household.copies, {}).queryKey, []);
+  seed(
+    convexQuery(gateway.library.myLibraryIndex, {}).queryKey,
+    copies as unknown as Index,
+  );
+  // The full rows of whatever the pills leave.
+  const copiesOf = (...ids: string[]) =>
+    seed(
+      convexQuery(gateway.library.myLibraryCopies, {
+        copyIds: ids as Id<"ownedPuzzles">[],
+      }).queryKey,
+      copies.filter((row) => ids.includes(row._id)),
+    );
+  copiesOf("copy-b");
+  copiesOf("copy-a");
   seed(convexQuery(gateway.household.mine, {}).queryKey, null);
   seed(convexQuery(gateway.lending.lentOut, {}).queryKey, [lentOutLoan]);
 

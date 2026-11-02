@@ -40,7 +40,12 @@ vi.mock("@/compat/link", () => ({
 vi.mock("@/gateway", () => ({
   gateway: {
     identity: { byClerkId: "byClerkId" },
-    library: { ownedByOwner: "ownedByOwner", updateOffers: "updateOffers" },
+    library: {
+      myLibraryWindow: "myLibraryWindow",
+      myLibraryIndex: "myLibraryIndex",
+      myLibraryCopies: "myLibraryCopies",
+      updateOffers: "updateOffers",
+    },
     collections: { addOwnedPuzzle: "addOwnedPuzzle" },
     household: { copies: "householdCopies", mine: "householdMine" },
     lending: { lentOut: "lentOut", recallLoan: "recallLoan" },
@@ -58,10 +63,14 @@ vi.mock("@tanstack/react-query", () => ({
         ? { _id: "member_1" }
         : name === "householdMine"
           ? null
-          : [],
+          : name === "myLibraryWindow"
+            ? { rows: [], hasMore: false, matched: 0, total: 0 }
+            : [],
     isPending: false,
+    isPlaceholderData: false,
   }),
   useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  keepPreviousData: undefined,
 }));
 vi.mock("@/components/library/copy-card-actions", () => ({
   useCopyCardActions: () => ({ cardActions: () => [], dialogs: null }),

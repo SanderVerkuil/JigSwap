@@ -22,12 +22,18 @@ import {
   filtersFromSearch,
   MAX_SEARCH_LENGTH,
   validateMyPuzzlesSearch,
+  viewNeedsWholeLibrary,
   type MyPuzzlesOwner,
   type MyPuzzlesSearch,
   type MyPuzzlesSort,
   type MyPuzzlesStatus,
 } from "@/components/library/my-puzzles-filters";
 import { useBulkCopyActions } from "@/components/library/use-bulk-copy-actions";
+import {
+  LIBRARY_ROWS_MAX,
+  useLibraryRows,
+} from "@/components/library/use-library-rows";
+import { PuzzleCardSkeleton } from "@/components/puzzles/puzzle-card-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,11 +52,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
-import type { LoanView } from "@jigswap/contracts";
+import type { HouseholdCopyPermission, LoanView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -153,10 +159,11 @@ function PuzzlesPage() {
   const locale = useLocale();
   const displayName = useMemberDisplayName();
   const tLending = useTranslations("lending");
+  const tCommon = useTranslations("common");
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const viewMode = search.view ?? "grid";
-  const filters = filtersFromSearch(search);
+  const filters = useMemo(() => filtersFromSearch(search), [search]);
   // Every control writes its value into the URL (a default clears its key). Replace, not push:
   // changing a filter is not a new page, so Back still leaves My Puzzles in one step.
   const setSearch = (patch: Partial<MyPuzzlesSearch>) =>
@@ -172,56 +179,97 @@ function PuzzlesPage() {
     ),
   );
 
-  const { data: userownedPuzzles, isPending: userownedPuzzlesPending } =
-    useQuery(
-      convexQuery(
-        gateway.library.ownedByOwner,
-        convexUser?._id
-          ? { ownerId: convexUser._id as Id<"users">, includeUnavailable: true }
-          : "skip",
-      ),
-    );
+  const signedIn = Boolean(convexUser?._id);
 
-  // Household copies: the other members' copies, shown after the member's own (copies stay owned by
-  // whoever added them; `household.viewerAccess` says whether the viewer may manage or only view).
-  const { data: householdCopies } = useQuery(
-    convexQuery(gateway.household.copies, convexUser?._id ? {} : "skip"),
+  // Selection mode (bulk actions). Only copies the viewer may manage can be selected, and an
+  // action covers only the selected copies the current filters show, loaded or not.
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+
+  // A lean row per copy, only while a view needs the whole library: a search, a sort or a status
+  // pill, or selection mode (Select all covers every copy the filters show, not just the loaded
+  // ones). The plain list never reads it.
+  const wholeLibrary = viewNeedsWholeLibrary(filters);
+  const { data: index } = useQuery(
+    convexQuery(
+      gateway.library.myLibraryIndex,
+      signedIn && (wholeLibrary || selecting) ? {} : "skip",
+    ),
   );
   // The viewer's household (null when in none): My puzzles points at its Puzzles tab, where every
   // puzzle in the household can be filtered by owner.
   const { data: myHousehold } = useQuery(
-    convexQuery(gateway.household.mine, convexUser?._id ? {} : "skip"),
-  );
-  const allCopies = useMemo(
-    () => [...(userownedPuzzles ?? []), ...(householdCopies ?? [])],
-    [userownedPuzzles, householdCopies],
-  );
-  const householdAccessById = useMemo(
-    () =>
-      new Map(
-        (householdCopies ?? []).map((copy) => [copy._id, copy.household]),
-      ),
-    [householdCopies],
+    convexQuery(gateway.household.mine, signedIn ? {} : "skip"),
   );
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
-
-  // The member's solve log powers the In Progress / Completed pills and the card's Start/Finish.
-  const solveStateByCopyId = useSolveStateByCopyId(Boolean(convexUser?._id));
-  // The card ⋯ actions (and their dialogs), following the viewer's access to each copy.
-  const { cardActions, dialogs } = useCopyCardActions({
-    copies: allCopies,
-    householdAccessById,
-    solveStateByCopyId,
-  });
-
   // Lookup of open loans keyed by the copy's ownedPuzzles _id (LoanView.copyDocId), so each card can
   // tell whether it is currently lent out without an extra per-row query.
   const loanByCopyDocId = useMemo(
     () => new Map((lentOut ?? []).map((loan) => [loan.copyDocId, loan])),
     [lentOut],
   );
+
+  // The member's solve log powers the In Progress / Completed pills and the card's Start/Finish.
+  const solveStateByCopyId = useSolveStateByCopyId(signedIn);
+
+  // Every copy this view shows, worked out over the index in the member's locale.
+  const matches = useMemo(() => {
+    if (!index) return undefined;
+    const viaHousehold = new Set(
+      index.flatMap((row) => (row.viewerAccess ? [row._id] : [])),
+    );
+    return filterAndSortCopies(index, filters, {
+      viaHousehold: (copyId) => viaHousehold.has(copyId),
+      solveState: (copyId) => solveStateByCopyId.get(copyId),
+      lentOut: (copyId) => loanByCopyDocId.has(copyId),
+      locale,
+    });
+  }, [index, filters, solveStateByCopyId, loanByCopyDocId, locale]);
+
+  const list = useLibraryRows({
+    enabled: signedIn,
+    viewKey: JSON.stringify([
+      filters.q,
+      filters.status,
+      filters.owner,
+      filters.sort,
+    ]),
+    windowArgs: { owner: filters.owner },
+    ids: wholeLibrary ? matches?.map((copy) => copy._id) : null,
+  });
+  const loadedCopies = useMemo(
+    () => list.entries.flatMap(({ copy }) => (copy ? [copy] : [])),
+    [list.entries],
+  );
+  const matchedCount = wholeLibrary ? matches?.length : list.counts?.matched;
+  const totalCount = wholeLibrary ? index?.length : list.counts?.total;
+
+  // What the viewer may do with a housemate's copy; their own copies are absent.
+  const householdAccessById = useMemo(() => {
+    const access = new Map<string, { viewerAccess: HouseholdCopyPermission }>();
+    for (const row of index ?? []) {
+      if (row.viewerAccess) {
+        access.set(row._id, { viewerAccess: row.viewerAccess });
+      }
+    }
+    for (const copy of loadedCopies) {
+      if (copy.household) access.set(copy._id, copy.household);
+    }
+    return access;
+  }, [index, loadedCopies]);
+
+  // The card ⋯ actions (and their dialogs), following the viewer's access to each copy.
+  const { cardActions, dialogs } = useCopyCardActions({
+    copies: loadedCopies,
+    householdAccessById,
+    solveStateByCopyId,
+  });
+
   const borrowerName = (loan: LoanView) =>
     loan.borrower ? displayName(loan.borrower) : tLending("deletedMember");
 
@@ -234,13 +282,6 @@ function PuzzlesPage() {
     { value: "inProgress", label: t("filters.inProgress") },
     { value: "completed", label: t("filters.completed") },
   ];
-
-  const filteredownedPuzzles = filterAndSortCopies(allCopies, filters, {
-    viaHousehold: (copyId) => householdAccessById.has(copyId),
-    solveState: (copyId) => solveStateByCopyId.get(copyId),
-    lentOut: (copyId) => loanByCopyDocId.has(copyId),
-    locale,
-  });
 
   // The filters narrowing the list right now, named as their controls name them, so an empty result
   // says what excluded everything (and Show all can undo it) instead of "add your first puzzle".
@@ -255,20 +296,15 @@ function PuzzlesPage() {
   const showAll = () =>
     setSearch({ q: undefined, status: undefined, owner: undefined });
 
-  // Selection mode (bulk actions). Only copies the viewer may manage can be selected, and an
-  // action covers only the selected copies the current filters show.
-  const [selecting, setSelecting] = useState(false);
-  const [selected, setSelected] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
-  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
-  const isSelectable = (copy: (typeof allCopies)[number]) =>
+  const isSelectable = (copy: { _id: string; aggregateId?: string }) =>
     canSelectCopy(copy, householdAccessById.get(copy._id));
-  const selectableIds = filteredownedPuzzles
+  // Everything the filters show once the index is in; until then what's loaded.
+  const selectionPool = matches ?? loadedCopies;
+  const selectableIds = selectionPool
     .filter(isSelectable)
     .map((copy) => copy._id);
   const selectedIds = new Set(selectedInView(selected, selectableIds));
-  const selectedCopies = filteredownedPuzzles.filter((copy) =>
+  const selectedCopies = selectionPool.filter((copy) =>
     selectedIds.has(copy._id),
   );
   const toggleSelecting = () => {
@@ -325,12 +361,7 @@ function PuzzlesPage() {
     [t],
   );
 
-  if (
-    !user ||
-    !convexUser ||
-    userownedPuzzlesPending ||
-    userownedPuzzles === undefined
-  ) {
+  if (!user || !convexUser) {
     return <PuzzlesGridSkeleton />;
   }
 
@@ -448,12 +479,11 @@ function PuzzlesPage() {
         }
         count={
           <span className="flex items-center gap-3">
-            {t("resultCount", {
-              count: filteredownedPuzzles.length,
-              total: allCopies.length,
-            })}
+            {matchedCount !== undefined &&
+              totalCount !== undefined &&
+              t("resultCount", { count: matchedCount, total: totalCount })}
             {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
-            {allCopies.some(isSelectable) && (
+            {selectionPool.some(isSelectable) && (
               <Button
                 type="button"
                 variant={selecting ? "secondary" : "outline"}
@@ -470,7 +500,13 @@ function PuzzlesPage() {
       />
 
       {/* Puzzles Grid/List */}
-      {allCopies.length === 0 ? (
+      {list.loading ? (
+        <PuzzleViewProvider viewMode={viewMode}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <PuzzleCardSkeleton key={i} />
+          ))}
+        </PuzzleViewProvider>
+      ) : totalCount === 0 && list.entries.length === 0 ? (
         <EmptyState
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
@@ -483,7 +519,7 @@ function PuzzlesPage() {
             </Button>
           }
         />
-      ) : filteredownedPuzzles.length === 0 ? (
+      ) : list.entries.length === 0 && !list.stale ? (
         <EmptyState
           title={t("noMatch.title", {
             filters: activeFilterLabels.join(" · "),
@@ -496,61 +532,93 @@ function PuzzlesPage() {
           }
         />
       ) : (
-        <PuzzleViewProvider viewMode={viewMode}>
-          {filteredownedPuzzles.map((puzzle) => {
-            const loan = loanByCopyDocId.get(puzzle._id);
-            const household = householdAccessById.get(puzzle._id);
-            const selectable = isSelectable(puzzle);
-            return (
-              <PuzzleCard
-                headingLevel={2}
-                key={puzzle._id}
-                puzzle={puzzle}
-                // While selecting, a tap selects (no navigation, no ⋯ menu); a copy the viewer
-                // can't manage shows a disabled checkbox.
-                variant={selecting ? "selection" : "default"}
-                isSelected={selecting && selectedIds.has(puzzle._id)}
-                onSelect={
-                  selecting && selectable
-                    ? (id) => setSelected((prev) => toggleSelection(prev, id))
-                    : undefined
-                }
-                className={selecting && !selectable ? "opacity-60" : undefined}
-                viewBasePath="/my-puzzles"
-                imageFit="contain"
-                {...cardActions(puzzle._id)}
-                owner={
-                  household && (
-                    <CopyOwnerLine
-                      owner={household.owner}
-                      viewOnly={household.viewerAccess === "view"}
-                    />
-                  )
-                }
-                loanBadge={
-                  loan && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {tLending("onLoanTo", {
-                          name: borrowerName(loan),
-                        })}
-                      </Badge>
-                      {/* Recall ends the loan at once, so it asks first and reports either way.
-                          Hidden while selecting, where a tap on the card selects it. */}
-                      {!selecting && (
-                        <RecallLoanButton
-                          loanId={loan.loanId}
-                          puzzleTitle={loan.puzzleTitle}
-                          borrowerName={borrowerName(loan)}
-                        />
-                      )}
-                    </div>
-                  )
-                }
-              />
-            );
-          })}
-        </PuzzleViewProvider>
+        // While the next rows or another view load, what's on screen stays, dimmed and marked busy.
+        <div
+          aria-busy={list.stale}
+          className={
+            list.stale ? "opacity-60 motion-safe:transition-opacity" : undefined
+          }
+        >
+          <PuzzleViewProvider viewMode={viewMode}>
+            {list.entries.map(({ id, copy: puzzle }) => {
+              if (!puzzle) return <PuzzleCardSkeleton key={id} />;
+              const loan = loanByCopyDocId.get(puzzle._id);
+              const selectable = isSelectable(puzzle);
+              return (
+                <PuzzleCard
+                  headingLevel={2}
+                  key={puzzle._id}
+                  puzzle={puzzle}
+                  // While selecting, a tap selects (no navigation, no ⋯ menu); a copy the viewer
+                  // can't manage shows a disabled checkbox.
+                  variant={selecting ? "selection" : "default"}
+                  isSelected={selecting && selectedIds.has(puzzle._id)}
+                  onSelect={
+                    selecting && selectable
+                      ? (selectedId) =>
+                          setSelected((prev) =>
+                            toggleSelection(prev, selectedId),
+                          )
+                      : undefined
+                  }
+                  className={
+                    selecting && !selectable ? "opacity-60" : undefined
+                  }
+                  viewBasePath="/my-puzzles"
+                  imageFit="contain"
+                  {...cardActions(puzzle._id)}
+                  owner={
+                    puzzle.household && (
+                      <CopyOwnerLine
+                        owner={puzzle.household.owner}
+                        viewOnly={puzzle.household.viewerAccess === "view"}
+                      />
+                    )
+                  }
+                  loanBadge={
+                    loan && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {tLending("onLoanTo", {
+                            name: borrowerName(loan),
+                          })}
+                        </Badge>
+                        {/* Recall ends the loan at once, so it asks first and reports either way.
+                            Hidden while selecting, where a tap on the card selects it. */}
+                        {!selecting && (
+                          <RecallLoanButton
+                            loanId={loan.loanId}
+                            puzzleTitle={loan.puzzleTitle}
+                            borrowerName={borrowerName(loan)}
+                          />
+                        )}
+                      </div>
+                    )
+                  }
+                />
+              );
+            })}
+          </PuzzleViewProvider>
+        </div>
+      )}
+
+      {/* aria-disabled, not disabled, while the next rows load: a disabled button drops focus. */}
+      {list.hasMore && (
+        <Button
+          variant="outline"
+          className="h-11 self-center md:h-9"
+          aria-disabled={list.stale}
+          onClick={() => {
+            if (!list.stale) list.loadMore();
+          }}
+        >
+          {list.stale ? tCommon("loading") : t("showMore")}
+        </Button>
+      )}
+      {list.atMax && (
+        <p className="text-muted-foreground text-center text-sm">
+          {t("rowsAtMax", { max: LIBRARY_ROWS_MAX })}
+        </p>
       )}
 
       {selecting && (
