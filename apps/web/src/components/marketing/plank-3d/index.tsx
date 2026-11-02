@@ -23,7 +23,7 @@ function usePrefersReducedMotion(): boolean {
   );
 }
 
-/** Render-nothing error boundary: any 3D failure leaves the CSS plank. */
+/** Render-nothing error boundary: any 3D failure leaves the hero as a closed gate does. */
 class SceneBoundary extends React.Component<
   { children: React.ReactNode; onError?: () => void },
   { failed: boolean }
@@ -49,13 +49,14 @@ export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
   );
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
   // `mounted` = idle client on a capable device (see three-gate); gates every
-  // 3D path. Phones, Save-Data and low-memory devices keep the CSS planks.
+  // 3D path. Without it this backdrop shows the CSS planks from 1200px and no
+  // art below that (phones get theirs in the page flow, see hero.tsx).
   const mounted = useCanLoad3D();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
   // The gate can close again (viewport narrowed below 768 px): the scene
-  // unmounts, so the CSS planks must come back rather than stay faded out.
+  // unmounts, so the CSS planks must not stay faded out for when it widens again.
   if (sceneReady && !mounted) setSceneReady(false);
 
   // Resolve CSS-var colors + font from the live DOM; re-resolve when the
@@ -98,9 +99,11 @@ export function JigPlank3D({ rows = [] }: { rows?: PlankBox[][] }) {
           whole stack is scaled down so the boxes read smaller, matching the
           scene. Other JigPlank call sites (features/about) are untouched —
           the stacking lives here, not in JigPlank itself.
-          Positioned right-of-center, vertically centered. Below 1200px this
-          stack would sit under the hero's frosted panel and blur into smudges
-          behind the copy, so narrower screens get the scene or no art here. */}
+          Positioned right-of-center, vertically centered. Below 1200px a row of
+          three boxes reaches under the hero's frosted panel, which ends at
+          x=664, and blurs into smudges behind the copy (it clears from about
+          1175px; the first paint and a full catalogue both have such a row), so
+          narrower screens get the scene or no art here. */}
       <div
         className="flex max-[1199px]:hidden"
         style={{

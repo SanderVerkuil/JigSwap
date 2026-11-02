@@ -5,9 +5,10 @@ import * as React from "react";
  * profile shelves). three.js is ~245 KB gz plus a GPU context, so it loads
  * only once the page is idle, on a viewport of at least 768 px, without
  * Save-Data and with at least 4 GB of memory where the browser reports it.
- * Everywhere else the CSS plank stays. A scene loaded on the member's request
- * (the profile shelf's physics) needs the same device budget at any viewport
- * width (deviceAllows3D) and probes WebGL only once asked.
+ * Everywhere else no scene loads and each caller shows its own fallback. A
+ * scene loaded on the member's request (the profile shelf's physics) needs the
+ * same device budget at any viewport width (deviceAllows3D) and probes WebGL
+ * only once asked.
  */
 const WIDE_VIEWPORT = "(min-width: 768px)";
 const MIN_DEVICE_MEMORY_GB = 4;

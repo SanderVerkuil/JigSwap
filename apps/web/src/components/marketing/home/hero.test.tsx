@@ -155,6 +155,9 @@ describe("Hero", () => {
     ).toBeNull();
   });
 
+  // The panel ends at x=664 up to 1200px. Measured with a 15px scrollbar and the shelf's overhang
+  // counted, a row of three boxes reaches 537 at 1040 and 631 at 1140, and clears the panel from
+  // 1175. A catalogue with 9 puzzles clears it sooner, but the first paint and a full one don't.
   it("shows the backdrop's CSS planks only where they clear the copy's panel", () => {
     const { container } = renderHero();
     const stacks = planksOf(container, ".max-\\[1199px\\]\\:hidden");
