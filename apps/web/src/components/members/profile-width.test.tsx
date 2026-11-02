@@ -65,6 +65,7 @@ const lockedProfile = {
     memberId: "member1",
     displayName: "Hans",
     username: "hans",
+    handle: "hans",
     memberSince: Date.UTC(2024, 0, 1),
     visibility: "private",
     followerCount: 0,

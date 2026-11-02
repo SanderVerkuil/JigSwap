@@ -29,7 +29,7 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   useConvexMutation: () => vi.fn(),
 }));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
-  usePageHeaderActions: () => {},
+  usePageHeader: () => {},
 }));
 vi.mock("@/lib/web-push", () => ({
   pushSupported: () => false,
