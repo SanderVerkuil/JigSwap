@@ -2800,12 +2800,10 @@
       "trade_completed": "Ruil voltooid",
       "trade_cancelled": "Ruil geannuleerd",
       "trade_cancelled_member_deleted": "Ruil geannuleerd (account verwijderd)",
-      "exchange_proposed": "Ruil voorgesteld",
       "exchange_disputed": "Ruilgeschil",
       "message_received": "Nieuwe berichten",
       "circle_message_received": "Kringberichten",
       "review_received": "Ontvangen beoordelingen",
-      "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
       "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
@@ -2842,7 +2840,7 @@
       },
       "social": {
         "title": "Sociaal",
-        "description": "Volgers, volgverzoeken, beoordelingen, favorieten en doelen"
+        "description": "Volgers, volgverzoeken, beoordelingen en doelen"
       },
       "submissions": {
         "title": "Mijn inzendingen",
@@ -3025,18 +3023,16 @@
     "pushError": "Kon pushmeldingen niet bijwerken",
     "matrixLabel": "Meldingskanalen per type",
     "typeDesc": {
-      "trade_request": "Wanneer iemand een ruil voorstelt voor een van je puzzels.",
+      "trade_request": "Wanneer iemand een van je puzzels wil ruilen, lenen of kopen.",
       "trade_accepted": "Wanneer iemand een ruil accepteert die je hebt voorgesteld.",
       "trade_declined": "Wanneer iemand een ruil afwijst die je hebt voorgesteld.",
       "trade_completed": "Wanneer een ruil is voltooid.",
       "trade_cancelled": "Wanneer een ruil is geannuleerd.",
       "trade_cancelled_member_deleted": "Wanneer een ruil wordt geannuleerd omdat het account van het andere lid is verwijderd.",
-      "exchange_proposed": "Wanneer iemand een uitwisseling voorstelt — ruil, verkoop of uitlenen.",
       "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
       "message_received": "Wanneer je een nieuw bericht ontvangt.",
       "circle_message_received": "Wanneer iemand schrijft in de groepschat van een van je kringen. E-mail komt als korte samenvatting, nooit per bericht.",
       "review_received": "Wanneer iemand je een beoordeling geeft na een uitwisseling.",
-      "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
       "proposal_approved": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt goedgekeurd.",

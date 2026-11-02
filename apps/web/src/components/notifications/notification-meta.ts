@@ -121,9 +121,16 @@ export interface NotificationCategory {
   readonly types: readonly NotificationType[];
 }
 
-// Display grouping for the preferences matrix. Every NotificationType appears in EXACTLY one
-// category (pinned by notification-meta.test.ts). `admin` stays hidden for non-admins via the
-// existing ADMIN_NOTIFICATION_TYPES filtering.
+// Types nothing emits any more (a proposal notifies as trade_request, whatever its kind; favouriting
+// notifies nobody). Old rows still render, so the types stay; a preference row for them would be a
+// switch that controls nothing.
+export const UNSENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set(
+  ["exchange_proposed", "puzzle_favorited"],
+);
+
+// Display grouping for the preferences matrix. Every NotificationType that can still be sent appears
+// in EXACTLY one category (pinned by notification-meta.test.ts). `admin` stays hidden for non-admins
+// via the existing ADMIN_NOTIFICATION_TYPES filtering.
 export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
   {
     key: "trades",
@@ -134,7 +141,6 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "trade_completed",
       "trade_cancelled",
       "trade_cancelled_member_deleted",
-      "exchange_proposed",
       "exchange_disputed",
     ],
   },
@@ -153,7 +159,6 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "circle_invite_received",
       "circle_invite_accepted",
       "circle_deleted",
-      "puzzle_favorited",
       "review_received",
       "goal_achieved",
     ],

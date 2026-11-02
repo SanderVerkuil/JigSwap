@@ -2800,12 +2800,10 @@
       "trade_completed": "Trade completed",
       "trade_cancelled": "Trade cancelled",
       "trade_cancelled_member_deleted": "Trade cancelled (account deleted)",
-      "exchange_proposed": "Exchange proposed",
       "exchange_disputed": "Exchange disputed",
       "message_received": "New messages",
       "circle_message_received": "Circle messages",
       "review_received": "Reviews received",
-      "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
       "proposal_approved": "Suggestion approved",
@@ -2842,7 +2840,7 @@
       },
       "social": {
         "title": "Social",
-        "description": "Followers, follow requests, reviews, favorites and goals"
+        "description": "Followers, follow requests, reviews and goals"
       },
       "submissions": {
         "title": "My submissions",
@@ -3025,18 +3023,16 @@
     "pushError": "Couldn't update push notifications",
     "matrixLabel": "Notification channels by type",
     "typeDesc": {
-      "trade_request": "When someone proposes a trade for one of your puzzles.",
+      "trade_request": "When someone asks to swap, borrow or buy one of your puzzles.",
       "trade_accepted": "When someone accepts a trade you proposed.",
       "trade_declined": "When someone declines a trade you proposed.",
       "trade_completed": "When a trade is completed.",
       "trade_cancelled": "When a trade is cancelled.",
       "trade_cancelled_member_deleted": "When a trade is cancelled because the other member deleted their account.",
-      "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
       "exchange_disputed": "When an exchange you're part of is disputed.",
       "message_received": "When you receive a new message.",
       "circle_message_received": "When someone writes in the group chat of one of your circles. Email comes as a short digest, never per message.",
       "review_received": "When someone leaves you a review after an exchange.",
-      "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
       "proposal_approved": "When an edit you suggested to a catalogue puzzle is approved.",

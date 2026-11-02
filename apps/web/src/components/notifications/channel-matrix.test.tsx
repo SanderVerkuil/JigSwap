@@ -102,17 +102,17 @@ describe("ChannelMatrix structure and names (UX-34)", () => {
 
   it("says visibly why email is off for a type that never emails, and ties it to the switch", () => {
     renderMatrix();
-    const email = switchFor("exchange_proposed", "email");
+    const email = switchFor("exchange_disputed", "email");
     expect(email.disabled).toBe(true);
-    const note = document.getElementById("email-na-exchange_proposed");
+    const note = document.getElementById("email-na-exchange_disputed");
     expect(note?.textContent).toBe(en.notifications.emailUnavailableShort);
     expect(email.getAttribute("aria-describedby")).toBe(
-      "row-exchange_proposed-desc email-na-exchange_proposed",
+      "row-exchange_disputed-desc email-na-exchange_disputed",
     );
     // The other channels of that row do not carry the email note.
     expect(
-      switchFor("exchange_proposed", "push").getAttribute("aria-describedby"),
-    ).toBe("row-exchange_proposed-desc");
+      switchFor("exchange_disputed", "push").getAttribute("aria-describedby"),
+    ).toBe("row-exchange_disputed-desc");
   });
 
   it("shows no email note on a type that can be emailed", () => {
