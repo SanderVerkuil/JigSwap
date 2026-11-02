@@ -5349,6 +5349,8 @@
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd.",
+    "loadErrorTitle": "We konden deze puzzel niet laden",
+    "loadErrorSub": "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
     "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community."
   },
   "whatsNew": {

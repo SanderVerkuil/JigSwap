@@ -33,9 +33,7 @@ type PublicReview = FunctionReturnType<
 >[number];
 
 const viewQuery = (id: string) =>
-  convexQuery(gateway.catalog.publicDefinitionView, {
-    puzzleId: id as Id<"puzzles">,
-  });
+  convexQuery(gateway.catalog.publicDefinitionView, { puzzleId: id });
 const reviewsQuery = (id: string) =>
   convexQuery(gateway.social.listPublicPuzzleReviews, {
     puzzleId: id as Id<"puzzles">,
@@ -56,17 +54,23 @@ export const Route = createFileRoute("/_public/catalog/$id")({
       context.queryClient.ensureQueryData(viewQuery(params.id)),
       context.queryClient.ensureQueryData(reviewsQuery(params.id)),
     ]);
-    // A nonexistent id resolves to null; a malformed one fails `v.id("puzzles")` arg validation and
-    // rejects (production redacts the message, so the two can't be told apart). Either way the URL
-    // names no puzzle: a real 404 with the friendly not-found below, not a 200.
-    if (view.status === "rejected" || !view.value) throw notFound();
+    // A URL that names no puzzle reads as null, malformed ids included (the query takes any string):
+    // a real 404 with the friendly not-found below, not a 200. A rejection is a failed read, so it
+    // goes to the error view with a 500: these URLs are the whole sitemap, and an outage must not
+    // tell crawlers the puzzles are gone.
+    if (view.status === "rejected") throw view.reason;
+    if (!view.value) throw notFound();
     return { view: view.value };
   },
   // loaderData is resolved before head() runs on the SSR pass, which is what crawlers and link
   // previews read; the description is the visitor's language via the root intl payload.
   head: ({ loaderData, match }) => {
     const d = loaderData?.view.definition;
-    if (!d) return { meta: [{ title: pageTitle(match.context, "notFound") }] };
+    if (!d) {
+      return match.status === "error"
+        ? {}
+        : { meta: [{ title: pageTitle(match.context, "notFound") }] };
+    }
     const maker = d.brand || d.publisher;
     return seoHead(match, "catalog", {
       title: `${d.title} — JigSwap`,
@@ -80,6 +84,7 @@ export const Route = createFileRoute("/_public/catalog/$id")({
     });
   },
   notFoundComponent: PuzzleNotFound,
+  errorComponent: PuzzleLoadError,
   component: PublicPuzzlePage,
 });
 
@@ -91,6 +96,20 @@ function PuzzleNotFound() {
       <MarketingNotFoundContent
         title={t("notFound")}
         message={t("notFoundSub")}
+      />
+    </main>
+  );
+}
+
+// A failed read (see the loader): the puzzle may well exist, so no "404", and no raw error text.
+function PuzzleLoadError() {
+  const t = useTranslations("publicCatalog");
+  return (
+    <main>
+      <MarketingNotFoundContent
+        kicker={null}
+        title={t("loadErrorTitle")}
+        message={t("loadErrorSub")}
       />
     </main>
   );

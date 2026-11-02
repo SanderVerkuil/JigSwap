@@ -150,8 +150,8 @@ describe("public catalogue detail copy", () => {
 
 type HeadFn = (ctx: {
   loaderData?: { view: View | null };
-  match: { context: unknown; pathname: string };
-}) => { meta: Array<Record<string, string>> };
+  match: { context: unknown; pathname: string; status?: string };
+}) => { meta?: Array<Record<string, string>> };
 const head = (Route as unknown as { options: { head: HeadFn } }).options.head;
 const headMatch = (locale: "en" | "nl") => ({
   context: {
@@ -220,10 +220,31 @@ describe("public catalogue detail not found", () => {
     await expect(loadWith(() => Promise.resolve(null))).rejects.toBe(NOT_FOUND);
   });
 
-  it("answers a malformed id (the read rejects) with a real 404", async () => {
+  // A string that names no puzzle answers null (publicCatalog.test.ts), so a rejection is a failed
+  // read: an outage must not tell crawlers a puzzle in the sitemap is gone.
+  it.each([
+    ["a network failure", new TypeError("fetch failed")],
+    ["the platform's error page", new Error("<html>502 Bad Gateway</html>")],
+    ["a failing function", new Error("[Request ID: abc] Server Error")],
+  ])("rethrows %s to the error boundary, not a 404", async (_, failure) => {
+    await expect(loadWith(() => Promise.reject(failure))).rejects.toBe(failure);
+  });
+
+  it("still loads a puzzle when only its reviews fail", async () => {
+    const view = viewWith(unrated);
     await expect(
-      loadWith(() => Promise.reject(new Error("Server Error"))),
-    ).rejects.toBe(NOT_FOUND);
+      loader({
+        context: {
+          queryClient: {
+            ensureQueryData: vi
+              .fn()
+              .mockResolvedValueOnce(view)
+              .mockRejectedValueOnce(new Error("Server Error")),
+          },
+        },
+        params: { id: PUZZLE_ID },
+      }),
+    ).resolves.toEqual({ view });
   });
 
   it("loads an existing puzzle", async () => {
@@ -234,8 +255,38 @@ describe("public catalogue detail not found", () => {
   });
 
   it("titles the 404 as a missing page", () => {
-    const { meta } = head({ match: headMatch("nl") });
+    const { meta } = head({
+      match: { ...headMatch("nl"), status: "notFound" },
+    });
     expect(meta).toEqual([{ title: nl.marketing.titles.notFound }]);
+  });
+
+  it("doesn't call a failed read a missing page", () => {
+    const { meta } = head({ match: { ...headMatch("nl"), status: "error" } });
+    expect(meta).toBeUndefined();
+  });
+
+  it("says a failed read is on our side and offers the way back", () => {
+    const LoadError = (
+      Route as unknown as { options: { errorComponent: ComponentType } }
+    ).options.errorComponent;
+    render(
+      <IntlProvider locale="nl" messages={nl} timeZone="Europe/Amsterdam">
+        <LoadError />
+      </IntlProvider>,
+    );
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "We konden deze puzzel niet laden",
+      }),
+    ).toBeTruthy();
+    expect(screen.queryByText("404")).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: nl.notFound.browseCatalogue })
+        .getAttribute("href"),
+    ).toBe("/catalog");
   });
 
   it("shows a heading and a way back to the catalogue when the puzzle is gone", () => {

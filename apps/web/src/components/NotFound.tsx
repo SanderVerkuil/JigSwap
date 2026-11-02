@@ -58,18 +58,21 @@ const inlineLink = "text-mk-violet-600 font-medium hover:underline";
 // The public 404 in the marketing look: a 404 kicker, an h1, one line of explanation and ways
 // back into the public site (home, catalogue, docs, contact) — never members-only pages, which
 // would bounce a visitor to sign-in. It renders no landmark itself so it also fits a layout that
-// already provides <main> (the docs). A route may name what's missing via `title`/`message`.
+// already provides <main> (the docs). A route may name what's missing via `title`/`message`, and
+// drop the 404 kicker when the page isn't one (a failed read).
 export function MarketingNotFoundContent({
+  kicker = "404",
   title,
   message,
 }: {
+  kicker?: string | null;
   title?: string;
   message?: string;
 }) {
   const t = useTranslations("notFound");
   return (
     <Container className="py-[clamp(56px,9vw,112px)] text-center">
-      <Eyebrow center>404</Eyebrow>
+      {kicker && <Eyebrow center>{kicker}</Eyebrow>}
       <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(32px,5vw,48px)] leading-[1.1] mt-4 text-balance">
         {title ?? t("title")}
       </h1>

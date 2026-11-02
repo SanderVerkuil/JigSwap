@@ -5349,6 +5349,8 @@
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalogue.",
+    "loadErrorTitle": "We couldn't load this puzzle",
+    "loadErrorSub": "Something went wrong on our side. Please try again in a moment.",
     "metaDescription": "{hasMaker, select, yes {{title} by {maker}} other {{title}}} — {count, number}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap."
   },
   "whatsNew": {
