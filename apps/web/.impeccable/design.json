@@ -1,0 +1,915 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T10:00:55.878Z",
+  "title": "Design System: JigSwap",
+  "extensions": {
+    "colorMeta": {
+      "sky": {
+        "role": "secondary",
+        "displayName": "Sky",
+        "tonalRamp": [
+          "#030c14",
+          "#112735",
+          "#21445a",
+          "#3e627b",
+          "#60859f",
+          "#8da9bc",
+          "#bdcdd9",
+          "#eaeff3"
+        ]
+      },
+      "sky-soft": {
+        "role": "secondary",
+        "displayName": "Sky Soft",
+        "tonalRamp": [
+          "#070c0f",
+          "#1c252c",
+          "#33424c",
+          "#50606b",
+          "#72838f",
+          "#9aa7b0",
+          "#c4ccd1",
+          "#eceff0"
+        ]
+      },
+      "sky-frame": {
+        "role": "secondary",
+        "displayName": "Sky Frame",
+        "tonalRamp": [
+          "#080c0e",
+          "#1e252a",
+          "#374148",
+          "#546067",
+          "#76828a",
+          "#9da6ac",
+          "#c6cbcf",
+          "#edeff0"
+        ]
+      },
+      "sky-frame-step": {
+        "role": "secondary",
+        "displayName": "Frame Step",
+        "tonalRamp": [
+          "#070c10",
+          "#1a262d",
+          "#30424e",
+          "#4d616e",
+          "#6f8491",
+          "#97a7b1",
+          "#c3ccd2",
+          "#eceff1"
+        ]
+      },
+      "sky-frame-line": {
+        "role": "secondary",
+        "displayName": "Frame Line",
+        "tonalRamp": [
+          "#070c0f",
+          "#1b262c",
+          "#32424c",
+          "#4e616b",
+          "#70838e",
+          "#99a7af",
+          "#c3ccd1",
+          "#eceff0"
+        ]
+      },
+      "canal-ink": {
+        "role": "primary",
+        "displayName": "Canal Ink",
+        "tonalRamp": [
+          "#030e0a",
+          "#102a22",
+          "#20483d",
+          "#3d675b",
+          "#608b7d",
+          "#8dada2",
+          "#bdcfc9",
+          "#eaf0ee"
+        ]
+      },
+      "canal-primary": {
+        "role": "primary",
+        "displayName": "Canal Primary",
+        "tonalRamp": [
+          "#020e0a",
+          "#092a22",
+          "#164a3c",
+          "#35695a",
+          "#588d7c",
+          "#89aea1",
+          "#bbd0c9",
+          "#e9f0ee"
+        ]
+      },
+      "canal-link": {
+        "role": "primary",
+        "displayName": "Canal Link",
+        "tonalRamp": [
+          "#000f0a",
+          "#002c21",
+          "#024c3c",
+          "#216c59",
+          "#48907b",
+          "#7fb1a1",
+          "#b6d2c8",
+          "#e8f1ee"
+        ]
+      },
+      "on-canal": {
+        "role": "neutral",
+        "displayName": "On Canal",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#808080",
+          "#a4a4a4",
+          "#cacaca",
+          "#eeeeee"
+        ]
+      },
+      "marigold": {
+        "role": "secondary",
+        "displayName": "Marigold",
+        "tonalRamp": [
+          "#120900",
+          "#312101",
+          "#553a01",
+          "#7b5602",
+          "#a67607",
+          "#cd9b41",
+          "#e3c697",
+          "#f6eddf"
+        ]
+      },
+      "marigold-press": {
+        "role": "secondary",
+        "displayName": "Marigold Press",
+        "tonalRamp": [
+          "#130900",
+          "#322001",
+          "#563901",
+          "#7d5504",
+          "#a97403",
+          "#cf9a44",
+          "#e4c599",
+          "#f7eddf"
+        ]
+      },
+      "plank": {
+        "role": "tertiary",
+        "displayName": "Plank",
+        "tonalRamp": [
+          "#110a01",
+          "#302107",
+          "#523b11",
+          "#72592f",
+          "#967c51",
+          "#b6a182",
+          "#d5c9b7",
+          "#f2eee8"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#242424",
+          "#404040",
+          "#5d5d5d",
+          "#808080",
+          "#a4a4a4",
+          "#cacaca",
+          "#eeeeee"
+        ]
+      },
+      "surface-secondary": {
+        "role": "neutral",
+        "displayName": "Surface Secondary",
+        "tonalRamp": [
+          "#090c0d",
+          "#202528",
+          "#394146",
+          "#575f64",
+          "#798287",
+          "#9fa6aa",
+          "#c7cbce",
+          "#edefef"
+        ]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Surface Muted",
+        "tonalRamp": [
+          "#0a0b0c",
+          "#212527",
+          "#3b4144",
+          "#595f62",
+          "#7b8185",
+          "#a1a5a8",
+          "#c8cbcc",
+          "#eeeeef"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "tonalRamp": [
+          "#060d0b",
+          "#182823",
+          "#2d463f",
+          "#49645c",
+          "#6b877f",
+          "#95aaa3",
+          "#c2ceca",
+          "#ecefee"
+        ]
+      },
+      "ink-muted-public": {
+        "role": "neutral",
+        "displayName": "Ink Muted Public",
+        "tonalRamp": [
+          "#050d0b",
+          "#152823",
+          "#29473e",
+          "#45655c",
+          "#67887f",
+          "#92aba3",
+          "#c0ceca",
+          "#ebf0ee"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "#090c0d",
+          "#1f2528",
+          "#374246",
+          "#546065",
+          "#778288",
+          "#9da6aa",
+          "#c6cbce",
+          "#edefef"
+        ]
+      },
+      "line-input": {
+        "role": "neutral",
+        "displayName": "Line Input",
+        "tonalRamp": [
+          "#080c0e",
+          "#1d2529",
+          "#354248",
+          "#526066",
+          "#748389",
+          "#9ca7ac",
+          "#c5cccf",
+          "#edeff0"
+        ]
+      },
+      "tulip": {
+        "role": "tertiary",
+        "displayName": "Tulip",
+        "tonalRamp": [
+          "#1e0000",
+          "#4a0300",
+          "#7a0b00",
+          "#af1400",
+          "#da4430",
+          "#ee816e",
+          "#fab8ac",
+          "#ffe9e5"
+        ]
+      },
+      "leaf": {
+        "role": "tertiary",
+        "displayName": "Leaf",
+        "tonalRamp": [
+          "#001002",
+          "#012d0b",
+          "#004e19",
+          "#0d712a",
+          "#3e954d",
+          "#7ab680",
+          "#b3d5b6",
+          "#e7f2e8"
+        ]
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Amber",
+        "tonalRamp": [
+          "#150800",
+          "#371d00",
+          "#5d3501",
+          "#864f01",
+          "#b36e17",
+          "#cd9965",
+          "#e3c4a7",
+          "#f7ede3"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "#1f0001",
+          "#4b0104",
+          "#7c000a",
+          "#b10414",
+          "#dc403b",
+          "#f07f74",
+          "#fbb7af",
+          "#fee9e6"
+        ]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Destructive",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(0.2 0.127 27.325)",
+          "oklch(0.3 0.191 27.325)",
+          "oklch(0.4 0.245 27.325)",
+          "oklch(0.5 0.245 27.325)",
+          "oklch(0.6 0.245 27.325)",
+          "oklch(0.7 0.191 27.325)",
+          "oklch(0.8 0.127 27.325)",
+          "oklch(0.93 0.045 27.325)"
+        ]
+      },
+      "logo-jig": {
+        "role": "tertiary",
+        "displayName": "Logo Jig",
+        "tonalRamp": [
+          "#090329",
+          "#200f5f",
+          "#391f9c",
+          "#5343c4",
+          "#726aee",
+          "#9798f9",
+          "#c1c5fe",
+          "#ebedfe"
+        ]
+      },
+      "logo-swap": {
+        "role": "tertiary",
+        "displayName": "Logo Swap",
+        "tonalRamp": [
+          "#001000",
+          "#002e00",
+          "#014f01",
+          "#027202",
+          "#2a9927",
+          "#71b96c",
+          "#afd8ab",
+          "#e6f3e4"
+        ]
+      },
+      "chart-2": {
+        "role": "tertiary",
+        "displayName": "Chart Amber",
+        "tonalRamp": [
+          "#130900",
+          "#332000",
+          "#563902",
+          "#7d5401",
+          "#aa7405",
+          "#cd9b4d",
+          "#e3c69c",
+          "#f6ede0"
+        ]
+      },
+      "chart-3": {
+        "role": "tertiary",
+        "displayName": "Chart Blue",
+        "tonalRamp": [
+          "#000c1b",
+          "#002642",
+          "#02436e",
+          "#03629e",
+          "#3786c5",
+          "#75aada",
+          "#b0cfea",
+          "#e6f0f9"
+        ]
+      },
+      "chart-5": {
+        "role": "tertiary",
+        "displayName": "Chart Brown",
+        "tonalRamp": [
+          "#120900",
+          "#322003",
+          "#563907",
+          "#765728",
+          "#9b7a4b",
+          "#b9a07e",
+          "#d7c8b4",
+          "#f2eee7"
+        ]
+      },
+      "night-sheet": {
+        "role": "neutral",
+        "displayName": "Night Sheet",
+        "tonalRamp": [
+          "#050d10",
+          "#14272d",
+          "#27454e",
+          "#44636d",
+          "#668691",
+          "#91a9b1",
+          "#bfcdd2",
+          "#ebeff1"
+        ]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "tonalRamp": [
+          "#040d10",
+          "#12282e",
+          "#23454f",
+          "#40646f",
+          "#628792",
+          "#8faab2",
+          "#beced3",
+          "#eaeff1"
+        ]
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "tonalRamp": [
+          "#030d10",
+          "#10282e",
+          "#21464f",
+          "#3d646f",
+          "#608893",
+          "#8daab3",
+          "#bdced3",
+          "#eaf0f1"
+        ]
+      },
+      "night-accent": {
+        "role": "neutral",
+        "displayName": "Night Accent",
+        "tonalRamp": [
+          "#030d11",
+          "#0d282f",
+          "#1d4651",
+          "#3a6571",
+          "#5c8895",
+          "#8babb4",
+          "#bcced4",
+          "#eaf0f1"
+        ]
+      },
+      "night-frame": {
+        "role": "neutral",
+        "displayName": "Night Frame",
+        "tonalRamp": [
+          "#050d10",
+          "#16272d",
+          "#2a444d",
+          "#47636d",
+          "#698690",
+          "#93a9b1",
+          "#c0cdd2",
+          "#ebeff1"
+        ]
+      },
+      "night-canal": {
+        "role": "neutral",
+        "displayName": "Night Canal",
+        "tonalRamp": [
+          "#060c0f",
+          "#19262c",
+          "#2f434c",
+          "#4b626b",
+          "#6d848e",
+          "#96a8af",
+          "#c2ccd1",
+          "#eceff0"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "tonalRamp": [
+          "#090c0c",
+          "#202526",
+          "#3a4144",
+          "#575f62",
+          "#798285",
+          "#9fa6a8",
+          "#c7cbcc",
+          "#edefef"
+        ]
+      },
+      "night-ink-muted": {
+        "role": "neutral",
+        "displayName": "Night Ink Muted",
+        "tonalRamp": [
+          "#060d0e",
+          "#17272a",
+          "#2c4449",
+          "#486368",
+          "#6a868b",
+          "#95a9ad",
+          "#c1cdd0",
+          "#ebeff0"
+        ]
+      },
+      "night-primary": {
+        "role": "neutral",
+        "displayName": "Night Primary",
+        "tonalRamp": [
+          "#000f0a",
+          "#012c21",
+          "#014c3b",
+          "#086e57",
+          "#3c927a",
+          "#79b3a0",
+          "#b3d3c8",
+          "#e7f1ed"
+        ]
+      },
+      "night-link": {
+        "role": "neutral",
+        "displayName": "Night Link",
+        "tonalRamp": [
+          "#000f0a",
+          "#022b22",
+          "#024b3d",
+          "#196d5a",
+          "#43907d",
+          "#7db1a2",
+          "#b5d2c9",
+          "#e8f1ee"
+        ]
+      },
+      "night-plank": {
+        "role": "neutral",
+        "displayName": "Night Plank",
+        "tonalRamp": [
+          "#120900",
+          "#322003",
+          "#563907",
+          "#765728",
+          "#9b7a4b",
+          "#b9a07e",
+          "#d7c8b4",
+          "#f2eee7"
+        ]
+      },
+      "night-logo-jig": {
+        "role": "neutral",
+        "displayName": "Night Logo Jig",
+        "tonalRamp": [
+          "#0b061f",
+          "#24194b",
+          "#3f2f7c",
+          "#5c4ea1",
+          "#7e71c9",
+          "#a29bdd",
+          "#c8c6ec",
+          "#eeedfa"
+        ]
+      },
+      "night-logo-swap": {
+        "role": "neutral",
+        "displayName": "Night Logo Swap",
+        "tonalRamp": [
+          "#001000",
+          "#012e01",
+          "#014f03",
+          "#047209",
+          "#009c0b",
+          "#66bc62",
+          "#aadaa6",
+          "#e4f4e3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display-hero": {
+        "displayName": "Display Hero",
+        "purpose": "The home h1, filling the measure on one line in the sky."
+      },
+      "display-page": {
+        "displayName": "Display Page",
+        "purpose": "Public sub-page titles."
+      },
+      "headline-section": {
+        "displayName": "Headline Section",
+        "purpose": "Public section statements."
+      },
+      "title-storey": {
+        "displayName": "Title Storey",
+        "purpose": "The band title of a feature storey."
+      },
+      "statement": {
+        "displayName": "Statement",
+        "purpose": "The family's quote and the live-count sentence."
+      },
+      "title-page": {
+        "displayName": "Title Page",
+        "purpose": "Page titles in the sheet head."
+      },
+      "title-section": {
+        "displayName": "Title Section",
+        "purpose": "Dashboard section heads and the briefing sentence."
+      },
+      "label-group": {
+        "displayName": "Label Group",
+        "purpose": "Sidebar group names, in the serif."
+      },
+      "body-public": {
+        "displayName": "Body Public",
+        "purpose": "Reading text on public pages."
+      },
+      "body-app": {
+        "displayName": "Body App",
+        "purpose": "All interface text in the shell."
+      },
+      "action-public": {
+        "displayName": "Action Public",
+        "purpose": "Public button labels."
+      },
+      "action-app": {
+        "displayName": "Action App",
+        "purpose": "Shell button labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Tab bar labels, stat captions and badges, in sentence case."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Numbers in the app, in the text face with tabular numerals."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The logo's lettering and nothing else."
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover-float",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Popovers and menus, which truly float."
+      },
+      {
+        "name": "dialog-float",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Dialogs and sheets."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-strong",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Entrances, overlays and press feedback."
+      },
+      {
+        "name": "press",
+        "value": "scale(0.97), 150-160ms",
+        "purpose": "Feedback on every pressable thing, under motion-safe."
+      },
+      {
+        "name": "overlay-enter",
+        "value": "scale from 0.95 at the trigger origin",
+        "purpose": "Popovers, menus, selects and tooltips."
+      },
+      {
+        "name": "dialog",
+        "value": "200ms",
+        "purpose": "Dialogs, from their centre."
+      },
+      {
+        "name": "sheet",
+        "value": "280ms in, 200ms out",
+        "purpose": "Side and bottom sheets."
+      },
+      {
+        "name": "keyboard",
+        "value": "none",
+        "purpose": "Command palette, its backdrop and the sidebar toggle do not animate."
+      },
+      {
+        "name": "entrance-public",
+        "value": "500-560ms, rise 16-32px, stagger 60-70ms",
+        "purpose": "Public section parts, once."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "public-footer-sm",
+        "value": "640px"
+      },
+      {
+        "name": "public-edge",
+        "value": "760px"
+      },
+      {
+        "name": "shell-md",
+        "value": "768px"
+      },
+      {
+        "name": "public-storey",
+        "value": "860px"
+      },
+      {
+        "name": "public-footer",
+        "value": "1024px"
+      },
+      {
+        "name": "public-nav",
+        "value": "1180px"
+      },
+      {
+        "name": "public-footer-lg",
+        "value": "1280px"
+      },
+      {
+        "name": "public-shelf-lg",
+        "value": "1360px"
+      },
+      {
+        "name": "skyline-min-height",
+        "value": "720px (height)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The shell's everyday action, in canal green.",
+      "html": "<button class=\"ds-btn-primary\">Save changes</button>",
+      "css": ".ds-btn-primary{background:var(--primary);color:var(--primary-foreground);border:0;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;height:36px;padding:8px 16px;border-radius:4px;font-size:14px;font-weight:500;transition:background-color 150ms cubic-bezier(0.23,1,0.32,1),scale 150ms cubic-bezier(0.23,1,0.32,1);cursor:pointer}.ds-btn-primary:hover{background:color-mix(in oklab,var(--primary) 90%,transparent)}.ds-btn-primary:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}.ds-btn-primary:active{scale:.97}"
+    },
+    {
+      "name": "Add Puzzle (shell marigold)",
+      "kind": "button",
+      "refersTo": "button-marigold",
+      "description": "The one marigold action in the shell, in the top bar.",
+      "html": "<button class=\"ds-btn-add\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14M12 5v14\"/></svg><span>Add Puzzle</span></button>",
+      "css": ".ds-btn-add{background:var(--mk-gold);color:var(--mk-on-gold);border:0;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:4px;font-size:14px;font-weight:500;transition:background-color 150ms cubic-bezier(0.23,1,0.32,1),scale 150ms cubic-bezier(0.23,1,0.32,1);cursor:pointer}.ds-btn-add:hover{background:var(--mk-gold-press)}.ds-btn-add:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}.ds-btn-add:active{scale:.97}"
+    },
+    {
+      "name": "Public Marigold Action",
+      "kind": "button",
+      "refersTo": "button-marigold-public",
+      "description": "The main action on a public page.",
+      "html": "<button class=\"ds-btn-public\">Start a shelf</button>",
+      "css": ".ds-btn-public{background:var(--mk-gold);color:var(--mk-on-gold);border:0;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;height:50px;padding:0 22px;border-radius:10px;font-size:18px;font-weight:700;transition:background-color 150ms cubic-bezier(0.23,1,0.32,1),scale 150ms cubic-bezier(0.23,1,0.32,1);cursor:pointer}.ds-btn-public:hover{background:var(--mk-gold-press)}.ds-btn-public:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}.ds-btn-public:active{scale:.97}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A white fill with a one pixel edge.",
+      "html": "<button class=\"ds-btn-outline\">Cancel</button>",
+      "css": ".ds-btn-outline{height:36px;padding:8px 16px;border:1px solid var(--border);border-radius:4px;background:var(--background);color:var(--foreground);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;font-size:14px;font-weight:500;transition:background-color 150ms cubic-bezier(0.23,1,0.32,1),scale 150ms cubic-bezier(0.23,1,0.32,1);cursor:pointer}.ds-btn-outline:hover{background:var(--accent);color:var(--accent-foreground)}.ds-btn-outline:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}.ds-btn-outline:active{scale:.97}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A plain field with a quiet edge.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search your shelf\" aria-label=\"Search your shelf\">",
+      "css": ".ds-input{height:36px;width:240px;padding:4px 12px;border:1px solid var(--input);border-radius:4px;background:transparent;color:var(--foreground);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;font-size:14px;outline:none;transition:color 150ms,box-shadow 150ms}.ds-input::placeholder{color:var(--muted-foreground)}.ds-input:focus-visible{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in oklab,var(--ring) 50%,transparent)}"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "A serif group name over items; the active item is a white window in the sky frame.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-group\" href=\"#\">Library</a><a class=\"ds-nav-item is-active\" href=\"#\" aria-current=\"page\">My Puzzles</a><a class=\"ds-nav-item\" href=\"#\">Collections</a></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:4px;width:224px;padding:8px;background:var(--sidebar);color:var(--sidebar-foreground);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif}.ds-nav-group{height:32px;padding:0 8px;display:flex;align-items:center;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:15px;color:inherit;text-decoration:none;text-underline-offset:4px}.ds-nav-group:hover{text-decoration:underline}.ds-nav-item{padding:8px;border-radius:4px;font-size:14px;color:inherit;text-decoration:none;transition:scale 160ms cubic-bezier(0.23,1,0.32,1)}.ds-nav-item:hover{background:var(--sidebar-accent)}.ds-nav-item:focus-visible{outline:2px solid var(--sidebar-ring)}.ds-nav-item:active{scale:.97}.ds-nav-item.is-active{background:var(--sidebar-active);font-weight:600}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "",
+      "description": "A removable filter, round by nature, holding a small tinted field name.",
+      "html": "<span class=\"ds-chip\"><span class=\"ds-chip-field\">Pieces</span>1000<button class=\"ds-chip-x\" aria-label=\"Remove\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;gap:6px;padding:2px 4px 2px 10px;border:1px solid var(--input);border-radius:9999px;background:var(--card);color:var(--foreground);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;font-size:14px}.ds-chip-field{padding:0 8px;border:1px solid color-mix(in oklab,var(--jigsaw-primary) 30%,transparent);border-radius:9999px;background:color-mix(in oklab,var(--jigsaw-primary) 10%,transparent);color:var(--primary-text);font-size:11px;font-weight:500}.ds-chip-x{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:0;border-radius:9999px;background:transparent;color:var(--muted-foreground);cursor:pointer}.ds-chip-x:hover{color:var(--foreground)}.ds-chip-x:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "One flat step on the sheet: a 1px edge and no shadow at rest.",
+      "html": "<article class=\"ds-card\"><h3 class=\"ds-card-title\">In motion</h3><p class=\"ds-card-num\">12</p><p class=\"ds-card-sub\">boxes with someone else</p></article>",
+      "css": ".ds-card{width:240px;padding:24px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--card-foreground);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif}.ds-card-title{margin:0 0 12px;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:20px;font-weight:400}.ds-card-num{margin:0;font-size:24px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}.ds-card-sub{margin:4px 0 0;font-size:12px;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Floor Pin",
+      "kind": "custom",
+      "refersTo": "floor-pin",
+      "description": "A hero control on the cutaway house; marigold when its floor is chosen.",
+      "html": "<div class=\"ds-pins\"><button class=\"ds-pin\" aria-pressed=\"false\">Sanne</button><button class=\"ds-pin is-on\" aria-pressed=\"true\">Opa</button></div>",
+      "css": ".ds-pins{display:flex;gap:16px;padding:12px 12px 24px;background:var(--mk-sky)}.ds-pin{position:relative;min-height:46px;padding:0 18px;border:0;border-radius:10px;background:var(--mk-canal);color:var(--mk-on-canal);font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;font-size:18px;font-weight:700;cursor:pointer;transition:scale 160ms cubic-bezier(0.23,1,0.32,1)}.ds-pin::after{content:'';position:absolute;left:50%;bottom:-11px;margin-left:-11px;width:22px;height:12px;background:inherit;clip-path:polygon(0 0,100% 0,50% 100%)}.ds-pin:hover{background:color-mix(in oklab,var(--mk-canal) 86%,var(--mk-on-canal))}.ds-pin:focus-visible{outline:3px solid var(--mk-on-canal);box-shadow:0 0 0 7px var(--mk-canal)}.ds-pin:active{scale:.97}.ds-pin.is-on{background:var(--mk-gold);color:var(--mk-on-gold)}.ds-pin.is-on:hover{background:var(--mk-gold-press)}"
+    },
+    {
+      "name": "Gable Skyline",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "The signature: flat Dutch facades in one colour, tone on tone at the foot of the sidebar. Path data from the shipped component; the set is shortened here.",
+      "html": "<div class=\"ds-skyline\"><svg viewBox=\"0 0 246 120\" width=\"246\" height=\"120\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M0 120V62h6v-8h6v-8h5v-8h10v8h5v8h6v8h6v58z\"/><path d=\"M44 120V62c0-6 6-6 8-12 2-6 0-10 4-14 2-2 4-3 5-6h6c1 3 3 4 5 6 4 4 2 8 4 14 2 6 8 6 8 12v58z\"/><path d=\"M84 120V70l19-26 19 26v50z\"/><path d=\"M122 120V58h8V40l6-6 5-30 5 30 6 6v18h8v62z\"/><path d=\"M160 120V66h6v-6c6 0 8-4 8-10v-6h6V34h6v10h6v6c0 6 2 10 8 10v6h6v54z\"/><path d=\"M206 120V62h6v-8h6v-8h5v-8h6v8h5v8h6v8h6v58z\"/><g fill=\"var(--sidebar-skyline-window)\"><rect x=\"18\" y=\"72\" width=\"7\" height=\"10\"/><rect x=\"60\" y=\"56\" width=\"7\" height=\"10\"/><rect x=\"138\" y=\"72\" width=\"7\" height=\"10\"/><rect x=\"224\" y=\"54\" width=\"7\" height=\"10\"/></g></svg></div>",
+      "css": ".ds-skyline{display:flex;padding-top:16px;background:var(--sidebar);color:var(--sidebar-skyline)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Street With the Fronts Off",
+    "overview": "Take the fronts off a Dutch street and every household's shelf is on view. That one idea drives two surfaces in one world. On public pages (Persuade) the visitor stands outside: a flat sky field, canal-green ink, and bands of filled colour stacked like storeys, with original wimmelbild art as the only imagery. In the signed-in shell (Operate) the same street is seen from indoors: a calm sky frame around a white sheet of work. The world lends the shell its type, palette and one signature, the gable skyline; it never lends layout or controls.\n\nDensity follows the mode. Public pages are large and full-width, with type that scales to the viewport and bands that meet edge to edge. The shell is compact, with 14px interface text, 36px controls and tabular figures. Dark mode is not a different theme: it is the same street at night, with lit windows, and every surface stays well above black.",
+    "keyCharacteristics": [
+      "Two surfaces, one world: Persuade on a sky field, Operate on a white sheet in a sky frame.",
+      "Filled shapes with real edges, plank-tan ledges and a drawn gable skyline, not cards on grey.",
+      "One display face in one weight, one text face that also carries all data.",
+      "Marigold is scarce in the shell and loud only in the public world.",
+      "Motion is press feedback and short entrances, with one loud moment in the curtain footer."
+    ],
+    "rules": [
+      {
+        "name": "The Own Art Rule",
+        "body": "JigSwap's own surfaces use only original wimmelbild illustration. Real third-party box covers appear only as catalogue content, in the catalogue and on members' shelves. Public home-page boxes are drawn covers from the same art set.",
+        "section": "overview"
+      },
+      {
+        "name": "The Reserved Marigold Rule",
+        "body": "In the shell, marigold is an action colour for Add Puzzle in the top bar and the phone add button, and for nothing else that can be pressed. Everyday primaries are canal green. Its only other shell appearances are non-action marks: rating stars, text selection, and the night skyline's windows.",
+        "section": "colors"
+      },
+      {
+        "name": "The Public Marigold Rule",
+        "body": "On public pages marigold marks the main action. The hero extends it to the things that act on that same promise: each \"ask to borrow\" button in the docked shelf, and the chosen floor pin. A long page may also carry one full marigold storey (Discover on home, its counterpart on Features). The closing call to action stays a marigold button on sky, not a marigold band.",
+        "section": "colors"
+      },
+      {
+        "name": "The Logo's Own Colours Rule",
+        "body": "The wordmark takes `logo-jig` and `logo-swap`, and the violet raster mark stays as drawn, whatever the theme's primary does. The pair has a lifted night version for legibility. The single exception is the footer's giant name, knocked out in one light colour because the two-tone logo turns garish at that size on ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Night Street Rule",
+        "body": "Dark mode keeps the street's hues and stays clearly above black: nothing in the theme goes below Night Canal (OKLCH lightness 0.23), and working surfaces start at Night Sheet (0.31). Black appears only as a translucent scrim over content.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Weight Rule",
+        "body": "Young Serif has one weight, 400. `font-synthesis-weight: none` on the root means a bold on it renders as regular, never as a browser-faked bold. Build hierarchy through size. Do not write a weight on the display face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Figures Rule",
+        "body": "Figures that are data in the app use Hanken Grotesk with tabular numerals. Young Serif's old-style figures misread as data. The home page's live-count sentence is the recorded exception: there the figures are words in a public sentence, not a readout.",
+        "section": "typography"
+      },
+      {
+        "name": "The Logo Lettering Rule",
+        "body": "Baloo 2 at 700 sets the wordmark and nothing else.",
+        "section": "typography"
+      },
+      {
+        "name": "The Things That Float Rule",
+        "body": "A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row. Nothing at rest in the page carries one.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Solid Head Rule",
+        "body": "The sticky page head and the public header stand on solid colour. Do not frost them. Blur exists only to obscure a flagged image in moderation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Canal Primary for the shell's everyday primary, and marigold only for Add Puzzle in the top bar and the phone add button.",
+      "Do keep marigold's text in Canal Ink, and give every Persuade page one clear marigold action.",
+      "Do set figures in the app in Hanken Grotesk with tabular numerals.",
+      "Do build hierarchy on Young Serif by size alone, at its one weight.",
+      "Do stand boxes on a plank ledge, and let bands and tiles meet with colour rather than borders or shadows.",
+      "Do use the wordmark's own colour tokens, with the night pair after dark.",
+      "Do give every pressable thing the 0.97 press under `motion-safe`, and keep shell motion under 300ms.",
+      "Do make dark mode the same street at night, above black, with lit windows.",
+      "Do ship new marketing rasters with a provenance record beside the file."
+    ],
+    "donts": [
+      "Don't put a real third-party box cover on JigSwap's own marketing; those covers are catalogue content only.",
+      "Don't use a jigsaw-piece shape as decoration; the logo mark is the one puzzle piece in the world.",
+      "Don't add a second marigold button to a shell screen, or use marigold for an everyday action.",
+      "Don't write `font-bold` or `font-semibold` on Young Serif, or use it for data figures in the app.",
+      "Don't use Baloo 2 for anything but the wordmark.",
+      "Don't use tinted pill navigation, frosted page heads, uppercase captions, greeting emoji or glowing action buttons in the shell.",
+      "Don't use a centred hero with three feature cards on public pages.",
+      "Don't animate keyboard-driven or high-frequency actions.",
+      "Don't add decorative gradients; a scrim is for keeping text legible on a photo.",
+      "Don't add invented testimonials, press logos or inflated counts as visual proof."
+    ]
+  }
+}
