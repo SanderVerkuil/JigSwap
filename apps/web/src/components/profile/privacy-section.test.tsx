@@ -207,8 +207,12 @@ describe("PrivacySection", () => {
   });
 
   it("says it has changed a lot lately when the server refuses another change", async () => {
-    mocks.mutation.mockRejectedValueOnce(
-      new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+    mocks.mutation.mockImplementation((name) =>
+      name === MY_INVITE_LINK
+        ? Promise.resolve({ token: "tok1" })
+        : Promise.reject(
+            new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+          ),
     );
     renderSection("public");
     fireEvent.click(radio("Only people you approve"));
