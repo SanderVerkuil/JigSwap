@@ -433,6 +433,23 @@ describe("the bounded whole-library reads", () => {
       .withIdentity({ subject: "clerk_ann" })
       .query(api.household.listHouseholdCopies.listHouseholdCopies, {});
     expect(mates).toHaveLength(LIBRARY_INDEX_CAP);
+    const permissions = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(
+        api.household.listMyHouseholdCopyPermissions
+          .listMyHouseholdCopyPermissions,
+        {},
+      );
+    expect(permissions).toHaveLength(LIBRARY_INDEX_CAP);
+    expect(permissions[0].createdAt).toBe(LIBRARY_INDEX_CAP);
+    const requested = await addCopy(t, w, w.eve, { availability: swap });
+    const offerable = await t
+      .withIdentity({ subject: "clerk_bob" })
+      .query(api.exchange.getOfferableCopies.getOfferableCopies, {
+        requestedPuzzleId: requested,
+      });
+    expect(offerable).toHaveLength(LIBRARY_INDEX_CAP);
+    expect(offerable[0].createdAt).toBe(LIBRARY_INDEX_CAP);
   });
 });
 
