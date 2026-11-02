@@ -483,7 +483,7 @@ function ContributePuzzlePage() {
         <div className="flex flex-col gap-1.5">
           <Label>{t("coverColour")}</Label>
           <p className="text-xs text-muted-foreground">
-            {t("coverColourHint")}
+            {t("contributeCoverColourHint")}
           </p>
           <CoverColourField
             color={form.coverColor}

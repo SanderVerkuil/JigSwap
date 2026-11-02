@@ -538,6 +538,7 @@
     "importImported": "Details imported",
     "coverColour": "Cover colour",
     "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
+    "contributeCoverColourHint": "Pick a colour or upload a photo — this is how the puzzle appears in the catalogue.",
     "addToLibrary": "Add to Library",
     "saveAndAddAnother": "Save & Add Another",
     "addReadyHint": "Fill in title and piece count to continue.",

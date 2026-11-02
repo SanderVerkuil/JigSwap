@@ -178,6 +178,20 @@ const summary = (_id: string, title: string, brand?: string) => ({
   updatedAt: 1,
 });
 
+describe("the cover hint", () => {
+  it.each([
+    ["en", en.puzzles.contributeCoverColourHint, /shelf/i],
+    ["nl", nl.puzzles.contributeCoverColourHint, /plank/i],
+  ] as const)(
+    "promises the catalogue, not a shelf, in %s",
+    (locale, hint, shelf) => {
+      renderPage(locale);
+      expect(screen.getByText(hint)).toBeTruthy();
+      expect(document.body.textContent).not.toMatch(shelf);
+    },
+  );
+});
+
 describe("checking the catalogue for the puzzle being contributed", () => {
   const typeTitle = (title: string) =>
     fireEvent.change(screen.getByLabelText("Puzzle Title"), {
