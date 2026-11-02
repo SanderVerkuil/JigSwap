@@ -124,4 +124,25 @@ describe("TopBar add shortcut", () => {
     render(topBar());
     expect(addLink()).toBeNull();
   });
+
+  // Below xl the label costs the search pill its room. It stays the link's name.
+  it("shows only its icon below xl and keeps its name", () => {
+    render(topBar());
+    const label = screen.getByText(en.shell.actions.addToMyPuzzles);
+    expect(label.className).toContain("max-xl:sr-only");
+    expect(addLink()).not.toBeNull();
+  });
+});
+
+// The pill sits in the middle column of a 1fr-auto-1fr grid: whether the add shortcut is there
+// changes the right column's content, not where the middle column lands.
+describe("TopBar layout", () => {
+  it("centres the search pill in a grid, with the side columns equally wide", () => {
+    render(topBar());
+    const pill = searchPill();
+    const bar = pill.closest("header");
+    expect(bar?.className).toContain("grid-cols-[1fr_minmax(0,520px)_1fr]");
+    expect(pill.parentElement).toBe(bar);
+    expect(pill.className).toContain("w-full");
+  });
 });
