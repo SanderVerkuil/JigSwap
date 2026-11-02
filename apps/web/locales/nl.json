@@ -2513,6 +2513,7 @@
       "namePlaceholder": "bijv. Zaterdagpuzzelaars",
       "nameCounter": "{count}/{max}",
       "nameInvalid": "Een kringnaam moet 1 tot 100 tekens lang zijn.",
+      "createRateLimited": "Je hebt vandaag het maximale aantal kringen aangemaakt. Probeer het morgen opnieuw.",
       "cancel": "Annuleren",
       "create": "Aanmaken",
       "title": "{name} beheren",
@@ -2566,6 +2567,7 @@
       "CircleNotFound": "Deze kring is niet langer beschikbaar.",
       "CannotShareCopy": "Je kunt in deze kring alleen bekijken, dus je kunt hier geen puzzels delen.",
       "BatchTooLarge": "Je kunt maximaal 100 puzzels tegelijk delen.",
+      "RateLimited": "Je hebt vandaag het maximale aantal puzzels gedeeld. Probeer het morgen opnieuw.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
     },
     "page": {

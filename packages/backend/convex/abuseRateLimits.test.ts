@@ -176,3 +176,101 @@ describe("setProfileVisibility", () => {
     expect(row?.visibility).toBe("public");
   });
 });
+
+describe("sharing copies into a circle", () => {
+  const BATCH = 100;
+  const seedCopies = (count: number, from = 0) =>
+    t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Starry Night",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: me,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const ids: string[] = [];
+      for (let i = from; i < from + count; i++) {
+        const aggregateId = `copy_${i}`;
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleId,
+          ownerId: me,
+          heldBy: me,
+          condition: "good",
+          availability: { forTrade: true, forSale: false, forLend: false },
+          createdAt: 1,
+          updatedAt: 1,
+        });
+        ids.push(aggregateId);
+      }
+      return ids;
+    });
+  const newCircle = () =>
+    asMe().mutation(api.sharing.createCircle.createCircle, { name: "Friends" });
+  const share = (circleId: string, copyIds: string[]) =>
+    asMe().mutation(api.sharing.shareCopiesToCircle.shareCopiesToCircle, {
+      circleId,
+      copyIds,
+    });
+  const usedToday = async () =>
+    (
+      await t.run((ctx) =>
+        ctx.db
+          .query("rateLimits")
+          .withIndex("by_key", (q) => q.eq("key", `circleShare:${me}`))
+          .unique(),
+      )
+    )?.count ?? 0;
+  // The budget, nearly spent, without sharing it all.
+  const spend = (count: number) =>
+    t.run((ctx) =>
+      ctx.db.insert("rateLimits", {
+        key: `circleShare:${me}`,
+        windowStart: Date.now(),
+        count,
+      }),
+    );
+
+  test("each copy shared is charged; copies already there aren't", async () => {
+    const copies = await seedCopies(3);
+    const circleId = await newCircle();
+    await share(circleId, copies.slice(0, 2));
+    expect(await usedToday()).toBe(2);
+    await share(circleId, copies);
+    expect(await usedToday()).toBe(3);
+    await share(circleId, copies);
+    expect(await usedToday()).toBe(3);
+  });
+
+  test("a batch that doesn't fit today is refused whole", async () => {
+    const copies = await seedCopies(BATCH);
+    const circleId = await newCircle();
+    await spend(RATE_LIMITS.circleShare.max - BATCH + 1);
+    await expectRateLimited(share(circleId, copies));
+    expect(await t.run((ctx) => ctx.db.query("shareEvents").collect())).toEqual(
+      [],
+    );
+    await share(circleId, copies.slice(0, BATCH - 1));
+    expect(await usedToday()).toBe(RATE_LIMITS.circleShare.max);
+  });
+
+  test("sharing one copy at a time draws on the same budget", async () => {
+    const [copyId] = await seedCopies(1);
+    const circleId = await newCircle();
+    await spend(RATE_LIMITS.circleShare.max);
+    await expectRateLimited(
+      asMe().mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+        circleId,
+        copyId,
+      }),
+    );
+  });
+
+  test("createCircle allows a day's worth and refuses the next one", async () => {
+    for (let i = 0; i < RATE_LIMITS.circleCreate.max; i++) await newCircle();
+    await expectRateLimited(newCircle());
+    const circles = await t.run((ctx) => ctx.db.query("circles").collect());
+    expect(circles).toHaveLength(RATE_LIMITS.circleCreate.max);
+  });
+});

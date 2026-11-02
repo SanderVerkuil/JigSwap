@@ -2,6 +2,7 @@ import { makeCreateCircle, type MemberId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
 import {
   circleIdGenerator,
@@ -19,6 +20,7 @@ export const createCircle = mutation({
   args: { name: v.string() },
   handler: async (ctx, args): Promise<string> => {
     const ownerId = await requireMember(ctx); // owner derived from auth, never the client
+    await enforceRateLimit(ctx, "circleCreate", ownerId);
 
     const createCircle = makeCreateCircle({
       circles: convexCircleRepository(ctx),

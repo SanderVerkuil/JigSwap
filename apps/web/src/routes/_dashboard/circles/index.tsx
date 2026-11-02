@@ -45,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway } from "@/gateway";
 import { validateCirclesSearch } from "@/lib/circles-search";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -58,6 +59,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // Mirrors the Sharing contract DTOs; declared locally so the web app (type:app) reaches Convex only
@@ -127,7 +129,9 @@ function CirclesPage() {
       setIsCreateOpen(false);
     } catch (error) {
       if (isInvalidCircleName(error)) setNameInvalid(true);
-      else console.error("Failed to create circle:", error);
+      else if (convexErrorCode(error) === "RateLimited") {
+        toast.error(t("manage.createRateLimited"));
+      } else console.error("Failed to create circle:", error);
     }
   };
 
