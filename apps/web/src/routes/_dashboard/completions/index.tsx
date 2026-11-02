@@ -207,14 +207,17 @@ function CompletionsPage() {
 
   return (
     <div className="flex flex-col gap-[26px]">
-      {/* Divided stat row — open, no boxes */}
-      <StatRow
-        stats={[
-          { label: t("stats.completed"), value: String(history.length) },
-          { label: t("stats.pieces"), value: format.number(piecesPlaced) },
-          { label: t("stats.thisYear"), value: String(thisYear) },
-        ]}
-      />
+      {/* Divided stat row — open, no boxes. Three zeros would only push an empty log's way in down
+          the screen. */}
+      {completions.length > 0 && (
+        <StatRow
+          stats={[
+            { label: t("stats.completed"), value: String(history.length) },
+            { label: t("stats.pieces"), value: format.number(piecesPlaced) },
+            { label: t("stats.thisYear"), value: String(thisYear) },
+          ]}
+        />
+      )}
 
       {/* The log title, meta + Log Completion action now live in the shell
           page head; the stat row above stays as a distinct sub-section. */}

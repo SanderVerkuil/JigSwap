@@ -177,6 +177,12 @@ describe("completion log", () => {
     expect(shownRows()).toEqual(["a Harbour Lights"]);
   });
 
+  it("opens an empty log on its empty state, without three zeros above it", () => {
+    renderLog([]);
+    expect(screen.queryByText(en.solving.completions.stats.pieces)).toBeNull();
+    expect(screen.getByText("nothing logged yet")).toBeTruthy();
+  });
+
   it("shows the empty state, and joins nothing, with no solves at all", () => {
     renderLog([]);
     expect(screen.queryAllByTestId("row")).toEqual([]);
