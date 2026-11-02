@@ -5214,7 +5214,7 @@
           "content_removed": "Remove content"
         },
         "removeConfirmTitle": "Remove this content?",
-        "removeConfirmBody": "Both members will see it as removed by a moderator, and the author gets your statement of reasons. This can't be undone.",
+        "removeConfirmBody": "It's taken down for everyone who could see it, and the author gets your statement of reasons. This can't be undone.",
         "cancel": "Cancel",
         "decided": "Decision saved",
         "decideError": "Couldn't save the decision. Please try again."
