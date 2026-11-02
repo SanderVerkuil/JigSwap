@@ -140,12 +140,14 @@ export function NotificationPreferencesPanel() {
             <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
               {t("jumpTo")}
             </p>
-            <ul className="flex flex-col gap-1.5 pointer-coarse:gap-0">
+            {/* On touch, a wrapping row of the same 44px pills as the /notifications filter: a
+                stack of 44px links would push the settings off the first phone screen. */}
+            <ul className="flex flex-col gap-1.5 pointer-coarse:flex-row pointer-coarse:flex-wrap pointer-coarse:gap-2">
               {visibleCategories.map((category) => (
                 <li key={category.key}>
                   <a
                     href={`#category-${category.key}`}
-                    className="text-muted-foreground hover:text-foreground text-sm hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                    className="text-muted-foreground hover:text-foreground text-sm hover:underline pointer-coarse:bg-background pointer-coarse:text-foreground pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:rounded-full pointer-coarse:border pointer-coarse:px-3.5 pointer-coarse:font-medium pointer-coarse:shadow-xs pointer-coarse:hover:no-underline"
                   >
                     {t(`categories.${category.key}.title`)}
                   </a>
@@ -156,7 +158,7 @@ export function NotificationPreferencesPanel() {
         </aside>
 
         <section className="max-w-[880px]">
-          <SectionHead title={t("preferences")} icon={Bell} />
+          <SectionHead title={t("preferencesByType")} icon={Bell} />
           <ChannelMatrix
             preferences={preferences}
             channelLabel={channelLabel}

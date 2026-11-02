@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -29,14 +29,48 @@ const elementsWithClass = (name: string) =>
 
 afterEach(cleanup);
 
-describe("NotificationPreferencesPanel layout (UX-33)", () => {
-  const renderPanel = () =>
-    render(
-      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <NotificationPreferencesPanel />
-      </IntlProvider>,
-    );
+const renderPanel = () =>
+  render(
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <NotificationPreferencesPanel />
+    </IntlProvider>,
+  );
 
+describe("NotificationPreferencesPanel on touch", () => {
+  const jumpNav = () =>
+    screen.getByRole("navigation", { name: en.notifications.jumpTo });
+
+  // A vertical list of 44px links pushed the settings off the first phone screen.
+  it("wraps the jump links in a row on coarse pointers, and stacks them otherwise", () => {
+    renderPanel();
+    const classes = within(jumpNav()).getByRole("list").classList;
+    expect(classes).toContain("flex-col");
+    expect(classes).toContain("pointer-coarse:flex-row");
+    expect(classes).toContain("pointer-coarse:flex-wrap");
+  });
+
+  it("makes each jump link a 44px pill that reads as tappable on coarse pointers", () => {
+    renderPanel();
+    const classes = within(jumpNav()).getAllByRole("link")[0].classList;
+    expect(classes).toContain("pointer-coarse:min-h-11");
+    expect(classes).toContain("pointer-coarse:rounded-full");
+    expect(classes).toContain("pointer-coarse:border");
+    expect(classes).toContain("pointer-coarse:text-foreground");
+  });
+});
+
+describe("NotificationPreferencesPanel section heading", () => {
+  it("says what the section holds, instead of repeating the page's h1", () => {
+    renderPanel();
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Per notification type",
+    });
+    expect(heading.textContent).not.toBe(en.notifications.preferences);
+  });
+});
+
+describe("NotificationPreferencesPanel layout (UX-33)", () => {
   it("puts the query container above the two-column grid, never on it", () => {
     renderPanel();
     // A container query never styles its own container: on one element the

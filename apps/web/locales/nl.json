@@ -2759,6 +2759,7 @@
     "undo": "Ongedaan maken",
     "backToNotifications": "Terug naar meldingen",
     "jumpTo": "Ga naar",
+    "preferencesByType": "Per soort melding",
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",

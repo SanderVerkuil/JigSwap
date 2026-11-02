@@ -2759,6 +2759,7 @@
     "undo": "Undo",
     "backToNotifications": "Back to notifications",
     "jumpTo": "Jump to",
+    "preferencesByType": "Per notification type",
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
