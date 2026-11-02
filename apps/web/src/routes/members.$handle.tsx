@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
@@ -182,7 +183,7 @@ function MemberPage() {
     return (
       <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
         <MarketingHeader />
-        <main className="flex-1">
+        <main id={MAIN_CONTENT_ID} className="flex-1">
           <ProfileBody
             profile={profile}
             viewer="public"
@@ -360,7 +361,9 @@ function MemberNotFound() {
   return (
     <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
       <MarketingHeader />
-      <main className="flex-1">{body}</main>
+      <main id={MAIN_CONTENT_ID} className="flex-1">
+        {body}
+      </main>
       <MarketingFooter />
     </div>
   );

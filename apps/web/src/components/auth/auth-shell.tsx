@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { LangToggle, ModeToggle } from "@/components/marketing/header";
 import { Wordmark } from "@/components/marketing/wordmark";
 import type * as React from "react";
@@ -28,7 +29,10 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <ModeToggle />
         </div>
       </header>
-      <main className="flex-1 flex items-start sm:items-center justify-center px-4 py-4 sm:py-10">
+      <main
+        id={MAIN_CONTENT_ID}
+        className="flex-1 flex items-start sm:items-center justify-center px-4 py-4 sm:py-10"
+      >
         <div className="w-full max-w-md">{children}</div>
       </main>
       <footer className="font-mk-sans border-t border-mk-border">

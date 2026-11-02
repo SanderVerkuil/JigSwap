@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
 import { FeatureRows } from "@/components/marketing/home/feature-rows";
@@ -43,7 +44,7 @@ function Home() {
   return (
     <div className="mk-root font-mk-sans min-h-screen overflow-x-clip">
       <MarketingHeader />
-      <main>
+      <main id={MAIN_CONTENT_ID}>
         <Hero />
         <Stats />
         <HowPreview />

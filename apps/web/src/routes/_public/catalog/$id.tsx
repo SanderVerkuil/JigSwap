@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { MarketingNotFoundContent } from "@/components/NotFound";
 import {
@@ -101,7 +102,7 @@ export const Route = createFileRoute("/_public/catalog/$id")({
 function PuzzleNotFound() {
   const t = useTranslations("publicCatalog");
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <MarketingNotFoundContent
         title={t("notFound")}
         message={t("notFoundSub")}
@@ -114,7 +115,7 @@ function PuzzleNotFound() {
 function PuzzleLoadError() {
   const t = useTranslations("publicCatalog");
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <MarketingNotFoundContent
         kicker={null}
         title={t("loadErrorTitle")}
@@ -169,7 +170,10 @@ function PublicPuzzleDetail({
   ).filter(([, n]) => n > 0);
 
   return (
-    <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-10">
+    <main
+      id={MAIN_CONTENT_ID}
+      className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-10"
+    >
       {/* Hero — mirrors the dashboard detail skeleton, minus member actions. Two columns from md
           and a shorter 4:3 cover on phones, so the cover never fills the first screen on its own. */}
       <section className="grid items-start gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">

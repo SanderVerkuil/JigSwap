@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { EmptyState } from "@/components/library/empty-state";
 import { DefinitionCard } from "@/components/puzzles/definition-card";
 import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
@@ -188,7 +189,10 @@ function CatalogListPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-6 py-10">
+    <main
+      id={MAIN_CONTENT_ID}
+      className="mx-auto w-full max-w-[1200px] px-6 py-10"
+    >
       <h1 className="font-heading text-3xl font-bold tracking-tight">
         {t("title")}
       </h1>

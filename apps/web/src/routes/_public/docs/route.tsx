@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { DocsMobileBar } from "@/components/docs/docs-mobile-bar";
 import { DocsSearch } from "@/components/docs/docs-search";
 import { DocsSearchProvider } from "@/components/docs/docs-search-context";
@@ -53,7 +54,7 @@ function DocsLayout() {
         // Full-width landing: no sidebar, no horizontal padding/max-width so the
         // PageHero band can bleed edge-to-edge. The page supplies its own
         // Container for the card grid.
-        <main id="docs-content" className="min-w-0">
+        <main id={MAIN_CONTENT_ID} className="min-w-0">
           <Outlet />
         </main>
       ) : (
@@ -68,7 +69,7 @@ function DocsLayout() {
           >
             <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
           </aside>
-          <main id="docs-content" className="py-8 min-w-0">
+          <main id={MAIN_CONTENT_ID} className="py-8 min-w-0">
             <Outlet />
           </main>
         </div>

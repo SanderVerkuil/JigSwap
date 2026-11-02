@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { LegalDoc, type LegalSection } from "@/components/marketing/legal-doc";
 import { PageHero } from "@/components/marketing/page-hero";
 import { seoHead } from "@/lib/seo-head";
@@ -118,7 +119,7 @@ function TermsOfServicePage() {
   ];
 
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <PageHero
         eyebrow={tm("eyebrow")}
         title={t("title")}

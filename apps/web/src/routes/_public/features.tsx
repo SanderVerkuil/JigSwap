@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
@@ -26,7 +27,7 @@ function FeaturesPage() {
   const items = [1, 2, 3] as const;
 
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <PageHero
         eyebrow={t("heroEyebrow")}
         title={t("heroTitle")}

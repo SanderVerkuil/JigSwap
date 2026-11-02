@@ -1,9 +1,9 @@
 import { useTranslations } from "use-intl";
 
-/** Id of the dashboard shell's <main>; the skip link moves focus there. */
+/** Id of the page's <main>, on every page: the skip link's target, with or without JS. */
 export const MAIN_CONTENT_ID = "main-content";
 
-/** The page's main content: the shell's #main-content, else the first <main> (public pages). */
+/** The page's main content: #main-content, else the first <main>. */
 export function mainContentElement(): HTMLElement | null {
   return (
     document.getElementById(MAIN_CONTENT_ID) ?? document.querySelector("main")
@@ -31,10 +31,10 @@ export function SkipLink() {
   return (
     <a
       href={`#${MAIN_CONTENT_ID}`}
-      // Focus directly instead of following the hash, which would add a history entry and
-      // miss public pages whose <main> has no id. No scroll: the link is the first Tab stop, so
-      // the content top is already in view, and scrolling <main> to the top edge would tuck it
-      // under the sticky header.
+      // With JS, focus directly instead of following the hash, which would add a history entry.
+      // No scroll: the link is the first Tab stop, so the content top is already in view, and
+      // scrolling <main> to the top edge would tuck it under the sticky header. Without JS (or
+      // before hydration) the browser follows the hash to the same <main>.
       onClick={(event) => {
         if (focusMainContent({ preventScroll: true })) event.preventDefault();
       }}

@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { Container } from "@/components/marketing/container";
 import { FitToWidth } from "@/components/marketing/fit-to-width";
@@ -25,7 +26,7 @@ function AboutPage() {
   const timeline = [1, 2, 3] as const;
 
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <PageHero
         eyebrow={t("heroEyebrow")}
         title={t("heroTitle")}
