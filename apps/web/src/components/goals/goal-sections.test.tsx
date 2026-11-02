@@ -169,6 +169,14 @@ describe("GoalSections", () => {
     expect(headings()).toEqual(["Achieved"]);
   });
 
+  it("shows the count once at any width: under the title in a narrow tile, beside it otherwise", () => {
+    renderSections([goal({ title: "Ten" })]);
+    const [underTitle, beside] = screen.getAllByText("4/10 completions");
+    expect(underTitle.className).toContain("@sm/goal:hidden");
+    expect(beside.className).toContain("hidden");
+    expect(beside.className).toContain("@sm/goal:block");
+  });
+
   it("shows the period the goal counts in, as calendar dates", () => {
     renderSections([
       goal({ title: "This year" }),

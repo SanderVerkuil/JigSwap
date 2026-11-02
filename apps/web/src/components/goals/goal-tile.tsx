@@ -94,8 +94,13 @@ export function GoalTile({
       ? t("periodRange", { from, to: formatDateOnly(goal.targetDate) })
       : t("periodFrom", { from });
 
+  const progressCount = t("progressShort", {
+    current: goal.currentCompletions,
+    target: goal.targetCompletions,
+  });
+
   return (
-    <div>
+    <div className="@container/goal">
       <div className="mb-2.5 flex items-center gap-3">
         <span
           className={cn(
@@ -128,16 +133,17 @@ export function GoalTile({
             )}
           </div>
           <div className="text-muted-foreground mt-px text-xs">{period}</div>
+          {/* In a narrow tile the count sits under the title, so the title keeps the width. */}
+          <div className="text-muted-foreground font-mono text-xs @sm/goal:hidden">
+            {progressCount}
+          </div>
         </div>
         <div className="text-right">
           <div className="font-heading text-xl leading-none font-bold">
             {pct}%
           </div>
-          <div className="text-muted-foreground font-mono text-xs">
-            {t("progressShort", {
-              current: goal.currentCompletions,
-              target: goal.targetCompletions,
-            })}
+          <div className="text-muted-foreground hidden font-mono text-xs @sm/goal:block">
+            {progressCount}
           </div>
         </div>
         {actions && (
