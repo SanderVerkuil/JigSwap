@@ -91,9 +91,9 @@ export const Route = createFileRoute("/_dashboard/admin/moderation")({
 // Flagged Images reviews the auto-rejected photos (restore / confirm removal),
 // Unchecked Photos lets an admin approve or reject photos the classifier has
 // not decided (pending / unscored) or whose hash check timed out, or check an unscored one again,
+// Hash matches lists the CSAM hash-list matches to report (metadata only, never an image),
 // Review Requests decides the auto-rejected message photos whose sender asked for a review
-// (restore / keep removed), Hash matches lists the CSAM hash-list matches to report
-// (metadata only, never an image), and Activity Log pages through every moderation stamp
+// (restore / keep removed), and Activity Log pages through every moderation stamp
 // (filterable by kind and acting admin, both in the URL).
 function ModerationPage() {
   const t = useTranslations("admin.moderation");
@@ -529,6 +529,8 @@ function ModerationPage() {
 
       <Tabs value={tab} onValueChange={changeTab} className="gap-4">
         <StickyTabsBar>
+          {/* Seven tabs do not fit a 1440 screen, and the list scrolls sideways. Hash matches and
+              Reports carry deadlines, so they stay ahead of the tabs that scroll out of view. */}
           <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
             <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
               <Inbox aria-hidden />
@@ -548,11 +550,6 @@ function ModerationPage() {
                 capped={uncheckedCount?.capped}
               />
             </TabsTrigger>
-            <TabsTrigger value="appeals" className={TAB_TRIGGER_CLASS}>
-              <Scale aria-hidden />
-              {t("tabs.appeals")}
-              <TabCount count={appeals?.length} />
-            </TabsTrigger>
             <TabsTrigger value="hashMatches" className={TAB_TRIGGER_CLASS}>
               <ShieldAlert aria-hidden />
               {t("tabs.hashMatches")}
@@ -569,6 +566,11 @@ function ModerationPage() {
                 count={pendingCounts?.reports.count}
                 capped={pendingCounts?.reports.capped}
               />
+            </TabsTrigger>
+            <TabsTrigger value="appeals" className={TAB_TRIGGER_CLASS}>
+              <Scale aria-hidden />
+              {t("tabs.appeals")}
+              <TabCount count={appeals?.length} />
             </TabsTrigger>
             <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
               <History aria-hidden />

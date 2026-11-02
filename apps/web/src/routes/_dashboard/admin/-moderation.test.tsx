@@ -213,6 +213,27 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("moderation console: the tab bar", () => {
+  it("keeps Hash matches and Reports ahead of the tabs that may scroll out of view", async () => {
+    await openConsole();
+    const t = en.admin.moderation.tabs;
+    expect(
+      // Without the count pill.
+      screen
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent?.replace(/\d+$/, "")),
+    ).toEqual([
+      t.submissions,
+      t.flagged,
+      t.unchecked,
+      t.hashMatches,
+      t.reports,
+      t.appeals,
+      t.activity,
+    ]);
+  });
+});
+
 describe("moderation console: Edit & Approve", () => {
   it("saves the submission it was opened for when a new row lands on top", async () => {
     const update = vi.fn<Mutate>(() => Promise.resolve(null));

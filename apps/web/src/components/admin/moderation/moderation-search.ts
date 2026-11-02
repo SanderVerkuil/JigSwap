@@ -12,9 +12,9 @@ export const MODERATION_TABS = [
   "submissions",
   "flagged",
   "unchecked",
-  "appeals",
   "hashMatches",
   "reports",
+  "appeals",
   "activity",
 ] as const;
 export type ModerationTab = (typeof MODERATION_TABS)[number];
