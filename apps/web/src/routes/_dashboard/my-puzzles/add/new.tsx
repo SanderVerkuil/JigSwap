@@ -26,6 +26,7 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { useConditionOptions } from "@/components/library/condition";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
+import { LeaveGuard } from "@/components/quick-start/leave-guard";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -154,6 +155,14 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// The fields as comparable text, a chosen file by its name. Every key keeps DEFAULT_FORM's order,
+// since the form is only ever changed by spreading it.
+const formFingerprint = ({ coverFile, ...fields }: FormState) =>
+  JSON.stringify({ ...fields, coverFile: coverFile?.name });
+
+const copyFieldsOf = ({ condition, availability, notes }: FormState) =>
+  JSON.stringify({ condition, availability, notes });
+
 function AddPuzzlePage() {
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
@@ -172,6 +181,9 @@ function AddPuzzlePage() {
     ean: searchParams.get("ean") ?? "",
     upc: searchParams.get("upc") ?? "",
   }));
+  // What the form holds without the member having typed anything: what the link prefilled, and
+  // empty again after Save & Add Another. Anything else is work a nav tap would lose.
+  const [baseline, setBaseline] = useState(form);
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<
     string | null
   >(null);
@@ -308,6 +320,7 @@ function AddPuzzlePage() {
 
   const resetForm = () => {
     setForm(DEFAULT_FORM);
+    setBaseline(DEFAULT_FORM);
     setSelectedDefinitionId(null);
     setPendingMatch(null);
   };
@@ -418,7 +431,7 @@ function AddPuzzlePage() {
         resetForm();
       } else if (returnTo) {
         if (!notOffered) toast.success(t("puzzleAdded"));
-        void navigate({ href: returnTo });
+        void navigate({ href: returnTo, ignoreBlocker: true });
       } else {
         if (!notOffered) {
           toast.success(t("puzzleAdded"), {
@@ -429,9 +442,13 @@ function AddPuzzlePage() {
           });
         }
         if (copyPageId) {
-          void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
+          void navigate({
+            to: "/my-puzzles/$id",
+            params: { id: copyPageId },
+            ignoreBlocker: true,
+          });
         } else {
-          void navigate({ to: "/my-puzzles" });
+          void navigate({ to: "/my-puzzles", ignoreBlocker: true });
         }
       }
     },
@@ -470,6 +487,14 @@ function AddPuzzlePage() {
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
   const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
+
+  // Unsaved work, in both modes: copy mode's title and piece count come from the catalogue, so only
+  // the member's own fields count there. Not while a submit is on its way: that work isn't lost.
+  const unsaved =
+    !submitPuzzle.isPending &&
+    (isCopyMode
+      ? copyFieldsOf(form) !== copyFieldsOf(baseline)
+      : formFingerprint(form) !== formFingerprint(baseline));
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -1115,6 +1140,7 @@ function AddPuzzlePage() {
         form={isCopyMode ? copyColumn : formColumn}
         preview={previewColumn}
       />
+      <LeaveGuard work={unsaved ? { kind: "addForm", count: 1 } : null} />
     </div>
   );
 }

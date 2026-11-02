@@ -30,6 +30,8 @@ const mocks = vi.hoisted(() => ({
   call: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   navigate: vi.fn(),
   search: {} as Record<string, unknown>,
+  // The leave guard's useBlocker options on the latest render.
+  blocker: { disabled: true } as { disabled?: boolean },
 }));
 
 // The head reads the title from the loaded catalog of the context's locale.
@@ -42,6 +44,10 @@ vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ history: {}, invalidate: vi.fn() }),
   useLocation: () => ({ pathname: "/my-puzzles/add/new" }),
   useParams: () => ({}),
+  useBlocker: (options: { disabled?: boolean }) => {
+    mocks.blocker = options;
+    return { status: "idle" };
+  },
   redirect: vi.fn(),
   notFound: vi.fn(),
 }));
@@ -238,6 +244,7 @@ describe("adding a copy of a catalogue puzzle", () => {
     expect(mocks.navigate).toHaveBeenCalledWith({
       to: "/my-puzzles/$id",
       params: { id: "copy_doc_1" },
+      ignoreBlocker: true,
     });
   });
 });
@@ -279,6 +286,7 @@ describe("after adding", () => {
     expect(await landing()).toEqual({
       to: "/my-puzzles/$id",
       params: { id: "copy_doc_1" },
+      ignoreBlocker: true,
     });
     expect(callsTo(COPY_DOC_ID)).toEqual([{ copyId: "copy_agg_1" }]);
     expect(toast.error).not.toHaveBeenCalled();
@@ -303,7 +311,7 @@ describe("after adding", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
 
-    expect(await landing()).toEqual({ to: "/my-puzzles" });
+    expect(await landing()).toEqual({ to: "/my-puzzles", ignoreBlocker: true });
     // The copy was added: no failure toast.
     expect(toast.error).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalled();
@@ -313,7 +321,10 @@ describe("after adding", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID, returnTo: "/welcome?step=puzzles" });
     fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
 
-    expect(await landing()).toEqual({ href: "/welcome?step=puzzles" });
+    expect(await landing()).toEqual({
+      href: "/welcome?step=puzzles",
+      ignoreBlocker: true,
+    });
     expect(callsTo(COPY_DOC_ID)).toEqual([]);
   });
 });
@@ -457,6 +468,55 @@ describe("cancelling", () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+});
+
+describe("leaving with unsaved work", () => {
+  const asks = () => mocks.blocker.disabled === false;
+
+  it("doesn't ask about an untouched form, even one prefilled from the link", () => {
+    renderPage({ title: "Zzzznotfound", ean: "4005556123456" });
+    expect(asks()).toBe(false);
+  });
+
+  it("asks once a field differs, and not after it is put back", () => {
+    renderPage();
+    const title = screen.getByRole("textbox", { name: "Puzzle Title" });
+    fireEvent.change(title, { target: { value: "Kattenshow" } });
+    expect(asks()).toBe(true);
+    fireEvent.change(title, { target: { value: "" } });
+    expect(asks()).toBe(false);
+  });
+
+  it("counts a chosen box photo as work", () => {
+    renderPage();
+    fireEvent.change(
+      document.querySelector<HTMLInputElement>('input[type="file"]')!,
+      {
+        target: { files: [new File(["x"], "box.png", { type: "image/png" })] },
+      },
+    );
+    expect(asks()).toBe(true);
+  });
+
+  it("in copy mode ignores what the catalogue filled in, but not the member's own fields", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(asks()).toBe(false);
+    fireEvent.change(screen.getByRole("textbox", { name: /Notes/ }), {
+      target: { value: "Missing one piece" },
+    });
+    expect(asks()).toBe(true);
+  });
+
+  it("is clear again after Save & Add Another emptied the form", async () => {
+    renderPage({ title: "Zzzznotfound" });
+    fireEvent.change(screen.getByLabelText("Piece Count"), {
+      target: { value: "500" },
+    });
+    expect(asks()).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Save & Add Another" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    await waitFor(() => expect(asks()).toBe(false));
   });
 });
 
