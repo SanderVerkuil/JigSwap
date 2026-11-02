@@ -4,12 +4,16 @@ import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { canViewCopy } from "./library/canViewCopy";
 import schema from "./schema";
+import { canSeeProfileContent } from "./social/privacy";
 
 // Parity of the bulk copy reads with THE per-copy gate (PERF-B5q): a non-owner reading another
 // member's library (library.getOwnedPuzzlesByOwner) or a public collection of theirs
 // (library.getCollectionById) sees exactly the copies `canViewCopy` lets them see, one by one. The
 // world exercises every rule of the gate: public+open, private profile, household mate, mutual
-// follower, block, circle share, holder and exchange party on a private copy.
+// follower, block, circle share, holder and exchange party on a private copy. A collection is
+// profile content first (SEC-37): a viewer who may not see the owner's profile content gets null,
+// even when one copy in it is reachable by a circle share or an exchange; the parity holds inside
+// the collections a viewer may open.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -200,6 +204,10 @@ const gateAllows = (t: T, w: World, viewer: Viewer, owner: Owner) =>
     return allowed.sort();
   });
 
+// The collection-level gate in front of the per-copy one (SEC-37).
+const mayOpenCollection = (t: T, w: World, viewer: Viewer, owner: Owner) =>
+  t.run((ctx) => canSeeProfileContent(ctx, w.users[viewer], w.users[owner]));
+
 const sorted = (rows: { _id: string }[]) => rows.map((r) => r._id).sort();
 
 let t: T;
@@ -229,6 +237,16 @@ describe("bulk copy reads match the per-copy gate", () => {
     expect(await gateAllows(t, w, "xan", "pia")).toEqual([c.pia.private]);
   });
 
+  test("reaching one copy does not open the owner's collection", async () => {
+    // Both reach a copy of Pia's above, through a circle share and an exchange.
+    expect(await mayOpenCollection(t, w, "cid", "pia")).toBe(false);
+    expect(await mayOpenCollection(t, w, "xan", "pia")).toBe(false);
+    expect(await mayOpenCollection(t, w, "mia", "pia")).toBe(true);
+    expect(await mayOpenCollection(t, w, "sam", "pia")).toBe(false);
+    expect(await mayOpenCollection(t, w, "sam", "olive")).toBe(true);
+    expect(await mayOpenCollection(t, w, "bea", "olive")).toBe(false);
+  });
+
   for (const viewer of VIEWERS) {
     for (const owner of OWNERS) {
       test(`${viewer} reading ${owner}'s library and public collection`, async () => {
@@ -244,7 +262,9 @@ describe("bulk copy reads match the per-copy gate", () => {
           api.library.getCollectionById.getCollectionById,
           { collectionId: w.collections[owner] },
         );
-        expect(sorted(collection?.puzzles ?? [])).toEqual(expected);
+        expect(collection && sorted(collection.puzzles)).toEqual(
+          (await mayOpenCollection(t, w, viewer, owner)) ? expected : null,
+        );
       });
     }
   }
