@@ -1,8 +1,8 @@
 // Typed search params for the public /catalog page: `q` (search term), `brand`
 // and `pieces` (a piece-count bucket). Keeping the filters in the URL lets Back
 // from a puzzle restore them and makes a filtered view shareable. Anything
-// unknown, blank or of the wrong type is dropped, so a hand-edited URL shows
-// the unfiltered catalogue instead of failing.
+// unknown, blank or unusable is dropped, so a hand-edited URL shows the unfiltered
+// catalogue instead of failing.
 
 // Piece-count buckets from the spec: <500 / 500 / 1000 / 1500+.
 export const PIECE_BUCKETS = {
@@ -25,8 +25,13 @@ export function isPieceBucket(value: unknown): value is PieceBucket {
 
 // The search term as the URL stores it: trimmed, and absent when blank. The
 // page applies the same rule to what is typed, so it can tell its own URL
-// writes from a URL change made elsewhere (Back, a "Catalogue" link).
+// writes from a URL change made elsewhere (Back, a "Catalogue" link). The router
+// parses `?q=1000` into a number and `?q=true` into a boolean before this runs, so
+// those count as the text they were in the link.
 export function normalizeCatalogQuery(value: unknown): string | undefined {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;

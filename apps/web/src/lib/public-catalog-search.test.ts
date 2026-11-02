@@ -46,10 +46,27 @@ describe("validatePublicCatalogSearch", () => {
     );
   });
 
-  it("drops non-string values", () => {
+  // The router parses `?q=1000` into a number and `?q=true` into a boolean before this runs, and
+  // a piece count is a natural search here, so a hand-written link keeps its term.
+  it("keeps a search term or brand the router parsed as a number or boolean", () => {
+    expect(validatePublicCatalogSearch({ q: 1000, brand: 123 })).toEqual({
+      q: "1000",
+      brand: "123",
+      pieces: undefined,
+    });
+    expect(validatePublicCatalogSearch({ q: true, brand: false })).toEqual({
+      q: "true",
+      brand: "false",
+      pieces: undefined,
+    });
+    expect(validatePublicCatalogSearch({ q: 0 }).q).toBe("0");
+  });
+
+  it("drops arrays, objects and null", () => {
     expect(
-      validatePublicCatalogSearch({ q: 1000, brand: ["a"], pieces: 500 }),
+      validatePublicCatalogSearch({ q: ["a"], brand: { a: 1 }, pieces: 500 }),
     ).toEqual({ q: undefined, brand: undefined, pieces: undefined });
+    expect(validatePublicCatalogSearch({ q: null }).q).toBeUndefined();
   });
 
   it("ignores unrelated params", () => {
