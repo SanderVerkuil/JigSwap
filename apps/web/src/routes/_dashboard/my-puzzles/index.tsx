@@ -231,13 +231,10 @@ function PuzzlesPage() {
     return solveState?.completed ?? false;
   });
 
-  // The page title lives in the shell page head; publish the owned count + the
-  // Add Puzzle action there so the page body carries no duplicate header.
-  const ownedCount = allCopies.length;
-  const headerMeta = t("countMeta", { count: ownedCount });
+  // The page title lives in the shell page head; publish the actions there so the
+  // page body carries no duplicate header. The count lives beside the filters.
   usePageHeader(
     () => ({
-      meta: headerMeta,
       actions: (
         <>
           <Button variant="outline" size="sm" asChild>
@@ -258,7 +255,7 @@ function PuzzlesPage() {
         </>
       ),
     }),
-    [headerMeta],
+    [t],
   );
 
   if (
@@ -276,7 +273,7 @@ function PuzzlesPage() {
       <ActionsCoachmark />
 
       {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
-          to the global ⌘K palette; the count + Add Puzzle action live in the shell page head. */}
+          to the global ⌘K palette; the Add Puzzle action lives in the shell page head. */}
       <div className="flex flex-wrap items-center gap-3">
         {myHousehold ? (
           <Link

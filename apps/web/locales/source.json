@@ -497,7 +497,6 @@
     },
     "resultCount": "{count} of {total} puzzles",
     "searchHint": "Press {shortcut} to search puzzles, people and more",
-    "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",

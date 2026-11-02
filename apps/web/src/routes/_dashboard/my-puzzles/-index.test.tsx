@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // The "-" prefix keeps the TanStack route generator from treating this file as a route.
 // UX-158: the search hint names the palette shortcut of the platform it runs on, only after mount,
-// and not on a touch screen (no keyboard to press it with).
+// and not on a touch screen (no keyboard to press it with). UX-157: the puzzle count shows once.
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
 import { renderToString } from "react-dom/server";
@@ -11,6 +11,15 @@ import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { Route } from "./index";
 
+const mocks = vi.hoisted(() => ({
+  header: undefined as { meta?: unknown; actions?: unknown } | undefined,
+}));
+
+vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
+  usePageHeader: (factory: () => { meta?: unknown; actions?: unknown }) => {
+    mocks.header = factory();
+  },
+}));
 vi.mock("@/compat/clerk", () => ({
   useUser: () => ({ user: { id: "user_1" } }),
 }));
@@ -100,5 +109,15 @@ describe("My Puzzles search hint", () => {
     const html = renderToString(page());
     expect(html).toContain("0 of 0 puzzles");
     expect(html).not.toContain("search puzzles, people");
+  });
+});
+
+describe("My Puzzles head", () => {
+  it("leaves the count to the filter row and keeps its actions in the head", () => {
+    stubPlatform("Win32");
+    render(page());
+    expect(screen.getByText("0 of 0 puzzles")).toBeTruthy();
+    expect(mocks.header?.meta).toBeUndefined();
+    expect(mocks.header?.actions).toBeTruthy();
   });
 });

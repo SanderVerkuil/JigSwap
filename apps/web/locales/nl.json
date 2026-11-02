@@ -497,7 +497,6 @@
     },
     "resultCount": "{count} van {total} puzzels",
     "searchHint": "Druk op {shortcut} om puzzels, mensen en meer te zoeken",
-    "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
