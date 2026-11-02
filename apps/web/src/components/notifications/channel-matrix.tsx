@@ -197,10 +197,11 @@ export function ChannelMatrix({
                         role="rowheader"
                         className="flex min-w-0 items-center gap-3 pr-4"
                       >
+                        {/* The text's room on a phone, where three switch columns leave little. */}
                         <span
                           aria-hidden
                           className={cn(
-                            "bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                            "bg-muted hidden h-8 w-8 shrink-0 items-center justify-center rounded-full @md/matrix:flex",
                             notificationAccent(type),
                           )}
                         >

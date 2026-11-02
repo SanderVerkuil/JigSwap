@@ -181,6 +181,18 @@ describe("ChannelMatrix layout (UX-34)", () => {
     }
   });
 
+  // Below @md/matrix the icon's 44px goes to the text: rows ran 8 to 12 lines on a phone.
+  it("shows a row's icon only where the table has room for it", () => {
+    renderMatrix();
+    const title = document.getElementById("row-trade_request-title")!;
+    const icon = title
+      .closest('[role="rowheader"]')!
+      .querySelector("svg")!.parentElement!;
+    expect(classesOf(icon)).toEqual(
+      expect.arrayContaining(["hidden", "@md/matrix:flex"]),
+    );
+  });
+
   // Touch has no tooltip, so a clamped description could never be read in full.
   it("shows the whole description at every width", () => {
     renderMatrix();

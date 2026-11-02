@@ -40,13 +40,14 @@ describe("NotificationPreferencesPanel on touch", () => {
   const jumpNav = () =>
     screen.getByRole("navigation", { name: en.notifications.jumpTo });
 
-  // A vertical list of 44px links pushed the settings off the first phone screen.
-  it("wraps the jump links in a row on coarse pointers, and stacks them otherwise", () => {
+  // A vertical list of 44px links pushed the settings off the first phone screen. On one column
+  // they share the scrolling row (see the layout tests); beside the table they wrap.
+  it("wraps the jump links on coarse pointers in two columns, and stacks them only for a mouse", () => {
     renderPanel();
     const classes = within(jumpNav()).getByRole("list").classList;
-    expect(classes).toContain("flex-col");
-    expect(classes).toContain("pointer-coarse:flex-row");
-    expect(classes).toContain("pointer-coarse:flex-wrap");
+    expect(classes).toContain("@4xl/prefs:flex-col");
+    expect(classes).toContain("@4xl/prefs:pointer-coarse:flex-row");
+    expect(classes).toContain("@4xl/prefs:pointer-coarse:flex-wrap");
   });
 
   it("makes each jump link a 44px pill that reads as tappable on coarse pointers", () => {
@@ -67,10 +68,26 @@ describe("NotificationPreferencesPanel section heading", () => {
       name: "Per notification type",
     });
     expect(heading.textContent).not.toBe(en.notifications.preferences);
+    expect(
+      screen.queryByRole("heading", { name: en.notifications.preferences }),
+    ).toBeNull();
   });
 });
 
 describe("NotificationPreferencesPanel layout (UX-33)", () => {
+  // A list of six took a phone's whole first screen, pushing the first switch below it.
+  it("lays Jump to out as one scrolling row until the two-column layout", () => {
+    renderPanel();
+    const list = screen.getByRole("list");
+    const classes = [...list.classList];
+    expect(classes).toContain("overflow-x-auto");
+    expect(classes).toContain("@4xl/prefs:flex-col");
+    expect(classes).not.toContain("flex-col");
+    for (const link of within(list).getAllByRole("link")) {
+      expect(link.classList).toContain("whitespace-nowrap");
+    }
+  });
+
   it("puts the query container above the two-column grid, never on it", () => {
     renderPanel();
     // A container query never styles its own container: on one element the
