@@ -12,6 +12,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
@@ -197,7 +198,7 @@ const renderPage = ({ incoming = [], outgoing = [] }: Seed) => {
     return flushQueryNotifications();
   };
   const push = (seed: Seed) => act(() => setData(seed));
-  return { push };
+  return { push, setData };
 };
 
 const harbourToggle = () =>
@@ -314,5 +315,103 @@ describe("Exchanges page: regrouping keeps a row as the member left it", () => {
     await push({ incoming: [tulipRequest] });
     expect(harbourToggle().getAttribute("aria-expanded")).toBe("true");
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Exchanges page: the viewer's own confirmation", () => {
+  const confirmHandover = async (afterMutation?: () => Promise<void>) => {
+    fireEvent.click(
+      screen.getByRole("button", { name: en.trades.markComplete }),
+    );
+    const dialog = screen.getByRole("alertdialog");
+    fireEvent.click(
+      within(dialog).getByRole("button", {
+        name: en.trades.completeConfirm.confirm,
+      }),
+    );
+    await act(flushQueryNotifications);
+    await afterMutation?.();
+    // Radix hands focus back on a timeout once a dialog goes.
+    await act(flushQueryNotifications);
+  };
+
+  const confirmed = () =>
+    harbour({ status: "accepted", initiatorConfirmationTimestamp: NOW - 1000 });
+
+  const expectWaitingInFocus = () => {
+    expect(harbourToggle().getAttribute("aria-expanded")).toBe("true");
+    const waiting = screen.getByText(/You confirmed .* Waiting for Anna/);
+    expect(document.activeElement?.contains(waiting)).toBe(true);
+    // Focus is inside this row, not on the page body.
+    expect(document.activeElement).not.toBe(document.body);
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: en.trades.markComplete }),
+    ).toBeNull();
+  };
+
+  it("leaves the row open on the Waiting line with focus on it, when the data lands before the mutation resolves", async () => {
+    // Convex delivers the new query result before it resolves the mutation's promise.
+    const { setData } = renderPage({
+      incoming: [tulipRequest],
+      outgoing: [harbour({ status: "accepted" })],
+    });
+    mocks.mutation.mockImplementation(async () => {
+      await setData({ outgoing: [confirmed()] });
+    });
+    fireEvent.click(harbourToggle());
+
+    await confirmHandover();
+
+    expectWaitingInFocus();
+    expect(reading()).toEqual([
+      `# ${en.trades.groups.needsYou}`,
+      "Tulip Fields",
+      `# ${en.trades.groups.others}`,
+      "Harbour Lights",
+    ]);
+  });
+
+  it("leaves the row open on the Waiting line with focus on it, when the data lands after the mutation resolves", async () => {
+    const { push } = renderPage({
+      incoming: [tulipRequest],
+      outgoing: [harbour({ status: "accepted" })],
+    });
+    fireEvent.click(harbourToggle());
+
+    await confirmHandover(() => push({ outgoing: [confirmed()] }));
+
+    expectWaitingInFocus();
+  });
+
+  it("leaves the focus alone when the partner's own action changes the row", async () => {
+    const { push } = renderPage({
+      outgoing: [harbour({ status: "accepted" })],
+    });
+    fireEvent.click(harbourToggle());
+    const toggle = harbourToggle();
+    toggle.focus();
+
+    // Anna confirmed: the viewer did nothing, so nothing pulls their focus.
+    await push({
+      outgoing: [
+        harbour({
+          status: "accepted",
+          recipientConfirmationTimestamp: NOW - 1000,
+        }),
+      ],
+    });
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it("leaves the focus alone when the action is refused", async () => {
+    mocks.mutation.mockRejectedValue(new Error("nope"));
+    renderPage({ outgoing: [harbour({ status: "accepted" })] });
+    fireEvent.click(harbourToggle());
+
+    await confirmHandover();
+
+    // The confirm stays open next to the error toast.
+    expect(screen.getByRole("alertdialog")).not.toBeNull();
   });
 });

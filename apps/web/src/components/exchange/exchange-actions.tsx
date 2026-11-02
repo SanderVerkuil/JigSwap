@@ -10,6 +10,9 @@
 // and "Your turn" shows when only the partner has (the viewer's click then
 // settles it). `children` are the trailing actions that don't change the
 // exchange (review, message, report).
+//
+// The viewer's own action replaces the button they pressed, and the confirm
+// inside it, so focus moves to this block instead of falling to the page body.
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
@@ -17,7 +20,7 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import type { ExchangeFields } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { ConfirmActionButton } from "./confirm-action-button";
@@ -79,6 +82,20 @@ export function ExchangeActions({
     cancel.isPending ||
     complete.isPending;
 
+  const blockRef = useRef<HTMLDivElement>(null);
+  // Set while the viewer's own action is on its way; a partner's action moves no focus.
+  const viewerActed = useRef(false);
+  const side = viewerSide(direction);
+  const { mineAt, theirsAt, mySettles } = confirmationState(exchange, side);
+  // What decides which button shows. It changes when the query result lands, which Convex may
+  // deliver before or after the mutation's promise resolves.
+  const stage = `${exchange.status}:${mineAt !== undefined}`;
+  useEffect(() => {
+    if (!viewerActed.current) return;
+    viewerActed.current = false;
+    blockRef.current?.focus();
+  }, [stage]);
+
   // The lifecycle mutations key off the domain aggregateId, not the Convex _id;
   // a legacy row without one can't be acted on, so its buttons stay disabled.
   const exchangeId = exchange.aggregateId;
@@ -89,19 +106,19 @@ export function ExchangeActions({
     success: string,
   ): Promise<boolean> => {
     if (!exchangeId) return false;
+    viewerActed.current = true;
     try {
       await mutation.mutateAsync({ exchangeId });
       toast.success(success);
       return true;
     } catch (error) {
+      viewerActed.current = false;
       toast.error(t(exchangeErrorKey(error)));
       return false;
     }
   };
 
   const incoming = direction === "incoming";
-  const side = viewerSide(direction);
-  const { mineAt, theirsAt, mySettles } = confirmationState(exchange, side);
   const untitled = t("completeConfirm.untitled");
   const completeBody = [
     mySettles
@@ -122,7 +139,11 @@ export function ExchangeActions({
       : t("toast.completed");
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      ref={blockRef}
+      tabIndex={-1}
+      className="flex flex-col gap-2 outline-none"
+    >
       {exchange.status === "accepted" && mineAt !== undefined && (
         <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
           <Clock className="h-4 w-4 shrink-0" aria-hidden />
