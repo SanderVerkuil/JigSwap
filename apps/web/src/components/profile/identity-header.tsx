@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/compat/clerk";
+import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -71,8 +72,13 @@ export function IdentityHeader({
   const name = displayName(nameSource);
   // No Social profile yet (null) means the public default.
   const isPrivate = socialProfile?.visibility === "private";
-  // The canonical /members handle (same fallback as the route's redirect).
-  const publicHandle = member.slug ?? member.username ?? member._id;
+  // The canonical /members handle, by the route redirect's rule. Never rebuilt from `username`:
+  // another member may hold that string as a slug (SEC-07).
+  const publicHandle = canonicalHandleOf({
+    memberId: member._id,
+    slug: member.slug,
+    handle: member.handle,
+  });
 
   return (
     <header className="flex flex-wrap items-center gap-x-5 gap-y-4 border-b pb-6">

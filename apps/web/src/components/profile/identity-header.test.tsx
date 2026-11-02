@@ -43,6 +43,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 const member: Member = {
   _id: "member_henk",
+  handle: "member_henk",
   _creationTime: 0,
   clerkId: "user_henk",
   name: "Henk Pieterszoon",
@@ -157,19 +158,26 @@ describe("IdentityHeader visibility and public view", () => {
     ).toBeNull();
   });
 
-  it("links to the public profile by slug, then username, then id", () => {
+  it("links to the public profile by the server's handle, never a username it rebuilt (SEC-07)", () => {
     const href = () =>
       screen
         .getByRole("link", { name: "View public profile" })
         .getAttribute("href");
 
-    renderHeader({ memberOverrides: { slug: "henk-p", username: "henk" } });
-    expect(href()).toBe("/members/henk-p");
-    cleanup();
-    renderHeader({ memberOverrides: { username: "henk" } });
+    renderHeader({ memberOverrides: { handle: "henk", username: "henk" } });
     expect(href()).toBe("/members/henk");
     cleanup();
-    renderHeader();
+    // Another member holds "henk" as a slug, so the server's handle is the id, not the username.
+    renderHeader({ memberOverrides: { username: "henk" } });
+    expect(href()).toBe("/members/member_henk");
+    cleanup();
+    // A backend that predates `handle`: the slug always resolves back to this member.
+    renderHeader({
+      memberOverrides: { handle: undefined, slug: "henk-p", username: "henk" },
+    });
+    expect(href()).toBe("/members/henk-p");
+    cleanup();
+    renderHeader({ memberOverrides: { handle: undefined, username: "henk" } });
     expect(href()).toBe("/members/member_henk");
   });
 
