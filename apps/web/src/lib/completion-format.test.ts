@@ -8,6 +8,7 @@ import {
   formatCompletionMeta,
   formatSolveTime,
   solveDuration,
+  solveDurationText,
 } from "./completion-format";
 
 // The helper is typed for the app's hook; a catalog-backed translator behaves the same.
@@ -304,5 +305,49 @@ describe("formatCompletionMeta", () => {
         1000,
       ),
     ).toBe("Started Oct 12, 2026");
+  });
+});
+
+// The profile's solves list says the same as the member's own log: a typed time, or the span.
+describe("solveDurationText", () => {
+  const DAY_MS = 86_400_000;
+  const START = Date.UTC(2026, 9, 1);
+
+  it("says the time a member typed", () => {
+    expect(
+      solveDurationText(tEn, {
+        startDate: START,
+        endDate: START,
+        completionTimeMinutes: 200,
+      }),
+    ).toBe("3h 20m");
+  });
+
+  it("never turns the domain's derived duration into a time", () => {
+    expect(
+      solveDurationText(tEn, {
+        startDate: START,
+        endDate: START,
+        completionTimeMinutes: 1440,
+      }),
+    ).toBe("in one day");
+    expect(
+      solveDurationText(tEn, {
+        startDate: START,
+        endDate: START + 2 * DAY_MS,
+        completionTimeMinutes: 2880,
+      }),
+    ).toBe("over 3 days");
+  });
+
+  it("says nothing for a year-only solve", () => {
+    expect(
+      solveDurationText(tEn, {
+        startDate: START,
+        endDate: START,
+        datePrecision: "year",
+        completionTimeMinutes: 200,
+      }),
+    ).toBeNull();
   });
 });

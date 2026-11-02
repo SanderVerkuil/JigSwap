@@ -10,8 +10,8 @@ import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import {
   formatCompletionDate,
-  formatSolveTime,
   hrefForLink,
+  solveDurationText,
 } from "@/lib/completion-format";
 import { formatDateOnly } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
@@ -154,8 +154,7 @@ export function ProfileCompletionsSection({
                   date: formatDateOnly(format, completion.endDate),
                 })
               : formatCompletionDate(tLog, format, completion),
-            completion.completionTimeMinutes !== undefined &&
-              formatSolveTime(tLog, completion.completionTimeMinutes),
+            solveDurationText(tLog, completion),
           ]
             .filter(Boolean)
             .join(" · ");
