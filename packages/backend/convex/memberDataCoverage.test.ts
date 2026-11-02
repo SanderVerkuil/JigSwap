@@ -251,6 +251,15 @@ const MANIFEST: Record<string, Disposition> = {
     phases: ["exchangesOpenIn"],
     export: { exported: ["exchangesReceived"] },
   },
+  "exchanges.offeredPuzzleOwnerId": {
+    erasure: {
+      kept: "who owned a swap's offered copy at propose time, by id only, on a trade that stays the parties' history; it resolves to no one once the account is gone, and their copy goes with them, so an open trade naming it can no longer settle",
+    },
+    export: {
+      excluded:
+        "internal settlement bookkeeping that may name a household mate who is no party: exchangesProposed and exchangesReceived carry the offered copy's id, never its recorded owner",
+    },
+  },
 
   "messages.senderId": {
     erasure: {
@@ -754,6 +763,16 @@ const MANIFEST: Record<string, Disposition> = {
   "rateLimits.key": {
     declared: "v.string(): '<limit name>:<users id>' for per-member limits",
     erasure: { deleted: "their per-member counters" },
+    phases: ["rateLimits"],
+    export: { excluded: "abuse-prevention counters" },
+  },
+  "rateLimits.pairActorId": {
+    erasure: { deleted: "the per-pair counters of what they did to others" },
+    phases: ["rateLimits"],
+    export: { excluded: "abuse-prevention counters" },
+  },
+  "rateLimits.pairTargetId": {
+    erasure: { deleted: "the per-pair counters of what others did to them" },
     phases: ["rateLimits"],
     export: { excluded: "abuse-prevention counters" },
   },
