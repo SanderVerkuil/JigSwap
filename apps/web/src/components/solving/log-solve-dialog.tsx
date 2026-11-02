@@ -26,7 +26,7 @@ import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solveSaveErrorKey } from "./solving-error";
@@ -45,6 +45,8 @@ interface LogSolveDialogProps {
   viewerIsOwner?: boolean;
   // Called after a successful save (before the dialog closes). Useful for post-save navigation.
   onSuccess?: () => void;
+  // Where focus goes on close when what opened the dialog (a menu item) is gone by then.
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export function LogSolveDialog({
@@ -54,6 +56,7 @@ export function LogSolveDialog({
   puzzleTitle,
   viewerIsOwner = false,
   onSuccess,
+  returnFocusRef,
 }: LogSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const tCommon = useTranslations("common");
@@ -192,7 +195,15 @@ export function LogSolveDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         {/* Scrolls on a short screen, so Save stays reachable. */}
-        <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogContent
+          className="max-h-[90dvh] overflow-y-auto"
+          onCloseAutoFocus={(event) => {
+            const target = returnFocusRef?.current;
+            if (!target?.isConnected) return;
+            event.preventDefault();
+            target.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>

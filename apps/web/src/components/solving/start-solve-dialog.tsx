@@ -16,7 +16,7 @@ import { gateway } from "@/gateway";
 import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solveSaveErrorKey } from "./solving-error";
@@ -28,6 +28,8 @@ interface StartSolveDialogProps {
   copyId: string;
   puzzleTitle: string;
   onSuccess?: () => void;
+  // Where focus goes on close when what opened the dialog (a menu item) is gone by then.
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 // The first-class "Start puzzle" action: date (default today, editable to past/future) + optional
@@ -38,6 +40,7 @@ export function StartSolveDialog({
   copyId,
   puzzleTitle,
   onSuccess,
+  returnFocusRef,
 }: StartSolveDialogProps) {
   const t = useTranslations("solving.startSolve");
   const startCompletion = useMutation({
@@ -69,7 +72,14 @@ export function StartSolveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef?.current;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>

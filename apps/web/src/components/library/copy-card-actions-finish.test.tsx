@@ -52,7 +52,11 @@ function Card({ title }: { title?: string }) {
   });
   return (
     <>
-      <button onClick={() => cardActions(COPY_ID).onStartSolve(COPY_ID)}>
+      <button
+        onClick={() =>
+          cardActions(COPY_ID).onStartSolve(COPY_ID, { current: null })
+        }
+      >
         finish
       </button>
       {dialogs}

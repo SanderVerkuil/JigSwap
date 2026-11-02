@@ -98,10 +98,18 @@ interface PuzzleCardProps {
   /** Toggles the catalogue favourite of this copy's puzzle; `favorited` is its current state. */
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   favorited?: boolean;
-  onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  // The dialogs these open live on the page. `opener` is the ⋯ trigger, for the dialog to hand
+  // focus back to.
+  onLogSolve?: (
+    puzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   // Start/Finish solve swap: the page resolves whether the caller has an in-progress solve on
   // this copy (`solveInProgress`) and handles the action (start vs finish) itself.
-  onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onStartSolve?: (
+    puzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   solveInProgress?: boolean;
   // The owner's "Share with circles…" (the page owns the dialog). `opener` is the ⋯ trigger, for
   // the dialog to hand focus back to.
@@ -157,8 +165,14 @@ interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
   /** The card's puzzle title: names the trigger so each card's menu is distinguishable. */
   title: string;
-  onLogSolve?: (id: Id<"ownedPuzzles">) => void;
-  onStartSolve?: (id: Id<"ownedPuzzles">) => void;
+  onLogSolve?: (
+    id: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
+  onStartSolve?: (
+    id: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   solveInProgress?: boolean;
   onEdit?: (id: Id<"ownedPuzzles">) => void;
   onShareWithCircles?: (
@@ -228,7 +242,7 @@ function PuzzleOverflowMenu({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
-                onLogSolve(ownedId);
+                onLogSolve(ownedId, triggerRef);
               }}
             >
               <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
@@ -239,7 +253,7 @@ function PuzzleOverflowMenu({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
-                onStartSolve(ownedId);
+                onStartSolve(ownedId, triggerRef);
               }}
             >
               {solveInProgress ? (
