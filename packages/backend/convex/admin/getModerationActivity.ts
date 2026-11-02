@@ -6,6 +6,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { clampPaginationOpts } from "../lib/pageSize";
 import schema from "../schema";
+import { userQuery } from "../users";
 import { toAuditEntry } from "./auditEntry";
 
 // Admin-only, but the page size is still the client's request: each row joins the actor, a
@@ -80,10 +81,7 @@ const targetOf = async (
       const user =
         row.targetMemberId !== undefined
           ? await ctx.db.get(row.targetMemberId)
-          : await ctx.db
-              .query("users")
-              .withIndex("by_clerk_id", (q) => q.eq("clerkId", row.targetId))
-              .first();
+          : await userQuery(ctx, row.targetId);
       return user ? { kind: "member", userId: user._id } : null;
     }
     case "report": {
