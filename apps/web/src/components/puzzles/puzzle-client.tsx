@@ -4,7 +4,6 @@ import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
@@ -30,6 +29,7 @@ import { PuzzleCard } from "./puzzle-card";
 import { PuzzleCardSkeleton } from "./puzzle-card-skeleton";
 import { PuzzleFilters } from "./puzzle-filters";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
+import { ToolbarSearch } from "./toolbar-search";
 import { ViewModeToggle } from "./view-mode-toggle";
 
 const PAGE_SIZE = 20;
@@ -205,24 +205,14 @@ export function PuzzlesClient({
       <Card>
         <CardContent>
           {/* Wraps by the toolbar's own width, not the viewport (the sidebar narrows the column on
-              a tablet): the search and the buttons share a row while the search keeps 18rem,
-              enough for its hint; otherwise the buttons move together to a second row. */}
+              a tablet): see ToolbarSearch. */}
           <div className="flex flex-wrap gap-4">
-            {/* Search */}
-            <div className="relative flex-1 basis-72">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
-              />
-              <Input
-                type="search"
-                aria-label={t("searchLabel")}
-                placeholder={t("searchPlaceholder")}
-                value={searchDraft}
-                onChange={(e) => searchBox.change(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <ToolbarSearch
+              label={t("searchLabel")}
+              placeholder={t("searchPlaceholder")}
+              value={searchDraft}
+              onChange={searchBox.change}
+            />
 
             <div className="flex flex-wrap gap-4">
               {/* Favorites Toggle */}

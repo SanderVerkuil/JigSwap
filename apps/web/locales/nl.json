@@ -1557,7 +1557,7 @@
     "addFilterSearch": "Filteren op…",
     "noFilters": "Geen filters meer om toe te voegen.",
     "removeFilter": "Filter verwijderen",
-    "fieldText": "Tekst",
+    "searchLabel": "Exemplaren zoeken",
     "fieldAvailability": "Beschikbaarheid",
     "textPlaceholder": "Titel, merk of thema…",
     "card": {

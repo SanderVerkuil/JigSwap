@@ -46,7 +46,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "use-intl";
 
-// The Text condition reaches the URL (and so the server) after this pause in typing.
+// The search term reaches the URL (and so the server) after this pause in typing.
 const TEXT_DEBOUNCE_MS = 200;
 
 export const Route = createFileRoute("/_dashboard/browse")({
@@ -88,7 +88,7 @@ function BrowsePage() {
     void navigateSearch({ search: update, replace: true, resetScroll: false });
   const viewMode = search.view ?? "grid";
 
-  // The Text field edits a draft that follows the URL. Typing reaches the URL (and so the server)
+  // The search box edits a draft that follows the URL. Typing reaches the URL (and so the server)
   // after a pause, so every keystroke doesn't start a new search; clearing it and every other
   // condition apply at once.
   const text = useUrlTextDraft(
@@ -140,7 +140,7 @@ function BrowsePage() {
   );
 
   // Only the member lookup gates the page. Results load inside it, so the query builder stays
-  // mounted (and the Text field keeps focus) while a new filter's results arrive.
+  // mounted (and the search box keeps focus) while a new filter's results arrive.
   if (!user || convexUser === undefined) {
     return <PageLoading message={tCommon("loading")} />;
   }
@@ -162,14 +162,11 @@ function BrowsePage() {
           }
         />
       )}
-      {/* Query builder + result count + view toggle. Members compose multiple
-          AND-combined conditions (one of them the free-text filter); the global
-          ⌘K palette stays the quick known-item lookup. The shell owns the page
-          title and width — no boxed card, no container wrapper here. */}
-      <div
-        className="flex flex-wrap items-start justify-between gap-3"
-        data-tour="browse-filters"
-      >
+      {/* The toolbar the catalogue has too: search and filters, then the view toggle and the result
+          count. Members compose multiple AND-combined conditions; the global ⌘K palette stays the
+          quick known-item lookup. The shell owns the page title and width — no boxed card, no
+          container wrapper here. */}
+      <div className="flex flex-col gap-[18px]" data-tour="browse-filters">
         <QueryBuilder
           value={query}
           onChange={onQueryChange}
@@ -177,7 +174,16 @@ function BrowsePage() {
           tBrowse={tBrowse}
           tEnum={t}
         />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <ViewModeToggle
+            value={viewMode}
+            onChange={(mode) =>
+              updateSearch((prev) => ({
+                ...prev,
+                view: mode === "list" ? "list" : undefined,
+              }))
+            }
+          />
           {/* How many offers are on screen, with a + while more may follow: counting them all would
               mean reading them all. */}
           {browse.loading ? (
@@ -191,15 +197,6 @@ function BrowsePage() {
               </span>
             )
           )}
-          <ViewModeToggle
-            value={viewMode}
-            onChange={(mode) =>
-              updateSearch((prev) => ({
-                ...prev,
-                view: mode === "list" ? "list" : undefined,
-              }))
-            }
-          />
         </div>
       </div>
 

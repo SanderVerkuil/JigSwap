@@ -1557,7 +1557,7 @@
     "addFilterSearch": "Filter by…",
     "noFilters": "No filters left to add.",
     "removeFilter": "Remove filter",
-    "fieldText": "Text",
+    "searchLabel": "Search copies",
     "fieldAvailability": "Availability",
     "textPlaceholder": "Title, brand or theme…",
     "card": {

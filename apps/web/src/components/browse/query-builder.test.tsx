@@ -37,6 +37,34 @@ const renderBuilder = (initial: Partial<QueryBuilderState> = {}) =>
 
 afterEach(cleanup);
 
+describe("QueryBuilder: search box", () => {
+  const box = () =>
+    screen.getByRole("searchbox", { name: en.browse.searchLabel });
+
+  it("is on screen from the start, and types into the text condition", () => {
+    renderBuilder();
+    fireEvent.change(box(), { target: { value: "lake" } });
+    expect(screen.getByTestId("state").textContent).toContain('"text":"lake"');
+  });
+
+  it("is no longer offered as a filter to add", () => {
+    renderBuilder();
+    fireEvent.click(screen.getByRole("button", { name: en.browse.addFilter }));
+    expect(screen.queryByRole("option", { name: "Text" })).toBeNull();
+    expect(
+      screen.getByRole("option", { name: en.browse.fieldAvailability }),
+    ).toBeTruthy();
+  });
+
+  it("offers Clear All once there is a term, and clears it", () => {
+    renderBuilder({ text: "lake" });
+    fireEvent.click(
+      screen.getByRole("button", { name: en.browse.clearFilters }),
+    );
+    expect((box() as HTMLInputElement).value).toBe("");
+  });
+});
+
 describe("QueryBuilder: focus when a condition goes away", () => {
   const addFilter = () =>
     screen.getByRole("button", { name: en.browse.addFilter });
@@ -73,7 +101,6 @@ describe("QueryBuilder: focus when a condition goes away", () => {
       difficulty: "hard",
       minPieces: "500",
       availability: ["forTrade"],
-      text: "lake",
     });
     expect((addFilter() as HTMLButtonElement).disabled).toBe(false);
   });
