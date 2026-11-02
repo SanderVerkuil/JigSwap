@@ -109,8 +109,8 @@ export const gateway = {
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
     // The signed-in member's own shelf: library-wide counts plus only the newest few copies joined
-    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where a picker offers
-    // every copy (arrange-shelf, collections, circle sharing).
+    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where a picker shows every
+    // copy with its cover (arrange-shelf, a collection's Add puzzles, logging a solve).
     myShelf: api.library.getMyShelf.getMyShelf,
     // My Puzzles and the household's Puzzles tab: the first rows of the viewer's library (their own
     // and their housemates'), a lean row per copy for search, sort, status pills and Select all, and
@@ -118,6 +118,9 @@ export const gateway = {
     myLibraryWindow: api.library.listMyLibraryWindow.listMyLibraryWindow,
     myLibraryIndex: api.library.listMyLibraryIndex.listMyLibraryIndex,
     myLibraryCopies: api.library.getMyLibraryCopies.getMyLibraryCopies,
+    // Which catalogue definitions the member already has a copy of (the add flows' "on your shelf").
+    myOwnedDefinitionIds:
+      api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
     ownedWithCollectionStatus:

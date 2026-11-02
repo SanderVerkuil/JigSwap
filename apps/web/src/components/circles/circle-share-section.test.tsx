@@ -34,7 +34,7 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 
 vi.mock("sonner", () => ({ toast: mocks.toast }));
 
-type Copies = FunctionReturnType<typeof gateway.library.ownedByOwner>;
+type Copies = FunctionReturnType<typeof gateway.library.myLibraryIndex>;
 
 const CIRCLE = "circle_1";
 const ME = "me";
@@ -91,10 +91,7 @@ const renderSection = ({
     },
   });
   queryClient.setQueryData(
-    convexQuery(gateway.library.ownedByOwner, {
-      ownerId: ME as never,
-      includeUnavailable: true,
-    }).queryKey,
+    convexQuery(gateway.library.myLibraryIndex, {}).queryKey,
     copies,
   );
   queryClient.setQueryData(
@@ -281,6 +278,19 @@ describe("CircleShareSection", () => {
     expect(mocks.toast.success).not.toHaveBeenCalled();
     // The tick stays staged so the member can try again.
     expect(option("Lighthouse").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("offers only your own copies, not a housemate's the library index also lists", () => {
+    renderSection({
+      copies: [
+        copy("c_light", "Lighthouse"),
+        copy("c_mate", "Housemate's", {
+          viewerAccess: "manage",
+        }),
+      ],
+    });
+    expect(option("Lighthouse")).toBeTruthy();
+    expect(screen.queryByText("Housemate's")).toBeNull();
   });
 
   it("is translated (nl)", () => {

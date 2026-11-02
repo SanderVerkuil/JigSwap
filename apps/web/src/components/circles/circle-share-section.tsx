@@ -22,7 +22,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -51,13 +51,10 @@ export function CircleShareSection({
   const t = useTranslations("circles");
   const [staged, setStaged] = useState<StagedShares>(new Map());
 
+  // The lean library index: a row needs its title and offer state, never a cover. It also lists
+  // housemates' copies, which can't be shared.
   const copies = useQuery(
-    convexQuery(
-      gateway.library.ownedByOwner,
-      memberId
-        ? { ownerId: memberId as Id<"users">, includeUnavailable: true }
-        : "skip",
-    ),
+    convexQuery(gateway.library.myLibraryIndex, memberId ? {} : "skip"),
   );
   const shareState = useQuery(
     convexQuery(gateway.sharing.myCircleShareState, { circleId }),
@@ -121,7 +118,9 @@ export function CircleShareSection({
 
   // Legacy rows without an aggregate id can't be shared.
   const shareable = (copies.data ?? []).flatMap((copy) =>
-    copy.aggregateId ? [{ ...copy, aggregateId: copy.aggregateId }] : [],
+    copy.aggregateId && !copy.viewerAccess
+      ? [{ ...copy, aggregateId: copy.aggregateId }]
+      : [],
   );
 
   let body: ReactNode;

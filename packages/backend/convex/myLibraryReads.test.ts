@@ -357,6 +357,31 @@ describe("library.myLibraryCopies", () => {
   });
 });
 
+describe("library.myOwnedDefinitionIds", () => {
+  const idsOf = (who: string) =>
+    t
+      .withIdentity({ subject: `clerk_${who}` })
+      .query(api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds, {});
+
+  test("requires a signed-in member", async () => {
+    await expect(
+      t.query(
+        api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds,
+        {},
+      ),
+    ).rejects.toBeInstanceOf(ConvexError);
+  });
+
+  test("the definitions of the caller's own copies, once each; a housemate's stay out", async () => {
+    await addCopy(t, w, w.ann, { puzzleDefinitionId: "def-a" });
+    await addCopy(t, w, w.ann, { puzzleDefinitionId: "def-a" });
+    await addCopy(t, w, w.ann, { puzzleDefinitionId: "def-b" });
+    await addCopy(t, w, w.ann);
+    await addCopy(t, w, w.bob, { puzzleDefinitionId: "def-c" });
+    expect((await idsOf("ann")).sort()).toEqual(["def-a", "def-b"]);
+  });
+});
+
 describe("the bounded whole-library reads", () => {
   test("a non-owner reads only the newest copies of another member's library", async () => {
     const ids = await t.run(async (ctx) => {
