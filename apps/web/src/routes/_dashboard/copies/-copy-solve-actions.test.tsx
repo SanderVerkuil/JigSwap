@@ -134,6 +134,55 @@ describe("copy page solve actions", () => {
     expect(button("Offer for Swap")).toBeNull();
   });
 
+  it("doesn't offer a borrower a request for the copy they already hold, even while it stays on offer", () => {
+    const onOffer = {
+      ...copyView({}).snapshot,
+      availability: { forTrade: true, forSale: true, forLend: true },
+    };
+    renderCopy(
+      copyView({
+        snapshot: onOffer,
+        viewerHoldsCopy: true,
+        viewerMayRequest: true,
+      }),
+    );
+    expect(button(en.tradeRequest.cta.mixed)).toBeNull();
+    // A view-only seat's explanation of why it can't request goes with the button.
+    expect(
+      screen.queryByText(en.copyInstance.actions.requestViewOnly),
+    ).toBeNull();
+    expect(button("Start puzzle")).not.toBeNull();
+    expect(button("Message")).not.toBeNull();
+    cleanup();
+
+    renderCopy(
+      copyView({
+        snapshot: onOffer,
+        viewerHoldsCopy: true,
+        viewerMayRequest: false,
+      }),
+    );
+    expect(button(en.tradeRequest.cta.mixed)).toBeNull();
+    expect(
+      screen.queryByText(en.copyInstance.actions.requestViewOnly),
+    ).toBeNull();
+    expect(button("Message")).not.toBeNull();
+  });
+
+  it("keeps the request for someone who doesn't hold the copy", () => {
+    renderCopy(
+      copyView({
+        snapshot: {
+          ...copyView({}).snapshot,
+          availability: { forTrade: false, forSale: false, forLend: true },
+        },
+        viewerHoldsCopy: false,
+        viewerMayRequest: true,
+      }),
+    );
+    expect(button(en.tradeRequest.cta.borrow)).not.toBeNull();
+  });
+
   it("gives someone who does not hold the copy no solve actions, also when the backend predates viewerHoldsCopy", () => {
     for (const view of [
       copyView({ viewerHoldsCopy: false }),

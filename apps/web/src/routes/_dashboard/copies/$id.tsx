@@ -284,6 +284,9 @@ function CopyInstanceDetail({
   // personal. Management (sharing toggles, edit, photos) needs viewerCanManage. A backend without
   // `viewerHoldsCopy` leaves the borrower out, as before.
   const canSolve = inLibrary || copy.viewerHoldsCopy === true;
+  // The borrower has this copy in hand: lending it out doesn't clear its offer flags, but asking
+  // for it makes no sense to them. They keep Message.
+  const canRequest = isAvailable && copy.viewerHoldsCopy !== true;
 
   // The caller's solve history on this copy (caller-scoped server-side), powering the
   // Start puzzle ↔ Finish solve swap below. Only for viewers who may solve here, so other
@@ -558,7 +561,7 @@ function CopyInstanceDetail({
             {!inLibrary && (
               <>
                 {/* An anonymous (privacy-projected) owner goes unnamed: propose derives the recipient. */}
-                {isAvailable && (
+                {canRequest && (
                   <Button
                     variant="brand"
                     disabled={!copy.viewerMayRequest}
@@ -583,7 +586,7 @@ function CopyInstanceDetail({
                     {tRequest(requestAction)}
                   </Button>
                 )}
-                {isAvailable && !copy.viewerMayRequest && (
+                {canRequest && !copy.viewerMayRequest && (
                   // The server refuses a request through a view-only circle seat (propose); say why.
                   <p
                     id="request-view-only"
