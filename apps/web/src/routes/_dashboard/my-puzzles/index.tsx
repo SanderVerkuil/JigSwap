@@ -231,6 +231,8 @@ function PuzzlesPage() {
     });
   }, [index, filters, solveStateByCopyId, loanByCopyDocId, locale]);
 
+  const matchedIds = useMemo(() => matches?.map((copy) => copy._id), [matches]);
+
   const list = useLibraryRows({
     enabled: signedIn,
     viewKey: JSON.stringify([
@@ -240,7 +242,7 @@ function PuzzlesPage() {
       filters.sort,
     ]),
     windowArgs: { owner: filters.owner },
-    ids: wholeLibrary ? matches?.map((copy) => copy._id) : null,
+    ids: wholeLibrary ? matchedIds : null,
   });
   const loadedCopies = useMemo(
     () => list.entries.flatMap(({ copy }) => (copy ? [copy] : [])),

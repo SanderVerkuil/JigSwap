@@ -81,21 +81,25 @@ export function HouseholdPuzzles({
   const { data: index } = useQuery(
     convexQuery(gateway.library.myLibraryIndex, wholeLibrary ? {} : "skip"),
   );
-  const matches = useMemo(
-    () => index && filterHouseholdPuzzles(index, owner, availability),
+  const matchedIds = useMemo(
+    () =>
+      index &&
+      filterHouseholdPuzzles(index, owner, availability).map(
+        (copy) => copy._id,
+      ),
     [index, owner, availability],
   );
   const list = useLibraryRows({
     enabled: viewer !== undefined,
     viewKey: JSON.stringify(["household", owner, availability]),
     windowArgs: owner === "all" ? {} : { memberId: owner as Id<"users"> },
-    ids: wholeLibrary ? matches?.map((copy) => copy._id) : null,
+    ids: wholeLibrary ? matchedIds : null,
   });
   const copies = useMemo(
     () => list.entries.flatMap(({ copy }) => (copy ? [copy] : [])),
     [list.entries],
   );
-  const matchedCount = wholeLibrary ? matches?.length : list.counts?.matched;
+  const matchedCount = wholeLibrary ? matchedIds?.length : list.counts?.matched;
   const totalCount = wholeLibrary ? index?.length : list.counts?.total;
 
   const householdAccessById = useMemo(() => {
