@@ -153,7 +153,8 @@ function QrCard(props: QrDialogProps & { username: string }) {
             variant="brand"
             disabled={!qrUrl}
             onClick={() => {
-              if (qrUrl) void navigator.share({ url: qrUrl });
+              // A dismissed share sheet rejects; that is fine.
+              if (qrUrl) navigator.share({ url: qrUrl }).catch(() => {});
             }}
           >
             <Share2 className="size-4" />

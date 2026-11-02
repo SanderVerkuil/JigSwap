@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check, Copy, Mail, MessageCircle, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { canWebShare, mailtoUrl, whatsAppUrl } from "./invite-share";
 
@@ -47,9 +48,16 @@ export function InviteShareButtons({
     ? t(kind === "household" ? "householdMessage" : "message", { url })
     : "";
 
-  const copy = () => {
+  // "Copied" only once the clipboard accepted the link; a refusal (permissions, insecure context,
+  // no clipboard API) says so instead, as the QR dialog's copy does.
+  const copy = async () => {
     if (!url) return;
-    void navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      toast.error(tInvite("copyError"));
+      return;
+    }
     setCopied(true);
     onShared?.();
     setTimeout(() => setCopied(false), 2000);
@@ -82,7 +90,7 @@ export function InviteShareButtons({
           variant="outline"
           className={fallback}
           disabled={!url}
-          onClick={copy}
+          onClick={() => void copy()}
         >
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           {copied ? tInvite("copied") : tInvite("copyLink")}
