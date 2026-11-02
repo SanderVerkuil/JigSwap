@@ -145,7 +145,7 @@ describe("PuzzlePickList", () => {
     expect(rows.className).toContain("sm:hidden");
     // Named by what it shows (label in name), ending in what it does.
     const add = within(rows).getByRole("link", {
-      name: "Puzzle a Ravensburger · 1,000 pieces Add to Library",
+      name: "Puzzle a 1,000 pieces · Ravensburger Add to Library",
     });
     expect(add.getAttribute("href")).toBe("/my-puzzles/add/new?puzzleId=doc_a");
     expect(add.className).toContain("min-h-12");
@@ -174,11 +174,18 @@ describe("PuzzlePickList", () => {
     ).toEqual([false, true, false]);
   });
 
+  it("puts pieces before the brand beside the shelf mark, so only the brand can be cut short", () => {
+    renderList();
+    const rows = screen.getByTestId("pick-rows");
+    const owned = within(rows).getAllByRole("listitem")[1]!;
+    expect(owned.textContent).toMatch(/pieces · /);
+  });
+
   it("speaks Dutch", () => {
     renderList("nl");
     expect(
       screen.getByRole("link", {
-        name: "Puzzle a Ravensburger · 1.000 stukjes Toevoegen aan bibliotheek",
+        name: "Puzzle a 1.000 stukjes · Ravensburger Toevoegen aan bibliotheek",
       }),
     ).toBeTruthy();
     expect(screen.getAllByText("Op je plank").length).toBeGreaterThan(0);

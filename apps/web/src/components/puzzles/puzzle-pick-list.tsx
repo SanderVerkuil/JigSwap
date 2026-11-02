@@ -70,10 +70,11 @@ export function PuzzlePickList({
                     </Badge>
                   )}
                   <span className="text-muted-foreground truncate">
+                    {/* Pieces first: beside the shelf mark only the brand may be cut short. */}
                     {[
-                      puzzle.brand,
                       puzzle.pieceCount &&
                         `${format.number(puzzle.pieceCount)} ${t("pieces", { count: puzzle.pieceCount })}`,
+                      puzzle.brand,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
