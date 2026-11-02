@@ -64,7 +64,9 @@ describe("AuthShell", () => {
     renderShell();
     const banner = screen.getByRole("banner");
     expect(
-      within(banner).getByRole("button", { name: "Switch language" }),
+      within(banner).getByRole("button", {
+        name: "Switch language: English, EN",
+      }),
     ).toBeTruthy();
     expect(
       within(banner).getByRole("button", { name: "Toggle dark mode" }),
@@ -87,6 +89,8 @@ describe("AuthShell", () => {
     expect(
       within(footer).getByRole("link", { name: "Privacybeleid" }),
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Taal wijzigen" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Taal wijzigen: Nederlands, NL" }),
+    ).toBeTruthy();
   });
 });
