@@ -99,17 +99,14 @@ export function MyPuzzlesPhoneFilters({
             ref={triggerRef}
             type="button"
             variant="outline"
-            aria-label={t("filterSheet.open", { count: chips.length })}
             className="shrink-0 pointer-coarse:min-h-11 sm:hidden"
           >
             <SlidersHorizontal aria-hidden />
-            {t("filterSheet.title")}
+            {t("filterSheet.title")}{" "}
             {chips.length > 0 && (
-              <span
-                aria-hidden
-                className="bg-jigsaw-primary inline-flex size-5 items-center justify-center rounded-full text-xs font-semibold text-white"
-              >
+              <span className="bg-jigsaw-primary inline-flex size-5 items-center justify-center rounded-full text-xs font-semibold text-white">
                 {chips.length}
+                <span className="sr-only"> {t("filterSheet.active")}</span>
               </span>
             )}
           </Button>

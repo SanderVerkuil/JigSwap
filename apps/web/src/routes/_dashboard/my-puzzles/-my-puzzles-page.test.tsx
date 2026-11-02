@@ -328,7 +328,9 @@ describe("My Puzzles filters on a phone", () => {
       household: HOUSEHOLD_OF_TWO,
       search: { status: "forTrade", owner: "mine" },
     });
-    const button = screen.getByRole("button", { name: "Filters, 2 on" });
+    // The name comes from what the button shows, plus a word for screen readers (WCAG 2.5.3).
+    const button = screen.getByRole("button", { name: "Filters 2 active" });
+    expect(button.hasAttribute("aria-label")).toBe(false);
     fireEvent.click(
       screen.getByRole("button", { name: "Remove filter: For Trade" }),
     );

@@ -674,7 +674,7 @@
     },
     "filterSheet": {
       "title": "Filters",
-      "open": "{count, plural, =0 {Filters} one {Filters, # actief} other {Filters, # actief}}",
+      "active": "actief",
       "status": "Status",
       "show": "{count, plural, one {Toon # puzzel} other {Toon # puzzels}}",
       "close": "Klaar",
