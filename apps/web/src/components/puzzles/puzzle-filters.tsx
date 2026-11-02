@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import type { Locale } from "@/lib/i18n";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -32,13 +33,18 @@ interface Filters {
 
 interface PuzzleFiltersProps {
   filters: Filters;
-  onFiltersChange: (filters: Filters) => void;
+  /** Receives only what changed, so an edit made later (the range waits for a pause in typing)
+   *  can't write back the other filters as they were when it started. */
+  onFiltersChange: (patch: Partial<Filters>) => void;
   className?: string;
 }
 
 const COMMON_PIECE_COUNTS = [
   100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000,
 ];
+
+// A typed range bound reaches the URL (and so the server) after this pause in typing.
+const RANGE_DEBOUNCE_MS = 300;
 
 // Radix Select forbids an empty item value, so the "any" choice of every select carries this
 // sentinel and maps back to the filters' empty string.
@@ -103,6 +109,36 @@ function FilterSelect({
   );
 }
 
+// One bound of the custom range. It edits a draft that follows the URL; typing 1000 starts one
+// search, not four, and a value picked in the select next to it replaces the draft.
+function RangeBoundInput({
+  value,
+  onValueChange,
+  label,
+  placeholder,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  label: string;
+  placeholder: string;
+}) {
+  const { draft, change } = useUrlTextDraft(
+    value || undefined,
+    (bound) => onValueChange(bound ?? ""),
+    RANGE_DEBOUNCE_MS,
+  );
+  return (
+    <Input
+      type="number"
+      aria-label={label}
+      placeholder={placeholder}
+      value={draft}
+      onChange={(e) => change(e.target.value)}
+      className="flex-1"
+    />
+  );
+}
+
 export function PuzzleFilters({
   filters,
   onFiltersChange,
@@ -129,7 +165,7 @@ export function PuzzleFilters({
   }));
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {
-    onFiltersChange({ ...filters, [key]: value });
+    onFiltersChange({ [key]: value });
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -204,20 +240,18 @@ export function PuzzleFilters({
       <div className="space-y-2">
         <Label>{t("filters.customRange")}</Label>
         <div className="flex gap-2">
-          <Input
-            type="number"
+          <RangeBoundInput
+            label={t("filters.minPieces")}
             placeholder={t("filters.min")}
             value={filters.minPieces}
-            onChange={(e) => updateFilter("minPieces", e.target.value)}
-            className="flex-1"
+            onValueChange={(value) => updateFilter("minPieces", value)}
           />
           <span className="flex items-center text-muted-foreground">-</span>
-          <Input
-            type="number"
+          <RangeBoundInput
+            label={t("filters.maxPieces")}
             placeholder={t("filters.max")}
             value={filters.maxPieces}
-            onChange={(e) => updateFilter("maxPieces", e.target.value)}
-            className="flex-1"
+            onValueChange={(value) => updateFilter("maxPieces", value)}
           />
         </div>
       </div>

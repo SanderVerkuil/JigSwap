@@ -67,6 +67,8 @@ export function PuzzlesClient({
     hasActiveCatalogueFilters({ ...filters, searchTerm: "" }),
   );
   const filtersPanelId = useId();
+  // Clearing remounts the panel, so a range value still waiting for its pause goes with the rest.
+  const [filtersPanelKey, setFiltersPanelKey] = useState(0);
 
   // The search box edits a draft that follows the URL; the URL (and so the server query) takes it
   // over after a pause in typing, so every keystroke doesn't start a new search. A term changed
@@ -144,6 +146,7 @@ export function PuzzlesClient({
 
   const clearFilters = () => {
     searchBox.change("");
+    setFiltersPanelKey((key) => key + 1);
     // Everything but the view mode.
     onSearchChange((prev) => ({ view: prev.view }));
   };
@@ -247,9 +250,13 @@ export function PuzzlesClient({
           <div id={filtersPanelId}>
             {showFilters && (
               <PuzzleFilters
+                key={filtersPanelKey}
                 filters={filters}
-                onFiltersChange={(next) =>
-                  onSearchChange((prev) => ({ ...prev, ...facetSearch(next) }))
+                onFiltersChange={(patch) =>
+                  onSearchChange((prev) => ({
+                    ...prev,
+                    ...facetSearch({ ...filtersFromSearch(prev), ...patch }),
+                  }))
                 }
                 className="mt-4"
               />

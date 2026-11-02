@@ -73,7 +73,7 @@ const renderFilters = ({
   tags?: string[] | null;
   unseeded?: Unseeded;
   filters?: Filters;
-  onFiltersChange?: (filters: Filters) => void;
+  onFiltersChange?: (patch: Partial<Filters>) => void;
 } = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -164,11 +164,7 @@ describe("PuzzleFilters", () => {
     });
     fireEvent.keyDown(combobox("Brand"), { key: "Enter" });
     fireEvent.click(screen.getByRole("option", { name: "All brands" }));
-    expect(onFiltersChange).toHaveBeenLastCalledWith({
-      ...emptyFilters,
-      brand: "",
-      difficulty: "hard",
-    });
+    expect(onFiltersChange).toHaveBeenLastCalledWith({ brand: "" });
   });
 });
 

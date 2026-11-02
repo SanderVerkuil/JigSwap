@@ -6,7 +6,13 @@ import {
 } from "@/lib/puzzles-search";
 import { convexQuery } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { useState } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -83,13 +89,16 @@ const renderClient = (
     },
   });
   if (favourites) queryClient.setQueryData(favouritesKey, favourites);
-  return render(
+  // Fresh elements each time: a rerender has to reach PuzzlesClient for the read's new state to show.
+  const tree = () => (
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
         <Harness initial={initial} />
       </IntlProvider>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const view = render(tree());
+  return { rerender: () => view.rerender(tree()) };
 };
 
 const copy = en.puzzles.puzzles;
@@ -301,5 +310,78 @@ describe("PuzzlesClient filters panel", () => {
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  });
+});
+
+describe("PuzzlesClient piece range", () => {
+  const minInput = () =>
+    screen.getByRole<HTMLInputElement>("spinbutton", { name: "Min Pieces" });
+  const type = (value: string) =>
+    fireEvent.change(minInput(), { target: { value } });
+  const pause = () => act(() => vi.advanceTimersByTime(300));
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("starts one search per pause in typing, not one per keystroke", () => {
+    paginated.current = { results: LAKES, status: "Exhausted" };
+    renderClient({ brand: "Jumbo" });
+
+    for (const value of ["1", "10", "100", "1000"]) {
+      type(value);
+      expect(minInput().value).toBe(value);
+      expect(url().minPieces).toBeUndefined();
+    }
+    pause();
+
+    expect(url()).toEqual({ brand: "Jumbo", minPieces: 1000 });
+    expect(minInput().value).toBe("1000");
+  });
+
+  it("clears at once", () => {
+    renderClient({ minPieces: 500 });
+    expect(minInput().value).toBe("500");
+
+    type("");
+    expect(url().minPieces).toBeUndefined();
+    expect(minInput().value).toBe("");
+  });
+
+  it("follows a value picked in the select", () => {
+    renderClient({ minPieces: 500 });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Min Pieces" }), {
+      key: "Enter",
+    });
+    fireEvent.click(screen.getByRole("option", { name: "1000 pieces" }));
+    expect(url().minPieces).toBe(1000);
+    expect(minInput().value).toBe("1000");
+  });
+
+  it("keeps a filter changed while the range is still waiting for the pause", () => {
+    renderClient({ brand: "Jumbo" });
+    type("1000");
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Difficulty" }), {
+      key: "Enter",
+    });
+    fireEvent.click(screen.getByRole("option", { name: "Hard" }));
+    pause();
+    expect(url()).toEqual({
+      brand: "Jumbo",
+      difficulty: "hard",
+      minPieces: 1000,
+    });
+  });
+
+  it("drops the waiting value when the filters are cleared", () => {
+    renderClient({ brand: "Jumbo" });
+    type("1000");
+    fireEvent.click(screen.getByRole("button", { name: copy.clearFilters }));
+    pause();
+    expect(url()).toEqual({});
+    expect(minInput().value).toBe("");
   });
 });
