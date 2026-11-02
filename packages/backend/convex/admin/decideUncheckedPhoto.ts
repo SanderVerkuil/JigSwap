@@ -101,8 +101,8 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
 // proposal holding it and its renditions and blob deleted; approved box art is served (boxArtUrl)
 // and gets its renditions in the background (lib/imageModeration/renditionsStore). A CIRCLE ICON
-// likewise: a rejected one's blob is deleted (its uploader is told it was removed), an approved
-// one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
+// likewise: a rejected one's blob and rendition are deleted (its uploader is told it was removed),
+// an approved one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
 //
 // A MESSAGE photo (spec 2026-10-20 D5; only a sent, "unscored" one): approve serves it to the
 // thread (its message updates in place; the non-mutual blur still applies), which needs a passed
@@ -267,6 +267,7 @@ export const decideUncheckedPhoto = mutation({
       assertDecidable(row, decision);
       await ctx.db.patch(id, { ...decided, ...release });
       if (decision === "reject") {
+        await deleteRenditions(ctx, row.fileId);
         if (!(await isPreservedBlob(ctx, row.fileId))) {
           try {
             await ctx.storage.delete(row.fileId);

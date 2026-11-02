@@ -38,8 +38,8 @@ import {
 // logs and Axiom.
 //
 // backfillRenditions: the one-shot for images stored before renditions existed, per `table`:
-// "boxArt" (the default: every definition's box art), "copy" (copy photos) or "completion"
-// (completion photos). `dryRun` defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
+// "boxArt" (the default: every definition's box art), "copy" (copy photos), "completion"
+// (completion photos) or "circleIcon" (circle icons). `dryRun` defaults to TRUE: it only counts. Pass `dryRun: false` to write. Paginated: `batchSize`
 // rows per run (default 10), their candidates made ONE AFTER ANOTHER in the same action
 // (one decoded image in memory at a time); the action re-schedules itself with the next cursor
 // and logs the running totals ("imageModeration.backfillRenditions") on every page and the
@@ -48,11 +48,13 @@ import {
 // failed.
 
 // Which sizes each kind of image gets. Box art and copy photos appear on cards of many widths; a
-// completion photo is only ever a small tile, and the viewer opens the original.
+// completion photo is only ever a small tile (the viewer opens the original) and a circle icon a
+// small avatar.
 const LADDERS: Record<RenditionKind, RenditionLadder> = {
   boxArt: RENDITION_LADDER,
   copy: RENDITION_LADDER,
   completion: THUMBNAIL_LADDER,
+  circleIcon: THUMBNAIL_LADDER,
 };
 
 /** Runs per source, the first included, when storage or the database fails. */

@@ -16,17 +16,18 @@ import { isPreservedBlob } from "./quarantine";
 //
 // Invariants:
 // - A rendition exists only for an ELIGIBLE source blob that is still stored (renditionKindOf,
-//   checked again when recording): box art or a copy or completion photo that may be shown, never
-//   one that is pending, unscored, rejected, quarantined, preserved for an escalation, or none of
-//   these at all.
+//   checked again when recording): box art, a copy or completion photo or a circle icon that may
+//   be shown, never one that is pending, unscored, rejected, quarantined, preserved for an
+//   escalation, or none of these at all.
 // - Every rendition blob counts as referenced (blobReferences.isReferenced), so no upload flow
 //   can claim it and a storage sweep keeps it.
 // - ANY code that deletes or quarantines a source image blob calls `deleteRenditions` for it, so
 //   no rendition outlives its source.
 // - Responses never carry a rendition's storage id: read models turn it into a URL, and only
 //   behind the source's own publication gate (boxArtUrl for box art; approved and hash-cleared
-//   for a copy photo, library/resolveCoverUrl and getCopyInstanceView, or a completion photo,
-//   solving/listMyCompletions and social/listProfileCompletions).
+//   for a copy photo, library/resolveCoverUrl and getCopyInstanceView, a completion photo,
+//   solving/listMyCompletions and social/listProfileCompletions, or a circle icon for the
+//   circle's members, sharing/circleIcons.circleIconFields).
 
 const slotValidator = v.object({
   fileId: v.id("_storage"),
@@ -37,12 +38,13 @@ const slotValidator = v.object({
 /**
  * What the backfill covers: "boxArt" = every definition's `image`; "copy" = copy photos;
  * "completion" = completion photos (their sidecars; a legacy photo without one is left until
- * solving/backfillLegacyCompletionSidecars gives it one).
+ * solving/backfillLegacyCompletionSidecars gives it one); "circleIcon" = circle icons.
  */
 export const renditionTableValidator = v.union(
   v.literal("boxArt"),
   v.literal("copy"),
   v.literal("completion"),
+  v.literal("circleIcon"),
 );
 
 export const backfillTotalsValidator = v.object({
@@ -73,7 +75,7 @@ export const NO_TOTALS: BackfillTotals = {
 };
 
 /** What a source blob is; the action picks the sizes to make from it. */
-export type RenditionKind = "boxArt" | "copy" | "completion";
+export type RenditionKind = "boxArt" | "copy" | "completion" | "circleIcon";
 
 const whenApproved = <K extends RenditionKind>(
   kind: K,
@@ -83,12 +85,12 @@ const whenApproved = <K extends RenditionKind>(
 
 /**
  * What the blob is when it may get renditions (an image that may be shown), else null. A copy or
- * completion photo whose row is "approved" or from before photos were moderated (no status). Box
- * art whose boxArtUploads row is "approved" or from before box art was moderated (no status); with
- * no row at all, a definition holds it (box art from before the listing existed). Not a blob
- * preserved for an escalation. The hash check is not required: renditions are no more exposed than
- * the stored source, and read models serve them only through the source's gate (boxArtUrl; a
- * photo's approved and hash-cleared check).
+ * completion photo whose row is "approved" or from before photos were moderated (no status). A
+ * circle icon whose row is "approved". Box art whose boxArtUploads row is "approved" or from before
+ * box art was moderated (no status); with no row at all, a definition holds it (box art from before
+ * the listing existed). Not a blob preserved for an escalation. The hash check is not required:
+ * renditions are no more exposed than the stored source, and read models serve them only through
+ * the source's gate (boxArtUrl; a photo's or icon's approved and hash-cleared check).
  */
 export const renditionKindOf = async (
   ctx: QueryCtx,
@@ -105,6 +107,11 @@ export const renditionKindOf = async (
     .withIndex("by_file", (q) => q.eq("fileId", sourceId))
     .first();
   if (completionPhoto) return whenApproved("completion", completionPhoto);
+  const icon = await ctx.db
+    .query("circleIcons")
+    .withIndex("by_file", (q) => q.eq("fileId", sourceId))
+    .first();
+  if (icon) return whenApproved("circleIcon", icon);
   const listing = await ctx.db
     .query("boxArtUploads")
     .withIndex("by_storage", (q) => q.eq("storageId", sourceId))
@@ -238,6 +245,10 @@ const backfillPage = async (
       const page = await ctx.db
         .query("completionImages")
         .paginate(paginationOpts);
+      return { ...page, sources: page.page.map((row) => row.fileId) };
+    }
+    case "circleIcon": {
+      const page = await ctx.db.query("circleIcons").paginate(paginationOpts);
       return { ...page, sources: page.page.map((row) => row.fileId) };
     }
     case "boxArt": {

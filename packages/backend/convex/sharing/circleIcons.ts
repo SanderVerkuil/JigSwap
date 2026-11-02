@@ -1,7 +1,15 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import {
+  renditionSources,
+  thumbUrlOf,
+} from "../lib/imageModeration/imageSources";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import {
+  deleteRenditions,
+  scheduleRenditions,
+} from "../lib/imageModeration/renditionsStore";
 import { isCircleAdmin } from "./circleAccess";
 
 // A circle's icon: one per circle, shown everywhere the circle is (its card, its page, its group
@@ -16,12 +24,15 @@ import { isCircleAdmin } from "./circleAccess";
 // newer upload is being checked, or once it was refused, members keep seeing the previous icon,
 // or the default when there was none. The uploader and the circle's Admins see "checking" while
 // it is; the uploader sees "removed" once the check refused it (CSAM matches included: the same
-// answer as refused content, lib/imageModeration/quarantine).
+// answer as refused content, lib/imageModeration/quarantine). An icon is only ever a small avatar,
+// so `iconUrl` is its small rendition (lib/imageModeration/renditionsStore) once it has one, else
+// the original.
 //
-// LIFECYCLE: once a row becomes servable, the older rows go (row and blob); a new upload drops
-// every row but the current icon; remove drops them all; deleting the circle purges them
-// (sharing/purgeDeletedCircle). A quarantined row is never dropped and a preserved blob never
-// deleted (the escalation keeps them).
+// LIFECYCLE: once a row becomes servable, the older rows go (row, blob and rendition) and it gets
+// its rendition in the background; a new upload drops every row but the current icon; remove drops
+// them all; deleting the circle purges them (sharing/purgeDeletedCircle). A quarantined row is
+// never dropped and a preserved blob never deleted (the escalation keeps them); a quarantine and
+// a rejection delete the rendition.
 
 /** The content types accepted for an icon (the pipeline checks the bytes themselves). */
 export const CIRCLE_ICON_TYPES: readonly string[] = [
@@ -73,6 +84,10 @@ export const circleIconFields = async (
   const rows = await circleIconRows(ctx, circle.aggregateId ?? circle._id);
   const current = rows.find(isCircleIconServable);
   const url = current ? await ctx.storage.getUrl(current.fileId) : null;
+  const iconUrl =
+    current && url
+      ? thumbUrlOf(await renditionSources(ctx, current.fileId, url))
+      : null;
   const newest = rows[0];
   let status: CircleIconStatus | undefined;
   if (newest && newest !== current) {
@@ -87,14 +102,14 @@ export const circleIconFields = async (
     }
   }
   return {
-    ...(url ? { iconUrl: url } : {}),
+    ...(iconUrl ? { iconUrl } : {}),
     ...(status ? { iconStatus: status } : {}),
   };
 };
 
 /**
- * Drop an icon row and its blob. A quarantined row is kept whole for its escalation, and a blob an
- * escalation preserves is never deleted. Returns whether the row went.
+ * Drop an icon row with its blob and rendition. A quarantined row is kept whole for its escalation,
+ * and a blob an escalation preserves is never deleted. Returns whether the row went.
  */
 export const dropCircleIcon = async (
   ctx: MutationCtx,
@@ -102,6 +117,7 @@ export const dropCircleIcon = async (
 ): Promise<boolean> => {
   if (row.moderationStatus === "quarantined") return false;
   await ctx.db.delete(row._id);
+  await deleteRenditions(ctx, row.fileId);
   if (!(await isPreservedBlob(ctx, row.fileId))) {
     try {
       await ctx.storage.delete(row.fileId);
@@ -113,8 +129,9 @@ export const dropCircleIcon = async (
 };
 
 /**
- * Once `iconId` may be served it is the circle's icon: the rows uploaded before it go. Called
- * after every write that can open it (a verdict, a passed hash check, an admin's decision).
+ * Once `iconId` may be served it is the circle's icon: the rows uploaded before it go, and it gets
+ * its rendition. Called after every write that can open it (a verdict, a passed hash check, an
+ * admin's decision).
  */
 export const settleCircleIcon = async (
   ctx: MutationCtx,
@@ -127,6 +144,7 @@ export const settleCircleIcon = async (
       await dropCircleIcon(ctx, other);
     }
   }
+  await scheduleRenditions(ctx, row.fileId);
 };
 
 /** Drop every icon row of the circle (quarantined ones excepted). Returns how many went. */
