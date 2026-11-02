@@ -24,15 +24,15 @@ type Route = (res: ServerResponse) => void;
 let server: Server;
 let port: number;
 let requests: string[];
-let routes: Record<string, Route>;
+let routes: Map<string, Route>;
 const closers: Array<() => Promise<void>> = [];
 
 beforeEach(async () => {
   requests = [];
-  routes = {};
+  routes = new Map();
   server = createServer((req, res) => {
     requests.push(`${req.headers.host?.split(":")[0]}${req.url}`);
-    const route = routes[req.url ?? ""];
+    const route = routes.get(req.url ?? "");
     if (route) route(res);
     else
       res
@@ -152,7 +152,7 @@ describe("fetchPublic follows redirects one checked hop at a time", () => {
       res.writeHead(302, { location }).end();
 
   test("each hop is resolved and checked again", async () => {
-    routes["/start"] = redirect(`http://second.test:${port}/end`);
+    routes.set("/start", redirect(`http://second.test:${port}/end`));
     const lookups: string[] = [];
     const fetchPublic = transport({
       resolve: loopbackResolver(lookups),
@@ -173,7 +173,7 @@ describe("fetchPublic follows redirects one checked hop at a time", () => {
   });
 
   test("a redirect to a host that resolves to a blocked address is refused", async () => {
-    routes["/start"] = redirect(`http://internal.test:${port}/secret`);
+    routes.set("/start", redirect(`http://internal.test:${port}/secret`));
     const fetchPublic = transport({
       resolve: async (hostname) => [
         {
@@ -196,21 +196,24 @@ describe("fetchPublic follows redirects one checked hop at a time", () => {
       isBlocked: onlyTestServer,
     });
 
-    routes["/metadata"] = redirect("http://169.254.169.254/latest/meta-data/");
+    routes.set(
+      "/metadata",
+      redirect("http://169.254.169.254/latest/meta-data/"),
+    );
     expect(
       await fetchPublic(`http://shop.test:${port}/metadata`, {
         maxRedirects: 5,
       }),
     ).toMatchObject({ ok: false, code: "Blocked" });
 
-    routes["/file"] = redirect("file:///etc/passwd");
+    routes.set("/file", redirect("file:///etc/passwd"));
     expect(
       await fetchPublic(`http://shop.test:${port}/file`, { maxRedirects: 5 }),
     ).toMatchObject({ ok: false, code: "InvalidUrl" });
   });
 
   test("maxRedirects 0 returns the redirect itself without following it", async () => {
-    routes["/start"] = redirect(`http://second.test:${port}/end`);
+    routes.set("/start", redirect(`http://second.test:${port}/end`));
     const fetchPublic = transport({
       resolve: loopbackResolver(),
       isBlocked: onlyTestServer,
@@ -225,7 +228,7 @@ describe("fetchPublic follows redirects one checked hop at a time", () => {
   });
 
   test("past the redirect limit the last redirect is returned", async () => {
-    routes["/loop"] = redirect("/loop");
+    routes.set("/loop", redirect("/loop"));
     const fetchPublic = transport({
       resolve: loopbackResolver(),
       isBlocked: onlyTestServer,
@@ -240,7 +243,7 @@ describe("fetchPublic follows redirects one checked hop at a time", () => {
   });
 
   test("an aborted signal rejects with its reason (TimeoutError for AbortSignal.timeout)", async () => {
-    routes["/slow"] = () => {}; // never answers
+    routes.set("/slow", () => {}); // never answers
     const fetchPublic = transport({
       resolve: loopbackResolver(),
       isBlocked: onlyTestServer,
@@ -261,7 +264,7 @@ describe("readBodyCapped", () => {
   test("stops reading at the cap and closes the connection", async () => {
     let finished = false;
     let closedEarly = false;
-    routes["/huge"] = (res) => {
+    routes.set("/huge", (res) => {
       // 25 MB, chunked (no content-length), written as fast as the socket takes it.
       res.writeHead(200, { "content-type": "text/html" });
       let sent = 0;
@@ -280,7 +283,7 @@ describe("readBodyCapped", () => {
         res.end();
       };
       pump();
-    };
+    });
     const fetchPublic = transport({
       resolve: loopbackResolver(),
       isBlocked: onlyTestServer,
@@ -299,7 +302,7 @@ describe("readBodyCapped", () => {
   });
 
   test("returns a body within the cap whole", async () => {
-    routes["/page"] = (res) => res.writeHead(200).end("x".repeat(1000));
+    routes.set("/page", (res) => res.writeHead(200).end("x".repeat(1000)));
     const fetchPublic = transport({
       resolve: loopbackResolver(),
       isBlocked: onlyTestServer,
