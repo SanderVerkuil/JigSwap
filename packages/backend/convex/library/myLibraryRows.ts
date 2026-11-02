@@ -1,6 +1,7 @@
-import type {
-  HouseholdPersonView,
-  MyLibraryCopyView,
+import {
+  LIBRARY_ROWS_MAX,
+  type HouseholdPersonView,
+  type MyLibraryCopyView,
 } from "@jigswap/contracts";
 import { resolveHouseholdCopyPermission } from "@jigswap/domain";
 import { mergedStream, stream } from "convex-helpers/server/stream";
@@ -20,13 +21,13 @@ import { resolveCopyCoverFields } from "./resolveCoverUrl";
 // their housemates' (library/listMyLibraryWindow, listMyLibraryIndex, getMyLibraryCopies, and the
 // household-only household/listHouseholdCopies).
 
-// The most full rows one read joins. Each costs the copy, its puzzle and its cover, so this also
-// keeps the deepest scroll well inside Convex's per-function read limits.
-export const LIBRARY_WINDOW_MAX = 1000;
+// The most full rows one read joins, My Puzzles' deepest scroll and the pickers alike. Each costs up
+// to four index ranges (LIBRARY_ROWS_MAX explains), so more than this can throw instead of truncating.
+export const LIBRARY_WINDOW_MAX = LIBRARY_ROWS_MAX;
 
-// The most copies a read over the whole library covers, newest first: one index row each plus its
-// puzzle, or one full row each on the picker reads. No real member comes close; past it the oldest
-// copies drop out of search, sort and pickers rather than the read failing.
+// The most copies a lean read over the whole library covers, newest first: one index row each plus
+// at most its puzzle. No real member comes close; past it the oldest copies drop out of search, sort
+// and Select all rather than the read failing.
 export const LIBRARY_INDEX_CAP = 3000;
 
 /** Who the viewer's library spans, and what they may do with a housemate's copy. */

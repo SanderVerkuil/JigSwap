@@ -1,5 +1,6 @@
 "use client";
 
+import { PickerCapNote } from "@/components/library/picker-cap-note";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -248,6 +249,9 @@ function RequestTradeForm({
                   ))}
                 </SelectContent>
               </Select>
+            )}
+            {offerable !== undefined && (
+              <PickerCapNote shown={offerable.length} />
             )}
           </div>
         )}

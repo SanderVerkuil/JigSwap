@@ -12,9 +12,15 @@ import {
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
+// The newest members one read resolves. A member costs up to five index ranges (the copy, its puzzle
+// and its cover), plus the copy gate's on another member's copy, and Convex allows 4,096 per function.
+export const COLLECTION_ROWS_MAX = 500;
+
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
 // Catalog puzzle). Returns null on a missing collection, and drops members whose copy was deleted —
 // both preserved from legacy collections.getCollectionById; the result maps to a typed detail DTO.
+// Past COLLECTION_ROWS_MAX members it covers the newest and says so (`hasMorePuzzles`), instead of
+// failing the page.
 export const getCollectionById = query({
   args: { collectionId: v.id("collections") },
   handler: async (ctx, args): Promise<CollectionDetailView | null> => {
@@ -41,21 +47,26 @@ export const getCollectionById = query({
       .withIndex("by_collection", (q) =>
         q.eq("collectionId", args.collectionId),
       )
-      .collect();
+      .order("desc")
+      .take(COLLECTION_ROWS_MAX + 1);
+    const hasMorePuzzles = members.length > COLLECTION_ROWS_MAX;
 
     const entries = await Promise.all(
-      members.map(async (member) => {
-        const copy = member.ownedPuzzleId
-          ? await ctx.db.get(member.ownedPuzzleId)
-          : null;
-        if (!copy) return null;
-        // A collection is a shelf of its owner's OWN copies (adding requires owning both). A member
-        // row for a copy that has since changed hands is stale — e.g. left behind by a transfer
-        // before memberships were withdrawn on CopyOwnershipTransferred — and is dropped, so the
-        // previous owner's collection never lists the new owner's copy (no backfill needed).
-        if (copy.ownerId !== collection.userId) return null;
-        return { member, copy };
-      }),
+      members
+        .slice(0, COLLECTION_ROWS_MAX)
+        .reverse()
+        .map(async (member) => {
+          const copy = member.ownedPuzzleId
+            ? await ctx.db.get(member.ownedPuzzleId)
+            : null;
+          if (!copy) return null;
+          // A collection is a shelf of its owner's OWN copies (adding requires owning both). A member
+          // row for a copy that has since changed hands is stale — e.g. left behind by a transfer
+          // before memberships were withdrawn on CopyOwnershipTransferred — and is dropped, so the
+          // previous owner's collection never lists the new owner's copy (no backfill needed).
+          if (copy.ownerId !== collection.userId) return null;
+          return { member, copy };
+        }),
     );
 
     // Per-copy reachability gate: a non-owner viewing a public collection must NOT see member
@@ -89,7 +100,7 @@ export const getCollectionById = query({
       }),
     );
 
-    return toCollectionDetailView(collection, puzzles, {
+    return toCollectionDetailView(collection, puzzles, hasMorePuzzles, {
       includeOwnerOnly: isOwner,
     });
   },

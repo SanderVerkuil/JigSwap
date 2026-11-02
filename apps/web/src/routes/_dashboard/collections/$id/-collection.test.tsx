@@ -95,9 +95,13 @@ const collection: CollectionDetailView = {
   createdAt: 0,
   updatedAt: 0,
   puzzles: [copy],
+  hasMorePuzzles: false,
 };
 
-const renderPage = (viewer: string) => {
+const renderPage = (
+  viewer: string,
+  shown: CollectionDetailView = collection,
+) => {
   mocks.member = { _id: viewer };
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -116,7 +120,7 @@ const renderPage = (viewer: string) => {
     convexQuery(gateway.collections.byId, {
       collectionId: "col_doc" as Id<"collections">,
     }).queryKey,
-    collection,
+    shown,
   );
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
@@ -150,6 +154,20 @@ type ToastAction = { action?: { label: string; onClick: () => void } };
 afterEach(cleanup);
 
 describe("collection page controls", () => {
+  it("says only the newest members are shown when the server left older ones out", () => {
+    renderPage(OWNER, { ...collection, hasMorePuzzles: true });
+    expect(
+      screen.getByText(en.collections.newestOnly.replace("{count}", String(1))),
+    ).toBeTruthy();
+    expect(screen.getByText("1+")).toBeTruthy();
+  });
+
+  it("shows the plain count when nothing was left out", () => {
+    renderPage(OWNER);
+    expect(screen.queryByText("1+")).toBeNull();
+    expect(screen.getByText("1 puzzle")).toBeTruthy();
+  });
+
   it("gives the owner Edit, Add Puzzles and a ⋯ menu on each card", () => {
     renderPage(OWNER);
     expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();

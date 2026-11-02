@@ -38,7 +38,8 @@ export function CollectionDetailHeader({
         <div>
           <h1 className="text-3xl font-bold">{collection.name}</h1>
           <p className="text-muted-foreground">
-            {collection.puzzles?.length || 0} {t("puzzles")}
+            {collection.puzzles?.length || 0}
+            {collection.hasMorePuzzles ? "+" : ""} {t("puzzles")}
           </p>
         </div>
       </div>

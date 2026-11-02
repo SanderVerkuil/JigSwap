@@ -127,6 +127,15 @@ export interface BrowseOwnedCopiesView {
 }
 
 /**
+ * The most rows one read joins to their cards: My Puzzles' deepest window and every picker that
+ * offers a whole library (`library.ownedByOwner` for the owner, `exchange.offerableCopies`,
+ * `household.copies`). A row costs up to four index ranges (its puzzle, a cover photo still being
+ * checked, then the box art and its renditions), and Convex allows 4,096 per function. A picker that
+ * returns this many has left older copies out and should say so.
+ */
+export const LIBRARY_ROWS_MAX = 800;
+
+/**
  * The signed-in member's own shelf summary (`library.myShelf`) for the dashboard and profile
  * shelves: library-wide counts plus only the newest few copies joined, so a shelf never subscribes
  * to the whole library. Counts cover every owned copy, private ones included, up to a scan cap.
@@ -270,7 +279,10 @@ export interface CollectionDetailView {
   personalNotes?: string;
   createdAt: number;
   updatedAt: number;
+  /** The members the viewer may see of the collection's newest ones, oldest of those first. */
   puzzles: OwnedCopyView[];
+  /** True when older members were left out to keep the read inside Convex's limits. */
+  hasMorePuzzles: boolean;
 }
 
 // --- Copy instance (owned-copy) timeline -------------------------------------------------------

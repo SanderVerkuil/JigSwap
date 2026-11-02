@@ -3,7 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import {
-  LIBRARY_INDEX_CAP,
+  LIBRARY_WINDOW_MAX,
   libraryScopeOf,
   newestCopiesOf,
   toMyLibraryCopyViews,
@@ -14,7 +14,7 @@ import {
 // (library/listMyLibraryWindow). Every household copy is listed regardless of availability (the
 // household rule of canViewCopy), tagged with its owner and the viewer's access. Owner-only fields
 // are included only for "manage" (co-owner) access. Empty when the viewer is in no household. Newest
-// first, at most LIBRARY_INDEX_CAP.
+// first, at most LIBRARY_WINDOW_MAX.
 export const listHouseholdCopies = query({
   args: {},
   handler: async (ctx): Promise<HouseholdCopyView[]> => {
@@ -24,7 +24,7 @@ export const listHouseholdCopies = query({
     const copies = await newestCopiesOf(
       ctx,
       [...scope.mates],
-      LIBRARY_INDEX_CAP,
+      LIBRARY_WINDOW_MAX,
     );
     const views = await toMyLibraryCopyViews(ctx, copies, scope);
     return views

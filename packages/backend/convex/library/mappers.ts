@@ -266,8 +266,10 @@ export const toCollectionView = (
 export const toCollectionDetailView = (
   row: Doc<"collections">,
   puzzles: OwnedCopyView[],
+  hasMorePuzzles: boolean,
   opts?: { includeOwnerOnly?: boolean },
 ): CollectionDetailView => ({
   ...toCollectionMembershipView(row, opts),
   puzzles,
+  hasMorePuzzles,
 });

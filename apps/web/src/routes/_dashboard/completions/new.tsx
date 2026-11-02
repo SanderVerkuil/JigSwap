@@ -1,6 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { PickerCapNote } from "@/components/library/picker-cap-note";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { SolvePicker } from "@/components/solving/solve-picker";
@@ -119,6 +120,9 @@ function NewCompletionPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <p className="text-muted-foreground text-sm">{t("new.subtitle")}</p>
+      <PickerCapNote
+        shown={Math.max(ownedPuzzles.length, householdCopies.length)}
+      />
 
       <SolvePicker
         sections={sections}

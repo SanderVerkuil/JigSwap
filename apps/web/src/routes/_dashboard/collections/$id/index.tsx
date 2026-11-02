@@ -351,7 +351,10 @@ function CollectionDetailPage() {
       {!isEmpty && (
         <StatsBar
           cells={[
-            { value: String(stats.puzzleCount), label: t("puzzles") },
+            {
+              value: `${stats.puzzleCount}${collection.hasMorePuzzles ? "+" : ""}`,
+              label: t("puzzles"),
+            },
             {
               value: format.number(stats.piecesTotal),
               label: t("piecesTotal"),
@@ -380,7 +383,9 @@ function CollectionDetailPage() {
           {t("puzzlesInCollection")}
         </h2>
         <span className="text-muted-foreground text-sm">
-          {t("puzzleCount", { count: puzzles.length })}
+          {collection.hasMorePuzzles
+            ? t("newestOnly", { count: puzzles.length })
+            : t("puzzleCount", { count: puzzles.length })}
         </span>
       </div>
 

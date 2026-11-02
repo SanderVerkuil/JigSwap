@@ -100,6 +100,7 @@ const collection = (puzzles: OwnedCopyView[]): CollectionDetailView => ({
   createdAt: 0,
   updatedAt: 0,
   puzzles,
+  hasMorePuzzles: false,
 });
 
 function PublishedActions() {

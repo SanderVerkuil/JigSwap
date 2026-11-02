@@ -3,6 +3,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
+import { PickerCapNote } from "@/components/library/picker-cap-note";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
@@ -199,6 +200,8 @@ function AddPuzzlesToCollectionPage() {
           className="pl-9"
         />
       </div>
+
+      <PickerCapNote shown={libraryCopies.length} />
 
       {/* Puzzles Grid, or why it's empty: no library yet, everything is already in this
           collection, or nothing matches the search. */}
