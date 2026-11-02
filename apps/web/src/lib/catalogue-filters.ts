@@ -59,9 +59,13 @@ export function catalogueSearchArgs(
   const term = catalogueSearchKey(filters.searchTerm);
   if (term) args.searchTerm = term;
   if (filters.brand) args.brand = filters.brand;
-  const pieceMin = pieceBound(filters.minPieces);
+  const lower = pieceBound(filters.minPieces);
+  const upper = pieceBound(filters.maxPieces);
+  // Bounds typed the wrong way round still mean a range, not "no puzzles".
+  const inverted = lower !== undefined && upper !== undefined && lower > upper;
+  const pieceMin = inverted ? upper : lower;
+  const pieceMax = inverted ? lower : upper;
   if (pieceMin !== undefined) args.pieceMin = pieceMin;
-  const pieceMax = pieceBound(filters.maxPieces);
   if (pieceMax !== undefined) args.pieceMax = pieceMax;
   if (isDifficulty(filters.difficulty)) args.difficulty = filters.difficulty;
   if (filters.category) args.category = filters.category;

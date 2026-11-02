@@ -1,5 +1,6 @@
 "use client";
 
+import { PIECE_PRESETS } from "@/components/add-puzzle/add-puzzle-schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +16,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import type { Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { useId } from "react";
 import { useFormatter, useLocale, useTranslations } from "use-intl";
 import { categoryOptions } from "./category-options";
 
@@ -38,10 +41,6 @@ interface PuzzleFiltersProps {
   onFiltersChange: (patch: Partial<Filters>) => void;
   className?: string;
 }
-
-const COMMON_PIECE_COUNTS = [
-  100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000,
-];
 
 // A typed range bound reaches the URL (and so the server) after this pause in typing.
 const RANGE_DEBOUNCE_MS = 300;
@@ -109,8 +108,8 @@ function FilterSelect({
   );
 }
 
-// One bound of the custom range. It edits a draft that follows the URL; typing 1000 starts one
-// search, not four, and a value picked in the select next to it replaces the draft.
+// One bound of the piece range. It edits a draft that follows the URL; typing 1000 starts one
+// search, not four, and a preset picked below it replaces the draft.
 function RangeBoundInput({
   value,
   onValueChange,
@@ -160,10 +159,7 @@ export function PuzzleFilters({
 
   const allTags = useQuery(convexQuery(gateway.catalog.allTags, {}));
 
-  const pieceOptions = COMMON_PIECE_COUNTS.map((count) => ({
-    value: count.toString(),
-    label: `${format.number(count)} ${tPuzzles("pieces", { count })}`,
-  }));
+  const piecesLabelId = useId();
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {
     onFiltersChange({ [key]: value });
@@ -198,24 +194,6 @@ export function PuzzleFilters({
       />
 
       <FilterSelect
-        id="min-pieces"
-        label={t("filters.minPieces")}
-        value={filters.minPieces}
-        onValueChange={(value) => updateFilter("minPieces", value)}
-        anyLabel={t("filters.noMinimum")}
-        options={pieceOptions}
-      />
-
-      <FilterSelect
-        id="max-pieces"
-        label={t("filters.maxPieces")}
-        value={filters.maxPieces}
-        onValueChange={(value) => updateFilter("maxPieces", value)}
-        anyLabel={t("filters.noMaximum")}
-        options={pieceOptions}
-      />
-
-      <FilterSelect
         id="difficulty-filter"
         label={t("filters.difficulty")}
         value={filters.difficulty}
@@ -237,9 +215,10 @@ export function PuzzleFilters({
         unavailableLabel={t("filters.categoriesUnavailable")}
       />
 
-      {/* Custom Piece Count Range */}
-      <div className="space-y-2">
-        <Label>{t("filters.customRange")}</Label>
+      {/* One piece range: typed, or a common count picked as a preset (that exact count, the same
+          presets the contribute form offers). */}
+      <div role="group" aria-labelledby={piecesLabelId} className="space-y-2">
+        <Label id={piecesLabelId}>{t("filters.pieces")}</Label>
         <div className="flex gap-2">
           <RangeBoundInput
             label={t("filters.minPieces")}
@@ -255,10 +234,43 @@ export function PuzzleFilters({
             onValueChange={(value) => updateFilter("maxPieces", value)}
           />
         </div>
+        <div className="flex flex-wrap gap-1.5">
+          {PIECE_PRESETS.map((count) => {
+            const on =
+              filters.minPieces === String(count) &&
+              filters.maxPieces === String(count);
+            return (
+              <button
+                key={count}
+                type="button"
+                aria-pressed={on}
+                aria-label={`${format.number(count)} ${tPuzzles("pieces", { count })}`}
+                onClick={() =>
+                  onFiltersChange(
+                    on
+                      ? { minPieces: "", maxPieces: "" }
+                      : {
+                          minPieces: String(count),
+                          maxPieces: String(count),
+                        },
+                  )
+                }
+                className={cn(
+                  "border-border cursor-pointer rounded-full border px-2.5 py-1 font-mono text-xs transition-colors pointer-coarse:min-h-9",
+                  on
+                    ? "bg-jigsaw-primary-tint text-primary-text"
+                    : "bg-card text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {format.number(count)}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tags Filter */}
-      <div className="space-y-2 md:col-span-2 lg:col-span-3">
+      <div className="space-y-2 md:col-span-2">
         <Label>{t("filters.tags")}</Label>
 
         {/* Selected Tags */}

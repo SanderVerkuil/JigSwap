@@ -58,6 +58,24 @@ describe("catalogueSearchArgs", () => {
   });
 });
 
+describe("catalogueSearchArgs: an inverted piece range", () => {
+  it("reads as the same range the right way round", () => {
+    expect(
+      catalogueSearchArgs({
+        ...EMPTY_CATALOGUE_FILTERS,
+        minPieces: "777",
+        maxPieces: "100",
+      }),
+    ).toEqual({ pieceMin: 100, pieceMax: 777 });
+  });
+
+  it("leaves a single bound alone", () => {
+    expect(
+      catalogueSearchArgs({ ...EMPTY_CATALOGUE_FILTERS, minPieces: "777" }),
+    ).toEqual({ pieceMin: 777 });
+  });
+});
+
 describe("matchesCatalogueSearch", () => {
   it("ignores accents on both sides of the term", () => {
     const cafe = { title: "Café", pieceCount: 500 };

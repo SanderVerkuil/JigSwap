@@ -378,13 +378,11 @@ describe("PuzzlesClient piece range", () => {
     expect(minInput().value).toBe("");
   });
 
-  it("follows a value picked in the select", () => {
+  it("follows a preset", () => {
     renderClient({ minPieces: 500 });
-    fireEvent.keyDown(screen.getByRole("combobox", { name: "Min Pieces" }), {
-      key: "Enter",
-    });
-    fireEvent.click(screen.getByRole("option", { name: "1,000 pieces" }));
+    fireEvent.click(screen.getByRole("button", { name: "1,000 pieces" }));
     expect(url().minPieces).toBe(1000);
+    expect(url().maxPieces).toBe(1000);
     expect(minInput().value).toBe("1000");
   });
 

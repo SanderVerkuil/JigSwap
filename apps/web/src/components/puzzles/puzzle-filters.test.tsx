@@ -116,7 +116,6 @@ describe("PuzzleFilters", () => {
     renderFilters();
     expect(combobox("Category")).toBeTruthy();
     expect(combobox("Difficulty")).toBeTruthy();
-    expect(combobox("Min Pieces")).toBeTruthy();
     expect(screen.queryByRole("combobox", { name: "Brand" })).toBeNull();
   });
 
@@ -147,12 +146,54 @@ describe("PuzzleFilters", () => {
     expect(optionsOf(name)).toEqual(expected);
   });
 
-  it.each([
-    ["Min Pieces", "No minimum"],
-    ["Max Pieces", "No maximum"],
-  ])("offers a 'no limit' choice in the %s select", (name, first) => {
-    renderFilters({ brands: [] });
-    expect(optionsOf(name)[0]).toBe(first);
+  describe("piece count", () => {
+    const pieces = () => screen.getByRole("group", { name: "Pieces" });
+    const bound = (name: string) =>
+      screen.getByRole("spinbutton", { name }) as HTMLInputElement;
+    const preset = (name: string) =>
+      within(pieces()).getByRole("button", { name });
+
+    it("is one row: two number inputs and presets, no selects", () => {
+      renderFilters({ brands: [] });
+      expect(screen.queryByRole("combobox", { name: "Min Pieces" })).toBeNull();
+      expect(screen.queryByRole("combobox", { name: "Max Pieces" })).toBeNull();
+      expect(bound("Min Pieces").getAttribute("placeholder")).toBe("Min");
+      expect(bound("Max Pieces").getAttribute("placeholder")).toBe("Max");
+      expect(preset("1,000 pieces")).toBeTruthy();
+    });
+
+    it("shows any value in the URL in the inputs", () => {
+      renderFilters({
+        brands: [],
+        filters: { ...emptyFilters, minPieces: "777", maxPieces: "1000" },
+      });
+      expect(bound("Min Pieces").value).toBe("777");
+      expect(bound("Max Pieces").value).toBe("1000");
+    });
+
+    it("sets both bounds from a preset, and clears them when it is pressed again", () => {
+      const onFiltersChange = vi.fn();
+      const { unmount } = renderFilters({ brands: [], onFiltersChange });
+      expect(preset("1,000 pieces").getAttribute("aria-pressed")).toBe("false");
+      fireEvent.click(preset("1,000 pieces"));
+      expect(onFiltersChange).toHaveBeenLastCalledWith({
+        minPieces: "1000",
+        maxPieces: "1000",
+      });
+      unmount();
+
+      renderFilters({
+        brands: [],
+        onFiltersChange,
+        filters: { ...emptyFilters, minPieces: "1000", maxPieces: "1000" },
+      });
+      expect(preset("1,000 pieces").getAttribute("aria-pressed")).toBe("true");
+      fireEvent.click(preset("1,000 pieces"));
+      expect(onFiltersChange).toHaveBeenLastCalledWith({
+        minPieces: "",
+        maxPieces: "",
+      });
+    });
   });
 
   it("clears a filter when its 'all' choice is picked", () => {
