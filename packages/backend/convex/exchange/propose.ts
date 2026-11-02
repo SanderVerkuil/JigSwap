@@ -98,6 +98,10 @@ export const propose = mutation({
       ctx,
       "exchangePair",
       `${initiatorId}:${recipientId}`,
+      {
+        pairActorId: initiatorId as unknown as Id<"users">,
+        pairTargetId: recipientId,
+      },
     );
 
     const proposeExchange = makeProposeExchange({

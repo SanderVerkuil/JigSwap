@@ -38,7 +38,15 @@ export const followMemberUseCase = async (
 ): Promise<{ kind: "followed" | "requested"; id: string }> => {
   await enforceRateLimit(ctx, "followToggle", followerId);
   await assertPairNotBlocked(ctx, followerId, args.followeeId);
-  await enforceRateLimit(ctx, "followPair", `${followerId}:${args.followeeId}`);
+  await enforceRateLimit(
+    ctx,
+    "followPair",
+    `${followerId}:${args.followeeId}`,
+    {
+      pairActorId: followerId as unknown as Id<"users">,
+      pairTargetId: args.followeeId,
+    },
+  );
   const visibility = await profileVisibilityOf(ctx, args.followeeId);
   const reverseEdge = await ctx.db
     .query("follows")

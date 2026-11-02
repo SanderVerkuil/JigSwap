@@ -2144,7 +2144,14 @@ export default defineSchema({
     key: v.string(),
     windowStart: v.number(),
     count: v.number(),
-  }).index("by_key", ["key"]),
+    // The members a pair or notice key names, because account deletion can't look up an id in the
+    // middle of a key (conversation/purgeMemberMessagingData). Only those rows carry them.
+    pairActorId: v.optional(v.id("users")),
+    pairTargetId: v.optional(v.id("users")),
+  })
+    .index("by_key", ["key"])
+    .index("by_pair_actor", ["pairActorId"])
+    .index("by_pair_target", ["pairTargetId"]),
 
   // One-shot maintenance steps that other code waits for (lib/maintenanceMarkers). One row per
   // step name, written by the step itself when its run proves it done.

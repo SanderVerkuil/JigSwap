@@ -59,6 +59,7 @@ export const inviteToHousehold = mutation({
         ctx,
         "householdInvitePair",
         `${household.id}:${args.inviteeId}`,
+        { pairTargetId: args.inviteeId },
       );
       const viaEmail = (
         await ctx.db

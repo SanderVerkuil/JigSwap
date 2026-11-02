@@ -1,4 +1,5 @@
 import { ConvexError } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { logEvent } from "./logEvent";
 
@@ -115,12 +116,23 @@ export type RateLimitName = keyof typeof RATE_LIMITS;
 type WindowCharge =
   { allowed: true } | { allowed: false; retryAfterMs: number };
 
+/**
+ * The members a composite subject names ("<actor>:<target>", ...). Every limit keyed by a pair
+ * passes them, so that deleting either member's account also deletes the counter
+ * (conversation/purgeMemberMessagingData finds it by these, not by its key).
+ */
+export type PairMembers = {
+  readonly pairActorId?: Id<"users">;
+  readonly pairTargetId: Id<"users">;
+};
+
 // Count one action against `name` for `subject` in its current fixed window. A full window writes
 // nothing, so refused attempts don't extend the lockout.
 const chargeWindow = async (
   ctx: MutationCtx,
   name: RateLimitName,
   subject: string,
+  pair?: PairMembers,
 ): Promise<WindowCharge> => {
   const { windowMs, max } = RATE_LIMITS[name];
   const key = `${name}:${subject}`;
@@ -131,7 +143,12 @@ const chargeWindow = async (
     .unique();
 
   if (row === null) {
-    await ctx.db.insert("rateLimits", { key, windowStart: now, count: 1 });
+    await ctx.db.insert("rateLimits", {
+      key,
+      windowStart: now,
+      count: 1,
+      ...pair,
+    });
     return { allowed: true };
   }
   if (now - row.windowStart >= windowMs) {
@@ -170,8 +187,9 @@ export const enforceRateLimit = async (
   ctx: MutationCtx,
   name: RateLimitName,
   memberId: string,
+  pair?: PairMembers,
 ): Promise<void> => {
-  const charge = await chargeWindow(ctx, name, memberId);
+  const charge = await chargeWindow(ctx, name, memberId, pair);
   if (charge.allowed) return;
   logRefusal(name, charge.retryAfterMs, { member_id: memberId });
   throw new ConvexError({
@@ -190,8 +208,9 @@ export const consumeRateLimit = async (
   ctx: MutationCtx,
   name: RateLimitName,
   subject: string,
+  pair?: PairMembers,
 ): Promise<boolean> => {
-  const charge = await chargeWindow(ctx, name, subject);
+  const charge = await chargeWindow(ctx, name, subject, pair);
   if (!charge.allowed) {
     logRefusal(name, charge.retryAfterMs, { subject });
   }

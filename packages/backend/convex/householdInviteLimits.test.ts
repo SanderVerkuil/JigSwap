@@ -128,6 +128,24 @@ describe("household invite rate limits", () => {
     ).toEqual([]);
   });
 
+  test("the pair counter names the invitee, so account deletion can find it", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, bob } = await seed(t);
+    const householdId = await annFoundsHousehold(t, ann);
+    await invite(t, bob);
+    await flush(t);
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) =>
+          q.eq("key", `householdInvitePair:${householdId}:${bob}`),
+        )
+        .unique(),
+    );
+    expect(row?.pairTargetId).toBe(bob);
+    expect(row?.pairActorId).toBeUndefined();
+  });
+
   test("the pair cap is per invitee: another member can still be invited", async () => {
     const t = convexTest(schema, modules);
     const { ann, bob, cat } = await seed(t);

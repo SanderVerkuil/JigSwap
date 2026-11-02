@@ -1,4 +1,5 @@
 import type { NotificationState, NotificationType } from "@jigswap/domain";
+import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
 import { consumeRateLimit } from "../../../lib/rateLimits";
 
@@ -28,5 +29,9 @@ export const followNoticeAllowed = async (
     ctx,
     "followNotice",
     `${channel}:${state.type}:${state.userId}:${state.actorId}`,
+    {
+      pairActorId: state.actorId as unknown as Id<"users">,
+      pairTargetId: state.userId as unknown as Id<"users">,
+    },
   );
 };

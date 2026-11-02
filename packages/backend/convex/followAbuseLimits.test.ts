@@ -116,6 +116,25 @@ describe("follow loops are rate limited", () => {
     ).toHaveLength(cap);
   });
 
+  test("the pair counter names both members, so account deletion can find it", async () => {
+    const t = convexTest(schema, modules);
+    const { attacker, open } = await seed(t);
+    await asAttacker(t).mutation(api.social.followMember.followMember, {
+      followeeId: open,
+    });
+    await flush(t);
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) =>
+          q.eq("key", `followPair:${attacker}:${open}`),
+        )
+        .unique(),
+    );
+    expect(row?.pairActorId).toBe(attacker);
+    expect(row?.pairTargetId).toBe(open);
+  });
+
   test("a follow/unfollow loop on a public member stops at the per-pair cap", async () => {
     const t = convexTest(schema, modules);
     const { open } = await seed(t);
@@ -403,6 +422,24 @@ describe("follow notices on email and push", () => {
       jobs.map((job) => (job.args[0] as { actorId?: string }).actorId);
     expect(actors(emails)).toEqual([attacker, victim]);
     expect(actors(pushes)).toEqual([attacker, victim]);
+  });
+
+  test("the notice counters name actor and recipient, so account deletion can find them", async () => {
+    const t = convexTest(schema, modules);
+    const { attacker, open } = await seed(t);
+    await optIn(t, "clerk_open", open);
+    await followedEvent(t, attacker, open);
+
+    const rows = await t.run(async (ctx) =>
+      (await ctx.db.query("rateLimits").collect()).filter((row) =>
+        row.key.startsWith("followNotice:"),
+      ),
+    );
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.pairActorId).toBe(attacker);
+      expect(row.pairTargetId).toBe(open);
+    }
   });
 
   test("the throttle is a daily window: a day later the actor is announced again", async () => {

@@ -73,7 +73,8 @@ import {
 //   emailInvitesOut  the email invitations they sent: each row is deleted, its pending in-app
 //                fallback withdrawn and its Clerk invitation revoked (best-effort, scheduled).
 //                The address-HMAC send log holds no member id and lapses on its own.
-//   rateLimits   their own counters (never the deployment-wide MapTiler budget keys)
+//   rateLimits   their own counters and every per-pair counter naming them on either side (never
+//                the deployment-wide MapTiler budget keys)
 //   presence     their presencePreferences row and the presence component's rows for every room
 //                they were in (each keeps a lastDisconnected: a last-seen record, spec 5.6)
 // Then the rest of what they left (conversation/purgeMemberLibrary; spec 2026-10-19 deleted member
@@ -693,7 +694,7 @@ const runPhase = async (
       return page;
     }
     case "rateLimits": {
-      // One row per limit name at most: a fixed handful of point lookups, never paged.
+      // Their own counters, one row per limit name at most: a fixed handful of point lookups.
       for (const name of Object.keys(RATE_LIMITS) as RateLimitName[]) {
         const row = await ctx.db
           .query("rateLimits")
@@ -701,7 +702,23 @@ const runPhase = async (
           .unique();
         if (row) await ctx.db.delete(row._id);
       }
-      return { isDone: true, continueCursor: "" };
+      // The per-pair counters name other members too and can be many, so these are batched. Each
+      // deleted row leaves its index, so a next run simply takes the next rows and needs no cursor.
+      const asActor = await ctx.db
+        .query("rateLimits")
+        .withIndex("by_pair_actor", (q) => q.eq("pairActorId", memberId))
+        .take(opts.numItems);
+      for (const row of asActor) await ctx.db.delete(row._id);
+      const asTarget = await ctx.db
+        .query("rateLimits")
+        .withIndex("by_pair_target", (q) => q.eq("pairTargetId", memberId))
+        .take(opts.numItems);
+      for (const row of asTarget) await ctx.db.delete(row._id);
+      return {
+        isDone:
+          asActor.length < opts.numItems && asTarget.length < opts.numItems,
+        continueCursor: "",
+      };
     }
     case "presence": {
       // One settings row, and one component row per room (the heartbeat allowlists three rooms):

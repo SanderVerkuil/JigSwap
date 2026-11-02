@@ -146,6 +146,23 @@ describe("exchange.propose rate limits", () => {
     expect(await threadSeatsOf(t, s.owner)).toBe(cap);
   });
 
+  test("the pair counter names both members, so account deletion can find it", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    await propose(t, s.copyA);
+    await flush(t);
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) =>
+          q.eq("key", `exchangePair:${s.attacker}:${s.owner}`),
+        )
+        .unique(),
+    );
+    expect(row?.pairActorId).toBe(s.attacker);
+    expect(row?.pairTargetId).toBe(s.owner);
+  });
+
   test("the pair cap is per owner: another owner's copy can still be requested", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);

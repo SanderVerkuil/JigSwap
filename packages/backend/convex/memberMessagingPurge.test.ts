@@ -523,6 +523,69 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
     ]);
   });
 
+  test("per-pair counters naming them on either side are deleted; other members' stay", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol } = await seed(t);
+    const follow = (subject: string, followeeId: Id<"users">) =>
+      t
+        .withIdentity({ subject })
+        .mutation(api.social.followMember.followMember, { followeeId });
+    await follow("clerk_alice", carol);
+    await follow("clerk_carol", alice);
+    await follow("clerk_bob", carol);
+    await settleDueJobs(t);
+    const keysBefore = await t.run(async (ctx) =>
+      (await ctx.db.query("rateLimits").collect()).map((row) => row.key),
+    );
+    expect(keysBefore).toEqual(
+      expect.arrayContaining([
+        `followPair:${alice}:${carol}`,
+        `followPair:${carol}:${alice}`,
+        `followPair:${bob}:${carol}`,
+      ]),
+    );
+
+    await deleteAlice(t);
+
+    const keys = await t.run(async (ctx) =>
+      (await ctx.db.query("rateLimits").collect()).map((row) => row.key),
+    );
+    expect(keys.filter((key) => key.includes(alice))).toEqual([]);
+    expect(keys).toContain(`followPair:${bob}:${carol}`);
+  });
+
+  test("per-pair counters past one batch are deleted over several runs", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 5; i++) {
+        await ctx.db.insert("rateLimits", {
+          key: `followNotice:email:new_follower:${bob}:actor-${i}`,
+          windowStart: 1,
+          count: 1,
+          pairActorId: alice,
+        });
+        await ctx.db.insert("rateLimits", {
+          key: `householdInvitePair:household-${i}:${alice}`,
+          windowStart: 1,
+          count: 1,
+          pairTargetId: alice,
+        });
+      }
+    });
+    await t.mutation(
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: alice, phase: "rateLimits", batchSize: 2 },
+    );
+    expect(
+      await t.run((ctx) => ctx.db.query("rateLimits").collect()),
+    ).toHaveLength(6);
+    await settleDueJobs(t);
+    expect(await t.run((ctx) => ctx.db.query("rateLimits").collect())).toEqual(
+      [],
+    );
+  });
+
   test("reports they filed are anonymised; reports about them are kept", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob, carol } = await seed(t);
