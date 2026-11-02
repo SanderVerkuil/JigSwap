@@ -427,7 +427,7 @@ diegene jou heeft geblokkeerd. Heb jij diegene geblokkeerd, dan zie je "Je hebt
 _naam_ geblokkeerd." met een knop **Deblokkeren**.
 
 Om een lid te blokkeren of te melden, of een bericht of foto te melden, zie
-[Blokkeren & Melden](/docs/discovering-and-community/blocking-and-reporting).
+[Blokkeren & melden](/docs/discovering-and-community/blocking-and-reporting).
 
 > **Opmerking:** Verwijdert een lid zijn account, dan blijven zijn tekstberichten
 > in je gesprek staan, met als afzender **Verwijderd lid**. Zijn foto's en

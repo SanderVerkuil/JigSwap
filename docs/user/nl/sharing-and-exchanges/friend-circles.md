@@ -14,7 +14,7 @@ ja te zeggen: leden worden uitgenodigd en doen pas mee als ze accepteren.
 
 ## Een kring aanmaken
 
-1. Open **Kringen** en klik op **Kring Aanmaken**.
+1. Open **Kringen** en klik op **Kring aanmaken**.
 2. Vul een **Naam** in van 1 tot 100 tekens. Een teller laat zien hoeveel je
    er hebt gebruikt.
 3. Klik op **Aanmaken**.
@@ -194,12 +194,12 @@ opslaan**. Met **Wissen** gooi je de vinkjes weg die je nog niet hebt
 opgeslagen.
 
 Je kunt ook bij de puzzel zelf beginnen: kies op de pagina van de puzzel, of in
-het **⋯**-menu op de kaart in **Mijn Puzzels**, voor **Delen met kringen…**.
+het **⋯**-menu op de kaart in **Mijn puzzels**, voor **Delen met kringen…**.
 Vink de kringen aan waarmee je hem wilt delen, vink de kringen uit waarmee je
 hem niet meer wilt delen, en klik op **Opslaan**. Kringen waarin je **Alleen
 bekijken** hebt, kun je niet aanvinken.
 
-Wil je vanuit **Mijn Puzzels** veel puzzels tegelijk delen, klik dan op
+Wil je vanuit **Mijn puzzels** veel puzzels tegelijk delen, klik dan op
 **Selecteren**, kies de puzzels en kies **Delen met kring**. Je ziet dan hoeveel
 er zijn gedeeld en welke niet.
 

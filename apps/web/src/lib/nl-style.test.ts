@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
@@ -77,8 +79,6 @@ const ALLOWED: Record<string, readonly string[]> = {
   "household.bulkPermission.setView": ["Alleen"],
   // The What's new panel, by name.
   "whatsNew.announce": ["Wat"],
-  // An example series name, written as a publisher would.
-  "forms.puzzle-form.series.placeholder": ["Collectie"],
 };
 
 type Leaf = readonly [key: string, value: string];
@@ -288,6 +288,86 @@ describe("nl.json", () => {
     const offenders = leaves(nl)
       .filter(([, value]) => value.includes("..."))
       .map(([key, value]) => `${key}: ${value}`);
+    expect(offenders).toEqual([]);
+  });
+});
+
+// The Dutch docs and What's new notes follow the same style: their titles and headings show in the
+// docs nav and page heads, and their bold words quote the app's labels.
+describe("Dutch docs", () => {
+  const DOCS = join(import.meta.dirname, "../../../../docs");
+  const sources = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      return entry.isDirectory()
+        ? sources(path)
+        : /\.md$/.test(entry.name)
+          ? [path]
+          : [];
+    });
+  const files = [
+    ...sources(join(DOCS, "user/nl")),
+    ...sources(join(DOCS, "whats-new")).filter((path) =>
+      path.endsWith(".nl.md"),
+    ),
+  ];
+  const lines = (path: string) => readFileSync(path, "utf8").split("\n");
+
+  // Pages and controls of the app, named inside a sentence-case phrase ("De pagina Voltooiingen",
+  // "De kaart Snel instellen", "bij Mensen"); the example member in the messages page; a platform;
+  // and the letters in "Ctrl + K" and "Gekozen (N)".
+  const NAMED = new Set([
+    "Android",
+    "Berichten",
+    "Bladeren",
+    "K",
+    "Kring",
+    "Mara",
+    "Mensen",
+    "N",
+    "Snel",
+    "Uitnodigen",
+    "Versturen",
+    "Voltooiingen",
+  ]);
+
+  // Frontmatter titles, headings and bold text; "→", "›" and "/" separate labels in a menu path.
+  const phrases = (line: string) => {
+    const heading =
+      /^#{1,6}\s+(.*)$/.exec(line)?.[1] ??
+      /^title:\s*"?(.*?)"?\s*$/.exec(line)?.[1];
+    const bold = [...line.matchAll(/\*\*([^*]+)\*\*/g)].flatMap((match) =>
+      match[1].split(/\s[→›/]\s/),
+    );
+    return heading ? [heading, ...bold] : bold;
+  };
+
+  it("are sentence case outside names and labels named in a phrase", () => {
+    const offenders = files.flatMap((path) =>
+      lines(path).flatMap((line, index) =>
+        phrases(line).flatMap((phrase) => {
+          const hits = titleCaseWords("docs", phrase).filter(
+            (word) => !NAMED.has(word),
+          );
+          return hits.length > 0
+            ? [
+                `${relative(DOCS, path)}:${index + 1}: ${phrase}  [${hits.join(", ")}]`,
+              ]
+            : [];
+        }),
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("call puzzle pieces stukjes", () => {
+    const offenders = files.flatMap((path) =>
+      lines(path).flatMap((line, index) =>
+        /\bstukken\b/i.test(line)
+          ? [`${relative(DOCS, path)}:${index + 1}: ${line.trim()}`]
+          : [],
+      ),
+    );
     expect(offenders).toEqual([]);
   });
 });

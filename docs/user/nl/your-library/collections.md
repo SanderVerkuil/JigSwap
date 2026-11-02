@@ -4,19 +4,19 @@ order: 3
 summary: "Maak benoemde planken, voeg puzzels toe, bekijk collectiestatistieken en deel ze."
 ---
 
-# Collecties — Je Planken Organiseren
+# Collecties — Je planken organiseren
 
 Collecties zijn benoemde planken die je aanmaakt om je kopieën te organiseren.
 
 **Waar:** **Collecties** (`/collections`).
 
 Zolang je nog geen collectie hebt, legt de pagina uit wat een collectie is
-en biedt hij **Nieuwe Collectie** aan.
+en biedt hij **Nieuwe collectie** aan.
 
 ## Een collectie aanmaken
 
 1. Open **Collecties**.
-2. Klik op **Nieuwe Collectie**.
+2. Klik op **Nieuwe collectie**.
 3. Stel in:
    - Een **naam**. **Maken** blijft uit tot de collectie een naam heeft. Heb
      je al een collectie met die naam, dan staat dat onder het veld.
@@ -52,7 +52,7 @@ bevestiging zit een knop **Ongedaan maken** die hem terugzet.
 ## Een puzzel vanuit een collectie openen
 
 Klik je in een collectie op een van je eigen puzzels, dan opent hij op zijn
-pagina onder **Mijn Puzzels**, met de collectie in het kruimelpad zodat je
+pagina onder **Mijn puzzels**, met de collectie in het kruimelpad zodat je
 er zo naar teruggaat.
 
 ## Een collectie bewerken of verwijderen
@@ -64,7 +64,7 @@ er zo naar teruggaat.
   bevestigt. De puzzels erin blijven in je bibliotheek. Je standaardcollectie
   kun je niet verwijderen.
 
-Alleen jij ziet **Puzzels Toevoegen**, **Bewerken** en het **⋯**-menu op de
+Alleen jij ziet **Puzzels toevoegen**, **Bewerken** en het **⋯**-menu op de
 kaarten van je collecties. Anderen die een openbare collectie openen, zien de
 puzzels zonder die knoppen.
 

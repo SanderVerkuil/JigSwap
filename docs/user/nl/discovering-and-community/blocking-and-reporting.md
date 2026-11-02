@@ -1,10 +1,10 @@
 ---
-title: Blokkeren & Melden
+title: Blokkeren & melden
 order: 5
 summary: "Blokkeer leden met wie je geen contact wilt, meld problemen en beheer je blokkeringen."
 ---
 
-# Blokkeren & Melden
+# Blokkeren & melden
 
 Valt iemand je lastig, dan kun je diegene blokkeren, zodat die geen contact
 meer met je kan opnemen. Je kunt ook een lid, een bericht of een foto melden

@@ -1,10 +1,10 @@
 ---
-title: Voltooiingen & Doelen
+title: Voltooiingen & doelen
 order: 4
 summary: "Leg oplossingen vast, maak lopende puzzels af, beoordeel ze en volg je doelen."
 ---
 
-# Voltooiingen & Doelen
+# Voltooiingen & doelen
 
 ## Voltooiingen vastleggen
 
@@ -14,7 +14,7 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
 
 ### Een voltooiing vastleggen
 
-1. Ga naar **Mijn Puzzels**.
+1. Ga naar **Mijn puzzels**.
 2. Klik bij de kopie die je hebt opgelost op **Voltooiing vastleggen**.
 3. Kies in het dialoogvenster **Afgerond** (de standaard) of **Nog bezig**.
    Beide datums staan eerst op vandaag. Bij **Nog bezig** vul je alleen de
@@ -70,7 +70,7 @@ Zo wordt de datum gebruikt die je kiest:
 
 ### De pagina Voltooiingen
 
-De pagina Voltooiingen toont al je oplossingsregistraties, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukken gelegd** en **dit jaar afgerond**.
+De pagina Voltooiingen toont al je oplossingsregistraties, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukjes gelegd** en **dit jaar afgerond**.
 
 Voltooiingen waar je nog mee bezig bent, staan bovenaan onder **Bezig**.
 Daaronder groepeert **Geschiedenis** je afgeronde voltooiingen per jaar, het

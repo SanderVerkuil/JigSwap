@@ -1,18 +1,18 @@
 ---
-title: Puzzels Toevoegen & Importeren
+title: Puzzels toevoegen & importeren
 order: 2
 summary: "Voeg eigen kopieën één voor één of meerdere tegelijk toe, zoek op barcode, importeer via een winkellink en draag bij aan de catalogus."
 ---
 
-# Puzzels Toevoegen & Importeren
+# Puzzels toevoegen & importeren
 
-**Waar:** **Mijn Puzzels → Puzzel Toevoegen** (`/my-puzzles/add`).
+**Waar:** **Mijn puzzels → Puzzel toevoegen** (`/my-puzzles/add`).
 
 Een puzzel toevoegen gaat in twee stappen:
 
 ## Stap 1 — Kiezen of zoeken
 
-1. Klik op **Puzzel Toevoegen**.
+1. Klik op **Puzzel toevoegen**.
 2. Je ziet een keuzepagina. Die toont:
    - **Jouw inzendingen**: puzzels die je aan de catalogus hebt toegevoegd en
      die nog niet zijn goedgekeurd (bovenaan).
@@ -45,7 +45,7 @@ Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 
 **Vul de gegevens handmatig in (of pas de geïmporteerde aan):**
 
-- **Titel**, **merk**, **aantal stukken**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
+- **Titel**, **merk**, **aantal stukjes**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
 - **Beschikbaarheids-chips**: markeer als _voor ruil_, _voor uitlenen_ en/of _te koop_.
 - Een **foto van de doos** (optioneel, voor een nieuwe puzzel in de catalogus) — upload er een, of kies er een die de import heeft gevonden. Na de controle wordt hij de afbeelding van de puzzel in de catalogus. Hij wordt automatisch gecontroleerd (zoals elke foto die je uploadt) voordat iemand hem ziet; een foto die de controle tegenhoudt kan niet worden gebruikt, en zolang de controle nog loopt toont de puzzel zijn standaardafbeelding. Duurt de controle langer, dan krijg je na het opslaan een melding, en bij je eigen puzzels staat op de standaardafbeelding **Wordt gecontroleerd**; je hoeft niets te doen. Foto's van je eigen kopie zet je op de pagina van die kopie, zodra je hem hebt toegevoegd.
 - **Tags** en **notities**.
@@ -57,7 +57,7 @@ Op een groot scherm staan een **live voorbeeldkaart** en een **gereedheidscheckl
 
 ## Meerdere puzzels tegelijk toevoegen
 
-**Waar:** **Mijn Puzzels → Puzzel Toevoegen → Meerdere toevoegen**
+**Waar:** **Mijn puzzels → Puzzel toevoegen → Meerdere toevoegen**
 (`/my-puzzles/add/quick`).
 
 Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.

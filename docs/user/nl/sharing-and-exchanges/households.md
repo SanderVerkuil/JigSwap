@@ -8,10 +8,10 @@ summary: "Deel één puzzelbibliotheek met de mensen met wie je samenwoont, en k
 
 Met een huishouden delen de mensen met wie je samenwoont één
 puzzelbibliotheek. Iedereen in het huishouden ziet elkaars puzzels in
-**Mijn Puzzels**. Puzzels blijven van wie ze heeft toegevoegd, en
+**Mijn puzzels**. Puzzels blijven van wie ze heeft toegevoegd, en
 puzzelsessies blijven persoonlijk.
 
-**Waar:** **Mijn Bibliotheek** → **Huishouden** (`/household`). De pagina heeft
+**Waar:** **Mijn bibliotheek** → **Huishouden** (`/household`). De pagina heeft
 vier tabbladen: **Puzzels**, **Leden**, **Toegang** en **Instellingen**. Hij
 opent op **Puzzels**.
 
@@ -180,10 +180,10 @@ zijn of haar foto en naam.
 
 - Klik op een persoon boven de puzzels om alleen diens puzzels te zien, of op
   **Iedereen** voor alle.
-- Kies **Beschikbaar**, **Te Ruilen** of **Te Leen** om alleen puzzels te zien
+- Kies **Beschikbaar**, **Te ruilen** of **Te leen** om alleen puzzels te zien
   die worden aangeboden.
 - Klik op een puzzel om hem te openen.
-- Klik op **⋯** op een kaart voor dezelfde acties als in **Mijn Puzzels**: een
+- Klik op **⋯** op een kaart voor dezelfde acties als in **Mijn puzzels**: een
   puzzelsessie starten, afronden of vastleggen op elke puzzel; bij je eigen
   puzzels ook bewerken, verwijderen en aan een collectie toevoegen. De puzzel
   van een huisgenoot kun je alleen bewerken als de eigenaar hem op
@@ -192,8 +192,8 @@ zijn of haar foto en naam.
 ## Wat leden van een huishouden kunnen zien en doen
 
 - Iedereen ziet ieders puzzels op het tabblad **Puzzels** van het huishouden
-  en in **Mijn Puzzels**, ook exemplaren die op privé staan. In
-  **Mijn Puzzels** staat bij de puzzel van een huisgenoot zijn of haar foto en
+  en in **Mijn puzzels**, ook exemplaren die op privé staan. In
+  **Mijn puzzels** staat bij de puzzel van een huisgenoot zijn of haar foto en
   naam; puzzels zonder naam zijn van jou. Kies in het menu naast de
   weergaveknoppen **Alles**, alleen **Van mij** of alleen
   **Van huisgenoten**. De link **Alle puzzels in je huishouden** opent het

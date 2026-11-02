@@ -7,7 +7,7 @@ category: feature
 highlight: true
 notify: true
 cta:
-  label: "Mijn Puzzels openen"
+  label: "Mijn puzzels openen"
   to: /my-puzzles
 ---
 

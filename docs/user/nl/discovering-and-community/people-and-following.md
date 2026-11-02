@@ -1,12 +1,12 @@
 ---
-title: Mensen & Volgen
+title: Mensen & volgen
 order: 2
 summary: "Bouw je netwerk op, nodig vrienden uit, volg leden, volg de activiteitenfeed en laat opmerkingen en beoordelingen achter."
 ---
 
-# Sociale & Communityfuncties
+# Sociale & communityfuncties
 
-## Mensen / Sociale Hub
+## Mensen / sociale hub
 
 **Waar:** **Mensen** (`/people`).
 
@@ -43,7 +43,7 @@ lenen of te verkopen. Wissel tussen de twee met het filter **Alle puzzels** en
 
 Leden die elkaar niet volgen, zien alleen de aangeboden puzzels. Zie voor de
 details
-[Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+[Zichtbaarheid & privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Vrienden uitnodigen
 

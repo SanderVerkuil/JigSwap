@@ -12,7 +12,7 @@ cta:
 Nieuwe leden krijgen nu **Snel instellen**, een korte start om op weg te gaan.
 Het meeste ervan helpt iedereen, dus dit kun je vandaag al gebruiken:
 
-- **Meerdere puzzels tegelijk toevoegen.** Kies op de pagina Puzzel Toevoegen
+- **Meerdere puzzels tegelijk toevoegen.** Kies op de pagina Puzzel toevoegen
   voor **Meerdere toevoegen**, vink tot 25 puzzels uit de catalogus aan en voeg
   ze in één keer toe. Per puzzel kun je aangeven dat hij beschikbaar is om te
   ruilen.

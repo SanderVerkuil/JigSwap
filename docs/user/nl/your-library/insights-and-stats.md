@@ -1,10 +1,10 @@
 ---
-title: Inzichten & Statistieken
+title: Inzichten & statistieken
 order: 5
 summary: "Maak van je activiteit een persoonlijk dashboard en exporteer je gegevens."
 ---
 
-# Inzichten & Statistieken
+# Inzichten & statistieken
 
 **Waar:** **Inzichten** (`/insights`).
 
@@ -38,7 +38,7 @@ plekken:
 - onderaan **Inzichten**;
 - op de pagina **Privacy en veiligheid** van je account (open je accountmenu →
   **Account beheren** → **Privacy en veiligheid**), onder **Je gegevens**;
-- in snel zoeken (**Cmd/Ctrl + K**), onder **Snelle Acties**: als je het kiest,
+- in snel zoeken (**Cmd/Ctrl + K**), onder **Snelle acties**: als je het kiest,
   begint de download meteen.
 
 Het bestand is altijd compleet, hoe lang je lijsten ook zijn. De knop laat zien

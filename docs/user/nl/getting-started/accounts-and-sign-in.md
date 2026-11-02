@@ -1,10 +1,10 @@
 ---
-title: Accounts & Inloggen
+title: Accounts & inloggen
 order: 1
 summary: "Maak een account aan, log in en uit, en begrijp beveiligde pagina's."
 ---
 
-# Aan de slag — Account & Inloggen
+# Aan de slag — Account & inloggen
 
 JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt een account nodig om de persoonlijke bibliotheek, de uitwisselingen en de communityfuncties te gebruiken.
 
@@ -32,7 +32,7 @@ Deze pagina's kan iedereen lezen zonder in te loggen:
 - Deze handleiding ([Documentatie](/docs)).
 - **Profielen van leden** (`/members/…`). Hoeveel een profiel laat zien,
   hangt af van de instellingen van het lid; zie
-  [Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+  [Zichtbaarheid & privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 - [Contact](/contact), het [Privacybeleid](/privacy) en de
   [Algemene voorwaarden](/terms).
 

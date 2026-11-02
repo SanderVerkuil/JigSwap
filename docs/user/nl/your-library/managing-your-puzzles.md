@@ -1,29 +1,29 @@
 ---
-title: Je Puzzels Beheren
+title: Je puzzels beheren
 order: 1
 summary: "Bekijk je eigen kopieën, zoek, sorteer en filter ze, en verken de detailpagina van een kopie."
 ---
 
-# Je Puzzelbibliotheek Beheren
+# Je puzzelbibliotheek beheren
 
 Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk bezit. (Een "kopie" is één fysieke puzzel die je bezit — het platform houdt elke kopie apart bij, zodat je geschiedenis bij jou blijft.)
 
-**Waar:** **Mijn Puzzels** (`/my-puzzles`).
+**Waar:** **Mijn puzzels** (`/my-puzzles`).
 
 ## Je puzzels bekijken
 
-1. Open **Mijn Puzzels** vanuit de zijbalk of de tabbalk.
+1. Open **Mijn puzzels** vanuit de zijbalk of de tabbalk.
 2. Wissel tussen de weergaven **raster** en **lijst**.
 3. Typ in het **zoekvak** om puzzels te vinden op titel, merk of tag. Elk
    woord dat je typt moet erin voorkomen; hoofdletters en accenten maken niet
    uit, en een tag mag je met of zonder **#** typen.
 4. Kies een volgorde in het **sorteermenu**: **Onlangs toegevoegd** (de
-   standaard), **Titel A–Z** of **Minste stukken eerst**.
+   standaard), **Titel A–Z** of **Minste stukjes eerst**.
 5. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
    - **Alles**
    - **Beschikbaar**
-   - **Te Ruilen**
-   - **Te Leen**
+   - **Te ruilen**
+   - **Te leen**
    - **Bezig**
    - **Voltooid**
 6. Zit je in een huishouden, dan kies je in het menu **Van wie** of je de
@@ -166,7 +166,7 @@ Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is
 zichtbaar zolang het aanbod loopt. Koos je **Privé**, dan blijft dat je keuze:
 trek je elk aanbod in, dan is de kopie weer privé. Zie voor het volledige
 overzicht
-[Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+[Zichtbaarheid & privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Kopieën van je huishouden
 
