@@ -78,7 +78,10 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
         </span>
       </div>
       {failed ? (
-        <InviteLinkError onRetry={refetch} />
+        <InviteLinkError
+          onRetry={refetch}
+          className="items-center text-center"
+        />
       ) : (
         <>
           {/* Always-white card: ≥16px padding is the QR quiet zone. */}

@@ -185,9 +185,11 @@ describe("QR card while the link is on its way or refused", () => {
   it("says so when the link can't be fetched, and Try again asks again", async () => {
     mocks.mutation.mockRejectedValueOnce(new Error("offline"));
     renderDialog("mara");
-    expect((await screen.findByRole("alert")).textContent).toContain(
-      en.invite.linkError,
-    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain(en.invite.linkError);
+    // Everything in this card is centred.
+    expect(alert.classList).toContain("items-center");
+    expect(alert.classList).toContain("text-center");
     // Nothing to scan or copy, so the hints and actions about the code are gone too.
     expect(screen.queryByText(en.invite.scanHint)).toBeNull();
     expect(screen.queryByRole("button", { name: "Copy link" })).toBeNull();

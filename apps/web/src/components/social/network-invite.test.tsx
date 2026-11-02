@@ -61,4 +61,14 @@ describe("NetworkInvite", () => {
     );
     expect(mocks.mutation).toHaveBeenLastCalledWith(MY_INVITE_LINK, {});
   });
+
+  // It sits between a left-aligned paragraph and a left-aligned form on both of its surfaces.
+  it("lines the refusal up with the section around it", async () => {
+    mocks.mutation.mockRejectedValueOnce(new Error("offline"));
+    renderInvite();
+    const alert = await screen.findByRole("alert");
+    expect(alert.classList).toContain("items-start");
+    expect(alert.classList).not.toContain("items-center");
+    expect(alert.classList).not.toContain("text-center");
+  });
 });
