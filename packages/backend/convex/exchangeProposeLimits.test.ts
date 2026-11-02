@@ -200,6 +200,31 @@ describe("exchange.propose rate limits", () => {
     await flush(t);
   });
 
+  // SEC-85: the holder is the one blocked member past canViewCopy. Without the block they get the
+  // domain's refusal of a lent-out copy, so a spent pair must not answer them differently.
+  for (const blocker of ["attacker", "owner"] as const) {
+    test(`a holder with the pair spent gets the same refusal when the ${blocker} blocks`, async () => {
+      const t = convexTest(schema, modules);
+      const s = await seed(t);
+      await t.run((ctx) => ctx.db.patch(s.copyA, { heldBy: s.attacker }));
+      await spend(t, "exchangePair", `${s.attacker}:${s.owner}`);
+
+      const unblocked = await errorCodeOf(propose(t, s.copyA));
+      await t.run((ctx) =>
+        ctx.db.insert("blocks", {
+          blockerId: s[blocker],
+          blockedId: blocker === "owner" ? s.attacker : s.owner,
+          createdAt: Date.now(),
+        }),
+      );
+      const blocked = await errorCodeOf(propose(t, s.copyA));
+
+      expect(unblocked).toBe("CopyNotAvailable");
+      expect(blocked).toBe(unblocked);
+      expect(await exchangeCount(t)).toBe(0);
+    });
+  }
+
   test("the hourly member bucket caps proposals across owners", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);

@@ -93,16 +93,20 @@ export const propose = mutation({
     }
     // The per-owner cap, so a propose/cancel loop can't keep opening threads with one owner. Only
     // after the block and reachability checks: a RateLimited answer on a copy the initiator can't
-    // see would tell them it belongs to an owner they have already reached.
-    await enforceRateLimit(
-      ctx,
-      "exchangePair",
-      `${initiatorId}:${recipientId}`,
-      {
-        pairActorId: initiatorId as unknown as Id<"users">,
-        pairTargetId: recipientId,
-      },
-    );
+    // see would tell them it belongs to an owner they have already reached. The member holding the
+    // copy isn't charged: the domain refuses them, so they open no thread, and a RateLimited here
+    // would differ from the CopyNotAvailable a blocked holder gets above, which shows the block.
+    if (requested.heldBy !== initiatorUserId) {
+      await enforceRateLimit(
+        ctx,
+        "exchangePair",
+        `${initiatorId}:${recipientId}`,
+        {
+          pairActorId: initiatorId as unknown as Id<"users">,
+          pairTargetId: recipientId,
+        },
+      );
+    }
 
     const proposeExchange = makeProposeExchange({
       exchanges: convexExchangeRepository(ctx),
