@@ -8,7 +8,7 @@ import {
 } from "./events";
 import { CompletionId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 import { Photo } from "./photo";
-import { SolveDuration } from "./solve-duration";
+import { isSpanLongerThanAnySolve, SolveDuration } from "./solve-duration";
 
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
@@ -431,9 +431,10 @@ export class Completion {
   }
 
   // Reconcile a supplied duration with the start/end span. Returns the resolved minutes. An
-  // explicit minutes value must be a positive number. An explicit end-before-start is rejected
-  // before this helper is called, so the only span-derived cases are start < end (actual span)
-  // and start == end (date-only same-day completion, no explicit time given).
+  // explicit minutes value must be a valid SolveDuration. An explicit end-before-start is rejected
+  // before this helper is called, so the only span-derived cases are start < end (actual span, with
+  // no duration when it is too long to be a solve time) and start == end (date-only same-day
+  // completion, no explicit time given).
   private static resolveDuration(
     start: Date,
     end: Date,
@@ -444,6 +445,7 @@ export class Completion {
       if (duration.isErr) return err(duration.error);
       return ok(duration.value.minutes);
     }
+    if (isSpanLongerThanAnySolve(start, end)) return ok(undefined);
     if (end.getTime() > start.getTime()) {
       const duration = SolveDuration.between(start, end);
       if (duration.isErr) return err(duration.error);

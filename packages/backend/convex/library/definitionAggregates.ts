@@ -3,6 +3,7 @@
 // getPuzzleDefinitionView.ts so the two views can't drift on the shared math.
 
 import type { CopyOfferSwapType } from "@jigswap/contracts";
+import { isPlausibleSolveMinutes, MAX_SOLVE_MINUTES } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { profileVisibilityOf } from "../social/privacy";
@@ -14,23 +15,30 @@ const MS_PER_DAY = 86_400_000;
 /** Round to 1 decimal place. */
 export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
+/** The longest solve an average counts, in days: MAX_SOLVE_MINUTES. */
+const MAX_FINISH_DAYS = MAX_SOLVE_MINUTES / 1440;
+
 /** Whole-day solve duration: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's the
  * domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
  * explicit-vs-derived and applies the same-day => 1 day floor), converted to whole days. The
- * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration.
- * A non-positive fallback result means the span is unusable as a duration (e.g. a legacy same-day
- * row) and returns null (unknown) rather than a misleading 0. Null when neither is recorded. */
+ * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration,
+ * and for dates too far apart to have a duration. A fallback result that isn't positive means the
+ * span is unusable as a duration (e.g. a legacy same-day row) and returns null (unknown) rather than
+ * a misleading 0. So does a number no solve can have taken, stored before the domain bounded it:
+ * one row must not swamp a definition's public average. Null when neither is recorded. */
 export const finishDaysOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
 }): number | null => {
   if (c.completionTimeMinutes != null) {
-    return Math.round(c.completionTimeMinutes / 1440);
+    return isPlausibleSolveMinutes(c.completionTimeMinutes)
+      ? Math.round(c.completionTimeMinutes / 1440)
+      : null;
   }
   if (c.endDate != null) {
     const days = Math.round((c.endDate - c.startDate) / MS_PER_DAY);
-    return days > 0 ? days : null;
+    return days > 0 && days <= MAX_FINISH_DAYS ? days : null;
   }
   return null;
 };
@@ -186,7 +194,8 @@ export const completionTotalsOf = async (
 };
 
 /** Completion aggregate shown on the definition pages (count of finished solves + average
- * whole-day duration), from its sums. */
+ * whole-day duration), from its sums. Stored sums that average past any solve were written before
+ * finishDaysOf left such rows out: unknown until the row's next recompute (nightly at the latest). */
 export const completionStatsFromTotals = ({
   completedCount,
   finishDaysSum,
@@ -194,11 +203,14 @@ export const completionStatsFromTotals = ({
 }: CompletionTotals): {
   totalCompletions: number;
   avgCompletionDays: number | null;
-} => ({
-  totalCompletions: completedCount,
-  avgCompletionDays:
-    finishDaysCount > 0 ? round1(finishDaysSum / finishDaysCount) : null,
-});
+} => {
+  const average = finishDaysCount > 0 ? finishDaysSum / finishDaysCount : null;
+  return {
+    totalCompletions: completedCount,
+    avgCompletionDays:
+      average !== null && average <= MAX_FINISH_DAYS ? round1(average) : null,
+  };
+};
 
 /** Completion aggregate for a definition, read live. */
 export const completionStatsOf = async (

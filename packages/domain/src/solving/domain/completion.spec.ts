@@ -188,6 +188,25 @@ describe("Completion.record", () => {
     if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
   });
 
+  it("rejects an explicit completionTimeMinutes past the longest solve time", () => {
+    const r = recordValid({ completionTimeMinutes: Number.MAX_VALUE });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidDuration");
+  });
+
+  it("keeps the dates of a span too long to be a solve time, without a duration", () => {
+    const r = recordValid({
+      startDate: new Date("2001-03-01T10:00:00Z"),
+      endDate: END,
+    });
+    expect(r.isOk).toBe(true);
+    if (!r.isOk) return;
+    expect(r.value.toState().startDate).toEqual(
+      new Date("2001-03-01T10:00:00Z"),
+    );
+    expect(r.value.toState().completionTimeMinutes).toBeUndefined();
+  });
+
   it("rejects a derived sub-30-second span with InvalidDuration", () => {
     const result = recordValid({
       endDate: new Date(START.getTime() + 10_000), // 10s span, no explicit minutes
@@ -268,6 +287,21 @@ describe("Completion.finish", () => {
     const outcome = started.value.finish(START, NOW, 15);
     expect(outcome.isOk).toBe(true);
     expect(started.value.toState().completionTimeMinutes).toBe(15);
+  });
+
+  it("finishes a solve started so long ago that its span is no solve time", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: new Date("2001-03-01T10:00:00Z"),
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    const result = started.value.finish(END, NOW);
+    expect(result.isOk).toBe(true);
+    expect(started.value.isCompleted).toBe(true);
+    expect(started.value.toState().completionTimeMinutes).toBeUndefined();
   });
 
   it("rejects finishing with an invalid explicit duration", () => {
