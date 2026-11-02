@@ -1527,7 +1527,6 @@
     "fieldAvailability": "Beschikbaarheid",
     "textPlaceholder": "Titel, merk of thema…",
     "card": {
-      "request": "Aanvragen",
       "messageOwner": "Bericht sturen aan de eigenaar",
       "messageOwnerName": "Bericht sturen aan {name}",
       "favorite": "Favoriet"

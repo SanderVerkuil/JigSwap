@@ -1527,7 +1527,6 @@
     "fieldAvailability": "Availability",
     "textPlaceholder": "Title, brand or theme…",
     "card": {
-      "request": "Request",
       "messageOwner": "Message the owner",
       "messageOwnerName": "Message {name}",
       "favorite": "Favorite"
