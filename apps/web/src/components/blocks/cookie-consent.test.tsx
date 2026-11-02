@@ -194,6 +194,14 @@ describe("CookieConsent (mini)", () => {
     expect(region()).toBeNull();
   });
 
+  it("lifts itself above the app's tab bar on phones", () => {
+    render(banner());
+
+    expect(region()?.className).toContain(
+      "max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)]",
+    );
+  });
+
   it("goes away when the browser discards the cookie, instead of staying for the session", () => {
     const cookie = vi
       .spyOn(document, "cookie", "set")

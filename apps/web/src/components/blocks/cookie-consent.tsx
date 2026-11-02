@@ -158,7 +158,10 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
       className: cn(
         containerClasses,
         variant === "mini"
-          ? "left-0 right-0 sm:left-4 bottom-4 w-full sm:max-w-3xl"
+          ? // Inside the app on phones it sits above the bottom tab bar (its
+            // published height: 57px, more in the installed app) and its raised
+            // "+" (12px overhang), with an 8px gap.
+            "left-0 right-0 sm:left-4 bottom-4 max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)] w-full sm:max-w-3xl"
           : "bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 w-full sm:max-w-md",
       ),
       ...props,
