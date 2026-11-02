@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { CUSTOM_LINK_FIELD_ID } from "@/lib/profile-search";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
@@ -356,10 +357,10 @@ function EditProfileFormLoaded({
         />
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="profile-slug">{t("slug.label")}</Label>
+        <Label htmlFor={CUSTOM_LINK_FIELD_ID}>{t("slug.label")}</Label>
         <Input
           ref={slugInput}
-          id="profile-slug"
+          id={CUSTOM_LINK_FIELD_ID}
           value={slug}
           onChange={(e) => {
             setSlugValue(e.target.value);

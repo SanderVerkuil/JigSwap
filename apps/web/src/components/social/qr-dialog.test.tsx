@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
+import { CUSTOM_LINK_FIELD_ID } from "@/lib/profile-search";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   cleanup,
@@ -13,7 +14,7 @@ import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
-import { QrDialogAutoOpen } from "./qr-dialog";
+import { QrDialog, QrDialogAutoOpen } from "./qr-dialog";
 
 const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
@@ -165,6 +166,43 @@ describe("QR dialog", () => {
     );
     expect(screen.queryByText("Copied!")).toBeNull();
     expect(status()?.textContent).toBe("");
+  });
+});
+
+// Already on /profile?edit=link the prompt changes no URL, so the form's own focus doesn't run.
+describe("QR dialog's custom-link prompt with the form already open", () => {
+  const renderWithField = () =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <input id={CUSTOM_LINK_FIELD_ID} aria-label="field" />
+          <QrDialog memberId="m1" username={null} handle={undefined} />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+
+  const trigger = () =>
+    screen.getByRole("button", { name: en.invite.showMyQr, hidden: true });
+
+  it("lands on the field, not back on the trigger", async () => {
+    renderWithField();
+    fireEvent.click(trigger());
+    fireEvent.click(
+      await screen.findByRole("link", { name: en.invite.setCustomLink }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(document.activeElement?.id).toBe(CUSTOM_LINK_FIELD_ID),
+    );
+  });
+
+  it("still returns focus to the trigger on an ordinary close", async () => {
+    renderWithField();
+    fireEvent.click(trigger());
+    await screen.findByRole("link", { name: en.invite.setCustomLink });
+    fireEvent.click(screen.getByRole("button", { name: en.common.close }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(trigger()));
   });
 });
 

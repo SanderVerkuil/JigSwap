@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { CUSTOM_LINK_FIELD_ID } from "@/lib/profile-search";
 import { Link } from "@tanstack/react-router";
 import { QrCode, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { CopyLinkButton } from "./copy-link-button";
 import { InviteLinkError } from "./invite-link-error";
@@ -159,6 +160,7 @@ export function QrDialog(props: QrDialogProps) {
   // Controlled so the custom-link prompt can close the dialog before it routes to /profile —
   // otherwise it would linger open over that page.
   const [open, setOpen] = useState(false);
+  const choseCustomLink = useRef(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -168,10 +170,28 @@ export function QrDialog(props: QrDialogProps) {
           {t("showMyQr")}
         </Button>
       </DialogTrigger>
-      <DialogContent className={DIALOG_CONTENT_CLASS}>
+      <DialogContent
+        className={DIALOG_CONTENT_CLASS}
+        onCloseAutoFocus={(event) => {
+          if (!choseCustomLink.current) return;
+          choseCustomLink.current = false;
+          // With the field already open the URL may not change (/profile?edit=link), so nothing
+          // else moves focus. Without it, the form focuses its field itself when it mounts.
+          const field = document.getElementById(CUSTOM_LINK_FIELD_ID);
+          if (!field) return;
+          event.preventDefault();
+          field.focus();
+        }}
+      >
         <div className={DIALOG_BODY_CLASS}>
           <DialogTitle className="sr-only">{t("dialogTitle")}</DialogTitle>
-          <QrCard {...props} onNavigate={() => setOpen(false)} />
+          <QrCard
+            {...props}
+            onNavigate={() => {
+              choseCustomLink.current = true;
+              setOpen(false);
+            }}
+          />
         </div>
       </DialogContent>
     </Dialog>
