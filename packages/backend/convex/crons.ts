@@ -92,7 +92,8 @@ crons.daily(
 
 // Old notifications (read after 180 days, any after 365): DRY RUN only, weekly, logging a capped
 // sample of what would be deleted (notifications/retention). Switching to "delete" waits for the
-// owner to approve the periods and add the retention line to the privacy policy.
+// owner to approve the periods and add the retention line to the privacy policy, and only deletes
+// once RETENTION_ENFORCE also names "notifications" (lib/retention).
 crons.weekly(
   "count expired notifications (dry run)",
   { dayOfWeek: "monday", hourUTC: 4, minuteUTC: 15 },

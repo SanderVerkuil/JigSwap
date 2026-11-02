@@ -64,9 +64,13 @@ const remaining = (t: T) =>
 const exists = (t: T, id: Id<"notifications">) =>
   t.run(async (ctx) => (await ctx.db.get(id)) !== null);
 
-// Run the sweep the way the cron does, drain its self-scheduled pages, and return the one wide event
-// it logged at the end.
-const sweep = async (t: T, args: { mode?: "dry-run" | "delete" } = {}) => {
+// Run the sweep the way the cron does, drain its self-scheduled pages, and return the wide events
+// named `event` it logged (by default the one per-run event logged at the end).
+const sweep = async (
+  t: T,
+  args: { mode?: "dry-run" | "delete" } = {},
+  event = "notifications.retentionSweep",
+) => {
   const log = vi.spyOn(console, "log").mockImplementation(() => {});
   vi.useFakeTimers();
   try {
@@ -77,13 +81,19 @@ const sweep = async (t: T, args: { mode?: "dry-run" | "delete" } = {}) => {
     await t.finishAllScheduledFunctions(vi.runAllTimers);
     const events = log.mock.calls
       .map(([line]) => (typeof line === "string" ? line : ""))
-      .filter((line) => line.includes('"notifications.retentionSweep"'))
+      .filter((line) => line.includes(`"${event}"`))
       .map((line) => JSON.parse(line) as Record<string, unknown>);
     return events;
   } finally {
     vi.useRealTimers();
     log.mockRestore();
   }
+};
+
+// Deleting takes both the "delete" mode and the shared RETENTION_ENFORCE switch.
+const sweepDeleting = (t: T, event?: string) => {
+  vi.stubEnv("RETENTION_ENFORCE", "notifications");
+  return sweep(t, { mode: "delete" }, event);
 };
 
 const MIXED: Seed[] = [
@@ -138,7 +148,7 @@ describe("notification retention sweep", () => {
     const ann = await seedMember(t, "clerk_ann");
     const ids = await seedRows(t, ann, MIXED);
 
-    const events = await sweep(t, { mode: "delete" });
+    const events = await sweepDeleting(t);
 
     const expired = new Set(["oldRead", "ancientUnread", "ancientRead"]);
     for (const { label } of MIXED) {
@@ -149,6 +159,96 @@ describe("notification retention sweep", () => {
       expired_read: 2,
       expired_unread: 1,
       deleted: 3,
+    });
+  });
+
+  test.each([undefined, "reports, domainEvents"])(
+    'mode "delete" stays a dry run unless RETENTION_ENFORCE enables it (%s)',
+    async (enforce) => {
+      const t = convexTest(schema, modules);
+      const ann = await seedMember(t, "clerk_ann");
+      await seedRows(t, ann, MIXED);
+      if (enforce) vi.stubEnv("RETENTION_ENFORCE", enforce);
+
+      const events = await sweep(t, { mode: "delete" });
+
+      expect(await remaining(t)).toBe(MIXED.length);
+      expect(events[0]).toMatchObject({
+        mode: "dry-run",
+        expired_read: 2,
+        expired_unread: 1,
+        deleted: 0,
+      });
+    },
+  );
+
+  test('RETENTION_ENFORCE "all" deletes nothing while the cron passes "dry-run"', async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    await seedRows(t, ann, MIXED);
+    vi.stubEnv("RETENTION_ENFORCE", "all");
+
+    const events = await sweep(t, { mode: "dry-run" });
+
+    expect(await remaining(t)).toBe(MIXED.length);
+    expect(events[0]).toMatchObject({ mode: "dry-run", deleted: 0 });
+  });
+
+  test('RETENTION_ENFORCE "all" enables a "delete" run', async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    await seedRows(t, ann, MIXED);
+    vi.stubEnv("RETENTION_ENFORCE", "all");
+
+    const events = await sweep(t, { mode: "delete" });
+
+    expect(await remaining(t)).toBe(MIXED.length - 3);
+    expect(events[0]).toMatchObject({ mode: "delete", deleted: 3 });
+  });
+
+  test("every page logs the shared retention.sweep event", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await seedMember(t, "clerk_ann");
+    await seedRows(
+      t,
+      ann,
+      Array.from({ length: RETENTION_SWEEP_PAGE + 1 }, (_, i) => ({
+        label: `r${i}`,
+        ageDays: 200,
+        isRead: true,
+      })),
+    );
+
+    const dryRun = await sweep(t, {}, "retention.sweep");
+    expect(dryRun).toHaveLength(2);
+    expect(dryRun[0]).toMatchObject({
+      sweep: "notifications",
+      due: RETENTION_SWEEP_PAGE,
+      acted: 0,
+      dry_run: true,
+      is_done: false,
+    });
+    expect(dryRun[1]).toMatchObject({
+      due: 1,
+      acted: 0,
+      dry_run: true,
+      is_done: true,
+    });
+
+    const deleting = await sweepDeleting(t, "retention.sweep");
+    expect(deleting).toHaveLength(2);
+    expect(deleting[0]).toMatchObject({
+      sweep: "notifications",
+      due: RETENTION_SWEEP_PAGE,
+      acted: RETENTION_SWEEP_PAGE,
+      dry_run: false,
+      is_done: false,
+    });
+    expect(deleting[1]).toMatchObject({
+      due: 1,
+      acted: 1,
+      dry_run: false,
+      is_done: true,
     });
   });
 
@@ -166,7 +266,7 @@ describe("notification retention sweep", () => {
     await seedRows(t, ben, old(150, true));
     await seedRows(t, ben, old(60, false)); // unread under a year: kept
 
-    const events = await sweep(t, { mode: "delete" });
+    const events = await sweepDeleting(t);
 
     expect(await remaining(t)).toBe(60);
     expect(events).toHaveLength(1);
@@ -222,7 +322,7 @@ describe("notification retention sweep", () => {
       })),
     );
 
-    const events = await sweep(t, { mode: "delete" });
+    const events = await sweepDeleting(t);
 
     expect(await remaining(t)).toBe(0);
     expect(events[0]).toMatchObject({
@@ -265,7 +365,7 @@ describe("notification retention sweep", () => {
       { label: "b", ageDays: 100, isRead: true },
     ]);
 
-    const events = await sweep(t, { mode: "delete" });
+    const events = await sweepDeleting(t);
 
     expect(await remaining(t)).toBe(2);
     expect(events[0]).toMatchObject({ scanned: 0, deleted: 0, pages: 1 });
