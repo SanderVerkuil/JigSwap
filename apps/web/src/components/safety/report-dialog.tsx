@@ -268,9 +268,8 @@ function ReportForm({
 
       {/* The reported context, read-only. */}
       {"snippet" in target ? (
-        // ph-no-capture: the quoted text, a private message included, stays
-        // out of PostHog.
-        <div className="ph-no-capture flex flex-col gap-1.5">
+        // ph-no-capture on the quote: a private message stays out of PostHog.
+        <div className="flex flex-col gap-1.5">
           {target.kind !== "message" && (
             <p className="text-muted-foreground text-sm">
               {t(
@@ -281,7 +280,7 @@ function ReportForm({
               )}
             </p>
           )}
-          <blockquote className="bg-muted text-muted-foreground line-clamp-4 rounded-md border-l-4 px-3 py-2 text-sm break-words whitespace-pre-wrap">
+          <blockquote className="ph-no-capture bg-muted text-muted-foreground line-clamp-4 rounded-md border-l-4 px-3 py-2 text-sm break-words whitespace-pre-wrap">
             {target.snippet}
           </blockquote>
         </div>
