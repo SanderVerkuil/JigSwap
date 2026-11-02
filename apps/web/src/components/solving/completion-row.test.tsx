@@ -57,7 +57,6 @@ const row = (over: Partial<CompletionRowData> = {}): CompletionRowData => ({
   puzzleId: "puzzle-1" as CompletionRowData["puzzleId"],
   startDate: Date.UTC(2026, 9, 28),
   endDate: Date.UTC(2026, 9, 29),
-  photos: [],
   isCompleted: true,
   createdAt: NOW,
   updatedAt: NOW,
