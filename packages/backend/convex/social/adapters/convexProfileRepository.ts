@@ -1,7 +1,6 @@
 import type { MemberId, Profile, ProfileRepository } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
-import { markOwnerListingsChange } from "../../library/definitionStats";
 import { scheduleOwnerListingSync } from "../../library/ownerListingVisibility";
 import { profileToDomain, profileToRow } from "./mappers";
 
@@ -30,9 +29,8 @@ export const convexProfileRepository = (
     else await ctx.db.insert("profiles", row);
     // Absent means public. Only a public owner's open copies count as public listings in the
     // catalog's availability numbers, so those definitions are re-counted, and the copies move
-    // between Browse's public and private candidate ranges.
+    // between Browse's public and private candidate ranges. The sync does both.
     if ((existing?.visibility ?? "public") !== (row.visibility ?? "public")) {
-      await markOwnerListingsChange(ctx, row.memberId);
       await scheduleOwnerListingSync(ctx, row.memberId);
     }
   },

@@ -1332,6 +1332,7 @@
       "nowPrivate": "Je profiel is nu privé",
       "undo": "Ongedaan maken",
       "saveError": "Het is niet gelukt om te wijzigen wie je profiel kan zien. Probeer het opnieuw.",
+      "rateLimited": "Je hebt dit de laatste tijd vaak gewijzigd. Probeer het later opnieuw.",
       "inviteLink": "Uitnodigingslink",
       "inviteLinkHelp": "Wie je QR-code of uitnodigingslink opent, kan met één tik zorgen dat jullie elkaar volgen. Reset de link als je wilt dat links en QR-codes die je al hebt gedeeld niet meer werken.",
       "resetConfirmTitle": "Je uitnodigingslink resetten?",

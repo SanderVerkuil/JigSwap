@@ -155,3 +155,24 @@ describe("updateCopySharing", () => {
     expect(ownedPuzzles[0].ownerId).toBe(alice);
   });
 });
+
+describe("setProfileVisibility", () => {
+  const flip = (visibility: "public" | "private") =>
+    asMe().mutation(api.social.setProfileVisibility.setProfileVisibility, {
+      visibility,
+    });
+
+  test("allows an hour's worth and refuses the next one", async () => {
+    for (let i = 0; i < RATE_LIMITS.profileVisibility.max; i++) {
+      await flip(i % 2 === 0 ? "private" : "public");
+    }
+    await expectRateLimited(flip("private"));
+    const row = await t.run((ctx) =>
+      ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", me))
+        .unique(),
+    );
+    expect(row?.visibility).toBe("public");
+  });
+});

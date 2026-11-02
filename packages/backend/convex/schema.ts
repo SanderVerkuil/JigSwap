@@ -1758,6 +1758,9 @@ export default defineSchema({
     // Ordered, curated set of the member's owned copies featured on their profile shelf
     // (sub-project ④). Optional so existing rows validate; absent/empty = uncurated (recent-6 fallback).
     featuredCopyIds: v.optional(v.array(v.id("ownedPuzzles"))),
+    // Set while library/ownerListingVisibility is re-stamping this member's copies after a visibility
+    // change, so a flip that lands meanwhile doesn't start a second run. Absent otherwise.
+    listingSyncSince: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_member", ["memberId"])

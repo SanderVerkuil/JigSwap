@@ -16,6 +16,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { RotateCcw, Shield } from "lucide-react";
@@ -51,13 +52,16 @@ export function PrivacySection() {
   const shown = change.isPending ? change.variables.visibility : stored;
   const savedMessage = (visibility: Visibility) =>
     visibility === "private" ? t("nowPrivate") : t("nowPublic");
+  // More changes in an hour than the server takes (backend lib/rateLimits profileVisibility).
+  const failureMessage = (error: unknown) =>
+    t(convexErrorCode(error) === "RateLimited" ? "rateLimited" : "saveError");
 
   const undo = async (previous: Visibility) => {
     try {
       await setVisibility({ visibility: previous });
       toast.success(savedMessage(previous));
-    } catch {
-      toast.error(t("saveError"));
+    } catch (error) {
+      toast.error(failureMessage(error));
     }
   };
 
@@ -69,8 +73,8 @@ export function PrivacySection() {
       toast.success(savedMessage(next), {
         action: { label: t("undo"), onClick: () => void undo(previous) },
       });
-    } catch {
-      toast.error(t("saveError"));
+    } catch (error) {
+      toast.error(failureMessage(error));
     }
   };
 

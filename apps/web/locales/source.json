@@ -1332,6 +1332,7 @@
       "nowPrivate": "Your profile is now private",
       "undo": "Undo",
       "saveError": "Couldn't change who can see your profile. Please try again.",
+      "rateLimited": "You've changed this a lot lately. Try again later.",
       "inviteLink": "Invite link",
       "inviteLinkHelp": "Anyone who opens your QR code or invite link can make you follow each other in one tap. Reset it if you want links and QR codes you've already shared to stop working.",
       "resetConfirmTitle": "Reset your invite link?",

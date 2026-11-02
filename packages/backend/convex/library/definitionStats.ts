@@ -258,9 +258,9 @@ export const markCompletionStatsChange = async (
   }
 };
 
-/** A member's profile visibility changed: their open copies now count (or stop counting) as public
- * listings. Their library can be large, so the definitions are marked in batches after this
- * transaction. */
+/** A member's profile visibility changed and their copies have been re-stamped
+ * (library/ownerListingVisibility): their open copies now count (or stop counting) as public
+ * listings. Their library can be large, so the definitions are marked in batches. */
 export const markOwnerListingsChange = async (
   ctx: MutationCtx,
   ownerId: Id<"users">,

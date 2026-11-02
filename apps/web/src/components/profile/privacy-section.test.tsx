@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -183,6 +184,23 @@ describe("PrivacySection", () => {
       ),
     );
     expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(radio("Everyone").getAttribute("aria-checked")).toBe("true"),
+    );
+  });
+
+  it("says it has changed a lot lately when the server refuses another change", async () => {
+    mocks.mutation.mockRejectedValueOnce(
+      new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+    );
+    renderSection("public");
+    fireEvent.click(radio("Only people you approve"));
+
+    await waitFor(() =>
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        "You've changed this a lot lately. Try again later.",
+      ),
+    );
     await waitFor(() =>
       expect(radio("Everyone").getAttribute("aria-checked")).toBe("true"),
     );
