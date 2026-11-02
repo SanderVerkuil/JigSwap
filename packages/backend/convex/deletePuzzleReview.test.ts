@@ -60,7 +60,7 @@ const codeOf = async (promise: Promise<unknown>): Promise<string | null> => {
 describe("deletePuzzleReview", () => {
   test("the author deletes their review; the other member's review stays", async () => {
     const t = convexTest(schema, modules);
-    const { alice, bob, puzzleId } = await seed(t);
+    const { bob, puzzleId } = await seed(t);
     await asAlice(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
       puzzleId,
       rating: 4,
@@ -75,11 +75,13 @@ describe("deletePuzzleReview", () => {
       api.social.listPuzzleReviews.listPuzzleReviews,
       { puzzleId },
     );
-    const canDeleteByAuthor = new Map(
-      asSeenByAlice.map((r) => [r.author._id, r.canDelete]),
+    // Told apart by their stars: an author can read as anonymous to the viewer (SEC-11), and
+    // canDelete must hold for such a row too.
+    const canDeleteByRating = new Map(
+      asSeenByAlice.map((r) => [r.rating, r.canDelete]),
     );
-    expect(canDeleteByAuthor.get(alice)).toBe(true);
-    expect(canDeleteByAuthor.get(bob)).toBe(false);
+    expect(canDeleteByRating.get(4)).toBe(true);
+    expect(canDeleteByRating.get(2)).toBe(false);
 
     await asAlice(t).mutation(
       api.social.deletePuzzleReview.deletePuzzleReview,
@@ -96,7 +98,7 @@ describe("deletePuzzleReview", () => {
       api.social.listPuzzleReviews.listPuzzleReviews,
       { puzzleId },
     );
-    expect(list.map((r) => r.author._id)).toEqual([bob]);
+    expect(list.map((r) => r.rating)).toEqual([2]);
   });
 
   test("a member without a review gets PuzzleReviewNotFound and nothing changes", async () => {
