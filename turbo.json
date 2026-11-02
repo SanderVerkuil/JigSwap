@@ -17,7 +17,7 @@
         "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
       ],
       "outputs": [".output/**", "dist/**"],
-      "env": ["VITE_*"]
+      "env": ["VITE_*", "VERCEL_PROJECT_PRODUCTION_URL"]
     },
     "@jigswap/web#test": {
       "inputs": [
