@@ -42,6 +42,11 @@ describe("parseTarget", () => {
     expect(parseTarget("   ")).toEqual({ ok: false, error: "required" });
   });
 
+  it("takes the largest target the server does, and nothing above it", () => {
+    expect(parseTarget("100000")).toEqual({ ok: true, value: 100_000 });
+    expect(parseTarget("100001")).toEqual({ ok: false, error: "invalid" });
+  });
+
   it("refuses zero, fractions, negatives and non-numbers the server would reject", () => {
     for (const raw of [
       "0",

@@ -3344,6 +3344,8 @@
       "finishDescription": "When did you finish {puzzle}?",
       "finishDescriptionGeneric": "When did you finish this puzzle?",
       "startedOn": "You started on {date}.",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've logged a lot of solves today. Try again tomorrow.",
       "endBeforeStartError": "The finish date can't be before the start date.",
@@ -3363,6 +3365,8 @@
       "submit": "Start",
       "started": "Puzzle started",
       "finishTrigger": "Finish solve",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've started or logged a lot of solves today. Try again tomorrow."
     },
@@ -3436,7 +3440,7 @@
         "titleTooLong": "Keep the title to {max} characters.",
         "descriptionTooLong": "Keep the description to {max} characters.",
         "targetRequired": "Enter how many puzzles you want to finish.",
-        "targetInvalid": "Use a whole number of 1 or more.",
+        "targetInvalid": "Use a whole number from 1 to 100,000.",
         "toBeforeFrom": "The end date can't be before the start date.",
         "toPast": "Pick an end date from today on."
       },
@@ -5886,6 +5890,8 @@
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again.",
       "rateLimited": "You've logged a lot of puzzles today. Nothing was saved, so try again tomorrow."
     },

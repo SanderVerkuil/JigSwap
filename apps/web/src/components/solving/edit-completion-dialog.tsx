@@ -22,7 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
 
 interface EditCompletionDialogProps {
   open: boolean;
@@ -98,7 +98,7 @@ export function EditCompletionDialog({
         toast.error(tCompletions("editWindowClosed"));
       } else {
         console.error("Failed to edit completion:", error);
-        toast.error(t("saveError"));
+        toast.error(t(solveSaveErrorKey(error)));
       }
     }
   };

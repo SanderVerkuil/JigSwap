@@ -3344,6 +3344,8 @@
       "finishDescription": "Wanneer heb je {puzzle} afgemaakt?",
       "finishDescriptionGeneric": "Wanneer heb je deze puzzel afgemaakt?",
       "startedOn": "Je bent op {date} begonnen.",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel voltooiingen vastgelegd. Probeer het morgen opnieuw.",
       "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
@@ -3363,6 +3365,8 @@
       "submit": "Starten",
       "started": "Puzzel gestart",
       "finishTrigger": "Puzzel afronden",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel puzzels gestart of vastgelegd. Probeer het morgen opnieuw."
     },
@@ -3436,7 +3440,7 @@
         "titleTooLong": "Houd de titel op maximaal {max} tekens.",
         "descriptionTooLong": "Houd de beschrijving op maximaal {max} tekens.",
         "targetRequired": "Vul in hoeveel puzzels je wilt afmaken.",
-        "targetInvalid": "Gebruik een heel getal van 1 of meer.",
+        "targetInvalid": "Gebruik een heel getal van 1 tot en met 100.000.",
         "toBeforeFrom": "De einddatum mag niet vóór de begindatum liggen.",
         "toPast": "Kies een einddatum vanaf vandaag."
       },
@@ -5886,6 +5890,8 @@
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen.",
       "rateLimited": "Je hebt vandaag al veel puzzels vastgelegd. Er is niets opgeslagen, dus probeer het morgen opnieuw."
     },

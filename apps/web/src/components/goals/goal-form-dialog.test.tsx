@@ -146,7 +146,7 @@ describe("GoalFormDialog: create", () => {
       fireEvent.change(input(/^Target completions/), { target: { value } });
       fireEvent.click(screen.getByRole("button", { name: "Create goal" }));
       const target = input(/^Target completions/);
-      expect(errorOf(target)).toBe("Use a whole number of 1 or more.");
+      expect(errorOf(target)).toBe("Use a whole number from 1 to 100,000.");
       expect(document.activeElement).toBe(target);
       expect(calls.create).toHaveLength(0);
     },
@@ -309,7 +309,7 @@ describe("GoalFormDialog in Dutch", () => {
     fireEvent.click(screen.getByRole("button", { name: "Doel aanmaken" }));
     expect(errorOf(input(/^Titel/))).toBe("Geef je doel een titel.");
     expect(errorOf(input(/^Doelaantal voltooiingen/))).toBe(
-      "Gebruik een heel getal van 1 of meer.",
+      "Gebruik een heel getal van 1 tot en met 100.000.",
     );
   });
 });
