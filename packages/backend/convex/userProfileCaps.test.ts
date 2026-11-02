@@ -98,6 +98,10 @@ describe("users.updateUserProfile caps what it writes (SEC-27)", () => {
       code: "invalid_location",
     });
     expect((await rowOf(t, ann))?.location).toBe("a".repeat(80));
+
+    // An emptied field clears it, which is how the profile editor takes a location away.
+    await update("   ");
+    expect((await rowOf(t, ann))?.location).toBeUndefined();
   });
 
   test("a supported language is stored and leaves the location alone", async () => {
