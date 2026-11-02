@@ -26,10 +26,17 @@ import { gateway, Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { defaultFilter } from "cmdk";
 import { CheckIcon, EyeOff } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+
+// A row's value is the copy's id, which cmdk needs to tell same-titled copies apart. Its default
+// filter would also fuzzy-match that hidden id, so a search for "1000" kept unrelated rows: only
+// the title (the item's keywords) counts.
+const matchTitle = (_id: string, search: string, title?: string[]) =>
+  defaultFilter(title?.join(" ") ?? "", search);
 
 export function CircleShareSection({
   circleId,
@@ -132,7 +139,10 @@ export function CircleShareSection({
     body = (
       // cmdk keeps one row highlighted for the keyboard; while the list has no focus that
       // highlight would read as a selection, so it only shows on focus or hover.
-      <Command className="rounded-lg border [&:not(:focus-within)_[data-selected=true]:not(:hover)]:bg-transparent [&:not(:focus-within)_[data-selected=true]:not(:hover)]:text-foreground">
+      <Command
+        filter={matchTitle}
+        className="rounded-lg border [&:not(:focus-within)_[data-selected=true]:not(:hover)]:bg-transparent [&:not(:focus-within)_[data-selected=true]:not(:hover)]:text-foreground"
+      >
         <CommandInput
           placeholder={t("share.searchPlaceholder")}
           aria-label={t("share.searchPlaceholder")}

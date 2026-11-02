@@ -74,8 +74,9 @@ const COPIES: Copies = [
 
 const renderSection = ({
   shared = ["c_wasgij"],
+  copies = COPIES,
   locale = "en",
-}: { shared?: string[]; locale?: "en" | "nl" } = {}) => {
+}: { shared?: string[]; copies?: Copies; locale?: "en" | "nl" } = {}) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -94,7 +95,7 @@ const renderSection = ({
       ownerId: ME as never,
       includeUnavailable: true,
     }).queryKey,
-    COPIES,
+    copies,
   );
   queryClient.setQueryData(
     convexQuery(gateway.sharing.myCircleShareState, { circleId: CIRCLE })
@@ -132,6 +133,44 @@ beforeEach(() => {
   mocks.toast.error.mockReset();
 });
 afterEach(cleanup);
+
+describe("CircleShareSection search", () => {
+  const search = (term: string) =>
+    act(async () => {
+      fireEvent.change(
+        screen.getByPlaceholderText(en.circles.share.searchPlaceholder),
+        { target: { value: term } },
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  const titles = () =>
+    screen.queryAllByRole("option").map((el) => el.textContent);
+
+  it("finds puzzles by their title", async () => {
+    renderSection();
+    await search("wasg");
+    expect(titles()).toHaveLength(1);
+    expect(option("Wasgij")).toBeTruthy();
+  });
+
+  it("doesn't match the hidden id: digits a title doesn't contain find nothing", async () => {
+    renderSection({
+      copies: [
+        copy("aaaa1000-14be-4eee", "Lighthouse"),
+        copy("bbbb1000-14be-4eee", "Harbour Lights"),
+        copy("cccc-dddd", "Wasgij 1000 stukjes"),
+      ],
+    });
+    // Both ids contain every one of these; only one title contains the piece count.
+    await search("1000");
+    expect(titles()).toHaveLength(1);
+    expect(option("Wasgij 1000")).toBeTruthy();
+
+    await search("14be");
+    expect(titles()).toHaveLength(0);
+    expect(screen.getByText(en.circles.share.noMatches)).toBeTruthy();
+  });
+});
 
 describe("CircleShareSection", () => {
   it("ticks the copies already shared and says which ones members won't see", () => {
