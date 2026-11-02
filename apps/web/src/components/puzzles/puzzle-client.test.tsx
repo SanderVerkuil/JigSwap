@@ -341,7 +341,11 @@ describe("PuzzlesClient piece range", () => {
     screen.getByRole<HTMLInputElement>("spinbutton", { name: "Min Pieces" });
   const type = (value: string) =>
     fireEvent.change(minInput(), { target: { value } });
-  const pause = () => act(() => vi.advanceTimersByTime(300));
+  const pause = () => {
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
