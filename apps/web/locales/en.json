@@ -4598,7 +4598,7 @@
     "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
     "noRatings": "No ratings yet",
-    "communityRatings": "{count} community ratings",
+    "communityRatings": "{count, plural, one {# community rating} other {# community ratings}}",
     "copyReviews": "Copy Reviews",
     "copyReviewsHint": "Anyone who logs a solve of this copy can rate it.",
     "noCopyReviews": "No reviews of this copy yet.",
