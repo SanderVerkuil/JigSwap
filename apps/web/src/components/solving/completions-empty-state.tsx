@@ -5,7 +5,8 @@ import { Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 // "Already solved some? Mark past solves": the way to /completions/past, under the empty state and
-// on the log itself, so a member can come back to it after their first solve.
+// above the log's rows, so a member can come back to it after their first solve and however long
+// the log has grown.
 export function PastSolvesPrompt() {
   const t = useTranslations("solving.completions");
   return (

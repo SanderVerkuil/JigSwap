@@ -210,13 +210,17 @@ function CompletionsPage() {
       {/* Divided stat row — open, no boxes. Three zeros would only push an empty log's way in down
           the screen. */}
       {completions.length > 0 && (
-        <StatRow
-          stats={[
-            { label: t("stats.completed"), value: String(history.length) },
-            { label: t("stats.pieces"), value: format.number(piecesPlaced) },
-            { label: t("stats.thisYear"), value: String(thisYear) },
-          ]}
-        />
+        <>
+          <StatRow
+            stats={[
+              { label: t("stats.completed"), value: String(history.length) },
+              { label: t("stats.pieces"), value: format.number(piecesPlaced) },
+              { label: t("stats.thisYear"), value: String(thisYear) },
+            ]}
+          />
+          {/* Above the rows, so it stays in reach however long the log grows. */}
+          <PastSolvesPrompt />
+        </>
       )}
 
       {/* The log title, meta + Log action now live in the shell
@@ -254,9 +258,6 @@ function CompletionsPage() {
               }
               renderRow={renderCompletionRow}
             />
-            <div className="mt-4">
-              <PastSolvesPrompt />
-            </div>
           </>
         )}
       </section>

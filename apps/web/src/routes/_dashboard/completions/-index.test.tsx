@@ -199,6 +199,25 @@ describe("completion log", () => {
     ).toBe("/completions/past");
   });
 
+  // A member with hundreds of puzzles passes a full page of rows after two batches. Under the log
+  // the link would be three screens down and move further with every Show more.
+  it("puts marking past solves above the log, however long the log is", () => {
+    const history = Array.from({ length: 40 }, (_, i) =>
+      finished(`h${i}`, 2020 - i),
+    );
+    renderLog([...history, open("p", 9)]);
+    const link = screen.getByRole("link", { name: "Mark past solves" });
+    const [firstRow] = screen.getAllByTestId("row");
+    expect(
+      link.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      link.compareDocumentPosition(
+        screen.getByText(en.solving.completions.inProgressSection),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("never reads the member's library", () => {
     renderLog([finished("a", 2020)]);
     expect(Object.keys(mocks.asked)).not.toContain(
