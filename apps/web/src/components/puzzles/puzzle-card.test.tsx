@@ -161,6 +161,12 @@ describe("owned-copy PuzzleCard cover", () => {
 });
 
 describe("catalogue PuzzleCard on phones", () => {
+  it("sizes the cover for the two-column phone grid, not the full viewport", () => {
+    render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />);
+    expect(container.querySelector(".grid-cols-2")).toBeTruthy();
+    expect(cover().getAttribute("sizes")).toContain("(max-width: 639px) 50vw");
+  });
+
   it("offers no View Details button in the compact card; the title link opens the puzzle", () => {
     const host = document.createElement("div");
     host.innerHTML = renderToStaticMarkup(
