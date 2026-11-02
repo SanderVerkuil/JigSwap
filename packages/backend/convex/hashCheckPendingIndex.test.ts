@@ -167,6 +167,53 @@ describe("a refused upload leaves the hash-pending index", () => {
   );
 });
 
+// A row written before the claim rule may hold another row's blob (SEC-01). Refusing it can't delete
+// that blob, so the upload isn't settled: it stays in the index with its gate closed, and the other
+// row's picture is untouched. Reading "referenced" as gone would take it out of the index unchecked.
+describe("a refused upload whose blob another row holds", () => {
+  for (const [name, hcs] of [
+    ["the hash service answers", "no_match"],
+    ["the hash service is down", 503],
+  ] as const) {
+    test(`stays in the index with its gate closed when ${name}`, async () => {
+      fakes.hcs = hcs;
+      const t = withModerationPool(convexTest(schema, modules));
+      const { copy } = await seed(t);
+      const fileId = (await t.run((ctx) =>
+        ctx.storage.store(
+          new Blob([new TextEncoder().encode("definitely not an image")], {
+            type: "image/jpeg",
+          }),
+        ),
+      )) as Id<"_storage">;
+      await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+        copyId: copy,
+        fileId,
+      });
+      // The claim rule refuses a blob another row holds, so this is the older state: the box art
+      // holds the same blob by the time the pipeline runs.
+      await t.run(async (ctx) => {
+        const puzzle = await ctx.db.query("puzzles").first();
+        await ctx.db.patch(puzzle!._id, { image: fileId });
+      });
+      await settleDueScheduled(t);
+
+      const row = await t.run((ctx) =>
+        ctx.db
+          .query("ownedPuzzleImages")
+          .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy))
+          .unique(),
+      );
+      expect(row?.moderationStatus).toBe("rejected");
+      expect(row?.moderationLabel).toBe("invalid_image");
+      expect(await blobExists(t, fileId)).toBe(true);
+      expect(await pendingIndexIds(t)).toEqual([row!._id]);
+      expect(row?.hashCheckedAt).toBeUndefined();
+      expect(row && isHashCleared(row)).toBe(false);
+    });
+  }
+});
+
 describe("the refused outcome only clears a refused row that owes no hash check", () => {
   const HASHES = [{ md5: "a".repeat(32), sha1: "b".repeat(40) }];
 
