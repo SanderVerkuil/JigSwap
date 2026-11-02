@@ -11,8 +11,10 @@ import type { CaptureResult } from "posthog-js";
 //    even if a component loses its `ph-no-capture` class.
 //  - The page title is dropped from every event. PostHog copies document.title
 //    into each $pageview, and the tab names the page after what it shows
-//    (ShellDocumentTitle): a circle, a household, another member. $pathname
-//    already says which page it was.
+//    (ShellDocumentTitle): a circle, a household, another member. Leaving a
+//    thread, $pathname is already the next route while document.title still
+//    names the member, so no path can vouch for a title. $pathname already says
+//    which page it was.
 
 type Properties = CaptureResult["properties"];
 

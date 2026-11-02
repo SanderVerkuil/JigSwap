@@ -167,11 +167,9 @@ describe("sanitizeAnalyticsEvent: page titles", () => {
       expect(result?.properties).toEqual({ $pathname: "/circles/c1" });
     }
   });
-});
 
-describe("sanitizeAnalyticsEvent: messaging", () => {
-  // A thread's tab title names the other member, and PostHog copies the title onto $pageview.
-  it("drops the page title on the messaging screens", () => {
+  // A thread's tab title names the other member.
+  it("drops it on the messaging screens", () => {
     const result = sanitizeAnalyticsEvent(
       event("$pageview", {
         $pathname: "/messages/thread_1",
@@ -181,6 +179,30 @@ describe("sanitizeAnalyticsEvent: messaging", () => {
     expect(result?.properties).toEqual({ $pathname: "/messages/thread_1" });
   });
 
+  // Leaving a thread, $pathname is already the next route while document.title still names the
+  // member, so the path can't tell which titles are safe to send.
+  it("drops it on the page after a thread", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageview", {
+        $pathname: "/puzzles",
+        title: "Mara — Messages — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/puzzles" });
+  });
+
+  it("drops it from every event, on every page", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageleave", {
+        $pathname: "/puzzles/p1",
+        title: "Café — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/puzzles/p1" });
+  });
+});
+
+describe("sanitizeAnalyticsEvent: messaging", () => {
   it.each(["$autocapture", "$rageclick", "$dead_click", "$copy_autocapture"])(
     "drops %s on the messaging screens",
     (name) => {
