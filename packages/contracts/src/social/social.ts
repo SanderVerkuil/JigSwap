@@ -290,7 +290,10 @@ export type MemberTeaserIdentity = Pick<
  */
 export interface BlockedMemberView {
   memberId: string;
-  /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
+  /**
+   * The name they show other members: their chosen display name, else their account name or
+   * username (SEC-10); may be absent. Render via resolveMemberDisplayName / useMemberDisplayName.
+   */
   name?: string;
   avatar?: string;
   /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */

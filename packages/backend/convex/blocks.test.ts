@@ -582,6 +582,55 @@ describe("blockMember rules", () => {
     ).toEqual([]);
   });
 
+  // Blocking takes one call and tells the member nothing, so what the list shows must be no more
+  // than the blocker could read on the member's own link (getPublicMemberTeaser).
+  test("names a private member only as the blocker could already see them", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bob, {
+        name: "Real Fullname",
+        username: "bobby",
+        avatar: "https://img.example.com/bob.png",
+      });
+      await ctx.db.insert("profiles", {
+        memberId: bob,
+        displayName: "Pseudonym",
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+      // A private member without a display name reads by their account name, there too.
+      await ctx.db.patch(carol, { name: "Carol Account" });
+      await ctx.db.insert("profiles", {
+        memberId: carol,
+        visibility: "private",
+        updatedAt: Date.now(),
+      });
+    });
+    const teaser = await asAlice(t).query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: bob },
+    );
+
+    for (const memberId of [bob, carol]) {
+      await asAlice(t).mutation(api.social.blockMember.blockMember, {
+        memberId,
+      });
+    }
+    const list = await asAlice(t).query(
+      api.social.listMyBlocks.listMyBlocks,
+      {},
+    );
+    const named = list.find((row) => row.memberId === bob);
+    expect(named?.name).toBe("Pseudonym");
+    expect(named?.name).toBe(teaser?.displayName);
+    expect(named?.avatar).toBe(teaser?.avatar);
+    expect(JSON.stringify(list)).not.toContain("Real Fullname");
+    expect(list.find((row) => row.memberId === carol)?.name).toBe(
+      "Carol Account",
+    );
+  });
+
   test("can't block yourself", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);

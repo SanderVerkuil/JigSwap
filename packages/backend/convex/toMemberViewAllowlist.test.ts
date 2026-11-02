@@ -25,8 +25,6 @@ const ALLOWED: Record<string, string> = {
     "public, active profiles only, never across a block",
   "exchange/tradeParty.ts":
     "full view only for a party the ordinary rules reveal; a trade-only reveal is trimmed",
-  "social/listMyBlocks.ts":
-    "keeps only id, name and avatar of the members the caller blocked",
 };
 
 const root = fileURLToPath(new URL(".", import.meta.url));
