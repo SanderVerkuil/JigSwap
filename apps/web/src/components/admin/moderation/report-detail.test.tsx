@@ -218,8 +218,8 @@ describe("ReportDetail", () => {
       expect(evidence.textContent).toContain("You are an idiot");
       expect(evidence.textContent).toContain("Otto (otto@example.com)");
       expect((removeRadio() as HTMLInputElement).disabled).toBe(false);
+      // Choosing Remove fills in its template, which names what was removed.
       fireEvent.click(removeRadio());
-      fireEvent.click(screen.getByRole("button", { name: "Removal template" }));
       expect((statement() as HTMLTextAreaElement).value).toMatch(
         new RegExp(`^We removed ${content} because`),
       );
