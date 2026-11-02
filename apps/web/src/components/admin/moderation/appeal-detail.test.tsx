@@ -84,7 +84,7 @@ describe("AppealDetail", () => {
     expect(container.textContent).toContain("never the conversation");
 
     render(request, "nl");
-    expect(container.textContent).toContain("Beoordeling gevraagd");
+    expect(container.textContent).toContain("Herbeoordeling gevraagd");
     expect(container.textContent).toContain("Verstuurd door");
   });
 
