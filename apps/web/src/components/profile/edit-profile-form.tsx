@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -125,6 +126,9 @@ export function EditProfileForm({
   const { data: socialProfile } = useQuery(
     convexQuery(gateway.social.profile, {}),
   );
+  // /profile is not a form route, so the install tip would float over these fields; while the form
+  // is open it steps aside, as it does on the form routes (installTipBlockedOn).
+  useReportSurfaceBusy("profileEdit", true);
   if (!isLoaded || socialProfile === undefined) return null;
   return (
     <EditProfileFormLoaded

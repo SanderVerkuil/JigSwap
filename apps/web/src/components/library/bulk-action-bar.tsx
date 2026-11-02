@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import {
   ArrowLeftRight,
   ChevronDown,
@@ -68,6 +69,8 @@ export function BulkActionBar({
   const t = useTranslations("puzzles.bulk");
   const disabled = selectedCount === 0 || busy;
   const allSelected = selectableCount > 0 && selectedCount === selectableCount;
+  // On a phone this bar docks where the install tip docks: the tip steps aside while the bar is up.
+  useReportSurfaceBusy("bulkSelection", true);
 
   return (
     <div

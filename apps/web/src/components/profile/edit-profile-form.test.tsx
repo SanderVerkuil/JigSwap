@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -103,6 +104,13 @@ afterEach(cleanup);
 // happy-dom has no layout engine, so these pin the class contract that keeps
 // the form inside a 390px screen; the geometry itself was checked in a browser.
 describe("EditProfileForm on a phone", () => {
+  it("keeps the install tip off its fields while it is open", () => {
+    renderForm();
+    expect(isSurfaceBusy()).toBe(true);
+    cleanup();
+    expect(isSurfaceBusy()).toBe(false);
+  });
+
   it("is one explicit column below sm, so no field can size the track", () => {
     renderForm();
     const grid = screen.getByLabelText("Username").closest(".grid");
