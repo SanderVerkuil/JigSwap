@@ -592,6 +592,12 @@ export interface CopyInstanceView {
      * only when `viewerCanManage`; the edit controls show this, not `visibility`.
      */
     visibilityPreference?: "private" | "visible";
+    /**
+     * The copy owner's profile visibility, which decides how far an offer reaches: a public profile
+     * opens an offered copy to all members, a private one only to friends and shared circles.
+     * Present only when `viewerCanManage`.
+     */
+    ownerProfileVisibility?: "public" | "private";
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
     /** The puzzle definition's difficulty, when set. */

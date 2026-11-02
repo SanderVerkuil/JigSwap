@@ -13,11 +13,14 @@ export function CopyVisibilityControl({
   value,
   onChange,
   offered,
+  ownerProfileVisibility,
   disabled = false,
 }: {
   value: CopyVisibility;
   onChange: (value: CopyVisibility) => void;
   offered: boolean;
+  /** A private profile keeps an offer to friends and shared circles (library/canViewCopy). */
+  ownerProfileVisibility?: "public" | "private";
   disabled?: boolean;
 }) {
   const t = useTranslations("copyInstance.editCopy.visibility");
@@ -26,7 +29,10 @@ export function CopyVisibilityControl({
       key: "visible" as const,
       Icon: Globe,
       label: t("visible"),
-      hint: t("visibleHint"),
+      hint:
+        ownerProfileVisibility === "private"
+          ? t("visibleHintPrivateProfile")
+          : t("visibleHint"),
     },
     {
       key: "private" as const,

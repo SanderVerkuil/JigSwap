@@ -739,6 +739,40 @@ describe("an offer keeps the owner's private choice (UX-20)", () => {
     expect(viewOnly?.snapshot.visibilityPreference).toBeUndefined();
   });
 
+  test("getCopyInstanceView tells managers, and only them, how far an offer reaches", async () => {
+    const t = convexTest(schema, modules);
+    const cast = await seedCast(t);
+    const { rowId } = await t.run(async (ctx) => ({
+      rowId: await insertCopy(ctx, cast, {
+        ...VISIBLE,
+        availability: { ...CLOSED, forTrade: true },
+      }),
+    }));
+    const reachFor = async (name: string) =>
+      (await viewCopy(t, name, rowId))?.snapshot.ownerProfileVisibility;
+
+    // No profile row reads as public, as canViewCopy's rule 3 does.
+    expect(await reachFor("alice")).toBe("public");
+    await t.run((ctx) =>
+      ctx.db.insert("profiles", {
+        memberId: cast.alice,
+        visibility: "private",
+        updatedAt: NOW,
+      }),
+    );
+    expect(await reachFor("alice")).toBe("private");
+    // It describes the owner, whoever manages the copy.
+    expect(await reachFor("dave")).toBe("private");
+    const friend = await viewCopy(t, "bob", rowId);
+    expect(friend).not.toBeNull();
+    expect(friend?.snapshot.ownerProfileVisibility).toBeUndefined();
+
+    await t.run((ctx) => ctx.db.patch(rowId, { householdPermission: "view" }));
+    const viewOnly = await viewCopy(t, "dave", rowId);
+    expect(viewOnly?.viewerCanManage).toBe(false);
+    expect(viewOnly?.snapshot.ownerProfileVisibility).toBeUndefined();
+  });
+
   test("a library row carries visibilityPreference to managers only", async () => {
     const t = convexTest(schema, modules);
     const cast = await seedCast(t);

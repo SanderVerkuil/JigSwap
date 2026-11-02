@@ -32,7 +32,11 @@ import {
   renditionSources,
   type ImageSources,
 } from "../lib/imageModeration/imageSources";
-import { areMutualFollowers, projectMemberIdentity } from "../social/privacy";
+import {
+  areMutualFollowers,
+  profileVisibilityOf,
+  projectMemberIdentity,
+} from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import {
   copyVisibilityPreference,
@@ -494,6 +498,10 @@ export const getCopyInstanceView = query({
         // The owner's own choice (kept while offered) is for the edit controls only.
         visibilityPreference: viewerCanManage
           ? copyVisibilityPreference(copy)
+          : undefined,
+        // How far an offer reaches (canViewCopy rule 3), for what the manager is told about it.
+        ownerProfileVisibility: viewerCanManage
+          ? await profileVisibilityOf(ctx, copy.ownerId)
           : undefined,
         acquisitionDate: viewerCanManage ? copy.acquisitionDate : undefined,
         acquisitionSource: viewerCanManage ? copy.acquisitionSource : undefined,

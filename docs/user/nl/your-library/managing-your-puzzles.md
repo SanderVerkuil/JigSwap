@@ -90,9 +90,11 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
   kijken; dubbeltik om weer uit te zoomen.
 - Een **statusregel** onder de titel. Op je eigen kopie staat daar waar de
   kopie is en wie hem kan zien: "Uitgeleend aan _naam_ sinds _datum_" (met
-  **Terugvragen**), of waarvoor hij wordt aangeboden en of hij zichtbaar is
-  voor de community, alleen zichtbaar zolang je hem aanbiedt, of privé. Andere
-  leden zien alleen waarvoor hij wordt aangeboden.
+  **Terugvragen**); waarvoor hij wordt aangeboden en wie hem nu kan zien: de
+  community als je profiel openbaar is, vrienden en gedeelde kringen als het
+  privé is, of alleen zolang je hem aanbiedt als je **Privé** hebt gekozen; of,
+  als je hem niet aanbiedt, dat vrienden hem kunnen zien of dat hij privé is.
+  Andere leden zien alleen waarvoor hij wordt aangeboden.
 - **Verwervingsgegevens** (wanneer en hoe je hem kreeg) en je privénotities.
   Alleen jij (en leden van je huishouden die de kopie mogen beheren) zien ze.
   Staat er nog niets, klik dan op **Details toevoegen** om de maand, het jaar
@@ -163,7 +165,9 @@ Elke kopie is zichtbaar of privé. Je stelt dit in als je de kopie **Bewerkt**,
 onder **Wie kan dit exemplaar zien**:
 
 - **Zichtbaar**: leden die je wederzijds volgt, kunnen hem zien in je
-  bibliotheek, en iedereen zolang je hem aanbiedt.
+  bibliotheek. Zolang je hem aanbiedt, kunnen ook alle leden hem zien als je
+  profiel openbaar is, en leden van kringen waarin je hem hebt gedeeld als het
+  privé is.
 - **Privé — alleen jij en je huishouden**: verborgen voor alle anderen, ook
   voor je vrienden.
 

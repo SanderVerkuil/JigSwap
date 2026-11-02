@@ -26,18 +26,22 @@ const OFFER_WORDS = [
 // cover's "Available" chip and the For Trade/Lend/Sale badges. For whoever manages the copy
 // (`detailed`): an open loan ("On loan to Anna since 3 Mar 2026 · Recall"), otherwise the offers
 // plus who can see it, from the owner's own choice (`visibilityPreference`): friends while nothing
-// is offered and the community while something is (library/canViewCopy: a copy only opens up to
-// others through an offer), visible only while offered, or private. Visitors only see what it is
+// is offered, and while something is, the community if the owner's profile is public and friends
+// and shared circles if it is private (library/canViewCopy: an offer only opens a copy to everyone
+// through a public profile), visible only while offered, or private. Visitors only see what it is
 // offered for, and nothing when it isn't offered.
 export function CopyStatusLine({
   detailed,
   availability,
   visibilityPreference,
+  ownerProfileVisibility,
   openLoan,
 }: {
   detailed: boolean;
   availability: Availability;
   visibilityPreference: "private" | "visible";
+  /** A backend that doesn't send it yet reads as public, the default for a profile. */
+  ownerProfileVisibility?: "public" | "private";
   openLoan: OpenLoan | null;
 }) {
   const t = useTranslations("copyInstance.status");
@@ -74,7 +78,9 @@ export function CopyStatusLine({
           offered,
           visibilityPreference === "private"
             ? t("visibleWhileOffered")
-            : t("visibleToCommunity"),
+            : ownerProfileVisibility === "private"
+              ? t("visibleToCircles")
+              : t("visibleToCommunity"),
         ]
       : [offered];
   } else if (detailed) {

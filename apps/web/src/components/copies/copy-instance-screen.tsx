@@ -477,6 +477,7 @@ function CopyInstanceDetail({
             visibilityPreference={
               snapshot.visibilityPreference ?? snapshot.visibility
             }
+            ownerProfileVisibility={snapshot.ownerProfileVisibility}
             openLoan={openLoan}
           />
 

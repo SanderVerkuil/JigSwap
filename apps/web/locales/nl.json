@@ -4657,6 +4657,7 @@
       "visibleWhileOffered": "Zichtbaar zolang je hem aanbiedt, daarna weer privé",
       "notOffered": "Niet aangeboden",
       "visibleToCommunity": "Zichtbaar voor de community",
+      "visibleToCircles": "Zichtbaar voor vrienden en gedeelde kringen",
       "friendsCanSee": "Vrienden kunnen hem zien"
     },
     "editCopy": {
@@ -4681,7 +4682,8 @@
       "visibility": {
         "label": "Wie kan dit exemplaar zien",
         "visible": "Zichtbaar",
-        "visibleHint": "Vrienden kunnen hem zien, en iedereen zolang je hem aanbiedt.",
+        "visibleHint": "Vrienden kunnen hem zien, en alle leden zolang je hem aanbiedt.",
+        "visibleHintPrivateProfile": "Vrienden kunnen hem zien, en kringen waarmee hij gedeeld is zolang je hem aanbiedt.",
         "private": "Privé — alleen jij en je huishouden",
         "privateHint": "Verborgen voor alle anderen, ook voor je vrienden.",
         "offerNote": "Bied je een puzzel aan om te ruilen, uit te lenen of te verkopen, dan is hij zichtbaar zolang het aanbod loopt.",

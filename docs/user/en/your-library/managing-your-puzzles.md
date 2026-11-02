@@ -85,10 +85,11 @@ The detail page is the rich record of a single owned copy. It includes:
 - A **hero image** with condition and difficulty chips. On a phone or tablet,
   pinch it to zoom in and drag to look around; double-tap to zoom back out.
 - A **status line** under the title. On your own copy it says where the copy
-  is and who can see it: "On loan to _name_ since _date_" (with **Recall**),
-  or what it's offered for and whether it's visible to the community, visible
-  only while offered, or private. Other members only see what it's offered
-  for.
+  is and who can see it: "On loan to _name_ since _date_" (with **Recall**);
+  what it's offered for and who can see it now: the community if your profile
+  is public, friends and shared circles if it's private, or only while offered
+  if you chose **Private**; or, when it isn't offered, that friends can see it
+  or that it's private. Other members only see what it's offered for.
 - **Acquisition details** (when and how you got it) and your private notes.
   Only you (and household members who can manage the copy) see them. If
   nothing is recorded yet, click **Add details** to fill in the month, year
@@ -153,8 +154,9 @@ Only approved photos can be used as a cover.
 Each copy is either visible or private. Set it when you **Edit** the copy,
 under **Who can see this copy**:
 
-- **Visible**: members you follow each other with can see it in your library,
-  and anyone can while it's on offer.
+- **Visible**: members you follow each other with can see it in your library.
+  While it's on offer, so can all members if your profile is public, and
+  members of circles you've shared it into if it's private.
 - **Private — only you and your household**: hidden from everyone else,
   friends included.
 

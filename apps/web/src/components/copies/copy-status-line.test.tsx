@@ -78,6 +78,43 @@ describe("CopyStatusLine for whoever manages the copy", () => {
     );
   });
 
+  // canViewCopy rule 3: an offer opens a copy to all members only when the owner's profile is public.
+  it("with a private profile, says only friends and shared circles can see an offered copy", () => {
+    renderLine({
+      availability: { ...CLOSED, forTrade: true },
+      ownerProfileVisibility: "private",
+    });
+    expect(line()).toBe(
+      "Offered for swap · Visible to friends and shared circles",
+    );
+  });
+
+  it("says so in Dutch too", () => {
+    renderLine(
+      {
+        availability: { ...CLOSED, forTrade: true },
+        ownerProfileVisibility: "private",
+      },
+      "nl",
+    );
+    expect(line()).toBe(
+      "Aangeboden voor ruil · Zichtbaar voor vrienden en gedeelde kringen",
+    );
+  });
+
+  it("with a public profile, or before the backend says which, the community can see it", () => {
+    renderLine({
+      availability: { ...CLOSED, forTrade: true },
+      ownerProfileVisibility: "public",
+    });
+    expect(line()).toBe("Offered for swap · Visible to the community");
+  });
+
+  it("a private profile changes nothing about a copy that isn't offered", () => {
+    renderLine({ ownerProfileVisibility: "private" });
+    expect(line()).toBe("Not offered · Friends can see it");
+  });
+
   it("an offered copy the owner keeps private says it is visible only while offered", () => {
     renderLine({
       availability: { ...CLOSED, forSale: true },
