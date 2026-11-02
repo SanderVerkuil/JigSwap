@@ -4940,7 +4940,7 @@
           "submissions": "Inzending",
           "flagged": "Gemarkeerde afbeelding",
           "unchecked": "Niet-gecontroleerde foto",
-          "appeals": "Beoordelingsverzoek"
+          "appeals": "Herbeoordeling"
         }
       },
       "handledElsewhere": {
@@ -5151,17 +5151,17 @@
         },
         "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, nadat je dat bevestigt (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
       },
-      "appealsEmpty": "Er wachten geen foto's op een beoordeling.",
+      "appealsEmpty": "Er wachten geen foto's op een herbeoordeling.",
       "appeal": {
-        "loading": "Beoordelingsverzoeken laden…",
-        "intro": "De afzender vroeg om een beoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
+        "loading": "Herbeoordelingen laden…",
+        "intro": "De afzender vroeg om een herbeoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
         "imageAlt": "Foto in bericht ter beoordeling",
         "rowSource": "Foto in bericht",
         "label": "Label",
         "score": "Score",
         "sentBy": "Verstuurd door",
         "uploadedAt": "Geüpload",
-        "requestedAt": "Beoordeling gevraagd",
+        "requestedAt": "Herbeoordeling gevraagd",
         "reason": "Reden",
         "noPreview": "Geen voorbeeld: deze foto is nog niet door de hash-check, of het bestand is weg. Zolang hij hier niet te zien is, kun je hem niet herstellen.",
         "effects": {
@@ -5173,7 +5173,7 @@
         "keepConfirmTitle": "Deze foto verwijderd laten?",
         "keepConfirmBody": "De foto wordt definitief gewist en de afzender ziet dat de beslissing blijft staan. Dit kun je niet ongedaan maken.",
         "keepConfirmAction": "Verwijderd laten",
-        "notAwaiting": "Over dit beoordelingsverzoek is al beslist.",
+        "notAwaiting": "Over deze herbeoordeling is al beslist.",
         "cannotRestore": "Deze foto kan niet worden hersteld: hij is niet door de hash-check, of het bestand is weg."
       },
       "csam": {
