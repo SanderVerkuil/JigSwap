@@ -487,3 +487,48 @@ describe("a definition's numbers", () => {
     },
   );
 });
+
+// These were already refused; they stay here so that every numeric member input is on one page.
+describe("ratings and years", () => {
+  const BAD_RATINGS = [
+    0,
+    6,
+    3.5,
+    -1,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1e300,
+  ];
+
+  test.each(BAD_RATINGS)("a review refuses a rating of %p", async (rating) => {
+    await expect(
+      asMe().mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId,
+        rating,
+      }),
+    ).rejects.toThrow(/InvalidRating/);
+    await expect(
+      asMe().mutation(api.solving.submitReviews.submitReviews, {
+        puzzleId,
+        puzzle: { rating },
+      }),
+    ).rejects.toThrow(/InvalidRating/);
+    expect(
+      await t.run((ctx) => ctx.db.query("puzzleReviews").collect()),
+    ).toEqual([]);
+  });
+
+  test.each([1899, 2.5, Number.NaN, Number.POSITIVE_INFINITY, 1e300])(
+    "a year-only solve refuses %p",
+    async (year) => {
+      await expect(
+        asMe().mutation(api.solving.recordCompletion.recordCompletion, {
+          puzzleDefinitionId: puzzleId,
+          datePrecision: "year",
+          year,
+        }),
+      ).rejects.toThrow(/InvalidYear/);
+      expect(await completions()).toEqual([]);
+    },
+  );
+});
