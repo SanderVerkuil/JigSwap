@@ -172,6 +172,30 @@ describe("PuzzleCard (browse)", () => {
     expect(trigger.closest(".absolute")).toBeTruthy();
   });
 
+  // What fits depends on the card's width, not the viewport's: the row is its own container.
+  it("sizes the action row by the card's width", () => {
+    renderCard();
+    const request = screen.getByRole("button", { name: "Request swap" });
+    const row = request.parentElement!;
+    expect(row.className).toContain("@container");
+    // Too narrow for the label beside its icon: the label stays on one line, without the icon.
+    expect(request.className).toContain("@max-[16.5rem]:[&>svg]:hidden");
+    // Too narrow for the icon buttons beside Request: they share their own row, with no gap.
+    const icons = screen.getByRole("button", {
+      name: "Message Sander Verkuil",
+    }).parentElement!;
+    expect(icons.className).toContain("@max-[14rem]:w-full");
+    expect(icons.className).toContain("@max-[14rem]:[&>button]:flex-1");
+  });
+
+  // Containment gives an element no width of its own, and a list row's actions are only as wide
+  // as their content: as a container the row would collapse to nothing (measured in Chrome).
+  it("leaves a list row's action row out of the size containers", () => {
+    renderCard({}, "en", "list");
+    const request = screen.getByRole("button", { name: "Request swap" });
+    expect(request.parentElement!.className).not.toContain("@container");
+  });
+
   it("names every action button, each differently", () => {
     renderCard();
     const names = screen

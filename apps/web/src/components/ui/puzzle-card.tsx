@@ -630,11 +630,11 @@ export function PuzzleCard({
   // Requesting the copy is what Browse is for, so it is a labelled primary button; Message and the
   // favourite heart are named icon buttons with a tooltip. The heart keeps one name and reports its
   // state through aria-pressed. The two icons wrap together under Request on a card too narrow
-  // for all three (two-column tablet grid, a label that names the offer, longer Dutch), so
-  // Request's label is never cut off and the icons never split up. 40px targets, 44px on touch
-  // screens.
+  // for all three (a compact phone card, a label that names the offer, longer Dutch), so Request's
+  // label is never cut off and the icons never split up; on a phone card they then share that row
+  // evenly instead of leaving its left half empty. 40px targets, 44px on touch screens.
   const iconActions = (onMessage || onFavorite) && (
-    <div className="ml-auto flex items-center gap-2">
+    <div className="ml-auto flex items-center gap-2 @max-[14rem]:w-full @max-[14rem]:[&>button]:flex-1">
       {onMessage && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -681,7 +681,14 @@ export function PuzzleCard({
     </div>
   );
   const actions = hasBrowseRow ? (
-    <div className="flex flex-wrap items-center gap-2">
+    // A size container on a grid card only: containment gives an element no width of its own, and
+    // a list row's actions are only as wide as their content, so there it would collapse to nothing.
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2",
+        !listRow && "@container",
+      )}
+    >
       {variant !== "collection" && onRemove && (
         <Button
           variant="ghost"
@@ -697,11 +704,13 @@ export function PuzzleCard({
           onClick={() => onRequestExchange(ownedId)}
           // A list row can be 850px wide: past a phone, Request keeps its natural width there.
           // flex-auto starts from the label's one-line width, so the row wraps the icons below
-          // rather than squeeze it; only a card narrower than the label itself makes it wrap
-          // ("Vragen om te lenen" on a phone). min-w-0 lifts Button's touch minimum, which would
-          // otherwise be all the row reserves for it.
+          // rather than squeeze it. On a card too narrow for the label beside its icon the icon
+          // goes (with some padding), which also lets all three share a row on a wider grid card;
+          // only a card narrower than the label itself makes it wrap ("Vragen om te lenen" on a
+          // phone). min-w-0 lifts Button's touch minimum, which would otherwise be all the row
+          // reserves for it.
           className={cn(
-            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0",
+            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0 @max-[16.5rem]:px-2 @max-[16.5rem]:[&>svg]:hidden",
             viewMode === "list" && "sm:flex-none",
           )}
         >
