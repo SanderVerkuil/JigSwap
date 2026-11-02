@@ -375,6 +375,26 @@ describe("PastSolvesList (ticking)", () => {
     expect(input.getAttribute("aria-describedby")).toBeNull();
   });
 
+  // The room a browser leaves when focus scrolls: at its tallest, with the two-line cap message, the
+  // bar is 135px on a phone (above the tab bar) and 97px on a tablet. Its own button stays out of
+  // this, or tabbing to a bar already on screen would scroll the page.
+  it("keeps a focused row control clear of the sticky bars", () => {
+    list(async () => true);
+    tick("Cats");
+    const rows = screen.getByRole("list").parentElement!;
+    const classes = rows.className.split(/\s+/);
+    expect(classes).toContain(
+      "[&_:is(button,input,select)]:scroll-mb-[calc(var(--mobile-tab-bar-height,3.5rem)+9rem)]",
+    );
+    expect(classes).toContain("md:[&_:is(button,input,select)]:scroll-mb-28");
+    expect(classes).toContain(
+      "[&_:is(button,input,select)]:scroll-mt-[calc(var(--app-sticky-top,0px)+0.5rem)]",
+    );
+    expect(
+      rows.contains(screen.getByRole("button", { name: "Log 1 puzzle" })),
+    ).toBe(false);
+  });
+
   it("keeps the ticks when saving fails", async () => {
     const store = createStepCommitStore();
     list(async () => false, store);

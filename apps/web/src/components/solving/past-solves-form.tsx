@@ -170,32 +170,38 @@ export function PastSolvesList({
   return (
     <div className="space-y-4">
       <p className="font-medium">{t("lead")}</p>
-      <ul className="flex flex-col">
-        {candidates.slice(0, shown).map(({ copyId, title }, index, list) => {
-          const choice = choices.get(copyId);
-          return (
-            <li
-              key={copyId}
-              className={index < list.length - 1 ? "border-b" : undefined}
-            >
-              <PastSolveRow
-                id={copyId}
-                title={title}
-                choice={choice}
-                disabled={!choice && full}
-                years={years}
-                maxDate={maxDate}
-                onChange={(next) => setChoice(copyId, next)}
-              />
-            </li>
-          );
-        })}
-      </ul>
-      {showMore && (
-        <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
-          {t("showMore")}
-        </Button>
-      )}
+      {/* Tabbing through the rows never leaves focus behind what stays on screen: the shell's top
+          chrome, the bar below at its tallest (the cap message wraps), and the phone's tab bar.
+          Reserved before anything is ticked too, so ticking the focused row can't hide it behind
+          the bar that appears. Inside quick setup the flow's footer is no taller. */}
+      <div className="space-y-4 [&_:is(button,input,select)]:scroll-mt-[calc(var(--app-sticky-top,0px)+0.5rem)] [&_:is(button,input,select)]:scroll-mb-[calc(var(--mobile-tab-bar-height,3.5rem)+9rem)] md:[&_:is(button,input,select)]:scroll-mb-28">
+        <ul className="flex flex-col">
+          {candidates.slice(0, shown).map(({ copyId, title }, index, list) => {
+            const choice = choices.get(copyId);
+            return (
+              <li
+                key={copyId}
+                className={index < list.length - 1 ? "border-b" : undefined}
+              >
+                <PastSolveRow
+                  id={copyId}
+                  title={title}
+                  choice={choice}
+                  disabled={!choice && full}
+                  years={years}
+                  maxDate={maxDate}
+                  onChange={(next) => setChoice(copyId, next)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+        {showMore && (
+          <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
+            {t("showMore")}
+          </Button>
+        )}
+      </div>
       <div
         className={cn(
           showSubmit &&
