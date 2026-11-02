@@ -39,6 +39,7 @@ import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { StagedPhotoChips } from "./staged-photo-chips";
+import { useAttachCard } from "./use-attach-card";
 import { usePhotosAvailable, usePhotoStaging } from "./use-photo-staging";
 import { useTypingIndicator } from "./use-typing-indicator";
 
@@ -148,20 +149,9 @@ export function MessageComposer({
     setLocationOpen(false);
   }, [threadId]);
 
-  // The puzzle a copy's "Message" brought along. getCopyConversation applies the same gates as the
-  // copy's page and says which DM the copy belongs to, so a hand-typed ?attach= for someone else's
-  // copy stages nothing here. Staged once, while rendering (the sanctioned "adjust state when a
-  // value changes" pattern), so removing the chip sticks when the read updates.
-  const { data: attachView } = useQuery(
-    convexQuery(
-      gateway.conversation.getCopyConversation,
-      attachCopyId ? { copyId: attachCopyId as Id<"ownedPuzzles"> } : "skip",
-    ),
-  );
-  const attachCard =
-    attachView?.status === "existing" && attachView.threadId === threadId
-      ? attachView.copy
-      : undefined;
+  // The puzzle a copy's "Message" brought along. Staged once, while rendering (the sanctioned
+  // "adjust state when a value changes" pattern), so removing the chip sticks when the read updates.
+  const { card: attachCard } = useAttachCard(attachCopyId, threadId);
   const [attachedCopyId, setAttachedCopyId] = useState<string | null>(null);
   if (attachCard && attachedCopyId !== attachCard.copyId) {
     setAttachedCopyId(attachCard.copyId);

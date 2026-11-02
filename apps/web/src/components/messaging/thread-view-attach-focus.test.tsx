@@ -2,7 +2,7 @@
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -41,8 +41,13 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   },
 }));
 
-const row = (threadId: string, name: string): InboxThread => ({
+const row = (
+  threadId: string,
+  name: string,
+  readOnly?: boolean,
+): InboxThread => ({
   threadId,
+  ...(readOnly && { readOnly }),
   subject: {
     kind: "dm",
     otherMember: {
@@ -72,7 +77,16 @@ const CARD = {
   coverUrl: null,
 };
 
-function setup(attachCopyId?: string) {
+const EXISTING = { status: "existing", threadId: "thread_1", copy: CARD };
+const ATTACH_KEY = convexQuery(gateway.conversation.getCopyConversation, {
+  copyId: "copy_1" as Id<"ownedPuzzles">,
+}).queryKey;
+
+// `view: null` leaves the ?attach read in flight.
+function setup(
+  attachCopyId?: string,
+  { view = EXISTING, readOnly }: { view?: unknown; readOnly?: boolean } = {},
+) {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -86,7 +100,10 @@ function setup(attachCopyId?: string) {
       },
     },
   });
-  for (const thread of [row("thread_1", "Mara"), row("thread_2", "Noor")]) {
+  for (const thread of [
+    row("thread_1", "Mara", readOnly),
+    row("thread_2", "Noor"),
+  ]) {
     queryClient.setQueryData(
       convexQuery(gateway.conversation.getInboxThread, {
         threadId: thread.threadId as Id<"threads">,
@@ -94,12 +111,7 @@ function setup(attachCopyId?: string) {
       thread,
     );
   }
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getCopyConversation, {
-      copyId: "copy_1" as Id<"ownedPuzzles">,
-    }).queryKey,
-    { status: "existing", threadId: "thread_1", copy: CARD },
-  );
+  if (view !== null) queryClient.setQueryData(ATTACH_KEY, view);
   const tree = (threadId: string) => (
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
@@ -107,8 +119,25 @@ function setup(attachCopyId?: string) {
       </IntlProvider>
     </QueryClientProvider>
   );
-  const view = render(tree("thread_1"));
-  return { open: (threadId: string) => view.rerender(tree(threadId)) };
+  const screenView = render(tree("thread_1"));
+  return {
+    open: (threadId: string) => screenView.rerender(tree(threadId)),
+    settleAttach: (next: unknown) =>
+      act(() => {
+        queryClient.setQueryData(ATTACH_KEY, next);
+      }),
+    failAttach: () =>
+      act(() => {
+        queryClient
+          .getQueryCache()
+          .find({ queryKey: ATTACH_KEY })
+          ?.setState({
+            status: "error",
+            error: new Error("ArgumentValidationError"),
+            fetchStatus: "idle",
+          });
+      }),
+  };
 }
 
 const heading = (name: string) =>
@@ -148,6 +177,62 @@ describe("ThreadView focus", () => {
   it("stays on the title on a phone, so the keyboard stays down", async () => {
     mocks.isMobile = true;
     setup("copy_1");
+    await act(async () => {});
+    expect(document.activeElement).toBe(heading("Mara"));
+  });
+
+  it("doesn't make a phone wait for the read", async () => {
+    mocks.isMobile = true;
+    setup("copy_1", { view: null });
+    await act(async () => {});
+    expect(document.activeElement).toBe(heading("Mara"));
+  });
+
+  // A hand-typed or stale ?attach stages nothing, so nothing else would take focus.
+  it.each([
+    ["an unknown copy", { status: "unavailable" }],
+    ["the viewer's own copy", { status: "self" }],
+    ["a hidden owner's copy", { status: "ownerHidden" }],
+    ["a copy with no thread yet", { status: "new", canMessage: true }],
+    [
+      "a copy from another thread",
+      { status: "existing", threadId: "thread_2", copy: CARD },
+    ],
+    [
+      "a backend without the card",
+      { status: "existing", threadId: "thread_1" },
+    ],
+  ])("falls back to the title for %s", async (_name, view) => {
+    setup("copy_1", { view });
+    await act(async () => {});
+    expect(document.activeElement).toBe(heading("Mara"));
+  });
+
+  it("falls back to the title when the read fails (a malformed id)", async () => {
+    const { failAttach } = setup("copy_1", { view: null });
+    await act(async () => {});
+    expect(document.activeElement).toBe(document.body);
+    failAttach();
+    await waitFor(() => expect(document.activeElement).toBe(heading("Mara")));
+  });
+
+  it("gives the title focus once the read settles without a card", async () => {
+    const { settleAttach } = setup("copy_1", { view: null });
+    await act(async () => {});
+    expect(document.activeElement).toBe(document.body);
+    settleAttach({ status: "unavailable" });
+    await waitFor(() => expect(document.activeElement).toBe(heading("Mara")));
+  });
+
+  it("gives the composer focus once the read brings the card", async () => {
+    const { settleAttach } = setup("copy_1", { view: null });
+    await act(async () => {});
+    settleAttach(EXISTING);
+    await waitFor(() => expect(document.activeElement).toBe(composer("Mara")));
+  });
+
+  it("falls back to the title when the composer is closed", async () => {
+    setup("copy_1", { readOnly: true });
     await act(async () => {});
     expect(document.activeElement).toBe(heading("Mara"));
   });
