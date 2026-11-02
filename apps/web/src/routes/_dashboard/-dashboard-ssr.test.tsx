@@ -111,7 +111,7 @@ const clientAnswering = () => {
   return { queryClient, asked };
 };
 
-const renderPage = (queryClient: QueryClient) => {
+const renderPage = (queryClient: QueryClient, now = new Date(0)) => {
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
   return renderToString(
@@ -120,7 +120,7 @@ const renderPage = (queryClient: QueryClient) => {
         locale="en"
         messages={en}
         timeZone="Europe/Amsterdam"
-        now={new Date(0)}
+        now={now}
       >
         <Page />
       </IntlProvider>
@@ -169,6 +169,55 @@ describe("the dashboard home on the server", () => {
       expect(renderPage(queryClient)).toContain('data-slot="skeleton"');
     } finally {
       ANSWERS[name(gateway.library.myShelf)] = shelf;
+    }
+  });
+
+  // The server runs in UTC and the browser where the member is, so a "today" taken from the runtime
+  // would differ between the server's HTML and the first client render for hours around midnight.
+  it("paints the same page whatever zone the server runs in", async () => {
+    const zone = process.env.TZ;
+    // 00:30 on 3 November in Amsterdam, the 2nd in UTC and New York.
+    const instant = new Date("2026-11-02T23:30:00Z");
+    const goals = ANSWERS[name(gateway.solving.myGoals)];
+    const solves = ANSWERS[name(gateway.solving.myInProgress)];
+    ANSWERS[name(gateway.solving.myGoals)] = [
+      {
+        _id: "g1",
+        title: "Last day was the 2nd",
+        targetCompletions: 10,
+        currentCompletions: 1,
+        isActive: true,
+        isAchieved: false,
+        targetDate: Date.UTC(2026, 10, 2),
+      },
+    ];
+    ANSWERS[name(gateway.solving.myInProgress)] = [
+      {
+        completionId: "c1",
+        title: "Started on the 3rd",
+        startDate: Date.UTC(2026, 10, 3),
+      },
+    ];
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(instant);
+    try {
+      const { queryClient } = clientAnswering();
+      await prefetchDashboardHome(queryClient);
+      const paintIn = (tz: string) => {
+        process.env.TZ = tz;
+        return renderPage(queryClient, instant);
+      };
+      const html = paintIn("Europe/Amsterdam");
+      expect(html).toContain("Started today");
+      expect(html).not.toContain("Last day was the 2nd");
+      expect(paintIn("UTC")).toBe(html);
+      expect(paintIn("America/New_York")).toBe(html);
+      expect(paintIn("Asia/Tokyo")).toBe(html);
+    } finally {
+      vi.useRealTimers();
+      process.env.TZ = zone;
+      ANSWERS[name(gateway.solving.myGoals)] = goals;
+      ANSWERS[name(gateway.solving.myInProgress)] = solves;
     }
   });
 

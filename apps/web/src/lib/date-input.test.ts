@@ -1,11 +1,13 @@
 import { createFormatter } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  calendarDaysAgo,
+  calendarDaysSince,
   dateInputToMs,
   formatDateOnly,
   localTodayInput,
+  localTodayMs,
   msToDateInput,
+  zonedTodayMs,
 } from "./date-input";
 
 // A solve date is a calendar date stored as UTC midnight. These helpers must give the same answer
@@ -50,13 +52,35 @@ describe.each(ZONES)("date inputs in %s", (zone) => {
     expect(formatDateOnly(format("nl"), stored)).toBe("30 okt 2026");
   });
 
+  it("names the same day in a named time zone, whatever the runtime's zone", () => {
+    // 00:30 on 3 November in Amsterdam, still the 2nd in UTC and New York.
+    const instant = new Date("2026-11-02T23:30:00Z");
+    expect(zonedTodayMs(instant, "Europe/Amsterdam")).toBe(
+      Date.UTC(2026, 10, 3),
+    );
+    expect(zonedTodayMs(instant, "UTC")).toBe(Date.UTC(2026, 10, 2));
+    expect(zonedTodayMs(instant, "America/New_York")).toBe(
+      Date.UTC(2026, 10, 2),
+    );
+  });
+
   it("counts calendar days from a stored date to the local today", () => {
     const start = Date.UTC(2026, 9, 30);
-    expect(calendarDaysAgo(start, new Date(2026, 9, 30, 0, 30))).toBe(0);
-    expect(calendarDaysAgo(start, new Date(2026, 9, 30, 23, 30))).toBe(0);
-    expect(calendarDaysAgo(start, new Date(2026, 9, 31, 0, 30))).toBe(1);
-    expect(calendarDaysAgo(start, new Date(2026, 10, 2, 12))).toBe(3);
-    expect(calendarDaysAgo(start, new Date(2026, 9, 28, 12))).toBe(-2);
+    expect(
+      calendarDaysSince(start, localTodayMs(new Date(2026, 9, 30, 0, 30))),
+    ).toBe(0);
+    expect(
+      calendarDaysSince(start, localTodayMs(new Date(2026, 9, 30, 23, 30))),
+    ).toBe(0);
+    expect(
+      calendarDaysSince(start, localTodayMs(new Date(2026, 9, 31, 0, 30))),
+    ).toBe(1);
+    expect(
+      calendarDaysSince(start, localTodayMs(new Date(2026, 10, 2, 12))),
+    ).toBe(3);
+    expect(
+      calendarDaysSince(start, localTodayMs(new Date(2026, 9, 28, 12))),
+    ).toBe(-2);
   });
 });
 
@@ -78,6 +102,8 @@ describe("date input edge cases", () => {
 
   it("counts a legacy instant by its UTC calendar day", () => {
     const legacyStart = Date.UTC(2026, 9, 29, 15);
-    expect(calendarDaysAgo(legacyStart, new Date(2026, 9, 30, 12))).toBe(1);
+    expect(
+      calendarDaysSince(legacyStart, localTodayMs(new Date(2026, 9, 30, 12))),
+    ).toBe(1);
   });
 });

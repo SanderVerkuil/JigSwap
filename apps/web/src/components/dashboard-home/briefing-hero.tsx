@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useMemberToday } from "@/hooks/use-member-today";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { currentGoals } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -234,6 +235,7 @@ function QuickActions() {
 // shell chrome owns the greeting).
 export function BriefingHero() {
   const { member, isMemberLoading } = useCurrentMember();
+  const today = useMemberToday();
 
   const { data: exchanges } = useQuery(
     // Only what's still in play: finished exchanges have no part in the headline.
@@ -277,7 +279,7 @@ export function BriefingHero() {
     (e) => e.userRole === "owner" && e.status === "proposed",
   );
 
-  const activeGoal = currentGoals(goals ?? [])[0];
+  const activeGoal = currentGoals(goals ?? [], today)[0];
   const goal =
     activeGoal && activeGoal.targetCompletions > 0
       ? {

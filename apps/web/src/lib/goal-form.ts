@@ -1,4 +1,9 @@
-import { dateInputToMs, localTodayInput, msToDateInput } from "./date-input";
+import {
+  dateInputToMs,
+  localTodayInput,
+  localTodayMs,
+  msToDateInput,
+} from "./date-input";
 
 // The goals page's rules, kept pure so they can be tested: what the form accepts, what it sends,
 // and which section a goal belongs in. Goal dates follow lib/date-input: a calendar date stored as
@@ -19,32 +24,39 @@ export type GoalStatus = "active" | "achieved" | "ended" | "archived";
 
 // Whether a goal's last day has passed. Its last day is a calendar date (UTC midnight) and "today"
 // comes from the member's local calendar.
-function periodOver(goal: { targetDate?: number }, now: Date): boolean {
+function periodOver(goal: { targetDate?: number }, today: number): boolean {
   if (goal.targetDate === undefined) return false;
   const lastDay = Math.floor(goal.targetDate / DAY_MS) * DAY_MS;
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   return lastDay < today;
 }
+
+const statusOn = (
+  goal: { isActive: boolean; isAchieved: boolean; targetDate?: number },
+  today: number,
+): GoalStatus => {
+  if (!goal.isActive) return "archived";
+  if (goal.isAchieved) return "achieved";
+  return periodOver(goal, today) ? "ended" : "active";
+};
 
 export function goalStatus(
   goal: { isActive: boolean; isAchieved: boolean; targetDate?: number },
   now: Date = new Date(),
 ): GoalStatus {
-  if (!goal.isActive) return "archived";
-  if (goal.isAchieved) return "achieved";
-  return periodOver(goal, now) ? "ended" : "active";
+  return statusOn(goal, localTodayMs(now));
 }
 
 // The goals worth showing as "your goal" outside the goals page (the dashboard ring and briefing):
 // the ones still being chased first, then achieved ones whose period is still running. A goal whose
 // last day has passed never appears, even when it was achieved (it stays under Achieved on the goals
-// page), so the new year's prompt to set a goal shows.
+// page), so the new year's prompt to set a goal shows. `today` is a stored date: on a server-rendered
+// page, from hooks/use-member-today.
 export function currentGoals<
   G extends { isActive: boolean; isAchieved: boolean; targetDate?: number },
->(goals: readonly G[], now: Date = new Date()): G[] {
-  const chasing = goals.filter((goal) => goalStatus(goal, now) === "active");
+>(goals: readonly G[], today: number): G[] {
+  const chasing = goals.filter((goal) => statusOn(goal, today) === "active");
   const achieved = goals.filter(
-    (goal) => goalStatus(goal, now) === "achieved" && !periodOver(goal, now),
+    (goal) => statusOn(goal, today) === "achieved" && !periodOver(goal, today),
   );
   return [...chasing, ...achieved];
 }

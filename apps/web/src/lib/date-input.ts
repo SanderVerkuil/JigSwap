@@ -61,10 +61,28 @@ export function formatDateOnly(
   });
 }
 
-// Whole calendar days from a stored date to the member's local today: 0 for today, negative for a
+// Today as a stored date (UTC midnight), on the runtime's own calendar. In the browser that is the
+// member's. A server-rendered page must not read this during render: see hooks/use-member-today.
+export function localTodayMs(now: Date = new Date()): number {
+  return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+// Today as a stored date, on the calendar of a named time zone: the same on any runtime.
+export function zonedTodayMs(now: Date, timeZone: string | undefined): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+  return Date.UTC(part("year"), part("month") - 1, part("day"));
+}
+
+// Whole calendar days from a stored date to `today` (a stored date too): 0 for today, negative for a
 // future date. A legacy instant counts by its UTC calendar day.
-export function calendarDaysAgo(ms: number, now: Date = new Date()): number {
-  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+export function calendarDaysSince(ms: number, today: number): number {
   const day = Math.floor(ms / DAY_MS) * DAY_MS;
   return Math.round((today - day) / DAY_MS);
 }

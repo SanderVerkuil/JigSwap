@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
+import { useMemberToday } from "@/hooks/use-member-today";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { currentGoals } from "@/lib/goal-form";
@@ -271,10 +272,11 @@ function GoalBar({ goal }: { goal: GoalRow }) {
 function GoalsColumn({ goals }: { goals: GoalRow[] }) {
   const t = useTranslations("dashboard.pulse.goals");
   const isMobile = useIsMobile();
+  const today = useMemberToday();
 
   // Lead with the goal still being chased, then an achieved one. Ended and
   // archived goals belong to the goals page's "Past goals", not the ring.
-  const [primary, ...others] = currentGoals(goals);
+  const [primary, ...others] = currentGoals(goals, today);
   const rest = others.slice(0, 2);
 
   return (
