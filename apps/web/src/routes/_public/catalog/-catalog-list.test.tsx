@@ -131,6 +131,12 @@ const lastUrlWrite = () => {
 
 const searchBox = () => screen.getByRole<HTMLInputElement>("searchbox");
 
+const advanceDebounce = () => {
+  act(() => {
+    vi.advanceTimersByTime(300);
+  });
+};
+
 beforeEach(() => {
   router.navigate.mockClear();
 });
@@ -183,7 +189,7 @@ describe("public catalogue search in the URL", () => {
 
     fireEvent.change(searchBox(), { target: { value: " castle " } });
     expect(router.navigate).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(300));
+    advanceDebounce();
 
     expect(lastUrlWrite()).toEqual({
       search: { brand: "Jumbo", q: "castle" },
@@ -207,7 +213,7 @@ describe("public catalogue search in the URL", () => {
     const { changeUrl } = renderAt({});
 
     fireEvent.change(searchBox(), { target: { value: "cas" } });
-    act(() => vi.advanceTimersByTime(300));
+    advanceDebounce();
     fireEvent.change(searchBox(), { target: { value: "castle" } });
     changeUrl({ q: "cas" });
 
@@ -219,7 +225,7 @@ describe("public catalogue search in the URL", () => {
     renderAt({ q: "castle" });
 
     fireEvent.change(searchBox(), { target: { value: "  " } });
-    act(() => vi.advanceTimersByTime(300));
+    advanceDebounce();
 
     expect(lastUrlWrite().search.q).toBeUndefined();
   });
