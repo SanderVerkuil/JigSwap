@@ -12,6 +12,7 @@ import {
   LIGHTING,
   type LightingPreset,
 } from "@/components/marketing/plank-3d/palette";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { ContactShadows } from "@react-three/drei";
 import type {
   DomEvent,
@@ -24,7 +25,6 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { framedContentHeight, layoutRow } from "./layout";
-import { useCoarsePointer } from "./use-coarse-pointer";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———

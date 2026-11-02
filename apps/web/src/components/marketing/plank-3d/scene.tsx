@@ -1,5 +1,5 @@
-import { useCoarsePointer } from "@/components/common/puzzle-plank-3d/use-coarse-pointer";
 import type { PlankBox } from "@/components/marketing/plank";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { ContactShadows } from "@react-three/drei";
 import type {
   DomEvent,

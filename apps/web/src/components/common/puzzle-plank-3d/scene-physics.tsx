@@ -14,6 +14,7 @@ import {
   LIGHTING,
   type LightingPreset,
 } from "@/components/marketing/plank-3d/palette";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { ContactShadows } from "@react-three/drei";
 import type {
   DomEvent,
@@ -35,7 +36,6 @@ import { reconcileBodyRefs } from "./body-refs";
 import { clampThrowVelocity } from "./drag-math";
 import { framedContentHeight, layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
-import { useCoarsePointer } from "./use-coarse-pointer";
 import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
