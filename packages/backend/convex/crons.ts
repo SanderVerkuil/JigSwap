@@ -33,12 +33,19 @@ crons.interval(
 
 // Blobs nothing holds (older than a day) and box art only its listing holds (older than a week):
 // a DRY RUN that only logs `storage.sweep`, unless the deployment env STORAGE_GC_MODE is "delete"
-// (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md).
+// (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md). Daily over the
+// blobs recent enough to have just become candidates, monthly over all of them.
 crons.daily(
   "sweep unheld storage blobs",
   { hourUTC: 4, minuteUTC: 15 },
   internal.lib.storage.storageSweep.sweepStorage,
-  {},
+  { scope: "recent" },
+);
+crons.monthly(
+  "sweep all storage blobs",
+  { day: 1, hourUTC: 5, minuteUTC: 15 },
+  internal.lib.storage.storageSweep.sweepStorage,
+  { scope: "all" },
 );
 
 // The users.role mirror (admin-only notification targeting) reconciled with Clerk, in case a user

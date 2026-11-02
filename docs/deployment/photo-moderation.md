@@ -166,8 +166,10 @@ works and that count reaches zero, the banner disappears. When it is configured,
 Uploads are claimed once and the delete paths keep a blob that another row still holds, so a blob
 nobody holds stays in storage whenever an upload is never attached (a form left unsaved, an attach
 that was refused or came too late, a burst of upload URLs). A daily cron (04:15 UTC) runs
-`lib/storage/storageSweep.sweepStorage` over the whole `_storage` table, 50 blobs per batch, each
-batch its own transaction, rescheduling itself until the table is done. For each blob:
+`lib/storage/storageSweep.sweepStorage` over the `_storage` rows of the last 10 days
+(`scope: "recent"`), where nearly every such blob is, and a monthly cron (the 1st, 05:15 UTC) over
+the whole table (`scope: "all"`), which finds an older blob something has since let go of. Both go
+50 blobs per batch, each batch its own transaction, rescheduling itself until done. For each blob:
 
 - **Younger than 24 hours** (`ORPHAN_MIN_AGE_MS`): kept. An upload may still be attached (the claim
   windows are 15 minutes).
@@ -211,11 +213,12 @@ even when `STORAGE_GC_MODE` is `delete`, and every `storage.sweep` event carries
 2. `blobReferences.test.ts` is green on the code being deployed: every `v.id("_storage")` field in
    the schema is registered as a blob reference or reviewed as not one. A new storage-id field (for
    example image renditions) must be registered before the sweep may delete.
-3. At least 7 daily dry runs, whose `storage.sweep` events show only expected candidates (spot-check
-   a few `batch_candidate_ids` in the dashboard's **Files** view: abandoned uploads, never-used box
-   art) and no unexpected kinds in `kept_by_kind`.
+3. At least 7 daily dry runs and one over the whole table (the monthly cron, or by hand:
+   `npx convex run lib/storage/storageSweep:sweepStorage '{"scope":"all"}'`), whose `storage.sweep`
+   events show only expected candidates (spot-check a few `batch_candidate_ids` in the dashboard's
+   **Files** view: abandoned uploads, never-used box art) and no unexpected kinds in `kept_by_kind`.
 
-Each batch logs one `storage.sweep` wide event: `mode` (`dry_run` or `delete`), `delete_blocked`
+Each batch logs one `storage.sweep` wide event: `scope` (`recent` or `all`), `mode` (`dry_run` or `delete`), `delete_blocked`
 (only when delete mode was asked for but refused), `done`,
 `started_at`, `batch_scanned`, `batch_candidate_ids`, and the run's running totals (`scanned`,
 `scanned_bytes`, `young`, `kept`, `kept_by_kind`, `candidates`, `candidate_bytes`, `orphans`,
@@ -223,7 +226,7 @@ Each batch logs one `storage.sweep` wide event: `mode` (`dry_run` or `delete`), 
 `"done":true` carries the whole run.
 
 ```
-['jigswap'] | where event == "storage.sweep" and done == true | project _time, mode, scanned, kept, candidates, candidate_bytes, orphans, unattached_box_art, deleted, kept_by_kind
+['jigswap'] | where event == "storage.sweep" and done == true | project _time, scope, mode, scanned, kept, candidates, candidate_bytes, orphans, unattached_box_art, deleted, kept_by_kind
 ```
 
 A blob the sweep deletes is gone for the app (only a Convex backup that includes file storage
