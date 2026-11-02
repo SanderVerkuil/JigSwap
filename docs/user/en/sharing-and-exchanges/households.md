@@ -164,7 +164,7 @@ housemate's, including copies set to private. Each card says whose it is: your
 own say **You**, a housemate's show their picture and name.
 
 - Click a person above the puzzles to see only theirs, or **Everyone** for all.
-- Use **Available**, **For Trade** or **For Lend** to see only puzzles on offer.
+- Use **Available**, **For Trade** or **For Loan** to see only puzzles on offer.
 - Click a puzzle to open it.
 - Click **⋯** on a card for the same actions as in **My Puzzles**: start,
   finish or log a solve on any puzzle; on your own also edit, delete and add

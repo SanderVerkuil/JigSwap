@@ -180,7 +180,7 @@ zijn of haar foto en naam.
 
 - Klik op een persoon boven de puzzels om alleen diens puzzels te zien, of op
   **Iedereen** voor alle.
-- Kies **Beschikbaar**, **Te ruilen** of **Te leen** om alleen puzzels te zien
+- Kies **Beschikbaar**, **Te ruil** of **Te leen** om alleen puzzels te zien
   die worden aangeboden.
 - Klik op een puzzel om hem te openen.
 - Klik op **⋯** op een kaart voor dezelfde acties als in **Mijn puzzels**: een
