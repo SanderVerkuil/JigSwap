@@ -39,13 +39,13 @@ De vier stappen zijn:
 
 1. **Voeg je puzzels toe**: kies de puzzels die je bezit uit de catalogus,
    meerdere tegelijk. Zie
-   [Puzzels toevoegen & importeren](/docs/your-library/adding-and-importing).
+   [Puzzels toevoegen en importeren](/docs/your-library/adding-and-importing).
 2. **Leg vast wat je al hebt afgemaakt**: markeer de puzzels die je al hebt
    opgelost, met een datum, een jaar of "Weet ik niet meer". Zie
-   [Voltooiingen & doelen](/docs/your-library/completions-and-goals).
+   [Voltooiingen en doelen](/docs/your-library/completions-and-goals).
 3. **Vind je puzzelmaatjes**: volg mensen die je misschien kent, zoek leden op
    of deel je uitnodigingslink. Zie
-   [Mensen & volgen](/docs/discovering-and-community/people-and-following).
+   [Mensen en volgen](/docs/discovering-and-community/people-and-following).
 4. **Maak het persoonlijk**: stel je foto en locatie in, en wie je profiel kan
    zien.
 
@@ -87,4 +87,4 @@ accountmenu.
 
 Ben je lid geworden via iemands uitnodigingslink, dan vraagt een kaart
 **Uitnodigingen** of jullie elkaar willen volgen. Zie
-[Mensen & volgen](/docs/discovering-and-community/people-and-following#als-iemand-jou-heeft-uitgenodigd).
+[Mensen en volgen](/docs/discovering-and-community/people-and-following#als-iemand-jou-heeft-uitgenodigd).

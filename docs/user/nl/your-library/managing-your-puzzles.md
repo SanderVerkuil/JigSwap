@@ -166,7 +166,7 @@ Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is
 zichtbaar zolang het aanbod loopt. Koos je **Privé**, dan blijft dat je keuze:
 trek je elk aanbod in, dan is de kopie weer privé. Zie voor het volledige
 overzicht
-[Zichtbaarheid & privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+[Zichtbaarheid en privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Kopieën van je huishouden
 

@@ -1,10 +1,10 @@
 ---
-title: Reputatie & beoordelingen
+title: Reputatie en beoordelingen
 order: 4
 summary: "Laat na uitwisselingen partnerbeoordelingen achter en bouw je reputatiebadge op."
 ---
 
-# Reputatie & beoordelingen
+# Reputatie en beoordelingen
 
 Na een afgeronde uitwisseling kan elk van beide partijen een **partnerbeoordeling** achterlaten om de community te helpen de betrouwbaarheid in te schatten.
 

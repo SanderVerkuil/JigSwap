@@ -1,10 +1,10 @@
 ---
-title: Veelgestelde vragen & problemen oplossen
+title: Veelgestelde vragen en problemen oplossen
 order: 1
 summary: "Antwoorden op veelgestelde vragen en oplossingen voor zaken die misgaan."
 ---
 
-# Veelgestelde vragen & problemen oplossen
+# Veelgestelde vragen en problemen oplossen
 
 Tik op een vraag om het antwoord uit te klappen.
 
@@ -67,7 +67,7 @@ Staat er in een gesprek "Je kunt niet meer reageren in dit gesprek.", dan kun
 je het andere lid niet meer bereiken, bijvoorbeeld omdat diegene jou heeft
 geblokkeerd. Heb je diegene zelf geblokkeerd, dan biedt het gesprek in plaats
 daarvan **Deblokkeren**. Zie
-[Blokkeren & melden](/docs/discovering-and-community/blocking-and-reporting).
+[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).
 
 </details>
 
@@ -100,7 +100,7 @@ Zie [Berichten](/docs/staying-informed/messages#fotocontrole).
 Meldt iemand zich aan via jouw uitnodigingslink, dan vraagt JigSwap of jullie
 elkaar willen volgen. Jullie volgen elkaar pas zodra diegene **Elkaar volgen**
 kiest, en dan krijg je een melding. Diegene heeft 30 dagen om te reageren. Zie
-[Mensen & volgen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen).
+[Mensen en volgen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen).
 
 </details>
 
@@ -135,7 +135,7 @@ Gebruik **Mijn gegevens exporteren** onderaan **Inzichten**, onder **Je
 gegevens** op de pagina **Privacy en veiligheid** van je account, of in snel
 zoeken (**Cmd/Ctrl + K**). Je downloadt dan een JSON-bestand met je
 persoonlijke gegevens. Zie
-[Inzichten & statistieken](/docs/your-library/insights-and-stats#je-gegevens-exporteren).
+[Inzichten en statistieken](/docs/your-library/insights-and-stats#je-gegevens-exporteren).
 
 </details>
 

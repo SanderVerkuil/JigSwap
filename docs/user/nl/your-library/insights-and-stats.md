@@ -1,10 +1,10 @@
 ---
-title: Inzichten & statistieken
+title: Inzichten en statistieken
 order: 5
 summary: "Maak van je activiteit een persoonlijk dashboard en exporteer je gegevens."
 ---
 
-# Inzichten & statistieken
+# Inzichten en statistieken
 
 **Waar:** **Inzichten** (`/insights`).
 

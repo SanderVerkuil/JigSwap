@@ -1,10 +1,10 @@
 ---
-title: Voltooiingen & doelen
+title: Voltooiingen en doelen
 order: 4
 summary: "Leg oplossingen vast, maak lopende puzzels af, beoordeel ze en volg je doelen."
 ---
 
-# Voltooiingen & doelen
+# Voltooiingen en doelen
 
 ## Voltooiingen vastleggen
 

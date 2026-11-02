@@ -4,7 +4,7 @@ order: 3
 summary: "Maak benoemde planken, voeg puzzels toe, bekijk collectiestatistieken en deel ze."
 ---
 
-# Collecties — Je planken organiseren
+# Collecties — je planken organiseren
 
 Collecties zijn benoemde planken die je aanmaakt om je kopieën te organiseren.
 

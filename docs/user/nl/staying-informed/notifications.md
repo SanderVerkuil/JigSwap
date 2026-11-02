@@ -91,7 +91,7 @@ catalogus gaan deze meldingen over nieuwere functies:
 
 - **Uitnodigingen om elkaar te volgen**: degene via wiens uitnodigingslink je
   je hebt aangemeld, vraagt of jullie elkaar willen volgen. Zie
-  [Mensen & volgen](/docs/discovering-and-community/people-and-following).
+  [Mensen en volgen](/docs/discovering-and-community/people-and-following).
 - **Uitnodigingen voor een kring** en **Uitnodiging voor een kring
   geaccepteerd**: iemand nodigt je uit voor een vriendenkring, of accepteert
   jouw uitnodiging.

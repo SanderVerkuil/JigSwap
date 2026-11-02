@@ -1,10 +1,10 @@
 ---
-title: Zichtbaarheid & privacy
+title: Zichtbaarheid en privacy
 order: 1
 summary: "Wie je puzzels, je profiel en je naam ziet, en hoe je een exemplaar privé houdt."
 ---
 
-# Zichtbaarheid & privacy
+# Zichtbaarheid en privacy
 
 Jij bepaalt wie elke puzzel ziet en hoeveel andere leden van je profiel zien.
 Op deze pagina lees je wie wat ziet, en hoe je dat aanpast.
@@ -34,7 +34,7 @@ aanbiedt, met de tekst "Puzzels die _naam_ aanbiedt om te ruilen, uit te lenen
 of te verkopen."
 
 > **Let op:** Blokkeer je een lid, dan kan diegene je exemplaren niet meer
-> zien. Zie [Blokkeren & melden](/docs/discovering-and-community/blocking-and-reporting).
+> zien. Zie [Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).
 
 ## Een exemplaar privé maken
 

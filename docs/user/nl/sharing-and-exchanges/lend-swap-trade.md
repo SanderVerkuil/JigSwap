@@ -1,10 +1,10 @@
 ---
-title: Uitlenen, ruilen & verkopen
+title: Uitlenen, ruilen en verkopen
 order: 2
 summary: "Vind een exemplaar, vraag het aan, stuur de eigenaar een bericht en beheer je uitwisselingen."
 ---
 
-# Uitlenen, ruilen & verkopen
+# Uitlenen, ruilen en verkopen
 
 JigSwap ondersteunt drie soorten uitwisselingen:
 
@@ -182,4 +182,4 @@ pagina van de puzzel om hem weer aan te bieden.
 Je kunt je uitwisselingspartner ook vanuit de uitwisseling een **Bericht**
 sturen om details af te stemmen. Wil je een probleem met een ruil melden, open
 dan het menu **Ruilacties** en kies **Lid melden**. Zie
-[Blokkeren & melden](/docs/discovering-and-community/blocking-and-reporting).
+[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).
