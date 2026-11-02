@@ -210,7 +210,7 @@ describe("MarketingHeader mobile menu", () => {
 describe("MarketingHeader desktop bar", () => {
   it("never wraps a link, and swaps with the menu at one breakpoint", () => {
     renderHeader();
-    const nav = screen.getByRole("navigation", { name: "Primary navigation" });
+    const nav = screen.getByRole("navigation", { name: "Main" });
     for (const link of within(nav).getAllByRole("link")) {
       expect(link.className).toContain("whitespace-nowrap");
     }
