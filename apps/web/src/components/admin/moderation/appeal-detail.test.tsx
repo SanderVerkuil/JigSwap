@@ -154,4 +154,16 @@ describe("AppealDetail", () => {
     expect(container.textContent).toContain("Reason");
     expect(container.textContent).toContain("too_many_pixels");
   });
+
+  it("caps the photo and keeps the decisions in reach, whatever the pane's height", () => {
+    render(request);
+    const preview = container.querySelector("[data-detail-preview]");
+    expect(preview?.className).toContain("max-h-[40svh]");
+    const actions = container.querySelector("[data-detail-actions]");
+    expect(actions?.className).toContain("sticky");
+    expect(actions?.textContent).toContain(en.admin.moderation.appeal.restore);
+    expect(actions?.textContent).toContain(
+      en.admin.moderation.appeal.keepRemoved,
+    );
+  });
 });

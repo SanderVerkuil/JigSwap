@@ -11,6 +11,7 @@
 //   focus whenever the route bumps `focusDetailToken` (after a decision), never
 //   the next item's primary action, so a double Enter cannot approve the wrong
 //   item;
+// - a detail's decisions stick to the bottom of what scrolls it (DetailActions);
 // - from lg (1024px) the detail sits next to the list and sticks below the
 //   tab bar (however many rows it wraps to: --moderation-tabs-height, from
 //   moderation-tabs.tsx), scrolling on its own, so it stays in view however far
@@ -194,7 +195,7 @@ export function QueueList<T>({
         // Sticks below the sticky tab bar (--app-sticky-top + its height + a gap) and scrolls on its
         // own when taller than what is left of the scroll region.
         detailContainer(
-          "w-full min-w-0 rounded-xl border bg-card p-5 lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+var(--moderation-tabs-height,2.75rem)+0.75rem)] lg:max-h-[calc(100svh-var(--app-sticky-top,0px)-var(--moderation-tabs-height,2.75rem)-5.75rem)] lg:self-start lg:overflow-y-auto",
+          "w-full min-w-0 rounded-xl border bg-card p-5 [--detail-bg:var(--card)] [--detail-stick:-1.25rem] lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+var(--moderation-tabs-height,2.75rem)+0.75rem)] lg:max-h-[calc(100svh-var(--app-sticky-top,0px)-var(--moderation-tabs-height,2.75rem)-5.75rem)] lg:self-start lg:overflow-y-auto",
         )
       ) : (
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -211,7 +212,7 @@ export function QueueList<T>({
             <SheetHeader className="px-5 pb-0">
               <SheetTitle>{detailTitle}</SheetTitle>
             </SheetHeader>
-            {detailContainer("px-5 pb-5")}
+            {detailContainer("px-5 pb-5 [--detail-bg:var(--background)]")}
           </SheetContent>
         </Sheet>
       )}

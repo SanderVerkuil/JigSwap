@@ -15,6 +15,7 @@ import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { AlertTriangle, Check, Pencil, Puzzle, X } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { DetailActions } from "./detail-actions";
 
 export type PendingSubmission = FunctionReturnType<
   typeof gateway.catalog.pending
@@ -190,7 +191,7 @@ export function SubmissionDetail({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <DetailActions>
         <Button onClick={onApprove} disabled={busy}>
           <Check aria-hidden />
           {t("actions.approve")}
@@ -208,7 +209,7 @@ export function SubmissionDetail({
           <X aria-hidden />
           {t("reject")}
         </Button>
-      </div>
+      </DetailActions>
     </div>
   );
 }
