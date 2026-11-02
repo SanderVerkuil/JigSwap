@@ -730,3 +730,101 @@ describe("Completion round-trip", () => {
     expect(rehydrated.pullEvents()).toEqual([]);
   });
 });
+
+// NaN, Infinity and far-off instants used to be stored as they came, and every member who reads the
+// solve gets them back. new Date() turns all of them into dates nobody can have solved a puzzle on.
+describe("a solve's dates are dates a solve can have", () => {
+  const impossible = [
+    new Date(Number.NaN),
+    new Date(Number.POSITIVE_INFINITY),
+    new Date(1e30),
+    new Date(-1e15),
+    new Date(Date.UTC(1899, 11, 31)),
+    new Date(NOW.getTime() + 367 * 24 * 60 * 60 * 1000),
+  ];
+
+  it.each(impossible)("start() refuses %s", (startDate) => {
+    const r = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate,
+      now: NOW,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidSolveDate");
+  });
+
+  it.each(impossible)("record() refuses a start of %s", (startDate) => {
+    const r = recordValid({ startDate, endDate: startDate });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidSolveDate");
+  });
+
+  it.each(impossible)("record() refuses an end of %s", (endDate) => {
+    const r = recordValid({
+      startDate: new Date(Date.UTC(1900, 0, 1)),
+      endDate,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidSolveDate");
+  });
+
+  it.each(impossible)("finish() refuses an end of %s", (endDate) => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: new Date(Date.UTC(1900, 0, 1)),
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    const r = started.value.finish(endDate, NOW);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidSolveDate");
+    expect(started.value.isCompleted).toBe(false);
+  });
+
+  it.each(impossible)("edit() refuses %s, either way round", (date) => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: START,
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    for (const changes of [{ startDate: date }, { endDate: date }]) {
+      const r = started.value.edit(ALICE, changes, NOW);
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("InvalidSolveDate");
+    }
+  });
+
+  it("accepts the first day of 1900, today, and a year ahead", () => {
+    for (const startDate of [
+      new Date(Date.UTC(1900, 0, 1)),
+      NOW,
+      new Date(NOW.getTime() + 365 * 24 * 60 * 60 * 1000),
+    ]) {
+      expect(recordValid({ startDate, endDate: startDate }).isOk).toBe(true);
+    }
+  });
+
+  it("a stored row that predates the bound can still be edited in its other fields", () => {
+    const completion = Completion.rehydrate({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: new Date(Number.NaN),
+      photos: [],
+      isCompleted: false,
+      datePrecision: "day",
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    expect(completion.edit(ALICE, { notes: "Fixed" }, NOW).isOk).toBe(true);
+    // And its date can be put right.
+    expect(completion.edit(ALICE, { startDate: START }, NOW).isOk).toBe(true);
+  });
+});

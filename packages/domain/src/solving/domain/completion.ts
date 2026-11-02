@@ -1,5 +1,10 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { DatePrecision, MIN_SOLVE_YEAR, yearSentinel } from "./date-precision";
+import {
+  DatePrecision,
+  isPossibleSolveDate,
+  MIN_SOLVE_YEAR,
+  yearSentinel,
+} from "./date-precision";
 import { SolvingError } from "./errors";
 import {
   CompletionEdited,
@@ -103,7 +108,8 @@ export function completionEditableUntil(
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
 //
 // Invariants: a new completion names a puzzle definition or a copy (at least one, so a solve
-// can't be logged against nothing; SEC-30); endDate ≥ startDate; the duration is consistent with
+// can't be logged against nothing; SEC-30); its dates are ones a solve can have (checked where they
+// are supplied, so a row that predates that stays editable); endDate ≥ startDate; the duration is consistent with
 // the recorded end; at most five photos; edits only within 24h of completion (photo attachment is
 // exempt — see attachPhotos).
 export class Completion {
@@ -136,6 +142,9 @@ export class Completion {
   static start(props: StartCompletionProps): Result<Completion, SolvingError> {
     if (!props.puzzleDefinitionId && !props.copyId) {
       return err(SolvingError.targetRequired());
+    }
+    if (!isPossibleSolveDate(props.startDate, props.now)) {
+      return err(SolvingError.invalidSolveDate());
     }
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
@@ -243,6 +252,9 @@ export class Completion {
     allPiecesPresent?: boolean,
   ): Result<void, SolvingError> {
     if (this.state.isCompleted) return ok(undefined);
+    if (!isPossibleSolveDate(endDate, now)) {
+      return err(SolvingError.invalidSolveDate());
+    }
     if (endDate.getTime() < this.state.startDate.getTime()) {
       return err(SolvingError.invalidTimeRange());
     }
@@ -292,6 +304,12 @@ export class Completion {
     const editableUntil = this.editableUntil;
     if (editableUntil && now.getTime() > editableUntil.getTime()) {
       return err(SolvingError.editWindowClosed());
+    }
+
+    for (const date of [changes.startDate, changes.endDate]) {
+      if (date && !isPossibleSolveDate(date, now)) {
+        return err(SolvingError.invalidSolveDate());
+      }
     }
 
     // A "year"/"unknown" row's dates are sentinels, not facts. Setting a real date upgrades it to
@@ -407,6 +425,12 @@ export class Completion {
     if (props.datePrecision === "day") {
       if (!startDate || !endDate || year !== undefined) {
         return err(SolvingError.invalidDatePrecision());
+      }
+      if (
+        !isPossibleSolveDate(startDate, now) ||
+        !isPossibleSolveDate(endDate, now)
+      ) {
+        return err(SolvingError.invalidSolveDate());
       }
       if (endDate.getTime() < startDate.getTime()) {
         return err(SolvingError.invalidTimeRange());

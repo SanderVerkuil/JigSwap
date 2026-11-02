@@ -9,6 +9,18 @@ export type DatePrecision = "day" | "year" | "unknown";
 // The earliest year a year-only solve may claim.
 export const MIN_SOLVE_YEAR = 1900;
 
+const EARLIEST_SOLVE = Date.UTC(MIN_SOLVE_YEAR, 0, 1);
+const LATEST_SOLVE_AHEAD_MS = 366 * 24 * 60 * 60 * 1000;
+
+// A date a solve can have: a real date from MIN_SOLVE_YEAR on, and at most a year ahead (the forms
+// don't refuse a date ahead of today, and a member's today can be ahead of UTC's). Whatever else
+// arrives (NaN, Infinity and far-off instants all do through new Date) must never be stored: other
+// members read it back.
+export const isPossibleSolveDate = (date: Date, now: Date): boolean => {
+  const at = date.getTime();
+  return at >= EARLIEST_SOLVE && at <= now.getTime() + LATEST_SOLVE_AHEAD_MS;
+};
+
 // Goals count dated and year-only solves, never undated ones (user decision 4).
 export const countsTowardGoals = (precision: DatePrecision): boolean =>
   precision !== "unknown";

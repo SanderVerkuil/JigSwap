@@ -17,6 +17,7 @@ export type SolvingErrorCode =
   | "InvalidRating"
   | "ReviewTextTooLong"
   | "InvalidDuration"
+  | "InvalidSolveDate"
   | "NotAllowedToReviewCopy"
   | "PuzzleNotReviewable"
   | "InvalidDatePrecision"
@@ -32,6 +33,11 @@ export class SolvingError extends DomainError {
     message: string,
   ) {
     super(message);
+  }
+
+  // A date that isn't real or lies outside what a solve can have (isPossibleSolveDate).
+  static invalidSolveDate(): SolvingError {
+    return new SolvingError("InvalidSolveDate", "Not a date a solve can have");
   }
 
   // A completion's end instant precedes its start instant.
