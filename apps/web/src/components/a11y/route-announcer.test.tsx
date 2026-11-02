@@ -53,6 +53,8 @@ describe("shouldMoveFocus", () => {
   });
 });
 
+const ROUTE_TITLE = "Items";
+
 // A shell like the app's: chrome outside <main>, a control in <main> that survives route changes
 // (the messages inbox list), and the announcer once at the root.
 function makeRouter() {
@@ -78,10 +80,15 @@ function makeRouter() {
     createRoute({
       getParentRoute: () => rootRoute,
       path,
+      head: () => ({ meta: [{ title: ROUTE_TITLE }] }),
       component: () => <p>{path}</p>,
     });
   return createRouter({
-    routeTree: rootRoute.addChildren([page("/a"), page("/b")]),
+    routeTree: rootRoute.addChildren([
+      page("/a"),
+      page("/b"),
+      page("/items/$id"),
+    ]),
     history: createMemoryHistory({ initialEntries: ["/a"] }),
   });
 }
@@ -157,6 +164,81 @@ describe("RouteAnnouncer", () => {
     await go(() => router.history.back(), "/a");
     await vi.waitFor(() => expect(region().textContent).toBe("A page"));
     expect(document.activeElement).toBe(byId("nav-link"));
+  });
+
+  // A detail page's route title is generic ("My puzzles") until the page's data is in and the shell
+  // names the tab after it: speak that name, not the generic title first.
+  describe("on a detail route", () => {
+    const frames = async () => {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    };
+
+    it("waits for the page to name itself, then speaks that once", async () => {
+      document.title = ROUTE_TITLE;
+      await go(() => router.history.push("/items/1"), "/items/1");
+      await frames();
+      expect(region().textContent).toBe("");
+
+      document.title = "Oostenrijk, Tirol";
+      await vi.waitFor(() =>
+        expect(region().textContent).toBe("Oostenrijk, Tirol"),
+      );
+    });
+
+    it("doesn't wait for a page whose data was at hand, which has named itself already", async () => {
+      document.title = "Oostenrijk, Tirol";
+      await go(() => router.history.push("/items/1"), "/items/1");
+      await frames();
+      expect(region().textContent).toBe("Oostenrijk, Tirol");
+    });
+
+    it("still moves focus at once while it waits", async () => {
+      byId("nav-link").focus();
+      document.title = ROUTE_TITLE;
+      await go(() => router.history.push("/items/1"), "/items/1");
+      await frames();
+      expect(region().textContent).toBe("");
+      expect(document.activeElement).toBe(byId(MAIN_CONTENT_ID));
+    });
+
+    it("speaks the route's title when the page never names itself", async () => {
+      document.title = ROUTE_TITLE;
+      await go(() => router.history.push("/items/1"), "/items/1");
+      await vi.waitFor(() => expect(region().textContent).toBe(ROUTE_TITLE), {
+        timeout: 2000,
+      });
+    });
+
+    it("speaks a name that lands after the wait", async () => {
+      document.title = ROUTE_TITLE;
+      await go(() => router.history.push("/items/1"), "/items/1");
+      await vi.waitFor(() => expect(region().textContent).toBe(ROUTE_TITLE), {
+        timeout: 2000,
+      });
+      document.title = "Oostenrijk, Tirol";
+      await vi.waitFor(() =>
+        expect(region().textContent).toBe("Oostenrijk, Tirol"),
+      );
+    });
+
+    it("doesn't speak a page that named itself on the first load", async () => {
+      document.title = "Oostenrijk, Tirol";
+      await frames();
+      expect(region().textContent).toBe("");
+    });
+
+    it("doesn't let a late title from the old page through while leaving", async () => {
+      document.title = ROUTE_TITLE;
+      await go(() => router.history.push("/items/1"), "/items/1");
+      document.title = "Oostenrijk, Tirol";
+      await vi.waitFor(() =>
+        expect(region().textContent).toBe("Oostenrijk, Tirol"),
+      );
+      document.title = "B page";
+      await go(() => router.history.push("/b"), "/b");
+      await vi.waitFor(() => expect(region().textContent).toBe("B page"));
+    });
   });
 
   it("ignores a search-only change on the same page", async () => {
