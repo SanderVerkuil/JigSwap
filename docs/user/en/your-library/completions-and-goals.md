@@ -12,7 +12,7 @@ JigSwap keeps a full **solve log** of every puzzle you've worked on — even aft
 
 **Where:** **Completions** (`/completions`).
 
-### Log a completion
+### Log a solve
 
 1. Go to **My Puzzles**.
 2. On the copy you solved, click **Log a solve**.
@@ -28,7 +28,7 @@ Don't want to record solve times? Click **Don't track times** under the time
 fields. To turn them back on, open your account menu → **Manage account** →
 **Preferences**.
 
-You can also start from **Completions**: open **Log a completion**
+You can also start from **Completions**: open **Log a solve**
 (`/completions/new`) and pick the puzzle. The list shows the solves you're still
 working on first (pick one to finish it), then your own puzzles, the puzzles
 you've borrowed, and your household's puzzles. Use **Search** to find one by
@@ -41,10 +41,10 @@ title, brand or owner.
 If you've solved puzzles before joining JigSwap, you can log several at once,
 even when you don't remember exactly when.
 
-**Where:** **Quick setup → Log puzzles you finished** (`/welcome?step=solves`).
-Open Quick setup from your account menu.
+**Where:** **Completions → Mark past solves** (`/completions/past`). While you
+set up your account, the same list is a step of Quick setup.
 
-1. The step lists the puzzles in your library that have no solve logged yet.
+1. The page lists the puzzles in your library that have no solve logged yet.
    Click **Show more** to see more.
 2. Tick **I finished** next to each puzzle you've solved.
 3. Under **When?**, choose one:
@@ -53,8 +53,9 @@ Open Quick setup from your account menu.
    - **Pick a date**.
 4. Click **Log N puzzles** (for example, **Log 3 puzzles**).
 
-You can log up to 25 puzzles at a time. These solves don't appear in the
-community activity feed.
+You can log up to 25 puzzles at a time: log those, and they leave the list so
+you can carry on with the rest. These solves don't appear in the community
+activity feed.
 
 How the date you choose is used:
 
@@ -94,9 +95,8 @@ Per-row actions:
 On a phone, **Review**, **Edit** and **Delete** are in each row's **⋯** menu;
 **Finish solve** stays a button.
 
-Until you've logged a solve, the page offers **Log a solve** and, for puzzles
-you finished before joining, **Mark past solves**, which opens Quick setup's
-**Log puzzles you finished** step.
+Until you've logged a solve, the page offers **Log a solve**. **Mark past
+solves**, for puzzles you finished before joining, stays available below the log.
 
 ## Goals
 

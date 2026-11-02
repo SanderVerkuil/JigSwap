@@ -31,7 +31,7 @@ De items in de feed zijn klikbaar:
   (alleen als je eraan meedeed).
 
 Items linken alleen naar pagina's die je mag zien. Puzzels die in één keer
-zijn toegevoegd, en eerdere oplossingen die in één keer zijn vastgelegd,
+zijn toegevoegd, en eerdere voltooiingen die in één keer zijn vastgelegd,
 verschijnen niet in de feed.
 
 ## Wat wederzijds volgen oplevert

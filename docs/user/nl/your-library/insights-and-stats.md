@@ -17,7 +17,9 @@ Je persoonlijke analysedashboard toont:
   **gemiddelde beoordelingen** die je gaf en kreeg.
 - **Voltooiingen / maand**: een staaf per maand over de afgelopen 12 maanden,
   met het aantal boven elke staaf. Wissel tussen **Voltooiingen** en
-  **Oplosminuten** met de knopjes naast de titel.
+  **Oplosuren** met de knopjes naast de titel. Oplosuren en je totale oplostijd
+  tellen alleen de tijden op die je hebt ingevuld; een voltooiing met alleen
+  datums heeft geen tijd.
 - **Ruilacties / maand**: de ruilacties die je in elk van de afgelopen 12
   maanden startte, ook de maanden zonder ruil.
 - De **collectie-opbouw**: je puzzels op aantal stukjes, op moeilijkheid (een balk met een legenda die elke moeilijkheid met aantal en aandeel noemt) en je topmerken. Puzzels zonder merk staan als aantal onder de merkengrafiek, niet als merk in de ranglijst.

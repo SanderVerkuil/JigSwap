@@ -1,7 +1,7 @@
 ---
 title: Gebruikersgids
 order: 0
-summary: "Alles wat je nodig hebt om je bibliotheek op te bouwen, oplossingen vast te leggen en puzzels te ruilen."
+summary: "Alles wat je nodig hebt om je bibliotheek op te bouwen, voltooiingen vast te leggen en puzzels te ruilen."
 ---
 
 # Gebruikersgids

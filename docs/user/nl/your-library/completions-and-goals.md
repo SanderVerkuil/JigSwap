@@ -1,14 +1,14 @@
 ---
 title: Voltooiingen en doelen
 order: 4
-summary: "Leg oplossingen vast, maak lopende puzzels af, beoordeel ze en volg je doelen."
+summary: "Leg voltooiingen vast, maak lopende puzzels af, beoordeel ze en volg je doelen."
 ---
 
 # Voltooiingen en doelen
 
 ## Voltooiingen vastleggen
 
-JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan hebt gewerkt — zelfs nadat je de puzzel hebt weggeruild, blijven je voltooiingsregistraties bij jou.
+JigSwap houdt een volledig **voltooiingslogboek** bij van elke puzzel waar je aan hebt gewerkt — zelfs nadat je de puzzel hebt weggeruild, blijven je voltooiingsregistraties bij jou.
 
 **Waar:** **Voltooiingen** (`/completions`).
 
@@ -18,7 +18,7 @@ JigSwap houdt een volledig **oplossingslogboek** bij van elke puzzel waar je aan
 2. Klik bij de kopie die je hebt opgelost op **Voltooiing vastleggen**.
 3. Kies in het dialoogvenster **Afgerond** (de standaard) of **Nog bezig**.
    Beide datums staan eerst op vandaag. Bij **Nog bezig** vul je alleen de
-   startdatum in, en rond je de oplossing later af.
+   startdatum in, en rond je de voltooiing later af.
 4. Vul bij een afgeronde puzzel de **start- en einddatum** in en, als je wilt,
    bij **Hoelang heb je erover gedaan?** de uren en minuten. Voeg eventueel
    **notities** toe. Na het opslaan kun je de puzzel 1 tot 5 sterren en een
@@ -41,10 +41,10 @@ vind je een puzzel op titel, merk of eigenaar.
 Heb je al puzzels opgelost voordat je lid werd van JigSwap, dan kun je er
 meerdere tegelijk vastleggen, ook als je niet meer precies weet wanneer.
 
-**Waar:** **Snel instellen → Leg vast wat je al hebt afgemaakt**
-(`/welcome?step=solves`). Open Snel instellen via je accountmenu.
+**Waar:** **Voltooiingen → Leg eerdere voltooiingen vast** (`/completions/past`).
+Tijdens het instellen van je account is dezelfde lijst een stap van Snel instellen.
 
-1. De stap toont de puzzels in je bibliotheek waarvoor nog geen oplossing is
+1. De pagina toont de puzzels in je bibliotheek waarvoor nog geen voltooiing is
    vastgelegd. Klik op **Meer tonen** om er meer te zien.
 2. Vink **Ik heb _titel_ afgemaakt** aan bij elke puzzel die je hebt opgelost.
 3. Kies onder **Wanneer?** een van deze opties:
@@ -53,24 +53,25 @@ meerdere tegelijk vastleggen, ook als je niet meer precies weet wanneer.
    - **Kies een datum**.
 4. Klik op **N puzzels vastleggen** (bijvoorbeeld **3 puzzels vastleggen**).
 
-Je kunt maximaal 25 puzzels tegelijk vastleggen. Deze oplossingen verschijnen
+Je kunt maximaal 25 puzzels tegelijk vastleggen: leg ze vast, dan verdwijnen ze
+uit de lijst en ga je verder met de rest. Deze voltooiingen verschijnen
 niet in de activiteitenfeed van de community.
 
 Zo wordt de datum gebruikt die je kiest:
 
-- Een oplossing met alleen een jaar staat als "In 2023"; een oplossing zonder
+- Een voltooiing met alleen een jaar staat als "In 2023"; een voltooiing zonder
   datum staat als "Datum onbekend".
-- Oplossingen zonder datum tellen niet mee voor je doelen. Een oplossing met
+- Voltooiingen zonder datum tellen niet mee voor je doelen. Een voltooiing met
   alleen een jaar telt mee voor een doel waarvan de periode een deel van dat
   jaar beslaat.
 - Geen van beide heeft een oplostijd, en geen van beide telt mee in je
   maandelijkse oplostrends.
 - Wil je later een precieze datum toevoegen, gebruik dan **Bewerken** bij de
-  oplossing op de pagina Voltooiingen, binnen het bewerkvenster van 24 uur.
+  voltooiing op de pagina Voltooiingen, binnen het bewerkvenster van 24 uur.
 
 ### De pagina Voltooiingen
 
-De pagina Voltooiingen toont al je oplossingsregistraties, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukjes gelegd** en **dit jaar afgerond**.
+De pagina Voltooiingen toont al je voltooiingen, met een samenvatting van drie statistieken bovenaan: **totaal afgerond**, **stukjes gelegd** en **dit jaar afgerond**.
 
 Voltooiingen waar je nog mee bezig bent, staan bovenaan onder **Bezig**.
 Daaronder groepeert **Geschiedenis** je afgeronde voltooiingen per jaar, het
@@ -90,7 +91,7 @@ Acties per rij:
 - **Voltooiing afronden** — voor een voltooiing waar je nog mee bezig bent.
 - **Beoordelen** — stel je sterwaardering en beoordelingstekst in of wijzig ze.
 - **Bewerken** — pas de datumreeks, tijd en notities aan. Is het bewerkvenster
-  van een oplossing gesloten, dan is de knop grijs: beweeg erover of tik erop om
+  van een voltooiing gesloten, dan is de knop grijs: beweeg erover of tik erop om
   te zien wanneer het sloot.
 - **Verwijderen** — haal de voltooiing uit je geschiedenis, nadat je dat hebt
   bevestigd.
@@ -99,13 +100,12 @@ Op een telefoon staan **Beoordelen**, **Bewerken** en **Verwijderen** in het
 **⋯**-menu van elke rij; **Voltooiing afronden** blijft een knop.
 
 Zolang je nog niets hebt vastgelegd, biedt de pagina **Voltooiing vastleggen**
-aan en, voor puzzels die je al had afgemaakt voordat je lid werd,
-**Leg eerdere voltooiingen vast**. Dat opent de stap
-**Leg vast wat je al hebt afgemaakt** van Snel instellen.
+aan. **Leg eerdere voltooiingen vast**, voor puzzels die je al had afgemaakt
+voordat je lid werd, blijft beschikbaar onder het logboek.
 
 ## Doelen
 
-Stel persoonlijke uitdagingen in en volg ze automatisch aan de hand van je oplossingslogboek.
+Stel persoonlijke uitdagingen in en volg ze automatisch aan de hand van je voltooiingslogboek.
 
 **Waar:** **Doelen** (`/goals`).
 
@@ -126,17 +126,17 @@ hij **Nieuw doel** aan.
 
 ### Zo telt de voortgang
 
-Een doel telt de oplossingen die je binnen de periode afmaakt, van de eerste
+Een doel telt de voltooiingen die je binnen de periode afmaakt, van de eerste
 tot en met de laatste dag:
 
-- Een oplossing met een afronddatum telt mee als die datum in de periode valt.
-- Een oplossing met alleen een jaar telt mee als dat jaar in de periode valt
+- Een voltooiing met een afronddatum telt mee als die datum in de periode valt.
+- Een voltooiing met alleen een jaar telt mee als dat jaar in de periode valt
   (helemaal of gedeeltelijk).
-- Een oplossing zonder datum telt nooit mee.
+- Een voltooiing zonder datum telt nooit mee.
 
-Oplossingen die je al had vastgelegd voordat je het doel aanmaakte, tellen ook
+Voltooiingen die je al had vastgelegd voordat je het doel aanmaakte, tellen ook
 mee, zolang ze in de periode vallen. De voortgang wordt vanzelf bijgewerkt als
-je een oplossing vastlegt, bewerkt of verwijdert; je hoeft een doel nooit zelf
+je een voltooiing vastlegt, bewerkt of verwijdert; je hoeft een doel nooit zelf
 bij te werken.
 
 ### Je doelenpagina
@@ -155,7 +155,7 @@ Open het menu **⋯** bij een doel:
 - **Bewerken** — pas de titel, beschrijving, het doelaantal of de periode aan.
   De voortgang wordt opnieuw geteld voor de nieuwe periode.
 - **Archiveren** — verplaats het doel naar **Eerdere doelen**. Het telt geen
-  nieuwe oplossingen meer mee totdat je **Terugzetten** kiest; dan wordt het
+  nieuwe voltooiingen meer mee totdat je **Terugzetten** kiest; dan wordt het
   opnieuw geteld.
 - **Verwijderen** — verwijder het doel definitief, nadat je dat hebt bevestigd.
-  Je oplossingen blijven gewoon bestaan.
+  Je voltooiingen blijven gewoon bestaan.

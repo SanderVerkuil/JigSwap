@@ -100,7 +100,7 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
   Alleen jij (en leden van je huishouden die de kopie mogen beheren) zien ze.
   Staat er nog niets, klik dan op **Details toevoegen** om de maand, het jaar
   en de bron in te vullen.
-- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd, aantal keer
+- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd (uit de ingevulde tijden), aantal keer
   uitgeleend en je eigen beoordeling van de kopie (te zien voor jou en je
   huishouden, of voor wie hem beoordeeld heeft).
 - De **Eigenaar**: avatar en naam, met een link naar het profiel als je dat

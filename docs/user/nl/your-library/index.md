@@ -6,4 +6,4 @@ summary: "Voeg puzzels toe, organiseer collecties, leg voltooiingen vast en volg
 
 # Je bibliotheek
 
-Beheer de puzzelkopieën die je bezit, organiseer ze in collecties, leg elke oplossing vast en zie je persoonlijke inzichten groeien.
+Beheer de puzzelkopieën die je bezit, organiseer ze in collecties, leg elke voltooiing vast en zie je persoonlijke inzichten groeien.

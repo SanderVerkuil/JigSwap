@@ -95,7 +95,7 @@ The detail page is the rich record of a single owned copy. It includes:
   Only you (and household members who can manage the copy) see them. If
   nothing is recorded yet, click **Add details** to fill in the month, year
   and source.
-- A **stats strip**: times completed, fastest finish, times lent out, and your
+- A **stats strip**: times completed, fastest finish (from the times solvers entered), times lent out, and your
   own rating of the copy (shown to you and your household, or to anyone who
   rated it).
 - The **Owner**: their avatar and name, which links to their profile when you're

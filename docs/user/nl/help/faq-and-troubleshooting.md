@@ -23,7 +23,7 @@ Een **puzzel** (catalogusdefinitie) is het product — titel, merk, aantal stukj
 </details>
 
 <details>
-<summary>Ik heb een puzzel weggeruild. Ben ik mijn oplossingsgeschiedenis kwijt?</summary>
+<summary>Ik heb een puzzel weggeruild. Ben ik mijn voltooiingsgeschiedenis kwijt?</summary>
 
 Nee. Je voltooiingsregistraties en statistieken blijven bij **jou**, niet bij de puzzel. De nieuwe eigenaar krijgt een verse geschiedenis voor zijn kopie.
 
