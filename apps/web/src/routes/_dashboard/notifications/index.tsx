@@ -226,7 +226,7 @@ function NotificationsPage() {
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="grid gap-6 lg:gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <aside className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-2 xl:self-start">
+        <aside className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-[calc(var(--app-sticky-top,0px)+0.5rem)] xl:self-start">
           {/* Category pills + unread-only toggle: always visible. Below md the pills are ONE
               row that scrolls sideways, bleeding to the screen edges, with the toggle under it
               (two rows, not three); a wrapping row from md; a vertical stack at xl. */}

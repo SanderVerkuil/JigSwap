@@ -405,7 +405,7 @@ function ProposalReview({
         <div className="xl:hidden">{actionsRow}</div>
       </div>
 
-      <aside className="hidden xl:sticky xl:top-2 xl:block xl:self-start">
+      <aside className="hidden xl:sticky xl:top-[calc(var(--app-sticky-top,0px)+0.5rem)] xl:block xl:self-start">
         <div className="flex flex-col gap-4">
           {metaBlock}
           {actionsRow}

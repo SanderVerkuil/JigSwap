@@ -15,7 +15,7 @@ export function AddPuzzleLayout({
           under the submit button, a large card with look-alike buttons, so they are left out there:
           forms recap with AddPuzzleSummary above their submit, and the form's own hint next to the
           submit button says what is still missing. */}
-      <aside className="hidden flex-col gap-3.5 lg:sticky lg:top-2 lg:flex">
+      <aside className="hidden flex-col gap-3.5 lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+0.5rem)] lg:flex">
         {preview}
       </aside>
     </div>
