@@ -683,33 +683,6 @@ until that row exists, even when `STORAGE_GC_MODE` is `delete` (photo-moderation
 sweep").
 
 **Safe to re-run:** yes. A second real run creates 0 sidecars.
-## `library/backfillCopyOpenFlag` — the listing flag Browse reads by index
-## `library/backfillCopyOpenFlag` — the listing fields Browse reads by index
-
-**When:** once per deployment, after the `ownedPuzzles` listing fields (`isOpen`,
-`listedAt`, `ownerPrivate`) and their `by_listing` / `by_puzzle_listing` indexes (PERF-B1m,
-SEC-29) are deployed there. There is no ordering pressure: every copy save, every settled
-exchange and every profile visibility change already writes the fields, and until a row has
-them, Browse still finds it through a fallback that reads the rows without a flag and checks
-their availability and owner. That fallback reads legacy closed copies and private members'
-copies too, and they count against Browse's read budget (3,000 rows per call), so on a
-deployment with more copies than that Browse can miss older listings until the backfill has
-run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
-reads only public members' open copies.
-
-**What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
-it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself
-until the table is exhausted) and writes, on every row whose fields are absent (`set`) or
-disagree with its availability or owner (`repaired`): `isOpen` = "at least one of
-`forTrade`, `forSale`, `forLend` is set"; `listedAt` = when it was offered, kept if present
-and otherwise its `createdAt` (so Browse's order is today's), absent while closed;
-`ownerPrivate` = `true` while the owner's profile is private, absent otherwise. Rows already
-in step are left alone. It writes only those fields (not `updatedAt`: this is not an owner
-edit).
-
-**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
-doubles as a repair: if a future write path changes `availability` or the owner without the
-fields, a re-run corrects those rows (`repaired` > 0 points at that bug).
 
 **Commands:**
 
@@ -839,6 +812,41 @@ totals; the line with `"done":true` carries the whole run's totals.
 
 **Verify:** the real run's final `cleared` equals the dry run's `settled`, and a second dry run
 reports `"settled":0`.
+
+---
+
+## `library/backfillCopyOpenFlag` — the listing fields Browse reads by index
+
+**When:** once per deployment, after the `ownedPuzzles` listing fields (`isOpen`,
+`listedAt`, `ownerPrivate`) and their `by_listing` / `by_puzzle_listing` indexes (PERF-B1m,
+SEC-29) are deployed there. There is no ordering pressure: every copy save, every settled
+exchange and every profile visibility change already writes the fields, and until a row has
+them, Browse still finds it through a fallback that reads the rows without a flag and checks
+their availability and owner. That fallback reads legacy closed copies and private members'
+copies too, and they count against Browse's read budget (3,000 rows per call), so on a
+deployment with more copies than that Browse can miss older listings until the backfill has
+run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
+reads only public members' open copies.
+
+**What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
+it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself
+until the table is exhausted) and writes, on every row whose fields are absent (`set`) or
+disagree with its availability or owner (`repaired`): `isOpen` = "at least one of
+`forTrade`, `forSale`, `forLend` is set"; `listedAt` = when it was offered, kept if present
+and otherwise its `createdAt` (so Browse's order is today's), absent while closed;
+`ownerPrivate` = `true` while the owner's profile is private, absent otherwise. Rows already
+in step are left alone. It writes only those fields (not `updatedAt`: this is not an owner
+edit).
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
+doubles as a repair: if a future write path changes `availability` or the owner without the
+fields, a re-run corrects those rows (`repaired` > 0 points at that bug).
+
+**Commands:**
+
+```bash
+cd packages/backend
+
 # dev: dry run (counts only, writes nothing), then the real run
 npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{"dryRun":true}'
 npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{}'
