@@ -1,9 +1,5 @@
 // @vitest-environment happy-dom
-import {
-  HISTORY_PAGE_SIZE,
-  HISTORY_ROWS_MAX,
-  type HistoryRow,
-} from "@/lib/completion-history";
+import { HISTORY_PAGE_SIZE, type HistoryRow } from "@/lib/completion-history";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { IntlProvider } from "use-intl";
@@ -124,14 +120,14 @@ describe("SolveHistory", () => {
     ]);
   });
 
-  it("stops offering more past what the log joins at once, and says so", () => {
-    const rows = Array.from({ length: HISTORY_ROWS_MAX + 1 }, (_, i) =>
+  it("keeps offering more until the last solve, however long the log", () => {
+    const rows = Array.from({ length: 481 }, (_, i) =>
       solvedOn(`s${i}`, 2024, 0, 1),
     );
-    renderHistory(rows, "en", HISTORY_ROWS_MAX);
+    renderHistory(rows, "en", 480);
+    expect(shownRows()).toHaveLength(480);
+    fireEvent.click(screen.getByRole("button", { name: "Show 1 more" }));
+    expect(shownRows()).toHaveLength(481);
     expect(screen.queryByRole("button", { name: /Show/ })).toBeNull();
-    expect(
-      screen.getByText(`Showing the newest ${HISTORY_ROWS_MAX} solves.`),
-    ).toBeTruthy();
   });
 });

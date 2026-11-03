@@ -6,12 +6,9 @@
 // solves form a last group: their sentinel is the day they were logged, not when they were solved.
 // Dates are calendar dates stored at UTC midnight (lib/date-input), so years are read in UTC.
 
+// Also the most rows the log joins in one read (keep it well below the backend's
+// COMPLETION_ROWS_MAX), so its depth doesn't depend on how much a member's rows hold.
 export const HISTORY_PAGE_SIZE = 30;
-
-// Mirrors the backend's COMPLETION_ROWS_MAX less room for the solves in progress: the deepest the
-// log can be scrolled, since it asks for the rows on screen in one read. A whole number of pages, so
-// what the log says it shows is what it shows.
-export const HISTORY_ROWS_MAX = 90;
 
 export type HistoryRow = {
   startDate: number;
@@ -29,6 +26,24 @@ export type HistoryGroup<T> = {
   /** The solves of this group on the current page. */
   rows: T[];
 };
+
+// The pages of solves the log has asked the backend to join, given those on screen: solves it hasn't
+// asked about yet make new pages. A page already asked for never changes, wherever its solves have
+// moved to, so its live query and the rows it holds stay on screen when a solve is logged above them.
+// The same array comes back when nothing is new.
+export function withJoinPages<Id extends string>(
+  pages: readonly Id[][],
+  ids: readonly Id[],
+): readonly Id[][] {
+  const asked = new Set(pages.flat());
+  const fresh = ids.filter((id) => !asked.has(id));
+  if (fresh.length === 0) return pages;
+  const added: Id[][] = [];
+  for (let i = 0; i < fresh.length; i += HISTORY_PAGE_SIZE) {
+    added.push(fresh.slice(i, i + HISTORY_PAGE_SIZE));
+  }
+  return [...pages, ...added];
+}
 
 const at = (row: HistoryRow) => row.endDate ?? row.startDate;
 

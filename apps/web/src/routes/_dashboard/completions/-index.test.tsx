@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   queries: {} as Record<string, unknown>,
   // The arguments each query was last asked with.
   asked: {} as Record<string, unknown>,
+  // The rows each page of the join asks for, one array per read.
+  pages: [] as string[][],
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
@@ -33,8 +35,22 @@ vi.mock("@tanstack/react-query", async (importOriginal) => ({
     return {
       data: mocks.queries[name],
       isPending: !(name in mocks.queries),
-      isPlaceholderData: false,
     };
+  },
+  // The join: each page answers with the rows it asked for that the test's join holds.
+  useQueries: ({ queries }: { queries: { queryKey: unknown[] }[] }) => {
+    mocks.pages = queries.map(
+      ({ queryKey }) =>
+        (queryKey[2] as { completionIds: string[] }).completionIds,
+    );
+    return queries.map(({ queryKey }) => {
+      const rows = mocks.queries[queryKey[1] as string] as
+        { _id: string }[] | undefined;
+      const { completionIds } = queryKey[2] as { completionIds: string[] };
+      return {
+        data: rows?.filter((row) => completionIds.includes(row._id)),
+      };
+    });
   },
 }));
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
@@ -99,6 +115,21 @@ const open = (id: string, startDate: number) => ({
   isCompleted: false,
   startDate,
 });
+const undated = (id: string) => ({
+  ...finished(id, 2026),
+  datePrecision: "unknown",
+});
+
+const Page = (Route as unknown as { options: { component: ComponentType } })
+  .options.component;
+const queryClient = new QueryClient();
+const log = () => (
+  <QueryClientProvider client={queryClient}>
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <Page />
+    </IntlProvider>
+  </QueryClientProvider>
+);
 
 // `rows` null: the join hasn't answered yet.
 const renderLog = (index: unknown[], rows: unknown[] | null = index) => {
@@ -108,15 +139,8 @@ const renderLog = (index: unknown[], rows: unknown[] | null = index) => {
     [BY_IDS]: rows ?? undefined,
   };
   mocks.asked = {};
-  const Page = (Route as unknown as { options: { component: ComponentType } })
-    .options.component;
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <Page />
-      </IntlProvider>
-    </QueryClientProvider>,
-  );
+  mocks.pages = [];
+  return render(log());
 };
 
 const shownRows = () =>
@@ -146,11 +170,11 @@ describe("completion log", () => {
       finished(`h${i}`, 2020 - i),
     );
     renderLog([...history, open("p-old", 1), open("p-new", 9)]);
-    const asked = mocks.asked[BY_IDS] as { completionIds: string[] };
-    expect(asked.completionIds).toHaveLength(32);
+    const asked = mocks.pages.flat();
+    expect(asked).toHaveLength(32);
     // In progress first, newest started on top; then the newest years.
-    expect(asked.completionIds.slice(0, 3)).toEqual(["p-new", "p-old", "h0"]);
-    expect(asked.completionIds).not.toContain("h30");
+    expect(asked.slice(0, 3)).toEqual(["p-new", "p-old", "h0"]);
+    expect(asked).not.toContain("h30");
     expect(shownRows().slice(0, 3)).toEqual(["p-new", "p-old", "h0"]);
   });
 
@@ -160,9 +184,53 @@ describe("completion log", () => {
     );
     renderLog(history);
     fireEvent.click(screen.getByRole("button", { name: "Show 10 more" }));
-    const asked = mocks.asked[BY_IDS] as { completionIds: string[] };
-    expect(asked.completionIds).toHaveLength(40);
-    expect(asked.completionIds).toContain("h39");
+    const asked = mocks.pages.flat();
+    expect(asked).toHaveLength(40);
+    expect(asked).toContain("h39");
+  });
+
+  // A read's cost has to fit Convex's limit even with every image URL counted, so the depth of the log
+  // can't depend on what the deepest member's rows hold: it is one read per page.
+  it("reaches a member's last solve, one read of at most a page at a time", () => {
+    const history = Array.from({ length: 300 }, (_, i) =>
+      finished(`h${i}`, 2020 - i),
+    );
+    renderLog([...history, undated("forgotten")]);
+    for (let shown = 30; shown <= 300; shown += 30) {
+      fireEvent.click(screen.getByRole("button", { name: /^Show \d+ more$/ }));
+    }
+    expect(screen.queryByRole("button", { name: /^Show / })).toBeNull();
+    expect(shownRows()).toHaveLength(301);
+    expect(shownRows().at(-1)).toBe("forgotten");
+    expect(Math.max(...mocks.pages.map((page) => page.length))).toBe(30);
+    expect(new Set(mocks.pages.flat()).size).toBe(301);
+  });
+
+  it("leaves the pages it has asked for alone when another page opens", () => {
+    const history = Array.from({ length: 40 }, (_, i) =>
+      finished(`h${i}`, 2020 - i),
+    );
+    renderLog(history);
+    const first = mocks.pages[0];
+    fireEvent.click(screen.getByRole("button", { name: "Show 10 more" }));
+    expect(mocks.pages[0]).toEqual(first);
+    expect(mocks.pages).toHaveLength(2);
+  });
+
+  // Every later row moves down one, so asking by position would ask for every page again, and the log
+  // would blink.
+  it("asks for a solve logged at the top on its own, leaving the rest as they are", () => {
+    const history = Array.from({ length: 30 }, (_, i) =>
+      finished(`h${i}`, 2020 - i),
+    );
+    const { rerender } = renderLog(history);
+    const [first] = mocks.pages;
+    const logged = finished("new", 2021);
+    mocks.queries[INDEX] = [logged, ...history];
+    mocks.queries[BY_IDS] = [logged, ...history];
+    rerender(log());
+    expect(mocks.pages).toEqual([first, ["new"]]);
+    expect(shownRows()[0]).toBe("new");
   });
 
   it("doesn't leave a placeholder for a row the finished join didn't return", () => {
@@ -202,7 +270,7 @@ describe("completion log", () => {
   it("shows the empty state, and joins nothing, with no solves at all", () => {
     renderLog([]);
     expect(screen.queryAllByTestId("row")).toEqual([]);
-    expect(mocks.asked[BY_IDS]).toBe("skip");
+    expect(mocks.pages).toEqual([]);
     expect(screen.getByText("nothing logged yet")).toBeTruthy();
   });
 

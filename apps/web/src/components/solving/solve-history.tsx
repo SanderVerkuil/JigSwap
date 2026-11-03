@@ -2,16 +2,14 @@ import { Button } from "@/components/ui/button";
 import {
   groupSolveHistory,
   HISTORY_PAGE_SIZE,
-  HISTORY_ROWS_MAX,
   type HistoryRow,
 } from "@/lib/completion-history";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 // The completion log's History: the member's finished solves under one heading per year (undated
-// solves last, lib/completion-history), as far as `limit`. Show more asks for the next page. Past
-// the most the log joins at once it says so instead. The rows themselves come from the page
-// (renderRow), which may still be joining one.
+// solves last, lib/completion-history), as far as `limit`. Show more asks for the next page. The rows
+// themselves come from the page (renderRow), which may still be joining one.
 export function SolveHistory<T extends HistoryRow>({
   rows,
   limit,
@@ -49,7 +47,7 @@ export function SolveHistory<T extends HistoryRow>({
           </div>
         </section>
       ))}
-      {remaining > 0 && limit < HISTORY_ROWS_MAX && (
+      {remaining > 0 && (
         <Button
           variant="outline"
           className="pointer-coarse:min-h-11"
@@ -57,11 +55,6 @@ export function SolveHistory<T extends HistoryRow>({
         >
           {t("showMore", { count: Math.min(HISTORY_PAGE_SIZE, remaining) })}
         </Button>
-      )}
-      {remaining > 0 && limit >= HISTORY_ROWS_MAX && (
-        <p className="text-muted-foreground text-sm">
-          {t("historyAtMax", { max: HISTORY_ROWS_MAX })}
-        </p>
       )}
     </>
   );

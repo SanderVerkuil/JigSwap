@@ -9,6 +9,6 @@ export const COMPLETION_INDEX_CAP = 5000;
 // copy, the photo sidecars and one rendition per photo (MAX_PHOTOS). It also asks for up to 24 URLs:
 // four for its thumbnail and four for each photo. Whether a URL takes up a range is inferred, not
 // measured: this assumes it does, for a member with every photo on every solve, and leaves about 10% to
-// spare. The log asks for what's on screen, so this is as far as it can be scrolled (keep the web's
-// HISTORY_ROWS_MAX below it).
+// spare. The log asks a page at a time (the web's HISTORY_PAGE_SIZE, which stays well below this), so
+// this isn't how far it can be scrolled.
 export const COMPLETION_ROWS_MAX = 100;

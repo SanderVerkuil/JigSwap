@@ -297,10 +297,10 @@ describe("solving.myCompletionsByIds", () => {
   });
 });
 
-// The log asks for the rows on screen in one read, so its stated maximum has to hold under Convex's
-// real limits (4,096 index ranges per function) for the most expensive rows a member can have, with
-// its URLs counted as ranges too (test-fixtures/readBudget): each of 5 photos and the row's thumbnail
-// resolve the image and its three renditions.
+// The read's stated maximum has to hold under Convex's real limits (4,096 index ranges per function) for
+// the most expensive rows a member can have, with its URLs counted as ranges too
+// (test-fixtures/readBudget): each of 5 photos and the row's thumbnail resolve the image and its three
+// renditions. The log itself asks for less: a page at a time.
 describe("solving.myCompletionsByIds at its stated maximum", () => {
   const BASE = 1_700_000_000_000;
 

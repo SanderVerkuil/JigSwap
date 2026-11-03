@@ -3355,8 +3355,7 @@
       "dateUnknown": "Datum onbekend",
       "inYear": "In {year}",
       "yearCount": "{count, plural, one {# voltooiing} other {# voltooiingen}}",
-      "showMore": "Nog {count} tonen",
-      "historyAtMax": "Je ziet de nieuwste {max} voltooiingen."
+      "showMore": "Nog {count} tonen"
     },
     "logSolve": {
       "trigger": "Voltooiing vastleggen",

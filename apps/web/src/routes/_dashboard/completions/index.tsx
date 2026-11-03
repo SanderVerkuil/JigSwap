@@ -5,6 +5,7 @@ import { StatRow } from "@/components/library/stat-row";
 import {
   CompletionRow,
   type CompletionDialogRequest,
+  type CompletionRowData,
 } from "@/components/solving/completion-row";
 import {
   CompletionsEmptyState,
@@ -29,10 +30,14 @@ import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
 import { useReturnFocus } from "@/hooks/use-return-focus";
 import { countsTowardThisYear } from "@/lib/completion-format";
-import { groupSolveHistory, HISTORY_PAGE_SIZE } from "@/lib/completion-history";
+import {
+  groupSolveHistory,
+  HISTORY_PAGE_SIZE,
+  withJoinPages,
+} from "@/lib/completion-history";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -121,18 +126,25 @@ function CompletionsPage() {
       ].map((row) => row._id as Id<"completions">),
     [inProgress, history, historyLimit],
   );
-  const { data: shownRows, isPlaceholderData: joining } = useQuery({
-    ...convexQuery(
-      gateway.solving.myCompletionsByIds,
-      shownIds.length > 0 ? { completionIds: shownIds } : "skip",
-    ),
-    // While a longer page or a changed row loads, what's on screen stays.
-    placeholderData: keepPreviousData,
-  });
-  const rowById = useMemo(
-    () => new Map((shownRows ?? []).map((row) => [row._id as string, row])),
-    [shownRows],
+  // Joined a page per read, so no read holds more than a page's photos however deep the log is open.
+  // What's on screen stays while a longer page loads: a page already asked for doesn't change.
+  const [askedPages, setAskedPages] = useState<readonly Id<"completions">[][]>(
+    [],
   );
+  const joinPages = withJoinPages(askedPages, shownIds);
+  if (joinPages !== askedPages) setAskedPages(joinPages);
+  const joined = useQueries({
+    queries: joinPages.map((completionIds) =>
+      convexQuery(gateway.solving.myCompletionsByIds, { completionIds }),
+    ),
+  });
+  const rowById = new Map<string, CompletionRowData>();
+  const answered = new Set<string>();
+  joined.forEach(({ data }, page) => {
+    if (data === undefined) return;
+    for (const id of joinPages[page]) answered.add(id);
+    for (const row of data) rowById.set(row._id, row);
+  });
 
   // The page title lives in the shell page head; publish the log meta + the Log
   // Completion action there so the body carries no duplicate section header. While the empty
@@ -189,11 +201,10 @@ function CompletionsPage() {
   ) => {
     const completion = rowById.get(_id);
     if (!completion) {
-      // A join that has answered without it won't bring it: it was just deleted, or it is past the
-      // most one join holds (many solves in progress can take the history's room).
-      return shownRows === undefined || joining ? (
+      // A page that has answered without it won't bring it: it was just deleted.
+      return answered.has(_id) ? null : (
         <Skeleton key={_id} className="mb-2 h-14" />
-      ) : null;
+      );
     }
     return (
       <CompletionRow
