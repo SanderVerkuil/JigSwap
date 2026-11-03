@@ -2,6 +2,7 @@
 
 import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { LeaveGuard } from "@/components/quick-start/leave-guard";
 import { useStepCommitRegistration } from "@/components/quick-start/step-commit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -105,7 +106,8 @@ export function PastSolvesForm({
 // each row's "When?" answer; at most PAGE rows are ticked at once (the mutation's cap), which it
 // says at the cap. The submit only shows once something is ticked (never "Log 0") and stays in view
 // while the list scrolls; inside quick setup it never shows, because the flow's Continue logs the
-// ticks ("Log 3 and continue").
+// ticks ("Log 3 and continue"). Leaving with ticks asks first: here its own guard, inside quick
+// setup the flow's (QuickStartFlowStep).
 export function PastSolvesList({
   candidates,
   pending,
@@ -225,6 +227,13 @@ export function PastSolvesList({
           </Button>
         )}
       </div>
+      {!inFlow && (
+        <LeaveGuard
+          work={
+            choices.size > 0 ? { kind: "solves", count: choices.size } : null
+          }
+        />
+      )}
     </div>
   );
 }

@@ -22,6 +22,12 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PastSolveRow, PastSolvesList } from "./past-solves-form";
 
+// These tests are about the rows: past-solves-leave.test.tsx runs the leave guard on a real router.
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  useBlocker: () => ({ status: "idle" }),
+}));
+
 afterEach(cleanup);
 
 const render = (ui: ReactElement, locale: "en" | "nl" = "en") =>
