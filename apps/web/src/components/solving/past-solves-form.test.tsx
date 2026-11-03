@@ -554,7 +554,7 @@ describe("PastSolvesList on a long list", () => {
     act(() => {
       fireEvent.change(
         screen.getByRole("searchbox", {
-          name: "Search your puzzles by title or brand",
+          name: "Search your puzzles by title, brand or pieces",
         }),
         { target: { value: term } },
       );
@@ -568,6 +568,29 @@ describe("PastSolvesList on a long list", () => {
     cleanup();
     list(many(11));
     expect(screen.getByRole("searchbox")).toBeTruthy();
+  });
+
+  // Logging a batch shortens the list. A term that stays applied with no box to clear it would leave
+  // the member on "No puzzles match" for the rest of the visit.
+  it("keeps the search in reach while a term is set, when the list has got short", () => {
+    const short = (count: number) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={many(count)}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>
+    );
+    const { rerender } = renderDom(short(11));
+    search("Puzzle 10");
+    rerender(short(10));
+    expect(screen.getByRole("searchbox")).toBeTruthy();
+    expect(screen.getByText(/No puzzles match/)).toBeTruthy();
+
+    search("");
+    expect(rows()).toHaveLength(10);
+    expect(screen.queryByRole("searchbox")).toBeNull();
   });
 
   it("narrows the rows and keeps a tick the search hides", () => {

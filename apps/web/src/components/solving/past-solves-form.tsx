@@ -34,7 +34,8 @@ import { solveSaveErrorKey } from "./solving-error";
 // Rows shown at first and added per "Show more"; also the most one submit may log (the
 // recordPastCompletions cap), so a member ticks at most this many at once.
 const PAGE = 25;
-// A list up to this long is read at a glance; a longer one gets a search.
+// A list up to this long is read at a glance; a longer one gets a search. A search stays while it has
+// a term, so one that outlives a logged batch can still be cleared.
 const NO_SEARCH_UP_TO = 10;
 
 // The bulk "I've solved these" step (spec 2026-10-17 §2.4, step 2): the member's own copies with
@@ -195,7 +196,7 @@ export function PastSolvesList({
   return (
     <div className="space-y-4">
       <p className="font-medium">{t("lead")}</p>
-      {candidates.length > NO_SEARCH_UP_TO && (
+      {(candidates.length > NO_SEARCH_UP_TO || term !== "") && (
         <div className="relative w-full max-w-sm">
           <Search
             aria-hidden

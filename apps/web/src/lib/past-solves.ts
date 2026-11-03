@@ -41,6 +41,11 @@ export interface PastSolveCandidate {
   pieceCount?: number;
 }
 
+// A row writes its piece count the way the member's language does ("3.000", "3,000"), and the search
+// looks at the plain number, so both sides lose the separators.
+const searchable = (text: string): string =>
+  foldForSearch(text).replace(/(?<=\d)[.,](?=\d)/g, "");
+
 // Which rows show for a search and a page size. Every word must appear in the title, brand or piece
 // count. A ticked row a search hides keeps its tick, unless it is `waiting` (it can't be logged yet):
 // that one holds the submit back, so it stays in reach. A ticked row also stays past the page, so
@@ -60,10 +65,10 @@ export function pastSolveRows<C extends PastSolveCandidate>(
     waiting: { has: (copyId: string) => boolean };
   },
 ): { rows: C[]; more: boolean; noMatch: boolean } {
-  const words = foldForSearch(term).split(/\s+/).filter(Boolean);
+  const words = searchable(term).split(/\s+/).filter(Boolean);
   const found = new Set(
     candidates.filter((candidate) => {
-      const haystack = foldForSearch(
+      const haystack = searchable(
         [candidate.title, candidate.brand, candidate.pieceCount].join(" "),
       );
       return words.every((word) => haystack.includes(word));

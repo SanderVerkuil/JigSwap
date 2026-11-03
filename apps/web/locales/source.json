@@ -5966,7 +5966,7 @@
       "whichYear": "Which year",
       "pickDate": "Pick a date",
       "showMore": "Show more",
-      "searchLabel": "Search your puzzles by title or brand",
+      "searchLabel": "Search your puzzles by title, brand or pieces",
       "noMatches": "No puzzles match “{term}”",
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",

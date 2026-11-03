@@ -151,6 +151,14 @@ describe("pastSolveRows", () => {
     expect(rows("1000").ids).toEqual(["a", "c"]);
   });
 
+  // A row writes its pieces as the member's language does: "3.000 stukjes", "3,000 pieces".
+  it("finds a piece count as a row writes it", () => {
+    expect(rows("1.000").ids).toEqual(["a", "c"]);
+    expect(rows("1,000").ids).toEqual(["a", "c"]);
+    expect(rows("1.0").ids).toEqual(["a", "c"]);
+    expect(rows("2.000").noMatch).toBe(true);
+  });
+
   it("needs every word, in any order", () => {
     expect(rows("1000 ravens").ids).toEqual(["a"]);
     expect(rows("ravens harbour").ids).toEqual([]);

@@ -5966,7 +5966,7 @@
       "whichYear": "Welk jaar",
       "pickDate": "Kies een datum",
       "showMore": "Meer tonen",
-      "searchLabel": "Zoek in je puzzels op titel of merk",
+      "searchLabel": "Zoek in je puzzels op titel, merk of aantal stukjes",
       "noMatches": "Geen puzzels gevonden voor “{term}”",
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
