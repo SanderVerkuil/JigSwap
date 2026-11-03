@@ -190,18 +190,17 @@ describe("CataloguePickerView", () => {
     expect(byLabel(buttons(els), "Remove Puzzle a")).toHaveLength(1);
   });
 
-  it("labels the submit with the count and disables it on an empty tray", () => {
+  it("labels the submit with the count, and has none on an empty tray (never 'Add 0')", () => {
     const submit = (els: Element[]) =>
-      buttons(els).find((el) => attr(el, "data-picker-submit") !== undefined)!;
+      buttons(els).find((el) => attr(el, "data-picker-submit") !== undefined);
 
-    const empty = submit(render({}));
-    expect(attr(empty, "disabled")).toBeDefined();
+    expect(submit(render({}))).toBeUndefined();
 
-    const two = submit(render({ picks: [pick("a"), pick("b")] }));
+    const two = submit(render({ picks: [pick("a"), pick("b")] }))!;
     expect(text(two)).toBe("Add 2 puzzles");
     expect(attr(two, "disabled")).toBeUndefined();
 
-    const busy = submit(render({ picks: [pick("a")], isSubmitting: true }));
+    const busy = submit(render({ picks: [pick("a")], isSubmitting: true }))!;
     expect(attr(busy, "disabled")).toBeDefined();
   });
 
@@ -274,7 +273,7 @@ describe("CataloguePickerView", () => {
   });
 
   it("states that added puzzles are not offered by default, in Dutch too", () => {
-    const els = render({}, "nl");
+    const els = render({ picks: [pick("a")] }, "nl");
     expect(
       els.some((el) =>
         text(el).startsWith("Toegevoegde puzzels worden niet aangeboden"),
@@ -283,7 +282,7 @@ describe("CataloguePickerView", () => {
     const submit = buttons(els).find(
       (el) => attr(el, "data-picker-submit") !== undefined,
     )!;
-    expect(text(submit)).toBe("0 puzzels toevoegen");
+    expect(text(submit)).toBe("1 puzzel toevoegen");
   });
 
   // The piece count follows the app locale, like every other number (UX-63).

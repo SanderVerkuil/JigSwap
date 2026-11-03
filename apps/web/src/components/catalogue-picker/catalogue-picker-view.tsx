@@ -300,7 +300,8 @@ export function CataloguePickerView({
           {t("availabilityNote")}
         </p>
 
-        {!hideSubmit && (
+        {/* Only once something is picked, so never a disabled "Add 0 puzzles". */}
+        {!hideSubmit && picks.length > 0 && (
           <div className="flex items-center justify-end gap-3">
             {docked && (
               <Button
@@ -325,7 +326,7 @@ export function CataloguePickerView({
               type="button"
               data-picker-submit
               className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full min-w-0 flex-1 text-white pointer-coarse:min-h-11 sm:w-auto sm:flex-none"
-              disabled={picks.length === 0 || isSubmitting}
+              disabled={isSubmitting}
               onClick={onSubmit}
             >
               {t("submit", { count: picks.length })}
