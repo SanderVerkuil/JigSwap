@@ -669,7 +669,7 @@ describe("PastSolvesList on a long list", () => {
     );
     expect(
       screen.getByRole("searchbox", {
-        name: "Zoek in je puzzels op titel of merk",
+        name: "Zoek in je puzzels op titel, merk of aantal stukjes",
       }),
     ).toBeTruthy();
     expect(
