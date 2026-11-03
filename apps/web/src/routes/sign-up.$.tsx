@@ -1,5 +1,6 @@
 import { SignUp } from "@/compat/clerk";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { InviteSignUpNote } from "@/components/social/invite-sign-up-note";
 import { pageTitle } from "@/lib/page-title";
 import { isSharedCopyHref } from "@/lib/shared-copy-link";
 import { createFileRoute, useLocation } from "@tanstack/react-router";
@@ -32,6 +33,7 @@ function SignUpPage() {
   return (
     <AuthShell>
       {isSharedCopyHref(redirectUrl) && <SharedPuzzleNote />}
+      <InviteSignUpNote redirectUrl={redirectUrl} />
       {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
           win; this only changes the no-param fallback from / to /dashboard.
           signInUrl keeps the card's footer link on our own sign-in page;

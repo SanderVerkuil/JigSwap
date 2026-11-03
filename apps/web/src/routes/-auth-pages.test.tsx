@@ -17,6 +17,13 @@ vi.mock("@tanstack/react-router", () => ({
     select(location),
 }));
 
+// It reads the backend: invite-sign-up-note.test.tsx covers what it says.
+vi.mock("@/components/social/invite-sign-up-note", () => ({
+  InviteSignUpNote: ({ redirectUrl }: { redirectUrl: unknown }) => (
+    <div data-testid="invite-note" data-redirect={String(redirectUrl)} />
+  ),
+}));
+
 vi.mock("@/components/auth/auth-shell", () => ({
   AuthShell: ({ children }: { children: ReactNode }) => (
     <div data-testid="auth-shell">{children}</div>
@@ -58,6 +65,15 @@ describe("sign-up for a member's puzzle link", () => {
     location.search = { redirect_url: "/copies/abc?shared=1" };
     renderSignUp();
     expect(screen.getByText(en.auth.sharedPuzzle)).toBeTruthy();
+  });
+
+  it("hands the return address to the invite note, which decides whether to speak", () => {
+    location.search = { redirect_url: "/members/hans?invite=abc" };
+    renderSignUp();
+    expect(screen.getByTestId("invite-note").dataset.redirect).toBe(
+      "/members/hans?invite=abc",
+    );
+    expect(screen.queryByText(en.auth.sharedPuzzle)).toBeNull();
   });
 
   it("stays quiet for any other sign-up", () => {

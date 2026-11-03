@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { NEW_MEMBER_WINDOW_MS, shouldHandOffInvite } from "./invite-landing";
+import {
+  inviteHrefTarget,
+  NEW_MEMBER_WINDOW_MS,
+  shouldHandOffInvite,
+} from "./invite-landing";
 
 const now = 1_000_000_000;
 const base = {
@@ -35,5 +39,38 @@ describe("shouldHandOffInvite", () => {
     expect(shouldHandOffInvite({ ...base, inviteValid: false })).toBe(false);
     expect(shouldHandOffInvite({ ...base, invite: undefined })).toBe(false);
     expect(shouldHandOffInvite({ ...base, invite: "" })).toBe(false);
+  });
+});
+
+describe("inviteHrefTarget", () => {
+  it("reads the member and token from a member page's invite link", () => {
+    expect(inviteHrefTarget("/members/hans?invite=abc")).toEqual({
+      handle: "hans",
+      token: "abc",
+    });
+  });
+
+  it("takes the full URL Clerk may hand back, and decodes the handle", () => {
+    expect(
+      inviteHrefTarget("https://jigswap.site/members/h%C3%A9t/?invite=a%2Fb"),
+    ).toEqual({ handle: "hét", token: "a/b" });
+  });
+
+  it("is null for anything else", () => {
+    for (const href of [
+      undefined,
+      null,
+      42,
+      "",
+      "/dashboard",
+      "/members/hans",
+      "/members/hans?invite=",
+      "/members/hans/shelf?invite=abc",
+      "/copies/abc?shared=1",
+      "http://[bad",
+      "/members/%E0%A4%A?invite=abc",
+    ]) {
+      expect(inviteHrefTarget(href)).toBeNull();
+    }
   });
 });

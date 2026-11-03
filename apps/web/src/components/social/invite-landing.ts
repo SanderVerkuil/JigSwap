@@ -27,3 +27,24 @@ export const shouldHandOffInvite = ({
   invite !== "" &&
   inviteValid &&
   now - memberCreatedAt < NEW_MEMBER_WINDOW_MS;
+
+const MEMBER_PATH = /^\/members\/([^/]+)\/?$/;
+
+// The member and token of an invite link, as sign-up holds it in redirect_url; null for anything
+// else. It takes an href or a full URL: Clerk may hand redirect_url back absolute. Only a pointer:
+// the server still has to say the token is live for that member (social.inviteContext).
+export const inviteHrefTarget = (
+  href: unknown,
+): { handle: string; token: string } | null => {
+  if (typeof href !== "string") return null;
+  try {
+    const url = new URL(href, "https://jigswap.site");
+    const handle = MEMBER_PATH.exec(url.pathname)?.[1];
+    const token = url.searchParams.get("invite");
+    return handle && token
+      ? { handle: decodeURIComponent(handle), token }
+      : null;
+  } catch {
+    return null;
+  }
+};
