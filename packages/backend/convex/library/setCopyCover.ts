@@ -7,6 +7,7 @@ import {
   convexCopyManagerPolicy,
 } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -24,6 +25,7 @@ export const setCopyCover = mutation({
   },
   handler: async (ctx, args) => {
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
+    await enforceRateLimit(ctx, "copyEdit", memberId);
 
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");

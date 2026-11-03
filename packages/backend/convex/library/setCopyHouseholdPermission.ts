@@ -8,6 +8,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { toConvexError } from "../household/errors";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 
 // The copy's OWNER chooses what their household may do with it: "manage" (act as co-owner) or
 // "view" (see it only). Owner-only (the domain's householdPermissionChange rule, shared with the
@@ -24,6 +25,7 @@ export const setCopyHouseholdPermission = mutation({
   },
   handler: async (ctx, args): Promise<void> => {
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
+    await enforceRateLimit(ctx, "copyEdit", memberId);
     const copy = await ctx.db.get(args.copyId);
     if (!copy) throw new ConvexError("Copy not found");
     const change = householdPermissionChange(

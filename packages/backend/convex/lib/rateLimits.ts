@@ -54,6 +54,11 @@ export const RATE_LIMITS = {
   // each writes the row and a domain event, and a loop must not be free (openListing keeps a quick
   // reopen from climbing Browse).
   copySharing: { windowMs: MINUTE, max: 30 },
+  // A copy's other edits, all together: its details, condition and cover, and the household permission
+  // (library/updateCopyDetails, changeCopyCondition, setCopyCover, setCopyHouseholdPermission and its
+  // bulk form). Each patches the row, inside the range every Browse first page reads, and a Save in the
+  // edit dialog can make three of these calls at once, so 30/min still leaves ten Saves a minute.
+  copyEdit: { windowMs: MINUTE, max: 30 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
   // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },

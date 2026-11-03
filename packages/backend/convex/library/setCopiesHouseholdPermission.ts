@@ -11,6 +11,7 @@ import { mutation } from "../_generated/server";
 import { toConvexError } from "../household/errors";
 import { membershipOf } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 
 // Bulk form of setCopyHouseholdPermission, from the household page. The caller must be in a
 // household and OWN every copy in the batch; one foreign or missing copy rejects the whole batch
@@ -31,6 +32,7 @@ export const setCopiesHouseholdPermission = mutation({
     args,
   ): Promise<{ changed: number; unchanged: number }> => {
     const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
+    await enforceRateLimit(ctx, "copyEdit", memberId);
     if (!(await membershipOf(ctx, memberId))) {
       throw toConvexError(HouseholdApplicationError.notInHousehold());
     }

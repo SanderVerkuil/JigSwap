@@ -156,6 +156,120 @@ describe("updateCopySharing", () => {
   });
 });
 
+// Every copy edit patches the row, inside the listing range each Browse first page reads, and most
+// publish a domain event, so a loop mustn't be free. One bucket across them: a dialog save can make
+// three of these calls at once. The bulk form of the household permission shares it too, or it would
+// be the way around it.
+describe("copy edits", () => {
+  const CAP = RATE_LIMITS.copyEdit.max;
+  let copy: Id<"ownedPuzzles">;
+  let photo: Id<"ownedPuzzleImages">;
+
+  beforeEach(async () => {
+    ({ copy, photo } = await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: me,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy_me",
+        puzzleId,
+        ownerId: me,
+        heldBy: me,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        isOpen: true,
+        listedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const photo = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: me,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert("households", { aggregateId: "hh", createdAt: 1 });
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh",
+        memberId: me,
+        role: "admin",
+        joinedAt: 1,
+      });
+      return { copy, photo };
+    }));
+  });
+
+  const edits = {
+    updateCopyDetails: (i: number) =>
+      asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId: "copy_me",
+        notes: `note ${i}`,
+      }),
+    changeCopyCondition: (i: number) =>
+      asMe().mutation(api.library.changeCopyCondition.changeCopyCondition, {
+        copyId: "copy_me",
+        condition: i % 2 === 0 ? "fair" : "good",
+      }),
+    setCopyCover: (i: number) =>
+      asMe().mutation(api.library.setCopyCover.setCopyCover, {
+        copyId: copy,
+        ...(i % 2 === 0 ? { coverImageId: photo } : {}),
+      }),
+    setCopyHouseholdPermission: (i: number) =>
+      asMe().mutation(
+        api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
+        { copyId: copy, permission: i % 2 === 0 ? "view" : "manage" },
+      ),
+    setCopiesHouseholdPermission: (i: number) =>
+      asMe().mutation(
+        api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+        { copyIds: [copy], permission: i % 2 === 0 ? "view" : "manage" },
+      ),
+  };
+
+  test.each(Object.entries(edits))(
+    "%s allows a minute's worth and refuses the next, writing nothing",
+    async (_name, edit) => {
+      for (let i = 0; i < CAP; i++) await edit(i);
+      const before = await t.run((ctx) => ctx.db.get(copy));
+
+      await expectRateLimited(edit(CAP));
+
+      expect(await t.run((ctx) => ctx.db.get(copy))).toEqual(before);
+    },
+  );
+
+  test("they draw on one bucket, and it fills again after the window", async () => {
+    const all = Object.values(edits);
+    for (let i = 0; i < CAP; i++) await all[i % all.length](i);
+    for (const edit of all) await expectRateLimited(edit(CAP));
+
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("rateLimits").first();
+      await ctx.db.patch(row!._id, {
+        windowStart: Date.now() - RATE_LIMITS.copyEdit.windowMs,
+      });
+    });
+    await edits.updateCopyDetails(CAP);
+  });
+
+  test("an edit refused for another reason isn't charged", async () => {
+    const refused = () =>
+      asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId: "no_such_copy",
+        notes: "nothing to write to",
+      });
+    for (let i = 0; i < CAP; i++) await expect(refused()).rejects.toThrow();
+    await edits.updateCopyDetails(0);
+  });
+});
+
 describe("setProfileVisibility", () => {
   const flip = (visibility: "public" | "private") =>
     asMe().mutation(api.social.setProfileVisibility.setProfileVisibility, {
