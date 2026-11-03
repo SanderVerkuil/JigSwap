@@ -3,6 +3,7 @@ import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { deleteRenditions } from "../../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
+import { deleteCircleSharesOfCopy } from "../../sharing/adapters/circleCopyShares";
 import { profileVisibilityOf } from "../../social/privacy";
 import { markCopyStatsChange } from "../definitionStats";
 import { syncMemberLibraryCounts } from "../memberLibraryCounts";
@@ -93,7 +94,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
 
     async remove(id: CopyId): Promise<void> {
       // Resolve the real `ownedPuzzles._id` from the aggregateId, then cascade-delete the row and
-      // its owned rows (collection memberships + images) so no orphans survive the Copy.
+      // its owned rows (collection memberships + circle shares + images) so no orphans survive the Copy.
       const row = await rowById(id);
       if (!row) return;
 
@@ -109,6 +110,10 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         .withIndex("by_copy", (q) => q.eq("copyId", row._id))
         .collect();
       for (const review of reviews) await ctx.db.delete(review._id);
+
+      // A share names its owner and holds their place in a busy circle's read. Past this point nothing
+      // could find it by its copy, not even account erasure, so it goes now.
+      await deleteCircleSharesOfCopy(ctx, id as string);
 
       // A photo's renditions go with it (lib/imageModeration/renditionsStore).
       const images = await loadImages(row._id);

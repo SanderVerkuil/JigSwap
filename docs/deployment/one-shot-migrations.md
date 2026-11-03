@@ -318,8 +318,8 @@ copy's owner can share it, so the sharer is whoever owned the copy at `sharedAt`
 ownership change is recorded in
 `copyCustodyEntries` (previous and new owner). Per share:
 
-- the copy no longer exists -> deleted, counted `dangling` (copy deletion never withdrew
-  shares; the link points at nothing).
+- the copy no longer exists -> deleted, counted `dangling` (copy deletion did not withdraw
+  shares until `ownerId` was added; the link points at nothing).
 - no transfer after `sharedAt` -> the sharer still owns it, `kept`.
 - the first transfer after `sharedAt` names the sharer; the copy came back to that member
   -> `kept`.

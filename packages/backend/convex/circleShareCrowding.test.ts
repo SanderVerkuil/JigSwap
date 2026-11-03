@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -393,6 +394,67 @@ describe("what a circle's bounded share read holds", () => {
       (await ctx.db.query("circleCopyShares").collect()).map((s) => s.ownerId),
     );
     expect(owners).toEqual([alice, alice]);
+  });
+});
+
+// A share names its owner, so it can't outlive the copy: nothing would ever find it again by that name,
+// and it would hold the owner's place in a busy circle for a copy that isn't there.
+describe("a deleted copy's shares go with it", () => {
+  const sharesOf = (t: T) =>
+    t.run((ctx) => ctx.db.query("circleCopyShares").collect());
+
+  const settleDueJobs = async (t: T) => {
+    for (let i = 0; i < 400; i++) {
+      await t.finishInProgressScheduledFunctions();
+      const jobs = await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect(),
+      );
+      const busy = jobs.some(
+        (job) =>
+          job.state.kind === "inProgress" ||
+          (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
+      );
+      if (!busy) return;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    throw new Error("scheduled functions did not settle");
+  };
+
+  test("deleting a copy withdraws it from every circle, and leaves other copies' shares", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, puzzleId } = await seedCircle(t);
+    const [gone, kept] = await addCopies(t, alice, puzzleId, "alice", 2);
+    await t.run((ctx) => mkCircle(ctx, "family", alice, [alice]));
+    await shareAs(t, "alice", [gone, kept]);
+    await shareAs(t, "alice", [gone], "family");
+
+    await t
+      .withIdentity({ subject: "clerk_alice" })
+      .mutation(api.library.deleteCopy.deleteCopy, { copyId: gone });
+
+    expect((await sharesOf(t)).map((share) => share.copyId)).toEqual([kept]);
+  });
+
+  test("a member who deleted a shared copy is named by no share after erasure", async () => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const t = convexTest(schema, modules);
+    // The purge's presence phase runs before the copies.
+    presenceTest.register(t);
+    const { alice, puzzleId } = await seedCircle(t);
+    const [gone, kept] = await addCopies(t, alice, puzzleId, "alice", 2);
+    await shareAs(t, "alice", [gone, kept]);
+    await t
+      .withIdentity({ subject: "clerk_alice" })
+      .mutation(api.library.deleteCopy.deleteCopy, { copyId: gone });
+    await settleDueJobs(t);
+
+    await t.mutation(internal.users.deleteUser, { id: "clerk_alice" });
+    await settleDueJobs(t);
+
+    expect(await t.run((ctx) => ctx.db.get(alice))).toBeNull();
+    expect(await sharesOf(t)).toEqual([]);
+    vi.restoreAllMocks();
   });
 });
 
