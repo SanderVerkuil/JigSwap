@@ -11,7 +11,11 @@ import type { DataModel, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
-import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
+import {
+  clampUnpinnedPaginationOpts,
+  paginateBounded,
+  PINNED_PAGE_READ_FACTOR,
+} from "../lib/pageSize";
 import {
   publicAvailabilityFromByType,
   publicAvailabilityOf,
@@ -22,6 +26,9 @@ import { toPuzzleSummaryView } from "./mappers";
 
 // A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
 const MAX_PAGE_SIZE = 50;
+// The most rows one call of the plain browse reads to fill a page, matches or not: as far as a page a
+// hook has pinned may read, so a page cut here can be split without being cut again.
+export const SEARCH_CATALOG_ROWS_READ = MAX_PAGE_SIZE * PINNED_PAGE_READ_FACTOR;
 // Copies of one definition looked through for blocked owners' offers, so a definition with a flood
 // of copies can't use up a blocking viewer's read limit. Past it the chip can overcount.
 const MAX_COPIES_CHECKED_FOR_BLOCKS = 200;
@@ -31,8 +38,12 @@ const MAX_COPIES_CHECKED_FOR_BLOCKS = 200;
 // beyond the loaded page are found). Approved-only: at the search index for a term, at the
 // by_status index for the plain browse.
 //
-// Optional facets narrow both branches the same way. Brand, piece range, difficulty and category
-// are part of the scan filter, so pages stay full. Tags (any-of) can't be expressed as a filter on
+// Optional facets narrow both branches the same way. Brand and piece range choose the index the plain
+// browse reads, so a filter that matches little reads little (with a piece range and no brand it reads
+// smallest first). Difficulty and category filter as the read goes: it stops at
+// SEARCH_CATALOG_ROWS_READ rows, so what a call costs doesn't grow with the catalogue, and a page that
+// didn't fill comes back short, even empty, with `isDone` false and the cursor where it stopped. The
+// web keeps asking and says "so far" until it is done. Tags (any-of) can't be expressed as a filter on
 // an array field, so they narrow each page after the read; a page can come back short, never wrong.
 // `category` is a string because it arrives from a URL search param: a malformed id gives an empty,
 // finished page instead of failing the query.
@@ -67,22 +78,24 @@ export const searchCatalog = query({
       args.category === undefined
         ? undefined
         : ctx.db.normalizeId("adminCategories", args.category);
-    if (category === null) {
+    const { brand, pieceMin, pieceMax } = args;
+    if (
+      category === null ||
+      (pieceMin !== undefined && pieceMax !== undefined && pieceMin > pieceMax)
+    ) {
       return { page: [], isDone: true, continueCursor: "" };
     }
 
     const facets = (q: FilterBuilder<NamedTableInfo<DataModel, "puzzles">>) =>
       q.and(
         q.eq(q.field("status"), "approved"),
-        ...(args.brand === undefined
+        ...(brand === undefined ? [] : [q.eq(q.field("brand"), brand)]),
+        ...(pieceMin === undefined
           ? []
-          : [q.eq(q.field("brand"), args.brand)]),
-        ...(args.pieceMin === undefined
+          : [q.gte(q.field("pieceCount"), pieceMin)]),
+        ...(pieceMax === undefined
           ? []
-          : [q.gte(q.field("pieceCount"), args.pieceMin)]),
-        ...(args.pieceMax === undefined
-          ? []
-          : [q.lte(q.field("pieceCount"), args.pieceMax)]),
+          : [q.lte(q.field("pieceCount"), pieceMax)]),
         ...(args.difficulty === undefined
           ? []
           : [q.eq(q.field("difficulty"), args.difficulty)]),
@@ -90,6 +103,29 @@ export const searchCatalog = query({
           ? []
           : [q.eq(q.field("category"), category)]),
       );
+
+    // The approved rows a plain browse walks: one brand's, one piece range's, or all of them.
+    const approvedRows = () => {
+      const puzzles = ctx.db.query("puzzles");
+      if (brand !== undefined) {
+        return puzzles.withIndex("by_status_brand", (q) =>
+          q.eq("status", "approved").eq("brand", brand),
+        );
+      }
+      if (pieceMin !== undefined || pieceMax !== undefined) {
+        return puzzles.withIndex("by_status_pieces", (q) => {
+          const approved = q.eq("status", "approved");
+          if (pieceMin === undefined) {
+            return approved.lte("pieceCount", pieceMax!);
+          }
+          const from = approved.gte("pieceCount", pieceMin);
+          return pieceMax === undefined
+            ? from
+            : from.lte("pieceCount", pieceMax);
+        });
+      }
+      return puzzles.withIndex("by_status", (q) => q.eq("status", "approved"));
+    };
 
     const result =
       term.length > 0
@@ -105,11 +141,11 @@ export const searchCatalog = query({
               clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
             )
         : await paginateBounded(
-            ctx.db
-              .query("puzzles")
-              .withIndex("by_status", (q) => q.eq("status", "approved"))
-              .filter(facets),
-            args.paginationOpts,
+            approvedRows().filter(facets),
+            {
+              ...args.paginationOpts,
+              maximumRowsRead: SEARCH_CATALOG_ROWS_READ,
+            },
             MAX_PAGE_SIZE,
           );
 
