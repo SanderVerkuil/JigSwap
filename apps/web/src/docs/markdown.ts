@@ -156,11 +156,19 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
 const BLOCK_TAG =
   /<\/?(?:address|article|aside|blockquote|br|dd|details|div|dl|dt|figcaption|figure|h[1-6]|hr|li|ol|p|pre|section|summary|table|tbody|td|tfoot|th|thead|tr|ul)\b[^>]*>/gi;
 
+// Until stable: one pass can leave a tag behind when removing another forms it.
+function stripTags(html: string): string {
+  let text = html;
+  for (let previous = ""; previous !== text;) {
+    previous = text;
+    text = text.replace(/<[^>]+>/g, "");
+  }
+  return text;
+}
+
 function stripHtml(html: string): string {
   return (
-    html
-      .replace(BLOCK_TAG, " ")
-      .replace(/<[^>]+>/g, "")
+    stripTags(html.replace(BLOCK_TAG, " "))
       // The serializer writes & and < as hex references; this text is shown as text.
       .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) =>
         String.fromCodePoint(parseInt(hex, 16)),
