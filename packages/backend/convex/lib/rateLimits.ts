@@ -59,6 +59,9 @@ export const RATE_LIMITS = {
   // bulk form). Each patches the row, inside the range every Browse first page reads, and a Save in the
   // edit dialog can make three of these calls at once, so 30/min still leaves ten Saves a minute.
   copyEdit: { windowMs: MINUTE, max: 30 },
+  // Display name and bio (social/editProfile), one call per Save. Every page showing the member reads
+  // the profile row, so a loop re-runs all of them.
+  profileEdit: { windowMs: MINUTE, max: 30 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
   // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },

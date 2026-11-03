@@ -270,6 +270,47 @@ describe("copy edits", () => {
   });
 });
 
+// Every page showing a member reads their profile row, so a loop re-runs all of them.
+describe("editProfile", () => {
+  const CAP = RATE_LIMITS.profileEdit.max;
+  const edit = (bio: string) =>
+    asMe().mutation(api.social.editProfile.editProfile, { bio });
+  const myProfile = () =>
+    t.run((ctx) =>
+      ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", me))
+        .unique(),
+    );
+
+  test("allows a minute's worth and refuses the next, writing nothing", async () => {
+    for (let i = 0; i < CAP; i++) await edit(`Story ${i}`);
+    const before = await myProfile();
+
+    await expectRateLimited(edit("One more"));
+
+    expect(await myProfile()).toEqual(before);
+  });
+
+  test("fills again after the window", async () => {
+    for (let i = 0; i < CAP; i++) await edit(`Story ${i}`);
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("rateLimits").first();
+      await ctx.db.patch(row!._id, {
+        windowStart: Date.now() - RATE_LIMITS.profileEdit.windowMs,
+      });
+    });
+    await edit("Back again");
+    expect((await myProfile())?.bio).toBe("Back again");
+  });
+
+  test("an edit refused for another reason isn't charged", async () => {
+    const tooLong = "x".repeat(10_000);
+    for (let i = 0; i < CAP; i++) await expect(edit(tooLong)).rejects.toThrow();
+    await edit("Short");
+  });
+});
+
 describe("setProfileVisibility", () => {
   const flip = (visibility: "public" | "private") =>
     asMe().mutation(api.social.setProfileVisibility.setProfileVisibility, {
