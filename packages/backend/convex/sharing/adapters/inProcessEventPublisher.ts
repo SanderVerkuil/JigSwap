@@ -108,7 +108,16 @@ const projectCopyShare = async (
     )
     .unique();
   if (existing) return;
-  await ctx.db.insert("circleCopyShares", { circleId, copyId, sharedAt });
+  const copy = await ctx.db
+    .query("ownedPuzzles")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", copyId))
+    .unique();
+  await ctx.db.insert("circleCopyShares", {
+    circleId,
+    copyId,
+    sharedAt,
+    ownerId: copy?.ownerId,
+  });
 };
 
 // Drop the `circleCopyShares` links in this circle whose copy the departed member owns. Without

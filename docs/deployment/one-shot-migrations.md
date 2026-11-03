@@ -1198,3 +1198,50 @@ npx convex run --prod catalog/backfillSearchableText:backfillSearchableText
 
 **Verify:** the last log line of a second dry run says `patched: 0` in its totals, and a
 search for `cafe` on `/puzzles` finds a puzzle called `Café`.
+
+---
+
+## `sharing/backfillCircleShareOwners` — circle shares name their owner
+
+**When:** once per deployment, after `circleCopyShares.ownerId` and its `by_circle_owner` index
+are deployed there. There is no ordering pressure: every new share already names its owner, and
+until a row does, a busy circle's read treats it as one more member's and reads those newest
+first, as it always did. So until this has run, one member's newest shares can still push another
+member's older copy out of a circle mates' Browse and off the circle's page, in a circle with
+more shares than its read gets (200, or fewer for a viewer in many circles).
+
+**What it does:** pages through `circleCopyShares` (200 rows per batch; `batchSize` overrides it,
+rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself until
+the table is exhausted) and sets `ownerId` on a row without one to its copy's owner. Only a
+copy's owner can share it and a transfer deletes the copy's shares, so that is the member who
+shared it. A row whose copy no longer exists stays as it is and is counted `noCopy`. It writes
+only that field, and deletes nothing.
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run sharing/backfillCircleShareOwners:backfillCircleShareOwners '{"dryRun":true}'
+npx convex run sharing/backfillCircleShareOwners:backfillCircleShareOwners '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod sharing/backfillCircleShareOwners:backfillCircleShareOwners '{"dryRun":true}'
+npx convex run --prod sharing/backfillCircleShareOwners:backfillCircleShareOwners '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, set, inStep, noCopy }`; the remaining batches
+run as scheduled functions. Each batch logs one JSON line with
+`"event":"sharing.backfillCircleShareOwners"`, `dry_run`, the batch counts and the running
+`totals`; the line with `"is_done":true` carries the whole run's totals.
+
+**Verify:**
+
+1. The real run's final `totals.set` matches the dry run's (give or take shares made in between,
+   which already name their owner).
+2. Run the dry run again: its final totals show `"set":0`. `noCopy` stays what it was.
+3. In the dashboard data view, every `circleCopyShares` row but those has `ownerId`, and it is the
+   `ownerId` of the `ownedPuzzles` row whose `aggregateId` is its `copyId`.

@@ -496,6 +496,16 @@ const MANIFEST: Record<string, Disposition> = {
     },
     export: { exported: ["circles"] },
   },
+  "circleCopyShares.ownerId": {
+    erasure: {
+      deleted: "the shares of the copies they own, with the copies",
+    },
+    phases: ["copies"],
+    export: {
+      excluded:
+        "which circle holds which copy: a read model of what they shared, kept to bound a circle's read, with no fact of its own about the member",
+    },
+  },
   "circleInvites.inviteeId": {
     erasure: { deleted: "circle invites they received, with the notices" },
     phases: ["invitesIn"],

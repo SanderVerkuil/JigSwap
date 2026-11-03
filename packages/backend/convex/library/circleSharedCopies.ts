@@ -2,6 +2,7 @@ import type { CircleId, OwnerId } from "@jigswap/domain";
 import { toCopyId, toMemberId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { sharesOfCircleWithin } from "../sharing/adapters/circleCopyShares";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { makeCircleAwareVisibilityPolicy } from "./adapters/circleAwareVisibilityPolicy";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
@@ -17,13 +18,14 @@ import { convexCopyRepository } from "./adapters/convexCopyRepository";
 // (so a stale share left behind after the owner left the circle exposes nothing), and the policy gets
 // exactly those per-copy circles, never just any circle the viewer and owner happen to share.
 //
-// BOUNDED (#190): at most CIRCLE_SHARES_READ_PER_CIRCLE shares are read per circle (newest first), and
-// CIRCLE_SHARES_READ_TOTAL across a viewer's circles, split evenly, so a copy shared further back in
-// a very busy circle can drop out of this batched set. That only affects the list surface built on
-// it (Browse); every per-copy gate (canViewCopy / canViewCopyWithContext, the definition view) uses
-// `isCircleSharedWithViewer` instead, which reads that copy's own shares (capped by_copy, with a
-// viewer-circle fallback that reaches the same decision up to MAX_VIEWER_CIRCLES_READ), so this cap
-// can't hide a copy on its detail page.
+// BOUNDED (#190): at most CIRCLE_SHARES_READ_PER_CIRCLE shares are read per circle, and
+// CIRCLE_SHARES_READ_TOTAL across a viewer's circles, split evenly. A very busy circle's read goes
+// round its members (sharing/adapters/circleCopyShares.sharesOfCircleWithin), so what one member
+// shares can't take another's copy out of this set, and only a member's own older shares can drop out.
+// That only affects the list surface built on it (Browse); every per-copy gate (canViewCopy /
+// canViewCopyWithContext, the definition view) uses `isCircleSharedWithViewer` instead, which reads
+// that copy's own shares (capped by_copy, with a viewer-circle fallback that reaches the same decision
+// up to MAX_VIEWER_CIRCLES_READ), so this cap can't hide a copy on its detail page.
 export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
 // Each share costs an index range for its copy, and Browse runs this on every page, so a member of
 // many busy circles can't push its read past Convex's limit of 4,096 ranges per function.
@@ -146,8 +148,8 @@ export type CircleShareCandidate = {
   into: CircleId[];
 };
 
-// The first half of the batched read: the viewer's circles, their newest shares and those copies'
-// rows. Cheap enough to run per page of a list. isCircleShareVisible decides each one.
+// The first half of the batched read: the viewer's circles, their shares as far as the read goes and
+// those copies' rows. Cheap enough to run per page of a list. isCircleShareVisible decides each one.
 export const circleShareCandidates = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -167,11 +169,12 @@ export const circleShareCandidates = async (
   // which of the viewer's circles each copy was shared into.
   const sharedInto = new Map<string, CircleId[]>();
   for (const circle of myCircles) {
-    const shares = await ctx.db
-      .query("circleCopyShares")
-      .withIndex("by_circle", (q) => q.eq("circleId", circle.id as string))
-      .order("desc")
-      .take(perCircle);
+    const shares = await sharesOfCircleWithin(
+      ctx,
+      circle.id as string,
+      circle.members.map(({ memberId }) => memberId as unknown as Id<"users">),
+      perCircle,
+    );
     for (const share of shares) {
       const into = sharedInto.get(share.copyId) ?? [];
       into.push(circle.id);

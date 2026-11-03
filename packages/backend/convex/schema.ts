@@ -1737,15 +1737,22 @@ export default defineSchema({
 
   // Read model of copies shared into a circle, projected from the CopySharedToCircle event. Sharing
   // owns no copy state; this link makes a friend-circle copy discoverable to the circle's members.
-  // `copyId` is the Library CopyId aggregateId (string), not a resolved owned-puzzle _id.
+  // `copyId` is the Library CopyId aggregateId (string), not a resolved owned-puzzle _id. `ownerId` is
+  // the member who shared it (only a copy's owner can, and a transfer deletes the copy's shares), so a
+  // busy circle's bounded read can go round its members (adapters/circleCopyShares). Absent on rows
+  // written before it existed until sharing/backfillCircleShareOwners has run: `by_circle_owner` holds
+  // those as one more member, so a reader needn't care. Only ever decides which rows a read looks at:
+  // who may see a copy is decided from the copy's row and the circle's seats.
   circleCopyShares: defineTable({
     circleId: v.string(),
     copyId: v.string(),
     sharedAt: v.number(),
+    ownerId: v.optional(v.id("users")),
   })
     .index("by_circle", ["circleId"])
     .index("by_copy", ["copyId"])
-    .index("by_circle_copy", ["circleId", "copyId"]),
+    .index("by_circle_copy", ["circleId", "copyId"])
+    .index("by_circle_owner", ["circleId", "ownerId"]),
 
   // Social: a member's public profile (display name + bio). One row per member; the aggregate
   // is keyed by member, so `by_member` backs findByMember and aggregateId is the ProfileId.
