@@ -326,6 +326,16 @@ describe("welcomeDialogAllowed (mounted in the whole signed-in shell)", () => {
       expect(welcomeDialogAllowed(pathname)).toBe(false);
     },
   );
+
+  it("waits on the puzzle a newcomer was sent to, and only there", () => {
+    const allowed = (pathname: string, search: string) =>
+      welcomeDialogAllowed(pathname, `${pathname}${search}`);
+    expect(allowed("/copies/abc", "?shared=1")).toBe(false);
+    expect(allowed("/copies/abc/", "?shared=1")).toBe(false);
+    expect(allowed("/copies/abc", "")).toBe(true);
+    expect(allowed("/copies/abc", "?from=collection")).toBe(true);
+    expect(allowed("/dashboard", "?shared=1")).toBe(true);
+  });
 });
 
 describe("inviteExtrasSuppressed (D7)", () => {
