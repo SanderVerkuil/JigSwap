@@ -147,7 +147,7 @@ describe("the locked card for a logged-out visitor", () => {
   it("makes no claim about the member's choice without an invite: SEC-44 hides it", () => {
     const all = page({});
     expect(all).toContain(
-      "Visitors without an account can't see Hans's puzzles, completions and story. Sign up to see what they share with members.",
+      "Visitors without an account can't see Hans's puzzles, completions and story. Sign up to follow them.",
     );
     expect(all).toContain("Sign up to follow");
     expect(all).not.toMatch(WRONG);

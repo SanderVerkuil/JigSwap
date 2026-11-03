@@ -2728,7 +2728,7 @@
       "daysHoursValue": "{days}d {hours}u",
       "piecesValue": "{count, plural, one {# stukje} other {# stukjes}}",
       "privateBody": "Deze plank is privé — {name} deelt puzzels, voltooiingen en verhaal alleen met goedgekeurde volgers.",
-      "visitorBody": "Bezoekers zonder account zien de puzzels, voltooiingen en het verhaal van {name} niet. Meld je aan om te zien wat er met leden wordt gedeeld.",
+      "visitorBody": "Bezoekers zonder account zien de puzzels, voltooiingen en het verhaal van {name} niet. Meld je aan om {name} te volgen.",
       "invitedBody": "Meld je aan om te zien wat {name} deelt. Daarna vragen we of jullie elkaar willen volgen, en er gebeurt niets tot je ja zegt.",
       "signUpToFollow": "Meld je aan om te volgen",
       "signUpToFollowEachOther": "Meld je aan om elkaar te volgen",

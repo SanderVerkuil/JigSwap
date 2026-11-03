@@ -2728,7 +2728,7 @@
       "daysHoursValue": "{days}d {hours}h",
       "piecesValue": "{count, plural, one {# piece} other {# pieces}}",
       "privateBody": "This shelf is private — {name} shares their puzzles, completions and story with approved followers only.",
-      "visitorBody": "Visitors without an account can't see {name}'s puzzles, completions and story. Sign up to see what they share with members.",
+      "visitorBody": "Visitors without an account can't see {name}'s puzzles, completions and story. Sign up to follow them.",
       "invitedBody": "Sign up to see what {name} shares. We'll then ask whether you two want to follow each other, and nothing happens until you say yes.",
       "signUpToFollow": "Sign up to follow",
       "signUpToFollowEachOther": "Sign up to follow each other",
