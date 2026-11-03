@@ -1,9 +1,11 @@
+import { MAX_HOUSEHOLD_PERMISSION_BATCH } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { RATE_LIMITS } from "./lib/rateLimits";
+import { HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE } from "./library/setCopiesHouseholdPermission";
 import schema from "./schema";
 
 // Public writes a free account could loop on: each bucket allows what a member would do by hand and
@@ -267,6 +269,74 @@ describe("copy edits", () => {
       });
     for (let i = 0; i < CAP; i++) await expect(refused()).rejects.toThrow();
     await edits.updateCopyDetails(0);
+  });
+
+  // One bulk call can write 200 rows, so at a token a call a loop patches 6,000 rows a minute against
+  // the single form's 30, and the bulk form would be the way around the limit.
+  describe("the bulk household permission pays for what it writes", () => {
+    const seedShelf = async () => {
+      const row = (await t.run((ctx) => ctx.db.get(copy)))!;
+      const more = await t.run(async (ctx) => {
+        const ids = [];
+        for (let i = 0; i < MAX_HOUSEHOLD_PERMISSION_BATCH - 1; i++) {
+          ids.push(
+            await ctx.db.insert("ownedPuzzles", {
+              aggregateId: `copy_${i}`,
+              puzzleId: row.puzzleId,
+              ownerId: me,
+              heldBy: me,
+              condition: "good",
+              availability: { forTrade: false, forSale: false, forLend: false },
+              createdAt: 1,
+              updatedAt: 1,
+            }),
+          );
+        }
+        return ids;
+      });
+      return [copy, ...more];
+    };
+    const setAll = (
+      copyIds: Id<"ownedPuzzles">[],
+      permission: "view" | "manage",
+    ) =>
+      asMe().mutation(
+        api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+        { copyIds, permission },
+      );
+
+    test("a member can still change a whole batch, three times a minute", async () => {
+      const shelf = await seedShelf();
+      const perBatch = Math.ceil(
+        MAX_HOUSEHOLD_PERMISSION_BATCH / HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE,
+      );
+      expect(Math.floor(CAP / perBatch)).toBe(3);
+
+      expect((await setAll(shelf, "view")).changed).toBe(shelf.length);
+      await setAll(shelf, "manage");
+      await setAll(shelf, "view");
+
+      await expectRateLimited(setAll(shelf, "manage"));
+      const left = await t.run((ctx) => ctx.db.get(shelf[0]));
+      expect(left?.householdPermission).toBe("view");
+    });
+
+    test("what is left of the minute still pays for a small change", async () => {
+      const shelf = await seedShelf();
+      await setAll(shelf, "view");
+      await setAll(shelf, "manage");
+      await setAll(shelf, "view");
+      expect((await setAll(shelf.slice(0, 25), "manage")).changed).toBe(25);
+    });
+
+    test("a batch that changes nothing costs one, like any call", async () => {
+      const shelf = await seedShelf();
+      await setAll(shelf, "view");
+      for (let i = 0; i < CAP - 8; i++) {
+        expect((await setAll(shelf, "view")).changed).toBe(0);
+      }
+      await expectRateLimited(setAll(shelf, "view"));
+    });
   });
 });
 

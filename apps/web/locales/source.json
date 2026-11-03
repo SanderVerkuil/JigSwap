@@ -2329,6 +2329,7 @@
       "title": "My puzzles in this household",
       "sub": "Choose what your household may do with each of your puzzles. Only you can change this for your own puzzles.",
       "empty": "You haven't added any puzzles yet.",
+      "rateLimited": "You're changing this very quickly. Wait a minute and try again.",
       "filterLabel": "Filter by household access",
       "filterAll": "All puzzles",
       "selectAll": "Select all",

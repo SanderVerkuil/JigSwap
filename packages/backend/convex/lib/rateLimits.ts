@@ -56,8 +56,9 @@ export const RATE_LIMITS = {
   copySharing: { windowMs: MINUTE, max: 30 },
   // A copy's other edits, all together: its details, condition and cover, and the household permission
   // (library/updateCopyDetails, changeCopyCondition, setCopyCover, setCopyHouseholdPermission and its
-  // bulk form). Each patches the row, inside the range every Browse first page reads, and a Save in the
-  // edit dialog can make three of these calls at once, so 30/min still leaves ten Saves a minute.
+  // bulk form, which pays by the rows it writes). Each patches the row, inside the range every Browse
+  // first page reads, and a Save in the edit dialog can make three of these calls at once, so 30/min
+  // still leaves ten Saves a minute.
   copyEdit: { windowMs: MINUTE, max: 30 },
   // Display name and bio (social/editProfile), one call per Save. Every page showing the member reads
   // the profile row, so a loop re-runs all of them.

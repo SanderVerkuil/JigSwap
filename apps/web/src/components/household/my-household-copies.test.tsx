@@ -13,8 +13,10 @@ import {
 } from "@testing-library/react";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import { renderToStaticMarkup } from "react-dom/server";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -194,7 +196,10 @@ describe("MyHouseholdCopies", () => {
   });
 });
 
-const renderInteractive = (copies: unknown[]) => {
+const renderInteractive = (
+  copies: unknown[],
+  onError: (error: unknown) => void = () => {},
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -215,7 +220,7 @@ const renderInteractive = (copies: unknown[]) => {
   renderDom(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <MyHouseholdCopies householdDefault="view" onError={() => {}} />
+        <MyHouseholdCopies householdDefault="view" onError={onError} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -310,5 +315,31 @@ describe("MyHouseholdCopies selection bar", () => {
         screen.getByRole("button", { name: "Select all" }),
       ),
     );
+  });
+
+  // A whole batch takes 8 of the minute's 30, so someone flipping one back and forth does get here. The
+  // household's own text for this refusal is about join requests and says to come back tomorrow.
+  it("says a refused change only has to wait a minute, and keeps the selection", async () => {
+    mocks.mutation.mockRejectedValueOnce(
+      new ConvexError({ code: "RateLimited", retryAfterMs: 30_000 }),
+    );
+    const onError = vi.fn();
+    renderInteractive([copy("b", "Forest", "view")], onError);
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Forest" }));
+    fireEvent.pointerDown(bar()!, { button: 0, ctrlKey: false });
+    const items = await screen.findAllByRole("menuitem");
+    fireEvent.click(items[0]);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Change access" }),
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        en.household.bulkPermission.rateLimited,
+      ),
+    );
+    expect(onError).not.toHaveBeenCalled();
+    expect(bar()).not.toBeNull();
+    expect(nl.household.bulkPermission.rateLimited).toBeTruthy();
   });
 });

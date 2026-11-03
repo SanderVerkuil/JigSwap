@@ -2329,6 +2329,7 @@
       "title": "Mijn puzzels in dit huishouden",
       "sub": "Kies wat je huishouden met elk van je puzzels mag doen. Alleen jij kunt dit voor je eigen puzzels wijzigen.",
       "empty": "Je hebt nog geen puzzels toegevoegd.",
+      "rateLimited": "Je wijzigt dit erg snel. Wacht een minuutje en probeer het opnieuw.",
       "filterLabel": "Filteren op toegang voor het huishouden",
       "filterAll": "Alle puzzels",
       "selectAll": "Alles selecteren",

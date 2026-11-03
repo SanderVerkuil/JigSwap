@@ -17,6 +17,11 @@ import { enforceRateLimit } from "../lib/rateLimits";
 // household and OWN every copy in the batch; one foreign or missing copy rejects the whole batch
 // before anything is written (one mutation = one transaction, so it is all-or-nothing). Ids are
 // deduped and capped; copies whose stored value already matches the choice are not rewritten.
+// One token of copyEdit per this many rows written, so the bulk form isn't the way around the single
+// form's limit: a whole batch costs 8 of the bucket's 30, and a member can still change one three times
+// a minute.
+export const HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE = 25;
+
 export const setCopiesHouseholdPermission = mutation({
   args: {
     copyIds: v.array(v.id("ownedPuzzles")),
@@ -58,6 +63,21 @@ export const setCopiesHouseholdPermission = mutation({
       args.permission,
     );
     if (plan.isErr) throw toConvexError(plan.error);
+
+    // The call has paid for its first rows above. A refusal here rolls that back too.
+    const furtherCharges =
+      Math.ceil(
+        plan.value.toChange.length / HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE,
+      ) - 1;
+    if (furtherCharges > 0) {
+      await enforceRateLimit(
+        ctx,
+        "copyEdit",
+        memberId,
+        undefined,
+        furtherCharges,
+      );
+    }
 
     const now = Date.now();
     for (const copy of plan.value.toChange) {

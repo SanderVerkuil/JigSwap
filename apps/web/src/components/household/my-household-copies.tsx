@@ -43,6 +43,7 @@ import {
   type HouseholdPermissionChoice,
   type PermissionFilter,
 } from "./bulk-permission";
+import { householdErrorKey } from "./household-error";
 
 type OwnCopy = FunctionReturnType<
   typeof gateway.household.myCopyPermissions
@@ -86,7 +87,11 @@ export function MyHouseholdCopies({
       setSelected(new Set());
       toast.success(t("changed", { count: changed }));
     },
-    onError,
+    // A limit here only takes a minute, not the day the shared household text says for join requests.
+    onError: (error) =>
+      householdErrorKey(error) === "errors.RateLimited"
+        ? toast.error(t("rateLimited"))
+        : onError(error),
   });
 
   if (copies === undefined) return null;
