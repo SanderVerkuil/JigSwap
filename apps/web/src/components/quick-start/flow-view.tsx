@@ -167,10 +167,18 @@ export function QuickStartFlowView({
 
       <div
         className={cn(
-          "bg-card sticky bottom-[var(--mobile-tab-bar-height,3.5rem)] z-20 flex items-center gap-3 border-t px-4 py-3 pb-[30px] md:bottom-0 md:justify-between md:pb-3",
+          "bg-card sticky bottom-[var(--mobile-tab-bar-height,3.5rem)] z-20 flex flex-wrap items-center gap-3 border-t px-4 py-3 pb-[30px] md:bottom-0 md:justify-between md:pb-3",
           typing && "max-md:hidden",
         )}
       >
+        {/* Why Continue is disabled, right above it: what holds it back may be far up the step. A
+            live region from the start, so the reason is announced when it appears. */}
+        <p
+          role="status"
+          className="text-muted-foreground w-full text-sm empty:hidden"
+        >
+          {pending ? pendingWork.reason : null}
+        </p>
         <Button
           variant="ghost"
           className="pointer-coarse:min-h-11"

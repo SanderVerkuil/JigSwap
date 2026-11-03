@@ -631,6 +631,36 @@ describe("QuickStartFlowView", () => {
       expect(disabled(next)).toBe(true);
     });
 
+    it("says why it waits, in a live region that is there from the start", () => {
+      const status = (over: Parameters<typeof footer>[0]) =>
+        all(
+          render(
+            <QuickStartFlowView
+              step="solves"
+              view={VIEW}
+              onSkip={() => {}}
+              onContinue={() => {}}
+              {...over}
+            >
+              <p>body</p>
+            </QuickStartFlowView>,
+          ),
+        ).find((el) => attr(el, "role") === "status")!;
+      expect(
+        text(
+          status({
+            pendingWork: {
+              kind: "solves",
+              count: 2,
+              ready: false,
+              reason: "Choose a date for 1 puzzle, or pick I don't remember.",
+            },
+          }),
+        ),
+      ).toBe("Choose a date for 1 puzzle, or pick I don't remember.");
+      expect(text(status({ pendingWork: null }))).toBe("");
+    });
+
     it("is busy while saving, with Skip held too", () => {
       const { skip, next } = footer({
         pendingWork: { kind: "puzzles", count: 3, ready: true },

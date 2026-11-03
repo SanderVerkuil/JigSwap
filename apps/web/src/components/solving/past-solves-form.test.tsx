@@ -369,6 +369,104 @@ describe("PastSolvesList (ticking)", () => {
     ).toBe(true);
   });
 
+  it("says why the submit waits while a ticked row has Pick a date but no date", () => {
+    list(async () => true);
+    const log = () => screen.getByRole("button", { name: "Log 2 puzzles" });
+    tick("Mountain Lake");
+    tick("Cats");
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(log().hasAttribute("disabled")).toBe(false);
+
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "Pick a date" })[1]!,
+      );
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 1 puzzle, or pick I don't remember.",
+    );
+    expect(log().hasAttribute("disabled")).toBe(true);
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Pick a date"), {
+        target: { value: "2020-01-01" },
+      });
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(log().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("counts every row still waiting, a refused date too, and takes the member to the first", () => {
+    list(async () => true);
+    tick("Mountain Lake");
+    tick("Cats");
+    for (const radio of screen.getAllByRole("radio", { name: "Pick a date" })) {
+      act(() => {
+        fireEvent.click(radio);
+      });
+    }
+    const [first, second] = screen.getAllByLabelText("Pick a date");
+    act(() => {
+      fireEvent.change(second!, { target: { value: "2999-01-01" } });
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 2 puzzles, or pick I don't remember.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show me" }));
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("offers no way to the row when none is waiting", () => {
+    list(async () => true);
+    tick("Cats");
+    expect(screen.queryByRole("button", { name: "Show me" })).toBeNull();
+  });
+
+  it("prefers the reason to the batch limit: that one is what holds the submit back", () => {
+    const candidates = Array.from({ length: 25 }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+    renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+    for (let i = 0; i < 25; i++) tick(`Puzzle ${i}`);
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "Pick a date" })[0]!,
+      );
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 1 puzzle, or pick I don't remember.",
+    );
+  });
+
+  it("inside quick setup hands the reason to the flow's footer instead of saying it here", () => {
+    const store = createStepCommitStore();
+    list(async () => true, store);
+    tick("Cats");
+    expect(store.getSnapshot()?.reason).toBeUndefined();
+
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    expect(store.getSnapshot()).toEqual({
+      kind: "solves",
+      count: 1,
+      ready: false,
+      reason: "Choose a date for 1 puzzle, or pick I don't remember.",
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(screen.queryByRole("button", { name: "Show me" })).toBeNull();
+  });
+
   it("links a refused date to its reason, and a valid date to nothing", () => {
     list(async () => true);
     tick("Cats");

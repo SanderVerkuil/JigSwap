@@ -5967,6 +5967,8 @@
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "batchFull": "{count} is het maximum per keer. Leg deze eerst vast en ga daarna verder met de rest.",
       "futureDate": "Kies een datum tot en met vandaag.",
+      "needsDate": "Kies een datum voor {count, plural, one {# puzzel} other {# puzzels}}, of kies Weet ik niet meer.",
+      "showWaiting": "Laat zien",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
       "invalidDate": "Die datum kan niet. Controleer het jaar.",
       "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",

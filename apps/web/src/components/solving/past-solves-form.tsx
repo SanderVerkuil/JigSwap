@@ -131,7 +131,12 @@ export function PastSolvesList({
   const items = [...choices].map(([copyId, choice]) =>
     toPastCompletionItem(copyId, choice, maxDate),
   );
-  const ready = items.every((item) => item !== null);
+  // Ticked rows that can't be logged yet: Pick a date without a date, or with one after today.
+  const waiting = new Set(
+    [...choices.keys()].filter((_, index) => items[index] === null),
+  );
+  const ready = waiting.size === 0;
+  const reason = ready ? undefined : t("needsDate", { count: waiting.size });
 
   // Resolves true when the batch was logged, and clears the ticks.
   const submit = async () => {
@@ -143,6 +148,7 @@ export function PastSolvesList({
     kind: "solves",
     count: choices.size,
     ready,
+    reason,
     commit: submit,
   });
   const showSubmit = !inFlow && choices.size > 0;
@@ -213,18 +219,41 @@ export function PastSolvesList({
             "bg-background sticky bottom-[var(--mobile-tab-bar-height,3.5rem)] z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t py-3 pb-[30px] md:bottom-0 md:pb-3",
         )}
       >
-        {/* A live region from the start, so reaching the cap is announced. */}
+        {/* A live region from the start, so reaching the cap, or the reason the submit waits, is
+            announced. Inside quick setup the flow's footer says the reason, by its Continue. */}
         <p role="status" className="text-sm empty:hidden">
-          {full ? t("batchFull", { count: PAGE }) : null}
+          {!inFlow && reason
+            ? reason
+            : full
+              ? t("batchFull", { count: PAGE })
+              : null}
         </p>
         {showSubmit && (
-          <Button
-            className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 ms-auto text-white"
-            onClick={() => void submit()}
-            disabled={!ready || pending}
-          >
-            {t("submit", { count: choices.size })}
-          </Button>
+          <div className="ms-auto flex flex-wrap items-center justify-end gap-2">
+            {/* The row may be far up a long list, out of sight while this button stays grey. */}
+            {!ready && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const first = candidates.find(({ copyId }) =>
+                    waiting.has(copyId),
+                  );
+                  if (first) {
+                    document.getElementById(dateIdOf(first.copyId))?.focus();
+                  }
+                }}
+              >
+                {t("showWaiting")}
+              </Button>
+            )}
+            <Button
+              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white"
+              onClick={() => void submit()}
+              disabled={!ready || pending}
+            >
+              {t("submit", { count: choices.size })}
+            </Button>
+          </div>
         )}
       </div>
       {!inFlow && (
@@ -237,6 +266,9 @@ export function PastSolvesList({
     </div>
   );
 }
+
+const checkboxIdOf = (copyId: string) => `past-solve-${copyId}`;
+const dateIdOf = (copyId: string) => `${checkboxIdOf(copyId)}-date`;
 
 // One copy's row: the "I finished <title>" checkbox and, once ticked, the "When?" choice. Fully
 // controlled: `choice` is undefined while unticked. Ticking defaults to "I don't remember".
@@ -258,7 +290,7 @@ export function PastSolveRow({
   onChange: (choice: PastSolveChoice | null) => void;
 }) {
   const t = useTranslations("quickStart.solves");
-  const checkboxId = `past-solve-${id}`;
+  const checkboxId = checkboxIdOf(id);
   const dateErrorId = `${checkboxId}-date-error`;
   const dateRefused = choice?.when === "day" && choice.date > maxDate;
   return (
@@ -312,6 +344,7 @@ export function PastSolveRow({
           )}
           {choice.when === "day" && (
             <Input
+              id={dateIdOf(id)}
               type="date"
               aria-label={t("pickDate")}
               max={maxDate}

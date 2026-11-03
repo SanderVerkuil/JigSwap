@@ -5967,6 +5967,8 @@
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
       "batchFull": "{count} is the most for one batch. Log these first, then mark the rest.",
       "futureDate": "Pick a date up to today.",
+      "needsDate": "Choose a date for {count, plural, one {# puzzle} other {# puzzles}}, or pick I don't remember.",
+      "showWaiting": "Show me",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
       "invalidDate": "That date isn't possible. Check the year.",
       "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",

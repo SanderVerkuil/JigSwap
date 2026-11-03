@@ -18,6 +18,8 @@ export interface StepCommitSnapshot {
   count: number;
   /** False while the work can't be saved yet (a ticked row still needs its date). */
   ready: boolean;
+  /** Why it can't yet, in the member's words: the footer says it next to the disabled Continue. */
+  reason?: string;
 }
 
 /**
@@ -56,7 +58,8 @@ const sameSnapshot = (
     b !== null &&
     a.kind === b.kind &&
     a.count === b.count &&
-    a.ready === b.ready);
+    a.ready === b.ready &&
+    a.reason === b.reason);
 
 export function createStepCommitStore(): StepCommitStore {
   let snapshot: StepCommitSnapshot | null = null;
@@ -106,6 +109,7 @@ export function useStepCommitRegistration({
   kind,
   count,
   ready,
+  reason,
   commit,
   kept = null,
 }: StepCommitSnapshot & {
@@ -118,8 +122,8 @@ export function useStepCommitRegistration({
     store?.setKept(kept);
   });
   useEffect(() => {
-    store?.publish({ kind, count, ready });
-  }, [store, kind, count, ready]);
+    store?.publish({ kind, count, ready, reason });
+  }, [store, kind, count, ready, reason]);
   useEffect(() => {
     if (!store) return;
     return () => {
