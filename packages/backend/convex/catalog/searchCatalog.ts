@@ -7,7 +7,7 @@ import {
   type PaginationResult,
 } from "convex/server";
 import { v } from "convex/values";
-import type { DataModel, Id } from "../_generated/dataModel";
+import type { DataModel, Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
@@ -29,9 +29,12 @@ const MAX_PAGE_SIZE = 50;
 // The most rows one call of the plain browse reads to fill a page, matches or not: as far as a page a
 // hook has pinned may read, so a page cut here can be split without being cut again.
 export const SEARCH_CATALOG_ROWS_READ = MAX_PAGE_SIZE * PINNED_PAGE_READ_FACTOR;
-// Copies of one definition looked through for blocked owners' offers, so a definition with a flood
-// of copies can't use up a blocking viewer's read limit. Past it the chip can overcount.
-const MAX_COPIES_CHECKED_FOR_BLOCKS = 200;
+// What one card's chip looks through for offers to leave out of the definition's stored count: the
+// viewer's own copies of it, and those of this many members blocked either way, at most this many
+// copies across them. Anyone can block a viewer and pile long copies onto a definition, so these cap
+// what a page can cost; the chip can overcount past them. The viewer's own blocks are looked at first.
+const MAX_BLOCKED_OWNERS_CHECKED = 8;
+const MAX_COPIES_CHECKED = 20;
 
 // Catalog read for the member catalogue (/puzzles) and the add-copy picker: the approved
 // catalogue, paginated, narrowed server-side by the search index when a term is given (so matches
@@ -50,9 +53,9 @@ const MAX_COPIES_CHECKED_FOR_BLOCKS = 200;
 //
 // Each row carries `availableCount`, for the card's link to Browse: the definition's stored public
 // offers (one definitionStats row per card) minus the viewer's own and those of members blocked
-// either way, which Browse never lists. Only a viewer with blocks pays a read of the definition's
-// copies per card. A definition whose stats don't exist yet has no count: this paged list never
-// computes them live.
+// either way, which Browse never lists. Those come from the owners' own rows, so other members' copies
+// of the definition are never read. A definition whose stats don't exist yet has no count: this paged
+// list never computes them live.
 export const searchCatalog = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -159,13 +162,34 @@ export const searchCatalog = query({
 
     const blockedOwners = await blockedEitherWaySet(ctx, me);
     const visibilityCache = new Map<string, "public" | "private">();
-    const blockedOwnersCopies = async (puzzleId: Id<"puzzles">) => {
-      if (blockedOwners.size === 0) return [];
-      const copies = await ctx.db
+    const ownerCopiesOf = (
+      ownerId: Id<"users">,
+      puzzleId: Id<"puzzles">,
+      count: number,
+    ) =>
+      ctx.db
         .query("ownedPuzzles")
-        .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
-        .take(MAX_COPIES_CHECKED_FOR_BLOCKS);
-      return copies.filter((copy) => blockedOwners.has(copy.ownerId));
+        .withIndex("by_owner_puzzle", (q) =>
+          q.eq("ownerId", ownerId).eq("puzzleId", puzzleId),
+        )
+        .take(count);
+    const blockedOwnersChecked = [...blockedOwners].slice(
+      0,
+      MAX_BLOCKED_OWNERS_CHECKED,
+    );
+    const blockedOwnersCopies = async (puzzleId: Id<"puzzles">) => {
+      const copies: Doc<"ownedPuzzles">[] = [];
+      for (const ownerId of blockedOwnersChecked) {
+        if (copies.length >= MAX_COPIES_CHECKED) break;
+        copies.push(
+          ...(await ownerCopiesOf(
+            ownerId,
+            puzzleId,
+            MAX_COPIES_CHECKED - copies.length,
+          )),
+        );
+      }
+      return copies;
     };
     const availableFromOthers = async (
       puzzleId: Id<"puzzles">,
@@ -174,12 +198,7 @@ export const searchCatalog = query({
       if (!totals) return 0;
       const { total } = publicAvailabilityFromByType(totals.publicAvailable);
       if (total === 0) return 0;
-      const mine = await ctx.db
-        .query("ownedPuzzles")
-        .withIndex("by_owner_puzzle", (q) =>
-          q.eq("ownerId", me).eq("puzzleId", puzzleId),
-        )
-        .collect();
+      const mine = await ownerCopiesOf(me, puzzleId, MAX_COPIES_CHECKED);
       const hidden = [...mine, ...(await blockedOwnersCopies(puzzleId))];
       return (
         total - (await publicAvailabilityOf(ctx, hidden, visibilityCache)).total
