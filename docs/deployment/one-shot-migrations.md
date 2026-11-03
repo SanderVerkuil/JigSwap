@@ -313,8 +313,9 @@ incomplete: transfers settling in between leave new stale rows, so run it (again
 it, rounded down and clamped to 1..50 so a worst-case batch stays under Convex's
 per-transaction read limit; each batch its own transaction, rescheduling itself until the
 table is exhausted).
-A share row stores no sharer, so the rule derives it: only the copy's owner can share it, so
-the sharer is whoever owned the copy at `sharedAt`, and every ownership change is recorded in
+The rows this is for store no sharer (they predate `ownerId`), so the rule derives it: only the
+copy's owner can share it, so the sharer is whoever owned the copy at `sharedAt`, and every
+ownership change is recorded in
 `copyCustodyEntries` (previous and new owner). Per share:
 
 - the copy no longer exists -> deleted, counted `dangling` (copy deletion never withdrew
