@@ -37,13 +37,14 @@ export function TabCount({
 
 // Wraps a page's TabsList so the tab bar sticks just below the shell's sticky chrome
 // (--app-sticky-top, set by the dashboard shell) while the tab's content scrolls under it. Opaque
-// page background so nothing shows through; z-10 keeps it under the page head (z-20), the top
-// bars (z-30) and every popover, menu and dialog (z-50).
+// page background so nothing shows through. z-[11] keeps it above what scrolls under it (a puzzle
+// card's actions are `relative z-10`, and at equal z-index they would take the tabs' taps) and under
+// the page head (z-20), the top bars (z-30) and every popover, menu and dialog (z-50).
 export function StickyTabsBar({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "bg-background sticky top-[var(--app-sticky-top,0px)] z-10",
+        "bg-background sticky top-[var(--app-sticky-top,0px)] z-[11]",
         className,
       )}
       {...props}

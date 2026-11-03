@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TabCount } from "./underline-tabs";
+import { StickyTabsBar, TabCount } from "./underline-tabs";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -36,5 +36,20 @@ describe("TabCount", () => {
   it("shows a count that stopped at its cap as N+", () => {
     act(() => root.render(<TabCount count={50} capped />));
     expect(container.textContent).toBe("50+");
+  });
+});
+
+describe("StickyTabsBar", () => {
+  // A puzzle card's ⋯ button and a member tile's actions are `relative z-10`, to sit above the
+  // card's stretched link. Scrolling under a bar at that same z-index, the later element wins: the
+  // button paints over the tab and takes its taps. It stays under the page head (z-20).
+  it("sits above what scrolls under it, and under the page head", () => {
+    act(() => root.render(<StickyTabsBar data-testid="bar" />));
+    const bar = container.querySelector('[data-testid="bar"]')!;
+    const match = /\bz-\[?(\d+)\]?/.exec(bar.className);
+    expect(match).not.toBeNull();
+    const zIndex = Number(match![1]);
+    expect(zIndex).toBeGreaterThan(10);
+    expect(zIndex).toBeLessThan(20);
   });
 });
