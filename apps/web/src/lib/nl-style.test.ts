@@ -283,6 +283,15 @@ describe("nl.json", () => {
     expect(offenders).toEqual([]);
   });
 
+  // A puzzle someone owns is an exemplaar, everywhere else in nl.json. "Een kopie" stays for a copy
+  // of data, as in the privacy text, so only the plural is checked.
+  it("calls puzzle copies exemplaren", () => {
+    const offenders = leaves(nl)
+      .filter(([, value]) => /kopieën/i.test(value))
+      .map(([key, value]) => `${key}: ${value}`);
+    expect(offenders).toEqual([]);
+  });
+
   // "Laden…", not "Laden...": one ellipsis character, as in the rest of the app.
   it("uses the ellipsis character, never three dots", () => {
     const offenders = leaves(nl)
