@@ -35,11 +35,18 @@
 // when the bytes the decoder is given (jpegDecodeInput: without APPn and COM segments) hold
 // exactly one frame header, of 1 to 4 components sampled 1..4, whose blocks fit MAX_JPEG_BLOCKS.
 // jpeg-js's own caps (maxResolutionInMP, maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB) back that
-// up in decodeUpright. Time is bounded separately: jpeg-js walks every block on each scan, and a
-// scan can cost 28 bytes of file. Measured on a desktop (reencodeImage, 3538x3538, 1 component):
-// 100 scans 3.2 s, 1,600 scans 44 s, 22,000 scans in a 616 KB file 594 s, past Convex's 10-minute
-// action limit and retried, so one upload could hold a moderation slot for about 50 minutes
-// (SEC-18). A JPEG with more than MAX_JPEG_SCANS is refused; a progressive one normally has ten.
+// up in decodeUpright. Time is bounded separately: jpeg-js walks every block once per selector of
+// every scan, over the scan's spectral range, and a scan can cost 28 bytes of file. Measured on a
+// desktop (reencodeImage, 3538x3538, 1 component): 100 scans 3.2 s, 1,600 scans 44 s, 22,000 scans
+// in a 616 KB file 594 s, past Convex's 10-minute action limit and retried, so one upload could
+// hold a moderation slot for about 50 minutes (SEC-18). It reads the selector count and the
+// spectral end unchecked, so counting scans isn't enough either: 6 scans of 255 selectors with
+// spectral end 255 are 28 KB and took 674 s. So a JPEG is accepted with at most MAX_JPEG_SCANS
+// scans, each of which names distinct components of the frame and a spectral range within 0..63:
+// a scan then visits a block at most once, and the most block visits a decode can make is
+// MAX_JPEG_SCANS x MAX_JPEG_BLOCKS. Re-encoding at that bound (2896x2176 4:4:4, 295,392 blocks, 32
+// scans of all three components) took 1.8 s, and so did a scan that reads zero bits past the end of
+// the file with the longest Huffman code. All else the decoder does follows the size of the file.
 //
 // PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
 // the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
@@ -83,8 +90,8 @@ export const MAX_JPEG_BLOCKS = 296_000;
 
 /**
  * Most scans a JPEG may hold (see jpegHeader). A progressive JPEG normally has about ten, and an
- * optimising encoder's a few more. At this cap a decode of the largest accepted frame takes about
- * a second on the measurements above.
+ * optimising encoder's a few more. Each scan visits a block at most once (see jpegHeader), so this
+ * times MAX_JPEG_BLOCKS is the most block visits a decode can make; see the measurements above.
  */
 export const MAX_JPEG_SCANS = 32;
 
@@ -105,7 +112,7 @@ export type ImageFormat = "jpeg" | "png" | "webp" | "gif";
 export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
-  | "unreadable_header" // a supported format whose header has no usable dimensions
+  | "unreadable_header" // no usable dimensions in a supported format, or (JPEG) a scan unlike its frame
   | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) MAX_JPEG_BLOCKS or MAX_JPEG_SCANS
   | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
   | "animated" // an animated WebP or an APNG: only a still image is decoded
@@ -244,15 +251,40 @@ export const jpegDecodeInput = (b: Uint8Array): Uint8Array => {
 // together: 1 to 4 components (what jpeg-js turns into pixels), each sampled 1..4 (the JPEG
 // standard's range). Its block count is what jpeg-js allocates for it: per component, its
 // sampled blocks in every MCU, the image padded to whole MCUs. A scan it can only reach through
-// the two bytes of a scan header (FF DA), so those are counted the same way, at any offset: a table
-// that happens to hold them can only count against the file, never let a scan through uncounted.
+// the two bytes of a scan header (FF DA), so those are counted and checked the same way, at any
+// offset: a table that happens to hold them can only count against the file, never let a scan
+// through unchecked. (No libjpeg quantisation table at any quality holds them.)
+//
+// A scan header must hold together too, because jpeg-js takes it at its word: it reads the selector
+// count and the spectral range from the bytes after the marker, whatever the length says, and
+// walks the frame's blocks once per selector over that range. [marker][length u16][n], then
+// n x [component id][tables], then [spectral start][spectral end][successive approximation].
+const scanHeaderHolds = (
+  input: Uint8Array,
+  at: number,
+  componentIds: ReadonlySet<number>,
+): boolean => {
+  if (at + 5 > input.length) return false;
+  const selectors = input[at + 4];
+  if (selectors < 1 || selectors > componentIds.size) return false;
+  if (u16be(input, at + 2) !== 6 + 2 * selectors) return false;
+  const named = new Set<number>();
+  for (let s = 0; s < selectors; s++) named.add(input[at + 5 + 2 * s]);
+  if (named.size !== selectors) return false;
+  if (![...named].every((id) => componentIds.has(id))) return false;
+  const spectralStart = input[at + 5 + 2 * selectors];
+  const spectralEnd = input[at + 6 + 2 * selectors];
+  // Past the end of the file both read as undefined, and neither comparison holds.
+  return spectralStart <= spectralEnd && spectralEnd <= 63;
+};
+
 const jpegHeader = (b: Uint8Array): Header | null => {
   const input = jpegDecodeInput(b);
   let at = -1;
-  let jpegScans = 0;
+  const scanHeaders: number[] = [];
   for (let i = 0; i + 1 < input.length; i++) {
     if (input[i] !== 0xff) continue;
-    if (input[i + 1] === 0xda) jpegScans++;
+    if (input[i + 1] === 0xda) scanHeaders.push(i);
     if (input[i + 1] >= 0xc0 && input[i + 1] <= 0xc2) {
       if (at !== -1) return null;
       at = i;
@@ -265,12 +297,17 @@ const jpegHeader = (b: Uint8Array): Header | null => {
   if (u16be(input, at + 2) !== 8 + 3 * components) return null;
   if (at + 10 + 3 * components > input.length) return null;
   const sampling: { h: number; v: number }[] = [];
+  const componentIds = new Set<number>();
   for (let c = 0; c < components; c++) {
+    componentIds.add(input[at + 10 + 3 * c]);
     const hv = input[at + 11 + 3 * c];
     const h = hv >> 4;
     const v = hv & 0x0f;
     if (h < 1 || h > 4 || v < 1 || v > 4) return null;
     sampling.push({ h, v });
+  }
+  if (!scanHeaders.every((i) => scanHeaderHolds(input, i, componentIds))) {
+    return null;
   }
   const height = u16be(input, at + 5);
   const width = u16be(input, at + 7);
@@ -282,7 +319,7 @@ const jpegHeader = (b: Uint8Array): Header | null => {
     (sum, { h, v }) => sum + mcusPerLine * h * mcusPerColumn * v,
     0,
   );
-  return { width, height, jpegBlocks, jpegScans };
+  return { width, height, jpegBlocks, jpegScans: scanHeaders.length };
 };
 
 // PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must

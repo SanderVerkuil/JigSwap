@@ -298,6 +298,18 @@ describe("input guards (copy photos)", () => {
       "too_many_pixels",
     ],
     [
+      "a 28 KB progressive JPEG whose scans repeat a selector 255 times with spectral end 255",
+      progressiveJpeg({
+        width: 3538,
+        height: 3538,
+        scans: 6,
+        selectors: 255,
+        spectralEnd: 255,
+      }),
+      "image/jpeg",
+      "unreadable_header",
+    ],
+    [
       "a 779-byte JPEG whose frame header makes jpeg-js allocate over 1 GiB",
       JPEG_BLOCK_BOMB,
       "image/jpeg",
