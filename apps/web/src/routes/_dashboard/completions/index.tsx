@@ -121,7 +121,7 @@ function CompletionsPage() {
       ].map((row) => row._id as Id<"completions">),
     [inProgress, history, historyLimit],
   );
-  const { data: shownRows } = useQuery({
+  const { data: shownRows, isPlaceholderData: joining } = useQuery({
     ...convexQuery(
       gateway.solving.myCompletionsByIds,
       shownIds.length > 0 ? { completionIds: shownIds } : "skip",
@@ -188,8 +188,13 @@ function CompletionsPage() {
     isLast: boolean,
   ) => {
     const completion = rowById.get(_id);
-    // Still being joined, or just deleted.
-    if (!completion) return <Skeleton key={_id} className="mb-2 h-14" />;
+    if (!completion) {
+      // A join that has answered without it won't bring it: it was just deleted, or it is past the
+      // most one join holds (many solves in progress can take the history's room).
+      return shownRows === undefined || joining ? (
+        <Skeleton key={_id} className="mb-2 h-14" />
+      ) : null;
+    }
     return (
       <CompletionRow
         key={completion._id}

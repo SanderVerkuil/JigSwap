@@ -21,8 +21,8 @@ import { resolveCopyCoverFields } from "./resolveCoverUrl";
 // their housemates' (library/listMyLibraryWindow, listMyLibraryIndex, getMyLibraryCopies, and the
 // household-only household/listHouseholdCopies).
 
-// The most full rows one read joins, My Puzzles' deepest scroll and the pickers alike. Each costs up
-// to four index ranges (LIBRARY_ROWS_MAX explains), so more than this can throw instead of truncating.
+// The most full rows one read joins, My Puzzles' deepest scroll and the pickers alike. LIBRARY_ROWS_MAX
+// explains what each costs: more than this can throw instead of truncating.
 export const LIBRARY_WINDOW_MAX = LIBRARY_ROWS_MAX;
 
 // The most copies a lean read over the whole library covers, newest first: one index row each plus

@@ -13,8 +13,10 @@ import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
 // The newest members one read resolves. A member costs up to five index ranges (the copy, its puzzle
-// and its cover), plus the copy gate's on another member's copy, and Convex allows 4,096 per function.
-export const COLLECTION_ROWS_MAX = 500;
+// and its cover), plus the copy gate's on another member's copy, and four URLs, and Convex allows 4,096
+// ranges per function. Whether a URL takes up a range is inferred, not measured: this assumes it does
+// (LIBRARY_ROWS_MAX explains), and leaves about 10% to spare.
+export const COLLECTION_ROWS_MAX = 350;
 
 // Library read: a collection with its member copies resolved (each carrying its addedAt and joined
 // Catalog puzzle). Returns null on a missing collection, and drops members whose copy was deleted —

@@ -100,11 +100,12 @@ const open = (id: string, startDate: number) => ({
   startDate,
 });
 
-const renderLog = (index: unknown[], rows = index) => {
+// `rows` null: the join hasn't answered yet.
+const renderLog = (index: unknown[], rows: unknown[] | null = index) => {
   mocks.queries = {
     [getFunctionName(gateway.identity.byClerkId)]: { _id: "me" },
     [INDEX]: index,
-    [BY_IDS]: rows,
+    [BY_IDS]: rows ?? undefined,
   };
   mocks.asked = {};
   const Page = (Route as unknown as { options: { component: ComponentType } })
@@ -162,6 +163,21 @@ describe("completion log", () => {
     const asked = mocks.asked[BY_IDS] as { completionIds: string[] };
     expect(asked.completionIds).toHaveLength(40);
     expect(asked.completionIds).toContain("h39");
+  });
+
+  it("doesn't leave a placeholder for a row the finished join didn't return", () => {
+    renderLog(
+      [finished("a", 2024), finished("b", 2024)],
+      [finished("a", 2024)],
+    );
+    expect(shownRows()).toHaveLength(1);
+    expect(document.querySelector('[data-slot="skeleton"]')).toBeNull();
+  });
+
+  it("holds a placeholder for each row while the join is on its way", () => {
+    renderLog([finished("a", 2024), finished("b", 2024)], null);
+    expect(shownRows()).toHaveLength(0);
+    expect(document.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
   });
 
   it("passes on the library info the join found", () => {
