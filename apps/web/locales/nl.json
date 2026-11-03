@@ -5963,6 +5963,8 @@
       "whichYear": "Welk jaar",
       "pickDate": "Kies een datum",
       "showMore": "Meer tonen",
+      "searchLabel": "Zoek in je puzzels op titel of merk",
+      "noMatches": "Geen puzzels gevonden voor “{term}”",
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "batchFull": "{count} is het maximum per keer. Leg deze eerst vast en ga daarna verder met de rest.",

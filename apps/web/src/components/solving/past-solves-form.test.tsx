@@ -5,7 +5,11 @@ import {
   type StepCommitStore,
 } from "@/components/quick-start/step-commit";
 import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
-import type { PastCompletionItem, PastSolveChoice } from "@/lib/past-solves";
+import type {
+  PastCompletionItem,
+  PastSolveCandidate,
+  PastSolveChoice,
+} from "@/lib/past-solves";
 import {
   act,
   cleanup,
@@ -519,6 +523,137 @@ describe("PastSolvesList (ticking)", () => {
     });
     expect(saved).toBe(false);
     expect(store.getSnapshot()?.count).toBe(1);
+  });
+});
+
+describe("PastSolvesList on a long list", () => {
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+  const list = (candidates: PastSolveCandidate[], locale: "en" | "nl" = "en") =>
+    renderDom(
+      <IntlProvider
+        locale={locale}
+        messages={locale === "en" ? en : nl}
+        timeZone="Europe/Amsterdam"
+      >
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+  const tick = (name: string) =>
+    act(() => {
+      fireEvent.click(screen.getByRole("checkbox", { name }));
+    });
+  const search = (term: string) =>
+    act(() => {
+      fireEvent.change(
+        screen.getByRole("searchbox", {
+          name: "Search your puzzles by title or brand",
+        }),
+        { target: { value: term } },
+      );
+    });
+  const rows = () =>
+    screen.queryAllByRole("checkbox").map((box) => box.getAttribute("id"));
+
+  it("offers a search only once the list is long enough to need one", () => {
+    list(many(10));
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    cleanup();
+    list(many(11));
+    expect(screen.getByRole("searchbox")).toBeTruthy();
+  });
+
+  it("narrows the rows and keeps a tick the search hides", () => {
+    list(many(12));
+    tick("I finished Puzzle 3");
+    search("Puzzle 11");
+    expect(rows()).toEqual(["past-solve-c11"]);
+    expect(screen.getByRole("button", { name: "Log 1 puzzle" })).toBeTruthy();
+
+    search("");
+    expect(
+      screen
+        .getByRole("checkbox", { name: "I finished Puzzle 3" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("reaches past the first page, and the row found there stays on the list", () => {
+    list(many(30));
+    expect(rows()).toHaveLength(25);
+    search("Puzzle 29");
+    tick("I finished Puzzle 29");
+    search("");
+    expect(rows()).toHaveLength(26);
+    expect(rows().at(-1)).toBe("past-solve-c29");
+    expect(screen.getByRole("button", { name: "Show more" })).toBeTruthy();
+  });
+
+  it("keeps a row that holds the submit back in view through a search", () => {
+    list(many(12));
+    tick("I finished Puzzle 3");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    search("Puzzle 11");
+    expect(rows()).toEqual(["past-solve-c3", "past-solve-c11"]);
+  });
+
+  it("says when nothing matches, and offers no Show more", () => {
+    list(many(30));
+    search("zzz");
+    expect(screen.getByText("No puzzles match “zzz”")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+  });
+
+  it("tells same-titled copies apart by brand and pieces, in the row's name", () => {
+    list([
+      { copyId: "a", title: "Cats", brand: "Goliath", pieceCount: 1500 },
+      { copyId: "b", title: "Cats", brand: "Ravensburger" },
+      { copyId: "c", title: "Cats", pieceCount: 1 },
+      { copyId: "d", title: "Dogs" },
+    ]);
+    expect(
+      screen.getByRole("checkbox", {
+        name: "I finished Cats Goliath · 1,500 pieces",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Cats Ravensburger" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Cats 1 piece" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Dogs" }),
+    ).toBeTruthy();
+  });
+
+  it("reads naturally in Dutch", () => {
+    list(
+      [
+        ...many(11),
+        { copyId: "a", title: "Katten", brand: "Goliath", pieceCount: 1500 },
+      ],
+      "nl",
+    );
+    expect(
+      screen.getByRole("searchbox", {
+        name: "Zoek in je puzzels op titel of merk",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Ik heb Katten afgemaakt Goliath · 1.500 stukjes",
+      }),
+    ).toBeTruthy();
   });
 });
 

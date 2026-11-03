@@ -14,23 +14,28 @@ import { gateway } from "@/gateway";
 import { localTodayInput } from "@/lib/date-input";
 import {
   pastSolveCandidates,
+  pastSolveRows,
   toPastCompletionItem,
   yearOptions,
   type PastCompletionItem,
+  type PastSolveCandidate,
   type PastSolveChoice,
   type PastSolveWhen,
 } from "@/lib/past-solves";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Search } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { solveSaveErrorKey } from "./solving-error";
 
 // Rows shown at first and added per "Show more"; also the most one submit may log (the
 // recordPastCompletions cap), so a member ticks at most this many at once.
 const PAGE = 25;
+// A list up to this long is read at a glance; a longer one gets a search.
+const NO_SEARCH_UP_TO = 10;
 
 // The bulk "I've solved these" step (spec 2026-10-17 §2.4, step 2): the member's own copies with
 // no completion yet, each with an "I finished <title>" checkbox and, once ticked, a "When?" choice
@@ -50,7 +55,7 @@ export function PastSolvesForm({
 }) {
   const t = useTranslations("quickStart.solves");
   const { member } = useCurrentMember();
-  // The lean library index, less housemates' copies: a row needs only its title.
+  // The lean library index, less housemates' copies: a row needs only its title, brand and pieces.
   const { data: library } = useQuery(
     convexQuery(gateway.library.myLibraryIndex, member ? {} : "skip"),
   );
@@ -93,6 +98,8 @@ export function PastSolvesForm({
       ).map((copy) => ({
         copyId: copy.aggregateId as string,
         title: copy.snapshot?.title ?? copy.puzzle?.title ?? "",
+        brand: copy.snapshot?.brand ?? copy.puzzle?.brand,
+        pieceCount: copy.snapshot?.pieceCount ?? copy.puzzle?.pieceCount,
       }))}
       pending={record.isPending}
       emptyText={emptyText}
@@ -107,7 +114,7 @@ export function PastSolvesForm({
 // says at the cap. The submit only shows once something is ticked (never "Log 0") and stays in view
 // while the list scrolls; inside quick setup it never shows, because the flow's Continue logs the
 // ticks ("Log 3 and continue"). Leaving with ticks asks first: here its own guard, inside quick
-// setup the flow's (QuickStartFlowStep).
+// setup the flow's (QuickStartFlowStep). A long list gets a search; ticks survive it (pastSolveRows).
 export function PastSolvesList({
   candidates,
   pending,
@@ -115,14 +122,16 @@ export function PastSolvesList({
   emptyAction,
   onSubmit,
 }: {
-  candidates: readonly { copyId: string; title: string }[];
+  candidates: readonly PastSolveCandidate[];
   pending: boolean;
   emptyText?: string;
   emptyAction?: ReactNode;
   onSubmit: (items: PastCompletionItem[]) => Promise<boolean>;
 }) {
   const t = useTranslations("quickStart.solves");
+  const tp = useTranslations("puzzles");
   const [shown, setShown] = useState(PAGE);
+  const [term, setTerm] = useState("");
   const [choices, setChoices] = useState<Map<string, PastSolveChoice>>(
     () => new Map(),
   );
@@ -168,7 +177,12 @@ export function PastSolvesList({
 
   const years = yearOptions(new Date().getFullYear());
   const full = choices.size >= PAGE;
-  const showMore = shown < candidates.length;
+  const { rows, more, noMatch } = pastSolveRows(candidates, {
+    term,
+    shown,
+    ticked: choices,
+    waiting,
+  });
 
   const setChoice = (copyId: string, choice: PastSolveChoice | null) =>
     setChoices((prev) => {
@@ -181,13 +195,34 @@ export function PastSolvesList({
   return (
     <div className="space-y-4">
       <p className="font-medium">{t("lead")}</p>
+      {candidates.length > NO_SEARCH_UP_TO && (
+        <div className="relative w-full max-w-sm">
+          <Search
+            aria-hidden
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+          />
+          <Input
+            type="search"
+            aria-label={t("searchLabel")}
+            placeholder={tp("librarySearch.placeholder")}
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      )}
       {/* Tabbing through the rows never leaves focus behind what stays on screen: the shell's top
           chrome, the bar below at its tallest (the cap message wraps), and the phone's tab bar.
           Reserved before anything is ticked too, so ticking the focused row can't hide it behind
           the bar that appears. Inside quick setup the flow's footer is no taller. */}
       <div className="space-y-4 [&_:is(button,input,select)]:scroll-mt-[calc(var(--app-sticky-top,0px)+0.5rem)] [&_:is(button,input,select)]:scroll-mb-[calc(var(--mobile-tab-bar-height,3.5rem)+9rem)] md:[&_:is(button,input,select)]:scroll-mb-28">
-        <ul className="flex flex-col">
-          {candidates.slice(0, shown).map(({ copyId, title }, index, list) => {
+        {noMatch && (
+          <p className="text-muted-foreground text-sm">
+            {t("noMatches", { term: term.trim() })}
+          </p>
+        )}
+        <ul className="flex flex-col empty:hidden">
+          {rows.map(({ copyId, title, brand, pieceCount }, index, list) => {
             const choice = choices.get(copyId);
             return (
               <li
@@ -197,6 +232,8 @@ export function PastSolvesList({
                 <PastSolveRow
                   id={copyId}
                   title={title}
+                  brand={brand}
+                  pieceCount={pieceCount}
                   choice={choice}
                   disabled={!choice && full}
                   years={years}
@@ -207,7 +244,7 @@ export function PastSolvesList({
             );
           })}
         </ul>
-        {showMore && (
+        {more && (
           <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
             {t("showMore")}
           </Button>
@@ -275,6 +312,8 @@ const dateIdOf = (copyId: string) => `${checkboxIdOf(copyId)}-date`;
 export function PastSolveRow({
   id,
   title,
+  brand,
+  pieceCount,
   choice,
   disabled,
   years,
@@ -283,6 +322,8 @@ export function PastSolveRow({
 }: {
   id: string;
   title: string;
+  brand?: string;
+  pieceCount?: number;
   choice: PastSolveChoice | undefined;
   disabled?: boolean;
   years: readonly number[];
@@ -290,6 +331,15 @@ export function PastSolveRow({
   onChange: (choice: PastSolveChoice | null) => void;
 }) {
   const t = useTranslations("quickStart.solves");
+  const tp = useTranslations("puzzles");
+  const format = useFormatter();
+  const details = [
+    brand,
+    pieceCount &&
+      `${format.number(pieceCount)} ${tp("pieces", { count: pieceCount })}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const checkboxId = checkboxIdOf(id);
   const dateErrorId = `${checkboxId}-date-error`;
   const dateRefused = choice?.when === "day" && choice.date > maxDate;
@@ -309,8 +359,16 @@ export function PastSolveRow({
             )
           }
         />
-        <Label htmlFor={checkboxId} className="font-normal">
-          {t("finished", { title })}
+        {/* In the label, so the line reaches a screen reader too: it's what tells two copies with
+            the same title apart. */}
+        <Label
+          htmlFor={checkboxId}
+          className="flex-col items-start gap-1 leading-snug font-normal"
+        >
+          <span>{t("finished", { title })}</span>
+          {details && (
+            <span className="text-muted-foreground text-xs">{details}</span>
+          )}
         </Label>
       </div>
       {choice && (
