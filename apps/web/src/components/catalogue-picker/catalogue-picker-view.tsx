@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { isPartialBarcode } from "@/lib/catalogue-search";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
@@ -71,6 +72,8 @@ export function CataloguePickerView({
   const trimmed = term.trim();
   const full = picks.length >= PICK_LIMIT;
   const docked = stickyFooter && picks.length > 0;
+  // The install tip docks in the same spot: while the submit is docked, it steps aside.
+  useReportSurfaceBusy("cataloguePicker", docked);
   // Docked on a phone, the tray and its note only show when the chip opens them.
   const hiddenWhenDocked = docked && !trayOpen && "max-sm:hidden";
 

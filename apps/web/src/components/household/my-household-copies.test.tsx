@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { LIBRARY_ROWS_MAX } from "@jigswap/contracts";
@@ -246,6 +247,17 @@ describe("MyHouseholdCopies selection bar", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select Harbour" }));
     expect(bar()).toBeNull();
+  });
+
+  it("reports the bottom of the screen as taken while it is up, so the install tip steps aside", () => {
+    renderInteractive(two);
+    expect(isSurfaceBusy()).toBe(false);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Harbour" }));
+    expect(isSurfaceBusy()).toBe(true);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Harbour" }));
+    expect(isSurfaceBusy()).toBe(false);
   });
 
   it("counts Select all, and Clear empties the selection and returns focus to Select all", () => {

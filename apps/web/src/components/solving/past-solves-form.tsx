@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { localTodayInput } from "@/lib/date-input";
 import {
@@ -142,6 +143,9 @@ export function PastSolvesList({
     ready,
     commit: submit,
   });
+  const showSubmit = !inFlow && choices.size > 0;
+  // The install tip docks in the same spot, and would hide the submit on a long list: it steps aside.
+  useReportSurfaceBusy("pastSolvesSubmit", showSubmit);
 
   if (candidates.length === 0) {
     return (
@@ -157,7 +161,6 @@ export function PastSolvesList({
   const years = yearOptions(new Date().getFullYear());
   const full = choices.size >= PAGE;
   const showMore = shown < candidates.length;
-  const showSubmit = !inFlow && choices.size > 0;
 
   const setChoice = (copyId: string, choice: PastSolveChoice | null) =>
     setChoices((prev) => {

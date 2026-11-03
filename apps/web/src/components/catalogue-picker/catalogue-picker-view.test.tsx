@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import {
   cleanup,
   fireEvent,
@@ -337,6 +338,34 @@ describe("CataloguePickerView stickyFooter", () => {
     expect(classOf(els, (el) => el.tagName === "section")).not.toContain(
       "max-sm:hidden",
     );
+  });
+
+  it("reports the bottom of the screen as taken only while docked, so the install tip steps aside", () => {
+    const view = (picks: Pick[]) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CataloguePickerView
+          term=""
+          rows={[]}
+          picks={picks}
+          isSearching={false}
+          isSubmitting={false}
+          stickyFooter
+          onTermChange={noop}
+          onToggle={noop}
+          onRemove={noop}
+          onRemoveLast={noop}
+          onForTradeChange={noop}
+          onForLendChange={noop}
+          onSubmit={noop}
+        />
+      </IntlProvider>
+    );
+    const { rerender } = renderDom(view([]));
+    expect(isSurfaceBusy()).toBe(false);
+    rerender(view([pick("a")]));
+    expect(isSurfaceBusy()).toBe(true);
+    rerender(view([]));
+    expect(isSurfaceBusy()).toBe(false);
   });
 
   it("opens and closes the tray from the chip", () => {

@@ -4,6 +4,7 @@ import {
   StepCommitContext,
   type StepCommitStore,
 } from "@/components/quick-start/step-commit";
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import type { PastCompletionItem, PastSolveChoice } from "@/lib/past-solves";
 import {
   act,
@@ -263,6 +264,15 @@ describe("PastSolvesList (ticking)", () => {
     list(async () => true);
     tick("Cats");
     expect(screen.getByRole("button", { name: "Log 1 puzzle" })).toBeTruthy();
+  });
+
+  it("reports the bottom of the screen as taken while its submit is up, so the install tip steps aside", () => {
+    list(async () => true);
+    expect(isSurfaceBusy()).toBe(false);
+    tick("Cats");
+    expect(isSurfaceBusy()).toBe(true);
+    tick("Cats");
+    expect(isSurfaceBusy()).toBe(false);
   });
 
   it("inside quick setup hides its submit and hands the ticks to Continue", async () => {
