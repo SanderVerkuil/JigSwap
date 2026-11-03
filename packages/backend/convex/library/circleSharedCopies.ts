@@ -28,7 +28,9 @@ export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
 // Each share costs an index range for its copy, and Browse runs this on every page, so a member of
 // many busy circles can't push its read past Convex's limit of 4,096 ranges per function.
 export const CIRCLE_SHARES_READ_TOTAL = 600;
-export const MAX_SHARES_READ_PER_COPY = 100;
+// A copy's shares are the owner's to multiply, and lists run this check per row, so past this few the
+// check reads the viewer's own circles instead (see isCircleSharedWithViewer).
+export const MAX_SHARES_READ_PER_COPY = 5;
 // Generous next to real use (a member in hundreds of friend circles is already extreme; each circle
 // holds at most 50 members), while keeping the fallback well inside Convex's per-function read limits.
 export const MAX_VIEWER_CIRCLES_READ = 500;
@@ -50,13 +52,14 @@ const isMemberOf = async (
 // owner's junction rows, so the cost is O(shares of the copy), independent of the viewer's circles.
 //
 // The share count is OWNER-controlled (one copy can be shared into any number of solo circles), so
-// at most MAX_SHARES_READ_PER_COPY shares are read by_copy. Past that, the candidate circles come from
-// the VIEWER's own memberships instead (circleMembers.by_member), each probed with a
-// circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of qualifying circles,
-// so the decision is identical to the uncapped rule (no false negatives) as long as the viewer is in
-// at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not circle-shared).
-// The viewer's own consent bounds that list: a member is only in circles they created or whose
-// invite they accepted (no admin can seat anyone directly), so nobody else can inflate it.
+// at most MAX_SHARES_READ_PER_COPY shares are read by_copy, few enough that a list deciding row after
+// row can't be pushed past Convex's limit of 4,096 ranges by what one owner does. Past that, the
+// candidate circles come from the VIEWER's own memberships instead (circleMembers.by_member), each
+// probed with a circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of
+// qualifying circles, so the decision is identical to the uncapped rule (no false negatives) as long as
+// the viewer is in at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not
+// circle-shared). The viewer's own consent bounds that list: a member is only in circles they created
+// or whose invite they accepted (no admin can seat anyone directly), so nobody else can inflate it.
 export const isCircleSharedWithViewer = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
