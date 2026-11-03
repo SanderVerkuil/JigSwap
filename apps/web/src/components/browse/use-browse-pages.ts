@@ -11,7 +11,7 @@ import {
 // open a subscription.
 import { useConvex } from "convex/react";
 import type { FunctionArgs, FunctionReturnType } from "convex/server";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { QueryBuilderState } from "./query-builder";
 
 // Browse asks for other members' offers a page of this size at a time, each from where the last one
@@ -113,6 +113,25 @@ export function useBrowsePages(args: BrowseArgs) {
     placeholderData: keepPreviousData,
   });
   const stale = !list && first.isPlaceholderData;
+
+  // A first page holds its subscription for as long as it is cached (see router.tsx), and every
+  // listing change re-runs it, so the first page of the filters just left goes at once: only the
+  // current filters' page stays live, however many searches the member types. Its rows stay on screen
+  // (placeholderData keeps them) until the new page arrives. Leaving Browse is not a filter change:
+  // that page stays cached, so Back renders it at once.
+  const filtersOnScreen = useRef(args);
+  useEffect(() => {
+    const left = filtersOnScreen.current;
+    filtersOnScreen.current = args;
+    if (JSON.stringify(left) === key) return;
+    queryClient.removeQueries({
+      queryKey: convexQuery(gateway.library.browseOwned, {
+        ...left,
+        limit: BROWSE_PAGE_SIZE,
+      }).queryKey,
+      exact: true,
+    });
+  });
 
   const loadMore = async () => {
     if (!list && (!first.data || stale)) return;

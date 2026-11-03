@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
-import { convexQuery } from "@convex-dev/react-query";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -309,6 +309,32 @@ describe("useBrowsePages", () => {
     expect(hook.result.current.loadingMore).toBe(false);
   });
 
+  it("keeps the previous filters' rows on screen after dropping their first page", async () => {
+    const before = filters("placeholder-before");
+    const after = filters("placeholder-after");
+    const { queryClient, hook } = setup(before);
+    await seedFirst(queryClient, before, page(rows(0, 2), true, "c1"), hook);
+
+    hook.rerender({ args: after });
+
+    await waitFor(() =>
+      expect(queryClient.getQueryState(firstKey(before))).toBeUndefined(),
+    );
+    expect(idsOf(hook.result.current.rows)).toEqual(["copy-0", "copy-1"]);
+    expect(hook.result.current.stale).toBe(true);
+    expect(hook.result.current.hasMore).toBe(false);
+
+    await seedFirst(
+      queryClient,
+      after,
+      page([{ _id: "after-1" }], false, null),
+    );
+    await waitFor(() =>
+      expect(idsOf(hook.result.current.rows)).toEqual(["after-1"]),
+    );
+    expect(hook.result.current.stale).toBe(false);
+  });
+
   it("reports loading until the first page of a first visit arrives", () => {
     const { hook } = setup(filters("first-visit"));
     expect(hook.result.current.loading).toBe(true);
@@ -410,5 +436,113 @@ describe("useBrowsePages", () => {
     expect(convex.query).toHaveBeenCalledTimes(1);
 
     await act(async () => next.resolve(page(rows(2, 3), false, null)));
+  });
+});
+
+// The real bridge over a fake Convex client, with the options router.tsx uses: gcTime stays at the
+// TanStack default, and the bridge holds a query's subscription until the query is removed.
+describe("Browse's live first pages", () => {
+  afterEach(cleanup);
+
+  const world = () => {
+    const live = new Set<string>();
+    const client = {
+      watchQuery: (_fn: unknown, args: unknown) => ({
+        onUpdate: () => {
+          const watched = JSON.stringify(args);
+          live.add(watched);
+          return () => live.delete(watched);
+        },
+        localQueryResult: () => undefined,
+        localQueryLogs: () => undefined,
+        journal: () => undefined,
+      }),
+      query: async () => page(rows(0, 3), false, null),
+    };
+    const bridge = new ConvexQueryClient(client as never);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryKeyHashFn: bridge.hashFn(),
+          queryFn: bridge.queryFn(),
+          staleTime: Infinity,
+        },
+      },
+    });
+    bridge.connect(queryClient);
+    return { live, queryClient };
+  };
+
+  const search = (term: string): BrowseArgs => ({
+    includeOwnPuzzles: false,
+    ...(term ? { searchTerm: term } : {}),
+  });
+
+  const mountOn = (queryClient: QueryClient, args: BrowseArgs) =>
+    renderHook(({ args: current }) => useBrowsePages(current), {
+      initialProps: { args },
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      ),
+    });
+
+  it("holds one, however many searches and filters the member goes through", async () => {
+    const { live, queryClient } = world();
+    const hook = mountOn(queryClient, search(""));
+    await waitFor(() => expect(live.size).toBe(1));
+
+    for (const term of ["r", "ra", "rav", "rave", "raven", "ravens"]) {
+      hook.rerender({ args: search(term) });
+      await waitFor(() =>
+        expect([...live]).toEqual([
+          JSON.stringify({ ...search(term), limit: BROWSE_PAGE_SIZE }),
+        ]),
+      );
+    }
+    hook.rerender({ args: { ...search(""), availability: ["forLend"] } });
+    await waitFor(() =>
+      expect([...live]).toEqual([
+        JSON.stringify({
+          ...search(""),
+          availability: ["forLend"],
+          limit: BROWSE_PAGE_SIZE,
+        }),
+      ]),
+    );
+  });
+
+  it("opens the first page again for filters the member comes back to", async () => {
+    const { live, queryClient } = world();
+    const hook = mountOn(queryClient, search("back-a"));
+    await waitFor(() => expect(live.size).toBe(1));
+    hook.rerender({ args: search("back-b") });
+    await waitFor(() =>
+      expect([...live][0]).toContain('"searchTerm":"back-b"'),
+    );
+
+    hook.rerender({ args: search("back-a") });
+
+    await waitFor(() =>
+      expect([...live]).toEqual([
+        JSON.stringify({ ...search("back-a"), limit: BROWSE_PAGE_SIZE }),
+      ]),
+    );
+  });
+
+  it("leaves the first page cached and live on leaving Browse, so Back renders at once", async () => {
+    const { live, queryClient } = world();
+    const args = search("leave-and-back");
+    const first = mountOn(queryClient, args);
+    await waitFor(() => expect(first.result.current.rows).toHaveLength(3));
+
+    first.unmount();
+    expect(live.size).toBe(1);
+
+    const back = mountOn(queryClient, args);
+    expect(back.result.current.rows).toHaveLength(3);
+    expect(back.result.current.loading).toBe(false);
+    expect(live.size).toBe(1);
   });
 });
