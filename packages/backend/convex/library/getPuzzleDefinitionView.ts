@@ -45,8 +45,8 @@ export const DEFINITION_READ_BUDGET = 3 * DEFINITION_CANDIDATE_CAP;
 // community's review-rating distribution, ownership/completion stats, the viewer's own ownership, and
 // a short list of REACHABLE available copies the viewer could acquire. The reachability gate —
 // owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — mirrors
-// browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer, uncapped in
-// effect) where Browse uses the capped batched collector, so a copy shared long ago into a very busy
+// browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer) where Browse
+// uses the capped batched collector, so a copy shared long ago into a very busy
 // circle can appear here and not in Browse. Returns null for an unknown puzzle, and for a definition
 // that is not approved unless the viewer submitted it or is an admin (canViewDefinition, the same
 // gate as getPuzzleById), so unmoderated, rejected or disabled catalogue text is not served by id.
@@ -127,7 +127,7 @@ export const getPuzzleDefinitionView = query({
     // --- reachability gate (replicated from browseOwnedPuzzles/circleSharedCopies) --------------
     // An available copy is shown iff its owner's profile is PUBLIC, OR the copy is shared into a
     // circle the viewer belongs to. The viewer's own copies are excluded. The circle clause is
-    // checked per candidate copy (O(shares of that copy), #190), not via the batched collector.
+    // checked per candidate copy (#190), not via the batched collector.
     const visibilityCache = new Map<string, "public" | "private">();
     const ownerIsPublic = async (ownerId: Id<"users">): Promise<boolean> => {
       const key = ownerId as unknown as string;

@@ -2,7 +2,10 @@ import type { CircleId, OwnerId } from "@jigswap/domain";
 import { toCopyId, toMemberId, toOwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { sharesOfCircleWithin } from "../sharing/adapters/circleCopyShares";
+import {
+  isCopySharedInto,
+  sharesOfCircleWithin,
+} from "../sharing/adapters/circleCopyShares";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { makeCircleAwareVisibilityPolicy } from "./adapters/circleAwareVisibilityPolicy";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
@@ -23,19 +26,19 @@ import { convexCopyRepository } from "./adapters/convexCopyRepository";
 // round its members (sharing/adapters/circleCopyShares.sharesOfCircleWithin), so what one member
 // shares can't take another's copy out of this set, and only a member's own older shares can drop out.
 // That only affects the list surface built on it (Browse); every per-copy gate (canViewCopy /
-// canViewCopyWithContext, the definition view) uses `isCircleSharedWithViewer` instead, which reads
-// that copy's own shares (capped by_copy, with a viewer-circle fallback that reaches the same decision
-// up to MAX_VIEWER_CIRCLES_READ), so this cap can't hide a copy on its detail page.
+// canViewCopyWithContext, the definition view) uses `isCircleSharedWithViewer` instead, which starts
+// from the viewer's own circles up to MAX_VIEWER_CIRCLES_READ, so this cap can't hide a copy on its
+// detail page.
 export const CIRCLE_SHARES_READ_PER_CIRCLE = 200;
 // Each share costs an index range for its copy, and Browse runs this on every page, so a member of
 // many busy circles can't push its read past Convex's limit of 4,096 ranges per function.
 export const CIRCLE_SHARES_READ_TOTAL = 600;
-// A copy's shares are the owner's to multiply, and lists run this check per row, so past this few the
-// check reads the viewer's own circles instead (see isCircleSharedWithViewer).
-export const MAX_SHARES_READ_PER_COPY = 5;
 // Generous next to real use (a member in hundreds of friend circles is already extreme; each circle
-// holds at most 50 members), while keeping the fallback well inside Convex's per-function read limits.
+// holds at most 50 members), while keeping the check well inside Convex's per-function read limits.
 export const MAX_VIEWER_CIRCLES_READ = 500;
+// The most index ranges the check takes in one function call, those circles included. Lists ask it
+// row after row next to reads of their own, and all of it has to fit Convex's limit of 4,096.
+export const MAX_CIRCLE_CLAUSE_RANGES = 1000;
 
 const isMemberOf = async (
   ctx: QueryCtx,
@@ -49,19 +52,102 @@ const isMemberOf = async (
     )
     .first()) !== null;
 
-// The single-copy form of the circle clause, with the same semantics as the batched collector below:
-// reads only THIS copy's shares (circleCopyShares.by_copy) and, per share, probes the viewer's and the
-// owner's junction rows, so the cost is O(shares of the copy), independent of the viewer's circles.
+// What one function call knows of the viewer's circles.
+type ViewerCircles = {
+  seats: { circleId: string; circle: Doc<"circles"> }[];
+  // Which of them another member sits in too, once asked for.
+  sharedWith: Map<Id<"users">, Promise<ViewerCircles["seats"]>>;
+  rangesLeft: number;
+};
+
+const readViewerCircles = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+): Promise<ViewerCircles> => {
+  const links = await ctx.db
+    .query("circleMembers")
+    .withIndex("by_member", (q) => q.eq("memberId", viewerId))
+    .take(MAX_VIEWER_CIRCLES_READ + 1);
+  const tooMany = links.length > MAX_VIEWER_CIRCLES_READ;
+  const seats = await Promise.all(
+    (tooMany ? [] : links).map(async ({ circleAggregateId: circleId }) => {
+      // The collector only sees circles listForMember resolves: a viewer junction row AND an
+      // existing circles row.
+      const circle = await ctx.db
+        .query("circles")
+        .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
+        .unique();
+      return circle ? { circleId, circle } : null;
+    }),
+  );
+  return {
+    seats: seats.filter((seat) => seat !== null),
+    sharedWith: new Map(),
+    rangesLeft: tooMany ? 0 : MAX_CIRCLE_CLAUSE_RANGES - links.length,
+  };
+};
+
+// Per function call, so a list asking row after row pays for the viewer's circles once.
+const viewerCircleReads = new WeakMap<
+  QueryCtx,
+  Map<Id<"users">, Promise<ViewerCircles>>
+>();
+
+const viewerCirclesOf = (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+): Promise<ViewerCircles> => {
+  // A mutation can change a circle between two checks, so it reads them each time. It asks about a
+  // copy or two, not a list.
+  if ("insert" in ctx.db) return readViewerCircles(ctx, viewerId);
+  const reads = viewerCircleReads.get(ctx) ?? new Map();
+  viewerCircleReads.set(ctx, reads);
+  const read: Promise<ViewerCircles> =
+    reads.get(viewerId) ?? readViewerCircles(ctx, viewerId);
+  reads.set(viewerId, read);
+  return read;
+};
+
+// Past the budget a lookup isn't made, and what it would have found doesn't count.
+const takeRange = (viewer: ViewerCircles): boolean => viewer.rangesLeft-- > 0;
+
+// The viewer's circles the member sits in too, once per member. Membership is the junction row (the
+// embedded list is written with it, and only spares asking about the circles it doesn't name).
+const seatsSharedWith = (
+  ctx: QueryCtx,
+  viewer: ViewerCircles,
+  memberId: Id<"users">,
+): Promise<ViewerCircles["seats"]> => {
+  const known = viewer.sharedWith.get(memberId);
+  if (known) return known;
+  const read = (async () => {
+    const seats = await Promise.all(
+      viewer.seats
+        .filter(({ circle }) =>
+          circle.memberships.some((seat) => seat.memberId === memberId),
+        )
+        .map(async (seat) =>
+          takeRange(viewer) && (await isMemberOf(ctx, seat.circleId, memberId))
+            ? seat
+            : null,
+        ),
+    );
+    return seats.filter((seat) => seat !== null);
+  })();
+  viewer.sharedWith.set(memberId, read);
+  return read;
+};
+
+// The single-copy form of the circle clause, with the same semantics as the batched collector below.
+// It starts from the VIEWER's circles (circleMembers.by_member), never the copy's shares: how many
+// circles a copy is shared into is up to its OWNER, and lists ask this row after row. Those circles
+// are read once per function call, so a copy whose owner has no seat next to the viewer costs nothing
+// more, whoever owns it and however much they share. One who has costs a point lookup per circle they
+// have in common (by_circle_copy), and that takes the viewer's consent to grow: a member is only in
+// circles they created or whose invite they accepted (no admin can seat anyone directly).
 //
-// The share count is OWNER-controlled (one copy can be shared into any number of solo circles), so
-// at most MAX_SHARES_READ_PER_COPY shares are read by_copy, few enough that a list deciding row after
-// row can't be pushed past Convex's limit of 4,096 ranges by what one owner does. Past that, the
-// candidate circles come from the VIEWER's own memberships instead (circleMembers.by_member), each
-// probed with a circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of
-// qualifying circles, so the decision is identical to the uncapped rule (no false negatives) as long as
-// the viewer is in at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not
-// circle-shared). The viewer's own consent bounds that list: a member is only in circles they created
-// or whose invite they accepted (no admin can seat anyone directly), so nobody else can inflate it.
+// Past MAX_VIEWER_CIRCLES_READ circles, or MAX_CIRCLE_CLAUSE_RANGES in one function call, it FAILS
+// CLOSED (not circle-shared).
 export const isCircleSharedWithViewer = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -93,52 +179,16 @@ export const circlesSharingCopyWith = async (
 ): Promise<Doc<"circles">[]> => {
   const copyId = row.aggregateId;
   if (copyId === undefined) return [];
-  const shares = await ctx.db
-    .query("circleCopyShares")
-    .withIndex("by_copy", (q) => q.eq("copyId", copyId))
-    .take(MAX_SHARES_READ_PER_COPY + 1);
-  let candidateCircles: string[];
-  if (shares.length <= MAX_SHARES_READ_PER_COPY) {
-    candidateCircles = shares.map((s) => s.circleId);
-  } else {
-    const links = await ctx.db
-      .query("circleMembers")
-      .withIndex("by_member", (q) => q.eq("memberId", viewerId))
-      .take(MAX_VIEWER_CIRCLES_READ + 1);
-    if (links.length > MAX_VIEWER_CIRCLES_READ) return [];
-    candidateCircles = (
-      await Promise.all(
-        links.map(async ({ circleAggregateId }) =>
-          (await ctx.db
-            .query("circleCopyShares")
-            .withIndex("by_circle_copy", (q) =>
-              q.eq("circleId", circleAggregateId).eq("copyId", copyId),
-            )
-            .first()) !== null
-            ? circleAggregateId
-            : null,
-        ),
-      )
-    ).filter((c) => c !== null);
-  }
-  return (
-    await Promise.all(
-      candidateCircles.map(async (circleId) => {
-        // The collector only sees circles listForMember resolves: a viewer junction row AND an
-        // existing circles row.
-        if (
-          !(await isMemberOf(ctx, circleId, viewerId)) ||
-          !(await isMemberOf(ctx, circleId, row.ownerId))
-        ) {
-          return null;
-        }
-        return ctx.db
-          .query("circles")
-          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", circleId))
-          .unique();
-      }),
-    )
-  ).filter((c) => c !== null);
+  const viewer = await viewerCirclesOf(ctx, viewerId);
+  const seats = await seatsSharedWith(ctx, viewer, row.ownerId);
+  const sharing = await Promise.all(
+    seats.map(async ({ circleId, circle }) =>
+      takeRange(viewer) && (await isCopySharedInto(ctx, circleId, copyId))
+        ? circle
+        : null,
+    ),
+  );
+  return sharing.filter((circle) => circle !== null);
 };
 
 // A copy shared into one of the viewer's circles, not yet checked: the row, and the viewer's circles

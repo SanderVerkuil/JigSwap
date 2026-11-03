@@ -6,12 +6,11 @@ import { canViewCopy } from "./library/canViewCopy";
 import {
   collectCircleSharedCopies,
   isCircleSharedWithViewer,
-  MAX_SHARES_READ_PER_COPY,
 } from "./library/circleSharedCopies";
 import schema from "./schema";
 
-// #190: the bounded single-copy circle check (by_copy lookup) must decide exactly what the batched
-// collector decides, for every #181 scoping case.
+// #190: the bounded single-copy circle check (from the viewer's circles) must decide exactly what the
+// batched collector decides, for every #181 scoping case.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const NOW = 1_000_000;
@@ -211,8 +210,8 @@ describe("single-copy circle check == batched collector (#190)", () => {
   }
 });
 
-// Route B: the copy has more shares than MAX_SHARES_READ_PER_COPY (owner-inflated with solo circles),
-// so the single-copy check probes the viewer's own circles. It must still agree with the collector.
+// The copy has many shares (owner-inflated with solo circles), which the single-copy check never reads
+// through. It must still agree with the collector.
 const overCapCases: Case[] = [
   {
     name: "viewer and owner both seated in A",
@@ -243,7 +242,7 @@ const overCapCases: Case[] = [
   },
 ];
 
-describe("over the per-copy share cap: viewer-circle route == batched collector (#190)", () => {
+describe("shared into many circles: single-copy check == batched collector (#190)", () => {
   for (const c of overCapCases) {
     test(c.name, async () => {
       const t = convexTest(schema, modules);
@@ -275,7 +274,7 @@ describe("over the per-copy share cap: viewer-circle route == batched collector 
           createdAt: NOW,
           updatedAt: NOW,
         });
-        for (let i = 0; i < MAX_SHARES_READ_PER_COPY + 1; i++) {
+        for (let i = 0; i < 10; i++) {
           await mkCircle(ctx, `solo-${i}`, owner, [owner], [owner]);
           await ctx.db.insert("circleCopyShares", {
             circleId: `solo-${i}`,
