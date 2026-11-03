@@ -45,7 +45,9 @@ meerdere tegelijk vastleggen, ook als je niet meer precies weet wanneer.
 Tijdens het instellen van je account is dezelfde lijst een stap van Snel instellen.
 
 1. De pagina toont de puzzels in je bibliotheek waarvoor nog geen voltooiing is
-   vastgelegd. Klik op **Meer tonen** om er meer te zien.
+   vastgelegd, elk met merk en stukjes. Klik op **Meer tonen** om er meer te zien.
+   Een lange lijst heeft ook een zoekveld; aangevinkte puzzels blijven aangevinkt
+   als een zoekopdracht ze verbergt.
 2. Vink **Ik heb _titel_ afgemaakt** aan bij elke puzzel die je hebt opgelost.
 3. Kies onder **Wanneer?** een van deze opties:
    - **Weet ik niet meer** (de standaard),
@@ -55,7 +57,8 @@ Tijdens het instellen van je account is dezelfde lijst een stap van Snel instell
 
 Je kunt maximaal 25 puzzels tegelijk vastleggen: leg ze vast, dan verdwijnen ze
 uit de lijst en ga je verder met de rest. Deze voltooiingen verschijnen
-niet in de activiteitenfeed van de community.
+niet in de activiteitenfeed van de community. Ga je weg terwijl er nog puzzels
+aangevinkt staan, dan vragen we dat eerst.
 
 Zo wordt de datum gebruikt die je kiest:
 

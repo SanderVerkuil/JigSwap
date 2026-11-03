@@ -44,8 +44,9 @@ even when you don't remember exactly when.
 **Where:** **Completions → Mark past solves** (`/completions/past`). While you
 set up your account, the same list is a step of Quick setup.
 
-1. The page lists the puzzles in your library that have no solve logged yet.
-   Click **Show more** to see more.
+1. The page lists the puzzles in your library that have no solve logged yet,
+   each with its brand and pieces. Click **Show more** to see more. A long list
+   also has a search; puzzles you've ticked stay ticked when a search hides them.
 2. Tick **I finished** next to each puzzle you've solved.
 3. Under **When?**, choose one:
    - **I don't remember** (the default),
@@ -55,7 +56,8 @@ set up your account, the same list is a step of Quick setup.
 
 You can log up to 25 puzzles at a time: log those, and they leave the list so
 you can carry on with the rest. These solves don't appear in the community
-activity feed.
+activity feed. If you leave the page with puzzles still ticked, you're asked
+first.
 
 How the date you choose is used:
 
