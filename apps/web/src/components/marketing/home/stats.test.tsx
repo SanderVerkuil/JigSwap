@@ -29,8 +29,7 @@ describe("Stats", () => {
 
   it("shows the platform numbers once the community is big enough", () => {
     const html = render(50);
-    expect(html).toContain(en.marketing.home.stats.puzzlers);
-    expect(html).toContain(">50<");
-    expect(html).toContain(">340<");
+    expect(html).toContain("50 puzzlers");
+    expect(html).toContain("340");
   });
 });

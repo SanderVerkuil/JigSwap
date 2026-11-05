@@ -214,7 +214,7 @@ function AddPuzzlesToCollectionPage() {
           title={t("picker.libraryEmpty")}
           sub={t("picker.libraryEmptyHint")}
           action={
-            <Button variant="brand" asChild>
+            <Button asChild>
               <Link href="/my-puzzles/add">
                 <Plus className="h-4 w-4" />
                 {t("picker.addToLibrary")}
@@ -257,7 +257,6 @@ function AddPuzzlesToCollectionPage() {
           className="bg-card sticky bottom-14 z-20 -mx-4 border-t px-4 pt-3 pb-[30px] sm:hidden"
         >
           <Button
-            variant="brand"
             onClick={() => addSelected.mutate()}
             disabled={addSelected.isPending}
             className="min-h-11 w-full"

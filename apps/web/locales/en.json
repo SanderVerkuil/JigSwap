@@ -41,13 +41,14 @@
     "photoUploadRateLimitedUntil": "You've uploaded the most photos allowed for now. Try again {when}."
   },
   "notFound": {
-    "title": "We can't find that page",
-    "description": "It may have moved, or the address has a typo. The shelves are all still where you left them.",
+    "title": "Page not found",
+    "description": "Oops! The page you're looking for doesn't exist.",
     "backToHome": "Back to home",
     "browsePuzzles": "Browse puzzles",
     "backToDashboard": "Back to dashboard",
     "browseCatalogue": "Browse the catalogue",
-    "helpLinks": "Need a hand? Read the <docs>docs</docs> or <contact>get in touch</contact>."
+    "helpLinks": "Need a hand? Read the <docs>docs</docs> or <contact>get in touch</contact>.",
+    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL."
   },
   "navigation": {
     "home": "Home",
@@ -4288,7 +4289,7 @@
       "inputPlaceholder": "Search or jump to…",
       "empty": "No results found.",
       "goTo": "Go To",
-      "quickActions": "Quick actions",
+      "quickActions": "Quick Actions",
       "groupLibrary": "In your library",
       "groupPuzzles": "Puzzles",
       "groupPeople": "People",
@@ -4300,20 +4301,20 @@
     "actions": {
       "add": "Add",
       "addToMyPuzzles": "Add to my puzzles",
-      "addAPuzzle": "Add a puzzle",
+      "addAPuzzle": "Add a Puzzle",
       "logCompletion": "Log a solve",
       "markPastSolves": "Mark past solves",
       "createCircle": "Create a Circle",
-      "browseCommunity": "Browse community",
+      "browseCommunity": "Browse Community",
       "exportData": "Export my data"
     },
     "welcome": "Welcome back, {name}!",
     "welcomeAnonymous": "Welcome back!",
-    "welcomeNew": "Welcome, {name}! 🧩",
-    "welcomeNewAnonymous": "Welcome! 🧩",
+    "welcomeNew": "Welcome, {name}!",
+    "welcomeNewAnonymous": "Welcome!",
     "groups": {
       "library": {
-        "label": "My library",
+        "label": "My Library",
         "blurb": "Everything you own and track."
       },
       "community": {
@@ -4334,7 +4335,7 @@
         "description": "Your puzzle world at a glance"
       },
       "library": {
-        "title": "My library",
+        "title": "My Library",
         "subtitle": "Everything you own and track."
       },
       "community": {
@@ -4516,8 +4517,7 @@
     "language": {
       "switch": "Switch language",
       "label": "Language",
-      "changed": "Language changed successfully",
-      "current": "Current language: {language}"
+      "changed": "Language changed successfully"
     },
     "mobile": {
       "tabsLabel": "Primary",
@@ -4530,7 +4530,7 @@
       "tabWithCount": "{label}, {count}",
       "back": "Back to {section}",
       "backGeneric": "Back",
-      "openQuickActions": "Quick actions",
+      "openQuickActions": "Quick Actions",
       "quick": {
         "addPuzzleSub": "Put a new box on your shelf",
         "logCompletionSub": "Finished one? Record it",
@@ -4547,7 +4547,6 @@
     "plankPlay": "Play",
     "primaryNav": "Primary",
     "toggleSidebar": "Toggle sidebar",
-    "loading": "Loading dashboard...",
     "sidebarTitle": "Menu",
     "sidebarDescription": "Main navigation",
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
@@ -5674,7 +5673,6 @@
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalogue.",
-    "pieceCount": "{count, number} pieces",
     "loadErrorTitle": "We couldn't load this puzzle",
     "loadErrorSub": "Something went wrong on our side. Please try again in a moment.",
     "metaDescription": "{hasMaker, select, yes {{title} by {maker}} other {{title}}} — {count, number}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap."

@@ -102,10 +102,10 @@ describe("AppSidebar hub labels", () => {
     );
   });
 
-  it("renders the label as a 12px row with a hover and focus background", () => {
+  it("renders the label as a serif row with a hover and focus background", () => {
     renderSidebar();
     const classes = classesOf(hubLink(en.shell.groups.library.label));
-    expect(classes).toContain("text-xs");
+    expect(classes).toContain("text-[15px]");
     expect(classes).not.toContain("text-[10px]");
     expect(classes).toContain("hover:bg-sidebar-accent");
     expect(classes).toContain("focus-visible:bg-sidebar-accent");

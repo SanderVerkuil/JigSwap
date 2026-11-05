@@ -142,7 +142,7 @@ export function MyPuzzlesPhoneFilters({
           </FilterGroup>
           {householdLink}
           <SheetClose asChild>
-            <Button type="button" variant="brand" className="min-h-11 w-full">
+            <Button type="button" className="min-h-11 w-full">
               {matchedCount === undefined
                 ? t("filterSheet.close")
                 : t("filterSheet.show", { count: matchedCount })}

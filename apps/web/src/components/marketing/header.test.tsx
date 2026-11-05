@@ -173,7 +173,7 @@ describe("MarketingHeader mobile menu", () => {
 
   it("keeps the sign-up CTA in the bar on every width", () => {
     renderHeader();
-    const cta = screen.getByRole("link", { name: "Start trading" });
+    const cta = screen.getByRole("link", { name: "Start your shelf" });
     expect(cta.getAttribute("href")).toBe("/sign-up");
     // No breakpoint hides it: the bar keeps it next to the menu toggle.
     expect(cta.className.split(/\s+/)).not.toContain("hidden");
@@ -210,7 +210,7 @@ describe("MarketingHeader mobile menu", () => {
       screen.getByRole("navigation", { name: "Menu" }).className.split(/\s+/),
     ).toEqual(
       expect.arrayContaining([
-        "max-h-[calc(100dvh-71px)]",
+        "max-h-[calc(100dvh-64px)]",
         "overflow-y-auto",
         "overscroll-contain",
       ]),
@@ -301,8 +301,8 @@ describe("MarketingHeader desktop bar", () => {
     expect(breakpoint).toBeDefined();
     expect(menuToggle().className).toContain(`min-[${breakpoint}px]:hidden`);
     expect(
-      screen.getByRole("link", { name: "Start trading" }).className,
-    ).toContain(`min-[${breakpoint}px]:h-9`);
+      screen.getByRole("link", { name: "Start your shelf" }).className,
+    ).toContain(`min-[${breakpoint}px]:px-4`);
   });
 
   it("keeps log in in the bar from 861px, and in the menu only below that", () => {

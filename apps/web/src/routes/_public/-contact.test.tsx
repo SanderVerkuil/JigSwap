@@ -147,7 +147,7 @@ describe("contact form", () => {
     fireEvent.change(field(nl.marketing.contactPage.formMessage), {
       target: { value: "A perfectly reasonable message." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Verstuur bericht" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bericht versturen" }));
 
     await screen.findByText("Bericht verstuurd!");
     expect(backend.submit.mock.calls[0]?.[0]).toEqual({
@@ -187,7 +187,7 @@ describe("contact form", () => {
     send();
 
     await screen.findByText(
-      "Something went wrong while sending — please try again.",
+      "Something went wrong while sending. Please try again.",
     );
     await waitFor(() =>
       expect(screen.queryByText(/a lot of messages/)).toBeNull(),

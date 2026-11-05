@@ -135,7 +135,7 @@ export function MobileTabBar() {
                 ? t("openQuickActionsUnread", { count: whatsNewCount })
                 : t("openQuickActions")
             }
-            className="bg-jigsaw-gold text-jigsaw-on-gold hover:bg-mk-gold-press focus-visible:ring-ring/50 relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-xl transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]"
+            className="bg-jigsaw-gold text-jigsaw-on-gold hover:bg-mk-gold-press focus-visible:ring-ring relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-xl transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-2 motion-safe:active:scale-[0.97]"
           >
             <Plus className="size-6" />
             {whatsNewCount > 0 && (
@@ -194,7 +194,7 @@ function TabLink({
       aria-label={count && value > 0 ? count.label : t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "focus-visible:ring-ring/50 flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-safe:active:scale-[0.97]",
+        "focus-visible:ring-ring flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-2 focus-visible:ring-inset motion-safe:active:scale-[0.97]",
         on ? "text-foreground" : "text-muted-foreground",
       )}
     >

@@ -38,7 +38,7 @@ import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 // Shared 44px touch target for every control in the bar; the page's own control shows as current.
 const tapTarget =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-sidebar-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-safe:active:scale-[0.97] aria-[current=page]:text-primary-text";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.97] aria-[current=page]:text-primary-text";
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");

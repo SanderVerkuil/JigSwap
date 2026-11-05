@@ -550,7 +550,7 @@ export function PuzzleCard({
   const solveBadge = solveInProgress && (
     <Badge
       variant="secondary"
-      className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+      className="bg-background border-border text-foreground text-xs"
     >
       <Clock className="mr-1 h-3 w-3" />
       {tCompletions("inProgress")}

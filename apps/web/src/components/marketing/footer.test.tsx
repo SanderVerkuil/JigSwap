@@ -56,14 +56,16 @@ describe("MarketingFooter start link", () => {
   it("invites a visitor to start", () => {
     renderFooter();
     expect(
-      screen.getByRole("link", { name: "Start trading" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Start your shelf" })
+        .getAttribute("href"),
     ).toBe("/sign-up");
   });
 
   it("takes a member to their dashboard, under that name", () => {
     auth.isAuthenticated = true;
     renderFooter();
-    expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Start your shelf" })).toBeNull();
     expect(
       screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
     ).toBe("/dashboard");
@@ -86,7 +88,7 @@ describe("MarketingFooter touch targets", () => {
     const listed = controls.filter((el) => el.closest(".flex-col"));
     expect(listed.length).toBeGreaterThan(5);
     for (const el of listed) {
-      expect(el.className.split(/\s+/)).toContain("pointer-coarse:py-1.5");
+      expect(el.className.split(/\s+/)).toContain("min-h-9");
     }
   });
 });

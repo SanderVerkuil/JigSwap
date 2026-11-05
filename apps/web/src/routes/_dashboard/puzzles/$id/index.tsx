@@ -303,7 +303,7 @@ function PuzzleDefinitionDetail({
               link-style extras. */}
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {ownCopyHref && (
-              <Button variant="brand" className={wrappingAction} asChild>
+              <Button className={wrappingAction} asChild>
                 <Link href={ownCopyHref}>{t("viewYourCopy")}</Link>
               </Button>
             )}

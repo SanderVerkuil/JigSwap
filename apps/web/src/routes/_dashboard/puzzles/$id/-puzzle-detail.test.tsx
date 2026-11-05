@@ -301,9 +301,8 @@ describe("puzzle detail page: available copies link", () => {
 
 describe("puzzle detail page: actions", () => {
   const tCatalog = en.puzzles.puzzles;
-  // The brand (primary) button variant paints a gradient background.
-  const isPrimary = (el: HTMLElement) =>
-    el.className.includes("linear-gradient");
+  // The primary button is the default variant's canal fill.
+  const isPrimary = (el: HTMLElement) => el.className.includes("bg-primary");
 
   it("leads with the member's own copy when they already own the puzzle", () => {
     setView({

@@ -21,6 +21,12 @@ const NEVER_UNDER_THE_TIP: Record<string, string> = {
   "components/admin/moderation/detail-actions.tsx":
     "below lg it opens in a Sheet (queue-list.tsx), and from md there is no tip",
   "components/blocks/cookie-consent.tsx": "z-50: it paints over the tip",
+  "components/dashboard-layout/page-head.tsx":
+    "sticks to the top; its bottom-0 is the edge line drawn on ::after",
+  "components/marketing/footer.tsx":
+    "a public page: the tip mounts in the dashboard shell only",
+  "components/marketing/home/hero.tsx":
+    "a public page: the tip mounts in the dashboard shell only",
   "components/tour/tour-layer.tsx":
     "a running tour reports the surface busy from tour-provider.tsx",
 };

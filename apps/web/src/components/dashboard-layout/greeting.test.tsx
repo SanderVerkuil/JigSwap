@@ -63,8 +63,8 @@ describe("useDashboardGreeting", () => {
       firstName: "Henk",
       createdAt: new Date(+NOW - HOUR),
     };
-    expect(render()).toBe("<h1>Welcome, Henk! 🧩</h1>");
-    expect(render("nl")).toBe("<h1>Welkom, Henk! 🧩</h1>");
+    expect(render()).toBe("<h1>Welcome, Henk!</h1>");
+    expect(render("nl")).toBe("<h1>Welkom, Henk!</h1>");
   });
 
   it("welcomes a returning member back", () => {
@@ -72,15 +72,15 @@ describe("useDashboardGreeting", () => {
       firstName: "Henk",
       createdAt: new Date(+NOW - 3 * 24 * HOUR),
     };
-    expect(render()).toBe("<h1>Welcome back, Henk! 🧩</h1>");
-    expect(render("nl")).toBe("<h1>Welkom terug, Henk! 🧩</h1>");
+    expect(render()).toBe("<h1>Welcome back, Henk!</h1>");
+    expect(render("nl")).toBe("<h1>Welkom terug, Henk!</h1>");
   });
 
   it("has a nameless form for both", () => {
     clerkUser.current = { firstName: null, createdAt: new Date(+NOW - HOUR) };
-    expect(render()).toBe("<h1>Welcome! 🧩</h1>");
-    expect(render("nl")).toBe("<h1>Welkom! 🧩</h1>");
+    expect(render()).toBe("<h1>Welcome!</h1>");
+    expect(render("nl")).toBe("<h1>Welkom!</h1>");
     clerkUser.current = undefined;
-    expect(render()).toBe("<h1>Welcome back! 🧩</h1>");
+    expect(render()).toBe("<h1>Welcome back!</h1>");
   });
 });

@@ -28,7 +28,7 @@ import { useTranslations } from "use-intl";
 import { LanguageRadios, ThemeRadios } from "./display-preferences";
 
 const ROW =
-  "hover:bg-accent active:bg-accent focus-visible:ring-ring/50 flex min-h-14 w-full items-center gap-3.5 rounded-lg px-2.5 py-2 text-left transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]";
+  "hover:bg-accent active:bg-accent focus-visible:ring-ring flex min-h-14 w-full items-center gap-3.5 rounded-lg px-2.5 py-2 text-left transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-2 motion-safe:active:scale-[0.97]";
 const ROW_ICON = "text-primary-text size-5 shrink-0";
 
 // Titles reuse the command palette's quick-action strings where they exist;
@@ -163,7 +163,7 @@ export function MobileQuickSheet({
               >
                 <action.icon aria-hidden className={ROW_ICON} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">
+                  <span className="block font-semibold">
                     {t(action.titleKey)}
                   </span>
                   <span className="text-muted-foreground block text-sm">
@@ -182,7 +182,7 @@ export function MobileQuickSheet({
               <button type="button" onClick={install} className={ROW}>
                 <Download aria-hidden className={ROW_ICON} />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">
+                  <span className="block font-semibold">
                     {tInstall("menuTitle")}
                   </span>
                   <span className="text-muted-foreground block text-sm">

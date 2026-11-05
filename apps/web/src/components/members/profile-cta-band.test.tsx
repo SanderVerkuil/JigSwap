@@ -61,7 +61,7 @@ const withIntl = (node: ReactNode) =>
 // The brand variant is the only one carrying the brand glow.
 const expectBrandButton = (link: Element) => {
   expect(attr(link, "data-slot")).toBe("button");
-  expect(attr(link, "class")?.split(" ")).toContain("shadow-mk-brand");
+  expect(attr(link, "class")?.split(" ")).toContain("bg-jigsaw-gold");
 };
 
 // A locked profile renders only the hero + private card, so no queries are needed.

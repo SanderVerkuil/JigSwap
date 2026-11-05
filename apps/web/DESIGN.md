@@ -383,7 +383,7 @@ Flat and direct; every pressable thing answers the finger.
 - **Sidebar:** serif group names that link to their landing, underlined when current. Items are 14px with an icon. Hover is Frame Step. The active item is a white window in the frame, at 600: not a tinted pill.
 - **Top bar:** sidebar toggle and logo, centred search, then bell, theme and language, then Add Puzzle in marigold. No avatar; identity sits at the foot of the sidebar.
 - **Tab bar:** four tabs on the card colour with a raised 52px marigold button in the centre that opens the quick-action sheet. The current tab fills its icon and turns its label to 600.
-- **Public header:** sticky on sky, 64px; text links at 16px, underlined when current or hovered; collapses into a white menu below 1180px.
+- **Public header:** sticky on sky, 64px; text links at 16px, underlined when current or hovered; collapses into a white menu below 1200px, where the longest bar (Dutch, signed out) still fits on one line.
 
 ### Gable Skyline
 

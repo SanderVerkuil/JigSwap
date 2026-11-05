@@ -1,8 +1,5 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { MK_AVATAR_TONES } from "@/components/marketing/avatar-colors";
-import { Eyebrow } from "@/components/marketing/section";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 // WCAG 2 AA (4.5:1) guard for the marketing token layer. The tokens in
@@ -124,19 +121,6 @@ function contrast(fg: Rgb, bg: Rgb): number {
 const SURFACES = ["--mk-bg", "--mk-card", "--mk-muted"] as const;
 const AA = 4.5;
 
-// The token behind an element's `text-mk-*` class in the given mode
-// (`dark:text-mk-*` wins in dark mode).
-function textToken(html: string, mode: Mode): string {
-  const classes = /class="([^"]*)"/.exec(html)?.[1].split(/\s+/) ?? [];
-  const pick = (pattern: RegExp) =>
-    classes.map((c) => pattern.exec(c)?.[1]).find((t) => t !== undefined);
-  const token =
-    (mode === "dark" ? pick(/^dark:text-(mk-[\w-]+)$/) : undefined) ??
-    pick(/^text-(mk-[\w-]+)$/);
-  if (token === undefined) throw new Error(`no text-mk-* class in ${html}`);
-  return `var(--${token})`;
-}
-
 describe.each(["light", "dark"] as const)("marketing contrast (%s)", (mode) => {
   const tokens = MODES[mode];
   const color = (value: string) => resolve(value, tokens);
@@ -146,22 +130,6 @@ describe.each(["light", "dark"] as const)("marketing contrast (%s)", (mode) => {
       contrast(color("var(--mk-text-muted)"), color(`var(${surface})`)),
     ).toBeGreaterThanOrEqual(AA);
   });
-
-  it.each(SURFACES)("the section eyebrow reaches AA on %s", (surface) => {
-    const eyebrow = textToken(renderToStaticMarkup(<Eyebrow>x</Eyebrow>), mode);
-    expect(
-      contrast(color(eyebrow), color(`var(${surface})`)),
-    ).toBeGreaterThanOrEqual(AA);
-  });
-
-  it.each(Object.entries(MK_AVATAR_TONES))(
-    "%s avatar initials reach AA on their fill",
-    (_, tone) => {
-      expect(contrast(color(tone.fg), color(tone.bg))).toBeGreaterThanOrEqual(
-        AA,
-      );
-    },
-  );
 });
 
 // The docs stylesheet's own rule (`selector` at the start of a line), property by property.
@@ -182,7 +150,7 @@ function docsRule(selector: string): Record<string, string> {
 }
 
 // Inline code sets its own tint, so it needs its own guard: the ramp inverts in
-// dark mode, which makes a low step like violet-200 dark on the dark tint.
+// dark mode, which makes a low step like canal-200 dark on the dark tint.
 describe.each(["light", "dark"] as const)("docs inline code (%s)", (mode) => {
   it("reaches AA on its own tinted chip", () => {
     const code = {

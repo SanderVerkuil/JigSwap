@@ -219,7 +219,7 @@ function QuickActions() {
         <Link
           key={href}
           href={href}
-          className="bg-background hover:bg-accent focus-visible:border-ring focus-visible:ring-ring/50 relative inline-flex h-8 items-center gap-2 rounded-md border pointer-coarse:min-h-11 px-3 text-sm font-medium transition-[background-color,scale] max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]"
+          className="bg-background hover:bg-accent focus-visible:border-ring focus-visible:ring-ring relative inline-flex h-8 items-center gap-2 rounded-md border pointer-coarse:min-h-11 px-3 text-sm font-medium transition-[background-color,scale] max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-2 motion-safe:active:scale-[0.97]"
         >
           <Icon className="text-primary-text size-4" />
           {label}

@@ -41,13 +41,14 @@
     "photoUploadRateLimitedUntil": "Je hebt voorlopig het maximale aantal foto's geüpload. Probeer het {when} opnieuw."
   },
   "notFound": {
-    "title": "Die pagina kunnen we niet vinden",
-    "description": "Misschien is hij verhuisd, of zit er een typefout in het adres. De planken staan nog waar je ze hebt achtergelaten.",
-    "backToHome": "Terug naar de startpagina",
-    "browsePuzzles": "Puzzels bekijken",
+    "title": "Pagina niet gevonden",
+    "description": "Oeps! De pagina die je zoekt bestaat niet.",
+    "backToHome": "Terug naar de homepage",
+    "browsePuzzles": "Puzzels bladeren",
     "backToDashboard": "Terug naar dashboard",
     "browseCatalogue": "Bekijk de catalogus",
-    "helpLinks": "Hulp nodig? Lees de <docs>documentatie</docs> of <contact>neem contact met ons op</contact>."
+    "helpLinks": "Hulp nodig? Lees de <docs>documentatie</docs> of <contact>neem contact met ons op</contact>.",
+    "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd."
   },
   "navigation": {
     "home": "Home",
@@ -4309,8 +4310,8 @@
     },
     "welcome": "Welkom terug, {name}!",
     "welcomeAnonymous": "Welkom terug!",
-    "welcomeNew": "Welkom, {name}! 🧩",
-    "welcomeNewAnonymous": "Welkom! 🧩",
+    "welcomeNew": "Welkom, {name}!",
+    "welcomeNewAnonymous": "Welkom!",
     "groups": {
       "library": {
         "label": "Mijn bibliotheek",
@@ -4516,8 +4517,7 @@
     "language": {
       "switch": "Taal wijzigen",
       "label": "Taal",
-      "changed": "Taal succesvol gewijzigd",
-      "current": "Huidige taal: {language}"
+      "changed": "Taal succesvol gewijzigd"
     },
     "mobile": {
       "tabsLabel": "Hoofdnavigatie",
@@ -4547,7 +4547,6 @@
     "plankPlay": "Spelen",
     "primaryNav": "Hoofdnavigatie",
     "toggleSidebar": "Zijbalk in- of uitklappen",
-    "loading": "Dashboard laden...",
     "sidebarTitle": "Menu",
     "sidebarDescription": "Hoofdnavigatie",
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
@@ -5674,7 +5673,6 @@
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd.",
-    "pieceCount": "{count, number} stukjes",
     "loadErrorTitle": "We konden deze puzzel niet laden",
     "loadErrorSub": "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
     "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Sterren, reviews en ruilbeschikbaarheid in de JigSwap-community."

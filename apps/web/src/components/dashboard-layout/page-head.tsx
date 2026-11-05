@@ -72,7 +72,7 @@ export function PageHead() {
       // Explicit trail published by the page (deep routes).
       <nav
         aria-label={t("breadcrumbLabel")}
-        className="flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground"
+        className="flex flex-wrap items-center gap-1.5 text-[13px] leading-4 text-muted-foreground"
       >
         {crumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-1.5">
@@ -91,7 +91,7 @@ export function PageHead() {
     ) : group ? (
       <nav
         aria-label={t("breadcrumbLabel")}
-        className="flex items-center gap-1.5 text-[13px] text-muted-foreground"
+        className="flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground"
       >
         <Link href={group.href} className={crumbLink}>
           {t(`groups.${group.key}.label`)}
@@ -132,7 +132,7 @@ export function PageHead() {
       <div
         data-slot="page-head-crumbs"
         aria-hidden={crumbTrail ? undefined : true}
-        className="mb-0.5 min-h-5"
+        className="mb-0.5 min-h-4"
       >
         {crumbTrail}
       </div>

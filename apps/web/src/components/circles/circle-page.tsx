@@ -132,7 +132,6 @@ export function CirclePage({ circleId }: { circleId: string }) {
               user &&
               detail.memberCount === 1 && (
                 <Button
-                  variant="brand"
                   size="sm"
                   className="h-11 md:h-8"
                   onClick={() => setManageView("invite")}

@@ -373,7 +373,7 @@ describe("PhotoLightbox comment composer", () => {
     stub.photoComments = Array.from({ length: 100 }, (_, i) => comment(i));
     render({ gallery: approved });
     const count = () =>
-      [...document.querySelectorAll("span.font-mono")].map(
+      [...document.querySelectorAll("span.text-xs.tabular-nums")].map(
         (el) => el.textContent,
       );
     expect(count()).toContain("100+");

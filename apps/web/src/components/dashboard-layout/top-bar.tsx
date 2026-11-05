@@ -30,7 +30,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     // clusters, whether or not a page shows the CTA. Below lg the CTA's short label can outgrow its
     // column, so the left column hugs the logo there: the search keeps its left edge on every page
     // and gives way on its right.
-    <header className="hidden h-12 shrink-0 grid-cols-[1fr_minmax(0,34rem)_1fr] items-center gap-x-3 px-2 max-lg:grid-cols-[auto_minmax(0,34rem)_1fr] md:grid xl:gap-x-6">
+    <header className="hidden h-12 shrink-0 grid-cols-[1fr_minmax(0,520px)_1fr] items-center gap-x-3 px-2 max-lg:grid-cols-[auto_minmax(0,520px)_1fr] md:grid xl:gap-x-6">
       <div className="flex items-center gap-2 pl-2">
         <SidebarTrigger
           aria-label={t("toggleSidebar")}
@@ -48,7 +48,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         type="button"
         onClick={onOpenPalette}
         aria-keyshortcuts="Meta+K Control+K"
-        className="flex h-8 w-full min-w-0 cursor-pointer items-center gap-2 rounded-md border border-sidebar-border bg-background px-2.5 text-sm text-muted-foreground transition-colors outline-none hover:border-ring/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 pointer-coarse:h-11"
+        className="flex h-8 w-full min-w-0 cursor-pointer items-center gap-2 rounded-md border border-sidebar-border bg-background px-2.5 text-sm text-muted-foreground transition-colors outline-none hover:border-ring/60 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:h-11"
       >
         <Search className="size-4 shrink-0" />
         <span className="flex-1 truncate text-left">
@@ -77,7 +77,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             asChild
             variant="brand"
             size="sm"
-            className="ml-1 pointer-coarse:h-11 lg:max-xl:w-8 lg:max-xl:px-0 pointer-coarse:lg:max-xl:w-11"
+            className="ml-1 pointer-coarse:h-11 lg:max-xl:w-9 lg:max-xl:px-0 pointer-coarse:lg:max-xl:w-11"
           >
             <Link
               href="/my-puzzles/add"

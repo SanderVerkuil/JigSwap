@@ -263,7 +263,7 @@ function HeroSection({
             {handle && (
               <span className="inline-flex items-center gap-1 [overflow-wrap:anywhere]">
                 <AtSign className="size-3.5" />
-                <span>{handle}</span>
+                <span data-slot="member-handle">{handle}</span>
               </span>
             )}
             {hero.location && (
