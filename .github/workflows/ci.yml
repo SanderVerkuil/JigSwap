@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# Read-only token: nothing in CI writes to GitHub (the pnpm and Turborepo caches use the
+# Actions runtime token, not GITHUB_TOKEN).
+permissions:
+  contents: read
+
 # A newer push to the same PR branch supersedes in-flight runs; pushes to main
 # always run to completion so every main commit has a CI result.
 concurrency:
@@ -17,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # pnpm before setup-node so its pnpm cache can resolve the store. Version is
       # read from the root package.json "packageManager" field (pnpm@11.5.2).
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
@@ -33,7 +38,7 @@ jobs:
 
       # Persist Turborepo's local task cache between runs so unchanged packages are replayed.
       - name: Restore Turborepo cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .turbo/cache
           key: turbo-${{ runner.os }}-${{ github.sha }}

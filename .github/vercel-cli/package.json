@@ -1,0 +1,8 @@
+{
+  "name": "jigswap-vercel-cli",
+  "private": true,
+  "description": "The Vercel CLI that .github/workflows/vercel-preview.yml runs with VERCEL_TOKEN. Installed in CI with `npm ci --ignore-scripts` from the integrity-pinned package-lock.json next to this file; kept outside the pnpm workspace so it never enters pnpm-lock.yaml or a workspace install.",
+  "dependencies": {
+    "vercel": "62.2.0"
+  }
+}

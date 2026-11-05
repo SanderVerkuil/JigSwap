@@ -34,10 +34,14 @@ Convex preview through `convex-preview-teardown.yml`. The Vercel web preview sta
 is not redeployed.
 
 `vercel-preview.yml` checks out the PR branch (not the merge ref) and runs
-`vercel deploy --target=preview` from the repo root with a pinned CLI. The build runs
-remotely on Vercel, so the dashboard Build Command (`scripts/vercel-build.sh`) and the
-Preview-scoped env vars apply as before. The Vercel docs say a CLI deployment can lack the
-Git branch association that sets `VERCEL_GIT_COMMIT_REF`, so the workflow:
+`vercel deploy --target=preview` from the repo root. The CLI comes from
+`.github/vercel-cli/package-lock.json` (`npm ci --ignore-scripts`: integrity-checked, no
+install scripts), outside the pnpm workspace. That lockfile is read from the commit the
+workflow runs from, not from the PR branch, so a branch created before it existed still
+deploys. The build runs remotely on Vercel, so the
+dashboard Build Command (`scripts/vercel-build.sh`) and the Preview-scoped env vars apply
+as before. The Vercel docs say a CLI deployment can lack the Git branch association that
+sets `VERCEL_GIT_COMMIT_REF`, so the workflow:
 
 - passes the branch as the build env `JIGSWAP_PREVIEW_BRANCH`, which `vercel-build.sh`
   prefers over `VERCEL_GIT_COMMIT_REF` and hands to `convex deploy --preview-name`, and

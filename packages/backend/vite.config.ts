@@ -18,8 +18,9 @@ export default defineConfig(() => ({
     dangerouslyIgnoreUnhandledErrors: true,
     // CI runs `turbo run ... --concurrency=4`, so vitest shares the runner with other projects'
     // lint/build; convex-test's per-test module bundling then pushes tests that take ~500ms
-    // locally past the 5s default timeout.
-    testTimeout: 20_000,
+    // locally past the 5s default timeout. The image-pipeline and read-model suites decode real
+    // images and write thousands of rows, which GitHub's 2-core runners can stretch past 20s.
+    testTimeout: process.env.CI ? 60_000 : 20_000,
     server: { deps: { inline: ["convex-test"] } },
     include: [
       "convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",

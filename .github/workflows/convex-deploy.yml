@@ -6,7 +6,9 @@ name: Convex Deploy
 #     preview deployment instead (see convex-preview.yml — preview deployments are
 #     available on every Convex plan, including Free/Starter).
 #   - production: only after the CI workflow succeeds on main (workflow_run gate), so prod
-#     never deploys code that failed lint/type-check/test/build.
+#     never deploys code that failed lint/type-check/test/build. The CI run must also come
+#     from a push to this repository: `branches: [main]` matches only the head branch NAME,
+#     so a pull request whose head branch is called `main` (e.g. from a fork) would match too.
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
 # After each push, `whatsNew/publishPending` starts the What's new notification fan-out (idempotent).
 # Preview deployments (convex-preview.yml) deliberately skip it: they are seeded from a dev snapshot
@@ -25,6 +27,19 @@ name: Convex Deploy
 # runs without ordering them by commit, so an older commit's run could otherwise deploy over a
 # newer one. The newer commit's own run deploys it. A re-run of an old run skips the same way.
 # If the tip of main can't be read, the job fails without deploying (visible, safe to re-run).
+#
+# Production environment: the production job runs in the `convex-production` GitHub
+# Environment so CONVEX_DEPLOY_KEY_PROD can live there, readable only by runs on main. Until
+# the owner sets it up, GitHub auto-creates it unprotected and the job keeps reading the
+# repo-level secret, so nothing changes. One-time owner setup (Settings > Environments >
+# convex-production):
+#   1. Deployment branches and tags: "Selected branches and tags", rule `main`. workflow_run
+#      jobs run with the default branch as their ref, so the production job passes.
+#   2. Optional: Required reviewers (the owner), if every prod deploy should wait for approval.
+#   3. Environment secrets: add CONVEX_DEPLOY_KEY_PROD (same value, or a fresh prod deploy key).
+#   4. Once a production run has deployed with it, delete the repo-level CONVEX_DEPLOY_KEY_PROD
+#      (Settings > Secrets and variables > Actions).
+# The name stays clear of Vercel's `Production`/`Preview` environments (names ignore case).
 on:
   push:
     branches: [main]
@@ -32,6 +47,11 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+
+# Read-only token: checkout and the stale-commit guard's `git ls-remote origin` only read this
+# repository; the deploys authenticate with the Convex deploy keys, not GITHUB_TOKEN.
+permissions:
+  contents: read
 
 jobs:
   dev:
@@ -46,7 +66,7 @@ jobs:
       group: convex-dev-deploy
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Skip if no longer the tip of main
         id: guard
@@ -66,10 +86,10 @@ jobs:
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         if: steps.guard.outputs.deploy == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         if: steps.guard.outputs.deploy == 'true'
         with:
           node-version: 22
@@ -120,10 +140,15 @@ jobs:
 
   production:
     name: Deploy production deployment
-    # Only when the CI workflow completed successfully on main.
+    # Only when the CI workflow completed successfully for a push to main of this repository
+    # (never for a pull request run, whatever its head branch is called or where it lives).
     if: >-
       github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    # Holds CONVEX_DEPLOY_KEY_PROD once the owner moves it there (see the header).
+    environment: convex-production
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Never cancel an in-flight production deploy; queue instead.
@@ -131,7 +156,7 @@ jobs:
       group: convex-prod-deploy
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # workflow_run runs detached from the triggering commit; check out the exact SHA CI passed on.
           ref: ${{ github.event.workflow_run.head_sha }}
@@ -154,10 +179,10 @@ jobs:
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         if: steps.guard.outputs.deploy == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         if: steps.guard.outputs.deploy == 'true'
         with:
           node-version: 22

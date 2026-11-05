@@ -1,0 +1,136 @@
+name: Dependency audit
+
+# Reports known advisories in the production dependency tree, read straight from
+# pnpm-lock.yaml (no install). It never fails: findings at moderate or above show up as a
+# warning annotation and in the run summary. Fix them with a selective override in
+# pnpm-workspace.yaml (vulnerable range -> first patched release on the same major). When
+# the only patched release is a new major, an override would move its dependents across a
+# major they were never tested on, so leave the warning until they move.
+#
+# A second pass audits the whole pnpm tree, so dev, lint, test and build tooling gets the same
+# warning: a lint plugin runs on every developer machine and CI job, though it never ships.
+# Production findings show up in both passes.
+#
+# A third step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
+# .github/vercel-cli/package-lock.json (also no install). Most of its advisories sit behind
+# exact pins inside Vercel's own packages, so the fix is a CLI release that moves them
+# (Dependabot proposes one monthly), not an override that the CLI was never tested against.
+#
+# Kept out of ci.yml on purpose. convex-deploy.yml deploys Convex production only after the
+# CI workflow concludes with success, so an advisory published against an unchanged lockfile
+# would block every production deploy. For the same reason, NEVER make this a required
+# status check.
+#
+# The weekly run catches new advisories against a lockfile that has not changed.
+on:
+  pull_request:
+    paths:
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - "**/package.json"
+      - .github/vercel-cli/package-lock.json
+      - .github/workflows/audit.yml
+  push:
+    branches: [main]
+    paths:
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - "**/package.json"
+      - .github/vercel-cli/package-lock.json
+      - .github/workflows/audit.yml
+  schedule:
+    - cron: "41 5 * * 1" # Mondays 05:41 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Audit dependencies (non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      # Version comes from the root package.json "packageManager" field.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # pnpm audit exits non-zero on findings at or above --audit-level, and also when the
+      # registry cannot be reached. Both become a warning; the step itself always succeeds.
+      - name: pnpm audit --prod
+        run: |
+          set +e
+          pnpm audit --prod --audit-level=moderate > audit.txt 2>&1
+          status=$?
+          set -e
+          cat audit.txt
+          {
+            echo "## Dependency audit (production dependencies)"
+            echo
+            echo "Advisories at moderate or above raise a warning; low ones are listed only."
+            echo
+            echo '```'
+            cat audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "::warning title=Dependency audit::pnpm audit --prod reported advisories at moderate or above, or could not reach the registry (exit $status). See the run summary."
+          fi
+          exit 0
+
+      # Same contract, for every dependency: dev, lint, test and build tooling included.
+      - name: pnpm audit (all dependencies)
+        run: |
+          set +e
+          pnpm audit --audit-level=moderate > audit.txt 2>&1
+          status=$?
+          set -e
+          cat audit.txt
+          {
+            echo "## Dependency audit (all dependencies, including dev tooling)"
+            echo
+            echo "Advisories at moderate or above raise a warning; low ones are listed only."
+            echo
+            echo '```'
+            cat audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "::warning title=Dev tooling audit::pnpm audit (all dependencies, dev tooling included) reported advisories at moderate or above, or could not reach the registry (exit $status). See the run summary."
+          fi
+          exit 0
+
+      # Same contract as above, for the npm tree in .github/vercel-cli. setup-node's npm reads
+      # the lockfile; nothing is installed and no install script runs.
+      - name: npm audit (Vercel CLI)
+        working-directory: .github/vercel-cli
+        run: |
+          set +e
+          npm audit --package-lock-only --audit-level=moderate > audit.txt 2>&1
+          status=$?
+          set -e
+          cat audit.txt
+          {
+            echo "## Dependency audit (Vercel CLI, .github/vercel-cli)"
+            echo
+            echo "Advisories at moderate or above raise a warning; low ones are listed only."
+            echo
+            echo '```'
+            cat audit.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "::warning title=Vercel CLI audit::npm audit reported advisories at moderate or above in .github/vercel-cli, or could not reach the registry (exit $status). See the run summary."
+          fi
+          exit 0
