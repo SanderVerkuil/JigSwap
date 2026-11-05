@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -42,6 +43,7 @@ import {
   type HouseholdPermissionChoice,
   type PermissionFilter,
 } from "./bulk-permission";
+import { householdErrorKey } from "./household-error";
 
 type OwnCopy = FunctionReturnType<
   typeof gateway.household.myCopyPermissions
@@ -85,7 +87,11 @@ export function MyHouseholdCopies({
       setSelected(new Set());
       toast.success(t("changed", { count: changed }));
     },
-    onError,
+    // A limit here only takes a minute, not the day the shared household text says for join requests.
+    onError: (error) =>
+      householdErrorKey(error) === "errors.RateLimited"
+        ? toast.error(t("rateLimited"))
+        : onError(error),
   });
 
   if (copies === undefined) return null;
@@ -249,6 +255,8 @@ function SelectionBar({
 }) {
   const t = useTranslations("household.bulkPermission");
   const tAccess = useTranslations("household.copyAccess");
+  // The install tip docks in this very spot, and would take this bar's taps: it steps aside.
+  useReportSurfaceBusy("householdSelection", true);
   return (
     <div className="pointer-events-none sticky bottom-[57px] z-20 pb-[34px] md:bottom-4 md:pb-0">
       {/* On a narrower screen the menu button wraps to a row of its own rather than truncating

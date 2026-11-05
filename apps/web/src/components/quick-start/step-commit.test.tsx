@@ -38,6 +38,12 @@ describe("createStepCommitStore", () => {
     store.publish(null);
     expect(listener).toHaveBeenCalledTimes(3);
     expect(store.getSnapshot()).toBeNull();
+
+    // The reason is part of the content: the same count can wait for something else now.
+    store.publish({ kind: "solves", count: 1, ready: false, reason: "a" });
+    store.publish({ kind: "solves", count: 1, ready: false, reason: "b" });
+    expect(listener).toHaveBeenCalledTimes(5);
+    expect(store.getSnapshot()?.reason).toBe("b");
   });
 
   it("stops notifying an unsubscribed listener", () => {

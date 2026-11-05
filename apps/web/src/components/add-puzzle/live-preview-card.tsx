@@ -69,6 +69,7 @@ export function CopyPreviewCard({
         viewBasePath=""
         imageFit="contain"
         showActions={false}
+        headingLevel={2}
       />
     </PuzzleViewProvider>
   );

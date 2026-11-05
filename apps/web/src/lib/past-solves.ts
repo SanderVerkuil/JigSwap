@@ -1,3 +1,4 @@
+import { foldForSearch } from "@/lib/catalogue-search";
 import { dateInputToMs } from "@/lib/date-input";
 
 // Pure helpers behind the bulk "I've solved these" rows (quick start step 2, PastSolvesForm).
@@ -30,6 +31,60 @@ export function pastSolveCandidates<
   return copies
     .filter((c) => c.aggregateId !== undefined && !solvedCopyIds.has(c._id))
     .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// One row's facts: enough to recognise the box in hand, and tell same-titled copies apart.
+export interface PastSolveCandidate {
+  copyId: string;
+  title: string;
+  brand?: string;
+  pieceCount?: number;
+}
+
+// A row writes its piece count the way the member's language does ("3.000", "3,000"), and the search
+// looks at the plain number, so both sides lose the separators.
+const searchable = (text: string): string =>
+  foldForSearch(text).replace(/(?<=\d)[.,](?=\d)/g, "");
+
+// Which rows show for a search and a page size. Every word must appear in the title, brand or piece
+// count. A ticked row a search hides keeps its tick, unless it is `waiting` (it can't be logged yet):
+// that one holds the submit back, so it stays in reach. A ticked row also stays past the page, so
+// one found through a search doesn't vanish when the search is cleared. `noMatch` is about the
+// search alone: a waiting row showing doesn't make it a match.
+export function pastSolveRows<C extends PastSolveCandidate>(
+  candidates: readonly C[],
+  {
+    term,
+    shown,
+    ticked,
+    waiting,
+  }: {
+    term: string;
+    shown: number;
+    ticked: { has: (copyId: string) => boolean };
+    waiting: { has: (copyId: string) => boolean };
+  },
+): { rows: C[]; more: boolean; noMatch: boolean } {
+  const words = searchable(term).split(/\s+/).filter(Boolean);
+  const found = new Set(
+    candidates.filter((candidate) => {
+      const haystack = searchable(
+        [candidate.title, candidate.brand, candidate.pieceCount].join(" "),
+      );
+      return words.every((word) => haystack.includes(word));
+    }),
+  );
+  const matching = candidates.filter(
+    (candidate) => found.has(candidate) || waiting.has(candidate.copyId),
+  );
+  const rows = matching.filter(
+    (candidate, index) => index < shown || ticked.has(candidate.copyId),
+  );
+  return {
+    rows,
+    more: rows.length < matching.length,
+    noMatch: found.size === 0,
+  };
 }
 
 // The recordPastCompletions item for one ticked row, or null while "Pick a date" has no date yet or

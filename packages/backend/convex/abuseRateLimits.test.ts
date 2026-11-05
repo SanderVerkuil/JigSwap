@@ -1,9 +1,11 @@
+import { MAX_HOUSEHOLD_PERMISSION_BATCH } from "@jigswap/domain";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { RATE_LIMITS } from "./lib/rateLimits";
+import { HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE } from "./library/setCopiesHouseholdPermission";
 import schema from "./schema";
 
 // Public writes a free account could loop on: each bucket allows what a member would do by hand and
@@ -153,6 +155,229 @@ describe("updateCopySharing", () => {
       { limit: 1 },
     );
     expect(ownedPuzzles[0].ownerId).toBe(alice);
+  });
+});
+
+// Every copy edit patches the row, inside the listing range each Browse first page reads, and most
+// publish a domain event, so a loop mustn't be free. One bucket across them: a dialog save can make
+// three of these calls at once. The bulk form of the household permission shares it too, or it would
+// be the way around it.
+describe("copy edits", () => {
+  const CAP = RATE_LIMITS.copyEdit.max;
+  let copy: Id<"ownedPuzzles">;
+  let photo: Id<"ownedPuzzleImages">;
+
+  beforeEach(async () => {
+    ({ copy, photo } = await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: me,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy_me",
+        puzzleId,
+        ownerId: me,
+        heldBy: me,
+        condition: "good",
+        availability: { forTrade: true, forSale: false, forLend: false },
+        isOpen: true,
+        listedAt: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const photo = await ctx.db.insert("ownedPuzzleImages", {
+        ownedPuzzleId: copy,
+        uploaderId: me,
+        fileId: await ctx.storage.store(new Blob(["x"])),
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert("households", { aggregateId: "hh", createdAt: 1 });
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh",
+        memberId: me,
+        role: "admin",
+        joinedAt: 1,
+      });
+      return { copy, photo };
+    }));
+  });
+
+  const edits = {
+    updateCopyDetails: (i: number) =>
+      asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId: "copy_me",
+        notes: `note ${i}`,
+      }),
+    changeCopyCondition: (i: number) =>
+      asMe().mutation(api.library.changeCopyCondition.changeCopyCondition, {
+        copyId: "copy_me",
+        condition: i % 2 === 0 ? "fair" : "good",
+      }),
+    setCopyCover: (i: number) =>
+      asMe().mutation(api.library.setCopyCover.setCopyCover, {
+        copyId: copy,
+        ...(i % 2 === 0 ? { coverImageId: photo } : {}),
+      }),
+    setCopyHouseholdPermission: (i: number) =>
+      asMe().mutation(
+        api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
+        { copyId: copy, permission: i % 2 === 0 ? "view" : "manage" },
+      ),
+    setCopiesHouseholdPermission: (i: number) =>
+      asMe().mutation(
+        api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+        { copyIds: [copy], permission: i % 2 === 0 ? "view" : "manage" },
+      ),
+  };
+
+  test.each(Object.entries(edits))(
+    "%s allows a minute's worth and refuses the next, writing nothing",
+    async (_name, edit) => {
+      for (let i = 0; i < CAP; i++) await edit(i);
+      const before = await t.run((ctx) => ctx.db.get(copy));
+
+      await expectRateLimited(edit(CAP));
+
+      expect(await t.run((ctx) => ctx.db.get(copy))).toEqual(before);
+    },
+  );
+
+  test("they draw on one bucket, and it fills again after the window", async () => {
+    const all = Object.values(edits);
+    for (let i = 0; i < CAP; i++) await all[i % all.length](i);
+    for (const edit of all) await expectRateLimited(edit(CAP));
+
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("rateLimits").first();
+      await ctx.db.patch(row!._id, {
+        windowStart: Date.now() - RATE_LIMITS.copyEdit.windowMs,
+      });
+    });
+    await edits.updateCopyDetails(CAP);
+  });
+
+  test("an edit refused for another reason isn't charged", async () => {
+    const refused = () =>
+      asMe().mutation(api.library.updateCopyDetails.updateCopyDetails, {
+        copyId: "no_such_copy",
+        notes: "nothing to write to",
+      });
+    for (let i = 0; i < CAP; i++) await expect(refused()).rejects.toThrow();
+    await edits.updateCopyDetails(0);
+  });
+
+  // One bulk call can write 200 rows, so at a token a call a loop patches 6,000 rows a minute against
+  // the single form's 30, and the bulk form would be the way around the limit.
+  describe("the bulk household permission pays for what it writes", () => {
+    const seedShelf = async () => {
+      const row = (await t.run((ctx) => ctx.db.get(copy)))!;
+      const more = await t.run(async (ctx) => {
+        const ids = [];
+        for (let i = 0; i < MAX_HOUSEHOLD_PERMISSION_BATCH - 1; i++) {
+          ids.push(
+            await ctx.db.insert("ownedPuzzles", {
+              aggregateId: `copy_${i}`,
+              puzzleId: row.puzzleId,
+              ownerId: me,
+              heldBy: me,
+              condition: "good",
+              availability: { forTrade: false, forSale: false, forLend: false },
+              createdAt: 1,
+              updatedAt: 1,
+            }),
+          );
+        }
+        return ids;
+      });
+      return [copy, ...more];
+    };
+    const setAll = (
+      copyIds: Id<"ownedPuzzles">[],
+      permission: "view" | "manage",
+    ) =>
+      asMe().mutation(
+        api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+        { copyIds, permission },
+      );
+
+    test("a member can still change a whole batch, three times a minute", async () => {
+      const shelf = await seedShelf();
+      const perBatch = Math.ceil(
+        MAX_HOUSEHOLD_PERMISSION_BATCH / HOUSEHOLD_PERMISSION_ROWS_PER_CHARGE,
+      );
+      expect(Math.floor(CAP / perBatch)).toBe(3);
+
+      expect((await setAll(shelf, "view")).changed).toBe(shelf.length);
+      await setAll(shelf, "manage");
+      await setAll(shelf, "view");
+
+      await expectRateLimited(setAll(shelf, "manage"));
+      const left = await t.run((ctx) => ctx.db.get(shelf[0]));
+      expect(left?.householdPermission).toBe("view");
+    });
+
+    test("what is left of the minute still pays for a small change", async () => {
+      const shelf = await seedShelf();
+      await setAll(shelf, "view");
+      await setAll(shelf, "manage");
+      await setAll(shelf, "view");
+      expect((await setAll(shelf.slice(0, 25), "manage")).changed).toBe(25);
+    });
+
+    test("a batch that changes nothing costs one, like any call", async () => {
+      const shelf = await seedShelf();
+      await setAll(shelf, "view");
+      for (let i = 0; i < CAP - 8; i++) {
+        expect((await setAll(shelf, "view")).changed).toBe(0);
+      }
+      await expectRateLimited(setAll(shelf, "view"));
+    });
+  });
+});
+
+// Every page showing a member reads their profile row, so a loop re-runs all of them.
+describe("editProfile", () => {
+  const CAP = RATE_LIMITS.profileEdit.max;
+  const edit = (bio: string) =>
+    asMe().mutation(api.social.editProfile.editProfile, { bio });
+  const myProfile = () =>
+    t.run((ctx) =>
+      ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", me))
+        .unique(),
+    );
+
+  test("allows a minute's worth and refuses the next, writing nothing", async () => {
+    for (let i = 0; i < CAP; i++) await edit(`Story ${i}`);
+    const before = await myProfile();
+
+    await expectRateLimited(edit("One more"));
+
+    expect(await myProfile()).toEqual(before);
+  });
+
+  test("fills again after the window", async () => {
+    for (let i = 0; i < CAP; i++) await edit(`Story ${i}`);
+    await t.run(async (ctx) => {
+      const row = await ctx.db.query("rateLimits").first();
+      await ctx.db.patch(row!._id, {
+        windowStart: Date.now() - RATE_LIMITS.profileEdit.windowMs,
+      });
+    });
+    await edit("Back again");
+    expect((await myProfile())?.bio).toBe("Back again");
+  });
+
+  test("an edit refused for another reason isn't charged", async () => {
+    const tooLong = "x".repeat(10_000);
+    for (let i = 0; i < CAP; i++) await expect(edit(tooLong)).rejects.toThrow();
+    await edit("Short");
   });
 });
 

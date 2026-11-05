@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   pastSolveCandidates,
+  pastSolveRows,
   toPastCompletionItem,
   yearOptions,
 } from "./past-solves";
@@ -104,5 +105,91 @@ describe("yearOptions", () => {
     expect(years[0]).toBe(2026);
     expect(years.at(-1)).toBe(1950);
     expect(years).toHaveLength(77);
+  });
+});
+
+describe("pastSolveRows", () => {
+  const CANDIDATES = [
+    {
+      copyId: "a",
+      title: "Mountain Lake",
+      brand: "Ravensburger",
+      pieceCount: 1000,
+    },
+    { copyId: "b", title: "Café de Paris", brand: "Goliath", pieceCount: 500 },
+    { copyId: "c", title: "Harbour", pieceCount: 1000 },
+    { copyId: "d", title: "Cats" },
+  ];
+  const NONE = new Set<string>();
+  const rows = (
+    term: string,
+    {
+      shown = 25,
+      ticked = NONE,
+      waiting = NONE,
+    }: {
+      shown?: number;
+      ticked?: ReadonlySet<string>;
+      waiting?: ReadonlySet<string>;
+    } = {},
+  ) => {
+    const result = pastSolveRows(CANDIDATES, { term, shown, ticked, waiting });
+    return { ...result, ids: result.rows.map((row) => row.copyId) };
+  };
+
+  it("pages the whole list without a search", () => {
+    expect(rows("").ids).toEqual(["a", "b", "c", "d"]);
+    expect(rows("").more).toBe(false);
+    expect(rows("   ", { shown: 2 }).ids).toEqual(["a", "b"]);
+    expect(rows("", { shown: 2 }).more).toBe(true);
+  });
+
+  it("finds a title, a brand or a piece count, ignoring case and accents", () => {
+    expect(rows("MOUNTAIN").ids).toEqual(["a"]);
+    expect(rows("goliath").ids).toEqual(["b"]);
+    expect(rows("cafe").ids).toEqual(["b"]);
+    expect(rows("1000").ids).toEqual(["a", "c"]);
+  });
+
+  // A row writes its pieces as the member's language does: "3.000 stukjes", "3,000 pieces".
+  it("finds a piece count as a row writes it", () => {
+    expect(rows("1.000").ids).toEqual(["a", "c"]);
+    expect(rows("1,000").ids).toEqual(["a", "c"]);
+    expect(rows("1.0").ids).toEqual(["a", "c"]);
+    expect(rows("2.000").noMatch).toBe(true);
+  });
+
+  it("needs every word, in any order", () => {
+    expect(rows("1000 ravens").ids).toEqual(["a"]);
+    expect(rows("ravens harbour").ids).toEqual([]);
+  });
+
+  it("says when nothing matches", () => {
+    expect(rows("zzz").noMatch).toBe(true);
+    expect(rows("cats").noMatch).toBe(false);
+    expect(rows("").noMatch).toBe(false);
+  });
+
+  it("keeps a ticked row out of a search that doesn't match it", () => {
+    expect(rows("cats", { ticked: new Set(["a"]) }).ids).toEqual(["d"]);
+  });
+
+  it("keeps a row that holds the submit back in view through any search, and still says no match", () => {
+    const held = rows("zzz", {
+      ticked: new Set(["a"]),
+      waiting: new Set(["a"]),
+    });
+    expect(held.ids).toEqual(["a"]);
+    expect(held.noMatch).toBe(true);
+    expect(
+      rows("cats", { ticked: new Set(["a"]), waiting: new Set(["a"]) }).ids,
+    ).toEqual(["a", "d"]);
+  });
+
+  it("keeps a row ticked through a search on the list past the page, in its place", () => {
+    const paged = rows("", { shown: 1, ticked: new Set(["c"]) });
+    expect(paged.ids).toEqual(["a", "c"]);
+    expect(paged.more).toBe(true);
+    expect(rows("", { shown: 3, ticked: new Set(["d"]) }).more).toBe(false);
   });
 });

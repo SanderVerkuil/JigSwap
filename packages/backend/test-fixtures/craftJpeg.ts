@@ -33,16 +33,40 @@ export const progressiveJpeg = ({
   width,
   height,
   scans,
+  selectors = 1,
+  spectralStart = 1,
+  spectralEnd = 63,
+  scanLength,
+  selector = 1,
 }: {
   width: number;
   height: number;
   scans: number;
+  /** How many times each scan names the frame's one component. jpeg-js walks every block that often. */
+  selectors?: number;
+  spectralStart?: number;
+  spectralEnd?: number;
+  /** The scan header's own length field, when it should lie about the selectors it holds. */
+  scanLength?: number;
+  /** Which component the scan names. The frame's one component is 1. */
+  selector?: number;
 }): Uint8Array => {
   const blocks = Math.ceil(width / 8) * Math.ceil(height / 8);
+  const header = segment(0xda, [
+    selectors,
+    ...Array.from({ length: selectors }, () => [selector, 0x00]).flat(),
+    spectralStart,
+    spectralEnd,
+    // Successive approximation high 1, low 0.
+    0x10,
+  ]);
+  if (scanLength !== undefined) header.splice(2, 2, ...u16be(scanLength));
   const scan = [
-    // One component (table 0), spectral 1..63, successive approximation high 1, low 0.
-    ...segment(0xda, [1, 1, 0x00, 1, 63, 0x10]),
-    ...entropyCodedRuns(Math.ceil(blocks / EOB_RUN_BLOCKS)),
+    // Table 0, spectral 1..63 unless asked otherwise.
+    ...header,
+    ...entropyCodedRuns(
+      Math.ceil((blocks * Math.max(selectors, 1)) / EOB_RUN_BLOCKS),
+    ),
   ];
   const bytes = [
     0xff,

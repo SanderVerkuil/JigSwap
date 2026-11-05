@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
+import { rangesLeftAfterUrls } from "../test-fixtures/readBudget";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -296,8 +297,10 @@ describe("solving.myCompletionsByIds", () => {
   });
 });
 
-// The log asks for the rows on screen in one read, so its stated maximum has to hold under Convex's
-// real limits (4,096 index ranges per function) for the most expensive rows a member can have.
+// The read's stated maximum has to hold under Convex's real limits (4,096 index ranges per function) for
+// the most expensive rows a member can have, with its URLs counted as ranges too
+// (test-fixtures/readBudget): each of 5 photos and the row's thumbnail resolve the image and its three
+// renditions. The log itself asks for less: a page at a time.
 describe("solving.myCompletionsByIds at its stated maximum", () => {
   const BASE = 1_700_000_000_000;
 
@@ -310,9 +313,21 @@ describe("solving.myCompletionsByIds at its stated maximum", () => {
     ownerOf: (i: number) => Id<"users">,
   ) => {
     const ids: Id<"completions">[] = [];
-    const image = await t.run((ctx) =>
-      ctx.storage.store(new Blob(["x"], { type: "image/webp" })),
-    );
+    const image = await t.run(async (ctx) => {
+      const store = () =>
+        ctx.storage.store(new Blob(["x"], { type: "image/webp" }));
+      const sourceId = await store();
+      await ctx.db.insert("imageRenditions", {
+        sourceId,
+        width: 2000,
+        height: 2000,
+        small: { fileId: await store(), width: 480, height: 480 },
+        medium: { fileId: await store(), width: 640, height: 640 },
+        large: { fileId: await store(), width: 960, height: 960 },
+        createdAt: BASE,
+      });
+      return sourceId;
+    });
     for (let start = 0; start < count; start += 100) {
       const made = await t.run(async (ctx) => {
         const out: Id<"completions">[] = [];
@@ -366,17 +381,32 @@ describe("solving.myCompletionsByIds at its stated maximum", () => {
     return ids;
   };
 
+  const URLS_PER_ROW = (5 + 1) * 4;
+  const limited = () =>
+    convexTest({
+      schema,
+      modules,
+      transactionLimits: {
+        databaseQueries: rangesLeftAfterUrls(
+          COMPLETION_ROWS_MAX * URLS_PER_ROW,
+        ),
+      },
+    });
+
   test("own copies, with every photo allowed", async () => {
-    const t = convexTest({ schema, modules, transactionLimits: true });
+    const t = limited();
     const w = await seed(t);
     const ids = await seedSolves(t, w.ann, COMPLETION_ROWS_MAX, () => w.ann);
     const rows = await rowsOf(t, "ann", ids);
     expect(rows).toHaveLength(COMPLETION_ROWS_MAX);
     expect(rows[0].thumbnailUrl).toBeTruthy();
+    // What the budget assumes of a row.
+    expect(rows[0].photoItems).toHaveLength(5);
+    expect(rows[0].photoItems[0].srcSet?.split(", ")).toHaveLength(4);
   }, 300_000);
 
   test("copies that have moved on to members the viewer may no longer see", async () => {
-    const t = convexTest({ schema, modules, transactionLimits: true });
+    const t = limited();
     const w = await seed(t);
     const owners = await t.run(async (ctx) => {
       const out: Id<"users">[] = [];

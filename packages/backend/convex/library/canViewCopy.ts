@@ -88,8 +88,8 @@ const isExchangePartyFor = async (
 // household or owner profiles per copy, and can't accidentally pass a
 // mismatched viewerId to `canViewCopyWithContext` (it's stamped in at construction). `ownerVisibility`
 // and `mutualWithOwner` are mutable per-owner memos. The circle clause is decided per copy
-// (`isCircleSharedWithViewer`, O(shares of that copy)), never by collecting every share in every
-// circle the viewer is in (#190).
+// (`isCircleSharedWithViewer`, which reads the viewer's circles once per function call), never by
+// collecting every share in every circle the viewer is in (#190).
 export interface CopyViewContext {
   readonly viewerId: Id<"users">;
   // The other members of the viewer's household (empty when none): their copies are in the

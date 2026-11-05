@@ -8,6 +8,7 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { convexCopyManagerPolicy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -39,6 +40,7 @@ export const updateCopyDetails = mutation({
   },
   handler: async (ctx, args) => {
     const actingMemberId = (await requireMember(ctx)) as unknown as OwnerId;
+    await enforceRateLimit(ctx, "copyEdit", actingMemberId);
 
     const update = makeUpdateCopyDetails({
       copies: convexCopyRepository(ctx),

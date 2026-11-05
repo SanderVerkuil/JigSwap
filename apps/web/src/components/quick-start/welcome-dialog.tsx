@@ -23,15 +23,16 @@ import { PRIMARY_LOOK } from "./parts";
 
 // The one-time welcome dialog (spec §2.1, §5.1), mounted once in the signed-in shell so it greets
 // a new member on whatever page they land (UX-86), except where welcomeDialogAllowed says no
-// (/welcome, a full-screen phone thread): there it waits for the next page. It wins the
-// surface-busy priority over the What's new highlight: it reports busy while the member and the
-// onboarding query load and while it is due, even on a page where it waits, because the highlight
-// checks once after its 600 ms timer. Every close is final (dismissWelcome); "Start quick setup"
-// also opens /welcome. Nothing redirects on its own.
+// (/welcome, a full-screen phone thread, a puzzle they were sent): there it waits for the next
+// page. It wins the surface-busy priority over the What's new highlight: it reports busy while the
+// member and the onboarding query load and while it is due, even on a page where it waits, because
+// the highlight checks once after its 600 ms timer. Every close is final (dismissWelcome); "Start
+// quick setup" also opens /welcome. Nothing redirects on its own.
 export function WelcomeDialog() {
-  const allowed = welcomeDialogAllowed(
-    useLocation({ select: (location) => location.pathname }),
-  );
+  const allowed = useLocation({
+    select: (location) =>
+      welcomeDialogAllowed(location.pathname, location.href),
+  });
   const { member, isMemberLoading } = useCurrentMember();
   const { data: view } = useQuery(
     convexQuery(gateway.onboarding.quickStart, member ? {} : "skip"),

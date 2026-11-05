@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   groupSolveHistory,
   HISTORY_PAGE_SIZE,
+  withJoinPages,
   type HistoryRow,
 } from "./completion-history";
 
@@ -135,5 +136,29 @@ describe("groupSolveHistory", () => {
 
   it("pages 30 solves at a time", () => {
     expect(HISTORY_PAGE_SIZE).toBe(30);
+  });
+});
+
+describe("withJoinPages", () => {
+  const ids = (from: number, to: number) =>
+    Array.from({ length: to - from }, (_, i) => `s${from + i}`);
+
+  it("splits what it hasn't asked for into pages", () => {
+    expect(withJoinPages([], ids(0, 65)).map((page) => page.length)).toEqual([
+      30, 30, 5,
+    ]);
+  });
+
+  it("hands back the same pages when nothing is new, so a render can tell", () => {
+    const pages = withJoinPages([], ids(0, 40));
+    expect(withJoinPages(pages, ids(0, 40))).toBe(pages);
+    expect(withJoinPages(pages, ids(5, 10))).toBe(pages);
+  });
+
+  it("never changes a page it has asked for, wherever a solve moved to", () => {
+    const pages = withJoinPages([], ids(0, 40));
+    const next = withJoinPages(pages, ["new", ...ids(0, 40)]);
+    expect(next.slice(0, pages.length)).toEqual(pages);
+    expect(next.at(-1)).toEqual(["new"]);
   });
 });

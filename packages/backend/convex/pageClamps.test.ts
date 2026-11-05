@@ -249,7 +249,8 @@ describe("a far endCursor can't read past a page's bound", () => {
 // continueCursor): no row may fall out of that.
 describe("splitting a pinned page that hit the bound keeps every row", () => {
   test("the member catalogue search, split the way the hooks split it", async () => {
-    // One definition in ten matches, so 50 matches span about 500 rows; the bound is 200.
+    // One definition in ten matches, so a page stops at the bound of 200 rows with 20 matches, and a
+    // pin across two of those spans 400 rows.
     await addDefinitions(t, me, 600, (i) => (i % 10 === 0 ? "expert" : "easy"));
     const search = (paginationOpts: Opts) =>
       asMe().query(api.catalog.searchCatalog.searchCatalog, {
@@ -257,7 +258,14 @@ describe("splitting a pinned page that hit the bound keeps every row", () => {
         paginationOpts,
       });
     const first = await search({ numItems: 50, cursor: null });
-    expect(first.page).toHaveLength(50);
+    expect(first.page).toHaveLength(20);
+    expect(first.isDone).toBe(false);
+    expect(first.pageStatus).toBe("SplitRequired");
+    const second = await search({
+      numItems: 50,
+      cursor: first.continueCursor,
+    });
+    expect(second.page).toHaveLength(20);
 
     const readSplit = async (
       cursor: string | null,
@@ -273,8 +281,8 @@ describe("splitting a pinned page that hit the bound keeps every row", () => {
         ...(await readSplit(middle, result.continueCursor)),
       ];
     };
-    expect(await readSplit(null, first.continueCursor)).toEqual(
-      first.page.map((row) => row._id),
+    expect(await readSplit(null, second.continueCursor)).toEqual(
+      [...first.page, ...second.page].map((row) => row._id),
     );
   });
 });

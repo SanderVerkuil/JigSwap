@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import {
   cleanup,
   fireEvent,
@@ -189,18 +190,17 @@ describe("CataloguePickerView", () => {
     expect(byLabel(buttons(els), "Remove Puzzle a")).toHaveLength(1);
   });
 
-  it("labels the submit with the count and disables it on an empty tray", () => {
+  it("labels the submit with the count, and has none on an empty tray (never 'Add 0')", () => {
     const submit = (els: Element[]) =>
-      buttons(els).find((el) => attr(el, "data-picker-submit") !== undefined)!;
+      buttons(els).find((el) => attr(el, "data-picker-submit") !== undefined);
 
-    const empty = submit(render({}));
-    expect(attr(empty, "disabled")).toBeDefined();
+    expect(submit(render({}))).toBeUndefined();
 
-    const two = submit(render({ picks: [pick("a"), pick("b")] }));
+    const two = submit(render({ picks: [pick("a"), pick("b")] }))!;
     expect(text(two)).toBe("Add 2 puzzles");
     expect(attr(two, "disabled")).toBeUndefined();
 
-    const busy = submit(render({ picks: [pick("a")], isSubmitting: true }));
+    const busy = submit(render({ picks: [pick("a")], isSubmitting: true }))!;
     expect(attr(busy, "disabled")).toBeDefined();
   });
 
@@ -273,7 +273,7 @@ describe("CataloguePickerView", () => {
   });
 
   it("states that added puzzles are not offered by default, in Dutch too", () => {
-    const els = render({}, "nl");
+    const els = render({ picks: [pick("a")] }, "nl");
     expect(
       els.some((el) =>
         text(el).startsWith("Toegevoegde puzzels worden niet aangeboden"),
@@ -282,7 +282,7 @@ describe("CataloguePickerView", () => {
     const submit = buttons(els).find(
       (el) => attr(el, "data-picker-submit") !== undefined,
     )!;
-    expect(text(submit)).toBe("0 puzzels toevoegen");
+    expect(text(submit)).toBe("1 puzzel toevoegen");
   });
 
   // The piece count follows the app locale, like every other number (UX-63).
@@ -337,6 +337,34 @@ describe("CataloguePickerView stickyFooter", () => {
     expect(classOf(els, (el) => el.tagName === "section")).not.toContain(
       "max-sm:hidden",
     );
+  });
+
+  it("reports the bottom of the screen as taken only while docked, so the install tip steps aside", () => {
+    const view = (picks: Pick[]) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CataloguePickerView
+          term=""
+          rows={[]}
+          picks={picks}
+          isSearching={false}
+          isSubmitting={false}
+          stickyFooter
+          onTermChange={noop}
+          onToggle={noop}
+          onRemove={noop}
+          onRemoveLast={noop}
+          onForTradeChange={noop}
+          onForLendChange={noop}
+          onSubmit={noop}
+        />
+      </IntlProvider>
+    );
+    const { rerender } = renderDom(view([]));
+    expect(isSurfaceBusy()).toBe(false);
+    rerender(view([pick("a")]));
+    expect(isSurfaceBusy()).toBe(true);
+    rerender(view([]));
+    expect(isSurfaceBusy()).toBe(false);
   });
 
   it("opens and closes the tray from the chip", () => {

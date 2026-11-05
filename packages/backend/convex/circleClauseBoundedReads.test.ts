@@ -10,13 +10,13 @@ import {
 import {
   CIRCLE_SHARES_READ_PER_CIRCLE,
   collectCircleSharedCopies,
-  MAX_SHARES_READ_PER_COPY,
   MAX_VIEWER_CIRCLES_READ,
 } from "./library/circleSharedCopies";
 import schema from "./schema";
 
-// #190: a single-copy circle check must read O(shares of THAT copy), never every share in every
-// circle the viewer is in; the batched collector (browse) reads at most a documented cap per circle.
+// #190: a single-copy circle check must read this copy's shares in the viewer's circles, never every
+// share in every circle the viewer is in; the batched collector (browse) reads at most a documented cap
+// per circle.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const NOW = 1_000_000;
@@ -186,23 +186,26 @@ describe("circle clause read bounds (#190)", () => {
     });
   });
 
-  test("the batched collector reads at most the documented cap per circle", async () => {
+  test("the batched collector collects at most the documented cap per circle", async () => {
     const t = convexTest(schema, modules);
     const { viewer } = await t.run(seed(1, CIRCLE_SHARES_READ_PER_CIRCLE + 5));
     await t.run(async (raw) => {
       const { ctx, counter } = countingShareReads(raw);
       const collected = await collectCircleSharedCopies(ctx, viewer);
-      expect(counter.rows).toBeLessThanOrEqual(CIRCLE_SHARES_READ_PER_CIRCLE);
+      // A circle past the cap is read once to find out, and then a member at a time.
+      expect(counter.rows).toBeLessThanOrEqual(
+        2 * CIRCLE_SHARES_READ_PER_CIRCLE + 1,
+      );
       expect(collected).toHaveLength(CIRCLE_SHARES_READ_PER_CIRCLE);
     });
   });
 
-  // An owner can share one copy into arbitrarily many (solo) circles; past the per-copy cap the check
-  // must switch to the viewer's own circles rather than read every share, without false negatives.
+  // An owner can share one copy into arbitrarily many (solo) circles; the check goes by the viewer's own
+  // circles rather than read every share, without false negatives.
   const seedOverCap = (viewerSeated: boolean) => async (ctx: MutationCtx) => {
     const { viewer, target } = await seed(0, 0)(ctx);
     const row = (await ctx.db.get(target))!;
-    for (let c = 0; c < MAX_SHARES_READ_PER_COPY + 5; c++) {
+    for (let c = 0; c < 10; c++) {
       await mkCircle(ctx, `solo-${c}`, row.ownerId, [row.ownerId]);
       await ctx.db.insert("circleCopyShares", {
         circleId: `solo-${c}`,
@@ -210,8 +213,8 @@ describe("circle clause read bounds (#190)", () => {
         sharedAt: NOW,
       });
     }
-    // The viewer's circle (created and shared into LAST, so beyond the by_copy cap). When
-    // `viewerSeated` is false the owner is not in it, so it does not qualify.
+    // The viewer's circle (created and shared into LAST). When `viewerSeated` is false the owner is
+    // not in it, so it does not qualify.
     await mkCircle(
       ctx,
       "V",
@@ -227,23 +230,23 @@ describe("circle clause read bounds (#190)", () => {
   };
 
   for (const viewerSeated of [true, false]) {
-    test(`copy shared past the per-copy cap: ${viewerSeated ? "visible via the viewer's circle beyond the cap" : "hidden without a qualifying viewer circle"}, reads bounded`, async () => {
+    test(`copy shared into many circles: ${viewerSeated ? "visible via the viewer's circle" : "hidden without a qualifying viewer circle"}, reads bounded`, async () => {
       const t = convexTest(schema, modules);
       const { viewer, target } = await t.run(seedOverCap(viewerSeated));
       await t.run(async (raw) => {
         const { ctx, counter } = countingShareReads(raw);
         const row = (await raw.db.get(target))!;
         expect(await canViewCopy(ctx, viewer, row)).toBe(viewerSeated);
-        // The capped by_copy read plus one point lookup per viewer circle (one here).
-        expect(counter.rows).toBeLessThanOrEqual(MAX_SHARES_READ_PER_COPY + 2);
+        // One point lookup per circle viewer and owner have in common (one here, or none).
+        expect(counter.rows).toBeLessThanOrEqual(1);
       });
     });
   }
 
   // Anyone can seat a member into circles without consent today, so the viewer's own membership list
-  // is not trusted to be small either: past MAX_VIEWER_CIRCLES_READ circles the over-cap route fails
-  // CLOSED (not circle-shared) instead of reading them all.
-  test("over-cap copy, viewer seated in more circles than the viewer-circle cap: fails closed, reads bounded", async () => {
+  // is not trusted to be small either: past MAX_VIEWER_CIRCLES_READ circles the check fails CLOSED (not
+  // circle-shared) instead of reading them all.
+  test("viewer seated in more circles than the viewer-circle cap: fails closed, reads bounded", async () => {
     const t = convexTest(schema, modules);
     const { viewer, target } = await t.run(async (ctx) => {
       const seeded = await seedOverCap(true)(ctx);

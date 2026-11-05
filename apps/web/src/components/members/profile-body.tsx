@@ -161,6 +161,7 @@ function ProfileBodyContent({
           memberId={hero.memberId as Id<"users">}
           viewer={viewer}
           returnToHref={returnToHref}
+          invited={invitedName ? invitedKind : undefined}
         />
       ) : (
         <>
@@ -763,6 +764,7 @@ function LockedCard({
   memberId,
   viewer,
   returnToHref,
+  invited,
 }: {
   firstName: string;
   /** The member's resolved display name, for the follow control's labels. */
@@ -770,14 +772,26 @@ function LockedCard({
   memberId: Id<"users">;
   viewer: ProfileViewer;
   returnToHref?: string;
+  /** The logged-out visitor's live invite, if they came through one. */
+  invited?: "network" | "household";
 }) {
   const t = useTranslations("members.profile");
+  const Icon = invited === "network" ? UserPlus : Lock;
+  // A logged-out viewer is locked out of any member who didn't explicitly choose public, and must
+  // not learn which it was (SEC-44), so nothing here may call this shelf private or promise an
+  // approval: a member who never chose has neither. A live invite ends the same way for every
+  // inviter, in a connection offer the newcomer answers (social/redeemInvite). Signed in, the lock
+  // only ever means a really private profile.
+  const body =
+    viewer !== "public"
+      ? t("privateBody", { name: firstName })
+      : invited === "network"
+        ? t("invitedBody", { name: firstName })
+        : t("visitorBody", { name: firstName });
   return (
     <Card className="mx-auto flex w-full max-w-md flex-col items-center gap-3 border-dashed p-8 text-center">
-      <Lock className="text-muted-foreground size-6" />
-      <p className="text-muted-foreground text-sm">
-        {t("privateBody", { name: firstName })}
-      </p>
+      <Icon aria-hidden className="text-muted-foreground size-6" />
+      <p className="text-muted-foreground text-sm">{body}</p>
       {viewer === "member" && (
         // Phase 1 keeps today's instant follow; the request-to-follow flow
         // replaces this in Phase 2.
@@ -786,7 +800,11 @@ function LockedCard({
       {viewer === "public" && (
         <Button asChild variant="brand">
           <SignUpLink returnToHref={returnToHref}>
-            {t("signUpToFollow")}
+            {invited === "network"
+              ? t("signUpToFollowEachOther")
+              : invited === "household"
+                ? t("ctaButton")
+                : t("signUpToFollow")}
           </SignUpLink>
         </Button>
       )}

@@ -128,9 +128,10 @@ export function InstallAppTip() {
 
   const open = (autoShown || requested) && method !== null && mobile;
   // A tip that is up steps aside on blocked pages and while a surface owns the bottom of the screen
-  // (My Puzzles' selection bar sits exactly where the tip docks, and would be untappable under it),
-  // and is back afterwards: nothing is dismissed. One the member asked for still shows there, except
-  // on an open thread, whose composer owns the bottom of the screen.
+  // (every sticky action bar sits exactly where the tip docks, and would be untappable under it:
+  // bottom-bars.test.ts holds them to it), and is back afterwards: nothing is dismissed. One the
+  // member asked for still shows there, except on an open thread, whose composer owns the bottom of
+  // the screen.
   const hidden = requested
     ? isImmersiveMobileRoute(pathname)
     : blocked || surfaceBusy;

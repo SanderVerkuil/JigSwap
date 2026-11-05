@@ -278,6 +278,34 @@ describe("decodeUpright decodes only what the guards checked", () => {
     expect(decode).not.toHaveBeenCalled();
   });
 
+  test("a JPEG whose scans repeat their selectors past the frame is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    await expect(
+      decodeUpright(
+        progressiveJpeg({
+          width: 64,
+          height: 64,
+          scans: 1,
+          selectors: 255,
+          spectralEnd: 255,
+        }),
+        "jpeg",
+        1,
+      ),
+    ).rejects.toThrow("refused before decode: unreadable_header");
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("a real progressive photo decodes to its pixels", async () => {
+    const photo = new Uint8Array(
+      readFileSync(
+        new URL("../test-fixtures/images/progressive.jpg", import.meta.url),
+      ),
+    );
+    const decoded = await decodeUpright(photo, "jpeg", 1);
+    expect([decoded.width, decoded.height]).toEqual([320, 240]);
+  });
+
   test("a progressive JPEG at the scan cap still decodes", async () => {
     const decoded = await decodeUpright(
       progressiveJpeg({ width: 64, height: 64, scans: MAX_JPEG_SCANS }),

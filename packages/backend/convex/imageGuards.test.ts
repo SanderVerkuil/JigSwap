@@ -507,6 +507,108 @@ describe("checkImageBytes", () => {
       }
     });
 
+    // The scan cap alone doesn't bound the work: jpeg-js reads a scan header's selector count and
+    // spectral end unchecked. These stayed under the cap and passed every guard (SEC-18): 6 scans of
+    // 255 selectors with spectral end 255 are 28,428 bytes and took 673.9 s to re-encode, past
+    // Convex's 10-minute action limit.
+    describe("a scan that asks for more work than its frame holds is refused, before decoding", () => {
+      const frame = { width: 3538, height: 3538 };
+      const refused = { ok: false, reason: "unreadable_header" };
+
+      test("the audit's files: 255 selectors with and without an out-of-range spectral end", () => {
+        const worst = progressiveJpeg({
+          ...frame,
+          scans: 6,
+          selectors: 255,
+          spectralEnd: 255,
+        });
+        expect(worst.length).toBe(28_428);
+        expect(checkImageBytes(worst)).toEqual(refused);
+        expect(
+          checkImageBytes(
+            progressiveJpeg({ ...frame, scans: 8, selectors: 255 }),
+          ),
+        ).toEqual(refused);
+        expect(
+          checkImageBytes(
+            progressiveJpeg({ ...frame, scans: 1, spectralEnd: 255 }),
+          ),
+        ).toEqual(refused);
+      });
+
+      test.each([
+        ["no selectors", { selectors: 0 }],
+        ["two selectors of a frame with one component", { selectors: 2 }],
+        ["a selector the frame doesn't have", { selector: 9 }],
+        ["a spectral end past the last coefficient", { spectralEnd: 64 }],
+        [
+          "a spectral start past the spectral end",
+          { spectralStart: 9, spectralEnd: 8 },
+        ],
+        ["a length that doesn't match the selectors", { scanLength: 9 }],
+      ])("%s", (_name, scan) => {
+        expect(
+          checkImageBytes(progressiveJpeg({ ...frame, scans: 1, ...scan })),
+        ).toEqual(refused);
+      });
+
+      test("the same component named twice in a frame that has several", () => {
+        const sos = segment(0xda, [2, 1, 0x00, 1, 0x00, 0, 63, 0]);
+        expect(
+          checkImageBytes(jpegOf(sof(64, 64, [0x11, 0x11, 0x11]), sos)),
+        ).toEqual(refused);
+      });
+
+      test("a scan marker with nothing after it, at the end of a table", () => {
+        const dqt = segment(0xdb, [0xff, 0xda]);
+        expect(checkImageBytes(jpegOf(sof(64, 64, [0x11]), dqt))).toEqual(
+          refused,
+        );
+      });
+
+      // A frame header in a table reads the same way already: a table that happens to hold the two
+      // bytes of a scan header can only count against the file (see the guard).
+      test("a stray scan marker in a table is read as a scan too", () => {
+        const dqt = segment(
+          0xdb,
+          [0, 0xff, 0xda],
+          new Array<number>(62).fill(1),
+        );
+        expect(checkImageBytes(jpegOf(dqt, sof(64, 64, [0x11])))).toEqual(
+          refused,
+        );
+      });
+
+      test.each([
+        [
+          "libjpeg's interleaved DC scan",
+          [3, 1, 0x00, 2, 0x00, 3, 0x00, 0, 0, 0x01],
+        ],
+        ["an AC scan of one component", [1, 2, 0x10, 1, 63, 0x01]],
+        ["a baseline scan", [3, 1, 0x00, 2, 0x11, 3, 0x11, 0, 63, 0x00]],
+      ])("%s passes", (_name, scan) => {
+        expect(
+          checkImageBytes(
+            jpegOf(sof(64, 64, [0x22, 0x11, 0x11], 0xc2), segment(0xda, scan)),
+          ),
+        ).toEqual({ ok: true, format: "jpeg", width: 64, height: 64 });
+      });
+    });
+
+    test("a real progressive photo, made by libjpeg's default scan script, passes", () => {
+      const photo = new Uint8Array(
+        readFileSync(
+          new URL("../test-fixtures/images/progressive.jpg", import.meta.url),
+        ),
+      );
+      expect(checkImageBytes(photo)).toEqual({
+        ok: true,
+        format: "jpeg",
+        width: 320,
+        height: 240,
+      });
+    });
+
     test("a scan in an APPn segment isn't counted; one after a fill byte is", () => {
       const scan = (count: number) =>
         Array.from({ length: count }, () =>

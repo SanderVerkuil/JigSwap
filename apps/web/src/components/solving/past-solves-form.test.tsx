@@ -4,7 +4,12 @@ import {
   StepCommitContext,
   type StepCommitStore,
 } from "@/components/quick-start/step-commit";
-import type { PastCompletionItem, PastSolveChoice } from "@/lib/past-solves";
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
+import type {
+  PastCompletionItem,
+  PastSolveCandidate,
+  PastSolveChoice,
+} from "@/lib/past-solves";
 import {
   act,
   cleanup,
@@ -20,6 +25,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PastSolveRow, PastSolvesList } from "./past-solves-form";
+
+// These tests are about the rows: past-solves-leave.test.tsx runs the leave guard on a real router.
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  useBlocker: () => ({ status: "idle" }),
+}));
 
 afterEach(cleanup);
 
@@ -265,6 +276,15 @@ describe("PastSolvesList (ticking)", () => {
     expect(screen.getByRole("button", { name: "Log 1 puzzle" })).toBeTruthy();
   });
 
+  it("reports the bottom of the screen as taken while its submit is up, so the install tip steps aside", () => {
+    list(async () => true);
+    expect(isSurfaceBusy()).toBe(false);
+    tick("Cats");
+    expect(isSurfaceBusy()).toBe(true);
+    tick("Cats");
+    expect(isSurfaceBusy()).toBe(false);
+  });
+
   it("inside quick setup hides its submit and hands the ticks to Continue", async () => {
     const store = createStepCommitStore();
     const onSubmit = vi.fn(async () => true);
@@ -353,6 +373,104 @@ describe("PastSolvesList (ticking)", () => {
     ).toBe(true);
   });
 
+  it("says why the submit waits while a ticked row has Pick a date but no date", () => {
+    list(async () => true);
+    const log = () => screen.getByRole("button", { name: "Log 2 puzzles" });
+    tick("Mountain Lake");
+    tick("Cats");
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(log().hasAttribute("disabled")).toBe(false);
+
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "Pick a date" })[1]!,
+      );
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 1 puzzle, or pick I don't remember.",
+    );
+    expect(log().hasAttribute("disabled")).toBe(true);
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Pick a date"), {
+        target: { value: "2020-01-01" },
+      });
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(log().hasAttribute("disabled")).toBe(false);
+  });
+
+  it("counts every row still waiting, a refused date too, and takes the member to the first", () => {
+    list(async () => true);
+    tick("Mountain Lake");
+    tick("Cats");
+    for (const radio of screen.getAllByRole("radio", { name: "Pick a date" })) {
+      act(() => {
+        fireEvent.click(radio);
+      });
+    }
+    const [first, second] = screen.getAllByLabelText("Pick a date");
+    act(() => {
+      fireEvent.change(second!, { target: { value: "2999-01-01" } });
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 2 puzzles, or pick I don't remember.",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Show me" }));
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("offers no way to the row when none is waiting", () => {
+    list(async () => true);
+    tick("Cats");
+    expect(screen.queryByRole("button", { name: "Show me" })).toBeNull();
+  });
+
+  it("prefers the reason to the batch limit: that one is what holds the submit back", () => {
+    const candidates = Array.from({ length: 25 }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+    renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+    for (let i = 0; i < 25; i++) tick(`Puzzle ${i}`);
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "Pick a date" })[0]!,
+      );
+    });
+    expect(screen.getByRole("status").textContent).toBe(
+      "Choose a date for 1 puzzle, or pick I don't remember.",
+    );
+  });
+
+  it("inside quick setup hands the reason to the flow's footer instead of saying it here", () => {
+    const store = createStepCommitStore();
+    list(async () => true, store);
+    tick("Cats");
+    expect(store.getSnapshot()?.reason).toBeUndefined();
+
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    expect(store.getSnapshot()).toEqual({
+      kind: "solves",
+      count: 1,
+      ready: false,
+      reason: "Choose a date for 1 puzzle, or pick I don't remember.",
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    expect(screen.queryByRole("button", { name: "Show me" })).toBeNull();
+  });
+
   it("links a refused date to its reason, and a valid date to nothing", () => {
     list(async () => true);
     tick("Cats");
@@ -405,6 +523,160 @@ describe("PastSolvesList (ticking)", () => {
     });
     expect(saved).toBe(false);
     expect(store.getSnapshot()?.count).toBe(1);
+  });
+});
+
+describe("PastSolvesList on a long list", () => {
+  const many = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+  const list = (candidates: PastSolveCandidate[], locale: "en" | "nl" = "en") =>
+    renderDom(
+      <IntlProvider
+        locale={locale}
+        messages={locale === "en" ? en : nl}
+        timeZone="Europe/Amsterdam"
+      >
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+  const tick = (name: string) =>
+    act(() => {
+      fireEvent.click(screen.getByRole("checkbox", { name }));
+    });
+  const search = (term: string) =>
+    act(() => {
+      fireEvent.change(
+        screen.getByRole("searchbox", {
+          name: "Search your puzzles by title, brand or pieces",
+        }),
+        { target: { value: term } },
+      );
+    });
+  const rows = () =>
+    screen.queryAllByRole("checkbox").map((box) => box.getAttribute("id"));
+
+  it("offers a search only once the list is long enough to need one", () => {
+    list(many(10));
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    cleanup();
+    list(many(11));
+    expect(screen.getByRole("searchbox")).toBeTruthy();
+  });
+
+  // Logging a batch shortens the list. A term that stays applied with no box to clear it would leave
+  // the member on "No puzzles match" for the rest of the visit.
+  it("keeps the search in reach while a term is set, when the list has got short", () => {
+    const short = (count: number) => (
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={many(count)}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>
+    );
+    const { rerender } = renderDom(short(11));
+    search("Puzzle 10");
+    rerender(short(10));
+    expect(screen.getByRole("searchbox")).toBeTruthy();
+    expect(screen.getByText(/No puzzles match/)).toBeTruthy();
+
+    search("");
+    expect(rows()).toHaveLength(10);
+    expect(screen.queryByRole("searchbox")).toBeNull();
+  });
+
+  it("narrows the rows and keeps a tick the search hides", () => {
+    list(many(12));
+    tick("I finished Puzzle 3");
+    search("Puzzle 11");
+    expect(rows()).toEqual(["past-solve-c11"]);
+    expect(screen.getByRole("button", { name: "Log 1 puzzle" })).toBeTruthy();
+
+    search("");
+    expect(
+      screen
+        .getByRole("checkbox", { name: "I finished Puzzle 3" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+  });
+
+  it("reaches past the first page, and the row found there stays on the list", () => {
+    list(many(30));
+    expect(rows()).toHaveLength(25);
+    search("Puzzle 29");
+    tick("I finished Puzzle 29");
+    search("");
+    expect(rows()).toHaveLength(26);
+    expect(rows().at(-1)).toBe("past-solve-c29");
+    expect(screen.getByRole("button", { name: "Show more" })).toBeTruthy();
+  });
+
+  it("keeps a row that holds the submit back in view through a search", () => {
+    list(many(12));
+    tick("I finished Puzzle 3");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    search("Puzzle 11");
+    expect(rows()).toEqual(["past-solve-c3", "past-solve-c11"]);
+  });
+
+  it("says when nothing matches, and offers no Show more", () => {
+    list(many(30));
+    search("zzz");
+    expect(screen.getByText("No puzzles match “zzz”")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Show more" })).toBeNull();
+  });
+
+  it("tells same-titled copies apart by brand and pieces, in the row's name", () => {
+    list([
+      { copyId: "a", title: "Cats", brand: "Goliath", pieceCount: 1500 },
+      { copyId: "b", title: "Cats", brand: "Ravensburger" },
+      { copyId: "c", title: "Cats", pieceCount: 1 },
+      { copyId: "d", title: "Dogs" },
+    ]);
+    expect(
+      screen.getByRole("checkbox", {
+        name: "I finished Cats Goliath · 1,500 pieces",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Cats Ravensburger" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Cats 1 piece" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", { name: "I finished Dogs" }),
+    ).toBeTruthy();
+  });
+
+  it("reads naturally in Dutch", () => {
+    list(
+      [
+        ...many(11),
+        { copyId: "a", title: "Katten", brand: "Goliath", pieceCount: 1500 },
+      ],
+      "nl",
+    );
+    expect(
+      screen.getByRole("searchbox", {
+        name: "Zoek in je puzzels op titel, merk of aantal stukjes",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Ik heb Katten afgemaakt Goliath · 1.500 stukjes",
+      }),
+    ).toBeTruthy();
   });
 });
 

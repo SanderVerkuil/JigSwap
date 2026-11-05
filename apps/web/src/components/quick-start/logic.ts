@@ -3,6 +3,7 @@
 // decide what the welcome dialog, the /welcome flow and the dashboard card show.
 
 import { isImmersiveMobileRoute } from "@/components/dashboard-layout/route-meta";
+import { isSharedCopyHref } from "@/lib/shared-copy-link";
 import type {
   QuickStartStepId,
   QuickStartStepView,
@@ -136,12 +137,18 @@ export function welcomeSurfaceBusy({
  * Where the welcome dialog may open. It is mounted in the signed-in shell, so a member who signs
  * up from a deep link (a catalogue "Join" button, a sign-in `redirect_url`) still gets it on the
  * page they land on; but never over the quick setup flow it offers, nor over a full-screen phone
- * thread. Elsewhere it waits for the member's next page.
+ * thread, nor over the puzzle a member sent them to (`href`, with its search): sign-up promised
+ * "you land right here", and the dialog's primary action leads away from it. Elsewhere it waits
+ * for the member's next page.
  */
-export function welcomeDialogAllowed(pathname: string): boolean {
+export function welcomeDialogAllowed(
+  pathname: string,
+  href: string = pathname,
+): boolean {
   return (
     pathname.replace(/\/+$/, "") !== "/welcome" &&
-    !isImmersiveMobileRoute(pathname)
+    !isImmersiveMobileRoute(pathname) &&
+    !isSharedCopyHref(href)
   );
 }
 
