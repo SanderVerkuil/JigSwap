@@ -387,11 +387,11 @@ Flat and direct; every pressable thing answers the finger.
 
 ### Gable Skyline
 
-The signature that signs the app and the public footer, and closes the Features page: twelve flat facades (stepped, bell and neck gables, pitched houses, a church spire, a windmill) in one colour at 480 by 120, with window rectangles painted from `--skyline-window`. At the foot of the sidebar it is tone on tone, its windows invisible by day and lit in dimmed marigold at night, behind the account row; it appears only from 720px of height. In the footer it stands on canal and its windows are lit marigold in both themes.
+The signature that signs the app and the public footer, and closes the Features page: twelve flat facades (stepped, bell and neck gables, pitched houses, a church spire, a windmill) in one colour at 480 by 120, with window rectangles painted from `--skyline-window`. At the foot of the sidebar it is tone on tone, its windows invisible by day and lit in dimmed marigold at night, behind the account row; it appears only from 720px of height. In the footer it stands on canal, its windows lit marigold in both themes, and it runs edge to edge: five stretches at drawn size up to 2400px, growing with the band beyond that.
 
 ### Floor Pins and Shelf Drawer
 
-The hero's interaction. Three pins with a triangular pointer stand on the cutaway house, Canal Ink at rest and marigold when chosen. The chosen floor stays clear while a flat canal dim, masked to the art's own edge, falls over the rest; its shelf docks beside the house in a white drawer. Each box stands on a 9px plank, its width following its piece count.
+The hero's interaction. Each of three floors of the cutaway house is one button, carrying a name pin with a triangular pointer, Canal Ink at rest and marigold when chosen. The floors meet mid-beam, so no click falls between them. The chosen floor stays clear while a flat canal dim, masked to the art's own edge, falls over the rest; the dim on a floor half lifts while it is pointed at or focused. The chosen floor's shelf docks beside the house in a white drawer. Each box stands on a 9px plank, its width following its piece count.
 
 ### Lending Slip
 
@@ -399,7 +399,7 @@ A white ledger on the canal storey: 16px tabular text, dotted leaders between th
 
 ### Curtain Footer
 
-The back of the street: a board of filled tiles (sky, sky soft, plank), then the name at the full width of the street over a canal band and skyline. The opaque page slides up to uncover it through sticky positioning alone, and only where the board fits the viewport (from 1024px wide and 700px tall, or 640px wide and 1120px tall). Keyboard focus into it scrolls it clear.
+The back of the street: a board of filled tiles (sky, sky soft, plank), then the name at the full width of the street over a canal band and skyline. The board arrives with the page like any other content, so its links come first; it then slides up to uncover the name and skyline, pinned behind it through sticky positioning alone.
 
 ### Motion
 

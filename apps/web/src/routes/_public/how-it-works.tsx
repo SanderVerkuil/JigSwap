@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_public/how-it-works")({
 // its picture, what happens, and the same box standing on the ledge. The label beside the box says
 // where it is right now, which is the question the product exists to answer.
 const STOPS = [
-  { n: 1, art: atticBoxes, width: 1080, height: 252 },
+  { n: 1, art: atticBoxes, width: 640, height: 360 },
   { n: 2, art: partyBarrow, width: 809, height: 493 },
   { n: 3, art: windowsHandover, width: 840, height: 372 },
   { n: 4, art: floorBedroom, width: 704, height: 344 },
@@ -101,7 +101,7 @@ function HowItWorksPage() {
                     src={boxCover}
                     alt=""
                     width={480}
-                    height={372}
+                    height={360}
                     loading="lazy"
                     decoding="async"
                     className="block h-auto w-[clamp(96px,10vw,152px)] shrink-0 rounded-t-[2px]"

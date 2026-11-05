@@ -1,8 +1,8 @@
 import { Link } from "@/compat/link";
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { Art } from "@/components/marketing/art";
-import floorKitchen from "@/components/marketing/assets/art/floor-kitchen.webp";
 import floorLiving from "@/components/marketing/assets/art/floor-living.webp";
+import kitchenTable from "@/components/marketing/assets/art/kitchen-table.webp";
 import partyGrandma from "@/components/marketing/assets/art/party-grandma.webp";
 import partyHandover from "@/components/marketing/assets/art/party-handover.webp";
 import { Container } from "@/components/marketing/container";
@@ -37,9 +37,9 @@ function AboutPage() {
         lead={t("heroLead")}
         aside={
           <Art
-            src={floorKitchen}
-            width={1344}
-            height={344}
+            src={kitchenTable}
+            width={2400}
+            height={903}
             alt={t("heroArtAlt")}
             className="min-h-[170px] object-cover"
           />

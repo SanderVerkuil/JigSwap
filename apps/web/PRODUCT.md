@@ -40,7 +40,7 @@ A home with physical boxes on a shelf, a kitchen table with a puzzle in progress
 
 ## Evidence on Hand
 
-- Original illustrated scenes in the JigSwap style, in `assets/`: `dutch-vilage-street.png`, `puzzle-house.png`, `puzzle-swap-party.png`, `puzzle-party-2.png`, `puzzle-party-3.png`, plus newer renders `puzzle-house-2.png` and `lids/dorpsstraat.png`. The owner approved them as the main imagery. Crops ship from `apps/web/src/components/marketing/assets/art/`.
+- Original illustrated scenes in the JigSwap style, in `assets/`: `dutch-vilage-street.png`, `puzzle-house.png`, `puzzle-swap-party.png`, `puzzle-party-2.png`, `puzzle-party-3.png`, plus newer renders of the house, the kitchen table and all 14 box lids. The owner approved them as the main imagery. Crops ship from `apps/web/src/components/marketing/assets/art/`.
 - Live platform counts from the real database: members, catalogue puzzles, puzzles on shelves. The owner keeps these on the home page, whatever their current size.
 - The family's own quote and the kitchen-table story on About.
 - There are no customer testimonials, press mentions, partner logos or pricing. Do not invent any.

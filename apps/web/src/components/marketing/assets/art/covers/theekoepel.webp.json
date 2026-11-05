@@ -1,4 +1,4 @@
 {
-  "prompt": "Pre-existing art: crop of the owner's illustration in assets/ (one of the five originals). No new generation; regenerate from the prompts handed to the owner when larger art lands.",
-  "createdAt": "2026-11-02T09:46:44.808Z"
+  "prompt": "Owner-generated on t3.chat from the box lid prompts on PR #393, with the Dorpsstraat lid as reference (render lid-theekoepel.png). The whole lid, scaled to 640x480.",
+  "createdAt": "2026-11-02T21:11:52.510Z"
 }

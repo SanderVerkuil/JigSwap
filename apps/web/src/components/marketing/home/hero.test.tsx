@@ -45,8 +45,11 @@ function render(locale: "en" | "nl") {
 describe("Hero", () => {
   it("server-renders three floor buttons with Opa Wim chosen and her shelf docked", () => {
     const html = render("en");
+    // The name sits inside the floor's button, after the floor's dim.
     const pressed = [
-      ...html.matchAll(/aria-pressed="(true|false)"[^>]*>([^<]+)</g),
+      ...html.matchAll(
+        /aria-pressed="(true|false)".*?([^<>]+)<\/span><\/button>/g,
+      ),
     ].map(([, state, name]) => [name, state]);
     expect(pressed).toEqual([
       ["Sanne", "false"],
@@ -86,8 +89,8 @@ describe("Hero", () => {
     const images = render("en").match(/<img[^>]*>/g) ?? [];
     const house = images.filter((img) => img.includes("fetchPriority"));
     expect(house).toHaveLength(1);
-    expect(house[0]).toContain('width="2000"');
-    expect(house[0]).toContain('height="1228"');
+    expect(house[0]).toContain('width="2400"');
+    expect(house[0]).toContain('height="1578"');
     expect(house[0]).not.toContain("lazy");
     for (const img of images.filter((i) => !i.includes("fetchPriority"))) {
       expect(img).toContain('loading="lazy"');

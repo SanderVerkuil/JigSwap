@@ -1,25 +1,26 @@
 import { Link } from "@/compat/link";
-import floorKitchen from "@/components/marketing/assets/art/floor-kitchen.webp";
+import kitchenTable from "@/components/marketing/assets/art/kitchen-table.webp";
 import { EDGE, TEXT_LINK } from "@/components/marketing/home/classes";
 import { Reveal } from "@/components/marketing/reveal";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "use-intl";
 
-// The family's own word, on the sky-soft band: the kitchen floor of the house across the full width,
-// standing on its ledge, then the point on the left and their quote, as they wrote it, on the right.
+// The family's own word, on the sky-soft band: their kitchen table across the full width, standing on
+// its ledge and never taller than the screen, then the point on the left and their quote, as they wrote
+// it, on the right.
 export function Sustain() {
   const t = useTranslations("marketing.home");
   return (
     <section className="bg-mk-sky-soft pb-[clamp(56px,8vw,120px)] text-mk-text-strong">
       <Reveal rise={24}>
         <img
-          src={floorKitchen}
+          src={kitchenTable}
           alt={t("sustain.tableAlt")}
-          width={1344}
-          height={344}
+          width={2400}
+          height={903}
           loading="lazy"
           decoding="async"
-          className="block aspect-[16/9] h-auto w-full object-cover object-[38%_50%] min-[760px]:aspect-auto"
+          className="block aspect-[16/9] h-auto w-full object-cover object-[38%_50%] min-[760px]:aspect-auto min-[760px]:max-h-[85svh]"
         />
         <div className="h-3.5 bg-mk-plank" />
       </Reveal>

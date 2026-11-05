@@ -1,4 +1,4 @@
 {
-  "prompt": "Owner-generated on t3.chat from the hero prompt (redraw assets/puzzle-house.png with flat sky and puzzle boxes in every room); source kept as assets/puzzle-house-2.png. Sky keyed to transparent and the clipped roof finished in code from the art's own tiles.",
-  "createdAt": "2026-11-02T13:00:05.055Z"
+  "prompt": "Owner-generated on t3.chat from the house prompt on PR #393, using a layout guide with a whole roof (render house-wide.png). Sky keyed to transparent and trimmed to the ridge; nothing else changed.",
+  "createdAt": "2026-11-02T21:11:52.460Z"
 }

@@ -21,7 +21,7 @@ const footerLinkCls =
 export function AuthShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("marketing");
   return (
-    <div className="mk-root bg-mk-sky min-h-svh flex flex-col overflow-x-clip">
+    <div className="mk-root bg-mk-sky! min-h-svh flex flex-col overflow-x-clip">
       <header className="font-mk-sans w-full max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
         <Link href="/" aria-label="JigSwap">
           <Wordmark />

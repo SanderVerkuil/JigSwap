@@ -120,8 +120,9 @@ export function FeatureRows() {
 
 // A wall of boxes, shelves running the sheet's full width with the copy in the top-left cubby. A box's
 // size follows its piece count, so the wall reads as real boxes, and leaves headroom under the ledge
-// above. On a stuck sheet each row sizes from its height; on a phone the boxes size from the width, and
-// only the right-hand boxes show.
+// above. A box is always the whole lid: on a stuck sheet it takes the smaller of its share of the
+// shelf's width and 90% of the row's height at 4:3 (120cqh); on a phone it sizes from the width, and only
+// the right-hand boxes show.
 type WallBox = { cover: string; title: string; size: number };
 
 const WALL: ReadonlyArray<{ left: WallBox[]; right: WallBox[] }> = [
@@ -167,7 +168,7 @@ function WallBoxes({
   return (
     <div
       className={cn(
-        "flex min-h-0 items-end gap-[2.5%] min-[860px]:h-full",
+        "flex min-h-0 items-end gap-[2.5%] min-[860px]:h-full min-[860px]:[container-type:size]",
         className,
       )}
     >
@@ -177,11 +178,11 @@ function WallBoxes({
           src={box.cover}
           alt={box.title}
           width={480}
-          height={372}
+          height={360}
           loading="lazy"
           decoding="async"
           style={{ "--size": box.size } as React.CSSProperties}
-          className="block aspect-[480/372] w-[calc(31%*var(--size))] rounded-t-[2px] border-[3px] border-b-[6px] border-white border-b-mk-canal object-cover min-[860px]:h-[calc(90%*var(--size))] min-[860px]:w-auto min-[860px]:max-w-(--box-max)"
+          className="box-content block aspect-[4/3] h-auto w-[calc(31%*var(--size))] rounded-t-[2px] border-[3px] border-b-[6px] border-white border-b-mk-canal min-[860px]:w-[calc(var(--size)*min(var(--box-max),120cqh))]"
         />
       ))}
     </div>
@@ -202,12 +203,12 @@ function ShelfWall({ intro }: { intro: React.ReactNode }) {
             ) : (
               <WallBoxes
                 boxes={row.left}
-                className="hidden px-10 [--box-max:46%] min-[860px]:flex"
+                className="hidden px-10 [--box-max:54cqw] min-[860px]:flex"
               />
             )}
             <WallBoxes
               boxes={row.right}
-              className="px-4 [--box-max:31%] min-[760px]:px-10 min-[860px]:px-6"
+              className="px-4 [--box-max:33cqw] min-[760px]:px-10 min-[860px]:px-6"
             />
           </div>
           <div className="h-3 shrink-0 bg-mk-plank" />
@@ -314,7 +315,7 @@ function LendTrackVisual() {
                 src={r.cover}
                 alt=""
                 width={480}
-                height={372}
+                height={360}
                 loading="lazy"
                 decoding="async"
                 className="h-auto w-[72px] shrink-0 rounded-t-[2px] min-[860px]:w-[clamp(96px,20svh,200px)]"

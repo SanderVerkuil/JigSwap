@@ -134,7 +134,7 @@ function FeaturesPage() {
                           <img
                             src={cover}
                             width={480}
-                            height={372}
+                            height={360}
                             alt={t("uiCoverAlt", { title: t(`ui${n}Title`) })}
                             loading="lazy"
                             decoding="async"
@@ -198,7 +198,7 @@ function FeaturesPage() {
                         <img
                           src={r.cover}
                           width={480}
-                          height={372}
+                          height={360}
                           alt=""
                           loading="lazy"
                           decoding="async"
