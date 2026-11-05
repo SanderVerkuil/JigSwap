@@ -193,7 +193,7 @@ export function TranslatableField<TFieldValues extends FieldValues>({
                     data-locale={locale}
                     onClick={() => setActiveLocale(locale)}
                     className={cn(
-                      "inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                      "inline-flex h-6 items-center gap-1.5 rounded-full px-2 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       active
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted",

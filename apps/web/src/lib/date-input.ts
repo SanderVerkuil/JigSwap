@@ -1,3 +1,5 @@
+import type { useFormatter } from "use-intl";
+
 // The one convention for date-only values (solve start/end dates, past-solve dates): a calendar
 // date is stored as UTC midnight of that date (Date.UTC(y, m, d)).
 //
@@ -47,9 +49,14 @@ export function msToDateInput(ms: number | undefined): string {
   return `${pad(at.getUTCFullYear(), 4)}-${pad(at.getUTCMonth() + 1)}-${pad(at.getUTCDate())}`;
 }
 
-// A stored date shown as a short locale date, in UTC so it is the date the member picked.
-export function formatDateOnly(ms: number, locale?: string): string {
-  return new Date(ms).toLocaleDateString(locale, {
+// A stored date in the app locale (use-intl's formatter, UX-63), in UTC so it is the date the
+// member picked.
+export function formatDateOnly(
+  format: ReturnType<typeof useFormatter>,
+  ms: number,
+): string {
+  return format.dateTime(ms, {
+    dateStyle: "medium",
     timeZone: DATE_ONLY_TIME_ZONE,
   });
 }

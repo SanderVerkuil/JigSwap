@@ -1,6 +1,7 @@
 "use client";
 
 import { buttonVariants } from "@/components/ui/button";
+import { useReturnFocus } from "@/components/ui/use-return-focus";
 import { cn } from "@/lib/utils";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import * as React from "react";
@@ -45,8 +46,12 @@ function AlertDialogOverlay({
 
 function AlertDialogContent({
   className,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
+  // Most confirmations open from state (menu items), not a Trigger: give focus back to the opener.
+  const returnFocus = useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus });
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
@@ -57,6 +62,7 @@ function AlertDialogContent({
           className,
         )}
         {...props}
+        {...returnFocus}
       />
     </AlertDialogPortal>
   );

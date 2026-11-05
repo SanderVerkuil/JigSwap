@@ -17,7 +17,6 @@ import { usePresenceOf } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -488,9 +487,8 @@ export function ThreadView({
   // Thread switch: move focus to the header title so keyboard and screen-reader
   // users land in the new conversation (once per thread, after it renders).
   const headingRef = useRef<HTMLHeadingElement>(null);
-  // Phones hide the shell top bar (and its h1) on thread pages, so the thread
-  // title is the page's h1 there; desktop keeps the shell's page h1.
-  const Heading = useIsMobile() ? "h1" : "h2";
+  // The thread title is an h2 at every width: the shell's page h1 ("Messages") is the
+  // page head's title from md and its sr-only phone heading below md.
   const focusedThreadRef = useRef<string | null>(null);
   const headerReady = headerRow !== undefined;
   useEffect(() => {
@@ -587,14 +585,14 @@ export function ThreadView({
               <CircleThreadHeader
                 thread={circleThread}
                 heading={
-                  <Heading
+                  <h2
                     ref={headingRef}
                     tabIndex={-1}
                     className={cn(HEADING_FOCUS_CLASS, "leading-5")}
                   >
                     {title}
                     <span className="sr-only">, {t("circle.circleChat")}</span>
-                  </Heading>
+                  </h2>
                 }
               />
             ) : (
@@ -612,13 +610,13 @@ export function ThreadView({
                 <div className="flex min-w-0 flex-col">
                   {/* Loaded, but the inbox wouldn't list this thread (e.g. a subject
                       that no longer resolves) — a generic title beats an eternal skeleton. */}
-                  <Heading
+                  <h2
                     ref={headingRef}
                     tabIndex={-1}
                     className={HEADING_FOCUS_CLASS}
                   >
                     {title ?? t("threadFallbackTitle")}
-                  </Heading>
+                  </h2>
                   {partnerPresence && (
                     <p className="text-muted-foreground text-xs leading-4">
                       {tPresence(partnerPresence)}

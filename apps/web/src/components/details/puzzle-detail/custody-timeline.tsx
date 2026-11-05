@@ -7,7 +7,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowRight, History, User } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 interface CustodyTimelineProps {
   copyId: Id<"ownedPuzzles">;
@@ -23,6 +23,7 @@ type ProjectedMember = CustodyTimelineView["currentOwner"];
 // each settled transfer -> current owner) from the custody read-model via the gateway.
 export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
   const t = useTranslations("custody");
+  const format = useFormatter();
   const projectedName = useProjectedMemberName();
   const { data: timeline, isPending } = useQuery(
     convexQuery(gateway.custody.timeline, { copyId }),
@@ -88,7 +89,10 @@ export function CustodyTimeline({ copyId }: CustodyTimelineProps) {
                     {t("transferredVia", { exchangeId: transfer.exchangeId })}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(transfer.occurredAt).toLocaleString()}
+                    {format.dateTime(transfer.occurredAt, {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
                   </p>
                 </div>
               </li>

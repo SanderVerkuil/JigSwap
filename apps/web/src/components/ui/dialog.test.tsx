@@ -4,7 +4,9 @@
 // scrolls, and the close button is a real 36px target (44px on touch) whose icon stays where it
 // was. Asserted through the class contract, since happy-dom does no layout.
 import { cleanup, render, screen } from "@testing-library/react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +19,17 @@ afterEach(cleanup);
 
 function renderDialog(className?: string) {
   return render(
-    <Dialog open>
-      <DialogContent className={className}>
-        <DialogTitle>Log a solve</DialogTitle>
-        <DialogDescription>When did you finish?</DialogDescription>
-        <DialogFooter>
-          <button type="button">Save</button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>,
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <Dialog open>
+        <DialogContent className={className}>
+          <DialogTitle>Log a solve</DialogTitle>
+          <DialogDescription>When did you finish?</DialogDescription>
+          <DialogFooter>
+            <button type="button">Save</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </IntlProvider>,
   );
 }
 

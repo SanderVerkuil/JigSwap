@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Puzzle } from "lucide-react";
 import type { ReactNode } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { BoxArtCheckingLabel } from "./box-art-checking";
+import { difficultyClasses } from "./catalog-detail-parts";
 import { usePuzzleView } from "./puzzle-view-provider";
 
 // Normalized view-model the shell renders. Both the catalog card and the
@@ -57,27 +58,16 @@ export interface PuzzleCardShellProps {
    *  `puzzle.imageSrcSet`; without it the browser assumes the full viewport width. List view
    *  always uses the fixed 128px cover column. */
   imageSizes?: string;
+  /**
+   * Heading level of the card title: 3 (default) for a grid under a section h2, 2 for a grid
+   * that sits directly under the page h1, so the outline never skips a level.
+   */
+  headingLevel?: 2 | 3;
   className?: string;
 }
 
 // The list view's cover column is `w-32` (8rem); keep the two in step.
 const LIST_COVER_SIZES = "128px";
-
-// Difficulty colour swatch, shared with the catalog card's original helper.
-function difficultyColor(difficulty?: string | null) {
-  switch (difficulty) {
-    case "easy":
-      return "bg-green-100 text-green-800";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800";
-    case "hard":
-      return "bg-orange-100 text-orange-800";
-    case "expert":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
 
 export function PuzzleCardShell({
   puzzle,
@@ -93,16 +83,19 @@ export function PuzzleCardShell({
   imageFit = "cover",
   imageChecking = false,
   imageSizes,
+  headingLevel = 3,
   className,
 }: PuzzleCardShellProps) {
   const t = useTranslations("puzzles");
   // Difficulty labels live under the nested `puzzles.puzzles.*` namespace.
   const tCat = useTranslations("puzzles.puzzles");
+  const format = useFormatter();
   const { viewMode } = usePuzzleView();
   // Grid cards drop to a compact density below sm, where a phone grid leaves
   // each card little room: a 4:3 cover (most box art is landscape), tighter
   // padding, and no description or tags. List rows keep one layout throughout.
   const compactOnPhones = viewMode === "grid";
+  const Title = `h${headingLevel}` as const;
 
   const difficultyLabel = (difficulty?: string | null) => {
     switch (difficulty) {
@@ -174,7 +167,7 @@ export function PuzzleCardShell({
       )}
     >
       <div className="mb-2">
-        <h3 className="font-semibold text-sm line-clamp-2 mb-1">
+        <Title className="font-semibold text-sm line-clamp-2 mb-1">
           {imageHref ? (
             // Stretched link: the ::after overlay spans the whole (relative) card, so
             // clicking the image, title or any empty area navigates. Action buttons
@@ -190,18 +183,19 @@ export function PuzzleCardShell({
           ) : (
             puzzle.title
           )}
-        </h3>
+        </Title>
         {puzzle.brand && (
           <p className="text-xs text-muted-foreground mb-1">{puzzle.brand}</p>
         )}
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <Badge variant="secondary" className="text-xs">
-            {puzzle.pieceCount ?? 0} {t("pieces")}
+            {format.number(puzzle.pieceCount ?? 0)}{" "}
+            {t("pieces", { count: puzzle.pieceCount ?? 0 })}
           </Badge>
           {puzzle.difficulty && (
             <Badge
               variant="secondary"
-              className={cn("text-xs", difficultyColor(puzzle.difficulty))}
+              className={cn("text-xs", difficultyClasses(puzzle.difficulty))}
             >
               {difficultyLabel(puzzle.difficulty)}
             </Badge>
@@ -279,7 +273,7 @@ export function PuzzleCardShell({
         // The stretched title link stands for the whole card, so keyboard focus on it rings the
         // card (its underline alone is too faint a cue). Focus on an action button keeps that
         // button's own ring instead.
-        "has-[[data-card-link]:focus-visible]:ring-2 has-[[data-card-link]:focus-visible]:ring-ring",
+        "has-[[data-card-link]:focus-visible]:ring-2 has-[[data-card-link]:focus-visible]:ring-ring has-[[data-card-link]:focus-visible]:ring-offset-2 has-[[data-card-link]:focus-visible]:ring-offset-background",
         selected && "ring-2 ring-primary",
         (href || selectable) && "cursor-pointer",
         className,

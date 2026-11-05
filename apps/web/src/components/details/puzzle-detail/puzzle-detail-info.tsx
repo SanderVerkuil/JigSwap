@@ -6,7 +6,7 @@ import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import type { FunctionReturnType } from "convex/server";
 import { Calendar, User } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // Owned-copy detail view DTO this panel renders, derived from the read it is fed by.
 type PuzzleData = NonNullable<
@@ -23,6 +23,7 @@ export function PuzzleDetailInfo({
   showOwner = false,
 }: PuzzleDetailInfoProps) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   const displayName = useMemberDisplayName();
 
   // Early return if no puzzle data
@@ -44,7 +45,8 @@ export function PuzzleDetailInfo({
                 Piece Count
               </p>
               <p className="text-lg">
-                {puzzle.puzzle.pieceCount} {t("pieces")}
+                {format.number(puzzle.puzzle.pieceCount)}{" "}
+                {t("pieces", { count: puzzle.puzzle.pieceCount })}
               </p>
             </div>
             {puzzle.puzzle.difficulty && (
@@ -116,7 +118,9 @@ export function PuzzleDetailInfo({
               <div>
                 <p className="text-sm font-medium">Acquired</p>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(puzzle.acquisitionDate).toLocaleDateString()}
+                  {format.dateTime(puzzle.acquisitionDate, {
+                    dateStyle: "medium",
+                  })}
                 </p>
               </div>
             </div>
@@ -126,7 +130,7 @@ export function PuzzleDetailInfo({
             <div>
               <p className="text-sm font-medium">Added to Collection</p>
               <p className="text-sm text-muted-foreground">
-                {new Date(puzzle.createdAt).toLocaleDateString()}
+                {format.dateTime(puzzle.createdAt, { dateStyle: "medium" })}
               </p>
             </div>
           </div>

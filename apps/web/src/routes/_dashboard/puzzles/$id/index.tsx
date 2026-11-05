@@ -140,6 +140,7 @@ function PuzzleDefinitionDetail({
   const tCatalog = useTranslations("puzzles.puzzles");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const conditionLabel = useConditionLabel();
+  const format = useFormatter();
 
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(puzzleId);
@@ -187,8 +188,11 @@ function PuzzleDefinitionDetail({
   // focus its first control, the required star rating (its single tab stop).
   const composerRef = useRef<HTMLDivElement>(null);
   const focusComposer = () => {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     composerRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduceMotion ? "auto" : "smooth",
       block: "center",
     });
     composerRef.current
@@ -229,9 +233,9 @@ function PuzzleDefinitionDetail({
           <p className="text-muted-foreground mt-1 text-base">
             {definition.brand ? `${definition.brand} · ` : ""}
             <span className="font-mono">
-              {definition.pieceCount.toLocaleString()}
+              {format.number(definition.pieceCount)}
             </span>{" "}
-            {tPuzzles("pieces")}
+            {tPuzzles("pieces", { count: definition.pieceCount })}
           </p>
 
           {/* Rating + difficulty + topics */}
@@ -576,7 +580,7 @@ function AvailableToSwap({
         <RouterLink
           to="/browse"
           search={{ puzzle: puzzleId }}
-          className="text-jigsaw-primary mt-3 inline-block text-sm font-semibold hover:underline"
+          className="text-primary-text mt-3 inline-block text-sm font-semibold hover:underline"
         >
           {t("seeAllCopies", { count: totalAvailable })}
         </RouterLink>

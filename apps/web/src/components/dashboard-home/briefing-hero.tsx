@@ -38,8 +38,8 @@ function HeadlineLink({
       className={cn(
         "underline decoration-2 underline-offset-[5px] transition-colors",
         tone === "green"
-          ? "text-jigsaw-secondary decoration-jigsaw-secondary/30 hover:decoration-jigsaw-secondary"
-          : "text-jigsaw-primary decoration-jigsaw-primary/30 hover:decoration-jigsaw-primary",
+          ? "text-jigsaw-secondary-text decoration-jigsaw-secondary/30 hover:decoration-jigsaw-secondary"
+          : "text-primary-text decoration-jigsaw-primary/30 hover:decoration-jigsaw-primary",
       )}
     >
       {children}
@@ -160,7 +160,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
           <strong className="text-foreground">{chunks}</strong>
         ),
         mineStrong: (chunks) => (
-          <strong className="text-jigsaw-primary">{chunks}</strong>
+          <strong className="text-primary-text">{chunks}</strong>
         ),
       })
     : t.rich(
@@ -176,7 +176,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
             <strong className="text-foreground">{chunks}</strong>
           ),
           mineStrong: (chunks) => (
-            <strong className="text-jigsaw-primary">{chunks}</strong>
+            <strong className="text-primary-text">{chunks}</strong>
           ),
         },
       );

@@ -1,7 +1,7 @@
 // apps/web/src/components/add-puzzle/live-preview-card.tsx
 import { Badge } from "@/components/ui/badge";
 import { Check, Puzzle } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export interface LivePreviewProps {
   title: string;
@@ -15,6 +15,7 @@ export interface LivePreviewProps {
 
 export function LivePreviewCard(props: LivePreviewProps) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   const cover = props.coverPhotoUrl
     ? {
         backgroundImage: `url(${props.coverPhotoUrl})`,
@@ -31,7 +32,7 @@ export function LivePreviewCard(props: LivePreviewProps) {
           />
         )}
         {props.available && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary-strong px-2.5 py-1 text-xs font-semibold text-white">
             <span className="size-1.5 rounded-full bg-white" />{" "}
             {t("previewAvailable")}
           </span>
@@ -49,11 +50,13 @@ export function LivePreviewCard(props: LivePreviewProps) {
         <span className="text-sm">
           {props.pieceCount != null ? (
             <>
-              <span className="font-semibold">{props.pieceCount}</span>{" "}
-              {t("pieces")}
+              <span className="font-semibold">
+                {format.number(props.pieceCount)}
+              </span>{" "}
+              {t("pieces", { count: props.pieceCount })}
             </>
           ) : (
-            `— ${t("pieces")}`
+            `— ${t("pieces", { count: 0 })}`
           )}
         </span>
         {props.difficulty && (
@@ -82,10 +85,13 @@ export function AddPuzzleSummary({
   offers?: ReadonlyArray<string>;
 }) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   if (!title.trim()) return null;
   const details = [
     brand,
-    pieceCount != null ? `${pieceCount} ${t("pieces")}` : "",
+    pieceCount != null
+      ? `${format.number(pieceCount)} ${t("pieces", { count: pieceCount })}`
+      : "",
     ...offers,
   ].filter((d) => d.length > 0);
   return (
@@ -117,6 +123,7 @@ export function ReadinessChecklist({
 }: {
   items: ReadonlyArray<{ ok: boolean; label: string }>;
 }) {
+  const t = useTranslations("puzzles");
   return (
     <div className="flex flex-col gap-2.5 border-t border-border pt-3">
       {items.map((c) => (
@@ -130,10 +137,12 @@ export function ReadinessChecklist({
           <span
             className={[
               "inline-flex size-[18px] items-center justify-center rounded-full",
-              c.ok ? "bg-jigsaw-secondary text-white" : "bg-muted",
+              c.ok ? "bg-jigsaw-secondary-strong text-white" : "bg-muted",
             ].join(" ")}
           >
-            <span className="sr-only">{c.ok ? "complete" : "incomplete"}</span>
+            <span className="sr-only">
+              {c.ok ? t("checkDone") : t("checkNotDone")}
+            </span>
             {c.ok && <Check className="size-3" />}
           </span>
           {c.label}

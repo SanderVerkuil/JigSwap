@@ -7,8 +7,8 @@ import {
   getGlobalStartContext,
 } from "@tanstack/react-start";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { DefaultCatchBoundary } from "./components/DefaultCatchBoundary";
 import { NotFoundContent } from "./components/NotFound";
+import { RouteError } from "./components/route-error";
 import { appScrollRestoration } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
 
@@ -64,7 +64,9 @@ export function getRouter() {
   const router = createTanStackRouter({
     routeTree,
     defaultPreload: "intent",
-    defaultErrorComponent: DefaultCatchBoundary,
+    // Route errors render inside Providers, so they get the translated card; the root route's
+    // own errorComponent (outside IntlProvider) keeps the hook-free DefaultCatchBoundary.
+    defaultErrorComponent: RouteError,
     // Chrome-free: TanStack renders the matched layout chain and drops this into
     // the deepest outlet, so a 404 picks up whichever shell it's under (app /
     // admin / marketing). The root route's own notFoundComponent (marketing

@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import { formatDateOnly } from "@/lib/date-input";
 import {
   cleanup,
   fireEvent,
@@ -187,15 +186,9 @@ describe("GoalSections", () => {
         createdAt: Date.UTC(2026, 2, 3, 23, 30),
       }),
     ]);
-    expect(
-      screen.getByText(
-        `${formatDateOnly(Date.UTC(2026, 0, 1))} – ${formatDateOnly(Date.UTC(2026, 11, 31))}`,
-      ),
-    ).toBeDefined();
+    expect(screen.getByText("Jan 1, 2026 – Dec 31, 2026")).toBeDefined();
     // Without a start date it counts from the (UTC) day it was created, like the server.
-    expect(
-      screen.getByText(`From ${formatDateOnly(Date.UTC(2026, 2, 3))}`),
-    ).toBeDefined();
+    expect(screen.getByText("From Mar 3, 2026")).toBeDefined();
   });
 });
 

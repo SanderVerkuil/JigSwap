@@ -327,7 +327,7 @@ function CategoryRow({
         disabled={!sortable}
         aria-label={t("dragHandle", { name })}
         // 44px hit area on touch widths (36px from md) around the 16px glyph.
-        className="-mx-3 flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40 md:-mx-2.5 md:size-9"
+        className="-mx-3 flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-40 md:-mx-2.5 md:size-9"
       >
         <GripVertical className="h-4 w-4" aria-hidden />
       </button>
@@ -352,7 +352,7 @@ function CategoryRow({
                 <TooltipTrigger
                   type="button"
                   aria-label={tooltip}
-                  className="inline-flex rounded-sm opacity-50 outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  className="inline-flex rounded-sm opacity-50 outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Flag locale={locale} className="h-2.5 w-3.5" />
                 </TooltipTrigger>

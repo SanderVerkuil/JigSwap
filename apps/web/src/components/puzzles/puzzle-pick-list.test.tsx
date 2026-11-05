@@ -145,7 +145,7 @@ describe("PuzzlePickList", () => {
     expect(rows.className).toContain("sm:hidden");
     // Named by what it shows (label in name), ending in what it does.
     const add = within(rows).getByRole("link", {
-      name: "Puzzle a Ravensburger · 1000 pieces Add to Library",
+      name: "Puzzle a Ravensburger · 1,000 pieces Add to Library",
     });
     expect(add.getAttribute("href")).toBe("/my-puzzles/add/new?puzzleId=doc_a");
     expect(add.className).toContain("min-h-12");
@@ -178,7 +178,7 @@ describe("PuzzlePickList", () => {
     renderList("nl");
     expect(
       screen.getByRole("link", {
-        name: "Puzzle a Ravensburger · 1000 stukken Toevoegen aan bibliotheek",
+        name: "Puzzle a Ravensburger · 1.000 stukjes Toevoegen aan bibliotheek",
       }),
     ).toBeTruthy();
     expect(screen.getAllByText("Op je plank").length).toBeGreaterThan(0);

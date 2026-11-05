@@ -348,7 +348,7 @@ export function HouseholdDetails({
               {inviteInMembers && (
                 <button
                   type="button"
-                  className="text-primary flex min-h-14 w-full items-center gap-3 py-2 text-left text-sm font-semibold"
+                  className="text-primary-text flex min-h-14 w-full items-center gap-3 py-2 text-left text-sm font-semibold"
                   onClick={() => setInviteOpen(true)}
                 >
                   <span className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-full">

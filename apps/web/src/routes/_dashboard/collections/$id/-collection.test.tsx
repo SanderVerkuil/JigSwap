@@ -137,10 +137,10 @@ beforeEach(() => {
 });
 
 const removeViaMenu = () => {
-  fireEvent.pointerDown(
-    screen.getByRole("button", { name: "Puzzle actions" }),
-    { button: 0, ctrlKey: false },
-  );
+  fireEvent.pointerDown(screen.getByRole("button", { name: /^Actions for/ }), {
+    button: 0,
+    ctrlKey: false,
+  });
   fireEvent.click(
     screen.getByRole("menuitem", { name: "Remove from this collection" }),
   );
@@ -154,7 +154,7 @@ describe("collection page controls", () => {
     renderPage(OWNER);
     expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Add Puzzles" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Puzzle actions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Actions for/ })).toBeTruthy();
   });
 
   it("gives a visitor of a public collection none of them", () => {
@@ -162,7 +162,7 @@ describe("collection page controls", () => {
     expect(screen.getByText("Puzzle 1")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Edit" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Add Puzzles" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Puzzle actions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
   });
 });
 

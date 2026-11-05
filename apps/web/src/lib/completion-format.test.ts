@@ -1,5 +1,5 @@
-import { createTranslator } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { createFormatter, createTranslator } from "use-intl";
+import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
@@ -22,49 +22,41 @@ const tNl = createTranslator({
   messages: nl,
   namespace: "solving.completions",
 }) as unknown as T;
+const fmtEn = createFormatter({ locale: "en", timeZone: "Europe/Amsterdam" });
+const fmtNl = createFormatter({ locale: "nl", timeZone: "Europe/Amsterdam" });
 
 // A stored solve date: the calendar date at UTC midnight (lib/date-input).
 const MARCH = Date.UTC(2025, 2, 14);
-const inUtc = (ms: number) =>
-  new Date(ms).toLocaleDateString(undefined, { timeZone: "UTC" });
 const SENTINEL_2023 = Date.UTC(2023, 6, 1, 12);
 
 describe("formatCompletionDate", () => {
-  it("shows the date for a dated solve, absent precision included", () => {
-    const expected = inUtc(MARCH);
-    expect(formatCompletionDate(tEn, { startDate: 0, endDate: MARCH })).toBe(
-      expected,
-    );
+  // The date follows the app locale, never the server's or browser's (UX-63).
+  it("shows the date for a dated solve in the app locale, absent precision included", () => {
     expect(
-      formatCompletionDate(tEn, {
+      formatCompletionDate(tEn, fmtEn, { startDate: 0, endDate: MARCH }),
+    ).toBe("Mar 14, 2025");
+    expect(
+      formatCompletionDate(tNl, fmtNl, {
         startDate: 0,
         endDate: MARCH,
         datePrecision: "day",
       }),
-    ).toBe(expected);
+    ).toBe("14 mrt 2025");
   });
 
   it("falls back to the start date when there is no end", () => {
-    expect(formatCompletionDate(tEn, { startDate: MARCH })).toBe(inUtc(MARCH));
+    expect(formatCompletionDate(tEn, fmtEn, { startDate: MARCH })).toBe(
+      "Mar 14, 2025",
+    );
   });
 
-  describe.each(["America/Los_Angeles", "Europe/Amsterdam"])(
-    "in %s",
+  it.each(["America/Los_Angeles", "Europe/Amsterdam"])(
+    "shows the calendar date the member picked in %s, not the day before",
     (zone) => {
-      afterEach(() => {
-        vi.unstubAllEnvs();
-      });
-
-      it("shows the calendar date the member picked, not the day before", () => {
-        vi.stubEnv("TZ", zone);
-        // Noon UTC is the same calendar day in both zones, so its local date is the expected one.
-        const sameDayLocal = new Date(
-          Date.UTC(2025, 2, 14, 12),
-        ).toLocaleDateString();
-        expect(
-          formatCompletionDate(tEn, { startDate: MARCH, endDate: MARCH }),
-        ).toBe(sameDayLocal);
-      });
+      const format = createFormatter({ locale: "en", timeZone: zone });
+      expect(
+        formatCompletionDate(tEn, format, { startDate: MARCH, endDate: MARCH }),
+      ).toBe("Mar 14, 2025");
     },
   );
 
@@ -74,8 +66,8 @@ describe("formatCompletionDate", () => {
       endDate: SENTINEL_2023,
       datePrecision: "year" as const,
     };
-    expect(formatCompletionDate(tEn, solve)).toBe("In 2023");
-    expect(formatCompletionDate(tNl, solve)).toBe("In 2023");
+    expect(formatCompletionDate(tEn, fmtEn, solve)).toBe("In 2023");
+    expect(formatCompletionDate(tNl, fmtNl, solve)).toBe("In 2023");
   });
 
   it("labels an undated solve as date unknown", () => {
@@ -84,8 +76,8 @@ describe("formatCompletionDate", () => {
       endDate: MARCH,
       datePrecision: "unknown" as const,
     };
-    expect(formatCompletionDate(tEn, solve)).toBe("Date unknown");
-    expect(formatCompletionDate(tNl, solve)).toBe("Datum onbekend");
+    expect(formatCompletionDate(tEn, fmtEn, solve)).toBe("Date unknown");
+    expect(formatCompletionDate(tNl, fmtNl, solve)).toBe("Datum onbekend");
   });
 });
 
@@ -256,35 +248,35 @@ describe("formatCompletionMeta", () => {
   });
 
   it("shows pieces and the typed time", () => {
-    expect(formatCompletionMeta(tEn, finished(DAY, 200), 1000)).toBe(
+    expect(formatCompletionMeta(tEn, fmtEn, finished(DAY, 200), 1000)).toBe(
       "1,000 pieces · 3h 20m",
     );
-    expect(formatCompletionMeta(tNl, finished(DAY, 200), 1000)).toBe(
+    expect(formatCompletionMeta(tNl, fmtNl, finished(DAY, 200), 1000)).toBe(
       "1.000 stukjes · 3 u 20 min",
     );
   });
 
   it("says a same-day solve without a typed time took one day", () => {
-    expect(formatCompletionMeta(tEn, finished(DAY, 1440), 500)).toBe(
+    expect(formatCompletionMeta(tEn, fmtEn, finished(DAY, 1440), 500)).toBe(
       "500 pieces · in one day",
     );
-    expect(formatCompletionMeta(tNl, finished(DAY, 1440), 500)).toBe(
+    expect(formatCompletionMeta(tNl, fmtNl, finished(DAY, 1440), 500)).toBe(
       "500 stukjes · op één dag",
     );
   });
 
   it("says a solve without a typed time spread over the calendar days it spans", () => {
     const end = DAY + 2 * 86_400_000;
-    expect(formatCompletionMeta(tEn, finished(end, 2880), 1000)).toBe(
+    expect(formatCompletionMeta(tEn, fmtEn, finished(end, 2880), 1000)).toBe(
       "1,000 pieces · over 3 days",
     );
-    expect(formatCompletionMeta(tNl, finished(end, 2880), 1000)).toBe(
+    expect(formatCompletionMeta(tNl, fmtNl, finished(end, 2880), 1000)).toBe(
       "1.000 stukjes · verspreid over 3 dagen",
     );
   });
 
   it("leads with Completed when the piece count is unknown", () => {
-    expect(formatCompletionMeta(tEn, finished(DAY, 200))).toBe(
+    expect(formatCompletionMeta(tEn, fmtEn, finished(DAY, 200))).toBe(
       "Completed · 3h 20m",
     );
   });
@@ -293,18 +285,24 @@ describe("formatCompletionMeta", () => {
     expect(
       formatCompletionMeta(
         tEn,
+        fmtEn,
         finished(SENTINEL_2023, undefined, "year"),
         1000,
       ),
     ).toBe("1,000 pieces");
-    expect(formatCompletionMeta(tNl, finished(DAY, undefined, "unknown"))).toBe(
-      "Voltooid",
-    );
+    expect(
+      formatCompletionMeta(tNl, fmtNl, finished(DAY, undefined, "unknown")),
+    ).toBe("Voltooid");
   });
 
   it("shows when an in-progress solve started, as the calendar date picked", () => {
     expect(
-      formatCompletionMeta(tEn, { isCompleted: false, startDate: DAY }, 1000),
-    ).toBe(`Started ${inUtc(DAY)}`);
+      formatCompletionMeta(
+        tEn,
+        fmtEn,
+        { isCompleted: false, startDate: DAY },
+        1000,
+      ),
+    ).toBe("Started Oct 12, 2026");
   });
 });

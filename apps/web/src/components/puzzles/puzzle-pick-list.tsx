@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Check, Info, Plus } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { addCopyHref, PuzzleCard } from "./puzzle-card";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
 
@@ -27,6 +27,7 @@ export function PuzzlePickList({
 }) {
   const t = useTranslations("puzzles");
   const tPicker = useTranslations("cataloguePicker");
+  const format = useFormatter();
   const onShelf = (puzzle: Puzzle) =>
     !!puzzle.aggregateId && ownedDefinitionIds.has(puzzle.aggregateId);
 
@@ -42,7 +43,7 @@ export function PuzzlePickList({
                 followed by what it does. */}
             <Link
               href={addCopyHref(puzzle._id)}
-              className="hover:bg-accent focus-visible:ring-ring/50 flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-reduce:transition-none"
+              className="hover:bg-accent focus-visible:ring-ring flex min-h-12 min-w-0 flex-1 items-center gap-3 py-2 pl-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset motion-reduce:transition-none"
             >
               <span className="bg-muted size-10 shrink-0 overflow-hidden rounded-md">
                 {puzzle.image && (
@@ -72,7 +73,7 @@ export function PuzzlePickList({
                     {[
                       puzzle.brand,
                       puzzle.pieceCount &&
-                        `${puzzle.pieceCount} ${t("pieces")}`,
+                        `${format.number(puzzle.pieceCount)} ${t("pieces", { count: puzzle.pieceCount })}`,
                     ]
                       .filter(Boolean)
                       .join(" · ")}

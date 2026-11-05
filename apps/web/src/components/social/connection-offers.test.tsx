@@ -68,6 +68,17 @@ const byTag = (html: string, tag: string) =>
   elementsOf(html).filter((el) => el.tagName === tag);
 
 describe("ConnectionOfferList", () => {
+  // The strip sits right under the page h1 (dashboard, People), so its title is an h2 (UX-66).
+  it("titles the strip with an h2", () => {
+    const html = render([ann]);
+    const headings = elementsOf(html).filter((el) =>
+      /^h[1-6]$/.test(el.tagName),
+    );
+    expect(headings.map((h) => [h.tagName, textOf(h)])).toEqual([
+      ["h2", "Invitations"],
+    ]);
+  });
+
   it("names the inviter and asks to follow each other, with both answers", () => {
     const html = render([ann]);
     expect(byTag(html, "p").map(textOf)).toEqual([

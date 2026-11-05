@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_dashboard/profile")({
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "profile") }],
   }),
-  pendingComponent: () => <PageLoading message="Loading profile..." />,
+  pendingComponent: () => <PageLoading />,
   component: ProfilePage,
 });
 

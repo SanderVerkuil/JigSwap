@@ -101,7 +101,7 @@ export function ImportZone({
         className="mt-2 min-h-[18px] sm:ml-10"
       >
         {state.status === "ready" && !state.match && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-jigsaw-secondary">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-jigsaw-secondary-text">
             <CircleCheck className="size-3.5" /> {t("importImported")}
           </span>
         )}

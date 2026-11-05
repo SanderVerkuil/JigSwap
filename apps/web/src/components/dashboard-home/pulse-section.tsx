@@ -49,7 +49,7 @@ const srOnly = (chunks: ReactNode) => <span className="sr-only">{chunks}</span>;
 // Completed green — everything else muted.
 const PILL_TONES: Record<string, string> = {
   proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
+  accepted: "bg-jigsaw-primary/10 text-primary-text",
   disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
   completed: "bg-green-500/15 text-green-700 dark:text-green-400",
 };
@@ -59,7 +59,7 @@ const DOT_TONES: Record<string, string> = {
   proposed: "bg-jigsaw-warning",
   accepted: "bg-jigsaw-primary",
   disputed: "bg-jigsaw-warning",
-  completed: "bg-jigsaw-secondary",
+  completed: "bg-jigsaw-secondary-strong",
 };
 
 function StatusPill({ status }: { status: ExchangeRow["status"] }) {

@@ -506,7 +506,7 @@ describe("ExchangeActions: Dutch", () => {
     });
     expect(screen.getByText("Jouw beurt")).toBeTruthy();
     expect(screen.getByText("Anna heeft 2 uur geleden bevestigd")).toBeTruthy();
-    fireEvent.click(button("Markeren als Voltooid"));
+    fireEvent.click(button("Markeren als voltooid"));
     expect(
       screen.getByText(
         "Anna heeft al bevestigd, dus met jouw bevestiging is de uitwisseling afgerond. Bij afronding gaat de lening in: Anna houdt “Harbour Lights” tot die wordt teruggegeven, en de puzzel blijft in je bibliotheek.",

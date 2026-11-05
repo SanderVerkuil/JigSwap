@@ -8,7 +8,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 import { useEffect } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // A member's public reputation on their own /profile: a summary line (avg
 // stars, count, credibility hint) plus the reviews they have RECEIVED, newest
@@ -33,6 +33,7 @@ function credibilityKey(credibility: number): "low" | "medium" | "high" {
 
 export function ReputationSection({ memberId }: ReputationSectionProps) {
   const t = useTranslations("reputation");
+  const format = useFormatter();
 
   const { data: profile } = useQuery(
     convexQuery(gateway.reputation.profile, memberId ? { memberId } : "skip"),
@@ -94,7 +95,10 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <div className="flex items-center gap-2">
             <span className="font-heading text-3xl leading-none font-bold">
-              {profile.averageRating.toFixed(1)}
+              {format.number(profile.averageRating, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
             </span>
             <StarRating value={Math.round(profile.averageRating)} size="sm" />
           </div>
@@ -119,7 +123,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
               <div className="flex items-center justify-between gap-2">
                 <StarRating value={review.rating} size="sm" />
                 <span className="text-muted-foreground text-xs">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                  {format.dateTime(review.createdAt, { dateStyle: "medium" })}
                 </span>
               </div>
 

@@ -98,10 +98,7 @@ export function Sparkbars({
               data-month-label
               className="text-muted-foreground min-w-0 flex-1 text-center text-xs whitespace-nowrap"
             >
-              {format.dateTime(monthStart(month), {
-                month: "short",
-                timeZone: DATE_ONLY_TIME_ZONE,
-              })}
+              {monthLabel(format, month)}
             </span>
           ))}
         </div>
@@ -130,4 +127,15 @@ export function Sparkbars({
       </table>
     </figure>
   );
+}
+
+// Short month label in the app locale ("Jan", "mrt") from a "YYYY-MM" bucket, read in UTC.
+export function monthLabel(
+  format: ReturnType<typeof useFormatter>,
+  bucket: string,
+): string {
+  return format.dateTime(monthStart(bucket), {
+    month: "short",
+    timeZone: DATE_ONLY_TIME_ZONE,
+  });
 }

@@ -14,7 +14,7 @@ import { Link as RouterLink } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { useMemo } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
 
@@ -139,6 +139,7 @@ function StatRow({
 // ground, no stat cards.
 export function ShelfSection() {
   const t = useTranslations("dashboard.shelf");
+  const format = useFormatter();
   const isMobile = useIsMobile();
   const { member, isMemberLoading } = useCurrentMember();
 
@@ -223,7 +224,12 @@ export function ShelfSection() {
     rating: {
       href: "/profile",
       hash: "reviews",
-      value: stats?.averageRating ? stats.averageRating.toFixed(1) : "—",
+      value: stats?.averageRating
+        ? format.number(stats.averageRating, {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })
+        : "—",
       label: t("stats.ratingLabel"),
       sub: t("stats.ratingSub", { count: totalReviews }),
     },

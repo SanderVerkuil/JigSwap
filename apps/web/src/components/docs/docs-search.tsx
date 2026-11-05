@@ -71,7 +71,7 @@ export function DocsSearch({
           {/* 16px on phones so iOS doesn't zoom the page when the input takes
               focus; the shared CommandInput stays text-sm elsewhere. */}
           <CommandInput
-            className="text-base md:text-sm"
+            className="text-base md:not-pointer-coarse:text-sm"
             placeholder={t("searchPlaceholder")}
             value={query}
             onValueChange={setQuery}

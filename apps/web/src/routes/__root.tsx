@@ -15,6 +15,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as React from "react";
+import { RouteAnnouncer } from "../components/a11y/route-announcer";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
@@ -192,6 +193,11 @@ const clerkAppearance = {
     colorSuccess: "var(--jigsaw-success)",
     colorWarning: "var(--jigsaw-warning)",
   },
+  // Clerk's fields are 13px, and iOS zooms the page into any field under 16px on focus. On touch,
+  // only the input text goes to 16px (not Clerk's global fontSize, which would scale every label).
+  elements: {
+    formFieldInput: { "@media (pointer: coarse)": { fontSize: "16px" } },
+  },
 } as const;
 
 function RootComponent() {
@@ -226,6 +232,8 @@ function RootComponent() {
             now={intl.now}
             cspNonce={cspNonce}
           >
+            {/* Speaks each new page title and moves focus to its main content (UX-68). */}
+            <RouteAnnouncer />
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>

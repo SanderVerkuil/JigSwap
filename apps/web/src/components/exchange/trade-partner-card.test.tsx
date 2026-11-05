@@ -160,6 +160,12 @@ describe("TradePartnerCard", () => {
     expect(skewed.textContent).not.toContain("@mara");
   });
 
+  // The average uses the app locale's decimal separator (UX-63).
+  it("shows the average rating with a Dutch decimal comma", () => {
+    renderCard(revealed(), { locale: "nl" });
+    expect(screen.getByText("4,5")).toBeTruthy();
+  });
+
   it("omits the email when the viewer may not see it", () => {
     renderCard(revealed({ email: undefined }));
     expect(screen.queryByText(/@example\.test/)).toBeNull();

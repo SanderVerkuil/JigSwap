@@ -48,7 +48,7 @@ export function PuzzleDetail({
   );
 
   if (isPending || ownedPuzzle === undefined) {
-    return <PageLoading message="Loading puzzle..." />;
+    return <PageLoading />;
   }
 
   if (ownedPuzzle === null) {

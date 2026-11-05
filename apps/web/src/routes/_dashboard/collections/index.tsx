@@ -142,7 +142,7 @@ function CollectionsPage() {
               <div key={collection._id} className="relative">
                 <Link
                   href={`/collections/${collection._id}`}
-                  className="bg-card focus-visible:ring-ring/50 flex h-full gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow outline-none hover:shadow-md focus-visible:ring-[3px]"
+                  className="bg-card focus-visible:ring-ring flex h-full gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow outline-none hover:shadow-md focus-visible:ring-2"
                 >
                   <CoverChip
                     color={collection.color || chipColor(index)}

@@ -22,7 +22,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import type { Member } from "./member-view";
 import { PRIVACY_SECTION_ID } from "./privacy-section";
 
@@ -46,6 +46,7 @@ export function IdentityHeader({
 }) {
   const t = useTranslations("profile");
   const tPublic = useTranslations("members.profile");
+  const format = useFormatter();
   const displayName = useMemberDisplayName();
   const { user } = useUser();
   const { data: reputation } = useQuery(
@@ -84,7 +85,7 @@ export function IdentityHeader({
     <header className="flex flex-wrap items-center gap-x-5 gap-y-4 border-b pb-6">
       <Avatar className="size-[84px]">
         <AvatarImage src={avatarSrc} alt={name} />
-        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-jigsaw-primary text-2xl font-bold">
+        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-primary-text text-2xl font-bold">
           <MemberInitial source={nameSource} />
         </AvatarFallback>
       </Avatar>
@@ -133,7 +134,10 @@ export function IdentityHeader({
           <Badge className="bg-jigsaw-success border-transparent text-white">
             <Star aria-hidden className="fill-current" />
             {tPublic("ratingPill", {
-              rating: reputation.averageRating.toFixed(1),
+              rating: format.number(reputation.averageRating, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              }),
               reviewCount: reputation.reviewCount,
             })}
           </Badge>

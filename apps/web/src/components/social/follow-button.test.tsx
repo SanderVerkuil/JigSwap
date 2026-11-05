@@ -63,6 +63,7 @@ const renderButton = (
   relation: Relation,
   iconOnly = false,
   locale: "en" | "nl" = "en",
+  memberName = "Mara",
 ) => {
   // The relation is seeded (Convex queries never go stale); the default queryFn serves the
   // same relation, so react-query has a queryFn without a Convex client behind it.
@@ -80,7 +81,11 @@ const renderButton = (
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <FollowButton memberId={MARA} memberName="Mara" iconOnly={iconOnly} />
+        <FollowButton
+          memberId={MARA}
+          memberName={memberName}
+          iconOnly={iconOnly}
+        />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -147,7 +152,9 @@ describe("FollowButton (following)", () => {
       }),
     );
     await waitFor(() =>
-      expect(mocks.toastSuccess).toHaveBeenLastCalledWith("Following"),
+      expect(mocks.toastSuccess).toHaveBeenLastCalledWith(
+        "You now follow Mara",
+      ),
     );
   });
 
@@ -350,4 +357,36 @@ describe("FollowButton labelled icon spacing", () => {
       );
     }
   });
+});
+
+// The follow toast says whom you now follow; Dutch never stops at "Je volgt nu" (UX-65).
+describe("FollowButton toast", () => {
+  const NOT_FOLLOWING: Relation = { ...FOLLOWING_PUBLIC, following: false };
+
+  beforeEach(() => {
+    mocks.mutation.mockResolvedValue({ kind: "followed", id: "f1" });
+  });
+
+  it.each([
+    ["en", "Follow", "You now follow Mara"],
+    ["nl", "Volgen", "Je volgt Mara nu"],
+  ] as const)("names the member in %s", async (locale, label, toast) => {
+    renderButton(NOT_FOLLOWING, false, locale);
+    fireEvent.click(screen.getByRole("button", { name: label }));
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith(toast));
+  });
+
+  it.each([
+    ["en", "Follow", "Following"],
+    ["nl", "Volgen", "Je volgt dit lid nu"],
+  ] as const)(
+    "still reads as a whole sentence without a name in %s",
+    async (locale, label, toast) => {
+      renderButton(NOT_FOLLOWING, false, locale, "");
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      await waitFor(() =>
+        expect(mocks.toastSuccess).toHaveBeenCalledWith(toast),
+      );
+    },
+  );
 });

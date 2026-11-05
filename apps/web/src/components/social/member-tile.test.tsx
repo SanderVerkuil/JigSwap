@@ -53,7 +53,11 @@ type Seed = {
 
 const render = (
   seed: Seed,
-  props: { followsYou?: boolean; hideLocation?: boolean } = {},
+  props: {
+    followsYou?: boolean;
+    hideLocation?: boolean;
+    headingLevel?: 2 | 3;
+  } = {},
   locale: "en" | "nl" = "en",
 ) => {
   // No network: SSR never runs effects, so queries only read the seeded cache.
@@ -167,6 +171,19 @@ describe("MemberTile", () => {
     // Only text inside the link: no nested elements (buttons, links, ...).
     expect(link.childNodes.every((child) => !isElement(child))).toBe(true);
     expect(textOf(link)).toBe("Hans-Peter van den Berg");
+  });
+
+  // A grid directly under the page h1 asks for h2 names; nested grids keep h3 (UX-66).
+  it.each([
+    [undefined, "h3"],
+    [2, "h2"],
+  ] as const)("names the member at headingLevel %s as %s", (level, tag) => {
+    const html = render({ stats: rated }, { headingLevel: level });
+    const headings = elementsOf(html).filter((el) =>
+      /^h[1-6]$/.test(el.tagName),
+    );
+    expect(headings.map((h) => h.tagName)).toEqual([tag]);
+    expect(textOf(headings[0]!)).toBe("Hans-Peter van den Berg");
   });
 
   it("does not nest the action buttons inside the link", () => {

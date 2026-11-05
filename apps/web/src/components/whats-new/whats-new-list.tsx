@@ -237,7 +237,7 @@ function EntryCard({
               aria-describedby={titleId}
               className={cn(
                 "text-primary-text inline-flex cursor-pointer list-none items-center gap-1 rounded-sm text-sm font-medium underline-offset-2 hover:underline [&::-webkit-details-marker]:hidden",
-                "focus-visible:ring-ring/50 outline-none focus-visible:ring-[3px]",
+                "focus-visible:ring-ring outline-none focus-visible:ring-2",
                 TOUCH_TARGET,
               )}
             >

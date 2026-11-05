@@ -6,6 +6,7 @@ import {
 } from "@/components/library/condition";
 import {
   PuzzleCardShell,
+  type PuzzleCardShellProps,
   type PuzzleCardView,
 } from "@/components/puzzles/puzzle-card-shell";
 // Re-export the consolidated provider so existing call sites that import
@@ -119,6 +120,8 @@ interface PuzzleCardProps {
   // Optional lending slot (e.g. an "on loan to X" badge + Recall action). The page owns the loan
   // data so the card stays generic; rendered above the action row when provided.
   loanBadge?: ReactNode;
+  /** Card title heading level; 2 when the grid sits directly under the page h1. */
+  headingLevel?: PuzzleCardShellProps["headingLevel"];
   className?: string;
 }
 
@@ -152,6 +155,8 @@ const CORNER_CHIP_CLASS = [
 
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
+  /** The card's puzzle title: names the trigger so each card's menu is distinguishable. */
+  title: string;
   onLogSolve?: (id: Id<"ownedPuzzles">) => void;
   onStartSolve?: (id: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
@@ -170,6 +175,7 @@ interface PuzzleOverflowMenuProps {
 
 function PuzzleOverflowMenu({
   ownedId,
+  title,
   onLogSolve,
   onStartSolve,
   solveInProgress = false,
@@ -207,7 +213,7 @@ function PuzzleOverflowMenu({
           <button
             ref={triggerRef}
             type="button"
-            aria-label={t("overflowMenu.ariaLabel")}
+            aria-label={t("overflowMenu.ariaLabelFor", { title })}
             onClick={(e) => e.stopPropagation()}
             // `data-[state=open]` pins opacity + a subtle bg while the menu is open.
             className={`${CORNER_CHIP_CLASS} text-foreground data-[state=open]:opacity-100 data-[state=open]:bg-accent`}
@@ -339,6 +345,7 @@ export function PuzzleCard({
   showCollectionDropdown = false,
   owner,
   loanBadge,
+  headingLevel,
   className = "",
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
@@ -487,6 +494,7 @@ export function PuzzleCard({
       {showOverflowMenu && (
         <PuzzleOverflowMenu
           ownedId={ownedId}
+          title={view.title}
           onLogSolve={onLogSolve}
           onStartSolve={onStartSolve}
           solveInProgress={solveInProgress}
@@ -645,6 +653,7 @@ export function PuzzleCard({
       imageFit={imageFit}
       imageSizes={imageSizes}
       imageChecking={imageChecking}
+      headingLevel={headingLevel}
       className={className}
     />
   );

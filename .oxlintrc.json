@@ -233,6 +233,25 @@
             ]
           }
         ],
+        // Locale-less toLocale*() formats with the server's or browser's locale, not the app's,
+        // and breaks hydration (UX-63). use-intl's useFormatter() is pinned to the app locale and
+        // time zone. An explicit locale argument is banned too: dates would still use the
+        // runtime's time zone, which differs between SSR and the browser.
+        "eslint/no-restricted-properties": [
+          "error",
+          {
+            "property": "toLocaleString",
+            "message": "Format with useFormatter() (format.number / format.dateTime) so the app locale and time zone apply; outside a component, pass the hook's format into the helper. Use an explicit Intl.*Format only for deliberately fixed-locale text."
+          },
+          {
+            "property": "toLocaleDateString",
+            "message": "Format with useFormatter().dateTime so the app locale and time zone apply (an explicit locale still uses the runtime's time zone). Outside a component, pass the hook's format into the helper."
+          },
+          {
+            "property": "toLocaleTimeString",
+            "message": "Format with useFormatter().dateTime so the app locale and time zone apply (an explicit locale still uses the runtime's time zone). Outside a component, pass the hook's format into the helper."
+          }
+        ],
         "nextjs/no-head-element": "off",
         "nextjs/no-html-link-for-pages": "off"
       }

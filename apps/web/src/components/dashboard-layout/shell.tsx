@@ -12,6 +12,7 @@
 // sheet; the content sits on the plain background with no inset card or page
 // head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
 // its trigger lives in the (hidden) desktop top bar.
+import { MAIN_CONTENT_ID, SkipLink } from "@/components/a11y/skip-link";
 import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
@@ -38,6 +39,7 @@ import {
 } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
+import { ShellHeading } from "./shell-title";
 import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
@@ -100,11 +102,17 @@ export function DashboardShell({
           onOpenChange={setSidebarOpen}
           className="flex-col md:h-svh md:overflow-hidden"
         >
+          {/* First Tab stop: jumps past the top bar and sidebar to the main landmark. */}
+          <SkipLink />
           <TopBar onOpenPalette={() => setPaletteOpen(true)} />
           <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
           <div className="flex flex-1 md:min-h-0">
             <AppSidebar />
-            <SidebarInset className="md:min-h-0 md:overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0">
+            <SidebarInset
+              id={MAIN_CONTENT_ID}
+              tabIndex={-1}
+              className="md:min-h-0 md:overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0"
+            >
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
@@ -189,6 +197,8 @@ function ContentArea({
         fullBleed && "md:flex md:min-h-0 md:max-w-none md:flex-1 md:p-0",
       )}
     >
+      {/* The page's h1 on phones, where the page head is hidden. */}
+      <ShellHeading />
       <MobilePageActions />
       {children}
     </div>

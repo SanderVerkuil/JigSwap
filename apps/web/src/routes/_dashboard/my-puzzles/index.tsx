@@ -139,7 +139,7 @@ function ActionsCoachmark() {
         size="icon"
         aria-label={t("dismiss")}
         onClick={handleDismiss}
-        className="-my-1.5 -mr-2 size-9 shrink-0 hover:text-foreground"
+        className="-my-1.5 -mr-2 size-9 shrink-0 hover:text-foreground pointer-coarse:-my-2.5 pointer-coarse:-mr-3 pointer-coarse:size-11"
       >
         <X aria-hidden />
       </Button>
@@ -422,6 +422,7 @@ function PuzzlesPage() {
             variant={viewMode === "grid" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("gridView")}
+            aria-pressed={viewMode === "grid"}
             onClick={() => setSearch({ view: undefined })}
           >
             <Grid className="h-4 w-4" />
@@ -430,6 +431,7 @@ function PuzzlesPage() {
             variant={viewMode === "list" ? "secondary" : "ghost"}
             size="icon"
             aria-label={t("listView")}
+            aria-pressed={viewMode === "list"}
             onClick={() => setSearch({ view: "list" })}
           >
             <List className="h-4 w-4" />
@@ -501,6 +503,7 @@ function PuzzlesPage() {
             const selectable = isSelectable(puzzle);
             return (
               <PuzzleCard
+                headingLevel={2}
                 key={puzzle._id}
                 puzzle={puzzle}
                 // While selecting, a tap selects (no navigation, no ⋯ menu); a copy the viewer

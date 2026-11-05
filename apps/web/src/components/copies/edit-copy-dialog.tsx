@@ -49,7 +49,7 @@ const ACQUISITION_SOURCES: readonly AcquisitionSource[] = [
 ];
 const FIRST_ACQUISITION_YEAR = 1950;
 const selectClass =
-  "bg-card focus:ring-primary h-10 w-full rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:h-9 md:text-sm";
+  "bg-card focus:ring-primary h-10 w-full rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:h-9 md:not-pointer-coarse:text-sm";
 
 // Owner-only inline editor for a single owned copy. Each field maps to a granular Library
 // mutation; on save we diff against the loaded snapshot and fire only the mutations whose value

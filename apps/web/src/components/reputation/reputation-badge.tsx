@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Star } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // A compact, droppable trust signal (avg stars + review count) shown next to a member's name.
 // Self-fetches its own reputation profile so callers only need to pass a memberId; renders
@@ -18,6 +18,7 @@ interface ReputationBadgeProps {
 
 export function ReputationBadge({ memberId, className }: ReputationBadgeProps) {
   const t = useTranslations("reputation");
+  const format = useFormatter();
   const { data: profile } = useQuery(
     convexQuery(gateway.reputation.profile, memberId ? { memberId } : "skip"),
   );
@@ -42,7 +43,10 @@ export function ReputationBadge({ memberId, className }: ReputationBadgeProps) {
     >
       <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
       <span className="font-medium text-foreground">
-        {profile.averageRating.toFixed(1)}
+        {format.number(profile.averageRating, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })}
       </span>
       <span>({profile.reviewCount})</span>
     </span>

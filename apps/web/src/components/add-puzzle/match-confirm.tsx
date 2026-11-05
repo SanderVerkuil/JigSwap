@@ -1,7 +1,7 @@
 // apps/web/src/components/add-puzzle/match-confirm.tsx
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export function MatchConfirm({
   match,
@@ -13,14 +13,16 @@ export function MatchConfirm({
   onIgnore: () => void;
 }) {
   const t = useTranslations("puzzles");
+  const format = useFormatter();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
       <span className="text-sm">
         {t("matchFoundLead")}{" "}
         <strong>
           {match.title}
-          {match.brand ? ` · ${match.brand}` : ""} · {match.pieceCount}{" "}
-          {t("pieces")}
+          {match.brand ? ` · ${match.brand}` : ""} ·{" "}
+          {format.number(match.pieceCount)}{" "}
+          {t("pieces", { count: match.pieceCount })}
         </strong>{" "}
         {t("matchFoundTail")}
       </span>

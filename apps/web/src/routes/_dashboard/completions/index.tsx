@@ -34,7 +34,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 type DialogState = CompletionDialogRequest | null;
 
@@ -67,6 +67,7 @@ function CompletionsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.completions");
   const tCommon = useTranslations("common");
+  const format = useFormatter();
   const [dialog, setDialog] = useState<DialogState>(null);
   // The dialogs have no Radix trigger, so focus returns to the row action that opened them.
   const dialogOpenerRef = useReturnFocus(dialog !== null);
@@ -205,7 +206,7 @@ function CompletionsPage() {
       <StatRow
         stats={[
           { label: t("stats.completed"), value: String(finished.length) },
-          { label: t("stats.pieces"), value: piecesPlaced.toLocaleString() },
+          { label: t("stats.pieces"), value: format.number(piecesPlaced) },
           { label: t("stats.thisYear"), value: String(thisYear) },
         ]}
       />

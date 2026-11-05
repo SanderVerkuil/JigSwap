@@ -269,13 +269,15 @@ function AuthedMemberPage({
   usePageHeader(
     () => ({
       title: name,
+      // ProfileBody's hero renders the name as this page's h1 once `me` resolves.
+      ownsHeading: Boolean(me),
       crumbs: [
         { label: tShell("groups.community.label"), href: "/community" },
         { label: tShell("pages.members.title"), href: "/people" },
       ],
       activeNavKey: "people",
     }),
-    [name, tShell],
+    [name, tShell, Boolean(me)],
   );
 
   // `me` unresolved -> loading OR the post-signup provisioning race (null):

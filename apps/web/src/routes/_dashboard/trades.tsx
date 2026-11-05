@@ -246,7 +246,7 @@ function ExchangesPage() {
                     ),
                   })
                 }
-                className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
+                className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:not-pointer-coarse:text-sm pointer-coarse:h-11"
                 aria-label={t("statusFilter")}
               >
                 <option value="all">{t("allStatuses")}</option>

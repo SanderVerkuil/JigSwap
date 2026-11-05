@@ -112,7 +112,7 @@ function DiscoverabilityNotice() {
         type="button"
         aria-label={t("dismiss")}
         onClick={handleDismiss}
-        className="hover:bg-accent hover:text-foreground focus-visible:ring-ring shrink-0 rounded p-0.5 focus-visible:ring-2 focus-visible:outline-none"
+        className="hover:bg-accent hover:text-foreground focus-visible:ring-ring shrink-0 rounded p-0.5 focus-visible:ring-2 focus-visible:outline-none pointer-coarse:-m-3 pointer-coarse:p-3.5"
       >
         <X className="h-4 w-4" />
       </button>
@@ -150,6 +150,7 @@ function NetworkTab({
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
           {members.map(([memberId, { followsYou }]) => (
             <MemberTile
+              headingLevel={2}
               key={memberId}
               memberId={memberId as Id<"users">}
               followsYou={followsYou}

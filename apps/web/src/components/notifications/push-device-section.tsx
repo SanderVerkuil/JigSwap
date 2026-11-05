@@ -40,7 +40,7 @@ export function PushDeviceSection() {
     row = (
       <>
         <span className="text-muted-foreground flex items-center gap-2 text-sm">
-          <BellRing className="text-jigsaw-secondary h-4 w-4" />
+          <BellRing className="text-jigsaw-secondary-text h-4 w-4" />
           {t("pushEnabledOnDevice")}
         </span>
         <Button variant="outline" size="sm" disabled={busy} onClick={disable}>

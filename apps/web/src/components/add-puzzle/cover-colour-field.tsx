@@ -1,4 +1,5 @@
 // apps/web/src/components/add-puzzle/cover-colour-field.tsx
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import {
   Tooltip,
   TooltipContent,
@@ -172,17 +173,16 @@ export function CoverColourField({
           const isBest = !opt.uploaded && best === opt.url;
           const measured = d && d.w > 0;
 
+          const size = measured
+            ? `, ${t("coverPhotoSize", { width: d.w, height: d.h })}`
+            : "";
           let ariaLabel: string;
           if (opt.uploaded) {
-            ariaLabel = `${t("coverPhoto")} (uploaded)`;
+            ariaLabel = t("coverPhotoUploaded");
           } else if (isBest) {
-            ariaLabel = `${t("coverPhoto")}, ${t("coverBestQuality")}${
-              measured ? `, ${d.w} by ${d.h}` : ""
-            }`;
+            ariaLabel = `${t("coverPhoto")}, ${t("coverBestQuality")}${size}`;
           } else {
-            ariaLabel = `${t("coverPhoto")}${
-              measured ? `, ${d.w} by ${d.h}` : ""
-            }`;
+            ariaLabel = `${t("coverPhoto")}${size}`;
           }
 
           return (
@@ -229,7 +229,7 @@ export function CoverColourField({
               {isBest && (
                 <span
                   aria-hidden
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-full bg-jigsaw-secondary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white shadow-sm ring-2 ring-card whitespace-nowrap"
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-0.5 rounded-full bg-jigsaw-secondary-strong px-1.5 py-0.5 text-[9px] font-semibold leading-none text-white shadow-sm ring-2 ring-card whitespace-nowrap"
                 >
                   <Star className="size-2.5" fill="currentColor" />
                   {t("coverBest")}
@@ -239,22 +239,20 @@ export function CoverColourField({
           );
         })}
 
-        {/* Upload photo */}
-        <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3.5 text-sm font-semibold text-muted-foreground hover:bg-accent">
+        {/* Upload photo: a real button (keyboard-reachable), styled as the dashed chip. */}
+        <FilePickButton
+          variant="ghost"
+          accept="image/*"
+          onFiles={([file]) => {
+            if (!file) return;
+            // Uploading is a manual pick: auto-select never replaces the member's own photo.
+            userPicked.current = true;
+            onUploadPhoto(file);
+          }}
+          className="gap-1.5 border border-dashed border-border px-3.5 font-semibold text-muted-foreground has-[>svg]:px-3.5"
+        >
           <Upload className="size-3.5" /> {t("uploadPhoto")}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              // Uploading is a manual pick: auto-select never replaces the member's own photo.
-              userPicked.current = true;
-              onUploadPhoto(file);
-            }}
-          />
-        </label>
+        </FilePickButton>
       </div>
     </TooltipProvider>
   );

@@ -10,7 +10,10 @@ import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import { Check, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { PuzzleCardShell } from "./puzzle-card-shell";
+import {
+  PuzzleCardShell,
+  type PuzzleCardShellProps,
+} from "./puzzle-card-shell";
 import { PUZZLE_GRID_COVER_SIZES } from "./puzzle-view-provider";
 
 // Catalog summary view DTO this card renders, derived from the recent-puzzles read it is fed by
@@ -27,6 +30,8 @@ interface PuzzleCardProps {
   variant?: "catalogue" | "pick";
   /** pick variant: the member already owns a copy of this puzzle ("On your shelf"). */
   onShelf?: boolean;
+  /** Card title heading level; 2 when the grid sits directly under the page h1. */
+  headingLevel?: PuzzleCardShellProps["headingLevel"];
 }
 
 // The add-a-copy form for a catalogue puzzle.
@@ -37,15 +42,23 @@ export function PuzzleCard({
   puzzle,
   variant = "catalogue",
   onShelf = false,
+  headingLevel,
 }: PuzzleCardProps) {
   return variant === "pick" ? (
-    <PickPuzzleCard puzzle={puzzle} onShelf={onShelf} />
+    <PickPuzzleCard
+      puzzle={puzzle}
+      onShelf={onShelf}
+      headingLevel={headingLevel}
+    />
   ) : (
-    <CataloguePuzzleCard puzzle={puzzle} />
+    <CataloguePuzzleCard puzzle={puzzle} headingLevel={headingLevel} />
   );
 }
 
-function CataloguePuzzleCard({ puzzle }: { puzzle: Puzzle }) {
+function CataloguePuzzleCard({
+  puzzle,
+  headingLevel,
+}: Pick<PuzzleCardProps, "puzzle" | "headingLevel">) {
   const t = useTranslations("puzzles");
   // Catalog-card strings (the favourite labels) live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
@@ -74,6 +87,7 @@ function CataloguePuzzleCard({ puzzle }: { puzzle: Puzzle }) {
       imageSizes={PUZZLE_GRID_COVER_SIZES}
       imageHref={`/puzzles/${puzzle._id}`}
       imageFit="contain"
+      headingLevel={headingLevel}
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
       actions={
         // The card opens the puzzle through its title's stretched link (one Tab stop per card), so
@@ -117,10 +131,8 @@ function CataloguePuzzleCard({ puzzle }: { puzzle: Puzzle }) {
 function PickPuzzleCard({
   puzzle,
   onShelf,
-}: {
-  puzzle: Puzzle;
-  onShelf: boolean;
-}) {
+  headingLevel,
+}: Pick<PuzzleCardProps, "puzzle" | "headingLevel"> & { onShelf: boolean }) {
   const t = useTranslations("puzzles");
   const tPicker = useTranslations("cataloguePicker");
   const boxArtInCheck = useBoxArtInCheck();
@@ -141,6 +153,7 @@ function PickPuzzleCard({
       }}
       // The chooser's auto-fill grid has the default grid's column bounds (PuzzlePickList).
       imageSizes={PUZZLE_GRID_COVER_SIZES}
+      headingLevel={headingLevel}
       imageHref={addHref}
       imageFit="contain"
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}

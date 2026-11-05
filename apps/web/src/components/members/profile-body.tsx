@@ -65,7 +65,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useRef, useState, type ComponentProps } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 export type PublicProfileView = NonNullable<
@@ -211,6 +211,7 @@ function HeroSection({
   requestedHandle?: string;
 }) {
   const t = useTranslations("members.profile");
+  const format = useFormatter();
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
@@ -236,10 +237,13 @@ function HeroSection({
               {name}
             </h1>
             {hero.reviewCount > 0 && (
-              <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
+              <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary-text inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
                 <Star className="size-3.5 fill-current" />
                 {t("ratingPill", {
-                  rating: hero.rating.toFixed(1),
+                  rating: format.number(hero.rating, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
                   reviewCount: hero.reviewCount,
                 })}
               </span>
@@ -562,6 +566,7 @@ function StorySection({
 // ── Stat strip ───────────────────────────────────────────────────────────────
 function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
   const t = useTranslations("members.profile");
+  const format = useFormatter();
   const cells = [
     { value: stats.puzzlesOwned, label: t("statOwned") },
     { value: stats.completions, label: t("statCompletions") },
@@ -575,8 +580,8 @@ function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
           key={cell.label}
           className={cn("px-3 text-center", i > 0 && "sm:border-l")}
         >
-          <div className="font-heading text-jigsaw-primary text-4xl leading-none font-bold">
-            {cell.value.toLocaleString()}
+          <div className="font-heading text-primary-text text-4xl leading-none font-bold">
+            {format.number(cell.value)}
           </div>
           <div className="text-muted-foreground mt-2 text-sm">{cell.label}</div>
         </div>
@@ -838,7 +843,7 @@ function InvitedBanner({
   if (kind === "household") {
     return (
       <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-col items-center gap-1 rounded-xl border px-4 py-3 text-center text-sm">
-        <p className="text-jigsaw-primary flex items-center justify-center gap-2 font-medium">
+        <p className="text-primary-text flex items-center justify-center gap-2 font-medium">
           <Sparkles className="size-4 shrink-0" />
           {t("householdInvitedYou", { name })}
         </p>
@@ -847,7 +852,7 @@ function InvitedBanner({
     );
   }
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-jigsaw-primary flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
+    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 text-primary-text flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-center text-sm font-medium">
       <Sparkles className="size-4 shrink-0" />
       {t("invitedYou", { name })}
     </div>

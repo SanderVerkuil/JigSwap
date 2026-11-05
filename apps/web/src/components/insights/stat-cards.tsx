@@ -2,7 +2,7 @@
 
 import { StatRow } from "@/components/library/stat-row";
 import { formatSolveTime } from "@/lib/completion-format";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export interface PersonalStats {
   completionsCount: number;
@@ -26,11 +26,17 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
   const t = useTranslations("insights.stats");
   // The completion log's duration format, so a time reads the same on both pages.
   const tSolve = useTranslations("solving.completions");
+  const format = useFormatter();
 
   // Null means "no ratings yet"; a 0 rating means the same in the legacy read model (mean of an
   // empty set), so both show the placeholder rather than a misleading 0.0.
   const formatRating = (rating: number | null): string =>
-    rating != null && rating > 0 ? rating.toFixed(1) : t("ratingNone");
+    rating != null && rating > 0
+      ? format.number(rating, {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })
+      : t("ratingNone");
 
   // Before the first finished solve the solve figures are only zeros, and the page shows an
   // empty state that says how to start (InsightsEmptyState), so the headline keeps what the

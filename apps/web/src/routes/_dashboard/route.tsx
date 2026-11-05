@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_dashboard")({
       sidebar: readSidebarCookies(),
     };
   },
-  pendingComponent: () => <PageLoading message="Loading dashboard..." />,
+  pendingComponent: () => <PageLoading />,
   // 404 inside the app renders within the dashboard shell (this layout's Outlet).
   notFoundComponent: AppNotFound,
   component: DashboardLayout,

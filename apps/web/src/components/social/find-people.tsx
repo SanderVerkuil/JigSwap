@@ -98,8 +98,10 @@ export function FindPeople() {
             role="list"
             aria-label={t("resultsLabel")}
           >
+            {/* Results sit level with the "Recently joined" h2 they replace. */}
             {results.map((member) => (
               <MemberTile
+                headingLevel={2}
                 key={member._id}
                 memberId={member._id as Id<"users">}
                 hideLocation

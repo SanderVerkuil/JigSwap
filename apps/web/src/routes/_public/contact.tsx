@@ -330,7 +330,7 @@ function ContactForm() {
             errors.message ? "contact-message-error" : undefined
           }
           className={cn(
-            "w-full resize-y text-base px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
+            "w-full resize-y text-base md:not-pointer-coarse:text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
             "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
             errors.message ? "border-mk-danger" : "border-mk-input-border",
           )}

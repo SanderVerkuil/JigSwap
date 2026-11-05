@@ -271,6 +271,7 @@ export function HouseholdPuzzles({
           <PuzzleViewProvider viewMode={viewMode}>
             {visible.map(({ copy, household: access }) => (
               <PuzzleCard
+                headingLevel={2}
                 key={copy._id}
                 puzzle={copy}
                 variant="default"

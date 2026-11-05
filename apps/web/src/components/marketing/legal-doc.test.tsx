@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { LegalDoc, type LegalSection } from "./legal-doc";
 
@@ -91,5 +97,16 @@ describe("LegalDoc contents", () => {
     expect(details).not.toBeNull();
     expect(details?.querySelector("summary")?.textContent).toBe("Contents");
     expect(hrefs(details as HTMLElement)).toEqual(["#p-who", "#p-cookies"]);
+  });
+
+  // A contents link is a plain jump to its hash, so nothing animates for a member who asked for
+  // reduced motion (UX-161).
+  it("jumps without a programmatic scroll", () => {
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    renderDoc();
+    const [sideNav] = screen.getAllByRole("navigation", { name: "Contents" });
+    fireEvent.click(within(sideNav).getAllByRole("link")[1]);
+    expect(scrollTo).not.toHaveBeenCalled();
+    scrollTo.mockRestore();
   });
 });

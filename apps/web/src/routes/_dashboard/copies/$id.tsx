@@ -40,6 +40,7 @@ import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
@@ -347,6 +348,8 @@ function CopyInstanceDetail({
   usePageHeader(
     () => ({
       title: snapshot.title,
+      // The body renders the title as this page's h1 below md; from md the head's h1 is it.
+      ownsHeading: "phone",
       crumbs: navCollection
         ? [
             { label: tShell("groups.library.label"), href: "/library" },
@@ -441,9 +444,9 @@ function CopyInstanceDetail({
           <p className="text-muted-foreground mt-1 text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
-              {snapshot.pieceCount.toLocaleString()}
+              {format.number(snapshot.pieceCount)}
             </span>{" "}
-            {tPuzzles("pieces")}
+            {tPuzzles("pieces", { count: snapshot.pieceCount })}
             {/* Only when the definition page would open for this viewer (not for a definition that
                 is no longer approved, unless they submitted it or are an admin). Hidden only on an
                 explicit false: web can deploy before the backend that sends the field, and an
@@ -453,7 +456,7 @@ function CopyInstanceDetail({
                 {" · "}
                 <Link
                   href={`/puzzles/${copy.puzzleId}`}
-                  className="text-jigsaw-primary font-semibold hover:underline"
+                  className="text-primary-text font-semibold hover:underline"
                 >
                   {t("viewPuzzlePage")}
                 </Link>
@@ -664,7 +667,7 @@ function CopyInstanceDetail({
                     <button
                       type="button"
                       onClick={() => openEditor("acquisition")}
-                      className="text-jigsaw-primary hover:underline"
+                      className="text-primary-text hover:underline"
                     >
                       {t("addDetails")}
                     </button>
@@ -769,7 +772,7 @@ function CopyInstanceDetail({
                 key={i}
                 icon={<CircleCheck className="h-4 w-4" />}
                 iconClass={
-                  c.isYou ? "bg-jigsaw-secondary" : "bg-jigsaw-primary"
+                  c.isYou ? "bg-jigsaw-secondary-strong" : "bg-jigsaw-primary"
                 }
                 last={i === copy.completions.length - 1}
                 title={
@@ -785,7 +788,7 @@ function CopyInstanceDetail({
                 }
                 sub={
                   (c.datePrecision ?? "day") !== "day"
-                    ? formatCompletionDate(tCompletions, {
+                    ? formatCompletionDate(tCompletions, format, {
                         startDate: c.occurredAt,
                         datePrecision: c.datePrecision,
                       })
@@ -838,7 +841,7 @@ function CopyInstanceDetail({
               <TimelineRow
                 key={i}
                 icon={<ArrowLeftRight className="h-4 w-4" />}
-                iconClass="bg-jigsaw-secondary"
+                iconClass="bg-jigsaw-secondary-strong"
                 last={i === copy.transfers.length - 1}
                 title={
                   tr.from.anonymous ? (
@@ -1062,9 +1065,6 @@ function PhotoStrip({
           : t(refusal.key, { max: photoLimit }),
       );
     },
-    onSettled: () => {
-      if (inputRef.current) inputRef.current.value = "";
-    },
   });
   const uploading = uploadPhoto.isPending;
   // Every photo shown here, placeholders included, takes one of the copy's places; once they are
@@ -1073,7 +1073,8 @@ function PhotoStrip({
   const full = gallery.length + pendingPhotos.length >= photoLimit;
 
   return (
-    <div className="flex gap-3.5 overflow-x-auto pb-1.5">
+    // -m-1 p-1: room inside the scroll box so the tiles' focus rings aren't clipped (same layout).
+    <div className="-m-1 flex gap-3.5 overflow-x-auto p-1 pb-2.5">
       {gallery.map((photo, i) => (
         <button
           key={photo.id}
@@ -1130,32 +1131,26 @@ function PhotoStrip({
         </p>
       )}
       {canAdd && !full && (
-        <label
-          className={cn(
-            "border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold",
-            uploading && "pointer-events-none opacity-60",
-          )}
+        // A real button (keyboard-reachable), styled as the dashed "add" tile. Edit copy's "Add
+        // photos" opens the same input through inputRef.
+        <FilePickButton
+          variant="ghost"
+          accept="image/*"
+          inputRef={inputRef}
+          disabled={uploading}
+          onFiles={([file]) => {
+            if (file) {
+              setEditing({
+                src: URL.createObjectURL(file),
+                fileName: file.name,
+              });
+            }
+          }}
+          className="border-border text-muted-foreground flex aspect-[4/3] h-auto w-[150px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold"
         >
-          <ImagePlus className="h-5 w-5" />
+          <ImagePlus className="size-5" />
           {uploading ? t("uploading") : t("addPhoto")}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                setEditing({
-                  src: URL.createObjectURL(file),
-                  fileName: file.name,
-                });
-              }
-              e.target.value = "";
-            }}
-          />
-        </label>
+        </FilePickButton>
       )}
       {gallery.length === 0 && pendingPhotos.length === 0 && !canAdd && (
         <p className="text-muted-foreground text-sm">{t("noPhotos")}</p>
@@ -1351,7 +1346,10 @@ function CopyReviewsSection({
         <>
           <div className="mb-1.5 flex items-end gap-2.5">
             <div className="font-heading text-foreground text-2xl font-bold leading-none">
-              {average.toFixed(1)}
+              {format.number(average, {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
             </div>
             <div className="pb-0.5">
               <StarRating value={Math.round(average)} size="sm" />

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { Check, ChevronUp, Plus, Search, X } from "lucide-react";
 import { useId, useState } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import { BarcodeScanButton } from "./barcode-scan-button";
 import {
   isPicked,
@@ -61,6 +61,7 @@ export function CataloguePickerView({
 }: CataloguePickerViewProps) {
   const t = useTranslations("cataloguePicker");
   const tp = useTranslations("puzzles");
+  const format = useFormatter();
   const searchId = useId();
   const trayHeadingId = useId();
   const trayId = useId();
@@ -148,7 +149,8 @@ export function CataloguePickerView({
                     <span className="text-muted-foreground block truncate text-xs">
                       {[
                         row.brand,
-                        row.pieceCount && `${row.pieceCount} ${tp("pieces")}`,
+                        row.pieceCount &&
+                          `${format.number(row.pieceCount)} ${tp("pieces", { count: row.pieceCount })}`,
                       ]
                         .filter(Boolean)
                         .join(" · ")}

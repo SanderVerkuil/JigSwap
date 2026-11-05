@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "use-intl";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -22,31 +23,34 @@ export function LoadingSpinner({
 }
 
 interface LoadingStateProps {
+  /** Defaults to the catalogue's common.loading text. */
   message?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
 export function LoadingState({
-  message = "Loading...",
+  message,
   size = "md",
   className,
 }: LoadingStateProps) {
+  const t = useTranslations("common");
   return (
     <div
       className={cn("flex flex-col items-center justify-center p-6", className)}
     >
       <LoadingSpinner size={size} className="mb-4" />
-      <p className="text-muted-foreground text-sm">{message}</p>
+      <p className="text-muted-foreground text-sm">{message ?? t("loading")}</p>
     </div>
   );
 }
 
 interface PageLoadingProps {
+  /** Defaults to the catalogue's common.loading text. */
   message?: string;
 }
 
-export function PageLoading({ message = "Loading..." }: PageLoadingProps) {
+export function PageLoading({ message }: PageLoadingProps) {
   return (
     <div className="min-h-[400px] flex items-center justify-center">
       <LoadingState message={message} size="lg" />

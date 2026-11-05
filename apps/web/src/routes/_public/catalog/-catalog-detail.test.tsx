@@ -190,7 +190,7 @@ describe("public catalogue detail head", () => {
     expect(meta).toContainEqual({
       name: "description",
       content:
-        "De Kattenshow van Jumbo — legpuzzel van 1.000 stukjes. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community.",
+        "De Kattenshow van Jumbo — legpuzzel van 1.000 stukjes. Sterren, reviews en ruilbeschikbaarheid in de JigSwap-community.",
     });
     expect(meta).toContainEqual({ property: "og:locale", content: "nl_NL" });
   });

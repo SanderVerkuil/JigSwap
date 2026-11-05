@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { usePaginatedQuery } from "convex/react";
 import { CircleCheck, Puzzle } from "lucide-react";
 import { useState } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 // A member's puzzles and finished solves on their profile page. Both reads are auth-gated and
 // visibility-gated server-side (social/listProfileCopies, social/listProfileCompletions), so the
@@ -133,6 +133,7 @@ export function ProfileCompletionsSection({
 }) {
   const t = useTranslations("profile.completions");
   const tLog = useTranslations("solving.completions");
+  const format = useFormatter();
   const { results, status, loadMore } = usePaginatedQuery(
     gateway.social.profileCompletions,
     { memberId },
@@ -150,9 +151,9 @@ export function ProfileCompletionsSection({
               t("pieces", { count: completion.pieceCount }),
             completion.datePrecision === "day"
               ? tLog("finished", {
-                  date: formatDateOnly(completion.endDate),
+                  date: formatDateOnly(format, completion.endDate),
                 })
-              : formatCompletionDate(tLog, completion),
+              : formatCompletionDate(tLog, format, completion),
             completion.completionTimeMinutes !== undefined &&
               formatSolveTime(tLog, completion.completionTimeMinutes),
           ]

@@ -61,7 +61,7 @@ import { useConvex } from "convex/react";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
   // Copy mode (?puzzleId) adds a copy of a catalogue puzzle; it creates nothing.
@@ -159,6 +159,7 @@ function AddPuzzlePage() {
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
   const tShell = useTranslations("shell");
+  const format = useFormatter();
 
   const navigate = useNavigate();
   const convex = useConvex();
@@ -460,6 +461,7 @@ function AddPuzzlePage() {
   const conditionOptions = useConditionOptions();
 
   // The chosen definition shown read-only at the top of copy mode.
+  const chosenPieceCount = specificPuzzle?.pieceCount ?? form.pieceCount;
   const chosenDefinition = isCopyMode ? (
     <div className="flex items-start gap-4 rounded-xl border border-border bg-card p-4">
       <div className="size-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
@@ -494,9 +496,10 @@ function AddPuzzlePage() {
               form.publisher}
           </div>
         )}
-        {(specificPuzzle?.pieceCount ?? form.pieceCount) != null && (
+        {chosenPieceCount != null && (
           <div className="mt-0.5 text-sm text-muted-foreground">
-            {specificPuzzle?.pieceCount ?? form.pieceCount} {t("pieces")}
+            {format.number(chosenPieceCount)}{" "}
+            {t("pieces", { count: chosenPieceCount })}
           </div>
         )}
       </div>

@@ -51,6 +51,7 @@ export function MemberTile({
   memberId,
   followsYou,
   hideLocation = false,
+  headingLevel = 3,
 }: {
   memberId: Id<"users">;
   // Hosts that already know it (the network list) pass it; otherwise (search results,
@@ -59,6 +60,9 @@ export function MemberTile({
   // Discovery surfaces (Find people) omit the location line: stats build trust with
   // strangers, street-level context doesn't. Defaults off so network tiles are unchanged.
   hideLocation?: boolean;
+  // Heading level of the name: 3 (default) under a section h2, 2 for a grid that sits
+  // directly under the page h1, so the outline never skips a level.
+  headingLevel?: 2 | 3;
 }) {
   const t = useTranslations("people");
   const tReputation = useTranslations("reputation");
@@ -84,6 +88,7 @@ export function MemberTile({
   }
 
   const name = displayName(member);
+  const Name = `h${headingLevel}` as const;
   const location = hideLocation ? undefined : member.location;
   const showFollowsYou = followsYou ?? relation?.followsYou ?? false;
   const hasMeta = showFollowsYou || !!location;
@@ -116,7 +121,7 @@ export function MemberTile({
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-base leading-snug font-semibold">
+          <Name className="text-base leading-snug font-semibold">
             <Link
               to="/members/$handle"
               // The id, never the username (SEC-07); the route redirects to the canonical handle.
@@ -124,11 +129,11 @@ export function MemberTile({
               data-card-link=""
               title={name}
               aria-describedby={describedBy}
-              className="line-clamp-2 rounded-sm [overflow-wrap:anywhere] after:absolute after:inset-0 after:z-[1] after:rounded-xl after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+              className="line-clamp-2 rounded-sm [overflow-wrap:anywhere] after:absolute after:inset-0 after:z-[1] after:rounded-xl after:content-[''] hover:underline focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
             >
               {name}
             </Link>
-          </h3>
+          </Name>
           {hasMeta && (
             <div
               id={metaId}

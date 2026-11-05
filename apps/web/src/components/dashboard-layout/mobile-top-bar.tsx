@@ -14,6 +14,7 @@ import { usePathname } from "@/compat/navigation";
 // Mark-only glyph: the header-icon logo is the stacked lockup with "JigSwap"
 // baked in underneath, which doubled the wordmark text beside it.
 import logoMark from "@/components/marketing/assets/icon.png";
+import { formatUnreadBadge } from "@/components/notifications/unread-count";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -22,14 +23,14 @@ import { useRouter } from "@tanstack/react-router";
 import { Bell, ChevronLeft, MessageSquare, Search } from "lucide-react";
 import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
+import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
-import { usePageHeaderContent } from "./page-header-slot";
 import {
   getNavGroup,
-  getRouteMeta,
   isImmersiveMobileRoute,
   isMobileTabRoot,
 } from "./route-meta";
+import { useShellTitle } from "./shell-title";
 import { ShellUserButton } from "./shell-user-button";
 import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
@@ -39,6 +40,7 @@ const tapTarget =
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
+  const tMobile = useTranslations("shell.mobile");
   const tNotifications = useTranslations("notifications");
   const pathname = usePathname();
   const { user } = useUser();
@@ -50,8 +52,15 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const unread = unreadCount ?? 0;
   const unreadMessages = useUnreadMessageCount();
   const messagesTitle = t("pages.messages.title");
+  // The dot shows no number, so the count lives in the link's name; capped like the desktop bell.
+  const bellLabel =
+    unread > 0
+      ? tNotifications("bellWithCount", { count: formatUnreadBadge(unread) })
+      : tNotifications("bell");
 
-  const meta = getRouteMeta(pathname);
+  // A page-published title (dynamic routes) overrides the static route title,
+  // same precedence as the desktop page head.
+  const { meta, title: shellTitle, titleOverride } = useShellTitle();
   const isHome = meta?.variant === "dashboard";
   // Deep pages (a route with a parent section) trade the breadcrumb row for a
   // back chevron; landings, the profile and the pages a tab opens (/trades sits
@@ -90,14 +99,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     event.preventDefault();
     router.history.back();
   };
-  // A page-published title (dynamic routes) overrides the static route title,
-  // same precedence as the desktop page head.
-  const { title: publishedTitle, titleInContent } = usePageHeaderContent();
-  const title =
-    publishedTitle ??
-    (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
-  // The page's own h1 carries the title; the bar keeps it as context text only.
-  const TitleTag = titleInContent ? "p" : "h1";
+  // Home shows the brand lockup instead of a title (the greeting is the sr-only h1 in main).
+  const title = isHome && titleOverride == null ? undefined : shellTitle;
   // Sticky page content (tab bars) sticks just below this bar.
   const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 
@@ -131,6 +134,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             aria-label="JigSwap"
             className="flex h-11 shrink-0 items-center gap-2 pl-1.5"
           >
+            {/* Decorative: the wordmark beside it already names the link. */}
             <Image src={logoMark} alt="" className="size-7 object-contain" />
             <span className="font-heading text-[19px] leading-none font-bold">
               <span className="text-jigsaw-primary">Jig</span>
@@ -140,8 +144,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         ) : null}
 
         <div className="min-w-0 flex-1">
+          {/* Plain text: the page's h1 lives in main (ShellHeading), not in the banner. */}
           {title && (
-            <TitleTag
+            <p
               className={cn(
                 // The controls leave a phone about 126px: two smaller lines before an ellipsis.
                 "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
@@ -149,7 +154,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               )}
             >
               {title}
-            </TitleTag>
+            </p>
           )}
         </div>
 
@@ -166,7 +171,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           aria-label={
             unreadMessages > 0
               ? t("mobile.withUnreadMessages", {
-                  name: messagesTitle,
+                  name: nameForNavBadge(tMobile, messagesTitle, unreadMessages),
                   count: unreadMessages,
                 })
               : messagesTitle
@@ -180,18 +185,21 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               aria-hidden
               className="bg-jigsaw-primary-accent ring-card absolute top-1.5 right-0.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white ring-2"
             >
-              {unreadMessages > 9 ? "9+" : unreadMessages}
+              {formatNavBadge(unreadMessages)}
             </span>
           )}
         </Link>
         <Link
           href="/notifications"
-          aria-label={tNotifications("bell")}
+          aria-label={bellLabel}
           className={cn(tapTarget, "relative text-muted-foreground")}
         >
           <Bell className="size-5" />
           {unread > 0 && (
-            <span className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2" />
+            <span
+              aria-hidden
+              className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2"
+            />
           )}
         </Link>
         <span data-tour="account-menu" className="flex">

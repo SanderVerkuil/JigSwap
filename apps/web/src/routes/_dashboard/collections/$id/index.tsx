@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/collections/$id/")({
   head: ({ match }) => ({
@@ -68,6 +68,7 @@ function CollectionDetailPage() {
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
   const tPuzzles = useTranslations("puzzles");
+  const format = useFormatter();
 
   const { data: collection, isPending: collectionPending } = useQuery(
     convexQuery(gateway.collections.byId, {
@@ -92,7 +93,11 @@ function CollectionDetailPage() {
   // breadcrumb reads My Library › Collections › <name>. The Add/Share/Edit
   // actions now live in the in-content hero block per the redesign, so this
   // page intentionally publishes no header `actions`.
-  usePageHeader(() => ({ title: collection?.name }), [collection?.name]);
+  // Once loaded, the hero renders the name as this page's h1, so the shell's copy is plain text.
+  usePageHeader(
+    () => ({ title: collection?.name, ownsHeading: Boolean(collection) }),
+    [collection?.name, Boolean(collection)],
+  );
 
   const puzzles = useMemo(
     () => (collection?.puzzles ?? []).filter((p) => p != null),
@@ -348,7 +353,7 @@ function CollectionDetailPage() {
           cells={[
             { value: String(stats.puzzleCount), label: t("puzzles") },
             {
-              value: stats.piecesTotal.toLocaleString(),
+              value: format.number(stats.piecesTotal),
               label: t("piecesTotal"),
             },
             {

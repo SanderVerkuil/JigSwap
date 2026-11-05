@@ -1,9 +1,11 @@
 "use client";
 
+import { useReturnFocus } from "@/components/ui/use-return-focus";
 import { cn } from "@/lib/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "use-intl";
 
 function Dialog({
   ...props
@@ -49,10 +51,15 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const t = useTranslations("common");
+  // Most dialogs open from state, not a DialogTrigger: give focus back to what opened them.
+  const returnFocus = useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus });
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -68,6 +75,7 @@ function DialogContent({
           className,
         )}
         {...props}
+        {...returnFocus}
       >
         {children}
         {/* A 36px target (44px on touch) centred on where the 16px icon always sat: 24px from
@@ -78,7 +86,7 @@ function DialogContent({
             className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:bg-accent hover:text-accent-foreground absolute top-1.5 right-1.5 grid size-9 place-items-center rounded-md opacity-100 transition-colors pointer-coarse:top-0.5 pointer-coarse:right-0.5 pointer-coarse:size-11 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("close")}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

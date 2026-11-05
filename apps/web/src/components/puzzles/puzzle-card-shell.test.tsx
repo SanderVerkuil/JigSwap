@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { PuzzleCardShell, type PuzzleCardView } from "./puzzle-card-shell";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
 
@@ -92,8 +93,17 @@ describe("PuzzleCardShell cover renditions", () => {
 
 // Router-free Link: the test asserts card layout classes, not routing.
 vi.mock("@/compat/link", () => ({
-  Link: ({ children, href }: { children?: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    children,
+    href,
+    ...rest
+  }: {
+    children?: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -162,5 +172,102 @@ describe("PuzzleCardShell density", () => {
     expect(renderDensity("grid", "contain").cover).toContain("bg-muted");
     expect(renderDensity("list", "contain").cover).toContain("bg-muted");
     expect(renderDensity("grid", "cover").cover).not.toContain("bg-muted");
+  });
+});
+
+describe("PuzzleCardShell piece count", () => {
+  // The count follows the app locale, never the server's or browser's (UX-63), and the
+  // word agrees with it: Dutch says "stukje"/"stukjes", never "stukken" (UX-65).
+  it.each([
+    ["en", 1000, "1,000 pieces"],
+    ["nl", 1000, "1.000 stukjes"],
+    ["en", 1, "1 piece"],
+    ["nl", 1, "1 stukje"],
+  ] as const)(
+    "labels the %s piece count %s as %s",
+    (locale, pieceCount, expected) => {
+      const html = renderToStaticMarkup(
+        <IntlProvider
+          locale={locale}
+          timeZone="UTC"
+          messages={locale === "nl" ? nl : en}
+        >
+          <PuzzleViewProvider viewMode="grid">
+            <PuzzleCardShell puzzle={puzzle({ pieceCount })} />
+          </PuzzleViewProvider>
+        </IntlProvider>,
+      );
+      expect(html).toContain(`>${expected}<`);
+    },
+  );
+});
+
+describe("PuzzleCardShell difficulty pill", () => {
+  it.each(["easy", "medium", "hard", "expert"] as const)(
+    "gives the %s difficulty pill dark-mode colours (UX-10)",
+    (difficulty) => {
+      const label = en.puzzles.puzzles.difficulty[difficulty];
+      const host = document.createElement("div");
+      host.innerHTML = renderToStaticMarkup(
+        <IntlProvider locale="en" timeZone="UTC" messages={en}>
+          <PuzzleViewProvider viewMode="grid">
+            <PuzzleCardShell puzzle={puzzle({ difficulty })} />
+          </PuzzleViewProvider>
+        </IntlProvider>,
+      );
+      const pill = [...host.querySelectorAll('[data-slot="badge"]')].find(
+        (el) => el.textContent === label,
+      );
+      expect(pill).toBeDefined();
+      const cls = [...(pill?.classList ?? [])];
+      expect(cls.some((c) => c.startsWith("dark:bg-"))).toBe(true);
+      expect(cls.some((c) => c.startsWith("dark:text-"))).toBe(true);
+    },
+  );
+
+  // A grid directly under the page h1 asks for h2 titles; nested grids keep h3 (UX-66).
+  it.each([
+    [undefined, "h3"],
+    [3, "h3"],
+    [2, "h2"],
+  ] as const)("titles the card at headingLevel %s as %s", (level, tag) => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+        <PuzzleViewProvider viewMode="grid">
+          <PuzzleCardShell
+            puzzle={puzzle()}
+            imageHref="/puzzles/p1"
+            headingLevel={level}
+          />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const headings = [...host.querySelectorAll("h1, h2, h3, h4, h5, h6")];
+    expect(headings.map((h) => h.tagName.toLowerCase())).toEqual([tag]);
+  });
+
+  it("rings the whole card when its stretched title link has keyboard focus (UX-72)", () => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+        <PuzzleViewProvider viewMode="grid">
+          <PuzzleCardShell puzzle={puzzle()} imageHref="/puzzles/p1" />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const link = host.querySelector("a");
+    expect(link?.getAttribute("href")).toBe("/puzzles/p1");
+    // The link hides its own outline (it would only circle the title)...
+    expect(link?.getAttribute("data-card-link")).toBe("");
+    expect(link?.classList.contains("focus-visible:outline-none")).toBe(true);
+    // ...so the card draws a full-alpha ring while the link is focused.
+    const card = host.querySelector('[data-slot="card"]');
+    expect([...(card?.classList ?? [])]).toEqual(
+      expect.arrayContaining([
+        "has-[[data-card-link]:focus-visible]:ring-2",
+        "has-[[data-card-link]:focus-visible]:ring-ring",
+      ]),
+    );
   });
 });
