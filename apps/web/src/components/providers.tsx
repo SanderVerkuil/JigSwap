@@ -1,6 +1,7 @@
 import { PostHogPageView } from "@/components/analytics-page-view";
 import { initPostHog, PostHogProvider } from "@/components/analytics-provider";
 import CookieConsent from "@/components/blocks/cookie-consent";
+import { PushSignOutGuard } from "@/components/notifications/push-signout-guard";
 import { Toaster } from "@/components/ui/sonner";
 import { timeZone, type Messages } from "@/lib/i18n";
 import { ThemeProvider } from "next-themes";
@@ -16,11 +17,14 @@ export function Providers({
   locale,
   messages,
   now: serverNow,
+  cspNonce,
   children,
 }: {
   locale: string;
   messages: Messages;
   now: number;
+  // For next-themes' inline theme script (lib/csp.ts).
+  cspNonce?: string;
   children: React.ReactNode;
 }) {
   // Global `now` from the server render, so SSR and hydration agree on relative
@@ -49,6 +53,7 @@ export function Providers({
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
+        nonce={cspNonce}
       >
         <PostHogProvider>
           {children}
@@ -56,6 +61,8 @@ export function Providers({
               PostHogProvider only auto-inits when consent was already granted. */}
           <CookieConsent variant="mini" onAcceptCallback={initPostHog} />
           <PostHogPageView />
+          {/* Drops a push subscription a signed-out browser still holds. */}
+          <PushSignOutGuard />
           <Toaster />
         </PostHogProvider>
       </ThemeProvider>

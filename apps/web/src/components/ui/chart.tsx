@@ -46,7 +46,7 @@ function ChartContainer({
   >["children"];
 }) {
   const uniqueId = React.useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`;
+  const chartId = `chart-${(id || uniqueId).replace(/[^a-z0-9_-]/gi, "")}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -68,12 +68,22 @@ function ChartContainer({
   );
 }
 
+// The id, keys and colours below are written into a <style> as raw text, verbatim in the SSR
+// HTML, so only selector-safe ids and keys and plain colour values (names, hex, var(), rgb(),
+// hsl(), oklch()) get through; anything that could close the rule or the element is dropped.
+const SAFE_IDENT = /^[a-z0-9_-]+$/i;
+const SAFE_COLOR = /^[\w\s#%(),./-]+$/;
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color,
+    ([key, config]) =>
+      SAFE_IDENT.test(key) &&
+      (config.theme
+        ? Object.values(config.theme).every((color) => SAFE_COLOR.test(color))
+        : !!config.color && SAFE_COLOR.test(config.color)),
   );
 
-  if (!colorConfig.length) {
+  if (!colorConfig.length || !SAFE_IDENT.test(id)) {
     return null;
   }
 

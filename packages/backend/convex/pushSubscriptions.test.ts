@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -370,5 +371,155 @@ describe("push subscription safety (SEC-16)", () => {
       });
     expect(await subscriptionsOf(t)).toHaveLength(11);
     error.mockRestore();
+  });
+});
+
+// SEC-54: the member's own device list (no endpoint or keys ever leave the server) and remote
+// revoke, so a push subscription left on a shared browser can be cut off from anywhere.
+describe("push device list and revoke", () => {
+  const CHROME = {
+    endpoint: "https://fcm.googleapis.com/fcm/send/chrome-token",
+    p256dh: "chrome-p256dh",
+    auth: "chrome-auth",
+  };
+  const FIREFOX = {
+    endpoint: "https://updates.push.services.mozilla.com/wpush/v2/ff-token",
+    p256dh: "ff-p256dh",
+    auth: "ff-auth",
+  };
+  const BOB_SAFARI = {
+    endpoint: "https://web.push.apple.com/bob-token",
+    p256dh: "bob-p256dh",
+    auth: "bob-auth",
+  };
+
+  const seedSubscription = async (
+    t: TestConvex<typeof schema>,
+    userId: Id<"users">,
+    sub: typeof SUB,
+    createdAt: number,
+  ) =>
+    t.run((ctx) =>
+      ctx.db.insert("pushSubscriptions", { userId, ...sub, createdAt }),
+    );
+
+  test("lists only the caller's devices, newest first, marking the current one, without endpoints or keys", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const bob = await seedUser(t, "clerk_bob", "bob@example.com");
+    const chromeId = await seedSubscription(t, alice, CHROME, 1_000);
+    const firefoxId = await seedSubscription(t, alice, FIREFOX, 2_000);
+    await seedSubscription(t, bob, BOB_SAFARI, 3_000);
+
+    const devices = await t
+      .withIdentity({ subject: "clerk_alice" })
+      .query(api.notifications.pushSubscriptions.listMyPushDevices, {
+        currentEndpoint: CHROME.endpoint,
+      });
+
+    expect(devices).toEqual([
+      { id: firefoxId, service: "firefox", createdAt: 2_000, current: false },
+      { id: chromeId, service: "chrome", createdAt: 1_000, current: true },
+    ]);
+    const serialized = JSON.stringify(devices);
+    for (const secret of [
+      CHROME.endpoint,
+      CHROME.p256dh,
+      CHROME.auth,
+      FIREFOX.endpoint,
+      FIREFOX.p256dh,
+      FIREFOX.auth,
+      "fcm.googleapis.com",
+      "mozilla.com",
+    ]) {
+      expect(serialized).not.toContain(secret);
+    }
+  });
+
+  test("marks nothing current without a current endpoint, and names each push service", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const services = [
+      ["https://fcm.googleapis.com/fcm/send/a", "chrome"],
+      ["https://updates.push.services.mozilla.com/wpush/v2/b", "firefox"],
+      ["https://web.push.apple.com/c", "safari"],
+      ["https://wns2-am3p.notify.windows.com/w/?token=d", "edge"],
+      ["https://push.example/e", "other"],
+      ["not a url", "other"],
+    ] as const;
+    for (const [index, [endpoint]] of services.entries()) {
+      await seedSubscription(t, alice, { ...SUB, endpoint }, index);
+    }
+
+    const devices = await t
+      .withIdentity({ subject: "clerk_alice" })
+      .query(api.notifications.pushSubscriptions.listMyPushDevices, {});
+
+    expect(devices.map((device) => [device.service, device.current])).toEqual(
+      services.map(([, service]) => [service, false]).reverse(),
+    );
+  });
+
+  test("the current flag never matches another member's endpoint", async () => {
+    const t = convexTest(schema, modules);
+    await seedUser(t, "clerk_alice", "alice@example.com");
+    const bob = await seedUser(t, "clerk_bob", "bob@example.com");
+    await seedSubscription(t, bob, BOB_SAFARI, 1_000);
+
+    const devices = await t
+      .withIdentity({ subject: "clerk_alice" })
+      .query(api.notifications.pushSubscriptions.listMyPushDevices, {
+        currentEndpoint: BOB_SAFARI.endpoint,
+      });
+    expect(devices).toEqual([]);
+  });
+
+  test("revoke deletes the caller's own device only", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const bob = await seedUser(t, "clerk_bob", "bob@example.com");
+    const chromeId = await seedSubscription(t, alice, CHROME, 1_000);
+    const firefoxId = await seedSubscription(t, alice, FIREFOX, 2_000);
+    const bobId = await seedSubscription(t, bob, BOB_SAFARI, 3_000);
+
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+    await asAlice.mutation(
+      api.notifications.pushSubscriptions.revokePushDevice,
+      { id: chromeId },
+    );
+    // Bob's id and a malformed id are both no-ops, not errors.
+    await asAlice.mutation(
+      api.notifications.pushSubscriptions.revokePushDevice,
+      { id: bobId },
+    );
+    await asAlice.mutation(
+      api.notifications.pushSubscriptions.revokePushDevice,
+      { id: "not-an-id" },
+    );
+
+    const remaining = await t.run((ctx) =>
+      ctx.db.query("pushSubscriptions").collect(),
+    );
+    expect(remaining.map((row) => row._id).sort()).toEqual(
+      [firefoxId, bobId].sort(),
+    );
+  });
+
+  test("both require a signed-in member", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedUser(t, "clerk_alice", "alice@example.com");
+    const chromeId = await seedSubscription(t, alice, CHROME, 1_000);
+
+    await expect(
+      t.query(api.notifications.pushSubscriptions.listMyPushDevices, {}),
+    ).rejects.toThrow(/Unauthenticated/);
+    await expect(
+      t.mutation(api.notifications.pushSubscriptions.revokePushDevice, {
+        id: chromeId,
+      }),
+    ).rejects.toThrow(/Unauthenticated/);
+    expect(
+      await t.run((ctx) => ctx.db.query("pushSubscriptions").collect()),
+    ).toHaveLength(1);
   });
 });

@@ -2,11 +2,30 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import {
+  createIsomorphicFn,
+  getGlobalStartContext,
+} from "@tanstack/react-start";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { DefaultCatchBoundary } from "./components/DefaultCatchBoundary";
 import { NotFoundContent } from "./components/NotFound";
 import { appScrollRestoration } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
+
+// This page render's CSP nonce, set by cspMiddleware (lib/csp.ts); undefined in dev and
+// prerender. As `ssr.nonce` the router stamps it on every script and preload it writes and
+// renders it in a csp-nonce meta tag, from which the browser-side router reads it back on
+// hydration. No request context exists when the router is built to resolve a server
+// function's redirect, which renders nothing.
+const getCspNonce = createIsomorphicFn()
+  .server(() => {
+    try {
+      return getGlobalStartContext()?.cspNonce;
+    } catch {
+      return undefined;
+    }
+  })
+  .client(() => undefined);
 
 export function getRouter() {
   const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string;
@@ -52,6 +71,7 @@ export function getRouter() {
     // NotFound) covers truly top-level unmatched paths where no shell applies.
     defaultNotFoundComponent: () => <NotFoundContent />,
     context: { queryClient, convexClient: convex, convexQueryClient },
+    ssr: { nonce: getCspNonce() },
     ...appScrollRestoration,
     Wrap: ({ children }) => (
       <ConvexProvider client={convexQueryClient.convexClient}>

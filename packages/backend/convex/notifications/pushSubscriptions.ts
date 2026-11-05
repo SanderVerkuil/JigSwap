@@ -1,9 +1,11 @@
+import type { PushDeviceService, PushDeviceView } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
   mutation,
+  query,
   type MutationCtx,
 } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -116,6 +118,70 @@ export const unregisterPushSubscription = mutation({
       .unique();
     if (existing && existing.userId === userId) {
       await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+// The push service behind an endpoint, by host. Only this coarse label leaves the server: the
+// endpoint itself identifies the browser to its push service.
+const PUSH_SERVICE_HOSTS: readonly (readonly [string, PushDeviceService])[] = [
+  ["fcm.googleapis.com", "chrome"],
+  ["push.services.mozilla.com", "firefox"],
+  ["push.apple.com", "safari"],
+  ["notify.windows.com", "edge"],
+];
+
+const pushServiceOf = (endpoint: string): PushDeviceService => {
+  let host: string;
+  try {
+    host = new URL(endpoint).hostname;
+  } catch {
+    return "other";
+  }
+  const match = PUSH_SERVICE_HOSTS.find(
+    ([suffix]) => host === suffix || host.endsWith(`.${suffix}`),
+  );
+  return match ? match[1] : "other";
+};
+
+// A member has a handful of devices; the cap only bounds the read.
+const MAX_LISTED_DEVICES = 50;
+
+// The caller's own push devices, newest first (SEC-54), so they can see where push still arrives
+// and revoke a browser they no longer use. `currentEndpoint` is the asking browser's own endpoint,
+// used only to flag its row as `current`; endpoints and keys never appear in the result.
+export const listMyPushDevices = query({
+  args: { currentEndpoint: v.optional(v.string()) },
+  handler: async (ctx, args): Promise<PushDeviceView[]> => {
+    const userId = (await requireMember(ctx)) as unknown as Id<"users">;
+    const rows = await ctx.db
+      .query("pushSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(MAX_LISTED_DEVICES);
+    return rows
+      .map((row) => ({
+        id: row._id,
+        service: pushServiceOf(row.endpoint),
+        createdAt: row.createdAt,
+        current: row.endpoint === args.currentEndpoint,
+      }))
+      .sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Remove one of the caller's push devices by its listed id (SEC-54): that browser gets no more
+// pushes, even though it still holds its own subscription until it next opens JigSwap signed out.
+// Another member's id, or a malformed one, is a silent no-op.
+export const revokePushDevice = mutation({
+  args: { id: v.string() },
+  handler: async (ctx, args) => {
+    const userId = (await requireMember(ctx)) as unknown as Id<"users">;
+    const id = ctx.db.normalizeId("pushSubscriptions", args.id);
+    if (!id) return;
+    const row = await ctx.db.get(id);
+    if (row && row.userId === userId) {
+      await ctx.db.delete(id);
     }
   },
 });

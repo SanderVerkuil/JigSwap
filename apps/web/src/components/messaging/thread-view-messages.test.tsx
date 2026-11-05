@@ -187,6 +187,13 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ThreadView message actions", () => {
+  it("keeps the conversation out of PostHog capture", () => {
+    renderThread(dmThread());
+    expect(
+      screen.getByText("Mara's message").closest(".ph-no-capture"),
+    ).not.toBeNull();
+  });
+
   it("offers More only on the other member's non-system, non-removed messages", () => {
     renderThread(dmThread());
     expect(
@@ -220,6 +227,8 @@ describe("ThreadView message actions", () => {
     expect(dialog.querySelector("blockquote")?.textContent).toBe(
       "Mara's message",
     );
+    // The quote renders in a portal, outside the thread's capture block.
+    expect(dialog.querySelector("blockquote.ph-no-capture")).not.toBeNull();
     expect(
       screen.getByRole("checkbox", { name: "Also block Mara" }),
     ).toBeTruthy();

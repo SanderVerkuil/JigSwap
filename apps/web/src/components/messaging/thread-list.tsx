@@ -111,7 +111,8 @@ export function ThreadList({
   guideBeside?: boolean;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // ph-no-capture: the rows quote private messages; keep them out of PostHog.
+    <div className="ph-no-capture flex min-h-0 flex-1 flex-col">
       {/* Desktop scrolls inside the frame; mobile scrolls the document. */}
       <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
         {/* One-time "show when you're online?" card, until the member chooses. */}

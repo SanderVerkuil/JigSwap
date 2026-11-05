@@ -383,7 +383,8 @@ export function ThreadView({
       : groupThreadMessages(messages, now, locale, t);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // ph-no-capture: PostHog never autocaptures or records private messages.
+    <div className="ph-no-capture flex min-h-0 flex-1 flex-col">
       {!hideHeader && (
         <div className="bg-card sticky top-0 z-10 shrink-0 border-b pt-[env(safe-area-inset-top)] md:static md:pt-0">
           <div className="flex h-14 items-center gap-3 px-2 md:px-4">

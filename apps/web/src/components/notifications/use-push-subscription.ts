@@ -46,7 +46,11 @@ export function usePushSubscription() {
     () => true,
     () => false,
   );
-  const [endpoint, setEndpoint] = useState<string | null>(null);
+  // This browser's push endpoint: undefined until it has been read (client only), then the
+  // endpoint or null. The device list waits on it to tell this browser from the member's others.
+  const [endpoint, setEndpoint] = useState<string | null | undefined>(
+    undefined,
+  );
   const permission = useSyncExternalStore(
     emptySubscribe,
     getPermissionSnapshot,
@@ -68,7 +72,7 @@ export function usePushSubscription() {
     if (!pushSupported()) return;
     currentSubscriptionEndpoint()
       .then(setEndpoint)
-      .catch(() => {});
+      .catch(() => setEndpoint(null));
   }, []);
 
   // The WHOLE enable flow — permission prompt, browser PushManager subscribe, server register —
@@ -138,6 +142,7 @@ export function usePushSubscription() {
     loading,
     configured,
     enabled,
+    endpoint,
     busy,
     enable: () => enableDevice.mutate(),
     disable: () => disableDevice.mutate(),

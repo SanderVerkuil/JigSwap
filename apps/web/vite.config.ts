@@ -5,6 +5,7 @@ import { nitro } from "nitro/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
+import { SECURITY_HEADERS } from "./src/lib/security-headers";
 import { appVersionPlugin } from "./vite-plugin-app-version";
 import { docsPlugin } from "./vite-plugin-docs";
 import { whatsNewPlugin } from "./vite-plugin-whats-new";
@@ -39,18 +40,33 @@ export default defineConfig({
       },
     }),
     viteReact(),
-    // Reverse-proxy PostHog through /ingest (the paths analytics-client.ts targets),
-    // replacing the next.config rewrites; static assets first as the more specific rule.
+    // PostHog's /ingest proxy is a server route (src/routes/ingest/$.ts), not a proxy route rule:
+    // on Vercel those become CDN rewrites that forward the Clerk cookie and pass PostHog's
+    // credentialed CORS back.
     nitro({
       routeRules: {
-        "/ingest/static/**": {
-          proxy: { to: "https://eu-assets.i.posthog.com/static/**" },
+        // Security headers on every response: SSR, server functions and static files alike.
+        "/**": { headers: SECURITY_HEADERS },
+        // Hashed build assets. Nitro would add only this cache-control rule for them, which on
+        // Vercel would shadow the /** headers; spelled out so they keep both.
+        "/assets/**": {
+          headers: {
+            ...SECURITY_HEADERS,
+            "cache-control": "public, max-age=31536000, immutable",
+          },
         },
-        "/ingest/**": { proxy: { to: "https://eu.i.posthog.com/**" } },
         // The deployed build id open tabs poll (vite-plugin-app-version.ts); never cached, or
-        // a tab would keep seeing the old id after a deploy.
-        "/version.json": { headers: { "cache-control": "no-store" } },
+        // a tab would keep seeing the old id after a deploy. Vercel applies only the first
+        // matching headers rule, so this one repeats the security headers.
+        "/version.json": {
+          headers: { ...SECURITY_HEADERS, "cache-control": "no-store" },
+        },
       },
+      // Run SSR and server functions in Dublin, next to the Convex deployment (AWS eu-west-1).
+      // Unpinned, Vercel ran them in Washington (iad1): every SSR query crossed the Atlantic and
+      // signed-in member data was rendered outside the EU. Nitro writes this into the
+      // function's .vc-config.json.
+      vercel: { functions: { regions: ["dub1"] } },
     }),
     // Bundle treemap for CI reports, opt-in via ANALYZE=1 so dev/prod builds
     // are untouched. TanStack Start runs one Rollup build per environment;

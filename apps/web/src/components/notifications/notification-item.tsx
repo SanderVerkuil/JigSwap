@@ -122,7 +122,8 @@ export function NotificationItem({
   }
   if (context.messagePreview) {
     contextParts.push(
-      <span key="preview" className="line-clamp-2">
+      // ph-no-capture: a private message's text; keep it out of PostHog.
+      <span key="preview" className="ph-no-capture line-clamp-2">
         {t("rich.context.messagePreview", { preview: context.messagePreview })}
       </span>,
     );

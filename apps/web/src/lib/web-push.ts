@@ -181,3 +181,25 @@ export async function currentSubscriptionEndpoint(): Promise<string | null> {
   const subscription = await registration.pushManager.getSubscription();
   return subscription?.endpoint ?? null;
 }
+
+// Stop push to this browser before its member signs out (SEC-54): unsubscribe here, then ask the
+// server to drop the endpoint while the session can still authenticate the call. Best-effort and
+// bounded: resolves within `budgetMs` and never rejects, so push can never block a sign-out.
+export async function tearDownPushForSignOut(
+  unregister: (endpoint: string) => Promise<unknown>,
+  budgetMs = 3000,
+): Promise<void> {
+  if (!pushSupported()) return;
+  try {
+    await withTimeout(
+      (async () => {
+        const endpoint = await unsubscribeFromPush();
+        if (endpoint) await unregister(endpoint);
+      })(),
+      budgetMs,
+      "push teardown",
+    );
+  } catch (error) {
+    console.warn("[push] teardown before sign-out failed:", error);
+  }
+}

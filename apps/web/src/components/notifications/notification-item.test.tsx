@@ -209,6 +209,19 @@ describe("NotificationItem rendering", () => {
     }
   });
 
+  it("keeps a message preview out of PostHog capture", () => {
+    renderItem(
+      base({
+        type: "message_received",
+        href: "/messages/t1",
+        context: { messagePreview: "Hi there" },
+      }),
+    );
+    expect(
+      screen.getByText(/Hi there/).closest(".ph-no-capture"),
+    ).not.toBeNull();
+  });
+
   it("renders the server href with its search param (trades deep link) and the status chip", () => {
     const { container } = renderItem(
       base({

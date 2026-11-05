@@ -222,7 +222,8 @@ function ChatPreview({
     );
   } else {
     body = (
-      <ul className="flex flex-col divide-y">
+      // ph-no-capture: the preview quotes the group chat; keep it out of PostHog.
+      <ul className="ph-no-capture flex flex-col divide-y">
         {messages.data.map((message) => (
           <li
             key={message.id}

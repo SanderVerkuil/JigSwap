@@ -187,3 +187,23 @@ export type NotificationActionStaleError = {
   code: "NOTIFICATION_ACTION_STALE";
   resolvedAs?: NotificationResolvedAs;
 };
+
+/**
+ * The push service a device subscribed through, read from its endpoint's host: `chrome` is Google's
+ * (Chrome and most Chromium browsers), `edge` Microsoft's, `safari` Apple's (Safari and iPhone/iPad
+ * home-screen apps).
+ */
+export type PushDeviceService =
+  "chrome" | "firefox" | "safari" | "edge" | "other";
+
+/**
+ * One of the viewer's own push subscriptions (`notifications.pushDevices`). Never carries the
+ * endpoint or the encryption keys. `current` is true for the row matching the endpoint the browser
+ * asked about, i.e. this device.
+ */
+export interface PushDeviceView {
+  id: string;
+  service: PushDeviceService;
+  createdAt: number;
+  current: boolean;
+}

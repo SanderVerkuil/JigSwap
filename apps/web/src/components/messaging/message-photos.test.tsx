@@ -116,7 +116,7 @@ describe("MessagePhotos", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Photo from Mara",
     });
-    expect(dialog).toBeTruthy();
+    expect(dialog.classList.contains("ph-no-capture")).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "Report photo" }));
     expect(await screen.findByText("Reporting a photo from Mara")).toBeTruthy();
     fireEvent.click(screen.getByRole("radio", { name: "Spam or scam" }));

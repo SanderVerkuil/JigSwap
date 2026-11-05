@@ -386,6 +386,9 @@ export const gateway = {
     registerPush: api.notifications.pushSubscriptions.registerPushSubscription,
     unregisterPush:
       api.notifications.pushSubscriptions.unregisterPushSubscription,
+    // The member's own push devices (no endpoints or keys) and a remote revoke for one of them.
+    pushDevices: api.notifications.pushSubscriptions.listMyPushDevices,
+    revokePushDevice: api.notifications.pushSubscriptions.revokePushDevice,
   },
 
   // Onboarding (quick start): the member's own checklist state. Step "done" is derived from real
