@@ -48,7 +48,9 @@ export function AuditList({
             {MODERATION_ACTIVITY_KINDS.includes(row.kind)
               ? t.rich(`activity.${row.kind}`, {
                   actor: row.actorName ?? t("activity.system"),
-                  target: row.targetLabel,
+                  target: row.targetMemberDeleted
+                    ? t("activity.deletedMemberTarget")
+                    : row.targetLabel,
                   strong: (chunks) => (
                     <strong className="font-semibold">{chunks}</strong>
                   ),

@@ -121,13 +121,15 @@ export interface ActivityBatchCoverView {
  * copy-level star opinions live in `copyReviews`, and definition-level opinions are
  * PuzzleReviewView. The `author` is privacy-projected like every member on the copy page (salt =
  * the copy's _id): a private author the viewer is not connected with is anonymous (SEC-11); `id` is
- * the CommentId aggregateId. Newest comments are returned first.
+ * the CommentId aggregateId. Newest comments are returned first. `canDelete` is true only for the
+ * viewer's own comment (the author may delete it).
  */
 export interface PuzzleCommentView {
   id: string;
   author: ProjectedMember;
   text: string;
   createdAt: number;
+  canDelete: boolean;
 }
 
 /**
@@ -136,7 +138,8 @@ export interface PuzzleCommentView {
  * text) and `text` their optional write-up (null when they left only stars). The `author` is
  * privacy-projected (salt = the puzzle id): a private author the viewer is not connected with is
  * anonymous (SEC-11), as on the public catalog; `updatedAt` is when the review was last written.
- * Newest reviews are returned first.
+ * Newest reviews are returned first. `canDelete` is true only for the viewer's own review (the
+ * author may delete it).
  */
 export interface PuzzleReviewView {
   id: string;
@@ -144,6 +147,7 @@ export interface PuzzleReviewView {
   rating: number | null;
   text: string | null;
   updatedAt: number;
+  canDelete: boolean;
 }
 
 /**
@@ -151,13 +155,15 @@ export interface PuzzleReviewView {
  * photo lightbox. Unlike a PuzzleCommentView there is no rating — photo comments are plain text. The
  * `author` is privacy-projected exactly like a PuzzleCommentView's (salt = the photo's copy _id, so
  * one hidden member reads the same across the copy page); `id` is the PhotoCommentId aggregateId.
- * Newest comments are returned first.
+ * Newest comments are returned first. `canDelete` is true only for the viewer's own comment (the
+ * author may delete it; the photo's owner may not).
  */
 export interface PhotoCommentView {
   id: string;
   author: ProjectedMember;
   text: string;
   createdAt: number;
+  canDelete: boolean;
 }
 
 /**

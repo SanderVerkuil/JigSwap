@@ -3,8 +3,8 @@ import type { QueryCtx } from "../_generated/server";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { messagePreviewOf } from "../notifications/viewRules";
 
-// Shared read helpers for the admin report queue (listReports, getReport) and decideReport's
-// audit label. Admin-only surfaces: labels may include the email by design.
+// Shared read helpers for the admin report queue (listReports, getReport). Admin-only surfaces:
+// labels may include the email by design.
 
 /** A member's admin label, or null when the account is gone (or the reporter is anonymised). */
 export const adminLabelOf = async (

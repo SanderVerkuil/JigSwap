@@ -1,5 +1,4 @@
 import {
-  inviterNameForEmail,
   toMemberId,
   type Channel,
   type MemberId,
@@ -8,7 +7,6 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { isActiveMember } from "../identity/requireActiveMember";
 import { circleOfOpenInvite } from "../sharing/circleAccess";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
@@ -133,26 +131,6 @@ const EXCHANGE_LIFECYCLE_TYPES: ReadonlySet<NotifyMemberCommand["type"]> =
 
 const asMember = (id: string): MemberId => toMemberId(id);
 
-// Resolve a member's display name for copy params. Missing user/name ⇒ no param (renderers have
-// locale-appropriate fallbacks), never a thrown error — copy must not break delivery.
-const memberName = async (
-  ctx: MutationCtx,
-  id: string | Id<"users">,
-): Promise<Record<string, string>> => {
-  const user = await ctx.db.get(id as Id<"users">);
-  const profile = await ctx.db
-    .query("profiles")
-    .withIndex("by_member", (q) => q.eq("memberId", id as Id<"users">))
-    .unique();
-  // Profile display name first, then account name/username. Never the email: the recipient is
-  // another member. The snapshot is copied into every recipient's row, so it is stored the way the
-  // out-of-band copy shows it (inviterNameForEmail: no control or bidi characters, no link or email
-  // address words, at most INVITER_NAME_MAX_LENGTH characters), never as an unbounded member-chosen
-  // string.
-  const actorName = inviterNameForEmail(memberDisplayNameOf(user, profile));
-  return actorName ? { actorName } : {};
-};
-
 // Resolve the persisted exchange row from its ExchangeId aggregateId so we can address the real
 // parties and use the Convex `_id` as the notification's relatedId (matching the old inline wording
 // + linkage exactly, now async).
@@ -209,9 +187,45 @@ const adminRecipients = async (
   return admins.filter((admin) => (admin._id as string) !== excludeUserId);
 };
 
+/**
+ * Every event name translate handles, one per `case` label. events/dispatch runs the
+ * Notifications handler only for these, so the many events no notification is about open no
+ * sub-transaction (PERF-B7). notificationEventNames.test.ts checks the list against translate's
+ * case labels: a case added without its name here fails the test.
+ */
+export const NOTIFYING_EVENT_NAMES: readonly string[] = [
+  "ExchangeProposed",
+  "ExchangeAccepted",
+  "ExchangeRejected",
+  "ExchangeCancelled",
+  "ExchangeCompleted",
+  "DisputeRaised",
+  "MessagePosted",
+  "GoalAchieved",
+  "PartnerReviewSubmitted",
+  "PuzzleDefinitionApproved",
+  "PuzzleDefinitionRejected",
+  "ChangeProposalApproved",
+  "ChangeProposalRejected",
+  "ChangeProposalFiled",
+  "PuzzleDefinitionSubmitted",
+  "MemberFollowed",
+  "FollowRequested",
+  "FollowRequestApproved",
+  "ConnectionOffered",
+  "HouseholdInviteSent",
+  "HouseholdInviteAccepted",
+  "HouseholdJoinRequested",
+  "HouseholdJoinRequestApproved",
+  "CircleInviteIssued",
+  "CircleInviteAccepted",
+  "CircleDeleted",
+];
+
 // Map a recorded event to zero or more NotifyMember commands. Unmapped events are a no-op (most
-// events have no member-facing notification yet). The `payload` carries the event's data fields
-// (branded id strings + epoch-millis dates) as serialised by recordAndSchedule.
+// events have no member-facing notification yet); add a new case's name to NOTIFYING_EVENT_NAMES.
+// The `payload` carries the event's data fields (branded id strings + epoch-millis dates) as
+// serialised by recordAndSchedule.
 const translate = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
@@ -228,7 +242,7 @@ const translate = async (
           row.recipientId,
           "trade_request",
           row._id,
-          await memberName(ctx, row.initiatorId),
+          {},
           { actor: row.initiatorId, subject: exchangeSubject(p) },
         ),
       ];
@@ -346,13 +360,6 @@ const translate = async (
       if (authorId === null || authorId === undefined) return [];
       const thread = await loadThread(ctx, p.threadId as string);
       if (!thread) return [];
-      // No name snapshot for a DM or a circle thread: the sender may be anonymous to the recipient
-      // (resolved at read and send time through the privacy rules), so a stored name must never
-      // be there to leak.
-      const author =
-        thread.subjectKind === "exchange"
-          ? await memberName(ctx, authorId)
-          : {};
       // A circle thread notifies only members who can see the message: a current seat (an
       // ex-member whose participant sync is pending or failed gets nothing) and a floor before it
       // (the later of their row's and seat's joinedAt; a row without one fails closed). A blocked
@@ -398,7 +405,7 @@ const translate = async (
           participant,
           circle ? "circle_message_received" : "message_received",
           thread.aggregateId,
-          author,
+          {},
           {
             actor: authorId,
             subject: { kind: "thread", threadId: thread.aggregateId },
@@ -568,7 +575,7 @@ const translate = async (
           followeeId,
           "new_follower",
           followerId, // the follower's users _id; the UI deep-links to /people
-          await memberName(ctx, followerId),
+          {},
           { actor: followerId }, // the follower IS the subject
         ),
       ];
@@ -589,7 +596,7 @@ const translate = async (
           p.targetId as string,
           "follow_request_received",
           p.requesterId as string,
-          await memberName(ctx, p.requesterId as string),
+          {},
           {
             actor: p.requesterId as string,
             subject: {
@@ -606,7 +613,7 @@ const translate = async (
           p.requesterId as string,
           "follow_request_approved",
           p.targetId as string,
-          await memberName(ctx, p.targetId as string),
+          {},
           { actor: p.targetId as string },
         ),
       ];
@@ -620,7 +627,7 @@ const translate = async (
           p.toId as string,
           "connection_offer_received",
           p.offerId as string,
-          await memberName(ctx, p.fromId as string),
+          {},
           {
             actor: p.fromId as string,
             subject: { kind: "connectionOffer", offerId: p.offerId as string },
@@ -636,7 +643,7 @@ const translate = async (
           p.inviteeId as string,
           "household_invite_received",
           p.inviteId as string,
-          await memberName(ctx, p.inviterId as string),
+          {},
           {
             actor: p.inviterId as string,
             subject: {
@@ -653,7 +660,7 @@ const translate = async (
           p.inviterId as string,
           "household_invite_accepted",
           p.householdId as string,
-          await memberName(ctx, p.inviteeId as string),
+          {},
           {
             actor: p.inviteeId as string,
             subject: {
@@ -680,7 +687,7 @@ const translate = async (
           p.adminId as string,
           "household_join_request_received",
           p.requestId as string,
-          await memberName(ctx, p.requesterId as string),
+          {},
           {
             actor: p.requesterId as string,
             subject: {
@@ -697,7 +704,7 @@ const translate = async (
           p.requesterId as string,
           "household_join_request_approved",
           p.householdId as string,
-          await memberName(ctx, p.approverId as string),
+          {},
           {
             actor: p.approverId as string,
             subject: {
@@ -802,7 +809,9 @@ const puzzleSubject = (puzzle: Doc<"puzzles">): NotificationSubject => ({
 // values for this type's copy (contract documented in notifications/copy.ts) — rendering happens at
 // the edges (web i18n, email templates, push copy table), never here. `refs` adds the typed
 // references the read side resolves live: the member who caused it (never set for moderator-driven
-// outcomes, so a moderator is never exposed) and what it is about.
+// outcomes, so a moderator is never exposed) and what it is about. `params` never holds a member's
+// name: the actor travels as a ref and every surface (bell, email, push) resolves it live for the
+// recipient, so no copy of the name outlives the actor's account or a later rename.
 const cmd = (
   recipient: string | Id<"users">,
   type: NotifyMemberCommand["type"],

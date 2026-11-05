@@ -31,11 +31,12 @@ export interface EmailSender {
 }
 
 // The default: no provider configured. Logs and drops, so opting a member into the email channel is
-// harmless until the AhaSend env vars are set on the deployment.
+// harmless until the AhaSend env vars are set on the deployment. The log names the idempotency key
+// only: never the address, and never the subject (subjects carry member names).
 export const noopEmailSender = (reason: string): EmailSender => ({
   async send(message) {
     console.warn(
-      `email disabled (${reason}); dropping "${message.subject}" email to ${message.to}.`,
+      `email disabled (${reason}); dropping email ${message.idempotencyKey}.`,
     );
   },
 });

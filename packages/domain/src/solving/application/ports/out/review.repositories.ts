@@ -3,7 +3,9 @@ import { CopyId, MemberId, PuzzleDefinitionId } from "../../../domain";
 // Outbound ports: persistence for the two-level review model. Each member holds AT MOST ONE
 // puzzle review per puzzle and AT MOST ONE copy review per copy — `upsert` creates the row or
 // replaces the existing one; enforcing that cardinality is the 2c-convex adapter's job (the
-// `puzzleReviews`/`copyReviews` tables), never the domain's.
+// `puzzleReviews`/`copyReviews` tables), never the domain's. A member may delete their own puzzle
+// or copy review: `remove` deletes the (member, puzzle) or (member, copy) row and says whether
+// there was one.
 
 // The already-normalised values a puzzle-review upsert persists.
 export interface PuzzleReviewUpsert {
@@ -21,6 +23,7 @@ export interface PuzzleReviewRepository {
     userId: MemberId,
     puzzleId: PuzzleDefinitionId,
   ): Promise<string | undefined>;
+  remove(userId: MemberId, puzzleId: PuzzleDefinitionId): Promise<boolean>;
 }
 
 // The already-normalised values a star-only copy-review upsert persists.
@@ -33,4 +36,5 @@ export interface CopyReviewUpsert {
 
 export interface CopyReviewRepository {
   upsert(review: CopyReviewUpsert): Promise<void>;
+  remove(userId: MemberId, copyId: CopyId): Promise<boolean>;
 }

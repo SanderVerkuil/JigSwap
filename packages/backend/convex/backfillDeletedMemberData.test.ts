@@ -272,6 +272,239 @@ describe("conversation.backfillDeletedMemberData", () => {
   });
 });
 
+describe("conversation.backfillDeletedMemberData: a solve kept on someone else's copy", () => {
+  // Ivy was deleted before the purge cleared notes: her solve of Bob's copy still carries them.
+  const seedSolve = (t: T) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const ivy = await mk("ivy");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const bobsCopy = await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-b1",
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const solve = await ctx.db.insert("completions", {
+        aggregateId: "completion-ivy",
+        userId: ivy,
+        ownedPuzzleId: bobsCopy,
+        startDate: now - 3_600_000,
+        endDate: now - 60_000,
+        notes: "Borrowed it while my knee healed",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.delete(ivy);
+      return { solve };
+    });
+
+  const run = async (t: T, dryRun: boolean) => {
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun, table: "completions" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+  };
+
+  test("a dry run keeps her notes", async () => {
+    const t = newT();
+    const { solve } = await seedSolve(t);
+    await run(t, true);
+    expect((await t.run((ctx) => ctx.db.get(solve)))!.notes).toBe(
+      "Borrowed it while my knee healed",
+    );
+  });
+
+  test("a real run clears her notes and keeps the solve in Bob's copy's History", async () => {
+    const t = newT();
+    const { solve } = await seedSolve(t);
+    await run(t, false);
+    const row = await t.run((ctx) => ctx.db.get(solve));
+    expect(row).not.toBeNull();
+    expect(row!).not.toHaveProperty("notes");
+  });
+});
+
+describe("conversation.backfillDeletedMemberData: the legacy exchange chat", () => {
+  // Jay was deleted before the purge covered the legacy `messages` table; his chat with Bob was
+  // copied into their exchange thread by conversation/backfill and is all he left behind.
+  test("a real run finds him through his legacy rows and deletes the copied ones", async () => {
+    const t = newT();
+    const { jay, legacyId } = await t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const jay = await mk("jay");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Lighthouse",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      });
+      const exchangeId = await ctx.db.insert("exchanges", {
+        initiatorId: jay,
+        recipientId: bob,
+        type: "trade",
+        requestedPuzzleId: copy,
+        status: "completed",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const legacyId = await ctx.db.insert("messages", {
+        exchangeId,
+        senderId: jay,
+        receiverId: bob,
+        content: "Can we meet at the station?",
+        messageType: "text",
+        isRead: true,
+        createdAt: now,
+      });
+      return { jay, legacyId };
+    });
+    await t.mutation(internal.conversation.backfill.run, {});
+    await t.run((ctx) => ctx.db.delete(jay));
+
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun: false, table: "messages" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+
+    expect(reportedIds()).toEqual([jay]);
+    expect(await t.run((ctx) => ctx.db.get(legacyId))).toBeNull();
+  });
+});
+
+describe("conversation.backfillDeletedMemberData: a DM nobody is left in", () => {
+  // Kim and Lou were both deleted before the purge dropped a thread nobody is left in: their DM,
+  // its participant rows and its messages are still there. Bob's DM with Kim stays.
+  const seedThreads = (t: T) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const mk = (who: string) =>
+        ctx.db.insert("users", {
+          clerkId: `clerk_${who}`,
+          name: who,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      const bob = await mk("bob");
+      const kim = await mk("kim");
+      const lou = await mk("lou");
+      const dm = async (aggregateId: string, pair: Id<"users">[]) => {
+        await ctx.db.insert("threads", {
+          aggregateId,
+          subjectKind: "dm",
+          participants: pair,
+          participantsKey: pair.map(String).sort().join("|"),
+          createdAt: now,
+        });
+        for (const memberId of pair) {
+          await ctx.db.insert("threadParticipants", {
+            threadAggregateId: aggregateId,
+            memberId,
+          });
+          await ctx.db.insert("threadMessages", {
+            threadAggregateId: aggregateId,
+            messageId: `${aggregateId}-${memberId}`,
+            authorId: memberId,
+            kind: "text",
+            body: "Hi",
+            sentAt: now,
+          });
+        }
+      };
+      await dm("dm-kim-lou", [kim, lou]);
+      await dm("dm-bob-kim", [bob, kim]);
+      await ctx.db.delete(kim);
+      await ctx.db.delete(lou);
+      return { kim, lou };
+    });
+
+  const threadIds = (t: T) =>
+    t.run(async (ctx) =>
+      (await ctx.db.query("threads").collect()).map((row) => row.aggregateId),
+    );
+
+  test("a dry run reports them and keeps the thread", async () => {
+    const t = newT();
+    const s = await seedThreads(t);
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { table: "threadParticipants" },
+    );
+    await settleDueJobs(t);
+    expect(reportedIds().sort()).toEqual([s.kim, s.lou].sort());
+    expect((await threadIds(t)).sort()).toEqual(["dm-bob-kim", "dm-kim-lou"]);
+  });
+
+  test("a real run purges their DM and keeps Bob's", async () => {
+    const t = newT();
+    await seedThreads(t);
+    await t.mutation(
+      internal.conversation.backfillDeletedMemberData.backfillDeletedMemberData,
+      { dryRun: false, table: "threadParticipants" },
+    );
+    await settleDueJobs(t);
+    await runDelayedScrubs(t);
+    expect(await threadIds(t)).toEqual(["dm-bob-kim"]);
+    const left = await t.run(async (ctx) => ({
+      participants: (await ctx.db.query("threadParticipants").collect()).map(
+        (row) => row.threadAggregateId,
+      ),
+      messages: (await ctx.db.query("threadMessages").collect()).map(
+        (row) => row.threadAggregateId,
+      ),
+    }));
+    expect(left).toEqual({
+      participants: ["dm-bob-kim", "dm-bob-kim"],
+      messages: ["dm-bob-kim", "dm-bob-kim"],
+    });
+  });
+});
+
 describe("conversation.backfillDeletedMemberData: events keyed by a deleted copy", () => {
   // An earlier deletion removed Hana's copy but left its CopyDetailsUpdated (no member id, her
   // notes) in the log. Bob's copy still exists.

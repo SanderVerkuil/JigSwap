@@ -1,7 +1,8 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
-import { internalMutation } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { internalMutation, internalQuery } from "../_generated/server";
 
 // One-off, idempotent backfill: legacy exchange chat (`messages` rows) becomes Conversation
 // threads. Run manually (npx convex run conversation/backfill:run); not part of the feature path.
@@ -19,6 +20,43 @@ import { internalMutation } from "../_generated/server";
 // (the new UI deep-links relatedId as a threadId).
 
 const legacyMessageId = (id: Id<"messages">): string => `legacy-${id}`;
+
+/**
+ * Whether this backfill has copied the legacy row into its exchange thread: the thread then holds
+ * the message and the legacy row is a duplicate. Used by the account-deletion purge, which deletes
+ * only copied rows (conversation/purgeMemberMessagingData legacyMessagesSent/Received).
+ */
+export const isCopiedLegacyMessage = async (
+  ctx: QueryCtx,
+  id: Id<"messages">,
+): Promise<boolean> =>
+  (await ctx.db
+    .query("threadMessages")
+    .withIndex("by_message_id", (q) => q.eq("messageId", legacyMessageId(id)))
+    .first()) !== null;
+
+// Read-only operator check before the `messages` table can be dropped: how many legacy rows exist
+// and how many this backfill has not copied yet (each would be lost with the table; run `run`
+// first). Paginated so each call stays inside the read limits (two reads per row); page with the
+// returned `continueCursor` until `isDone`, summing `scanned` and `unmigrated`.
+//   npx convex run conversation/backfill:legacyMessagesStatus \
+//     '{"paginationOpts":{"numItems":1000,"cursor":null}}'
+export const legacyMessagesStatus = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, { paginationOpts }) => {
+    const page = await ctx.db.query("messages").paginate(paginationOpts);
+    let unmigrated = 0;
+    for (const row of page.page) {
+      if (!(await isCopiedLegacyMessage(ctx, row._id))) unmigrated += 1;
+    }
+    return {
+      scanned: page.page.length,
+      unmigrated,
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
+  },
+});
 
 // Ensure the exchange's thread row (+ participant projection) exists, returning it. A created
 // thread mirrors what the repository would persist: fresh uuid aggregateId, exchange subject,

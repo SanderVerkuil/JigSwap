@@ -312,8 +312,9 @@ export const deleteUploadedCopyPhotos = async (
 
 /**
  * Their remaining completions. One on a copy someone else owns now is part of that copy's History:
- * the row stays (it renders as the departed member) without its photos. Any other (no copy, or the
- * copy is gone) is personal activity and is deleted with its photos.
+ * the row stays (it renders as the departed member) without its photos and without their private
+ * notes. Any other (no copy, or the copy is gone) is personal activity and is deleted with its
+ * photos.
  */
 export const purgeCompletions = async (
   ctx: MutationCtx,
@@ -330,9 +331,10 @@ export const purgeCompletions = async (
       : null;
     if (copy && copy.ownerId !== memberId) {
       await deleteCompletionPhotos(ctx, completion);
-      if (completion.photos.length > 0) {
+      if (completion.photos.length > 0 || completion.notes !== undefined) {
         await ctx.db.patch(completion._id, {
           photos: [],
+          notes: undefined,
           updatedAt: Date.now(),
         });
       }

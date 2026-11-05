@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,7 +27,9 @@ import { useTranslations } from "use-intl";
 // Post-exchange partner review. Keyed by the Exchange aggregateId (a string) and the OTHER
 // party's user id (derived by the caller). Self-fetches the caller's existing review so a
 // completed exchange already reviewed shows a non-interactive "Reviewed" chip instead of the
-// action. Maps the domain's stable ConvexError codes onto friendly, localized toasts.
+// action, plus "Remove comment" when the server says the review's written comment can be
+// removed (canClearComment). Maps the domain's stable ConvexError codes onto friendly, localized
+// toasts.
 interface LeaveReviewDialogProps {
   exchangeId: string | undefined;
   revieweeId: Id<"users"> | undefined;
@@ -79,9 +82,18 @@ export function LeaveReviewDialog({
 
   if (existingReview) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-        <CheckCircle className="h-4 w-4" />
-        {t("reviewed")}
+      <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
+          <CheckCircle className="h-4 w-4" />
+          {t("reviewed")}
+        </span>
+        {existingReview.canClearComment && exchangeId && (
+          <DeleteOwnContentButton
+            kind="reviewComment"
+            mutation={gateway.reputation.clearReviewComment}
+            args={{ exchangeId }}
+          />
+        )}
       </span>
     );
   }

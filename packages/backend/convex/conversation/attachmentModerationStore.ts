@@ -3,20 +3,29 @@ import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import {
   applyHashCheckResult,
   hashCheckResultArgs,
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import { STALLED_AFTER_MS } from "../lib/imageModeration/stalledSweep";
+import {
+  logRetentionSweep,
+  RETENTION_SWEEP_PAGE,
+  retentionEnforced,
+} from "../lib/retention";
 import {
   asImage,
   expireStagedAttachment,
+  expireUncheckedSentPhoto,
   MESSAGE_IMAGE_BLUR_THRESHOLD,
   MESSAGE_PHOTO_LABEL,
   purgeUndeliveredAttachment,
   REJECTED_ATTACHMENT_TTL_MS,
   settleSendBatch,
+  UNCHECKED_SENT_PHOTO_TTL_MS,
 } from "./messageAttachments";
 
 // The `messageAttachments` store for the shared image pipeline (lib/imageModeration/pipeline),
@@ -178,4 +187,100 @@ export const purgeUndelivered = internalMutation({
 export const expireStaged = internalMutation({
   args: { attachmentId: v.id("messageAttachments") },
   handler: (ctx, { attachmentId }) => expireStagedAttachment(ctx, attachmentId),
+});
+
+const uncheckedPhaseValidator = v.union(
+  v.literal("pending"),
+  v.literal("unscored"),
+);
+
+/**
+ * The daily retention sweep of the 7-day rule (crons.ts; lib/retention, sweep "sentPhotos"): a
+ * photo whose send was requested more than UNCHECKED_SENT_PHOTO_TTL_MS ago and that is still
+ * being checked ("pending", then "unscored") is expired
+ * (messageAttachments.expireUncheckedSentPhoto), only when RETENTION_ENFORCE names the sweep;
+ * otherwise it is counted and nothing changes. Never touched, only counted: a photo an open
+ * report holds (evidenceHold; the first sweep after the decision takes it), and one whose CSAM
+ * hash check has not finished (a late match must still find the bytes to preserve). A "pending"
+ * photo touched within STALLED_AFTER_MS is being checked right now (an admin's "Check again") and
+ * is left for a later run. A staged photo whose send was never requested is the 24-hour rule's
+ * (expireStaged), not this one's. One page of the by_moderation_status range per run (rows
+ * created before the cutoff), re-scheduling itself.
+ */
+export const sweepUncheckedSentPhotos = internalMutation({
+  args: {
+    phase: v.optional(uncheckedPhaseValidator),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    now: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const phase = args.phase ?? "pending";
+    const now = args.now ?? Date.now();
+    const cutoff = now - UNCHECKED_SENT_PHOTO_TTL_MS;
+    const enforce = retentionEnforced("sentPhotos");
+    const page = await ctx.db
+      .query("messageAttachments")
+      .withIndex("by_moderation_status", (q) =>
+        q.eq("moderationStatus", phase).lt("_creationTime", cutoff),
+      )
+      .paginate({
+        numItems: RETENTION_SWEEP_PAGE,
+        cursor: args.cursor ?? null,
+      });
+    let due = 0;
+    let acted = 0;
+    let heldReport = 0;
+    let heldHashCheck = 0;
+    for (const doc of page.page) {
+      const row = asImage(doc);
+      if (
+        !row ||
+        row.sendRequestedAt === undefined ||
+        row.sendRequestedAt > cutoff ||
+        (row.moderationStatus === "pending" &&
+          row.updatedAt > now - STALLED_AFTER_MS)
+      ) {
+        continue;
+      }
+      if (row.evidenceHold) {
+        heldReport++;
+        continue;
+      }
+      if (!isHashCleared(row)) {
+        heldHashCheck++;
+        continue;
+      }
+      due++;
+      if (!enforce) continue;
+      await expireUncheckedSentPhoto(ctx, row);
+      acted++;
+    }
+
+    const nextPhase = phase === "pending" ? ("unscored" as const) : undefined;
+    if (!page.isDone) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.conversation.attachmentModerationStore
+          .sweepUncheckedSentPhotos,
+        { phase, cursor: page.continueCursor, now },
+      );
+    } else if (nextPhase !== undefined) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.conversation.attachmentModerationStore
+          .sweepUncheckedSentPhotos,
+        { phase: nextPhase, cursor: null, now },
+      );
+    }
+    logRetentionSweep({
+      sweep: "sentPhotos",
+      phase,
+      due,
+      acted,
+      dryRun: !enforce,
+      isDone: page.isDone && nextPhase === undefined,
+      held_report: heldReport,
+      held_hash_check: heldHashCheck,
+    });
+  },
 });

@@ -81,6 +81,7 @@ type ResolveArgs = {
   relatedId?: string;
   actorId?: Id<"users">;
   subject?: Doc<"notifications">["subject"];
+  channel?: "email" | "push";
 };
 
 const resolve = (s: Setup, args: ResolveArgs) =>
@@ -257,6 +258,8 @@ describe("resolveForDelivery: context and deep links", () => {
       relatedId: "thread-1",
       actorId: s.mara,
       subject: { kind: "thread", threadId: "thread-1" },
+      // Push quotes the text by default (messageNotificationPrivacy.test.ts covers the setting).
+      channel: "push",
     });
     expect(content).toEqual({
       params: {
@@ -646,6 +649,80 @@ describe("sendEmail action", () => {
     expect(body.html_content).toContain(
       "https://jigswap.site/messages/thread-9",
     );
+  });
+
+  test("a message email leaves the text out by default (SEC-64)", async () => {
+    const s = await setup();
+    await seedThread(s, [s.viewer, s.mara]);
+    await s.t.action(internal.notifications.sendEmail.send, {
+      to: "viewer@example.com",
+      toName: "viewer",
+      type: "message_received",
+      params: {},
+      locale: "en",
+      relatedId: "thread-1",
+      idempotencyKey: "notif-5",
+      userId: s.viewer,
+      actorId: s.mara,
+      subject: { kind: "thread", threadId: "thread-1" },
+    });
+    const body = sentBody();
+    expect(body.subject).toBe("New message from Mara Display on JigSwap");
+    expect(body.text_content).not.toContain("Ravensburger");
+    expect(body.html_content).not.toContain("Ravensburger");
+  });
+
+  test("a message email quotes the text once the member allows it in email", async () => {
+    const s = await setup();
+    await seedThread(s, [s.viewer, s.mara]);
+    await s.t.run((ctx) =>
+      ctx.db.insert("notificationPreferences", {
+        memberId: s.viewer,
+        toggles: {},
+        messagePreviews: { email: true },
+        updatedAt: now,
+      }),
+    );
+    await s.t.action(internal.notifications.sendEmail.send, {
+      to: "viewer@example.com",
+      toName: "viewer",
+      type: "message_received",
+      params: {},
+      locale: "en",
+      relatedId: "thread-1",
+      idempotencyKey: "notif-6",
+      userId: s.viewer,
+      actorId: s.mara,
+      subject: { kind: "thread", threadId: "thread-1" },
+    });
+    expect(sentBody().text_content).toContain("Still have the Ravensburger?");
+  });
+
+  test("a provider rejection logs the status, never the recipient (SEC-75)", async () => {
+    const s = await setup();
+    fetchMock.mockResolvedValueOnce(
+      new Response("viewer@example.com is on the suppression list", {
+        status: 422,
+      }),
+    );
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    await s.t.action(internal.notifications.sendEmail.send, {
+      to: "viewer@example.com",
+      toName: "viewer",
+      type: "message_received",
+      params: { actorName: "Anna" },
+      locale: "en",
+      relatedId: "thread-9",
+      idempotencyKey: "notif-4",
+    });
+    const lines = logged.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes('"notifications.email"'));
+    logged.mockRestore();
+    expect(lines).toHaveLength(1);
+    const line = JSON.parse(lines[0]) as { error: { detail: string } };
+    expect(line.error.detail).toBe("AhaSend 422");
+    expect(lines[0]).not.toContain("viewer@example.com");
   });
 });
 

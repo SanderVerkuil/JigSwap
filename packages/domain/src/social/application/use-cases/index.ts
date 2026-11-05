@@ -2,6 +2,8 @@ export * from "./approve-follow-request";
 export * from "./arrange-shelf";
 export * from "./cancel-follow-request";
 export * from "./decline-follow-request";
+export * from "./delete-comment";
+export * from "./delete-photo-comment";
 export * from "./edit-profile";
 export * from "./follow-member";
 export * from "./post-comment";

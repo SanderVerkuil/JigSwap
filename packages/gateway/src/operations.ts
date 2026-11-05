@@ -124,6 +124,8 @@ export const gateway = {
     // Photo metadata itself flows through getCopyInstanceView's gallery.
     postPhotoComment: api.library.postPhotoComment.postPhotoComment,
     listPhotoComments: api.library.listPhotoComments.listPhotoComments,
+    // Author-only: a member deletes a photo comment they wrote (the view's `canDelete`).
+    deletePhotoComment: api.library.deletePhotoComment.deletePhotoComment,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
     // used for copy photos.
     generateUploadUrl: api.puzzles.generateUploadUrl,
@@ -330,6 +332,8 @@ export const gateway = {
     // Two-level review form: upsert puzzle and/or copy review in one call; read own rows back.
     submitReviews: api.solving.submitReviews.submitReviews,
     getMyReviews: api.solving.getMyReviews.getMyReviews,
+    // Author-only: "Delete my review" removes the caller's own star review of the copy.
+    deleteCopyReview: api.solving.deleteCopyReview.deleteCopyReview,
   },
 
   // Federated user settings: a read-composition over each context's settings section. Writes are
@@ -346,6 +350,10 @@ export const gateway = {
     reviewsForMember: api.reputation.listReviewsForMember.listReviewsForMember,
     myReviewForExchange:
       api.reputation.getMyReviewForExchange.getMyReviewForExchange,
+    // The reviewer removes the written comment of their own review (exchangeId = aggregateId);
+    // the ratings stay. Offered when myReviewForExchange says canClearComment.
+    clearReviewComment:
+      api.reputation.clearPartnerReviewComment.clearPartnerReviewComment,
   },
 
   // Notifications: the per-member in-app inbox + delivery preferences. A pure subscriber context
@@ -367,6 +375,11 @@ export const gateway = {
         .updateNotificationPreference,
     setPreferences:
       api.notifications.setNotificationPreferences.setNotificationPreferences,
+    // Whether email / push notifications for a message may quote its text ({ email, push });
+    // set one channel at a time.
+    messagePreviews:
+      api.notifications.getMyMessagePreviews.getMyMessagePreviews,
+    setMessagePreview: api.notifications.setMessagePreview.setMessagePreview,
     // Native Web Push: the client reads the (non-secret) VAPID public key, then registers /
     // unregisters its PushManager subscription as the member toggles push.
     pushConfig: api.notifications.getPushConfig.getPushConfig,
@@ -487,10 +500,14 @@ export const gateway = {
     // SEC-11), as are the review authors below.
     postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
     listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
+    // Author-only: a member deletes a copy comment they wrote (the view's `canDelete`).
+    deletePuzzleComment: api.social.deletePuzzleComment.deletePuzzleComment,
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
     listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
+    // Author-only: "Delete my review" removes the caller's own review of the puzzle.
+    deletePuzzleReview: api.social.deletePuzzleReview.deletePuzzleReview,
     listPublicPuzzleReviews:
       api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
     // Presence (opt-in, mutual-only, reciprocal): the caller's own share/override settings and
@@ -528,7 +545,9 @@ export const gateway = {
     tradeActivity: api.insights.getTradeActivity.getTradeActivity,
     // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
     recommendations: api.insights.getRecommendations.getRecommendations,
-    exportUserData: api.insights.exportUserData.exportUserData,
+    // The member's data export, one page of one section (@jigswap/contracts EXPORT_SECTIONS) at a
+    // time: walk every section from cursor null until isDone.
+    exportUserDataPage: api.insights.exportUserDataPage.exportUserDataPage,
     // Public query — returns a random seed-stable sample of catalog puzzles for
     // the marketing hero plank. Args: { limit: number; seed: number }.
     plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,

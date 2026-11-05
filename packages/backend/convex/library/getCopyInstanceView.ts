@@ -326,6 +326,8 @@ export const getCopyInstanceView = query({
           author: await project(r.userId),
           rating: r.rating,
           updatedAt: r.updatedAt,
+          // Only the author may delete a copy review (solving/deleteCopyReview, SEC-70).
+          canDelete: r.userId === viewerId,
         })),
     );
 

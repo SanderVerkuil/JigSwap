@@ -105,8 +105,8 @@ const dmFrom = async (
   return row;
 };
 
-// Everything the recipient receives for one notification: the bell page, the resolved delivery,
-// the push text and the email in both locales.
+// Everything the recipient receives for one notification: the bell page, the delivery resolved
+// for push and for email, the push text and the email in both locales.
 const recipientPayloads = async (
   t: TestConvex<typeof schema>,
   row: Doc<"notifications">,
@@ -115,33 +115,41 @@ const recipientPayloads = async (
     api.notifications.listMyNotificationViews.listMyNotificationViews,
     { paginationOpts: { numItems: 20, cursor: null } },
   );
-  const content = await t.query(
-    internal.notifications.resolveForDelivery.resolveForDelivery,
-    {
-      recipientId: row.userId,
-      type: row.type,
-      ...(row.params !== undefined ? { params: row.params } : {}),
-      ...(row.relatedId !== undefined ? { relatedId: row.relatedId } : {}),
-      ...(row.actorIds?.[0] !== undefined ? { actorId: row.actorIds[0] } : {}),
-      ...(row.subject !== undefined ? { subject: row.subject } : {}),
-    },
-  );
-  if (!content) throw new Error("expected delivery content");
+  const resolve = async (channel: "email" | "push") => {
+    const content = await t.query(
+      internal.notifications.resolveForDelivery.resolveForDelivery,
+      {
+        recipientId: row.userId,
+        type: row.type,
+        channel,
+        ...(row.params !== undefined ? { params: row.params } : {}),
+        ...(row.relatedId !== undefined ? { relatedId: row.relatedId } : {}),
+        ...(row.actorIds?.[0] !== undefined
+          ? { actorId: row.actorIds[0] }
+          : {}),
+        ...(row.subject !== undefined ? { subject: row.subject } : {}),
+      },
+    );
+    if (!content) throw new Error("expected delivery content");
+    return content;
+  };
+  const content = await resolve("push");
+  const emailContent = await resolve("email");
   const push = pushTextOf("message_received", content);
   const emails = await Promise.all(
     (["en", "nl"] as const).map((locale) =>
       renderEmail({
         type: "message_received",
-        params: content.params,
+        params: emailContent.params,
         locale,
         baseUrl: "https://jigswap.test",
         relatedId: row.relatedId,
-        href: content.href,
-        actorAnonymous: content.actorAnonymous,
+        href: emailContent.href,
+        actorAnonymous: emailContent.actorAnonymous,
       }),
     ),
   );
-  return { page, content, push, emails };
+  return { page, content, emailContent, push, emails };
 };
 
 describe("message_received sender privacy", () => {
@@ -201,5 +209,176 @@ describe("message_received sender privacy", () => {
     );
     // The sender line is always the brand; the subject names the sender.
     expect(payloads.emails[0].fromName).toBe("JigSwap");
+  });
+});
+
+// Message text outside the app (SEC-64): email and push quote a message only when the recipient
+// allows it per channel. Email defaults to no text, push to the text; the bell is unaffected, and
+// a photo or location is still named by its kind (that is not message text).
+describe("message text in email and push", () => {
+  const delivered = async (
+    t: TestConvex<typeof schema>,
+    row: Doc<"notifications">,
+    channel: "email" | "push" | undefined,
+  ) => {
+    const content = await t.query(
+      internal.notifications.resolveForDelivery.resolveForDelivery,
+      {
+        recipientId: row.userId,
+        type: row.type,
+        params: row.params ?? {},
+        ...(row.relatedId !== undefined ? { relatedId: row.relatedId } : {}),
+        ...(row.actorIds?.[0] !== undefined
+          ? { actorId: row.actorIds[0] }
+          : {}),
+        ...(row.subject !== undefined ? { subject: row.subject } : {}),
+        ...(channel !== undefined ? { channel } : {}),
+      },
+    );
+    if (!content) throw new Error("expected delivery content");
+    return content;
+  };
+
+  const setPreview = (
+    t: TestConvex<typeof schema>,
+    channel: "email" | "push",
+    enabled: boolean,
+  ) =>
+    as(t, "clerk_nora").mutation(
+      api.notifications.setMessagePreview.setMessagePreview,
+      { channel, enabled },
+    );
+
+  const TEXT = "Still have the Ravensburger?";
+
+  test("defaults: the email leaves the text out, the push quotes it", async () => {
+    const t = convexTest(schema, modules);
+    const { pat, nora } = await seed(t);
+    const row = await dmFrom(t, { id: pat, clerkId: "clerk_pat" }, nora);
+
+    expect(
+      await as(t, "clerk_nora").query(
+        api.notifications.getMyMessagePreviews.getMyMessagePreviews,
+        {},
+      ),
+    ).toEqual({ email: false, push: true });
+
+    const email = await delivered(t, row, "email");
+    expect(email.params).not.toHaveProperty("messagePreview");
+    expect(email.params.actorName).toBe("Pat Publicname");
+    const rendered = await renderEmail({
+      type: "message_received",
+      params: email.params,
+      locale: "en",
+      baseUrl: "https://jigswap.test",
+      relatedId: row.relatedId,
+      href: email.href,
+      actorAnonymous: email.actorAnonymous,
+    });
+    expect(rendered.text).not.toContain(TEXT);
+    expect(rendered.html).not.toContain(TEXT);
+
+    const push = await delivered(t, row, "push");
+    expect(push.params.messagePreview).toBe(TEXT);
+    expect(pushTextOf("message_received", push).message).toBe(TEXT);
+  });
+
+  test("a delivery that names no channel quotes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { pat, nora } = await seed(t);
+    const row = await dmFrom(t, { id: pat, clerkId: "clerk_pat" }, nora);
+    expect((await delivered(t, row, undefined)).params).not.toHaveProperty(
+      "messagePreview",
+    );
+  });
+
+  test("each channel follows the member's own choice", async () => {
+    const t = convexTest(schema, modules);
+    const { pat, nora } = await seed(t);
+    const row = await dmFrom(t, { id: pat, clerkId: "clerk_pat" }, nora);
+
+    await setPreview(t, "email", true);
+    await setPreview(t, "push", false);
+    expect(
+      await as(t, "clerk_nora").query(
+        api.notifications.getMyMessagePreviews.getMyMessagePreviews,
+        {},
+      ),
+    ).toEqual({ email: true, push: false });
+
+    expect((await delivered(t, row, "email")).params.messagePreview).toBe(TEXT);
+    const push = await delivered(t, row, "push");
+    expect(push.params).not.toHaveProperty("messagePreview");
+    expect(pushTextOf("message_received", push)).toEqual({
+      title: "New message",
+      message: "Pat Publicname sent you a message",
+    });
+  });
+
+  test("the setting leaves the per-type toggles and the bell alone", async () => {
+    const t = convexTest(schema, modules);
+    const { pat, nora } = await seed(t);
+    const before = await as(t, "clerk_nora").query(
+      api.notifications.getMyPreferences.getMyPreferences,
+      {},
+    );
+    await setPreview(t, "push", false);
+    const row = await dmFrom(t, { id: pat, clerkId: "clerk_pat" }, nora);
+
+    expect(
+      await as(t, "clerk_nora").query(
+        api.notifications.getMyPreferences.getMyPreferences,
+        {},
+      ),
+    ).toEqual(before);
+    const { page } = await recipientPayloads(t, row);
+    expect(page.page[0].context.messagePreview).toBe(TEXT);
+  });
+
+  test("a shared location is still named by its kind", async () => {
+    const t = convexTest(schema, modules);
+    const { pat, nora } = await seed(t);
+    const row = await dmFrom(t, { id: pat, clerkId: "clerk_pat" }, nora);
+    // The thread's newest message becomes a location.
+    await t.run(async (ctx) => {
+      const threadId = row.relatedId!;
+      const attachmentId = await ctx.db.insert("messageAttachments", {
+        kind: "location",
+        threadAggregateId: threadId,
+        uploaderId: pat,
+        precision: "approximate",
+        mapStatus: "failed",
+        messageId: "loc-1",
+        createdAt: Date.now() + 10,
+        updatedAt: Date.now() + 10,
+      });
+      await ctx.db.insert("threadMessages", {
+        threadAggregateId: threadId,
+        messageId: "loc-1",
+        authorId: pat,
+        kind: "location",
+        body: "",
+        attachmentId,
+        sentAt: Date.now() + 10,
+      });
+    });
+    for (const channel of ["email", "push"] as const) {
+      const content = await delivered(t, row, channel);
+      expect(content.params.messageKind).toBe("location");
+      expect(content.params).not.toHaveProperty("messagePreview");
+    }
+  });
+
+  test("only a member can read or change the setting", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.query(api.notifications.getMyMessagePreviews.getMyMessagePreviews, {}),
+    ).rejects.toThrow("Unauthenticated");
+    await expect(
+      t.mutation(api.notifications.setMessagePreview.setMessagePreview, {
+        channel: "email",
+        enabled: true,
+      }),
+    ).rejects.toThrow("Unauthenticated");
   });
 });

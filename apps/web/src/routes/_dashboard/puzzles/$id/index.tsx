@@ -13,6 +13,7 @@ import {
   Stat,
 } from "@/components/puzzles/catalog-detail-parts";
 import { ReportDialog } from "@/components/safety/report-dialog";
+import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -641,6 +642,7 @@ function ReviewsSection({
           <ReviewRow
             key={review.id}
             review={review}
+            puzzleId={puzzleId}
             relative={relative}
             last={i === list.length - 1}
             // Other members' reviews with text (a rating alone has nothing to report; the server
@@ -657,6 +659,11 @@ function ReviewsSection({
                   }
                 : undefined
             }
+            // The composer was seeded from this review: empty it once the review is gone.
+            onDeleted={() => {
+              setRating(0);
+              setText("");
+            }}
           />
         ))}
         {list.length === 0 && (
@@ -688,15 +695,19 @@ function ReviewsSection({
 
 function ReviewRow({
   review,
+  puzzleId,
   relative,
   last,
   onReport,
+  onDeleted,
 }: {
   review: PuzzleReview;
+  puzzleId: string;
   relative: (timestamp: number) => string;
   last: boolean;
   /** Offered on other members' reviews with text: opens the report dialog. */
   onReport?: (trigger: HTMLButtonElement) => void;
+  onDeleted: () => void;
 }) {
   const tSafety = useTranslations("safety");
   const t = useTranslations("puzzleDefinition");
@@ -736,6 +747,15 @@ function ReviewRow({
         >
           <Flag className="size-4" aria-hidden />
         </Button>
+      )}
+      {review.canDelete && (
+        <DeleteOwnContentButton
+          kind="review"
+          mutation={gateway.social.deletePuzzleReview}
+          args={{ puzzleId: puzzleId as Id<"puzzles"> }}
+          onDeleted={onDeleted}
+          iconOnly
+        />
       )}
     </div>
   );

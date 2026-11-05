@@ -3,7 +3,9 @@
 // Activity Log tab: the latest moderation decisions as one bordered list.
 // Each stamp kind maps to an icon + tone, the sentence is i18n-interpolated
 // from the kind, and the actor falls back to "System" for the automated
-// pipeline's rows (photo_auto_rejected has no actorId).
+// pipeline's rows (photo_auto_rejected has no actorId). A targeted member whose
+// account is gone reads the localized "Deleted member" (the backend stores no
+// name for them, SEC-57).
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
@@ -105,7 +107,9 @@ export function ActivityLog({ emptyTitle }: { emptyTitle: string }) {
             <p className="min-w-0 flex-1 text-sm">
               {t.rich(`activity.${row.kind}`, {
                 actor: row.actorName ?? t("activity.system"),
-                target: row.targetLabel,
+                target: row.targetMemberDeleted
+                  ? t("activity.deletedMemberTarget")
+                  : row.targetLabel,
                 strong: (chunks) => (
                   <strong className="font-semibold">{chunks}</strong>
                 ),

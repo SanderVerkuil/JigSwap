@@ -1,6 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { ChannelMatrix } from "@/components/notifications/channel-matrix";
+import { MessagePreviewSettings } from "@/components/notifications/message-preview-settings";
 import {
   ADMIN_NOTIFICATION_TYPES,
   NOTIFICATION_CATEGORIES,
@@ -92,6 +93,7 @@ export function NotificationPreferencesPanel() {
     <div className="@container/prefs grid gap-6 @4xl/prefs:grid-cols-[300px_minmax(0,1fr)] @4xl/prefs:gap-10">
       <aside className="flex flex-col gap-6 @4xl/prefs:sticky @4xl/prefs:top-2 @4xl/prefs:self-start">
         <PushDeviceSection />
+        <MessagePreviewSettings />
         <p className="text-muted-foreground max-w-prose text-sm">
           {t("channelsNote")}
         </p>

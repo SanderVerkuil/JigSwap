@@ -1,3 +1,8 @@
+import {
+  EXPORT_SECTIONS,
+  type ExportPageView,
+  type ExportRow,
+} from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -74,6 +79,26 @@ const docIdOf = (t: T, aggregateId: string) =>
     return row!._id;
   });
 
+/** The member's whole data export, every section read to its end. */
+const fullExport = async (t: T, who: string) => {
+  const out: Record<string, ExportRow[]> = {};
+  for (const section of EXPORT_SECTIONS) {
+    const rows: ExportRow[] = [];
+    let cursor: string | null = null;
+    for (;;) {
+      const page: ExportPageView = await as(t, who).query(
+        api.insights.exportUserDataPage.exportUserDataPage,
+        { section, cursor },
+      );
+      rows.push(...page.rows);
+      if (page.isDone) break;
+      cursor = page.continueCursor;
+    }
+    out[section] = rows;
+  }
+  return out;
+};
+
 /** Every exchange read model (plus notifications and the data export) as `who` sees it. */
 const allReadModels = async (
   t: T,
@@ -115,7 +140,7 @@ const allReadModels = async (
         { paginationOpts: { numItems: 50, cursor: null } },
       )
     ).page,
-    export: await reader.query(api.insights.exportUserData.exportUserData, {}),
+    export: await fullExport(t, who),
   };
 };
 

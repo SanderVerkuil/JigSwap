@@ -263,7 +263,7 @@ describe("exchange.propose", () => {
 
   test("creates a trade_request notification for the recipient", async () => {
     const t = convexTest(schema, modules);
-    const { bob, puzzleId } = await seed(t);
+    const { alice, bob, puzzleId } = await seed(t);
     const copy = await addCopy(t, puzzleId, bob, {
       ...ALL_FALSE,
       forSale: true,
@@ -280,7 +280,9 @@ describe("exchange.propose", () => {
     const notes = await notificationsFor(t, bob);
     expect(notes).toHaveLength(1);
     expect(notes[0].type).toBe("trade_request");
-    expect(notes[0].params?.actorName).toBe("clerk_alice");
+    // The requester is a ref, resolved live; no name is copied into Bob's row (SEC-68).
+    expect(notes[0].actorIds).toEqual([alice]);
+    expect(notes[0].params?.actorName).toBeUndefined();
     const row = await exchangeRow(t, id);
     expect(notes[0].relatedId).toBe(row?._id);
   });

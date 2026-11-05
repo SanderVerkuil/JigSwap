@@ -729,6 +729,44 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
     expect(await blobExists(t, s.herPhotoOfSold.fileId)).toBe(false);
   });
 
+  test("her solves kept on Bob's copies lose her private notes, with or without photos", async () => {
+    const t = newT();
+    const s = await seed(t);
+    // A note on her solve of the copy she sold, and a photo-less solve of another of Bob's
+    // copies (she borrowed it) with a note of its own.
+    const bobsOther = await insertCopy(t, s.puzzleId, s.bob);
+    const noteOnly = await t.run(async (ctx) => {
+      await ctx.db.patch(s.herSolveOfSold.completionId, {
+        notes: "Did this one at my sister's place",
+      });
+      const now = Date.now();
+      return ctx.db.insert("completions", {
+        aggregateId: "completion-note-only",
+        userId: s.alice,
+        ownedPuzzleId: bobsOther,
+        startDate: now - 3_600_000,
+        endDate: now - 60_000,
+        notes: "Borrowed from Bob, missing two pieces",
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    await deleteMember(t, "alice");
+
+    const solves = await t.run(async (ctx) => [
+      await ctx.db.get(s.herSolveOfSold.completionId),
+      await ctx.db.get(noteOnly),
+    ]);
+    for (const solve of solves) {
+      // The row stays as the copy's History, without her photos or notes.
+      expect(solve).not.toBeNull();
+      expect(solve!.photos).toEqual([]);
+      expect(solve!).not.toHaveProperty("notes");
+    }
+  });
+
   test("her own copy goes with its photos, blobs, links and her solve; Bob's solve stays", async () => {
     const t = newT();
     const s = await seed(t);

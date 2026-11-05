@@ -2,7 +2,6 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
-import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -36,7 +35,6 @@ export const gate = internalQuery({
 
     return {
       clerkId: target.clerkId,
-      name: adminMemberLabelOf(target),
       actorId: memberId as unknown as Id<"users">,
     };
   },
@@ -46,22 +44,21 @@ export const gate = internalQuery({
 // mirror (patching `role: undefined` clears the field — the users.patchUserRole
 // precedent) and stamp the audit row. The user.updated webhook reconciles the
 // mirror later regardless, so this is convenience, not a consistency
-// requirement.
+// requirement. The audit row names the member by users id only (SEC-57): no
+// name, email or Clerk id, which would outlive their account.
 export const apply = internalMutation({
   args: {
     userId: v.id("users"),
     role: v.union(v.literal("admin"), v.null()),
     actorId: v.id("users"),
-    clerkId: v.string(),
-    name: v.string(),
   },
-  handler: async (ctx, { userId, role, actorId, clerkId, name }) => {
+  handler: async (ctx, { userId, role, actorId }) => {
     await ctx.db.patch(userId, { role: role ?? undefined });
     await stampModerationAction(ctx, {
       actorId,
       kind: role === null ? "role_revoked" : "role_granted",
-      targetLabel: name,
-      targetId: clerkId,
+      targetMemberId: userId,
+      targetId: userId,
     });
   },
 });

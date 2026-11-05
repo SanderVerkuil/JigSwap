@@ -76,7 +76,7 @@ describe("admin/roleChange.gate", () => {
     ).rejects.toThrow(/User not found/);
   });
 
-  test("returns clerkId, name and the acting admin's id for a valid target", async () => {
+  test("returns the clerkId and the acting admin's id for a valid target", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     const result = await asAdmin(t).query(internal.admin.roleChange.gate, {
@@ -84,7 +84,6 @@ describe("admin/roleChange.gate", () => {
     });
     expect(result).toEqual({
       clerkId: "clerk_bob",
-      name: "Bob",
       actorId: alice,
     });
   });
@@ -98,8 +97,6 @@ describe("admin/roleChange.apply", () => {
       userId: bob,
       role: "admin",
       actorId: alice,
-      clerkId: "clerk_bob",
-      name: "Bob",
     });
     const row = await t.run((ctx) => ctx.db.get(bob));
     expect(row?.role).toBe("admin");
@@ -108,8 +105,8 @@ describe("admin/roleChange.apply", () => {
     expect(actions[0]).toMatchObject({
       actorId: alice,
       kind: "role_granted",
-      targetLabel: "Bob",
-      targetId: "clerk_bob",
+      targetMemberId: bob,
+      targetId: bob,
     });
     expect(typeof actions[0].at).toBe("number");
   });
@@ -122,8 +119,6 @@ describe("admin/roleChange.apply", () => {
       userId: bob,
       role: null,
       actorId: alice,
-      clerkId: "clerk_bob",
-      name: "Bob",
     });
     const row = await t.run((ctx) => ctx.db.get(bob));
     expect(row?.role).toBeUndefined();
@@ -132,8 +127,8 @@ describe("admin/roleChange.apply", () => {
     expect(actions[0]).toMatchObject({
       actorId: alice,
       kind: "role_revoked",
-      targetLabel: "Bob",
-      targetId: "clerk_bob",
+      targetMemberId: bob,
+      targetId: bob,
     });
   });
 
@@ -144,15 +139,11 @@ describe("admin/roleChange.apply", () => {
       userId: bob,
       role: "admin",
       actorId: alice,
-      clerkId: "clerk_bob",
-      name: "Bob",
     });
     await t.mutation(internal.admin.roleChange.apply, {
       userId: bob,
       role: null,
       actorId: alice,
-      clerkId: "clerk_bob",
-      name: "Bob",
     });
     const actions = await allActions(t);
     expect(actions.map((a) => a.kind)).toEqual([

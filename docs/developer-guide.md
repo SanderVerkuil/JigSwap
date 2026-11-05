@@ -173,6 +173,12 @@ patterns:
   5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
   `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
   `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
+  A payload never keeps free text a member typed or the identity they registered with
+  (`REDACTED_EVENT_FIELDS` in `events/recordAndSchedule.ts`): a subscriber that needs such a field
+  reads the source row. Each event's member ids are indexed in `domainEventMembers` (the account
+  purge reads a member's events through it), and the daily `events/retention` sweep deletes events
+  dispatched more than 97 days ago (the activity feed's 90 days plus a week; a dry run unless
+  `RETENTION_ENFORCE` names `domainEvents`). In-flight and `failedAt` events are never deleted.
 
   **Replaying a `failedAt` event (manual).** Every handler in `failedHandlers` rolled back in full
   (its own sub-transaction), so re-running it cannot duplicate its own writes; handlers in
@@ -189,6 +195,24 @@ patterns:
   3. Run `events/dispatch:dispatch` with `{ "eventId": "<id>" }` (dashboard Functions tab or
      `npx convex run`). It runs only the handlers that are neither completed nor failed; a new
      failure is logged and recorded as usual.
+
+  **One-off backfills for older data (operator, in this order).** Each is an internal mutation
+  that is a dry run by default: run it with `{}`, check its log line, then run it with
+  `{ "dryRun": false }`. It pages and reschedules itself.
+  1. `events/redactPayloads:redactPayloads` strips the redacted fields from events recorded
+     before the redaction (log `events.redactPayloads`).
+  2. `events/eventMembers:backfillEventMembers` adds `domainEventMembers` rows for older events and
+     then writes the `domainEventMembers` row in `backfillMarkers` (log
+     `events.backfillEventMembers`). Until that marker exists, the account purge pages the whole
+     event log for each member it purges.
+  3. `conversation/backfillDeletedMemberData:backfillDeletedMemberData` finds members deleted
+     before the purge covered everything and purges them again from `exchangesOpen`. Run it only
+     after steps 1 and 2 have finished: it re-purges every departed member it finds (also on later
+     re-runs, since a departed member's seat in a DM with an active member stays), and without the
+     marker each of those purges pages the whole log. Once the marker exists, the purge reads the
+     member's events by index and leaves older events' free text to step 1.
+
+  Steps 1 and 2 do not depend on each other; step 3 depends on both.
 
 ### 1.6 The TanStack Start web app
 

@@ -58,6 +58,12 @@ export const STAGED_ATTACHMENT_TTL_MS = 24 * 60 * 60_000;
 /** A rejected photo nobody appealed is purged after this long (spec 2.8: 30 days for appeals). */
 export const REJECTED_ATTACHMENT_TTL_MS = 30 * 24 * 60 * 60_000;
 /**
+ * A photo still being checked this long after it was sent is deleted (spec 2.8, the privacy
+ * policy's "a week later"): the daily retention sweep
+ * attachmentModerationStore.sweepUncheckedSentPhotos (expireUncheckedSentPhoto).
+ */
+export const UNCHECKED_SENT_PHOTO_TTL_MS = 7 * 24 * 60 * 60_000;
+/**
  * Scores from here up to the reject threshold (MODERATION_NSFW_THRESHOLD, default 0.85) deliver
  * the photo blurred ("sensitive content"): fine-art puzzles produce false positives (spec 2.2).
  */
@@ -145,9 +151,10 @@ const STOPPED: ReadonlySet<Status> = new Set([
  * Whether an image message's caption is withheld from a reader other than its sender: its photo
  * is gone, hidden, or stopped (rejected, quarantined, removed by a moderator), exactly the photos
  * that read "Removed by moderation" for them (messageAttachmentViews). Rejected and quarantined
- * alike. A deleted sender's photo ("no longer available") keeps its caption, like their text
- * messages. Every recipient read of a caption checks this: the thread read model and the inbox
- * snippet. The sender always keeps their own caption.
+ * alike. A photo "no longer available" (`removedReason`: its sender deleted their account, or it
+ * expired while still being checked) keeps its caption, like a text message. Every recipient read
+ * of a caption checks this: the thread read model and the inbox snippet. The sender always keeps
+ * their own caption.
  */
 export const isCaptionWithheld = (
   row: Doc<"messageAttachments"> | null,
@@ -155,8 +162,7 @@ export const isCaptionWithheld = (
   const image = asImage(row);
   if (!image || image.hiddenFromSender) return true;
   return (
-    STOPPED.has(image.moderationStatus) &&
-    image.removedReason !== "account_deleted"
+    STOPPED.has(image.moderationStatus) && image.removedReason === undefined
   );
 };
 
@@ -428,6 +434,32 @@ export const purgeUndeliveredAttachment = async (
   await discardAttachment(ctx, row);
 };
 
+/**
+ * The 7-day rule (UNCHECKED_SENT_PHOTO_TTL_MS) for one sent photo the retention sweep found still
+ * being checked (attachmentModerationStore.sweepUncheckedSentPhotos decides which): its blobs and
+ * reveals are deleted. One that is a message stays as a "removed" row (`removedReason:
+ * "expired"`) with only its size, no blurhash: both members read "Photo no longer available" and
+ * its caption stays, like a deleted sender's photo. One that never became a message (its append
+ * failed, e.g. the sender had left the thread) is deleted outright, as an undelivered photo is.
+ */
+export const expireUncheckedSentPhoto = async (
+  ctx: MutationCtx,
+  row: Attachment,
+): Promise<void> => {
+  if (row.messageId === undefined) {
+    await discardAttachment(ctx, row);
+    return;
+  }
+  await deleteAttachmentBlobs(ctx, row);
+  await deleteReveals(ctx, row._id);
+  await ctx.db.patch(row._id, {
+    moderationStatus: "removed",
+    removedReason: "expired",
+    blurhash: undefined,
+    updatedAt: Date.now(),
+  });
+};
+
 // Append the photo's image message through the domain path (participant rule, caption rule, the
 // MessagePosted event), authored by the uploader, at the current instant.
 const appendMessage = async (
@@ -657,9 +689,9 @@ export const messageAttachmentViews = (ctx: QueryCtx, viewer: Id<"users">) => {
     };
     const own = row.uploaderId === viewer;
     if (row.moderationStatus === "removed") {
-      // A deleted sender's photo keeps its placeholder ("no longer available"); a moderator's
-      // removal shows nothing of the image.
-      return row.removedReason === "account_deleted"
+      // A deleted sender's photo, or one that expired while still being checked, keeps its
+      // placeholder ("no longer available"); a moderator's removal shows nothing of the image.
+      return row.removedReason !== undefined
         ? {
             status: "removed",
             ...size,

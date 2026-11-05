@@ -1362,6 +1362,14 @@
       "axiom": {
         "title": "Axiom",
         "description": "Technische logs. Onze technische logregels (bijvoorbeeld dat een fotocontrole is uitgevoerd en hoe die afliep, met interne account- en record-ID's) worden naar Axiom gestuurd en opgeslagen in de EU-regio van Axiom. Deze logs bevatten geen berichten en geen foto's."
+      },
+      "ahasend": {
+        "title": "AhaSend",
+        "description": "E-mail versturen. AhaSend verstuurt onze meldingsmails (die je zelf aanzet in je meldingsvoorkeuren) en de uitnodigingen die leden per e-mail versturen. Per e-mail krijgt AhaSend het e-mailadres van de ontvanger (en bij leden hun naam) en de inhoud van de e-mail, waarin andere leden en puzzels genoemd kunnen worden. Een uitnodiging per e-mail bevat ook de naam van het lid dat hem verstuurde. De tekst van een bericht staat er alleen in als je dat aanzet (zie Berichten, foto's en locaties)."
+      },
+      "firecrawl": {
+        "title": "Firecrawl",
+        "description": "Winkelpagina's uitlezen. Voeg je een puzzel toe via een link naar een winkelpagina en kunnen we die pagina niet zelf uitlezen, dan vragen onze servers Firecrawl om de pagina op te halen. Firecrawl krijgt alleen de link die je hebt geplakt, nooit je accountgegevens, en wordt nooit vanuit je browser benaderd."
       }
     },
     "photos": {
@@ -1385,7 +1393,8 @@
         "Een foto die de controle tegenhoudt, krijgt het andere lid nooit te zien, en het bijschrift ook niet: diegene ziet \"Verwijderd door moderatie\". Je krijgt daar bericht over en kunt om een herbeoordeling vragen. Kan de automatische controle niet worden uitgevoerd, dan bekijkt een moderator de foto (zonder het gesprek te zien waarin hij is verstuurd) en keurt hem goed of verwijdert hem",
         "Een locatie delen gebeurt eenmalig: je stuurt één plek, nooit je actuele positie",
         "Een speld die je op de kaart zet wordt precies daar verstuurd. \"Mijn huidige locatie gebruiken\" wordt afgerond op een gebied van ongeveer 1 km; je exacte huidige positie versturen wordt alleen aangeboden aan leden die je wederzijdse volgers zijn, en alleen als je daarvoor kiest. Terwijl je de kaart rond je huidige positie bekijkt, onthouden we het midden ervan (afgerond op ongeveer 100 m) 15 minuten lang, zodat ook een speld die je precies op je eigen plek zet als een gebied bij benadering wordt verstuurd",
-        "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)"
+        "De kaartweergave van een gedeelde locatie wordt eenmalig op onze servers gemaakt als je hem verstuurt (zie MapTiler hierboven)",
+        "Een e-mail of pushmelding over een nieuw bericht bevat de tekst van het bericht alleen als je dat toestaat in je meldingsvoorkeuren: e-mails laten de tekst weg tenzij je dat aanzet, pushmeldingen tonen hem tenzij je dat uitzet. Meldingen over de groepschat van een kring bevatten de tekst nooit"
       ]
     },
     "groups": {
@@ -1485,7 +1494,7 @@
       "noSale": "We verkopen, verhuren of verhandelen je persoonsgegevens niet. Nooit.",
       "limitedSharing": "Gegevens worden alleen in deze gevallen gedeeld:",
       "circumstances": [
-        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Sightengine (automatische fotocontrole) en MapTiler (kaarten en plekken zoeken)",
+        "Met de dienstverleners uit dit beleid, als verwerkers namens ons: Convex (database en bestanden), Clerk (inloggen), Vercel (hosting), PostHog (analyse en foutrapportage), Axiom (operationele logs, gehost in de EU), Sightengine (automatische fotocontrole), MapTiler (kaarten en plekken zoeken), AhaSend (e-mail versturen) en Firecrawl (winkelpagina's uitlezen voor puzzels die je via een link toevoegt)",
         "Met andere leden, voor zover jij dat kiest — je profiel en de delen van je bibliotheek die je deelt zijn zichtbaar volgens jouw instellingen",
         "Wanneer de wet dat vereist, of om de dienst en haar leden te beschermen tegen fraude of misbruik",
         "Voor al het andere: alleen met jouw uitdrukkelijke toestemming"
@@ -1508,7 +1517,7 @@
         "Inzage: bekijk de gegevens die we over je hebben — het meeste is direct zichtbaar in de app",
         "Overdraagbaarheid: download je gegevens als bestand via de export op je Inzichten-pagina",
         "Rectificatie: corrigeer je profiel en bibliotheek zelf op elk moment, of vraag ons iets recht te zetten",
-        "Verwijdering: verwijder je account, waarmee je accountrecord wordt verwijderd — en vraag ons om resterende content die eraan gekoppeld is te verwijderen",
+        "Verwijdering: verwijder je reacties en beoordelingen zelf wanneer je wilt (bij een beoordeling van een ruilpartner kun je de geschreven opmerking verwijderen; de sterren blijven staan), verwijder je account, waarmee je accountrecord wordt verwijderd — en vraag ons om resterende content die eraan gekoppeld is te verwijderen",
         "Bezwaar en beperking: maak bezwaar tegen verwerking op basis van ons gerechtvaardigd belang",
         "Klacht: dien een klacht in bij je toezichthouder — in Nederland de Autoriteit Persoonsgegevens"
       ]
@@ -1608,7 +1617,7 @@
       "title": "Moderatie",
       "description": "Dit onderdeel legt uit hoe we JigSwap veilig houden en hoe we omgaan met inhoud en leden die deze Voorwaarden schenden.",
       "screeningTitle": "Automatische controle",
-      "screening": "Elke foto die je uploadt — naar je bibliotheek, een gelegde puzzel, een bericht of als catalogusafbeelding van een puzzel — wordt automatisch gecontroleerd door een veiligheidsdienst voordat anderen hem kunnen zien. Een foto die de controle tegenhoudt wordt niet gepubliceerd of bezorgd; een foto die als mogelijk gevoelig wordt aangemerkt, of die niet gecontroleerd kon worden, wordt vervaagd getoond totdat de kijker ervoor kiest hem te zien. Denk je dat de controle zich vergist, dan kun je vragen of een mens hem beoordeelt (zie hieronder).",
+      "screening": "Elke foto die je uploadt — naar je bibliotheek, een gelegde puzzel, een bericht of als catalogusafbeelding van een puzzel — wordt automatisch gecontroleerd door een veiligheidsdienst voordat anderen hem kunnen zien. Een foto die de controle tegenhoudt wordt niet gepubliceerd of bezorgd; een foto die als mogelijk gevoelig wordt aangemerkt, wordt vervaagd getoond totdat de kijker ervoor kiest hem te zien. Een foto die niet gecontroleerd kon worden, krijgen anderen pas te zien als hij alsnog is gecontroleerd. Denk je dat de controle zich vergist, dan kun je vragen of een mens hem beoordeelt (zie hieronder).",
       "reportingTitle": "Melden",
       "reporting": "Gebruik Melden bij een bericht, foto, profiel of puzzel om ons te wijzen op inhoud of gedrag dat deze Voorwaarden schendt. Om illegale inhoud te melden kies je die reden en geef je je naam, je e-mailadres en een verklaring dat je de melding te goeder trouw doet. Het lid dat je meldt hoort niet wie de melding heeft gedaan.",
       "decisionsTitle": "Onze besluiten",
@@ -2573,6 +2582,10 @@
     "pushDeviceTitle": "Push op dit apparaat",
     "pushDeviceSubtitle": "Bepaal of deze browser pushmeldingen ontvangt.",
     "pushDeviceDesc": "Ontvang meldingen, ook als JigSwap niet open is.",
+    "messagePreviewsTitle": "Berichtvoorbeelden",
+    "messagePreviewsEmail": "Berichttekst tonen in e-mails",
+    "messagePreviewsPush": "Berichttekst tonen in pushmeldingen",
+    "messagePreviewsNote": "Staat dit uit, dan meldt de e-mail of pushmelding wel dat je een nieuw bericht hebt, maar niet wat erin staat. In de app zie je altijd het hele bericht.",
     "pushEnable": "Inschakelen",
     "pushDisable": "Uitschakelen",
     "pushEnabledOnDevice": "Ingeschakeld op dit apparaat",
@@ -3028,12 +3041,11 @@
     },
     "export": {
       "title": "Mijn gegevens exporteren",
-      "description": "Download een JSON-kopie van je puzzels, voltooiingen, collecties, doelen en ruilen.",
+      "description": "Download een JSON-bestand met je account, puzzels, foto's, voltooiingen, beoordelingen, ruilen, wie je volgt en de berichten die je hebt gestuurd.",
       "button": "Mijn gegevens exporteren",
-      "preparing": "Voorbereiden...",
+      "preparing": "Voorbereiden... {percent}%",
       "success": "Je gegevens zijn gedownload.",
-      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw.",
-      "capped": "Sommige lijsten zijn beperkt tot {limit} rijen per categorie."
+      "error": "Kon je gegevens niet exporteren. Probeer het opnieuw."
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",
@@ -4293,6 +4305,7 @@
       "activity": {
         "loading": "Activiteit laden…",
         "system": "Systeem",
+        "deletedMemberTarget": "een verwijderd lid",
         "definition_approved": "<strong>{actor}</strong> keurde <strong>{target}</strong> goed",
         "definition_edited_approved": "<strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed",
         "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
@@ -5304,6 +5317,40 @@
         "photoComment": "Een reactie op een foto",
         "puzzleReview": "Een puzzelreview"
       }
+    }
+  },
+  "ownContent": {
+    "comment": {
+      "action": "Reactie verwijderen",
+      "title": "Deze reactie verwijderen?",
+      "body": "De reactie verdwijnt voor iedereen. Dit kun je niet ongedaan maken.",
+      "confirm": "Verwijderen",
+      "done": "Reactie verwijderd",
+      "error": "De reactie kon niet worden verwijderd. Probeer het opnieuw."
+    },
+    "review": {
+      "action": "Mijn review verwijderen",
+      "title": "Je review verwijderen?",
+      "body": "Je sterren en tekst verdwijnen bij deze puzzel, hier en in de openbare puzzelcatalogus. Je kunt later een nieuwe review schrijven.",
+      "confirm": "Review verwijderen",
+      "done": "Review verwijderd",
+      "error": "Je review kon niet worden verwijderd. Probeer het opnieuw."
+    },
+    "copyReview": {
+      "action": "Mijn beoordeling verwijderen",
+      "title": "Je beoordeling van dit exemplaar verwijderen?",
+      "body": "Je sterren verdwijnen uit de beoordelingen van dit exemplaar. Je kunt het later opnieuw beoordelen.",
+      "confirm": "Beoordeling verwijderen",
+      "done": "Beoordeling verwijderd",
+      "error": "Je beoordeling kon niet worden verwijderd. Probeer het opnieuw."
+    },
+    "reviewComment": {
+      "action": "Opmerking verwijderen",
+      "title": "Je opmerking verwijderen?",
+      "body": "Je geschreven opmerking verdwijnt uit deze review. Je sterren blijven staan, want die tellen mee voor de reputatie van je ruilpartner.",
+      "confirm": "Opmerking verwijderen",
+      "done": "Opmerking verwijderd",
+      "error": "Je opmerking kon niet worden verwijderd. Probeer het opnieuw."
     }
   },
   "presence": {

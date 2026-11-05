@@ -4,6 +4,7 @@ import { PhotoZoom } from "@/components/copies/photo-zoom";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { ReportDialog } from "@/components/safety/report-dialog";
+import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -582,6 +583,14 @@ function PhotoCommentRow({
         >
           <Flag className="size-4" aria-hidden />
         </Button>
+      )}
+      {comment.canDelete && (
+        <DeleteOwnContentButton
+          kind="comment"
+          mutation={gateway.library.deletePhotoComment}
+          args={{ commentId: comment.id }}
+          iconOnly
+        />
       )}
     </div>
   );

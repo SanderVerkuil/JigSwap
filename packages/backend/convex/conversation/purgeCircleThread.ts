@@ -3,29 +3,28 @@ import type { MutationCtx } from "../_generated/server";
 import { deleteAttachmentBlobs, deleteReveals } from "./messageAttachments";
 
 /**
- * One batch of a deleted circle's thread purge (sharing/purgeDeletedCircle), deleting at most
- * `budget` rows and returning how many it deleted: the messages first, then the attachments,
- * then the typing and participant rows, and the thread row last, once nothing hangs off it. A return equal to
- * `budget` means there may be more; the caller reschedules.
+ * One batch of a thread purge, deleting at most `budget` rows and returning how many it deleted:
+ * the messages first, then the attachments, then the typing and participant rows, and the thread
+ * row last, once nothing hangs off it. A return equal to `budget` means there may be more; the
+ * caller reschedules. Used for a deleted circle's thread (purgeCircleThreadBatch, from
+ * sharing/purgeDeletedCircle) and for a DM or exchange thread none of whose participants has an
+ * account left (conversation/purgeMemberMessagingData purgeOrphanThread).
  *
  * Attachments an open report holds (`evidenceHold`) are kept whole, blobs included: with the
  * thread and its messages gone they are detached, reachable only through their report, whose
- * snapshot is never touched here. A quarantined photo is kept whole too (the CSAM preservation owns
- * it). Both stay out of every batch's read, so the purge walks past them.
+ * snapshot is never touched here (releasing the hold deletes them, messageAttachments
+ * deleteIfOrphaned). A quarantined photo is kept whole too (the CSAM preservation owns it). Both
+ * stay out of every batch's read, so the purge walks past them.
  *
- * Hygiene, not access control: every thread read gates on the circle membership, which is gone
- * before this runs.
+ * Hygiene, not access control: nobody can read the thread any more (a circle thread gates on the
+ * circle membership, which is gone; a pair thread's participants have no accounts).
  */
-export const purgeCircleThreadBatch = async (
+export const purgeThreadBatch = async (
   ctx: MutationCtx,
-  circleId: string,
+  thread: Doc<"threads">,
   budget: number,
 ): Promise<number> => {
-  const thread = await ctx.db
-    .query("threads")
-    .withIndex("by_circle", (q) => q.eq("circleId", circleId))
-    .first();
-  if (!thread || budget <= 0) return 0;
+  if (budget <= 0) return 0;
   const threadId = thread.aggregateId;
   let deleted = 0;
 
@@ -69,6 +68,20 @@ export const purgeCircleThreadBatch = async (
 
   await ctx.db.delete(thread._id);
   return deleted + 1;
+};
+
+/** One batch of a deleted circle's thread purge (sharing/purgeDeletedCircle); see purgeThreadBatch. */
+export const purgeCircleThreadBatch = async (
+  ctx: MutationCtx,
+  circleId: string,
+  budget: number,
+): Promise<number> => {
+  const thread = await ctx.db
+    .query("threads")
+    .withIndex("by_circle", (q) => q.eq("circleId", circleId))
+    .first();
+  if (!thread || budget <= 0) return 0;
+  return purgeThreadBatch(ctx, thread, budget);
 };
 
 // A purged attachment goes with its blobs and every viewer's reveal of it.

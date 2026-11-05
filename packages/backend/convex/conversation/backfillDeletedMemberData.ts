@@ -11,8 +11,9 @@ export const BACKFILL_DELETED_MEMBER_DATA_BATCH = 200;
 export const BACKFILL_DELETED_MEMBER_DATA_MAX_BATCH = 1000;
 
 // The tables that hold what the later purge phases clean up, walked in this order. Each row names
-// the member(s) it belongs to; an exchange or a loan names both parties, an event any member its
-// payload mentions (so a member who left nothing but events is found, and their purge scrubs them).
+// the member(s) it belongs to; an exchange, a loan or a legacy chat message names both parties, an
+// event any member its payload mentions (so a member who left nothing but events is found, and
+// their purge scrubs them).
 const TABLES = [
   "exchanges",
   "loans",
@@ -24,6 +25,8 @@ const TABLES = [
   "categories",
   "circles",
   "householdMembers",
+  "threadParticipants",
+  "messages",
   "domainEvents",
 ] as const;
 type Table = (typeof TABLES)[number];
@@ -38,6 +41,8 @@ const tableValidator = v.union(
   v.literal("categories"),
   v.literal("circles"),
   v.literal("householdMembers"),
+  v.literal("threadParticipants"),
+  v.literal("messages"),
   v.literal("domainEvents"),
 );
 
@@ -113,6 +118,17 @@ const pageOf = async (
       return idsOf(ctx.db.query("householdMembers"), opts, (row) => [
         row.memberId,
       ]);
+    // A DM or exchange seat stays after an account deletion (circle seats go), so a member with
+    // a conversation left is found here and their purge can drop a thread nobody is left in.
+    case "threadParticipants":
+      return idsOf(ctx.db.query("threadParticipants"), opts, (row) => [
+        row.memberId,
+      ]);
+    case "messages":
+      return idsOf(ctx.db.query("messages"), opts, (row) => [
+        row.senderId,
+        row.receiverId,
+      ]);
     // An event names members anywhere in its untyped payload: every string that is a users id.
     // An event that names only a copy (CopyDetailsUpdated and its notes) leads to no member, so
     // the walk scrubs it itself once its copy is gone (scrubDeletedCopyEvent; counted on a dry
@@ -150,7 +166,21 @@ const pageOf = async (
  * and scheduled once. Its domainEvents walk also drops the personal fields (a copy's notes) from
  * events keyed by a copy that no longer exists, or only counts them on a dry run
  * (`deletedCopyEvents`). Each batch logs its findings; the last logs the whole list. Re-running is
- * harmless: a purged member leaves nothing behind to find. Run by an operator, with approval.
+ * safe: the purge is idempotent. A purged member can still be found (their seat in a DM an active
+ * member still has, a legacy chat row never copied) and is then purged again, changing nothing.
+ * Run by an operator, with approval.
+ *
+ * Cost and run order. Every member found is purged again from `exchangesOpen`, which includes the
+ * domainEvents phase. Until events/eventMembers:backfillEventMembers has written its
+ * `domainEventMembers` marker, that phase pages the WHOLE event log for each member, so one real
+ * run costs about (departed members x log size), and so does every later re-run. Run the one-off
+ * post-deploy steps in this order (each a dry run `{}` first, then `{ dryRun: false }`):
+ *   1. events/redactPayloads:redactPayloads
+ *   2. events/eventMembers:backfillEventMembers (wait for its marker / final log line)
+ *   3. conversation/backfillDeletedMemberData:backfillDeletedMemberData
+ * Steps 1 and 2 are independent of each other; step 3 comes after both: after step 2's marker so
+ * each re-purge reads only the member's own events by index, and after step 1 because that index
+ * walk relies on redactPayloads for older events' free text. Also in docs/developer-guide.md §1.5.
  */
 export const backfillDeletedMemberData = internalMutation({
   args: {

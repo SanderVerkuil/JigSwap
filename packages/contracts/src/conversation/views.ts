@@ -144,8 +144,9 @@ export interface LocationAvailabilityView {
  *   card with `reason` and `review`, exactly as the outbox shows it. A recipient never gets this
  *   status: they see `removed`.
  * - `removed`: removed by moderation (the check stopped it, or a moderator removed it):
- *   placeholder only. With `unavailable` its sender deleted their account (the blurhash
- *   placeholder, "Photo no longer available").
+ *   placeholder only. With `unavailable` its sender deleted their account, or it was still
+ *   being checked a week after it was sent (the blurhash placeholder when there is one, "Photo no
+ *   longer available").
  */
 export interface MessageAttachmentView {
   readonly status: "ready" | "blurred" | "pending" | "rejected" | "removed";
@@ -159,7 +160,7 @@ export interface MessageAttachmentView {
   readonly notMutual?: true;
   /** A photo that would be blurred, shown because this reader tapped Show earlier. */
   readonly revealed?: true;
-  /** `removed` because the sender deleted their account, not by a moderator. */
+  /** `removed`, not by a moderator: the sender deleted their account, or it expired unchecked. */
   readonly unavailable?: true;
   /** `rejected` only: why (see PendingAttachmentView). */
   readonly reason?: "unreadable" | "flagged";

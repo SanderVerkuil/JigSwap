@@ -3,6 +3,7 @@ import type { NotificationState } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import schema from "../schema";
+import { messagePreviewChannelValidator } from "./preferenceValidators";
 
 // What the out-of-band channels (email, push) render for ONE notification: the same resolution the
 // in-app read model does (resolveNotificationView), flattened into render params + a deep link.
@@ -39,6 +40,9 @@ export const deliveryResolutionArgs = {
   type: notificationFields.type,
   params: v.optional(v.record(v.string(), v.string())),
   relatedId: v.optional(v.string()),
+  // The channel this delivery leaves the app on: it decides whether a message's text may be
+  // quoted (the recipient's message-preview setting). Absent quotes nothing.
+  channel: v.optional(messagePreviewChannelValidator),
   ...deliveryRefsValidator,
 };
 

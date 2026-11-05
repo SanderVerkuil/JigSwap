@@ -40,4 +40,44 @@ crons.daily(
   {},
 );
 
+// Retention backstops (lib/retention): dry-run unless RETENTION_ENFORCE names the sweep.
+// Reports past their 12 months and evidence copies past their 6 months whose purge job was lost
+// get it re-armed; reports left open over 30 days are logged at error level
+// (reports/retention).
+crons.daily(
+  "report retention backstop",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.reports.retention.sweepReportRetention,
+  {},
+);
+
+// Photos still being checked a week after they were sent are deleted (their messages read "Photo
+// no longer available"); held by an open report or an unfinished hash check, they are kept
+// (conversation/attachmentModerationStore).
+crons.daily(
+  "sent photo retention",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.conversation.attachmentModerationStore.sweepUncheckedSentPhotos,
+  {},
+);
+
+// Copy photos the automated check rejected are deleted 30 days after the rejection, unless an
+// open report is about one or its hash check has not finished (library/moderationStore).
+crons.daily(
+  "rejected copy photo retention",
+  { hourUTC: 4, minuteUTC: 30 },
+  internal.library.moderationStore.sweepRejectedCopyPhotos,
+  {},
+);
+
+// Domain events dispatched more than the activity feed's 90 days plus a week ago are deleted with
+// their member lookup rows (dry run unless RETENTION_ENFORCE names "domainEvents"); events in
+// flight or failed are kept (events/retention).
+crons.daily(
+  "domain event retention",
+  { hourUTC: 4, minuteUTC: 45 },
+  internal.events.retention.sweepEventRetention,
+  {},
+);
+
 export default crons;

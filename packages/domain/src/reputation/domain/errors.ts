@@ -5,7 +5,8 @@ import { DomainError } from "../../shared-kernel";
 // logs/tests only). Modelled as a DomainError subclass so it can be thrown or carried in a
 // Result interchangeably. Cross-aggregate failures (e.g. exchange-not-completed) are
 // orchestration concerns and live in the application layer, not here.
-export type ReputationErrorCode = "SelfReview" | "InvalidRating";
+export type ReputationErrorCode =
+  "SelfReview" | "InvalidRating" | "NotReviewAuthor";
 
 export class ReputationError extends DomainError {
   override readonly name = "ReputationError";
@@ -30,6 +31,14 @@ export class ReputationError extends DomainError {
     return new ReputationError(
       "InvalidRating",
       `Rating ${value} must be an integer between 1 and 5`,
+    );
+  }
+
+  // Only the member who wrote a review may change what it says.
+  static notReviewAuthor(): ReputationError {
+    return new ReputationError(
+      "NotReviewAuthor",
+      "Only the reviewer can change this review",
     );
   }
 }

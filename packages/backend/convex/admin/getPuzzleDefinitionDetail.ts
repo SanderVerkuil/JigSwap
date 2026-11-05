@@ -9,6 +9,7 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { toAuditEntry } from "./auditEntry";
 
 // Admin read model for ONE catalog definition: the getUserDetail counterpart on the
 // catalog side. Definition facts + submitter, ownership stats and a capped distinct-owners
@@ -97,16 +98,7 @@ export const getPuzzleDefinitionDetail = query({
           .take(AUDIT_CAP)
       : [];
     const audit = await Promise.all(
-      auditRows.map(async (row) => {
-        const actor = row.actorId ? await ctx.db.get(row.actorId) : null;
-        return {
-          kind: row.kind,
-          actorName: actor ? adminMemberLabelOf(actor) : null,
-          targetLabel: row.targetLabel,
-          targetId: row.targetId,
-          at: row.at,
-        };
-      }),
+      auditRows.map((row) => toAuditEntry(ctx, row)),
     );
 
     return {

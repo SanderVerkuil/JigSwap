@@ -729,14 +729,22 @@ export default defineSchema({
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
+    // The member a role change or report decision targets (SEC-57). Such a row stores this id
+    // and a neutral targetLabel, never the member's name or email: the admin read models
+    // resolve the label while the account exists and read "Deleted member" once it is gone.
+    // Absent on rows about content, and on rows stamped before it
+    // (admin/backfillAuditTargets).
+    targetMemberId: v.optional(v.id("users")),
     at: v.number(),
   })
     .index("by_at", ["at"])
     // Back the admin user-detail audit trail: actions a member PERFORMED as
-    // admin, and actions TARGETING them (targetId = clerkId for role rows).
+    // admin, and actions TARGETING them (by_target_member; legacy role rows
+    // key targetId on the clerkId until the backfill has run).
     // Additive — Convex indexes existing rows automatically, no backfill.
     .index("by_actor", ["actorId", "at"])
-    .index("by_target", ["targetId", "at"]),
+    .index("by_target", ["targetId", "at"])
+    .index("by_target_member", ["targetMemberId", "at"]),
 
   // CSAM hash matches (lib/imageModeration/csamHashCheck), one row per quarantined image, for the
   // operator to report to Meldpunt Offlimits or the police (DSA Art. 18). Metadata only: the
@@ -1044,7 +1052,9 @@ export default defineSchema({
     // Copy-referencing messages of a thread, grouped per copy (rows without a copyId sort first
     // as undefined and are excluded by a range on copyId). Backs the inbox's context copies.
     .index("by_thread_copy_sent", ["threadAggregateId", "copyId", "sentAt"])
-    .index("by_message_id", ["messageId"]),
+    .index("by_message_id", ["messageId"])
+    // The messages one member wrote, for their data export (insights/exportUserDataPage).
+    .index("by_author", ["authorId", "sentAt"]),
 
   // A message's attachment (spec 2.1/2.2), staged BEFORE its message exists: the uploader stages
   // a photo (conversation/stageMessageImage), the shared image pipeline screens it
@@ -1123,9 +1133,14 @@ export default defineSchema({
         // read and mutation treats it as not found).
         hiddenFromSender: v.optional(v.boolean()),
         // Why a "removed" photo is gone when no moderator removed it: its sender deleted their
-        // account (users.purgeMemberMessagingData). Its blobs are deleted, the row keeps its
-        // blurhash and size, and the thread shows "Photo no longer available".
-        removedReason: v.optional(v.literal("account_deleted")),
+        // account (users.purgeMemberMessagingData), or it was still being checked a week after it
+        // was sent ("expired", conversation/attachmentModerationStore.sweepUncheckedSentPhotos).
+        // Its blobs are deleted, the row keeps its size (after an account deletion also the
+        // blurhash of a photo recipients could see), and the thread shows "Photo no longer
+        // available".
+        removedReason: v.optional(
+          v.union(v.literal("account_deleted"), v.literal("expired")),
+        ),
         createdAt: v.number(),
         updatedAt: v.number(),
       }),
@@ -1429,6 +1444,14 @@ export default defineSchema({
     aggregateId: v.optional(v.string()),
     memberId: v.id("users"),
     toggles: v.any(),
+    // Whether email / push may quote a message's text (SEC-64). Absent, or a channel absent,
+    // means the domain default: email no, push yes.
+    messagePreviews: v.optional(
+      v.object({
+        email: v.optional(v.boolean()),
+        push: v.optional(v.boolean()),
+      }),
+    ),
     updatedAt: v.number(),
   }).index("by_member", ["memberId"]),
 
@@ -1619,7 +1642,8 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a community comment on a PUZZLE DEFINITION (shared across every owned copy of that
-  // puzzle). A lightweight, append-only post: trimmed text + author + when.
+  // puzzle). A lightweight post: trimmed text + author + when; never edited, and only its author
+  // may delete it (social/deletePuzzleComment, SEC-70).
   // aggregateId is the CommentId; `by_puzzle` backs the newest-first read keyed on puzzleId.
   puzzleComments: defineTable({
     aggregateId: v.optional(v.string()),
@@ -1633,13 +1657,17 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_puzzle", ["puzzleId"])
-    .index("by_copy", ["copyId"]),
+    .index("by_copy", ["copyId"])
+    // The author's delete finds the comment by the id the read side shows (its aggregateId).
+    .index("by_aggregate_id", ["aggregateId"])
+    // Everything one member wrote (social/removeMemberContent).
+    .index("by_author", ["authorId", "createdAt"]),
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
-  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Append-only for
-  // members; a moderator deletes a reported one (admin/decideReport). The read side projects this
-  // table directly into view DTOs.
+  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Never edited.
+  // Only its author may delete it (library/deletePhotoComment, SEC-70), and a moderator deletes a
+  // reported one (admin/decideReport). The read side projects this table directly into view DTOs.
   photoComments: defineTable({
     aggregateId: v.optional(v.string()),
     photoId: v.id("ownedPuzzleImages"),
@@ -1648,7 +1676,11 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_photo", ["photoId"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    // The author's delete and a report's target find the comment by the id the read side shows
+    // (its aggregateId).
+    .index("by_aggregate_id", ["aggregateId"])
+    // Everything one member wrote (social/removeMemberContent).
+    .index("by_author", ["authorId", "createdAt"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.
@@ -1919,6 +1951,26 @@ export default defineSchema({
     // a full-table scan-and-filter.
     .index("by_name", ["name", "occurredAt"]),
 
+  // Which members a domainEvents payload names: one row per (event, users id anywhere in the
+  // payload), written with the event by events/recordAndSchedule. The account purge finds a
+  // member's events through by_member instead of paging the whole log; rows recorded before this
+  // table existed are added by events/eventMembers backfillEventMembers, which writes the
+  // "domainEventMembers" backfill marker when done (until then the purge pages the log). A row
+  // goes with its event, or once the purge has scrubbed the member out of the payload.
+  domainEventMembers: defineTable({
+    eventId: v.id("domainEvents"),
+    memberId: v.id("users"),
+  })
+    .index("by_member", ["memberId"])
+    .index("by_event", ["eventId", "memberId"]),
+
+  // One row per finished one-shot backfill that code waits on before it relies on the data the
+  // backfill writes (name = the backfill, e.g. "domainEventMembers").
+  backfillMarkers: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
+
   // Chain-of-Custody projection: one row per OwnershipTransferred event, folded by the custody
   // subscriber off the durable event log. WHY a dedicated table: domainEvents.payload is v.any()
   // with no per-copy index, so transfer history is not queryable by copyId; this read-model makes
@@ -2148,7 +2200,11 @@ export default defineSchema({
     .index("by_reporter_created", ["reporterId", "createdAt"])
     .index("by_reported_user", ["reportedUserId", "createdAt"])
     // The reports sharing one evidence copy (its purge; message-photo claims refuse it).
-    .index("by_evidence_file", ["evidenceFileId"]),
+    .index("by_evidence_file", ["evidenceFileId"])
+    // The daily retention backstop (reports/retention.sweepReportRetention): decided reports not
+    // purged yet, by decision time, and evidence copies by the end of their retention.
+    .index("by_retention_due", ["retentionPurgedAt", "decidedAt"])
+    .index("by_evidence_retain", ["evidenceRetainUntil"]),
 
   // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>", or
   // "<limit>:<memberId>:<otherId>" for a per-pair limit such as followPair, or

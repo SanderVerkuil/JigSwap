@@ -1,16 +1,22 @@
 import {
+  Comment,
+  CommentText,
   DisplayName,
   Follow,
   FollowRequest,
+  PhotoComment,
   Profile,
+  toCommentId,
+  toCopyId,
   toFollowId,
   toFollowRequestId,
   toMemberId,
+  toPhotoCommentId,
+  toPhotoId,
   toProfileId,
-  type Comment,
+  toPuzzleDefinitionId,
   type FollowRequestState,
   type FollowState,
-  type PhotoComment,
   type ProfileState,
 } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
@@ -146,6 +152,18 @@ export const commentToRow = (comment: Comment): CommentRow => {
   };
 };
 
+// Row -> Comment aggregate, for the author's delete. The CommentId is the row's aggregateId; a
+// legacy row written before aggregate ids is addressed by its `_id`, as the read side shows it.
+export const commentToDomain = (row: Doc<"puzzleComments">): Comment =>
+  Comment.rehydrate({
+    id: toCommentId(row.aggregateId ?? row._id),
+    puzzleId: toPuzzleDefinitionId(row.puzzleId),
+    authorId: toMemberId(row.authorId),
+    text: CommentText.fromState(row.text),
+    copyId: row.copyId === undefined ? undefined : toCopyId(row.copyId),
+    createdAt: new Date(row.createdAt),
+  });
+
 // PhotoComment aggregate -> row payload. Domain PhotoCommentId becomes `aggregateId`; the PhotoId it
 // carries is the `ownedPuzzleImages` _id (passed in by the mutation), re-branded to the `photoId`
 // FK column. Photo comments are text-only, so there is no rating field.
@@ -159,3 +177,14 @@ export const photoCommentToRow = (comment: PhotoComment): PhotoCommentRow => {
     createdAt: state.createdAt.getTime(),
   };
 };
+
+// Row -> PhotoComment aggregate, for the author's delete. The PhotoCommentId is the row's
+// aggregateId; a legacy row without one is addressed by its `_id`, as the read side shows it.
+export const photoCommentToDomain = (row: Doc<"photoComments">): PhotoComment =>
+  PhotoComment.rehydrate({
+    id: toPhotoCommentId(row.aggregateId ?? row._id),
+    photoId: toPhotoId(row.photoId),
+    authorId: toMemberId(row.authorId),
+    text: CommentText.fromState(row.text),
+    createdAt: new Date(row.createdAt),
+  });

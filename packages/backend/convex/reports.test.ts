@@ -1542,9 +1542,10 @@ describe("admin decideReport", () => {
     expect(actions[0]).toMatchObject({
       actorId: ada,
       kind: "report_warned",
-      targetLabel: "Bob",
+      targetMemberId: bob,
       targetId: reportId,
     });
+    expect(actions[0].targetLabel).not.toContain("Bob");
   });
 });
 

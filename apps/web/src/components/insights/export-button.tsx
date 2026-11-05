@@ -2,6 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
+import {
+  EXPORT_SECTIONS,
+  type ExportPageView,
+  type ExportRow,
+} from "@jigswap/contracts";
 // sanctioned convex/react exception: useConvex (see tanstack-query migration spec)
 import { useConvex } from "convex/react";
 import { Download } from "lucide-react";
@@ -12,17 +17,33 @@ import { useTranslations } from "use-intl";
 export function ExportButton() {
   const t = useTranslations("insights.export");
   const convex = useConvex();
-  const [busy, setBusy] = useState(false);
+  // The share of sections read so far (0-100) while an export runs; null when idle.
+  const [progress, setProgress] = useState<number | null>(null);
 
   const handleExport = async () => {
-    setBusy(true);
+    setProgress(0);
     try {
-      // One-shot fetch (not a live subscription): the export is a snapshot the user downloads,
-      // so it should not re-render the page or stay subscribed after the click.
-      const bundle = (await convex.query(
-        gateway.insights.exportUserData,
-        {},
-      )) as { limitPerCollection?: number } & Record<string, unknown>;
+      // One-shot fetches (not live subscriptions): the export is a snapshot the user downloads,
+      // so it should not re-render the page or stay subscribed after the click. Every section is
+      // read page by page to its end, so the file is complete however large the history is.
+      const bundle: Record<string, unknown> = {
+        exportedAt: new Date().toISOString(),
+      };
+      for (const [index, section] of EXPORT_SECTIONS.entries()) {
+        const rows: ExportRow[] = [];
+        let cursor: string | null = null;
+        for (;;) {
+          const page: ExportPageView = await convex.query(
+            gateway.insights.exportUserDataPage,
+            { section, cursor },
+          );
+          rows.push(...page.rows);
+          if (page.isDone) break;
+          cursor = page.continueCursor;
+        }
+        bundle[section] = rows;
+        setProgress(Math.round(((index + 1) / EXPORT_SECTIONS.length) * 100));
+      }
 
       const blob = new Blob([JSON.stringify(bundle, null, 2)], {
         type: "application/json",
@@ -36,21 +57,11 @@ export function ExportButton() {
       link.remove();
       URL.revokeObjectURL(url);
 
-      // Surface the server-side row cap so a power user knows the file may be truncated.
-      const counts = Object.values(bundle).filter(Array.isArray);
-      const capped =
-        typeof bundle.limitPerCollection === "number" &&
-        counts.some((arr) => arr.length >= bundle.limitPerCollection!);
-
-      toast.success(t("success"), {
-        description: capped
-          ? t("capped", { limit: bundle.limitPerCollection! })
-          : undefined,
-      });
+      toast.success(t("success"));
     } catch {
       toast.error(t("error"));
     } finally {
-      setBusy(false);
+      setProgress(null);
     }
   };
 
@@ -64,9 +75,15 @@ export function ExportButton() {
           {t("description")}
         </p>
       </div>
-      <Button variant="outline" onClick={handleExport} disabled={busy}>
+      <Button
+        variant="outline"
+        onClick={handleExport}
+        disabled={progress !== null}
+      >
         <Download className="h-4 w-4" />
-        {busy ? t("preparing") : t("button")}
+        {progress === null
+          ? t("button")
+          : t("preparing", { percent: progress })}
       </Button>
     </div>
   );

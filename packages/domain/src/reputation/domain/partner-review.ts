@@ -39,7 +39,7 @@ export interface PartnerReviewState {
 export class PartnerReview {
   private events: DomainEvent[] = [];
 
-  private constructor(private readonly state: PartnerReviewState) {}
+  private constructor(private state: PartnerReviewState) {}
 
   get id(): PartnerReviewId {
     return this.state.id;
@@ -59,6 +59,10 @@ export class PartnerReview {
 
   get rating(): StarRating {
     return this.state.rating;
+  }
+
+  get comment(): string | undefined {
+    return this.state.comment;
   }
 
   // Create a brand-new partner review. Decides only from its own data: rejects self-review
@@ -96,6 +100,18 @@ export class PartnerReview {
       ),
     );
     return ok(review);
+  }
+
+  // The reviewer takes back the written comment (SEC-70). Only the reviewer may: the comment is
+  // their personal text. The overall rating and the category scores stay as submitted, because
+  // they are part of the reviewee's reputation; nothing is recorded, since the ReputationProfile
+  // folds ratings only. Clearing an already-empty comment is a no-op.
+  clearComment(actorId: MemberId): Result<void, ReputationError> {
+    if (actorId !== this.state.reviewerId) {
+      return err(ReputationError.notReviewAuthor());
+    }
+    this.state = { ...this.state, comment: undefined };
+    return ok(undefined);
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.

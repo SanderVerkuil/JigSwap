@@ -6,7 +6,10 @@ import { ExchangeId, MemberId } from "../domain";
 // ReputationError, the `code` is the stable, machine-readable discriminant a transport
 // adapter maps to; the message is for logs/tests only.
 export type ReputationApplicationErrorCode =
-  "ExchangeNotCompleted" | "NotExchangeParticipant" | "DuplicatePartnerReview";
+  | "ExchangeNotCompleted"
+  | "NotExchangeParticipant"
+  | "DuplicatePartnerReview"
+  | "PartnerReviewNotFound";
 
 export class ReputationApplicationError extends DomainError {
   override readonly name = "ReputationApplicationError";
@@ -49,6 +52,16 @@ export class ReputationApplicationError extends DomainError {
     return new ReputationApplicationError(
       "DuplicatePartnerReview",
       `A review already exists for this reviewer on exchange ${exchangeId}`,
+    );
+  }
+
+  // The member has no review of this exchange (or only a legacy row the domain cannot load).
+  static partnerReviewNotFound(
+    exchangeId: ExchangeId,
+  ): ReputationApplicationError {
+    return new ReputationApplicationError(
+      "PartnerReviewNotFound",
+      `No review of exchange ${exchangeId} by this member`,
     );
   }
 }

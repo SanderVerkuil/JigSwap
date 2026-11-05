@@ -34,6 +34,8 @@ export interface AdminAuditEntryView {
   targetLabel: string;
   targetId: string;
   at: number;
+  /** The entry targets a member whose account is gone: render the localized "Deleted member". */
+  targetMemberDeleted?: boolean;
 }
 
 /** One of the member's catalog submissions (`puzzles.by_submitted_by`). */
@@ -48,6 +50,14 @@ export interface AdminUserSubmissionView {
   status: string;
   createdAt: number;
 }
+
+/**
+ * The admin user detail's stats read at most this many rows per stat, plus one, so a member with a
+ * huge library cannot push the read past Convex's limits. A count above it means "more than
+ * ADMIN_USER_STATS_CAP" (shown as `${ADMIN_USER_STATS_CAP}+`); the copies' availability breakdown
+ * then covers only the copies read.
+ */
+export const ADMIN_USER_STATS_CAP = 1000;
 
 /**
  * The admin user detail read model (`admin.getUserDetail`). Admin-only by
@@ -72,6 +82,7 @@ export interface AdminUserDetailView {
     createdAt: number;
     updatedAt: number;
   };
+  /** Each count stops at ADMIN_USER_STATS_CAP + 1 (a value above the cap means "more"). */
   stats: {
     /** `ownedPuzzles.by_owner`, with the availability breakdown. */
     copies: {
@@ -82,7 +93,7 @@ export interface AdminUserDetailView {
     };
     /** `collections.by_user`. */
     collections: number;
-    /** `completions.by_user` (indexed — no table scan). */
+    /** Finished solves, `completions.by_user_completed` (indexed — no table scan). */
     completions: number;
   };
   /** Newest first, capped at 50. */

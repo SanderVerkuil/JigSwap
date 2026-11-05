@@ -20,7 +20,9 @@ const stripCrlf = (value: string): string => value.replace(/[\r\n]+/g, " ");
 // (https://ahasend.com/docs/api-reference/messages/create-message). The Idempotency-Key header
 // makes a replayed send return the cached response instead of double-delivering. `sandbox: true`
 // (AHASEND_SANDBOX) makes AhaSend accept-but-not-deliver — used for live verification. Throws on
-// any non-2xx; the sendEmail action catches, logs a wide event, and drops (fail-open).
+// any non-2xx; the sendEmail action catches, logs a wide event, and drops (fail-open). The thrown
+// message carries the HTTP status only: a provider error body may echo the recipient's address
+// or name, and the message ends up in the logs (and Axiom).
 export const ahaSendEmailSender = (cfg: AhaSendConfig): EmailSender => ({
   async send(message: EmailMessage): Promise<void> {
     const doFetch = cfg.fetchImpl ?? fetch;
@@ -62,8 +64,7 @@ export const ahaSendEmailSender = (cfg: AhaSendConfig): EmailSender => ({
       },
     );
     if (!res.ok) {
-      const detail = (await res.text()).slice(0, 500);
-      throw new Error(`AhaSend ${res.status}: ${detail}`);
+      throw new Error(`AhaSend ${res.status}`);
     }
   },
 });

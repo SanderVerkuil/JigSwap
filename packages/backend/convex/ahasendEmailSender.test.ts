@@ -127,13 +127,21 @@ describe("ahaSendEmailSender", () => {
     await expect(sender(fetchMock).send(MESSAGE)).rejects.toThrow("boom");
   });
 
-  it("throws with status and response text on a non-2xx", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response("unverified domain", { status: 403 }));
-    await expect(sender(fetchMock).send(MESSAGE)).rejects.toThrow(
-      /AhaSend 403.*unverified domain/,
+  it("throws with the status only on a non-2xx, never the response body", async () => {
+    // A provider error body may echo the recipient (SEC-75); the thrown message is logged.
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: "recipient anna@example.com (Anna) is suppressed",
+        }),
+        { status: 403 },
+      ),
     );
+    const error: unknown = await sender(fetchMock)
+      .send(MESSAGE)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe("AhaSend 403");
   });
 });
 
@@ -141,8 +149,14 @@ describe("makeEmailSenderFromEnv", () => {
   it("returns the no-op when AhaSend env vars are missing", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const noop = makeEmailSenderFromEnv({});
-    await noop.send(MESSAGE); // must not throw
-    expect(warn).toHaveBeenCalled();
+    await noop.send({ ...MESSAGE, subject: "Mara Display sent you a message" });
+    expect(warn).toHaveBeenCalledTimes(1);
+    // The drop is diagnosable by its key, but names no recipient and no subject (subjects
+    // carry member names).
+    const logged = warn.mock.calls.flat().join(" ");
+    expect(logged).toContain("n-1");
+    expect(logged).not.toContain("anna@example.com");
+    expect(logged).not.toContain("Mara Display");
     warn.mockRestore();
   });
 

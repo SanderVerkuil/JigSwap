@@ -95,7 +95,8 @@ export const inAppChannel =
     await ctx.db.delete(_id);
     await ctx.db.insert("notifications", {
       ...kept,
-      // The newest actor's snapshot (name for legacy renderers), matching actorIds[0].
+      // The newest delivery's params (no actor name since SEC-68: the actor is the ref in
+      // actorIds[0]); a legacy row's name snapshot is replaced along with them.
       ...(state.params !== undefined
         ? { params: state.params as Record<string, string> }
         : {}),

@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin_auditEntry from "../admin/auditEntry.js";
+import type * as admin_backfillAuditTargets from "../admin/backfillAuditTargets.js";
 import type * as admin_confirmPhotoRemoval from "../admin/confirmPhotoRemoval.js";
 import type * as admin_decideImageReview from "../admin/decideImageReview.js";
 import type * as admin_decideReport from "../admin/decideReport.js";
@@ -183,9 +185,12 @@ import type * as custody_subscriber from "../custody/subscriber.js";
 import type * as docs_listDocFeedback from "../docs/listDocFeedback.js";
 import type * as docs_submitDocFeedback from "../docs/submitDocFeedback.js";
 import type * as events_dispatch from "../events/dispatch.js";
+import type * as events_eventMembers from "../events/eventMembers.js";
 import type * as events_ingestDispatchFailure from "../events/ingestDispatchFailure.js";
 import type * as events_makeEventPublisher from "../events/makeEventPublisher.js";
 import type * as events_recordAndSchedule from "../events/recordAndSchedule.js";
+import type * as events_redactPayloads from "../events/redactPayloads.js";
+import type * as events_retention from "../events/retention.js";
 import type * as exchange_accept from "../exchange/accept.js";
 import type * as exchange_adapters_convexCopyPort from "../exchange/adapters/convexCopyPort.js";
 import type * as exchange_adapters_convexExchangeEligibility from "../exchange/adapters/convexExchangeEligibility.js";
@@ -263,7 +268,7 @@ import type * as identity_searchUsers from "../identity/searchUsers.js";
 import type * as identity_setLocation from "../identity/setLocation.js";
 import type * as identity_setSlug from "../identity/setSlug.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
-import type * as insights_exportUserData from "../insights/exportUserData.js";
+import type * as insights_exportUserDataPage from "../insights/exportUserDataPage.js";
 import type * as insights_getCollectionBreakdown from "../insights/getCollectionBreakdown.js";
 import type * as insights_getCommunityAvatars from "../insights/getCommunityAvatars.js";
 import type * as insights_getCompletionTrends from "../insights/getCompletionTrends.js";
@@ -304,6 +309,7 @@ import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as lib_storage_blobLifecycle from "../lib/storage/blobLifecycle.js";
 import type * as lib_storage_storageSweep from "../lib/storage/storageSweep.js";
+import type * as lib_retention from "../lib/retention.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
 import type * as library_adapters_batchEventPublisher from "../library/adapters/batchEventPublisher.js";
@@ -335,6 +341,7 @@ import type * as library_createPersonalCategory from "../library/createPersonalC
 import type * as library_definitionAggregates from "../library/definitionAggregates.js";
 import type * as library_deleteCollection from "../library/deleteCollection.js";
 import type * as library_deleteCopy from "../library/deleteCopy.js";
+import type * as library_deletePhotoComment from "../library/deletePhotoComment.js";
 import type * as library_errors from "../library/errors.js";
 import type * as library_exchangeRoutes from "../library/exchangeRoutes.js";
 import type * as library_getBorrowedLoans from "../library/getBorrowedLoans.js";
@@ -388,6 +395,7 @@ import type * as notifications_backfillRefs from "../notifications/backfillRefs.
 import type * as notifications_copy from "../notifications/copy.js";
 import type * as notifications_deliveryContent from "../notifications/deliveryContent.js";
 import type * as notifications_errors from "../notifications/errors.js";
+import type * as notifications_getMyMessagePreviews from "../notifications/getMyMessagePreviews.js";
 import type * as notifications_getMyPreferences from "../notifications/getMyPreferences.js";
 import type * as notifications_getPushConfig from "../notifications/getPushConfig.js";
 import type * as notifications_listMyNotificationViews from "../notifications/listMyNotificationViews.js";
@@ -399,6 +407,7 @@ import type * as notifications_resolveForDelivery from "../notifications/resolve
 import type * as notifications_resolveNotificationView from "../notifications/resolveNotificationView.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
+import type * as notifications_setMessagePreview from "../notifications/setMessagePreview.js";
 import type * as notifications_setNotificationPreferences from "../notifications/setNotificationPreferences.js";
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_threadDigest from "../notifications/threadDigest.js";
@@ -426,6 +435,7 @@ import type * as reputation_adapters_inProcessEventPublisher from "../reputation
 import type * as reputation_adapters_partnerReviewMapper from "../reputation/adapters/partnerReviewMapper.js";
 import type * as reputation_adapters_systemClock from "../reputation/adapters/systemClock.js";
 import type * as reputation_backfill from "../reputation/backfill.js";
+import type * as reputation_clearPartnerReviewComment from "../reputation/clearPartnerReviewComment.js";
 import type * as reputation_errors from "../reputation/errors.js";
 import type * as reputation_getMyReviewForExchange from "../reputation/getMyReviewForExchange.js";
 import type * as reputation_getReputationProfile from "../reputation/getReputationProfile.js";
@@ -495,6 +505,8 @@ import type * as social_createHouseholdInviteLink from "../social/createHousehol
 import type * as social_declineConnection from "../social/declineConnection.js";
 import type * as social_declineFollowRequest from "../social/declineFollowRequest.js";
 import type * as social_declineHouseholdLinkInvite from "../social/declineHouseholdLinkInvite.js";
+import type * as social_deletePuzzleComment from "../social/deletePuzzleComment.js";
+import type * as social_deletePuzzleReview from "../social/deletePuzzleReview.js";
 import type * as social_editProfile from "../social/editProfile.js";
 import type * as social_errors from "../social/errors.js";
 import type * as social_establishMutualFollow from "../social/establishMutualFollow.js";
@@ -533,6 +545,7 @@ import type * as social_privacy from "../social/privacy.js";
 import type * as social_readViews from "../social/readViews.js";
 import type * as social_recordInviteLanding from "../social/recordInviteLanding.js";
 import type * as social_redeemInvite from "../social/redeemInvite.js";
+import type * as social_removeMemberContent from "../social/removeMemberContent.js";
 import type * as social_resetInviteLink from "../social/resetInviteLink.js";
 import type * as social_revokeHouseholdInviteLinks from "../social/revokeHouseholdInviteLinks.js";
 import type * as social_setPresencePreferences from "../social/setPresencePreferences.js";
@@ -555,6 +568,7 @@ import type * as solving_completionModerationStore from "../solving/completionMo
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
 import type * as solving_deleteCompletion from "../solving/deleteCompletion.js";
+import type * as solving_deleteCopyReview from "../solving/deleteCopyReview.js";
 import type * as solving_editCompletion from "../solving/editCompletion.js";
 import type * as solving_errors from "../solving/errors.js";
 import type * as solving_finishCompletion from "../solving/finishCompletion.js";
@@ -583,6 +597,8 @@ import type * as whatsNew_readState from "../whatsNew/readState.js";
 import type * as whatsNew_recordTourProgress from "../whatsNew/recordTourProgress.js";
 
 declare const fullApi: ApiFromModules<{
+  "admin/auditEntry": typeof admin_auditEntry;
+  "admin/backfillAuditTargets": typeof admin_backfillAuditTargets;
   "admin/confirmPhotoRemoval": typeof admin_confirmPhotoRemoval;
   "admin/decideImageReview": typeof admin_decideImageReview;
   "admin/decideReport": typeof admin_decideReport;
@@ -753,9 +769,12 @@ declare const fullApi: ApiFromModules<{
   "docs/listDocFeedback": typeof docs_listDocFeedback;
   "docs/submitDocFeedback": typeof docs_submitDocFeedback;
   "events/dispatch": typeof events_dispatch;
+  "events/eventMembers": typeof events_eventMembers;
   "events/ingestDispatchFailure": typeof events_ingestDispatchFailure;
   "events/makeEventPublisher": typeof events_makeEventPublisher;
   "events/recordAndSchedule": typeof events_recordAndSchedule;
+  "events/redactPayloads": typeof events_redactPayloads;
+  "events/retention": typeof events_retention;
   "exchange/accept": typeof exchange_accept;
   "exchange/adapters/convexCopyPort": typeof exchange_adapters_convexCopyPort;
   "exchange/adapters/convexExchangeEligibility": typeof exchange_adapters_convexExchangeEligibility;
@@ -833,7 +852,7 @@ declare const fullApi: ApiFromModules<{
   "identity/setLocation": typeof identity_setLocation;
   "identity/setSlug": typeof identity_setSlug;
   "identity/toMemberView": typeof identity_toMemberView;
-  "insights/exportUserData": typeof insights_exportUserData;
+  "insights/exportUserDataPage": typeof insights_exportUserDataPage;
   "insights/getCollectionBreakdown": typeof insights_getCollectionBreakdown;
   "insights/getCommunityAvatars": typeof insights_getCommunityAvatars;
   "insights/getCompletionTrends": typeof insights_getCompletionTrends;
@@ -874,6 +893,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rateLimits": typeof lib_rateLimits;
   "lib/storage/blobLifecycle": typeof lib_storage_blobLifecycle;
   "lib/storage/storageSweep": typeof lib_storage_storageSweep;
+  "lib/retention": typeof lib_retention;
   "library/acquireCopies": typeof library_acquireCopies;
   "library/acquireCopy": typeof library_acquireCopy;
   "library/adapters/batchEventPublisher": typeof library_adapters_batchEventPublisher;
@@ -905,6 +925,7 @@ declare const fullApi: ApiFromModules<{
   "library/definitionAggregates": typeof library_definitionAggregates;
   "library/deleteCollection": typeof library_deleteCollection;
   "library/deleteCopy": typeof library_deleteCopy;
+  "library/deletePhotoComment": typeof library_deletePhotoComment;
   "library/errors": typeof library_errors;
   "library/exchangeRoutes": typeof library_exchangeRoutes;
   "library/getBorrowedLoans": typeof library_getBorrowedLoans;
@@ -958,6 +979,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/copy": typeof notifications_copy;
   "notifications/deliveryContent": typeof notifications_deliveryContent;
   "notifications/errors": typeof notifications_errors;
+  "notifications/getMyMessagePreviews": typeof notifications_getMyMessagePreviews;
   "notifications/getMyPreferences": typeof notifications_getMyPreferences;
   "notifications/getPushConfig": typeof notifications_getPushConfig;
   "notifications/listMyNotificationViews": typeof notifications_listMyNotificationViews;
@@ -969,6 +991,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/resolveNotificationView": typeof notifications_resolveNotificationView;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
+  "notifications/setMessagePreview": typeof notifications_setMessagePreview;
   "notifications/setNotificationPreferences": typeof notifications_setNotificationPreferences;
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/threadDigest": typeof notifications_threadDigest;
@@ -996,6 +1019,7 @@ declare const fullApi: ApiFromModules<{
   "reputation/adapters/partnerReviewMapper": typeof reputation_adapters_partnerReviewMapper;
   "reputation/adapters/systemClock": typeof reputation_adapters_systemClock;
   "reputation/backfill": typeof reputation_backfill;
+  "reputation/clearPartnerReviewComment": typeof reputation_clearPartnerReviewComment;
   "reputation/errors": typeof reputation_errors;
   "reputation/getMyReviewForExchange": typeof reputation_getMyReviewForExchange;
   "reputation/getReputationProfile": typeof reputation_getReputationProfile;
@@ -1065,6 +1089,8 @@ declare const fullApi: ApiFromModules<{
   "social/declineConnection": typeof social_declineConnection;
   "social/declineFollowRequest": typeof social_declineFollowRequest;
   "social/declineHouseholdLinkInvite": typeof social_declineHouseholdLinkInvite;
+  "social/deletePuzzleComment": typeof social_deletePuzzleComment;
+  "social/deletePuzzleReview": typeof social_deletePuzzleReview;
   "social/editProfile": typeof social_editProfile;
   "social/errors": typeof social_errors;
   "social/establishMutualFollow": typeof social_establishMutualFollow;
@@ -1103,6 +1129,7 @@ declare const fullApi: ApiFromModules<{
   "social/readViews": typeof social_readViews;
   "social/recordInviteLanding": typeof social_recordInviteLanding;
   "social/redeemInvite": typeof social_redeemInvite;
+  "social/removeMemberContent": typeof social_removeMemberContent;
   "social/resetInviteLink": typeof social_resetInviteLink;
   "social/revokeHouseholdInviteLinks": typeof social_revokeHouseholdInviteLinks;
   "social/setPresencePreferences": typeof social_setPresencePreferences;
@@ -1125,6 +1152,7 @@ declare const fullApi: ApiFromModules<{
   "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;
   "solving/deleteCompletion": typeof solving_deleteCompletion;
+  "solving/deleteCopyReview": typeof solving_deleteCopyReview;
   "solving/editCompletion": typeof solving_editCompletion;
   "solving/errors": typeof solving_errors;
   "solving/finishCompletion": typeof solving_finishCompletion;

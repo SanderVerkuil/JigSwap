@@ -1,3 +1,4 @@
+import { EXPORT_SECTIONS } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -376,25 +377,30 @@ describe("no raw storage ids in read responses", () => {
     expect(idsIn(proposal, [...blobs, s.boxArt])).toEqual([s.proposedArt]);
   });
 
-  test("the data export carries no box-art or copy-photo id", async () => {
+  test("the data export carries no stored blob id", async () => {
     const t = convexTest(schema, modules);
-    const s = await seed(t);
+    await seed(t);
     const blobs = await allBlobs(t);
 
-    const exported = await as(t, "alice").query(
-      api.insights.exportUserData.exportUserData,
-      {},
+    const exported = Object.fromEntries(
+      await Promise.all(
+        EXPORT_SECTIONS.map(async (section) => {
+          const page = await as(t, "alice").query(
+            api.insights.exportUserDataPage.exportUserDataPage,
+            { section, cursor: null },
+          );
+          return [section, page.rows] as const;
+        }),
+      ),
     );
 
-    expect(exported.ownedPuzzles[0].snapshot).toEqual({
+    expect(exported.copies![0]).toMatchObject({
       title: "Mountain Vista",
       brand: "Ravensburger",
       pieceCount: 1000,
     });
-    // Only the member's own completion photos may still appear (as ids, until SEC-66 exports
-    // them as files); never catalogue art or copy photos.
-    expect(
-      idsIn(exported, blobs).filter((id) => id !== s.completionPhoto),
-    ).toEqual([]);
+    // Catalogue art, copy photos and the member's own completion photos alike: pictures leave as
+    // URLs (SEC-66), never as ids.
+    expect(idsIn(exported, blobs)).toEqual([]);
   });
 });

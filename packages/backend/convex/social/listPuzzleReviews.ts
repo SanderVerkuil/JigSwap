@@ -10,7 +10,8 @@ import { projectMemberIdentity } from "./privacy";
 // Read side: the community reviews on a catalog puzzle DEFINITION — the `puzzleReviews` table, one
 // row per (member, puzzle), keyed by puzzleId directly (the catalog detail page has no copyId).
 // Most-recently-updated first: the `by_puzzle` index orders by _creationTime, so rows are sorted by
-// `updatedAt` in JS after collect.
+// `updatedAt` in JS after collect. `canDelete` marks the viewer's own review: only the author may
+// delete it (social/deletePuzzleReview, SEC-70).
 //
 // SECURITY (SEC-11):
 //   - Auth-gated, and the definition must be disclosed to the caller exactly as getPuzzleById
@@ -59,6 +60,7 @@ export const listPuzzleReviews = query({
           rating: row.rating ?? null,
           text: row.text ?? null,
           updatedAt: row.updatedAt,
+          canDelete: row.userId === viewerId,
         } satisfies PuzzleReviewView,
       })),
     );

@@ -222,8 +222,9 @@ describe("message_received notifications", () => {
     const bobNotes = await messageNotesFor(t, bob);
     expect(bobNotes).toHaveLength(1);
     expect(bobNotes[0].relatedId).toBe(thread!.aggregateId);
-    // Exchange threads keep the name snapshot.
-    expect(bobNotes[0].params?.actorName).toBe("clerk_alice");
+    // The author is a ref, resolved live; no name is copied into Bob's row (SEC-68).
+    expect(bobNotes[0].actorIds).toEqual([alice]);
+    expect(bobNotes[0].params?.actorName).toBeUndefined();
     expect(await messageNotesFor(t, alice)).toHaveLength(0);
   });
 });

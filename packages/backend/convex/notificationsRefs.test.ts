@@ -120,8 +120,8 @@ describe("subscriber refs: exchange", () => {
     expect(row.actorIds).toEqual([w.alice]);
     expect(row.actorCount).toBe(1);
     expect(row.subject).toEqual(exchangeSubject);
-    // The name snapshot stays for email/push.
-    expect(row.params).toEqual({ actorName: "alice" });
+    // No name snapshot (SEC-68): email and push resolve the actor ref too.
+    expect(row.params).toEqual({});
   });
 
   test.each([

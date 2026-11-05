@@ -13,7 +13,9 @@ import {
   type RateLimitName,
 } from "../lib/rateLimits";
 import { presence } from "../presence";
+import { isCopiedLegacyMessage } from "./backfill";
 import { removeForDeletedMember } from "./messageAttachments";
+import { purgeThreadBatch } from "./purgeCircleThread";
 import { scrubMemberEvents } from "./purgeMemberEvents";
 import {
   cancelOpenExchanges,
@@ -26,6 +28,7 @@ import {
   leaveHousehold,
   purgeCompletions,
 } from "./purgeMemberLibrary";
+import { threadRowByAggregateId } from "./readModelHelpers";
 
 // Account deletion for messaging data (spec R.9, 2.8), scheduled by users.deleteUser. Text
 // messages stay: their author renders as "deleted member" (social/privacy projectMemberIdentity).
@@ -43,6 +46,7 @@ import {
 //                "left" row is posted: their circle memberships are not removed by this purge.
 //                Exchange/DM participant rows are kept: the pair thread stays readable for the
 //                other party, and its participant set and pair key (one DM per pair) need both.
+//                Once nobody in it has an account left, pairThreads purges it whole.
 //   typing       their typing indicators, in every thread kind
 //   blocksOut    the blocks they placed
 //   blocksIn     the blocks placed on them
@@ -86,6 +90,18 @@ import {
 //                The other party, if still active, gets a trade_cancelled_member_deleted
 //                notification (actor: the departed member, "Deleted member") and a system row in
 //                the exchange's thread.
+//   legacyMessagesSent      } their rows in the legacy exchange chat (`messages`, from before
+//   legacyMessagesReceived  } Conversation), both directions: a row conversation/backfill has
+//                copied into its exchange thread is a duplicate and is deleted (the thread keeps the
+//                message, like any other); one never copied is the only copy and is kept, counted
+//                in the log (conversation.purgeLegacyMessages kept_unmigrated).
+//   pairThreads  their DM and exchange threads: one none of whose participants has a users row
+//                left (they were the last) is purged whole by purgeOrphanThread, in its own
+//                batches (conversation/purgeCircleThread purgeThreadBatch: messages, attachments,
+//                typing, participant rows, then the thread). An attachment an open report holds or
+//                a quarantined photo stays, detached. A tombstoned participant (open CSAM
+//                escalation) still has a users row, so their threads stay. Runs after the legacy
+//                phases, which need the thread's copies to tell a copied legacy row.
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
 //   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
@@ -93,7 +109,8 @@ import {
 //                their own completions on it. Exchanges, loans and custody entries naming it stay.
 //   copyPhotos   their photos on copies other members own: row, blob and the photo's comments
 //   completions  their remaining completions: one on a copy someone else owns stays (that copy's
-//                History) without its photos; any other goes, photos and blobs included
+//                History) without its photos and their private notes; any other goes, photos and
+//                blobs included
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
 //   goals, collections (with their memberships, wishlists included), categories (personal)
@@ -105,15 +122,22 @@ import {
 //                longest-standing member, a sole member's is dissolved. Co-members already
 //                deleted leave first, so the promotion only lands on an active member.
 //   domainEvents (last; conversation/purgeMemberEvents) every finished event whose payload names
-//                them: their id becomes "deleted-member" and copied personal fields (email,
-//                clerkId, names, avatar, bio, location, notes, collection/category names) are
-//                dropped. An event keyed by a copy alone (CopyDetailsUpdated, with the owner's
-//                notes) loses those personal fields once its copy is gone, theirs (deleted by the
-//                copies phase) or anyone's. Pages EVENT_SCRUB_BATCH_SIZE events per run: it walks
-//                the whole log.
+//                them: their own activity-feed events (solves started and recorded, copies
+//                acquired) are deleted; in every other one their id becomes "deleted-member" and
+//                copied personal fields (email, clerkId, names, avatar, bio, location, notes,
+//                comment text, collection/category/circle names) are dropped. Their event
+//                lookup rows (domainEventMembers) go with it. Once the lookup backfill has run
+//                (events/eventMembers) the phase reads only their events, by index,
+//                EVENT_INDEX_BATCH_SIZE per run. Before that it pages the whole log,
+//                EVENT_SCRUB_BATCH_SIZE events per run, and an event keyed by a copy alone
+//                (CopyDetailsUpdated with the owner's notes, recorded before
+//                events/recordAndSchedule left notes out) loses those personal fields once its
+//                copy is gone, theirs (deleted by the copies phase) or anyone's.
 //                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
 //                purge itself emitted have been dispatched.
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
+//                A moderation audit row names a member by users id only (targetMemberId,
+//                SEC-57), so it needs no scrub: it reads "Deleted member" once the row is gone.
 // One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
 // schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
 // limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
@@ -121,14 +145,16 @@ import {
 
 /** Rows handled per run. */
 export const PURGE_BATCH_SIZE = 100;
-// The domainEvents phase reads the whole log and writes only the events that name the member.
+// The domainEvents phase, before the event lookup backfill has run, reads the whole log and writes
+// only the events that name the member (conversation/purgeMemberEvents).
 export const EVENT_SCRUB_BATCH_SIZE = 1000;
 // It starts this long after the phase before it, so events the earlier phases emitted (leaving the
 // household, deleting a circle) have finished dispatching, retries included (events/dispatch: 1 +
 // 2 + 4 + 8 minutes), and are not skipped as in flight.
 export const EVENT_SCRUB_DELAY_MS = 20 * 60_000;
 
-const PHASES = [
+// In run order. Every phase must be accounted for in memberDataCoverage.test.ts (SEC-95).
+export const PHASES = [
   "attachments",
   "reveals",
   "gpsViews",
@@ -164,6 +190,9 @@ const PHASES = [
   "presence",
   "exchangesOpen",
   "exchangesOpenIn",
+  "legacyMessagesSent",
+  "legacyMessagesReceived",
+  "pairThreads",
   "loansOpen",
   "loansOpenIn",
   "copies",
@@ -214,6 +243,9 @@ const phaseValidator = v.union(
   v.literal("presence"),
   v.literal("exchangesOpen"),
   v.literal("exchangesOpenIn"),
+  v.literal("legacyMessagesSent"),
+  v.literal("legacyMessagesReceived"),
+  v.literal("pairThreads"),
   v.literal("loansOpen"),
   v.literal("loansOpenIn"),
   v.literal("copies"),
@@ -228,6 +260,21 @@ const phaseValidator = v.union(
 );
 
 type Page = { isDone: boolean; continueCursor: string };
+
+// A DM or exchange thread nobody can read any more: none of its participants has a users row. A
+// tombstoned account (open CSAM escalation, users.deleteUser) still has one, so its threads are
+// kept for the preservation. A circle thread is never orphaned this way: it goes with its circle
+// (sharing/purgeDeletedCircle).
+const isOrphanedPairThread = async (
+  ctx: MutationCtx,
+  thread: Doc<"threads">,
+): Promise<boolean> => {
+  if (thread.subjectKind === "circle") return false;
+  for (const memberId of thread.participants) {
+    if ((await ctx.db.get(memberId)) !== null) return false;
+  }
+  return true;
+};
 
 // Delete the recipient's notifications of `type` whose subject is `subjectId`. A member holds few
 // of one invite type, so the by_user_type read stays small.
@@ -739,6 +786,61 @@ const runPhase = async (
       return cancelOpenExchanges(ctx, memberId, "initiator", opts);
     case "exchangesOpenIn":
       return cancelOpenExchanges(ctx, memberId, "recipient", opts);
+    case "legacyMessagesSent":
+    case "legacyMessagesReceived": {
+      // The legacy exchange chat, both directions. A row conversation/backfill copied into its
+      // exchange thread is a duplicate and goes; one never copied is the only copy of that message
+      // and is kept (counted, so the owner can run the backfill before dropping the table).
+      const sent = phase === "legacyMessagesSent";
+      const page = await (
+        sent
+          ? ctx.db
+              .query("messages")
+              .withIndex("by_sender", (q) => q.eq("senderId", memberId))
+          : ctx.db
+              .query("messages")
+              .withIndex("by_receiver", (q) => q.eq("receiverId", memberId))
+      ).paginate(opts);
+      let kept = 0;
+      for (const row of page.page) {
+        if (await isCopiedLegacyMessage(ctx, row._id)) {
+          await ctx.db.delete(row._id);
+        } else {
+          kept += 1;
+        }
+      }
+      if (page.page.length > 0) {
+        logEvent({
+          event: "conversation.purgeLegacyMessages",
+          outcome: "success",
+          member_id: memberId,
+          side: sent ? "sender" : "receiver",
+          deleted: page.page.length - kept,
+          kept_unmigrated: kept,
+        });
+      }
+      return page;
+    }
+    case "pairThreads": {
+      // Their DM and exchange threads (circle seats went in circleParticipants). A thread none of
+      // whose participants has an account left is purged whole by purgeOrphanThread, in its own
+      // batches; one the other party still has stays readable for them.
+      const page = await ctx.db
+        .query("threadParticipants")
+        .withIndex("by_member", (q) => q.eq("memberId", memberId))
+        .paginate(opts);
+      for (const row of page.page) {
+        const thread = await threadRowByAggregateId(ctx, row.threadAggregateId);
+        if (thread && (await isOrphanedPairThread(ctx, thread))) {
+          await ctx.scheduler.runAfter(
+            0,
+            internal.conversation.purgeMemberMessagingData.purgeOrphanThread,
+            { threadAggregateId: thread.aggregateId },
+          );
+        }
+      }
+      return page;
+    }
     case "loansOpen":
       return closeOpenLoans(ctx, memberId, "lender", opts);
     case "loansOpenIn":
@@ -801,5 +903,35 @@ export const purgeMemberMessagingData = internalMutation({
         ...(batchSize !== undefined && { batchSize }),
       },
     );
+  },
+});
+
+/**
+ * Purge a DM or exchange thread none of whose participants has an account left (the pairThreads
+ * phase schedules it once the last of them is deleted): its messages, attachments (held and
+ * quarantined ones excepted), typing and participant rows, then the thread row, PURGE_BATCH_SIZE
+ * rows per run, rescheduling itself until the thread is gone. Re-checks the thread on every run, so
+ * a duplicate schedule is harmless and a stale one (the thread is gone) does nothing.
+ */
+export const purgeOrphanThread = internalMutation({
+  args: { threadAggregateId: v.string() },
+  handler: async (ctx, { threadAggregateId }) => {
+    const thread = await threadRowByAggregateId(ctx, threadAggregateId);
+    if (!thread || !(await isOrphanedPairThread(ctx, thread))) return;
+    const deleted = await purgeThreadBatch(ctx, thread, PURGE_BATCH_SIZE);
+    if (deleted >= PURGE_BATCH_SIZE) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.conversation.purgeMemberMessagingData.purgeOrphanThread,
+        { threadAggregateId },
+      );
+      return;
+    }
+    logEvent({
+      event: "conversation.purgeOrphanThread",
+      outcome: "success",
+      thread_id: threadAggregateId,
+      subject_kind: thread.subjectKind,
+    });
   },
 });

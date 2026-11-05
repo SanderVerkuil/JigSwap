@@ -337,6 +337,8 @@ export interface CopyReviewEntry {
   rating: number;
   /** Epoch millis the review was last updated (the list's descending sort key). */
   updatedAt: number;
+  /** True only for the viewer's own review: the author may delete it. */
+  canDelete: boolean;
 }
 
 /** A loan of this copy, for the grouped loans list. */
