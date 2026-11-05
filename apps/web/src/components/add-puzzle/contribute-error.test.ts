@@ -1,0 +1,96 @@
+import { UploadRateLimitedError } from "@/lib/upload-rate-limit";
+import { ConvexError } from "convex/values";
+import { describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
+import source from "../../../locales/source.json";
+import { contributeError, coverStep, CoverStepError } from "./contribute-error";
+
+const NOW = 1_000_000;
+const limited = () =>
+  new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+
+describe("contributeError", () => {
+  it("names the submission limit, and when to try again, for a refused submission", () => {
+    expect(contributeError(limited(), NOW)).toEqual({
+      key: "rateLimited",
+      retryAt: NOW + 60_000,
+    });
+  });
+
+  it("names the cover-photo limit when the cover step was refused", () => {
+    expect(contributeError(new CoverStepError(limited()), NOW)).toEqual({
+      key: "coverRateLimited",
+      retryAt: NOW + 60_000,
+    });
+  });
+
+  it("says a field is too long for a TextTooLong refusal", () => {
+    expect(
+      contributeError(
+        new ConvexError({
+          code: "TextTooLong",
+          message: "The title can be at most 200 characters",
+        }),
+        NOW,
+      ),
+    ).toEqual({ key: "textTooLong" });
+  });
+
+  it.each([
+    ["a failed upload", new Error("Image upload failed")],
+    ["a failed cover step", new CoverStepError(new Error("upload failed"))],
+    ["a message-only refusal", new ConvexError("Unauthenticated")],
+    ["another code", new ConvexError({ code: "DuplicateBarcode" })],
+    [
+      "a RateLimited refusal without a wait",
+      new ConvexError({ code: "RateLimited" }),
+    ],
+  ])("keeps the generic message for %s", (_label, error) => {
+    expect(contributeError(error, NOW)).toEqual({
+      key: "puzzleCreationFailed",
+    });
+  });
+
+  it("every key it returns exists in English, Dutch and the source catalogue", () => {
+    for (const key of [
+      "rateLimited",
+      "coverRateLimited",
+      "textTooLong",
+      "puzzleCreationFailed",
+    ] as const) {
+      expect(en.puzzles[key]).toBeTruthy();
+      expect(nl.puzzles[key]).toBeTruthy();
+      expect(source.puzzles[key]).toBe(en.puzzles[key]);
+    }
+    for (const key of ["rateLimited", "coverRateLimited"] as const) {
+      expect(en.puzzles[key]).toContain("{when}");
+      expect(nl.puzzles[key]).toContain("{when}");
+    }
+  });
+});
+
+describe("coverStep", () => {
+  it("passes the step's result through", async () => {
+    await expect(coverStep(async () => "storage-id")).resolves.toBe(
+      "storage-id",
+    );
+  });
+
+  it("tags the step's failure as a CoverStepError carrying the original", async () => {
+    const refusal = limited();
+    const failure = await coverStep(async () => {
+      throw refusal;
+    }).catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(CoverStepError);
+    expect((failure as CoverStepError).original).toBe(refusal);
+  });
+
+  it("leaves the upload limit's refused URL untagged, so it keeps the upload message", async () => {
+    const refusal = new UploadRateLimitedError(limited());
+    const failure = await coverStep(async () => {
+      throw refusal;
+    }).catch((error: unknown) => error);
+    expect(failure).toBe(refusal);
+  });
+});

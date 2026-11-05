@@ -33,6 +33,7 @@ export interface SuggestInputProps {
    */
   suggestions: readonly string[];
   placeholder?: string;
+  maxLength?: number;
 }
 
 export function SuggestInput({
@@ -41,6 +42,7 @@ export function SuggestInput({
   onChange,
   suggestions,
   placeholder,
+  maxLength,
 }: SuggestInputProps) {
   const [focused, setFocused] = useState(false);
   // Dismissed-by-Escape: stays true until the value changes again, so the dropdown
@@ -76,6 +78,7 @@ export function SuggestInput({
             }
           }}
           placeholder={placeholder}
+          maxLength={maxLength}
           autoComplete="off"
         />
       </PopoverAnchor>

@@ -1,0 +1,103 @@
+// @vitest-environment happy-dom
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
+import { IntlProvider } from "use-intl";
+import { afterEach, describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
+import { CATALOG_TEXT_LIMITS, MAX_CATALOG_TAGS } from "./catalog-text-limits";
+import { TagInput } from "./tag-input";
+
+// A controlled host, like the catalogue forms; exposes the current tags for assertions.
+function Host({
+  initial = [],
+  locale = "en",
+}: {
+  initial?: string[];
+  locale?: "en" | "nl";
+}) {
+  const [tags, setTags] = useState<string[]>(initial);
+  return (
+    <IntlProvider
+      locale={locale}
+      messages={locale === "nl" ? nl : en}
+      timeZone="Europe/Amsterdam"
+    >
+      <TagInput value={tags} onChange={setTags} />
+      <output data-testid="tags">{JSON.stringify(tags)}</output>
+    </IntlProvider>
+  );
+}
+
+const fullList = () =>
+  Array.from({ length: MAX_CATALOG_TAGS }, (_, i) => `t${i}`);
+
+const tagsShown = () =>
+  JSON.parse(screen.getByTestId("tags").textContent ?? "[]") as string[];
+
+const type = (text: string) => {
+  const input = screen.getByLabelText("Tags");
+  fireEvent.change(input, { target: { value: text } });
+  fireEvent.keyDown(input, { key: "Enter" });
+};
+
+afterEach(cleanup);
+
+// The server refuses more than 20 tags, or a tag over 50 characters (SEC-26), so the input
+// never builds a list it would refuse.
+describe("TagInput bounds", () => {
+  it("adds comma-separated tags up to the most a puzzle may carry", () => {
+    render(<Host />);
+    type(Array.from({ length: 25 }, (_, i) => `tag${i}`).join(", "));
+    expect(tagsShown()).toHaveLength(MAX_CATALOG_TAGS);
+    expect(tagsShown()[MAX_CATALOG_TAGS - 1]).toBe("tag19");
+  });
+
+  it("shortens an over-long tag to the tag limit", () => {
+    render(<Host />);
+    type("x".repeat(60));
+    expect(tagsShown()).toEqual(["x".repeat(CATALOG_TEXT_LIMITS.tag)]);
+  });
+
+  it("takes no more tags once the list is full, and says why", () => {
+    render(<Host initial={fullList()} />);
+    const input = screen.getByLabelText("Tags");
+    expect(input).toHaveProperty("readOnly", true);
+    expect(input.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText(`Up to ${MAX_CATALOG_TAGS} tags`)).toBeTruthy();
+    expect(input.getAttribute("aria-describedby")).toBe(
+      screen.getByText(`Up to ${MAX_CATALOG_TAGS} tags`).id,
+    );
+  });
+
+  // A disabled input would drop keyboard focus to the page the moment the last tag is added.
+  it("keeps keyboard focus on the input when the last tag fills the list", () => {
+    render(<Host initial={fullList().slice(1)} />);
+    const input = screen.getByLabelText("Tags");
+    input.focus();
+    type("last");
+    expect(tagsShown()).toHaveLength(MAX_CATALOG_TAGS);
+    expect(input.hasAttribute("disabled")).toBe(false);
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("still removes the last tag with Backspace when the list is full", () => {
+    render(<Host initial={fullList()} />);
+    fireEvent.keyDown(screen.getByLabelText("Tags"), { key: "Backspace" });
+    expect(tagsShown()).toHaveLength(MAX_CATALOG_TAGS - 1);
+    expect(screen.getByLabelText("Tags")).toHaveProperty("readOnly", false);
+  });
+
+  it("says why in Dutch too", () => {
+    render(<Host initial={fullList()} locale="nl" />);
+    expect(screen.getByText(`Maximaal ${MAX_CATALOG_TAGS} tags`)).toBeTruthy();
+  });
+
+  it("still takes tags below the limit, with no limit hint", () => {
+    render(<Host initial={["a"]} />);
+    expect(screen.getByLabelText("Tags")).toHaveProperty("readOnly", false);
+    expect(screen.queryByText(`Up to ${MAX_CATALOG_TAGS} tags`)).toBeNull();
+    type("b, c");
+    expect(tagsShown()).toEqual(["a", "b", "c"]);
+  });
+});

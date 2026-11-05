@@ -352,6 +352,9 @@
     "puzzleCreated": "Puzzle created successfully",
     "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
+    "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
+    "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or pick a cover colour instead.",
+    "textTooLong": "One of the fields is too long. Shorten it and try again.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Puzzle added to your collection",
     "puzzleAdditionFailed": "Failed to add puzzle to collection",
@@ -510,6 +513,7 @@
     "importFetch": "Fetch details",
     "importFetching": "Fetching…",
     "importFailed": "Couldn't read that page — add the details manually.",
+    "importRateLimited": "You've imported the most pages allowed for now. Try again {when}, or fill in the details below.",
     "importAlreadyExists": "This puzzle is already on JigSwap — add it to your collection?",
     "importAddToCollection": "Add to collection",
     "importCreateAnyway": "Create new anyway",
@@ -545,6 +549,7 @@
     "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
     "fieldTags": "Tags",
     "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
+    "tagsLimit": "Up to {max} tags",
     "fieldNotes": "Notes",
     "notesPlaceholderLong": "Anything worth mentioning — missing pieces, special edition, where you got it…",
     "optional": "Optional",
@@ -917,6 +922,7 @@
       "searching": "Searching…",
       "noResults": "No places found.",
       "searchFailed": "Place search isn't available right now.",
+      "searchRateLimited": "You've searched a lot. Try again later.",
       "useCurrentLocation": "Use my current location",
       "locating": "Finding your location…",
       "locationDenied": "Your location isn't available. Search for a place instead.",
@@ -924,6 +930,7 @@
       "mapHint": "Tap the map to move the pin there, or use the buttons.",
       "mapLoading": "Loading map…",
       "mapFailed": "The map can't be shown right now.",
+      "mapRateLimited": "You've moved the map a lot. Try again later.",
       "pickFirst": "Search for a place or use your current location to place the pin.",
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
@@ -2928,7 +2935,8 @@
       "skip": "Skip",
       "saved": "Thanks! Follow-up saved.",
       "saveError": "Could not save everything. Please try again.",
-      "tooManyPhotos": "A completion can have at most 5 photos."
+      "tooManyPhotos": "A completion can have at most 5 photos.",
+      "photosRateLimited": "You've added the most photos allowed for now. Try again {when}."
     },
     "goals": {
       "title": "Goals",
@@ -3092,6 +3100,7 @@
     "errors": {
       "invalidEmail": "Enter a valid email address.",
       "rateLimited": "You've sent a lot of invitations today. Try again {when}.",
+      "busy": "Invitations are paused for a bit. Try again {when}.",
       "generic": "Couldn't send the invitation. Try again."
     },
     "pendingTitle": "Sent invitations",
@@ -3550,6 +3559,7 @@
       "errorEmail": "Enter a valid email",
       "errorMessage": "Tell us a bit more (min. 10 chars)",
       "errorSubmit": "Something went wrong while sending — please try again.",
+      "errorBusy": "We're receiving a lot of messages right now. Try again later, or email us at <mail>{email}</mail>.",
       "submit": "Send message",
       "privacyNote": "By sending, you agree to our privacy policy.",
       "sentTitle": "Message sent!",
@@ -3977,6 +3987,9 @@
     "uploading": "Uploading…",
     "photoAdded": "Photo added",
     "photoFailed": "Couldn't add photo",
+    "photoRateLimited": "You've added the most photos allowed for now. Try again {when}.",
+    "photoLimitReached": "A copy can have at most {max} photos.",
+    "photoLimitTile": "Limit of {max} photos reached",
     "noPhotos": "No photos yet.",
     "completionHistory": "Completion History",
     "completionsCount": "{count} completions",
@@ -4125,6 +4138,9 @@
       "notPending": "This suggestion was already decided — file a new one.",
       "empty": "Change at least one field to suggest an edit",
       "invalidBarcode": "One of the barcodes is not valid",
+      "rateLimited": "You've sent the most suggestions allowed for now. Try again {when}.",
+      "coverRateLimited": "You've uploaded the most images allowed for now. Try again {when}.",
+      "textTooLong": "One of the fields is too long. Shorten it and try again.",
       "generic": "Couldn't submit your suggestion"
     }
   },
@@ -4578,7 +4594,8 @@
         "errors": {
           "emptyTitle": "The title can't be empty",
           "invalidBarcode": "One of the barcodes is not valid",
-          "invalidPieceCount": "The piece count must be a positive number"
+          "invalidPieceCount": "The piece count must be a positive number",
+          "textTooLong": "One of the fields is too long. Shorten it and try again."
         },
         "cancel": "Cancel"
       },
@@ -4652,6 +4669,7 @@
       "notFoundSub": "This suggestion does not exist or the link is wrong.",
       "rejectionReason": "Reason",
       "actionFailed": "Couldn't complete the action",
+      "approveTextTooLong": "This suggestion has text longer than the catalogue allows, so it can't be applied. Decline it instead.",
       "backToQueue": "Back to suggestions"
     },
     "queueEmpty": {

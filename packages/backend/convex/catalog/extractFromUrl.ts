@@ -1,11 +1,14 @@
 "use node";
 
 import {
+  err,
   makeFallbackStorePageFetcher,
   makeImportPuzzleFromUrl,
+  StorePageFetchError,
   type CachedImportDraft,
   type ImportDraftCache,
   type PuzzleMatchLookup,
+  type StorePageFetcher,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -18,6 +21,22 @@ import { firecrawlStorePageFetcher } from "./adapters/firecrawlStorePageFetcher"
 import { ogieStorePageFetcher } from "./adapters/ogieStorePageFetcher";
 import { systemClock } from "./adapters/systemClock";
 
+// The gate's refusal code for the wide event: requireMember throws a bare message, the rate
+// limit a { code } object.
+const refusalCode = (error: unknown): string => {
+  const data: unknown = error instanceof ConvexError ? error.data : undefined;
+  if (typeof data === "string") return data;
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "code" in data &&
+    typeof data.code === "string"
+  ) {
+    return data.code;
+  }
+  return "Unexpected";
+};
+
 // Public Node action: the driving adapter. Wires ogie (page fetch) + ctx-backed cache/lookup
 // ports into the import use case. Returns a discriminated result so the UI degrades gracefully
 // (ok:false -> manual entry) and never sees a thrown error for a bad page.
@@ -25,6 +44,9 @@ import { systemClock } from "./adapters/systemClock";
 // Emits ONE wide event per call (logging-best-practices) so a failed extraction is diagnosable:
 // the event carries the url, the caller, the outcome, the error code AND the underlying ogie
 // `detail`, plus cache-hit / match / draft-shape facts and the duration.
+//
+// The one thrown refusal is the gate (urlImportGate.beginUrlImport): no member, or the
+// member's import buckets are full (ConvexError { code: "RateLimited", retryAfterMs }).
 export const extractFromUrl = action({
   args: { url: v.string() },
   handler: async (ctx, { url }) => {
@@ -44,11 +66,15 @@ export const extractFromUrl = action({
 
     const identity = await ctx.auth.getUserIdentity();
     event.user_subject = identity?.subject ?? null;
-    if (identity === null) {
+    // Only an active member within their hourly and daily import buckets (admins exempt) may
+    // start an import, and a refusal comes before any fetch (catalog/urlImportGate, SEC-21).
+    try {
+      await ctx.runMutation(internal.catalog.urlImportGate.beginUrlImport, {});
+    } catch (error) {
       event.outcome = "error";
-      event.error = { code: "Unauthenticated" };
+      event.error = { code: refusalCode(error) };
       await flush();
-      throw new ConvexError("Unauthenticated");
+      throw error;
     }
 
     // SSRF pre-flight: enforce http(s) + a public DNS host on the ENTRY url ONCE, before any tier
@@ -93,12 +119,36 @@ export const extractFromUrl = action({
         },
       };
 
+      // Firecrawl is the paid last tier: each scrape is charged to the deployment-wide budget
+      // first (lib/rateLimits firecrawlBudget). Once it is spent the tier fails, so the import
+      // keeps what a cheaper tier found, or the member fills the details in by hand.
+      const budgetedFirecrawl: StorePageFetcher = {
+        async fetch(pageUrl) {
+          if (process.env.FIRECRAWL_API_KEY) {
+            const charged = await ctx.runMutation(
+              internal.catalog.urlImportGate.chargeFirecrawl,
+              {},
+            );
+            if (!charged) {
+              event.firecrawl_budget_spent = true;
+              return err(
+                StorePageFetchError.fetchFailed(
+                  "firecrawl budget spent",
+                  "firecrawl_budget",
+                ),
+              );
+            }
+          }
+          return firecrawlStorePageFetcher.fetch(pageUrl);
+        },
+      };
+
       const importDraft = makeImportPuzzleFromUrl({
         fetcher: makeFallbackStorePageFetcher(
           ogieStorePageFetcher,
           makeFallbackStorePageFetcher(
             browserStorePageFetcher,
-            firecrawlStorePageFetcher,
+            budgetedFirecrawl,
           ),
         ),
         cache,

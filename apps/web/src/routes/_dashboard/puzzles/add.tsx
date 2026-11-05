@@ -1,8 +1,12 @@
 import { useRouter } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
+  CATALOG_TEXT_LIMITS,
+  contributeError,
   COVER_SWATCHES,
   CoverColourField,
+  coverStep,
+  CoverStepError,
   DIFFICULTY_OPTIONS,
   ImportZone,
   LivePreviewCard,
@@ -33,7 +37,9 @@ import {
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import {
@@ -105,6 +111,7 @@ function ContributePuzzlePage() {
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
@@ -178,13 +185,18 @@ function ContributePuzzlePage() {
     mutationFn: async () => {
       let imageId: Id<"_storage"> | undefined;
       if (form.coverMode === "photo") {
-        if (form.coverFile) {
-          imageId = await uploadBoxArt(form.coverFile);
+        const coverFile = form.coverFile;
+        if (coverFile) {
+          imageId = await coverStep(() => uploadBoxArt(coverFile));
         } else if (form.selectedImageUrl) {
           try {
             imageId = await importImage({ url: form.selectedImageUrl });
-          } catch {
-            // Non-fatal: proceed without the remote image
+          } catch (error) {
+            // The member's cover-photo limit stops the flow, so no puzzle is created without
+            // the cover they chose; any other failure is non-fatal: proceed without the image.
+            if (convexErrorCode(error) === "RateLimited") {
+              throw new CoverStepError(error);
+            }
             imageId = undefined;
           }
         }
@@ -221,11 +233,18 @@ function ContributePuzzlePage() {
     },
     onError: (error) => {
       console.error("Contribute puzzle failed:", error);
-      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20); the
+      // filing's and the cover check's own refusals (their limits, a text bound) name their
+      // reason (SEC-26).
+      if (isUploadRateLimited(error)) {
+        toast.error(tCommon("photoUploadRateLimited"));
+        return;
+      }
+      const failure = contributeError(error, Date.now());
       toast.error(
-        isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
-          : t("puzzleCreationFailed"),
+        "retryAt" in failure
+          ? t(failure.key, { when: relativeTime(failure.retryAt) })
+          : t(failure.key),
       );
     },
   });
@@ -274,6 +293,7 @@ function ContributePuzzlePage() {
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder={t("fieldTitlePlaceholder")}
+            maxLength={CATALOG_TEXT_LIMITS.title}
           />
         </div>
 
@@ -292,6 +312,7 @@ function ContributePuzzlePage() {
               onChange={(value) => setForm((f) => ({ ...f, publisher: value }))}
               suggestions={publisherSuggestions ?? []}
               placeholder={t("fieldPublisherPlaceholder")}
+              maxLength={CATALOG_TEXT_LIMITS.publisher}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -321,6 +342,7 @@ function ContributePuzzlePage() {
                 brandSuggestions?.filter((b): b is string => !!b) ?? []
               }
               placeholder={t("fieldBrandPlaceholder")}
+              maxLength={CATALOG_TEXT_LIMITS.brand}
             />
             <p className="text-xs text-muted-foreground">
               {t("brandOptionalHint")}
@@ -334,6 +356,7 @@ function ContributePuzzlePage() {
               onChange={(value) => setForm((f) => ({ ...f, series: value }))}
               suggestions={seriesSuggestions ?? []}
               placeholder={tf("series.placeholder")}
+              maxLength={CATALOG_TEXT_LIMITS.series}
             />
           </div>
         </div>
@@ -469,6 +492,7 @@ function ContributePuzzlePage() {
                   setForm((f) => ({ ...f, modelNumber: e.target.value }))
                 }
                 placeholder={tf("modelNumber.placeholder")}
+                maxLength={CATALOG_TEXT_LIMITS.modelNumber}
               />
             </div>
 
@@ -482,6 +506,7 @@ function ContributePuzzlePage() {
                   setForm((f) => ({ ...f, artist: e.target.value }))
                 }
                 placeholder={tf("artist.placeholder")}
+                maxLength={CATALOG_TEXT_LIMITS.artist}
               />
             </div>
 

@@ -156,6 +156,55 @@ describe("EmailInvite", () => {
     }
   });
 
+  it("says when invitations are paused by the shared budget, and when to try again", async () => {
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+    try {
+      mocks.action.mockRejectedValue(
+        new ConvexError({
+          code: "EmailInvitesBusy",
+          retryAfterMs: 40 * 60_000,
+        }),
+      );
+      renderInvite();
+      sendTo("friend@example.com");
+      await waitFor(() =>
+        expect(status().textContent).toBe(
+          "Invitations are paused for a bit. Try again in 40 minutes.",
+        ),
+      );
+      // The address stays, so it can be sent once invitations resume.
+      expect(emailInput().value).toBe("friend@example.com");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("says invitations are paused in Dutch", async () => {
+    vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+    try {
+      mocks.action.mockRejectedValue(
+        new ConvexError({
+          code: "EmailInvitesBusy",
+          retryAfterMs: 40 * 60_000,
+        }),
+      );
+      renderInvite("nl");
+      fireEvent.change(screen.getByLabelText("E-mailadres"), {
+        target: { value: "friend@example.com" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Uitnodigen per e-mail" }),
+      );
+      await waitFor(() =>
+        expect(status().textContent).toBe(
+          "Uitnodigingen staan even op pauze. Probeer het over 40 minuten opnieuw.",
+        ),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("gives any other refusal the generic message", async () => {
     mocks.action.mockRejectedValue(
       new ConvexError({ code: "EmailInvitesUnavailable" }),

@@ -1,8 +1,10 @@
+import { convexErrorCode as sharedConvexErrorCode } from "@/lib/convex-error-code";
 import { ConvexError } from "convex/values";
 import { describe, expect, it } from "vitest";
 import {
   allowedProposeTypes,
   canRequestTrade,
+  convexErrorCode,
   parsePriceCents,
   proposeErrorKey,
 } from "./request-trade";
@@ -106,5 +108,14 @@ describe("parsePriceCents", () => {
     expect(parsePriceCents("-3")).toBeUndefined();
     expect(parsePriceCents("abc")).toBeUndefined();
     expect(parsePriceCents("1.234")).toBeUndefined();
+  });
+});
+
+describe("convexErrorCode re-export", () => {
+  it("is the shared lib helper, so imports from this module keep working", () => {
+    expect(convexErrorCode).toBe(sharedConvexErrorCode);
+    expect(convexErrorCode(new ConvexError({ code: "CopyNotFound" }))).toBe(
+      "CopyNotFound",
+    );
   });
 });

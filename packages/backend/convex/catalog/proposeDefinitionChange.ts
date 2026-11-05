@@ -8,7 +8,9 @@ import {
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type QueryCtx } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexChangeProposalRepository } from "./adapters/convexChangeProposalRepository";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
@@ -120,7 +122,8 @@ export const currentBoxArt = async (
 
 // Composition root: any signed-in member proposes a field diff against an APPROVED definition.
 // Cross-aggregate rules (approved-only, one open proposal per member+definition) live in the
-// use case; this root only authenticates and adapts transport ⇄ domain.
+// use case; this root authenticates, charges the member's proposal buckets and adapts
+// transport ⇄ domain.
 export const proposeDefinitionChange = mutation({
   args: {
     puzzleDefinitionId: v.string(),
@@ -129,6 +132,12 @@ export const proposeDefinitionChange = mutation({
   },
   handler: async (ctx, args) => {
     const actingMember = await requireMember(ctx);
+    // Each filed proposal notifies every admin, and withdraw/re-file would otherwise cycle
+    // without end: bound filings per member (admins exempt). Editing in place is not a filing.
+    if (!(await isAdmin(ctx))) {
+      await enforceRateLimit(ctx, "proposalFile", actingMember);
+      await enforceRateLimit(ctx, "proposalFileDaily", actingMember);
+    }
     // A new image must be box art the server stripped of its metadata for this member.
     await assertBoxArtImage(
       ctx,

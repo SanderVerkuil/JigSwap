@@ -28,10 +28,12 @@ import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
 // Why a send failed, as the UI explains it: the address is malformed, the inviter hit the daily
-// limit (with when they can try again), or anything else (a generic retry).
+// limit, invitations are paused because the deployment-wide budget is spent (both with when they
+// can try again), or anything else (a generic retry).
 export type EmailInviteError =
   | { kind: "invalidEmail" }
   | { kind: "rateLimited"; retryAt: number }
+  | { kind: "busy"; retryAt: number }
   | { kind: "generic" };
 
 export function emailInviteError(
@@ -44,6 +46,12 @@ export function emailInviteError(
     if (data?.code === "InvalidEmail") return { kind: "invalidEmail" };
     if (data?.code === "RateLimited" && typeof data.retryAfterMs === "number") {
       return { kind: "rateLimited", retryAt: now + data.retryAfterMs };
+    }
+    if (
+      data?.code === "EmailInvitesBusy" &&
+      typeof data.retryAfterMs === "number"
+    ) {
+      return { kind: "busy", retryAt: now + data.retryAfterMs };
     }
   }
   return { kind: "generic" };
@@ -104,8 +112,8 @@ export function EmailInviteForm({ kind }: { kind: EmailInviteKind }) {
       ? ""
       : outcome.kind === "sent"
         ? t("sent")
-        : outcome.kind === "rateLimited"
-          ? t("errors.rateLimited", { when: relativeTime(outcome.retryAt) })
+        : outcome.kind === "rateLimited" || outcome.kind === "busy"
+          ? t(`errors.${outcome.kind}`, { when: relativeTime(outcome.retryAt) })
           : t(`errors.${outcome.kind}`);
 
   return (

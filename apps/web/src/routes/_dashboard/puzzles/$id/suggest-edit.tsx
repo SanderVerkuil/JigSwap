@@ -1,5 +1,10 @@
 import { useRouter } from "@/compat/navigation";
-import { SectionDivider } from "@/components/add-puzzle";
+import {
+  CATALOG_TEXT_LIMITS,
+  coverStep,
+  CoverStepError,
+  SectionDivider,
+} from "@/components/add-puzzle";
 import { FormContextPanel } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -20,7 +25,9 @@ import { PageLoading } from "@/components/ui/loading";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -59,6 +66,8 @@ const errorKeyFor = (error: unknown): string => {
       return "errors.empty";
     case "InvalidBarcode":
       return "errors.invalidBarcode";
+    case "TextTooLong":
+      return "errors.textTooLong";
     default:
       return "errors.generic";
   }
@@ -133,6 +142,7 @@ function SuggestEditForm({
   const t = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
 
   usePageHeader(
     () => ({
@@ -204,7 +214,7 @@ function SuggestEditForm({
       // Busy-state rule: the upload happens inside the mutation so isPending spans it.
       let imageId = form.newImageStorageId;
       if (coverFile) {
-        imageId = await uploadBoxArt(coverFile);
+        imageId = await coverStep(() => uploadBoxArt(coverFile));
       }
       const args = buildProposalArgs(
         baseline,
@@ -234,10 +244,21 @@ function SuggestEditForm({
     },
     onError: (error) => {
       // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      if (isUploadRateLimited(error)) {
+        toast.error(tCommon("photoUploadRateLimited"));
+        return;
+      }
+      // A limit refusal names the limit (the member's proposals, or the image upload's
+      // cover-photo check) and when they can try again.
+      const fromCover = error instanceof CoverStepError;
+      const cause = fromCover ? error.original : error;
+      const retryAt = rateLimitedRetryAt(cause, Date.now());
       toast.error(
-        isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
-          : t(errorKeyFor(error)),
+        retryAt !== undefined
+          ? t(fromCover ? "errors.coverRateLimited" : "errors.rateLimited", {
+              when: relativeTime(retryAt),
+            })
+          : t(errorKeyFor(cause)),
       );
     },
   });
@@ -313,6 +334,7 @@ function SuggestEditForm({
           onChange={(e) => set("comment", e.target.value)}
           placeholder={t("comment.placeholder")}
           rows={2}
+          maxLength={CATALOG_TEXT_LIMITS.comment}
         />
 
         <div className="lg:hidden">{actionsRow}</div>

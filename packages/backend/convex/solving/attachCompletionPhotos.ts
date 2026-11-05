@@ -9,6 +9,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
+import { chargePhotoAttach } from "../lib/rateLimits";
 import { assertClaimableUpload } from "../lib/storage/claimFreshUpload";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -59,6 +60,11 @@ export const attachCompletionPhotos = mutation({
       photoFileIds: newIds.map((id) => toFileId(id)),
     });
     if (result.isErr) throw toConvexError(result.error);
+
+    // Each new photo runs the paid moderation pipeline: one charge per photo to the acting
+    // member's photo bucket, before any sidecar or job exists. A refusal throws, which rolls the
+    // whole call back (the completion's photos included).
+    await chargePhotoAttach(ctx, memberId, newIds.length);
 
     const now = Date.now();
     for (const fileId of newIds) {

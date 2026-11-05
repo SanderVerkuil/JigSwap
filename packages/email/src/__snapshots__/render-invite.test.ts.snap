@@ -7,13 +7,13 @@ exports[`renderInviteEmail > pins the copy 1`] = `
       "body": "{inviterName} invited you to JigSwap to follow each other. JigSwap is where puzzlers share, swap and lend their jigsaw puzzles. Once you have joined, you choose whether you follow each other.",
       "cta": "Join JigSwap",
       "heading": "{inviterName} invited you to JigSwap",
-      "subject": "{inviterName} invited you to JigSwap",
+      "subject": "You're invited to JigSwap",
     },
     "nl": {
       "body": "{inviterName} nodigt je uit voor JigSwap om elkaar te volgen. Op JigSwap delen, ruilen en lenen puzzelaars hun legpuzzels. Zodra je lid bent, kies je zelf of jullie elkaar volgen.",
       "cta": "Word lid van JigSwap",
       "heading": "{inviterName} nodigt je uit voor JigSwap",
-      "subject": "{inviterName} nodigt je uit voor JigSwap",
+      "subject": "Je bent uitgenodigd voor JigSwap",
     },
   },
   "household": {
@@ -21,13 +21,13 @@ exports[`renderInviteEmail > pins the copy 1`] = `
       "body": "{inviterName} invited you to JigSwap to join their household. A household pools its members' jigsaw puzzles in one shared library. Once you have joined JigSwap, you choose whether you accept.",
       "cta": "Join JigSwap",
       "heading": "{inviterName} invited you to their household",
-      "subject": "{inviterName} invited you to their household on JigSwap",
+      "subject": "You're invited to a household on JigSwap",
     },
     "nl": {
       "body": "{inviterName} nodigt je uit voor JigSwap om lid te worden van hun huishouden. Een huishouden bundelt de legpuzzels van zijn leden in één gedeelde verzameling. Zodra je lid bent van JigSwap, kies je zelf of je de uitnodiging accepteert.",
       "cta": "Word lid van JigSwap",
       "heading": "{inviterName} nodigt je uit voor hun huishouden",
-      "subject": "{inviterName} nodigt je uit voor hun huishouden op JigSwap",
+      "subject": "Je bent uitgenodigd voor een huishouden op JigSwap",
     },
   },
 }

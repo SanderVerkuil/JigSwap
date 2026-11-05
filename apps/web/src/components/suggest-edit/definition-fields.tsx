@@ -1,4 +1,5 @@
 import {
+  CATALOG_TEXT_LIMITS,
   DIFFICULTY_OPTIONS,
   PieceCountField,
   SectionDivider,
@@ -82,6 +83,7 @@ export function PuzzleDefinitionFields({
           value={form.title}
           onChange={(e) => set("title", e.target.value)}
           placeholder={tf("title.placeholder")}
+          maxLength={CATALOG_TEXT_LIMITS.title}
         />
       </div>
 
@@ -95,6 +97,7 @@ export function PuzzleDefinitionFields({
           onChange={(e) => set("description", e.target.value)}
           placeholder={tf("description.placeholder")}
           rows={3}
+          maxLength={CATALOG_TEXT_LIMITS.description}
         />
       </div>
 
@@ -107,6 +110,7 @@ export function PuzzleDefinitionFields({
             onChange={(value) => set("brand", value)}
             suggestions={brandSuggestions ?? []}
             placeholder={tf("brand.placeholder")}
+            maxLength={CATALOG_TEXT_LIMITS.brand}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -119,6 +123,7 @@ export function PuzzleDefinitionFields({
             onChange={(value) => set("publisher", value)}
             suggestions={publisherSuggestions ?? []}
             placeholder={tf("publisher.placeholder")}
+            maxLength={CATALOG_TEXT_LIMITS.publisher}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -136,6 +141,7 @@ export function PuzzleDefinitionFields({
             value={form.artist}
             onChange={(e) => set("artist", e.target.value)}
             placeholder={tf("artist.placeholder")}
+            maxLength={CATALOG_TEXT_LIMITS.artist}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -146,6 +152,7 @@ export function PuzzleDefinitionFields({
             onChange={(value) => set("series", value)}
             suggestions={seriesSuggestions ?? []}
             placeholder={tf("series.placeholder")}
+            maxLength={CATALOG_TEXT_LIMITS.series}
           />
         </div>
       </div>
@@ -234,6 +241,7 @@ export function PuzzleDefinitionFields({
             value={form.modelNumber}
             onChange={(e) => set("modelNumber", e.target.value)}
             placeholder={tf("modelNumber.placeholder")}
+            maxLength={CATALOG_TEXT_LIMITS.modelNumber}
           />
         </div>
       </div>

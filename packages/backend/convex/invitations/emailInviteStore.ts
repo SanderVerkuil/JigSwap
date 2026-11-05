@@ -6,19 +6,25 @@ import {
 } from "@jigswap/domain";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { convexHouseholdRepository } from "../household/adapters/convexHouseholdRepository";
 import { toConvexError as toHouseholdConvexError } from "../household/errors";
 import { membershipOf } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { chargeClerkInviteBudget, enforceRateLimit } from "../lib/rateLimits";
+import {
+  chargeBudget,
+  clerkInviteBudget,
+  enforceRateLimit,
+} from "../lib/rateLimits";
 import { toConvexError as toSocialConvexError } from "../social/errors";
 import {
   EMAIL_INVITE_TTL_MS,
   emailInviteKindValidator,
+  emailInvitesBusy,
   emailInviteUnavailable,
+  NEW_ACCOUNT_AGE_MS,
   SEND_LOG_WINDOW_MS,
 } from "./config";
 import { applyExistingMemberFallback, withdrawFallback } from "./fallbacks";
@@ -26,12 +32,22 @@ import { applyExistingMemberFallback, withdrawFallback } from "./fallbacks";
 // The transactional steps of the email-invite actions (sendEmailInvite, revokeEmailInvite), plus
 // the scheduled expiry and send-log cleanup. Internal only: the actions are the public surface.
 
+// A new account (NEW_ACCOUNT_AGE_MS) or one without a verified email has the smaller
+// new-account allowance on top of the daily one.
+const isNewAccount = (inviter: Doc<"users"> | null, now: number): boolean =>
+  inviter === null ||
+  !inviter.email ||
+  now - inviter.createdAt < NEW_ACCOUNT_AGE_MS;
+
 /**
  * Steps 1–4 of sendEmailInvite, in ONE mutation that commits before any Clerk or email work, so
- * the rate-limit count stands whatever happens next: the inviter gate (member; household admin
- * for a household invite, refused with the inviter-only household error), the address check
- * (InvalidEmail), the per-inviter limit (RateLimited), and the local ref row with its expiry.
- * Returns what the action needs; the normalised address is returned, never stored.
+ * the counts stand whatever happens next: the inviter gate (member; household admin for a
+ * household invite, refused with the inviter-only household error), the address check
+ * (InvalidEmail), the deployment-wide invitation budget (EmailInvitesBusy with retryAfterMs,
+ * charged for every accepted invitation whatever its address), the per-inviter limits
+ * (RateLimited: emailInvite, and emailInviteNewAccount for a new account), and the local ref row
+ * with its expiry. Any refusal rolls the whole step back, so it charges nothing. Returns what the
+ * action needs; the normalised address is returned, never stored.
  */
 export const beginEmailInvite = internalMutation({
   args: { kind: emailInviteKindValidator, email: v.string() },
@@ -57,9 +73,18 @@ export const beginEmailInvite = internalMutation({
     const normalized = normalizeInviteEmail(email);
     if (normalized.isErr) throw toSocialConvexError(normalized.error);
 
-    await enforceRateLimit(ctx, "emailInvite", inviterId);
+    // The shared budget first, so a refusal says "busy" rather than spending the inviter's own
+    // allowance; it is charged whatever the address, so it never reveals anything about one.
+    const wait = await chargeBudget(ctx, clerkInviteBudget(process.env));
+    if (wait !== null) throw emailInvitesBusy(wait);
 
     const now = Date.now();
+    const inviter = await ctx.db.get(inviterId);
+    await enforceRateLimit(ctx, "emailInvite", inviterId);
+    if (isNewAccount(inviter, now)) {
+      await enforceRateLimit(ctx, "emailInviteNewAccount", inviterId);
+    }
+
     const ref = crypto.randomUUID();
     const expiresAt = now + EMAIL_INVITE_TTL_MS;
     await ctx.db.insert("emailInvites", {
@@ -76,7 +101,6 @@ export const beginEmailInvite = internalMutation({
       { inviteRef: ref },
     );
 
-    const inviter = await ctx.db.get(inviterId);
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_member", (q) => q.eq("memberId", inviterId))
@@ -136,12 +160,6 @@ export const applyExistingMember = internalMutation({
     });
     if (fallback !== undefined) await ctx.db.patch(row._id, { fallback });
   },
-});
-
-/** Step 7, first: one creation off the deployment-wide Clerk budget, or false when it is spent. */
-export const chargeClerkInvite = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<boolean> => chargeClerkInviteBudget(ctx),
 });
 
 /**

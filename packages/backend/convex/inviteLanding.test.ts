@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
+import { inviteLandingBudget } from "./lib/rateLimits";
 import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -26,6 +27,17 @@ const seedUsers = (t: TestConvex<typeof schema>) =>
     });
     return { alice, bob };
   });
+
+// Wide events are JSON lines: info on console.log, error on console.error.
+const captureLogs = () => {
+  const info = vi.spyOn(console, "log").mockImplementation(() => {});
+  const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  const eventsOf = (spy: typeof info) =>
+    spy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+  return { info: () => eventsOf(info), error: () => eventsOf(error) };
+};
 
 const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
@@ -101,5 +113,83 @@ describe("recordInviteLanding", () => {
         .unique(),
     );
     expect(row?.landingViews).toBe(2);
+  });
+});
+
+describe("recordInviteLanding budget (SEC-82)", () => {
+  const land = (t: TestConvex<typeof schema>, token: string) =>
+    t.mutation(api.social.recordInviteLanding.recordInviteLanding, { token });
+
+  const linkOf = (t: TestConvex<typeof schema>, token: string) =>
+    t.run((ctx) =>
+      ctx.db
+        .query("inviteLinks")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique(),
+    );
+
+  test("counts at most the link's hourly budget, then again the next hour", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    const link = await linkOf(t, token);
+    const [budget] = inviteLandingBudget(link!._id);
+
+    // Landings past the budget are accepted but not counted, and write nothing.
+    for (let i = 0; i < budget.cap + 5; i++) await land(t, token);
+    expect((await linkOf(t, token))?.landingViews).toBe(budget.cap);
+
+    // Age the link's window past its length: the next landing counts again.
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("rateLimits")
+        .withIndex("by_key", (q) => q.eq("key", budget.key))
+        .unique();
+      await ctx.db.patch(row!._id, {
+        windowStart: row!.windowStart - budget.windowMs,
+      });
+    });
+    await land(t, token);
+    expect((await linkOf(t, token))?.landingViews).toBe(budget.cap + 1);
+  });
+
+  test("unknown and revoked tokens still write nothing", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    await asAlice(t).mutation(api.social.resetInviteLink.resetInviteLink, {});
+
+    await land(t, "nope");
+    await land(t, token);
+    expect((await linkOf(t, token))?.landingViews).toBe(0);
+    expect(
+      await t.run((ctx) => ctx.db.query("rateLimits").collect()),
+    ).toHaveLength(0);
+  });
+
+  test("landings past the budget log no error line", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t);
+    const { token } = await asAlice(t).mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    const link = await linkOf(t, token);
+    const [budget] = inviteLandingBudget(link!._id);
+    const logs = captureLogs();
+    for (let i = 0; i < budget.cap + 30; i++) await land(t, token);
+
+    expect(logs.error()).toEqual([]);
+    expect((await linkOf(t, token))?.landingViews).toBe(budget.cap);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 });

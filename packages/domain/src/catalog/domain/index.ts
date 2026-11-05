@@ -1,6 +1,7 @@
 export * from "./approval";
 export * from "./barcode";
 export * from "./catalog-category";
+export * from "./catalog-text-limits";
 export * from "./clean-puzzle-title";
 export * from "./errors";
 export * from "./events";

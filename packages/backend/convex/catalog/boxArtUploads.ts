@@ -1,7 +1,9 @@
 import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { internalQuery, type QueryCtx } from "../_generated/server";
+import { internalMutation, type QueryCtx } from "../_generated/server";
+import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 
 // Box art (a puzzle definition's `image`, or a proposed one) is served to everyone, so it gets
 // exactly the checks every uploaded photo gets: the shared image-moderation pipeline
@@ -37,10 +39,22 @@ export const boxArtRefused = (reason: BoxArtRefusal) =>
     reason,
   });
 
-/** The acting member (an action has no ctx.db). */
-export const currentMember = internalQuery({
+/**
+ * Admit the acting member to one box-art check (catalog/sanitizeBoxArt, catalog/importPuzzleImage;
+ * an action has no ctx.db), before the upload is claimed or anything is fetched: only an active
+ * member, and at most RATE_LIMITS.boxArtCheck / boxArtCheckDaily of them, since each check runs
+ * the paid moderation pipeline (admins, who seed the catalogue, are exempt). Throws
+ * requireMember's refusal or ConvexError({ code: "RateLimited", retryAfterMs }), writing nothing.
+ */
+export const chargeBoxArtCheck = internalMutation({
   args: {},
-  handler: async (ctx) => (await requireMember(ctx)) as unknown as Id<"users">,
+  handler: async (ctx) => {
+    const member = await requireMember(ctx);
+    if (await isAdmin(ctx)) return null;
+    await enforceRateLimit(ctx, "boxArtCheck", member);
+    await enforceRateLimit(ctx, "boxArtCheckDaily", member);
+    return null;
+  },
 });
 
 /**

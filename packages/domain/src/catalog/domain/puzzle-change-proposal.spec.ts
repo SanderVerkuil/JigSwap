@@ -97,6 +97,36 @@ describe("PuzzleChangeProposal.file", () => {
     expect(barcode.isErr).toBe(true);
     if (barcode.isErr) expect(barcode.error.code).toBe("InvalidBarcode");
   });
+
+  // A proposal's diff and comment are bounded like the definition's own text (SEC-26), so an
+  // over-long value can neither sit in the review queue nor reach the definition on approval.
+  it.each([
+    ["description", { changes: { description: "x".repeat(5_001) } }],
+    ["brand", { changes: { brand: "x".repeat(101) } }],
+    [
+      "tags",
+      { changes: { tags: Array.from({ length: 21 }, (_, i) => `${i}`) } },
+    ],
+    ["comment", { comment: "c".repeat(2_001) }],
+  ] as const)("refuses an over-long %s with TextTooLong", (_field, extra) => {
+    const r = PuzzleChangeProposal.file({
+      id,
+      puzzleDefinitionId: definitionId,
+      proposedBy: proposer,
+      changes: { title: "Ok" },
+      baseline: {},
+      now: NOW,
+      ...extra,
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+  });
+
+  it("accepts a comment at its limit", () => {
+    expect(file({ comment: "c".repeat(2_000) }).toState().comment).toHaveLength(
+      2_000,
+    );
+  });
 });
 
 describe("edit", () => {
@@ -123,6 +153,31 @@ describe("edit", () => {
     const r = proposal.edit({}, {}, undefined, LATER);
     expect(r.isErr).toBe(true);
     if (r.isErr) expect(r.error.code).toBe("EmptyProposal");
+  });
+
+  it("re-checks the text bounds on the new diff and comment, changing nothing when refused", () => {
+    const proposal = file({ comment: "original" });
+    proposal.pullEvents();
+    const longComment = proposal.edit(
+      { title: "X" },
+      { title: "Old" },
+      "c".repeat(2_001),
+      LATER,
+    );
+    expect(longComment.isErr).toBe(true);
+    if (longComment.isErr) expect(longComment.error.code).toBe("TextTooLong");
+
+    const longField = proposal.edit(
+      { series: "s".repeat(101) },
+      {},
+      undefined,
+      LATER,
+    );
+    expect(longField.isErr).toBe(true);
+    if (longField.isErr) expect(longField.error.code).toBe("TextTooLong");
+
+    expect(proposal.toState().comment).toBe("original");
+    expect(proposal.pullEvents()).toHaveLength(0);
   });
 
   it("clears the comment when the edit omits it", () => {

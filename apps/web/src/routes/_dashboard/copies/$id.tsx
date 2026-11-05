@@ -3,6 +3,7 @@ import { useRouter } from "@/compat/navigation";
 import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOwner } from "@/components/copies/copy-owner";
+import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -31,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { durationParts } from "@/lib/humanize-duration";
 import {
@@ -716,6 +718,7 @@ function CopyInstanceDetail({
         <PhotoStrip
           gallery={gallery}
           pendingPhotos={copy.pendingPhotos}
+          photoLimit={copy.photoLimit}
           canAdd={copy.viewerCanManage}
           copyId={copyId}
           coverImageId={snapshot.coverImageId}
@@ -944,18 +947,21 @@ function SectionHead({
 function PhotoStrip({
   gallery,
   pendingPhotos,
+  photoLimit,
   canAdd,
   copyId,
   coverImageId,
 }: {
   gallery: CopyInstanceView["gallery"];
   pendingPhotos: CopyInstanceView["pendingPhotos"];
+  photoLimit: CopyInstanceView["photoLimit"];
   canAdd: boolean;
   copyId: string;
   coverImageId: string | null;
 }) {
   const t = useTranslations("copyInstance");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
   const inputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1003,18 +1009,29 @@ function PhotoStrip({
       });
     },
     onSuccess: () => toast.success(t("photoAdded")),
-    // An upload URL refused by the member's upload limit says to wait (SEC-20).
-    onError: (error) =>
+    onError: (error) => {
+      // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
+      // refusals (the photo limit, a full copy) name their reason (SEC-19).
+      if (isUploadRateLimited(error)) {
+        toast.error(tCommon("photoUploadRateLimited"));
+        return;
+      }
+      const refusal = copyPhotoError(error, Date.now());
       toast.error(
-        isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
-          : t("photoFailed"),
-      ),
+        refusal.key === "photoRateLimited"
+          ? t(refusal.key, { when: relativeTime(refusal.retryAt) })
+          : t(refusal.key, { max: photoLimit }),
+      );
+    },
     onSettled: () => {
       if (inputRef.current) inputRef.current.value = "";
     },
   });
   const uploading = uploadPhoto.isPending;
+  // Every photo shown here, placeholders included, takes one of the copy's places; once they are
+  // all taken the server refuses another (TooManyImages), so the picker is not offered and
+  // nothing is uploaded only to be refused.
+  const full = gallery.length + pendingPhotos.length >= photoLimit;
 
   return (
     <div className="flex gap-3.5 overflow-x-auto pb-1.5">
@@ -1063,7 +1080,13 @@ function PhotoStrip({
           className="aspect-[4/3] w-[210px] shrink-0 rounded-lg shadow-sm"
         />
       ))}
-      {canAdd && (
+      {canAdd && full && (
+        <p className="border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 text-center text-xs font-semibold">
+          <ImagePlus className="h-5 w-5 opacity-50" aria-hidden />
+          {t("photoLimitTile", { max: photoLimit })}
+        </p>
+      )}
+      {canAdd && !full && (
         <label
           className={cn(
             "border-border text-muted-foreground flex aspect-[4/3] w-[150px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed text-xs font-semibold",

@@ -352,6 +352,9 @@
     "puzzleCreated": "Puzzel succesvol aangemaakt",
     "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
+    "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
+    "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of kies een omslagkleur.",
+    "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Puzzel toegevoegd aan je collectie",
     "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
@@ -510,6 +513,7 @@
     "importFetch": "Gegevens ophalen",
     "importFetching": "Bezig met ophalen…",
     "importFailed": "Kon die pagina niet lezen — vul de gegevens handmatig in.",
+    "importRateLimited": "Je hebt voorlopig het maximale aantal pagina's geïmporteerd. Probeer het {when} opnieuw, of vul de gegevens hieronder zelf in.",
     "importAlreadyExists": "Deze puzzel staat al op JigSwap — toevoegen aan je collectie?",
     "importAddToCollection": "Aan collectie toevoegen",
     "importCreateAnyway": "Toch nieuw aanmaken",
@@ -545,6 +549,7 @@
     "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
     "fieldTags": "Tags",
     "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
+    "tagsLimit": "Maximaal {max} tags",
     "fieldNotes": "Notities",
     "notesPlaceholderLong": "Iets vermeldenswaards — ontbrekende stukjes, speciale editie, waar je hem vandaan hebt…",
     "optional": "Optioneel",
@@ -917,6 +922,7 @@
       "searching": "Zoeken…",
       "noResults": "Geen plekken gevonden.",
       "searchFailed": "Plekken zoeken lukt nu niet.",
+      "searchRateLimited": "Je hebt veel zoekopdrachten gedaan. Probeer het later opnieuw.",
       "useCurrentLocation": "Gebruik mijn huidige locatie",
       "locating": "Je locatie bepalen…",
       "locationDenied": "Je locatie is niet beschikbaar. Zoek liever een plek.",
@@ -924,6 +930,7 @@
       "mapHint": "Tik op de kaart om de speld daarheen te verplaatsen, of gebruik de knoppen.",
       "mapLoading": "Kaart laden…",
       "mapFailed": "De kaart kan nu niet worden getoond.",
+      "mapRateLimited": "Je hebt de kaart vaak verschoven. Probeer het later opnieuw.",
       "pickFirst": "Zoek een plek of gebruik je huidige locatie om de speld te plaatsen.",
       "zoomIn": "Inzoomen",
       "zoomOut": "Uitzoomen",
@@ -2928,7 +2935,8 @@
       "skip": "Overslaan",
       "saved": "Bedankt! Alles is opgeslagen.",
       "saveError": "Kon niet alles opslaan. Probeer het opnieuw.",
-      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben."
+      "tooManyPhotos": "Een voltooiing kan maximaal 5 foto's hebben.",
+      "photosRateLimited": "Je hebt voorlopig het maximale aantal foto's toegevoegd. Probeer het {when} opnieuw."
     },
     "goals": {
       "title": "Doelen",
@@ -3092,6 +3100,7 @@
     "errors": {
       "invalidEmail": "Vul een geldig e-mailadres in.",
       "rateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het {when} opnieuw.",
+      "busy": "Uitnodigingen staan even op pauze. Probeer het {when} opnieuw.",
       "generic": "Kon de uitnodiging niet versturen. Probeer het opnieuw."
     },
     "pendingTitle": "Verstuurde uitnodigingen",
@@ -3550,6 +3559,7 @@
       "errorEmail": "Vul een geldig e-mailadres in",
       "errorMessage": "Vertel iets meer (min. 10 tekens)",
       "errorSubmit": "Er ging iets mis bij het versturen — probeer het opnieuw.",
+      "errorBusy": "Er komen nu veel berichten binnen. Probeer het later opnieuw, of mail ons op <mail>{email}</mail>.",
       "submit": "Verstuur bericht",
       "privacyNote": "Door te versturen ga je akkoord met ons privacybeleid.",
       "sentTitle": "Bericht verstuurd!",
@@ -3977,6 +3987,9 @@
     "uploading": "Uploaden…",
     "photoAdded": "Foto toegevoegd",
     "photoFailed": "Kon foto niet toevoegen",
+    "photoRateLimited": "Je hebt voorlopig het maximale aantal foto's toegevoegd. Probeer het {when} opnieuw.",
+    "photoLimitReached": "Een exemplaar kan maximaal {max} foto's hebben.",
+    "photoLimitTile": "Maximum van {max} foto's bereikt",
     "noPhotos": "Nog geen foto's.",
     "completionHistory": "Voltooiingsgeschiedenis",
     "completionsCount": "{count} voltooiingen",
@@ -4125,6 +4138,9 @@
       "notPending": "Dit voorstel is al beoordeeld — dien een nieuw voorstel in.",
       "empty": "Wijzig minstens één veld om een voorstel in te dienen",
       "invalidBarcode": "Een van de barcodes is ongeldig",
+      "rateLimited": "Je hebt voorlopig het maximale aantal voorstellen ingediend. Probeer het {when} opnieuw.",
+      "coverRateLimited": "Je hebt voorlopig het maximale aantal afbeeldingen geüpload. Probeer het {when} opnieuw.",
+      "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
       "generic": "Voorstel indienen mislukt"
     }
   },
@@ -4578,7 +4594,8 @@
         "errors": {
           "emptyTitle": "De titel mag niet leeg zijn",
           "invalidBarcode": "Een van de barcodes is ongeldig",
-          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn"
+          "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn",
+          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw."
         },
         "cancel": "Annuleren"
       },
@@ -4652,6 +4669,7 @@
       "notFoundSub": "Dit voorstel bestaat niet of de link klopt niet.",
       "rejectionReason": "Reden",
       "actionFailed": "Actie kon niet worden uitgevoerd",
+      "approveTextTooLong": "Dit voorstel bevat tekst die langer is dan de catalogus toestaat, dus het kan niet worden toegepast. Wijs het af.",
       "backToQueue": "Terug naar voorstellen"
     },
     "queueEmpty": {

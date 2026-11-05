@@ -389,6 +389,32 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
     expect(await linksOf(t, s.alice)).toEqual([]);
   });
 
+  test("her invite links' landing counters go with the links; others' stay", async () => {
+    const t = convexTest(schema, modules);
+    const s = await seed(t);
+    const [alices] = await linksOf(t, s.alice);
+    const [bobs] = await linksOf(t, s.bob);
+    for (const { token } of [alices, bobs]) {
+      await t.mutation(api.social.recordInviteLanding.recordInviteLanding, {
+        token,
+      });
+    }
+    const landingKeys = () =>
+      t.run(async (ctx) =>
+        (await ctx.db.query("rateLimits").collect())
+          .map((row) => row.key)
+          .filter((key) => key.startsWith("inviteLanding:"))
+          .sort(),
+      );
+    expect(await landingKeys()).toEqual(
+      [`inviteLanding:${alices._id}`, `inviteLanding:${bobs._id}`].sort(),
+    );
+
+    await deleteAlice(t);
+
+    expect(await landingKeys()).toEqual([`inviteLanding:${bobs._id}`]);
+  });
+
   test("the inviter's counters are historic totals and do not drop", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);

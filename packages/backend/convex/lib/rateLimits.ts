@@ -29,16 +29,44 @@ export const RATE_LIMITS = {
   circleIconUploadUrl: { windowMs: HOUR, max: 20 },
   circleIcon: { windowMs: HOUR, max: 10 },
   // Place searches in the location picker (each proxies one MapTiler Geocoding request).
-  locationSearch: { windowMs: HOUR, max: 60 },
-  // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles).
-  locationPicker: { windowMs: HOUR, max: 60 },
+  locationSearch: { windowMs: HOUR, max: 30 },
+  // Picker map views (each pan, zoom or tap re-renders the view from MapTiler tiles, about 4-6
+  // upstream requests each).
+  locationPicker: { windowMs: HOUR, max: 30 },
+  // The daily caps next to them, so a handful of members can't spend the global MapTiler budget
+  // (conversation/locationStore.gateLocationCall enforces both of a pair).
+  locationSearchDaily: { windowMs: DAY, max: 100 },
+  locationPickerDaily: { windowMs: DAY, max: 100 },
   // Email invitations (invitations/sendEmailInvite), follow and household together.
   emailInvite: { windowMs: DAY, max: 10 },
+  // A new account's email invitations (younger than invitations/config NEW_ACCOUNT_AGE_MS, or
+  // without a verified email), charged on top of emailInvite: a fresh sign-up can't send the
+  // full allowance of JigSwap-branded email.
+  emailInviteNewAccount: { windowMs: DAY, max: 3 },
   // Requests to join a household (household/requestToJoinHousehold), like emailInvite.
   householdJoinRequest: { windowMs: DAY, max: 10 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~4/min (app room + messages at
   // 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },
+  // Store-page imports (catalog/extractFromUrl): each runs outbound fetches and may fall through
+  // to a paid Firecrawl scrape. Admins, who seed the catalogue, are exempt.
+  urlImport: { windowMs: HOUR, max: 30 },
+  urlImportDaily: { windowMs: DAY, max: 150 },
+  // Copy and completion photos (chargePhotoAttach): one bucket for all of them, since each photo
+  // runs the same paid moderation pipeline.
+  photoAttach: { windowMs: HOUR, max: 40 },
+  photoAttachDaily: { windowMs: DAY, max: 150 },
+  // Box-art checks (catalog/boxArtUploads.chargeBoxArtCheck: an upload's sanitizeBoxArt, or a shop
+  // image's importPuzzleImage), each running the paid moderation pipeline inline. Admins exempt.
+  boxArtCheck: { windowMs: HOUR, max: 20 },
+  boxArtCheckDaily: { windowMs: DAY, max: 60 },
+  // Catalogue submissions (catalog/submitPuzzleDefinition) and filed change proposals
+  // (catalog/proposeDefinitionChange): each one notifies every admin and joins the review
+  // queue, and withdraw/re-file could otherwise cycle forever. Admins are exempt.
+  catalogSubmit: { windowMs: HOUR, max: 10 },
+  catalogSubmitDaily: { windowMs: DAY, max: 20 },
+  proposalFile: { windowMs: HOUR, max: 10 },
+  proposalFileDaily: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -86,14 +114,34 @@ export const enforceRateLimit = async (
   throw new ConvexError({ code: "RateLimited", retryAfterMs });
 };
 
+/**
+ * Charge `photos` newly attached copy or completion photos (library/addCopyPhoto,
+ * solving/attachCompletionPhotos) to the acting member's photoAttach and photoAttachDaily
+ * buckets, one each. Throws RateLimited like enforceRateLimit, and the throw rolls back the whole
+ * mutation, so a batch is attached whole or not at all.
+ */
+export const chargePhotoAttach = async (
+  ctx: MutationCtx,
+  memberId: string,
+  photos = 1,
+): Promise<void> => {
+  for (let i = 0; i < photos; i++) {
+    await enforceRateLimit(ctx, "photoAttach", memberId);
+    await enforceRateLimit(ctx, "photoAttachDaily", memberId);
+  }
+};
+
 // The deployment-wide MapTiler budget: every upstream request (a tile, a Static Maps image, a
 // geocoding call) is charged against an hourly and a daily cap, whoever triggered it, so no mix
 // of members can run up the provider bill. Caps from env (positive integers), with defaults:
 //   MAPTILER_HOURLY_CAP - default 2000 requests per fixed hour
 //   MAPTILER_DAILY_CAP  - default 20000 requests per fixed day
 // One row per window on the rateLimits table (keys "maptiler:global:hour" / ":day").
+// MAPTILER_RENDER_RESERVE_PERCENT of each window is kept for the final render of a sent location
+// (conversation/locationStore.chargeRender): picker views and searches stop short of it.
 export const MAPTILER_HOURLY_CAP_DEFAULT = 2000;
 export const MAPTILER_DAILY_CAP_DEFAULT = 20_000;
+export const MAPTILER_RENDER_RESERVE_PERCENT = 20;
 
 const positiveIntOr = (raw: string | undefined, fallback: number): number => {
   const n = Number(raw);
@@ -105,20 +153,30 @@ export const mapTilerCaps = (env: Record<string, string | undefined>) => ({
   daily: positiveIntOr(env.MAPTILER_DAILY_CAP, MAPTILER_DAILY_CAP_DEFAULT),
 });
 
+// The part of a window's cap that picker views and searches may use.
+const withoutRenderReserve = (cap: number): number =>
+  Math.floor((cap * (100 - MAPTILER_RENDER_RESERVE_PERCENT)) / 100);
+
 /**
  * Charge `requests` upstream MapTiler requests to the global budget. False (and nothing
- * written) when either window would go over its cap; the refusal is logged.
+ * written) when either window would go over its cap; the refusal is logged. With
+ * `reserveForRenders` (picker views and searches) each window counts as full once it reaches
+ * its cap less the render reserve, so final renders can still be charged after the picker has
+ * spent its share.
  */
 export const chargeMapTilerBudget = async (
   ctx: MutationCtx,
   requests: number,
+  { reserveForRenders = false }: { reserveForRenders?: boolean } = {},
 ): Promise<boolean> => {
   if (requests <= 0) return true;
   const caps = mapTilerCaps(process.env);
+  const capOf = (cap: number) =>
+    reserveForRenders ? withoutRenderReserve(cap) : cap;
   const now = Date.now();
   const windows = [
-    { key: "maptiler:global:hour", windowMs: HOUR, cap: caps.hourly },
-    { key: "maptiler:global:day", windowMs: DAY, cap: caps.daily },
+    { key: "maptiler:global:hour", windowMs: HOUR, cap: capOf(caps.hourly) },
+    { key: "maptiler:global:day", windowMs: DAY, cap: capOf(caps.daily) },
   ];
   const planned = [];
   for (const window of windows) {
@@ -159,50 +217,145 @@ export const chargeMapTilerBudget = async (
   return true;
 };
 
-// The deployment-wide budget for Clerk invitation creations (invitations/sendEmailInvite). Clerk
-// allows 100 per hour for the whole application, so we stop well below that, whoever is inviting.
+// The deployment-wide budget for email invitations (invitations/emailInviteStore
+// .beginEmailInvite). Clerk allows 100 invitation creations per hour for the whole application, so
+// we stop well below that, whoever is inviting. Every accepted invitation is charged, whatever the
+// address turns out to be (each creates at most one Clerk invitation), so whether the budget is
+// spent never depends on earlier invitees' addresses. Charged with chargeBudget.
 //   CLERK_INVITES_HOURLY_CAP - positive integer, default 60 per fixed hour
 // One row on the rateLimits table (key "clerkInvites:global:hour").
 export const CLERK_INVITES_HOURLY_CAP_DEFAULT = 60;
-const CLERK_INVITES_KEY = "clerkInvites:global:hour";
+
+export const clerkInviteBudget = (
+  env: Record<string, string | undefined>,
+): BudgetWindow[] => [
+  {
+    key: "clerkInvites:global:hour",
+    windowMs: HOUR,
+    cap: positiveIntOr(
+      env.CLERK_INVITES_HOURLY_CAP,
+      CLERK_INVITES_HOURLY_CAP_DEFAULT,
+    ),
+  },
+];
+
+// A fixed-window budget that is not tied to a member: a whole deployment's use of an anonymous
+// form, or one invite link's landing counter. `cap` is the most the window may count. One row
+// per key on the rateLimits table, reset in place when its window has passed.
+export type BudgetWindow = { key: string; windowMs: number; cap: number };
 
 /**
- * Charge one Clerk invitation creation to the global hourly budget. False (and nothing written)
- * when the budget is spent; the refusal is logged as a rateLimit.refused event.
+ * Charge `amount` to every window, or to none of them. Null when charged; otherwise the ms until
+ * every full window has rolled over, with nothing written. The caller decides what a refusal
+ * means (throw, or skip quietly).
+ *
+ * Logging: the charge that fills a window logs one info-level rateLimit.filled event, so each
+ * window reports at most once that it ran out. Each refusal is also logged as an error-level
+ * rateLimit.refused event unless `logRefusals` is false; anonymous callers pass false, since
+ * their refusals are as frequent as a caller cares to loop and would otherwise drive unbounded
+ * error-level log volume and alerts.
  */
-export const chargeClerkInviteBudget = async (
+export const chargeBudget = async (
   ctx: MutationCtx,
-): Promise<boolean> => {
-  const cap = positiveIntOr(
-    process.env.CLERK_INVITES_HOURLY_CAP,
-    CLERK_INVITES_HOURLY_CAP_DEFAULT,
-  );
+  windows: readonly BudgetWindow[],
+  amount = 1,
+  { logRefusals = true }: { logRefusals?: boolean } = {},
+): Promise<number | null> => {
   const now = Date.now();
-  const row = await ctx.db
-    .query("rateLimits")
-    .withIndex("by_key", (q) => q.eq("key", CLERK_INVITES_KEY))
-    .unique();
-  const fresh = row === null || now - row.windowStart >= HOUR;
-  const count = (fresh ? 0 : row.count) + 1;
-  if (count > cap) {
-    logEvent({
-      event: "rateLimit.refused",
-      outcome: "error",
-      limit: CLERK_INVITES_KEY,
-      window_ms: HOUR,
-      max: cap,
-      retry_after_ms: row ? row.windowStart + HOUR - now : 0,
-    });
-    return false;
+  const planned = [];
+  let retryAfterMs: number | null = null;
+  for (const window of windows) {
+    const row = await ctx.db
+      .query("rateLimits")
+      .withIndex("by_key", (q) => q.eq("key", window.key))
+      .unique();
+    const fresh = row === null || now - row.windowStart >= window.windowMs;
+    const count = (fresh ? 0 : row.count) + amount;
+    if (count > window.cap) {
+      const wait = fresh
+        ? window.windowMs
+        : row.windowStart + window.windowMs - now;
+      if (logRefusals) {
+        logEvent({
+          event: "rateLimit.refused",
+          outcome: "error",
+          limit: window.key,
+          window_ms: window.windowMs,
+          max: window.cap,
+          amount,
+          retry_after_ms: wait,
+        });
+      }
+      retryAfterMs = Math.max(retryAfterMs ?? 0, wait);
+      continue;
+    }
+    planned.push({ window, row, fresh, count });
   }
-  if (row === null) {
-    await ctx.db.insert("rateLimits", {
-      key: CLERK_INVITES_KEY,
-      windowStart: now,
-      count,
-    });
-  } else {
-    await ctx.db.patch(row._id, { ...(fresh && { windowStart: now }), count });
+  if (retryAfterMs !== null) return retryAfterMs;
+  for (const { window, row, fresh, count } of planned) {
+    if (row === null) {
+      await ctx.db.insert("rateLimits", {
+        key: window.key,
+        windowStart: now,
+        count,
+      });
+    } else {
+      await ctx.db.patch(row._id, {
+        ...(fresh && { windowStart: now }),
+        count,
+      });
+    }
+    // A charged window never passes its cap, and refusals write nothing, so this is once per window.
+    if (count === window.cap) {
+      logEvent({
+        event: "rateLimit.filled",
+        outcome: "success",
+        limit: window.key,
+        window_ms: window.windowMs,
+        max: window.cap,
+      });
+    }
   }
-  return true;
+  return null;
 };
+
+// Deployment-wide budgets for the anonymous marketing forms: there is no member to key a limit
+// on, so every visitor shares one hourly and one daily window per form (SEC-22).
+export const CONTACT_BUDGET = [
+  { key: "contact:global:hour", windowMs: HOUR, cap: 20 },
+  { key: "contact:global:day", windowMs: DAY, cap: 100 },
+] as const satisfies readonly BudgetWindow[];
+
+export const DOC_FEEDBACK_BUDGET = [
+  { key: "docFeedback:global:hour", windowMs: HOUR, cap: 60 },
+  { key: "docFeedback:global:day", windowMs: DAY, cap: 300 },
+] as const satisfies readonly BudgetWindow[];
+
+// The deployment-wide Firecrawl budget: every paid scrape the URL import falls through to
+// (catalog/extractFromUrl) is charged here first, whoever imports. Caps from env (positive
+// integers), with defaults:
+//   FIRECRAWL_HOURLY_CAP - default 20 scrapes per fixed hour
+//   FIRECRAWL_DAILY_CAP  - default 100 scrapes per fixed day
+export const FIRECRAWL_HOURLY_CAP_DEFAULT = 20;
+export const FIRECRAWL_DAILY_CAP_DEFAULT = 100;
+
+export const firecrawlBudget = (
+  env: Record<string, string | undefined>,
+): BudgetWindow[] => [
+  {
+    key: "firecrawl:global:hour",
+    windowMs: HOUR,
+    cap: positiveIntOr(env.FIRECRAWL_HOURLY_CAP, FIRECRAWL_HOURLY_CAP_DEFAULT),
+  },
+  {
+    key: "firecrawl:global:day",
+    windowMs: DAY,
+    cap: positiveIntOr(env.FIRECRAWL_DAILY_CAP, FIRECRAWL_DAILY_CAP_DEFAULT),
+  },
+];
+
+// One invite link's landing counter (social/recordInviteLanding, public): at most 20 counted
+// landings per hour per link, so an anonymous loop cannot keep patching the link row (SEC-82).
+export const inviteLandingBudget = (linkId: string): BudgetWindow[] => [
+  { key: `inviteLanding:${linkId}`, windowMs: HOUR, cap: 20 },
+];

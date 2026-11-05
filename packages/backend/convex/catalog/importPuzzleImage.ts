@@ -39,7 +39,8 @@ export const importPuzzleImage = action({
     if ((await ctx.auth.getUserIdentity()) === null) {
       throw new ConvexError("Unauthenticated");
     }
-    await ctx.runQuery(internal.catalog.boxArtUploads.currentMember, {});
+    // Only an active member, within their box-art bucket (admins exempt), before any fetch.
+    await ctx.runMutation(internal.catalog.boxArtUploads.chargeBoxArtCheck, {});
 
     const signal = AbortSignal.timeout(10000); // shared deadline across all hops
     let currentUrl = url;

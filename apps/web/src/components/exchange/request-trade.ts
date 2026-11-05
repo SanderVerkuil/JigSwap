@@ -1,4 +1,8 @@
-import { ConvexError } from "convex/values";
+import { convexErrorCode } from "@/lib/convex-error-code";
+
+// Re-exported so modules that import the helper from here keep compiling; the helper itself lives
+// in lib/convex-error-code.ts. Keep this until no module imports it from this path.
+export { convexErrorCode } from "@/lib/convex-error-code";
 
 // Pure helpers for the trade-request dialog: which exchange types a copy allows, whether the
 // viewer may request it at all, and how propose's stable error codes map to localized messages.
@@ -66,22 +70,6 @@ const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
   DuplicateProposal: "duplicate",
   SelfExchange: "ownCopy",
   MissingTerms: "missingTerms",
-};
-
-/** The stable `code` of a ConvexError (its data may arrive JSON-encoded), else undefined. */
-export const convexErrorCode = (error: unknown): string | undefined => {
-  if (!(error instanceof ConvexError)) return undefined;
-  let data: unknown = error.data;
-  if (typeof data === "string") {
-    try {
-      data = JSON.parse(data);
-    } catch {
-      return undefined;
-    }
-  }
-  return typeof data === "object" && data !== null && "code" in data
-    ? String((data as { code: unknown }).code)
-    : undefined;
 };
 
 /** Map a propose failure to its localized message key; unknown failures are "generic". */

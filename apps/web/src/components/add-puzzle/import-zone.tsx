@@ -6,6 +6,7 @@ import {
 } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRelativeTime } from "@/hooks/use-relative-time";
 import { CircleCheck, Link, Link2, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -18,6 +19,7 @@ export function ImportZone({
   onMatch: (match: ImportedMatch) => void;
 }) {
   const t = useTranslations("puzzles");
+  const relativeTime = useRelativeTime();
   const { state, run } = usePuzzleImport();
   const [url, setUrl] = useState("");
 
@@ -95,7 +97,9 @@ export function ImportZone({
         )}
         {state.status === "error" && (
           <span className="text-xs text-muted-foreground">
-            {t("importFailed")}
+            {state.reason === "rateLimited"
+              ? t("importRateLimited", { when: relativeTime(state.retryAt) })
+              : t("importFailed")}
           </span>
         )}
       </div>

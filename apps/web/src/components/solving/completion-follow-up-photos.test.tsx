@@ -193,6 +193,36 @@ describe("completion follow-up photos", () => {
     expect(mocks.mutation).not.toHaveBeenCalledWith(ATTACH, expect.anything());
   });
 
+  it("says so when the photo limit refused the attach", async () => {
+    mocks.mutation.mockImplementation(async (name) => {
+      if (name === UPLOAD_URL) return "https://upload.test";
+      if (name === ATTACH) {
+        throw new ConvexError({
+          code: "RateLimited",
+          retryAfterMs: 3 * 3_600_000,
+        });
+      }
+      return null;
+    });
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderProvider();
+
+    await pick(new File(["photo"], "IMG_1.jpg", { type: "image/jpeg" }));
+    await screen.findByRole("button", { name: "Remove photo" });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "You've added the most photos allowed for now. Try again in 3 hours.",
+      ),
+    );
+    // The attach's own refusal is not the upload-URL limit.
+    expect(toast.error).not.toHaveBeenCalledWith(
+      en.common.photoUploadRateLimited,
+    );
+    quiet.mockRestore();
+  });
+
   it("a photo the browser cannot prepare is not added", async () => {
     mocks.prepare.mockRejectedValue(new Error("EncodingError"));
     renderProvider();
