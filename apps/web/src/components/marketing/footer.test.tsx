@@ -93,6 +93,31 @@ describe("MarketingFooter touch targets", () => {
   });
 });
 
+describe("MarketingFooter curtain", () => {
+  // Someone scrolling down for the links shouldn't have to pass the big name first, so only the name
+  // may be pinned: pinning the board too uncovers it last.
+  it("pins the name behind the links, never the links themselves", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <MarketingFooter curtain />
+      </IntlProvider>,
+    );
+    const footer = screen.getByRole("contentinfo");
+    expect(footer.className.split(/\s+/)).not.toContain("sticky");
+
+    const pinned = footer.querySelector(".sticky");
+    expect(pinned?.textContent).toBe("JigSwap");
+    expect(pinned?.querySelector("a, button")).toBeNull();
+
+    // The links come before the name in the page, so they arrive first.
+    const firstLink = within(footer).getAllByRole("link")[0];
+    expect(
+      firstLink.compareDocumentPosition(pinned as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
+
 describe("MarketingFooter legal links", () => {
   it("points Cookie policy at the cookie section, not the top of the privacy policy", () => {
     renderFooter();

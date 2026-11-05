@@ -16,22 +16,10 @@ const LINK = cn(
   "inline-flex min-h-9 origin-left items-center text-[16px] hover:underline hover:decoration-2 hover:underline-offset-4",
 );
 
-// A curtain footer is pinned behind the page; a keyboard user who tabs into it would land on links the
-// page still covers, and the browser sees no reason to scroll to something already "in view". Clicks
-// are left alone, so the page does not jump under a pointer.
-function uncoverOnKeyboardFocus(event: React.FocusEvent<HTMLElement>) {
-  if (
-    event.target.matches(":focus-visible") &&
-    getComputedStyle(event.currentTarget).position === "sticky"
-  ) {
-    window.scrollTo(0, document.documentElement.scrollHeight);
-  }
-}
-
-// The back of the street: a board of filled tiles. With `curtain`, the opaque page in front (z-10)
-// slides up to uncover it, by sticky positioning alone. That is switched off wherever the board is
-// taller than the viewport below the header, because a sticky footer that tall would leave its top
-// tiles unreachable.
+// The back of the street: a board of filled tiles, then the name over the street. With `curtain`, only
+// the name is pinned: the board arrives with the page like any other content, so its links come first,
+// and then slides up to uncover the street, by sticky positioning alone. The street is confined to the
+// footer and is always shorter than the viewport, so nothing it hides can become unreachable.
 export function MarketingFooter({ curtain = false }: { curtain?: boolean }) {
   const t = useTranslations("marketing");
   const start = useStartLink();
@@ -67,14 +55,9 @@ export function MarketingFooter({ curtain = false }: { curtain?: boolean }) {
 
   return (
     <footer
-      onFocusCapture={curtain ? uncoverOnKeyboardFocus : undefined}
-      className={cn(
-        "bg-mk-bg text-mk-text-strong",
-        curtain &&
-          "z-0 min-[640px]:[@media(min-height:1120px)]:sticky min-[640px]:[@media(min-height:1120px)]:bottom-0 min-[1024px]:[@media(min-height:700px)]:sticky min-[1024px]:[@media(min-height:700px)]:bottom-0",
-      )}
+      className={cn("bg-mk-bg text-mk-text-strong", curtain && "isolate")}
     >
-      <div className="grid grid-cols-2 gap-1.5 p-2 min-[1024px]:grid-cols-12 min-[1024px]:gap-2 min-[1024px]:p-3">
+      <div className="relative z-[1] grid grid-cols-2 gap-1.5 bg-mk-bg p-2 pb-1.5 min-[1024px]:grid-cols-12 min-[1024px]:gap-2 min-[1024px]:p-3 min-[1024px]:pb-2">
         {tile(
           t("footer.product"),
           [
@@ -130,26 +113,36 @@ export function MarketingFooter({ curtain = false }: { curtain?: boolean }) {
             {t("footer.country")}
           </p>
         </div>
+      </div>
 
-        {/* The loud moment: the name at the full width of the street, knocked out in one light colour
-            because the two-tone logo turns garish at this size on ink. Capped by height so the board
-            still fits a short laptop and the curtain keeps working. */}
-        <div className="@container relative col-span-2 min-h-[180px] overflow-hidden bg-mk-canal [--skyline-window:var(--mk-gold)] min-[1024px]:col-span-12">
+      {/* The loud moment: the name at the full width of the street, knocked out in one light colour
+          because the two-tone logo turns garish at this size on ink. Capped by height so the links and
+          the name still fit one screen on a short laptop. */}
+      <div
+        className={cn(
+          "px-2 pb-2 min-[1024px]:px-3 min-[1024px]:pb-3",
+          curtain && "sticky bottom-0",
+        )}
+      >
+        <div className="@container relative min-h-[180px] overflow-hidden bg-mk-canal [--skyline-window:var(--mk-gold)]">
           <span
             aria-hidden="true"
             className="font-logo relative z-[1] block pt-[1.6cqw] pb-[3cqw] text-center text-[length:min(26cqw,max(72px,calc((100svh-336px-4.6cqw)/0.92)))] leading-[0.92] font-bold text-[#b4dcf8] dark:text-mk-on-canal"
           >
             JigSwap
           </span>
+          {/* Five stretches of street, at their drawn size up to 2400px and growing with the band beyond
+              that, so the street always reaches both edges. Each overlaps the next by a pixel, so no
+              hairline opens where they meet at a fractional position. */}
           <div
             aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 flex text-[color-mix(in_oklab,var(--mk-canal)_84%,var(--mk-on-canal))]"
+            className="absolute bottom-0 left-0 flex w-[max(100%,2400px)] items-end text-[color-mix(in_oklab,var(--mk-canal)_84%,var(--mk-on-canal))]"
           >
-            <StreetSkyline className="h-[120px] w-[480px] shrink-0" />
-            <StreetSkyline className="h-[120px] w-[480px] shrink-0 -scale-x-100" />
-            <StreetSkyline className="h-[120px] w-[480px] shrink-0" />
-            <StreetSkyline className="h-[120px] w-[480px] shrink-0 -scale-x-100" />
-            <StreetSkyline className="h-[120px] w-[480px] shrink-0" />
+            <StreetSkyline className="-mr-px h-auto w-[calc(20%+1px)] shrink-0" />
+            <StreetSkyline className="-mr-px h-auto w-[calc(20%+1px)] shrink-0 -scale-x-100" />
+            <StreetSkyline className="-mr-px h-auto w-[calc(20%+1px)] shrink-0" />
+            <StreetSkyline className="-mr-px h-auto w-[calc(20%+1px)] shrink-0 -scale-x-100" />
+            <StreetSkyline className="-mr-px h-auto w-[calc(20%+1px)] shrink-0" />
           </div>
         </div>
       </div>

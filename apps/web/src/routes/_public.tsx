@@ -8,8 +8,7 @@ import { useTranslations } from "use-intl";
 // Pathless layout for the (public) marketing pages (about/contact/privacy/terms/
 // how-it-works/features). Marketing chrome (sticky header + curtain footer);
 // children keep their top-level URLs (/about, /contact, ...) and lay out their
-// own full-width sections. The content is opaque and stacked above the footer,
-// so it slides up to uncover it.
+// own full-width sections.
 export const Route = createFileRoute("/_public")({
   pendingComponent: PublicPending,
   // 404 under a marketing route renders within this marketing shell (its Outlet).
