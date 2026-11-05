@@ -2,6 +2,7 @@ import type {
   CurrentlySolvingItemView,
   PublicProfileView,
 } from "@jigswap/contracts";
+import { isPlausibleSolveMinutes } from "@jigswap/domain";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
@@ -185,7 +186,7 @@ export const getPublicProfile = query({
       }
 
       if (
-        completion.completionTimeMinutes !== undefined &&
+        isPlausibleSolveMinutes(completion.completionTimeMinutes) &&
         title !== undefined
       ) {
         if (!fastest || completion.completionTimeMinutes < fastest.minutes) {

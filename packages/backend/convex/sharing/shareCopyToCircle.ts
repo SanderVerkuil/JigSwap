@@ -7,6 +7,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCircleRepository } from "./adapters/convexCircleRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -34,6 +35,7 @@ export const shareCopyToCircle = mutation({
     if (copy.ownerId !== (actorId as unknown as string)) {
       throw new ConvexError("Only the owner can share this copy");
     }
+    await enforceRateLimit(ctx, "circleShare", actorId);
 
     const shareCopyToCircle = makeShareCopyToCircle({
       circles: convexCircleRepository(ctx),

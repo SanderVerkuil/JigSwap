@@ -563,7 +563,6 @@ The following indexes are available for efficient querying:
 - `collections.by_user` - Get all collections for a user
 - `collections.by_puzzle` - Get all collections for a puzzle
 - `collections.by_user_puzzle` - Get specific user-puzzle collection
-- `collections.by_visibility` - Filter by visibility level
 - `collections.by_wishlist` - Filter by wishlist status
 - `completions.by_user` - Get all completions for a user
 - `completions.by_puzzle` - Get all completions for a puzzle

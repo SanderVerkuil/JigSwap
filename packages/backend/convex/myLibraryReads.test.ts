@@ -411,7 +411,7 @@ describe("the bounded whole-library reads", () => {
 
   test("the owner's picker read and the household's stay bounded", async () => {
     await t.run(async (ctx) => {
-      for (let i = 0; i <= LIBRARY_INDEX_CAP; i++) {
+      for (let i = 0; i <= LIBRARY_WINDOW_MAX; i++) {
         await ctx.db.insert("ownedPuzzles", {
           puzzleId: w.puzzleId,
           ownerId: w.bob,
@@ -428,11 +428,11 @@ describe("the bounded whole-library reads", () => {
         ownerId: w.bob,
         includeUnavailable: true,
       });
-    expect(own).toHaveLength(LIBRARY_INDEX_CAP);
+    expect(own).toHaveLength(LIBRARY_WINDOW_MAX);
     const mates = await t
       .withIdentity({ subject: "clerk_ann" })
       .query(api.household.listHouseholdCopies.listHouseholdCopies, {});
-    expect(mates).toHaveLength(LIBRARY_INDEX_CAP);
+    expect(mates).toHaveLength(LIBRARY_WINDOW_MAX);
     const permissions = await t
       .withIdentity({ subject: "clerk_bob" })
       .query(
@@ -440,16 +440,16 @@ describe("the bounded whole-library reads", () => {
           .listMyHouseholdCopyPermissions,
         {},
       );
-    expect(permissions).toHaveLength(LIBRARY_INDEX_CAP);
-    expect(permissions[0].createdAt).toBe(LIBRARY_INDEX_CAP);
+    expect(permissions).toHaveLength(LIBRARY_WINDOW_MAX);
+    expect(permissions[0].createdAt).toBe(LIBRARY_WINDOW_MAX);
     const requested = await addCopy(t, w, w.eve, { availability: swap });
     const offerable = await t
       .withIdentity({ subject: "clerk_bob" })
       .query(api.exchange.getOfferableCopies.getOfferableCopies, {
         requestedPuzzleId: requested,
       });
-    expect(offerable).toHaveLength(LIBRARY_INDEX_CAP);
-    expect(offerable[0].createdAt).toBe(LIBRARY_INDEX_CAP);
+    expect(offerable).toHaveLength(LIBRARY_WINDOW_MAX);
+    expect(offerable[0].createdAt).toBe(LIBRARY_WINDOW_MAX);
   });
 });
 

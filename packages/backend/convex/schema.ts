@@ -261,6 +261,9 @@ export default defineSchema({
     // by_status is also the bounded pending-submissions count (admin/getPendingCounts).
     .index("by_status", ["status"])
     .index("by_status_brand", ["status", "brand"])
+    // The public catalog's piece range (catalog/browsePublicCatalog): an anonymous read must not
+    // walk the approved catalogue to find what a range holds.
+    .index("by_status_pieces", ["status", "pieceCount"])
     // The public facet reads (catalog/getAll*) distinct over these from the approved rows only, so
     // pending and rejected submissions cost them no reads, however many arrive (SEC-26).
     .index("by_status_publisher", ["status", "publisher"])
@@ -351,9 +354,10 @@ export default defineSchema({
     //   ownerPrivate  true while the owner's profile is private; absent means public, as on
     //                 `profiles`. Browse shows a private owner's copy only through a circle, which it
     //                 reads separately, so those rows stay out of its public range and can't use up
-    //                 its candidate window or read budget.
-    //   listedAt      when the copy was last offered (became open); absent while it is closed. Browse
-    //                 lists the newest offers first, so an old copy offered today sorts as new.
+    //                 a page's read budget.
+    //   listedAt      when the copy was last offered (became open); kept while it is closed, so that
+    //                 reopening soon after keeps its place. Browse lists the newest offers first, so
+    //                 an old copy offered today sorts as new.
     // A reader still re-checks the owner's visibility: a lagging flag can cost a slot, never leak.
     ownerPrivate: v.optional(v.literal(true)),
     listedAt: v.optional(v.number()),
@@ -423,8 +427,10 @@ export default defineSchema({
       "ownerPrivate",
       "listedAt",
     ])
-    // One member's copies of one definition (the definition view's household owner count).
-    .index("by_owner_puzzle", ["ownerId", "puzzleId"]),
+    // One member's copies of one definition (the definition view's household owner count and
+    // "you own this"), by either link a copy has to it.
+    .index("by_owner_puzzle", ["ownerId", "puzzleId"])
+    .index("by_owner_definition", ["ownerId", "puzzleDefinitionId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({
@@ -534,7 +540,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_name", ["userId", "name"])
-    .index("by_visibility", ["visibility"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Collection membership - many-to-many relationship (now references ownedPuzzles)
@@ -1026,7 +1031,9 @@ export default defineSchema({
   // Exchange: one party's explicit consent to show their email to the other party of THIS trade
   // (exchange/setContactSharing; read by exchange/getTradePartner through the domain rule
   // tradeEmailVisible). At most one row per side; deleting it withdraws consent. No row = not
-  // shared (fail closed, no backfill). Holds no member id: the side resolves through the exchange.
+  // shared (fail closed, no backfill). Holds no member id: the side resolves through the exchange,
+  // which is how the account purge (conversation/purgeMemberMessagingData) and the data export
+  // (insights/exportUserDataPage) find it.
   tradeContactShares: defineTable({
     exchangeId: v.id("exchanges"),
     side: v.union(v.literal("initiator"), v.literal("recipient")),
@@ -1048,8 +1055,7 @@ export default defineSchema({
   })
     .index("by_exchange", ["exchangeId"])
     .index("by_sender", ["senderId"])
-    .index("by_receiver", ["receiverId"])
-    .index("by_created_at", ["createdAt"]),
+    .index("by_receiver", ["receiverId"]),
 
   // Conversation context. One row per Thread aggregate; messages are companion rows (long chats
   // must not brush the document size limit). participantsKey = the two user _ids sorted and
@@ -1755,6 +1761,9 @@ export default defineSchema({
     // Ordered, curated set of the member's owned copies featured on their profile shelf
     // (sub-project ④). Optional so existing rows validate; absent/empty = uncurated (recent-6 fallback).
     featuredCopyIds: v.optional(v.array(v.id("ownedPuzzles"))),
+    // Set while library/ownerListingVisibility is re-stamping this member's copies after a visibility
+    // change, so a flip that lands meanwhile doesn't start a second run. Absent otherwise.
+    listingSyncSince: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_member", ["memberId"])
@@ -2065,7 +2074,6 @@ export default defineSchema({
     failedAt: v.optional(v.number()),
   })
     .index("by_processed", ["processedAt"])
-    .index("by_failed", ["failedAt"])
     // Backs the activity feed: pull recent events of a given name in a bounded time window without
     // a full-table scan-and-filter.
     .index("by_name", ["name", "occurredAt"]),
@@ -2143,8 +2151,9 @@ export default defineSchema({
 
   // The public landing page's counters (PERF-B2m), so insights/getGlobalStats reads one row instead
   // of every users, puzzles and ownedPuzzles row. One row, key "global", rewritten by
-  // insights/platformStats.recount (a 6-hourly cron that recounts the three tables), so the numbers
-  // may be up to one interval old. Same meaning as the legacy count: every row of each table.
+  // insights/platformStats.recount (a weekly cron that recounts the three tables, with a daily
+  // top-up of new rows), so the numbers may be up to a day old, and a deleted row counted for up to
+  // a week. Same meaning as the legacy count: every row of each table.
   platformStats: defineTable({
     key: v.string(),
     users: v.number(),
@@ -2169,17 +2178,16 @@ export default defineSchema({
   // viewer-independent parts; what depends on the viewer (their household's private copies, the
   // copies they can reach) is still read per request. Written only by
   // library/definitionStats.recompute, which recomputes a definition from source when a write has
-  // marked it, and nightly for every definition (the reconcile, which is also the backfill).
+  // marked it, and weekly for every definition (the reconcile, which is also the backfill).
   //   totals      the sums the pages derive their numbers from (library/definitionAggregates);
   //               absent until the first recompute, and reads compute live meanwhile
   //     breakdown        rated reviews per star, [5★, 4★, 3★, 2★, 1★]
   //     communityOwners  distinct owners of a copy that is not private
+  //     ownerCount       distinct owners of any copy, private ones included, for the admin console;
+  //                      absent until the row's next recompute (weekly at the latest)
   //     publicAvailable  open copies of public-profile owners, by priority swap type
-  //   stale       a write changed the definition's sources and a recompute is scheduled; the
-  //               totals are still served until it lands
-  //   staleSince  when it was marked stale (or its recompute last re-scheduled). A mark, or the
-  //               nightly reconcile, that finds it stale for longer than a few minutes takes it
-  //               that the recompute failed: it logs that and schedules another
+  //   stale, staleSince  written before marks moved to definitionStatsPending; only a recompute
+  //               still reads them, to clear them
   //   computedAt  when the totals were last written
   definitionStats: defineTable({
     puzzleId: v.id("puzzles"),
@@ -2192,6 +2200,7 @@ export default defineSchema({
         finishDaysSum: v.number(),
         finishDaysCount: v.number(),
         communityOwners: v.number(),
+        ownerCount: v.optional(v.number()),
         publicAvailable: v.object({
           swap: v.number(),
           lend: v.number(),
@@ -2202,6 +2211,17 @@ export default defineSchema({
     stale: v.optional(v.boolean()),
     staleSince: v.optional(v.number()),
     computedAt: v.optional(v.number()),
+  }).index("by_puzzle", ["puzzleId"]),
+
+  // A write changed this definition's sources and a recompute is scheduled (library/definitionStats).
+  // Apart from definitionStats because every page showing the definition subscribes to that row: a
+  // mark, and a recompute that finds nothing changed, must not re-run them. Deleted by the recompute.
+  //   since  when it was marked (or its recompute last re-scheduled). A mark, or the reconcile, that
+  //          finds it older than a few minutes takes it that the recompute failed: it logs that and
+  //          schedules another
+  definitionStatsPending: defineTable({
+    puzzleId: v.id("puzzles"),
+    since: v.number(),
   }).index("by_puzzle", ["puzzleId"]),
 
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the

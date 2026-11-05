@@ -276,7 +276,7 @@ function CatalogListPage() {
               <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
             ))}
           </div>
-        ) : cards.length === 0 ? (
+        ) : cards.length === 0 && lastPage?.isDone ? (
           q || brand || pieces ? (
             <EmptyState
               title={q ? t("noResults", { query: q }) : t("noResultsFiltered")}

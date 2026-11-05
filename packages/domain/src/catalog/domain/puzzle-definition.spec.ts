@@ -7,6 +7,7 @@ import {
 } from "../../shared-kernel";
 import { ALLOWED_APPROVAL_TRANSITIONS } from "./approval";
 import { PuzzleDefinitionRejected, PuzzleDefinitionSubmitted } from "./events";
+import { MAX_DIMENSION, MAX_PIECE_COUNT } from "./piece-count";
 import {
   PuzzleDefinition,
   SubmitPuzzleDefinitionProps,
@@ -544,5 +545,66 @@ describe("rehydrate / toState round-trip", () => {
     const restored = PuzzleDefinition.rehydrate(submit().toState());
     expect(restored.approve(LATER).isOk).toBe(true);
     expect(restored.status).toBe("approved");
+  });
+});
+
+// v.number() takes NaN, Infinity, negatives and 1e300 alike, and 1e300 is an integer too. All of them
+// used to reach the catalog page every visitor reads.
+describe("a definition's numbers stay within reason", () => {
+  const refused = (props: Partial<SubmitPuzzleDefinitionProps>) =>
+    PuzzleDefinition.submit({
+      id,
+      title: "Starry Night",
+      pieceCount: 1000,
+      submittedBy: submitter,
+      now: NOW,
+      ...props,
+    });
+
+  it.each([MAX_PIECE_COUNT + 1, 1e300, Number.MAX_VALUE])(
+    "refuses %p pieces, on a submit and on an update",
+    (pieceCount) => {
+      const submitted = refused({ pieceCount });
+      expect(submitted.isErr).toBe(true);
+      if (submitted.isErr) {
+        expect(submitted.error.code).toBe("InvalidPieceCount");
+      }
+      const updated = submit().update({ pieceCount }, LATER);
+      expect(updated.isErr).toBe(true);
+    },
+  );
+
+  it("accepts the largest piece count", () => {
+    expect(refused({ pieceCount: MAX_PIECE_COUNT }).isOk).toBe(true);
+  });
+
+  it.each([
+    0,
+    -1,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1e300,
+    MAX_DIMENSION + 1,
+  ])("refuses a side of %p, on a submit and on an update", (side) => {
+    for (const dimensions of [
+      { width: side, height: 50, unit: "cm" as const },
+      { width: 70, height: side, unit: "in" as const },
+    ]) {
+      const submitted = refused({ dimensions });
+      expect(submitted.isErr).toBe(true);
+      if (submitted.isErr) {
+        expect(submitted.error.code).toBe("InvalidDimensions");
+      }
+      const updated = submit().update({ dimensions }, LATER);
+      expect(updated.isErr).toBe(true);
+      if (updated.isErr) expect(updated.error.code).toBe("InvalidDimensions");
+    }
+  });
+
+  it("accepts real dimensions, fractions included", () => {
+    const dimensions = { width: 68.5, height: 48.2, unit: "cm" as const };
+    const r = refused({ dimensions });
+    expect(r.isOk).toBe(true);
+    if (r.isOk) expect(r.value.toState().dimensions).toEqual(dimensions);
   });
 });

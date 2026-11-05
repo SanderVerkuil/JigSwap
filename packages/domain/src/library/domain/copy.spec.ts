@@ -7,7 +7,7 @@ import {
 } from "../../shared-kernel";
 import { Acquisition } from "./acquisition";
 import { CatalogSnapshot } from "./catalog-snapshot";
-import { Copy } from "./copy";
+import { Copy, MAX_MISSING_PIECES } from "./copy";
 import {
   CopyAcquired,
   CopyConditionChanged,
@@ -17,6 +17,7 @@ import {
 } from "./events";
 import { Price } from "./price";
 import { SharingSetting } from "./sharing-setting";
+import { LIBRARY_TEXT_LIMITS } from "./text-limits";
 
 const copyId = toCopyId("copy1");
 const owner = toOwnerId("alice");
@@ -469,5 +470,78 @@ describe("rehydrate / toState round-trip", () => {
     const restored = Copy.rehydrate(state);
     expect(restored.pullEvents()).toHaveLength(0);
     expect(restored.toState()).toEqual(state);
+  });
+});
+
+// -1, Infinity and 1e300 used to be stored as they came and returned to anyone reading the copy.
+describe("a copy's missing pieces", () => {
+  const acquireWith = (missingPiecesCount: number) =>
+    Copy.acquire({
+      id: copyId,
+      ownerId: owner,
+      snapshot: snapshot(),
+      condition: "good",
+      missingPiecesCount,
+      now: NOW,
+    });
+  const invalid = [
+    -1,
+    1.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1e300,
+    MAX_MISSING_PIECES + 1,
+  ];
+
+  it.each(invalid)("acquire refuses %p", (count) => {
+    const result = acquireWith(count);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("InvalidMissingPieces");
+  });
+
+  it.each(invalid)("updateDetails refuses %p and keeps the count", (count) => {
+    const copy = acquire();
+    const result = copy.updateDetails({ missingPiecesCount: count }, LATER);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("InvalidMissingPieces");
+    expect(copy.toState().missingPiecesCount).toBeUndefined();
+  });
+
+  it.each([0, 1, MAX_MISSING_PIECES])("takes %p", (count) => {
+    expect(acquireWith(count).isOk).toBe(true);
+    const copy = acquire();
+    expect(copy.updateDetails({ missingPiecesCount: count }, LATER).isOk).toBe(
+      true,
+    );
+    expect(copy.toState().missingPiecesCount).toBe(count);
+  });
+});
+
+describe("a copy's notes are bounded", () => {
+  const max = LIBRARY_TEXT_LIMITS.copyNotes;
+
+  it("acquire refuses longer notes and takes the longest", () => {
+    const acquireWith = (notes: string) =>
+      Copy.acquire({
+        id: copyId,
+        ownerId: owner,
+        snapshot: snapshot(),
+        condition: "good",
+        notes,
+        now: NOW,
+      });
+    const refused = acquireWith("x".repeat(max + 1));
+    expect(refused.isErr).toBe(true);
+    if (refused.isErr) expect(refused.error.code).toBe("TextTooLong");
+    expect(acquireWith("x".repeat(max)).isOk).toBe(true);
+  });
+
+  it("updateDetails refuses longer notes and keeps the stored ones", () => {
+    const copy = acquire();
+    copy.updateDetails({ notes: "corner bent" }, LATER);
+    const refused = copy.updateDetails({ notes: "x".repeat(max + 1) }, LATER);
+    expect(refused.isErr).toBe(true);
+    if (refused.isErr) expect(refused.error.code).toBe("TextTooLong");
+    expect(copy.toState().notes).toBe("corner bent");
   });
 });

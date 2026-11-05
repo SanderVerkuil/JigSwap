@@ -1,4 +1,8 @@
-import { computePersonalStats, type ExchangeStatStatus } from "@jigswap/domain";
+import {
+  computePersonalStats,
+  isPlausibleSolveMinutes,
+  type ExchangeStatStatus,
+} from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -67,7 +71,9 @@ export const getPersonalStats = query({
 
     return computePersonalStats({
       completions: completions.map((c) => ({
-        completionTimeMinutes: c.completionTimeMinutes,
+        completionTimeMinutes: isPlausibleSolveMinutes(c.completionTimeMinutes)
+          ? c.completionTimeMinutes
+          : undefined,
         isCompleted: c.isCompleted,
         datePrecision: c.datePrecision,
       })),

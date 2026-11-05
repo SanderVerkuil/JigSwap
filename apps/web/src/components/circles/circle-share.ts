@@ -14,6 +14,7 @@ const KNOWN_CODES = new Set([
   "CircleNotFound",
   "CannotShareCopy",
   "BatchTooLarge",
+  "RateLimited",
 ]);
 
 /** The `circles` namespace i18n key describing why sharing or unsharing failed. */

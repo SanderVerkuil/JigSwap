@@ -38,13 +38,16 @@ export const readPlatformStats = (
 // carrying the running counts and rescheduling itself; the last batch writes the row. It counts
 // every row of each table, the meaning the landing page always had (deactivated members and
 // definitions in any status included). The walk spans several transactions, so rows written while
-// it runs may or may not be counted; the next run picks them up. Runs on a cron (crons.ts) and
-// doubles as the backfill: until its first run has written the row, getGlobalStats counts the
-// tables itself. Runbook: docs/deployment/one-shot-migrations.md.
+// it runs may or may not be counted; the next run picks them up. Runs on a weekly cron (crons.ts),
+// which also corrects for deleted rows, and doubles as the backfill: until its first run has written
+// the row, getGlobalStats counts the tables itself. With `since` it counts only rows created after
+// that time on top of the `counts` it is given (topUp). Runbook:
+// docs/deployment/one-shot-migrations.md.
 export const recount = internalMutation({
   args: {
     table: v.optional(countedTable),
     cursor: v.optional(v.union(v.string(), v.null())),
+    since: v.optional(v.number()),
     // Running counts carried across batches.
     counts: v.optional(
       v.object({
@@ -61,7 +64,14 @@ export const recount = internalMutation({
       1,
       Math.min(RECOUNT_MAX_BATCH, Math.floor(args.batchSize ?? RECOUNT_BATCH)),
     );
-    const page = await ctx.db.query(current).paginate({
+    const { since } = args;
+    const rows =
+      since === undefined
+        ? ctx.db.query(current)
+        : ctx.db
+            .query(current)
+            .withIndex("by_creation_time", (q) => q.gt("_creationTime", since));
+    const page = await rows.paginate({
       numItems,
       cursor: args.cursor ?? null,
       maximumBytesRead: RECOUNT_MAX_BYTES,
@@ -79,6 +89,7 @@ export const recount = internalMutation({
         table: next,
         ...(next === current && { cursor: page.continueCursor }),
         counts,
+        ...(since !== undefined && { since }),
         ...(args.batchSize !== undefined && { batchSize: args.batchSize }),
       });
       return;
@@ -101,5 +112,29 @@ export const recount = internalMutation({
       counts,
       counted_at: countedAt,
     });
+  },
+});
+
+// The daily step between weekly recounts: adds the rows created since the last count, so the
+// counters stay current without walking the three tables. A deleted row stays counted until the next
+// recount. Before any recount there is nothing to add to, so it runs a whole one.
+export const topUp = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const row = await readPlatformStats(ctx);
+    await ctx.scheduler.runAfter(
+      0,
+      internal.insights.platformStats.recount,
+      row
+        ? {
+            since: row.countedAt,
+            counts: {
+              users: row.users,
+              puzzles: row.puzzles,
+              ownedPuzzles: row.ownedPuzzles,
+            },
+          }
+        : {},
+    );
   },
 });

@@ -53,7 +53,7 @@ describe("clampPaginationOpts", () => {
       numItems: 1e9,
       cursor: "abc",
       endCursor: "xyz",
-      maximumRowsRead: 500,
+      maximumRowsRead: 100,
       id: 7,
     };
     expect(clampPaginationOpts(opts, 50)).toEqual({ ...opts, numItems: 50 });

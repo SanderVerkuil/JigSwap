@@ -35,7 +35,11 @@
 // when the bytes the decoder is given (jpegDecodeInput: without APPn and COM segments) hold
 // exactly one frame header, of 1 to 4 components sampled 1..4, whose blocks fit MAX_JPEG_BLOCKS.
 // jpeg-js's own caps (maxResolutionInMP, maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB) back that
-// up in decodeUpright.
+// up in decodeUpright. Time is bounded separately: jpeg-js walks every block on each scan, and a
+// scan can cost 28 bytes of file. Measured on a desktop (reencodeImage, 3538x3538, 1 component):
+// 100 scans 3.2 s, 1,600 scans 44 s, 22,000 scans in a 616 KB file 594 s, past Convex's 10-minute
+// action limit and retried, so one upload could hold a moderation slot for about 50 minutes
+// (SEC-18). A JPEG with more than MAX_JPEG_SCANS is refused; a progressive one normally has ten.
 //
 // PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
 // the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
@@ -78,6 +82,13 @@ export const MAX_IMAGE_PIXELS = 12_540_000;
 export const MAX_JPEG_BLOCKS = 296_000;
 
 /**
+ * Most scans a JPEG may hold (see jpegHeader). A progressive JPEG normally has about ten, and an
+ * optimising encoder's a few more. At this cap a decode of the largest accepted frame takes about
+ * a second on the measurements above.
+ */
+export const MAX_JPEG_SCANS = 32;
+
+/**
  * jpeg-js's own cap on what it allocates (its `maxMemoryUsageInMB`, which counts MiB), a backstop
  * behind the frame check: for the largest frame the guards accept, its blocks as jpeg-js counts
  * them (256 bytes each) and their sample lines (64 bytes per block), its colour and RGBA pixels
@@ -95,7 +106,7 @@ export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
-  | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) more than MAX_JPEG_BLOCKS
+  | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) MAX_JPEG_BLOCKS or MAX_JPEG_SCANS
   | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
   | "animated" // an animated WebP or an APNG: only a still image is decoded
   | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
@@ -128,7 +139,8 @@ const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 /**
  * What a header says about the decode: its size, (PNG) whether it is interlaced, (PNG, WebP)
- * whether it is an animation, and (JPEG) the 8x8 blocks the decoder allocates for it.
+ * whether it is an animation, and (JPEG) the 8x8 blocks the decoder allocates for it and the scans
+ * it walks them in.
  */
 type Header = {
   width: number;
@@ -136,6 +148,7 @@ type Header = {
   interlaced?: boolean;
   animated?: boolean;
   jpegBlocks?: number;
+  jpegScans?: number;
 };
 
 /** The image format the magic bytes announce, or null for anything else. */
@@ -230,12 +243,17 @@ export const jpegDecodeInput = (b: Uint8Array): Uint8Array => {
 // offset (wherever the decoder's own walk could take it), and that frame header must hold
 // together: 1 to 4 components (what jpeg-js turns into pixels), each sampled 1..4 (the JPEG
 // standard's range). Its block count is what jpeg-js allocates for it: per component, its
-// sampled blocks in every MCU, the image padded to whole MCUs.
+// sampled blocks in every MCU, the image padded to whole MCUs. A scan it can only reach through
+// the two bytes of a scan header (FF DA), so those are counted the same way, at any offset: a table
+// that happens to hold them can only count against the file, never let a scan through uncounted.
 const jpegHeader = (b: Uint8Array): Header | null => {
   const input = jpegDecodeInput(b);
   let at = -1;
+  let jpegScans = 0;
   for (let i = 0; i + 1 < input.length; i++) {
-    if (input[i] === 0xff && input[i + 1] >= 0xc0 && input[i + 1] <= 0xc2) {
+    if (input[i] !== 0xff) continue;
+    if (input[i + 1] === 0xda) jpegScans++;
+    if (input[i + 1] >= 0xc0 && input[i + 1] <= 0xc2) {
       if (at !== -1) return null;
       at = i;
     }
@@ -264,7 +282,7 @@ const jpegHeader = (b: Uint8Array): Header | null => {
     (sum, { h, v }) => sum + mcusPerLine * h * mcusPerColumn * v,
     0,
   );
-  return { width, height, jpegBlocks };
+  return { width, height, jpegBlocks, jpegScans };
 };
 
 // PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must
@@ -500,8 +518,8 @@ export const checkImageSize = (
 
 /**
  * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count,
- * (JPEG) the blocks its frame makes the decoder allocate, (PNG) no interlacing, and (PNG, WebP)
- * one still image, no animation.
+ * (JPEG) the blocks its frame makes the decoder allocate and the scans it walks them in, (PNG) no
+ * interlacing, and (PNG, WebP) one still image, no animation.
  */
 export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const size = checkImageSize(bytes.length);
@@ -513,7 +531,8 @@ export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const { width, height } = header;
   if (
     width * height > MAX_IMAGE_PIXELS ||
-    (header.jpegBlocks ?? 0) > MAX_JPEG_BLOCKS
+    (header.jpegBlocks ?? 0) > MAX_JPEG_BLOCKS ||
+    (header.jpegScans ?? 0) > MAX_JPEG_SCANS
   ) {
     return { ok: false, reason: "too_many_pixels" };
   }

@@ -10,7 +10,7 @@ import type { DataModel } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
 import { toPuzzleSummaryView } from "./mappers";
 
 // A page holds 1 to MAX_PAGE_SIZE puzzles whatever the client asks for.
@@ -47,11 +47,6 @@ export const searchCatalog = query({
   handler: async (ctx, args): Promise<PaginationResult<PuzzleSummaryView>> => {
     await requireMember(ctx);
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
-    const paginationOpts = clampPaginationOpts(
-      args.paginationOpts,
-      MAX_PAGE_SIZE,
-    );
-
     const category =
       args.category === undefined
         ? undefined
@@ -88,12 +83,17 @@ export const searchCatalog = query({
               q.search("searchableText", term).eq("status", "approved"),
             )
             .filter(facets)
-            .paginate(paginationOpts)
-        : await ctx.db
-            .query("puzzles")
-            .withIndex("by_status", (q) => q.eq("status", "approved"))
-            .filter(facets)
-            .paginate(paginationOpts);
+            .paginate(
+              clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+            )
+        : await paginateBounded(
+            ctx.db
+              .query("puzzles")
+              .withIndex("by_status", (q) => q.eq("status", "approved"))
+              .filter(facets),
+            args.paginationOpts,
+            MAX_PAGE_SIZE,
+          );
 
     const tags = args.tags ?? [];
     const rows =

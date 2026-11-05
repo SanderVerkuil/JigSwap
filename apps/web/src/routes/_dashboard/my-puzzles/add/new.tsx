@@ -56,6 +56,7 @@ import {
   useConvexAction,
   useConvexMutation,
 } from "@convex-dev/react-query";
+import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
@@ -575,6 +576,7 @@ function AddPuzzlePage() {
         value={form.notes}
         onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
         placeholder={t("notesPlaceholderLong")}
+        maxLength={LIBRARY_TEXT_LIMITS.copyNotes}
         rows={3}
       />
     </div>

@@ -2,6 +2,7 @@ import { makeSetProfileVisibility, Profile } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexProfileRepository } from "./adapters/convexProfileRepository";
 import { profileIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -20,6 +21,7 @@ export const setProfileVisibility = mutation({
   },
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
+    await enforceRateLimit(ctx, "profileVisibility", memberId);
     const profiles = convexProfileRepository(ctx);
     const events = inProcessEventPublisher(ctx);
     const clock = systemClock;

@@ -34,7 +34,8 @@ import {
   type TradesTab,
 } from "@/lib/trades-search";
 import { convexQuery } from "@convex-dev/react-query";
-import { useQuery } from "@tanstack/react-query";
+import { LIVE_EXCHANGES_PER_READ } from "@jigswap/contracts";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 // Not convex/react's: this list is read through stream(), whose pages only keep their ends when the
 // client pins them, and this hook does (without it, a change loses or repeats a row between pages).
@@ -119,6 +120,22 @@ function ExchangesPage() {
   const { data: liveExchanges } = useQuery(
     convexQuery(gateway.exchange.myLive, {}),
   );
+  // One read joins a window of what's in play, the most recently active first. A member with more
+  // than that opens the next window here, because any of them can need their answer. Only a full
+  // window can have another behind it.
+  const [liveWindows, setLiveWindows] = useState(1);
+  const olderLive = useQueries({
+    queries: Array.from({ length: liveWindows - 1 }, (_, i) =>
+      convexQuery(gateway.exchange.myLive, { page: i + 1 }),
+    ),
+  });
+  const newestWindow =
+    olderLive.length === 0 ? liveExchanges : olderLive.at(-1)?.data;
+  const hasMoreLive =
+    tab !== "loans" && newestWindow?.length === LIVE_EXCHANGES_PER_READ;
+  const loadingOlderLive = olderLive.some(
+    (window) => window.data === undefined && window.error === null,
+  );
   // A live status filter needs no history; neither does the Loans tab.
   const wantsHistory =
     tab !== "loans" &&
@@ -168,6 +185,7 @@ function ExchangesPage() {
   const loaded = new Map<string, ExchangeRow>();
   for (const exchange of [
     ...liveExchanges,
+    ...olderLive.flatMap((window) => window.data ?? []),
     ...finishedExchanges,
     ...(linkedExchange ? [linkedExchange] : []),
   ]) {
@@ -202,9 +220,12 @@ function ExchangesPage() {
       ? borrowed === undefined || lentOut === undefined
         ? undefined
         : t("loans.count", { count: borrowed.length + lentOut.length })
-      : t(hasMoreHistory ? "exchangesCountMore" : "exchangesCount", {
-          count: rows.length,
-        });
+      : t(
+          hasMoreHistory || hasMoreLive
+            ? "exchangesCountMore"
+            : "exchangesCount",
+          { count: rows.length },
+        );
 
   const renderRow = (
     { exchange, direction }: (typeof rows)[number],
@@ -257,7 +278,11 @@ function ExchangesPage() {
           <ExchangeGroupHeading
             key="group-others"
             title={t("groups.others")}
-            count={hasMoreHistory ? `${others.length}+` : others.length}
+            count={
+              hasMoreHistory || hasMoreLive
+                ? `${others.length}+`
+                : others.length
+            }
           />,
         ]
       : []),
@@ -318,7 +343,7 @@ function ExchangesPage() {
         <LoansTab borrowed={borrowed} lentOut={lentOut} />
       ) : rows.length === 0 && historyLoading ? (
         <PageLoading message={tCommon("loading")} />
-      ) : rows.length === 0 && !hasMoreHistory ? (
+      ) : rows.length === 0 && !hasMoreHistory && !hasMoreLive ? (
         <ExchangesEmptyState
           tab={tab}
           status={statusFilter}
@@ -329,16 +354,23 @@ function ExchangesPage() {
       )}
 
       {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
-      {hasMoreHistory && (
+      {(hasMoreHistory || hasMoreLive || loadingOlderLive) && (
         <Button
           variant="outline"
           className="h-11 self-center md:h-9"
-          aria-disabled={historyStatus === "LoadingMore"}
+          aria-disabled={historyStatus === "LoadingMore" || loadingOlderLive}
           onClick={() => {
-            if (historyStatus === "CanLoadMore") loadMore(HISTORY_PAGE_SIZE);
+            if (loadingOlderLive) return;
+            // What's in play before what's finished.
+            if (hasMoreLive) setLiveWindows((windows) => windows + 1);
+            else if (historyStatus === "CanLoadMore") {
+              loadMore(HISTORY_PAGE_SIZE);
+            }
           }}
         >
-          {historyStatus === "LoadingMore" ? tCommon("loading") : t("showMore")}
+          {historyStatus === "LoadingMore" || loadingOlderLive
+            ? tCommon("loading")
+            : t("showMore")}
         </Button>
       )}
     </div>

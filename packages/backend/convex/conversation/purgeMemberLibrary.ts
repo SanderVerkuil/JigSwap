@@ -9,6 +9,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { contactShareOf } from "../exchange/tradeParty";
 import { householdDeps } from "../household/adapters/deps";
 import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
@@ -109,6 +110,34 @@ export const cancelOpenExchanges = async (
     if (!OPEN_EXCHANGE.has(row.status)) continue;
     await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now });
     await announceCancellation(ctx, row, memberId);
+  }
+  return page;
+};
+
+/**
+ * Delete the member's own consent to show their email (tradeContactShares) on their exchanges on
+ * one side. The exchange row stays as the other party's history, so without this the record of who
+ * consented, and when, would outlive the account. The other party's consent on the same exchange is
+ * theirs to withdraw, and stays.
+ */
+export const deleteOwnContactShares = async (
+  ctx: MutationCtx,
+  memberId: Id<"users">,
+  side: "initiator" | "recipient",
+  opts: PageOpts,
+): Promise<Page> => {
+  const page = await (
+    side === "initiator"
+      ? ctx.db
+          .query("exchanges")
+          .withIndex("by_initiator", (q) => q.eq("initiatorId", memberId))
+      : ctx.db
+          .query("exchanges")
+          .withIndex("by_recipient", (q) => q.eq("recipientId", memberId))
+  ).paginate(opts);
+  for (const exchange of page.page) {
+    const share = await contactShareOf(ctx, exchange._id, side);
+    if (share) await ctx.db.delete(share._id);
   }
   return page;
 };

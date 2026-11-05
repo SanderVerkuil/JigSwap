@@ -1,7 +1,7 @@
 import { gateway, type Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import type { QueryClient } from "@tanstack/react-query";
-import { IN_MOTION_ROWS, LATEST_FEED_SIZE } from "./pulse-section";
+import { IN_MOTION_ROWS, LATEST_FEED_SIZE, latestRows } from "./pulse-section";
 import { MY_SHELF_SIZE } from "./shelf-section";
 
 // The dashboard home's reads during SSR, with the very arguments its sections ask for, so they find
@@ -17,8 +17,9 @@ export async function prefetchDashboardHome(
     const feed = await queryClient.fetchQuery(
       convexQuery(gateway.social.activityFeed, { limit: LATEST_FEED_SIZE }),
     );
-    // Each row of the Latest column names its member.
-    const others = new Set(feed.map((entry) => entry.memberId));
+    // Each row the Latest column shows names its member. The feed holds more rows than that, and a
+    // read made here stays subscribed in the browser after hydration, whether a row uses it or not.
+    const others = new Set(latestRows(feed).map((entry) => entry.memberId));
     others.delete(me._id);
     await Promise.allSettled([
       queryClient.fetchQuery(

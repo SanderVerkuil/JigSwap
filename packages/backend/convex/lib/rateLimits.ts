@@ -50,6 +50,10 @@ export const RATE_LIMITS = {
   // My Puzzles' bulk offer calls (library/updateCopiesOffers), each rewriting up to 100 copies. One
   // action on a large shelf takes a few calls, so 30/min leaves room for several actions and Undos.
   bulkOffers: { windowMs: MINUTE, max: 30 },
+  // A copy's sharing setting (library/updateCopySharing), one call per switch flipped on its page:
+  // each writes the row and a domain event, and a loop must not be free (openListing keeps a quick
+  // reopen from climbing Browse).
+  copySharing: { windowMs: MINUTE, max: 30 },
   // Presence heartbeats across all rooms and tabs: a tab sends ~3/min (app room at 60 s +
   // messages at 30 s), so 30/min covers several tabs while capping heartbeat cost abuse.
   presenceHeartbeat: { windowMs: MINUTE, max: 30 },
@@ -124,6 +128,18 @@ export const RATE_LIMITS = {
   // counted per solve: the quick start's past-solves batch is up to 25. Bounds how fast one account
   // can flood the activity feed's solve events (SEC-30).
   solveLog: { windowMs: DAY, max: 300 },
+  // Copies shared into circles, counted per copy (sharing/shareCopiesToCircle, shareCopyToCircle): a
+  // call writes a share row and an event and schedules a dispatch per copy, and a circle's page reads
+  // only its newest shares. Circles created alongside it (sharing/createCircle).
+  circleShare: { windowMs: DAY, max: 1000 },
+  circleCreate: { windowMs: DAY, max: 10 },
+  // Profile visibility changes (social/setProfileVisibility), Undo included: each one re-stamps every
+  // copy and re-counts every definition with an open one (library/ownerListingVisibility).
+  profileVisibility: { windowMs: HOUR, max: 10 },
+  // Collections and personal categories created (library/createCollection, createPersonalCategory).
+  // Their text is bounded, but not how many a member has, and a profile's collections are read whole.
+  collectionCreate: { windowMs: DAY, max: 30 },
+  categoryCreate: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

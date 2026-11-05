@@ -44,16 +44,15 @@ export const scanMemberLibraryCounts = async (
 /**
  * The member's counts: the stored row (one read, unaffected by edits that move neither number), or
  * a bounded count of the library while the member has no row yet (before the backfill has reached
- * them, or past the scan cap).
+ * them, or past the scan cap). `complete` is false when that count stopped at the cap.
  */
 export const readMemberLibraryCounts = async (
   ctx: QueryCtx,
   memberId: Id<"users">,
-): Promise<LibraryCounts> => {
+): Promise<LibraryCounts & { complete: boolean }> => {
   const row = await memberCountsRow(ctx, memberId);
-  if (row) return { owned: row.owned, forTrade: row.forTrade };
-  const { owned, forTrade } = await scanMemberLibraryCounts(ctx, memberId);
-  return { owned, forTrade };
+  if (row) return { owned: row.owned, forTrade: row.forTrade, complete: true };
+  return scanMemberLibraryCounts(ctx, memberId);
 };
 
 type CountedCopy = Pick<Doc<"ownedPuzzles">, "ownerId" | "availability">;

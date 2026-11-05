@@ -65,7 +65,15 @@ export const getHouseholdLinkInvite = query({
         joinRequest: await joinRequestState(ctx, link, memberId, now),
       };
     }
-    const inviterName = memberDisplayNameOf(await ctx.db.get(link.ownerId));
+    // The name the admin shows other members (SEC-10): their chosen display name when they set
+    // one, never the account name behind it.
+    const inviterName = memberDisplayNameOf(
+      await ctx.db.get(link.ownerId),
+      await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", link.ownerId))
+        .unique(),
+    );
     return inviterName === undefined ? { state } : { state, inviterName };
   },
 });

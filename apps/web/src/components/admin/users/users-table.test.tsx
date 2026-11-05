@@ -66,10 +66,10 @@ const users = [
   },
 ] as unknown as Users;
 
-const renderTable = () =>
+const renderTable = (rows: Users = users) =>
   render(
     <IntlProvider locale="en" messages={en} timeZone="UTC">
-      <UsersTable users={users} />
+      <UsersTable users={rows} />
     </IntlProvider>,
   );
 
@@ -87,6 +87,18 @@ const cellsOf = (name: string) => {
 };
 
 describe("UsersTable", () => {
+  it("shows a library size the server only counted part of as a lower bound", () => {
+    renderTable([
+      { ...users[0], ownedCopyCount: 5000, ownedCopyCountIsLowerBound: true },
+      users[1],
+    ]);
+    const counts = screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell").at(-2)?.textContent);
+    expect(counts).toEqual(["5000+", "0"]);
+  });
+
   it("links each member to their admin page", () => {
     renderTable();
     expect(

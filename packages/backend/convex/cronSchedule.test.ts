@@ -31,4 +31,14 @@ describe("the timed crons", () => {
       minuteUTC: 15,
     });
   });
+
+  test("only the monthly storage sweep walks every blob", () => {
+    expect(crons.crons["sweep unheld storage blobs"]?.args).toEqual([
+      { scope: "recent" },
+    ]);
+    expect(crons.crons["sweep all storage blobs"]).toMatchObject({
+      args: [{ scope: "all" }],
+      schedule: { type: "monthly" },
+    });
+  });
 });

@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { MAX_DOC_FEEDBACK_PAGE } from "./docs/listDocFeedback";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -248,7 +249,9 @@ describe("docs/listDocFeedback", () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await expect(
-      t.query(api.docs.listDocFeedback.listDocFeedback, {}),
+      t.query(api.docs.listDocFeedback.listDocFeedback, {
+        paginationOpts: { numItems: 10, cursor: null },
+      }),
     ).rejects.toBeInstanceOf(ConvexError);
   });
 
@@ -256,23 +259,63 @@ describe("docs/listDocFeedback", () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await expect(
-      asMember(t).query(api.docs.listDocFeedback.listDocFeedback, {}),
+      asMember(t).query(api.docs.listDocFeedback.listDocFeedback, {
+        paginationOpts: { numItems: 10, cursor: null },
+      }),
     ).rejects.toThrow(/Forbidden/);
   });
 
   test("returns the feedback entries for an admin", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const rows = await asAdmin(t).query(
+    const { page, isDone } = await asAdmin(t).query(
       api.docs.listDocFeedback.listDocFeedback,
-      {},
+      { paginationOpts: { numItems: 10, cursor: null } },
     );
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
+    expect(isDone).toBe(true);
+    expect(page).toHaveLength(1);
+    expect(page[0]).toMatchObject({
       slug: "getting-started",
       helpful: true,
       comment: "Very clear, thanks!",
     });
+  });
+
+  // An anonymous form feeds this table, up to 300 votes a day at 2,000 characters each: in about a
+  // month the whole table no longer fits one read.
+  test("pages newest first, whatever the table holds and the client asks for", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 500 },
+    });
+    await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 600; i++) {
+        await ctx.db.insert("docFeedback", {
+          slug: `page-${i}`,
+          helpful: false,
+          comment: "x".repeat(2000),
+          createdAt: i,
+        });
+      }
+    });
+    const read = (paginationOpts: {
+      numItems: number;
+      cursor: string | null;
+    }) =>
+      asAdmin(t).query(api.docs.listDocFeedback.listDocFeedback, {
+        paginationOpts,
+      });
+
+    const first = await read({ numItems: 1e9, cursor: null });
+    expect(first.page).toHaveLength(MAX_DOC_FEEDBACK_PAGE);
+    expect(first.page[0]?.slug).toBe("page-599");
+    expect(first.isDone).toBe(false);
+
+    const next = await read({ numItems: 10, cursor: first.continueCursor });
+    expect(next.page).toHaveLength(10);
+    expect(next.page[0]?.slug).toBe(`page-${599 - MAX_DOC_FEEDBACK_PAGE}`);
   });
 });
 

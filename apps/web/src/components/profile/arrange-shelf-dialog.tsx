@@ -1,5 +1,6 @@
 "use client";
 
+import { PickerCapNote } from "@/components/library/picker-cap-note";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -143,6 +144,9 @@ export function ArrangeShelfDialog({
                   {t("maxHint", { max: MAX_FEATURED })}
                 </p>
               )}
+              <div className="mb-3 empty:hidden">
+                <PickerCapNote shown={copies.length} />
+              </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {copies.map((copy) => {
                   const id = copy._id as Id<"ownedPuzzles">;

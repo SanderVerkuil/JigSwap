@@ -3,13 +3,14 @@
 // "Privacy & safety" page inside Clerk's profile modal (shell-user-button): the
 // presence-sharing toggle, then the caller's own "Blocked members" list
 // (social/listMyBlocks, newest first), each row with Unblock behind a confirm,
-// then "Your reports", then "Your data" with the data export (the same one as on
-// Insights). Self-contained like NotificationPreferencesPanel: no route
-// dependencies.
+// then "Your reports", then any photos the member left on puzzles they no longer
+// have, then "Your data" with the data export (the same one as on Insights).
+// Self-contained like NotificationPreferencesPanel: no route dependencies.
 import { useUser } from "@/compat/clerk";
 import { ExportDataButton } from "@/components/insights/export-button";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceSharingSetting } from "@/components/presence/presence-sharing";
+import { MyFormerCopyPhotos } from "@/components/safety/my-former-copy-photos";
 import { MyReports } from "@/components/safety/my-reports";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -79,6 +80,8 @@ export function PrivacySafetyPanel() {
       </section>
 
       <MyReports />
+
+      <MyFormerCopyPhotos />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium">{t("yourData")}</h2>

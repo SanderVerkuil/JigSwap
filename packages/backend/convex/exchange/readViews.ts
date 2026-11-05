@@ -10,6 +10,7 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
+import { canManageCopy } from "../household/copyAccess";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { canViewCopy } from "../library/canViewCopy";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
@@ -222,6 +223,39 @@ export const toExchangeFields = (
 });
 
 /**
+ * Whether the exchange may show `viewerId` the copy as it is now. A copy keeps its id through every
+ * sale and its owner keeps changing it, so an exchange row outlives what it shows. While the trade
+ * is in play and the copy still belongs to it (a party owns it, or a household mate's copy is still
+ * on offer, as canViewCopy's rule P decides that), the trade is about the copy itself and its facts
+ * are the party's to read, even with the owner's profile and the copy closed. Otherwise only the
+ * ordinary gate decides (canViewCopy, the copy page's own), so a party who has lost the copy page
+ * has lost its live facts too.
+ */
+const showsCopyAsItIsNow = async (
+  ctx: QueryCtx,
+  e: Doc<"exchanges">,
+  c: Doc<"ownedPuzzles">,
+  viewerId: Id<"users">,
+): Promise<boolean> => {
+  if (
+    isLiveExchangeStatus(e.status) &&
+    (c.ownerId === e.initiatorId ||
+      c.ownerId === e.recipientId ||
+      (c._id === e.offeredPuzzleId &&
+        (e.offeredPuzzleOwnerId ?? c.ownerId) === c.ownerId &&
+        (await canManageCopy(ctx, e.initiatorId, c))))
+  ) {
+    return true;
+  }
+  return canViewCopy(ctx, viewerId, c);
+};
+
+/**
+ * The copy on an exchange view (`e`'s requested or offered copy) as `viewerId` may see it. A party
+ * with no access to it any more (showsCopyAsItIsNow) gets only what the copy carries about the
+ * puzzle: its ids and the cached catalogue snapshot. Never its current condition, missing pieces,
+ * availability, visibility, asking price or last change, and not whether a party still owns it.
+ *
  * SECURITY: an exchange shows BOTH parties two owned copies (the requested copy owned by the
  * recipient, the offered copy owned by the initiator) to BOTH parties. The owner-only personal
  * fields — `notes` and the acquisition provenance (`acquisitionDate` / `acquisitionSource` /
@@ -234,12 +268,25 @@ export const toExchangeFields = (
  * is omitted for a party anonymous to the viewer AND for a non-party owner (a requester may offer a
  * household mate's co-managed copy; the mate takes no part in the trade).
  */
-export const toOwnedPuzzleView = (
+export const toOwnedPuzzleView = async (
+  ctx: QueryCtx,
+  e: Doc<"exchanges">,
   c: Doc<"ownedPuzzles"> | null,
   viewerId: Id<"users">,
   visible: ReadonlySet<Id<"users">>,
-): ExchangeOwnedPuzzleView | null => {
+): Promise<ExchangeOwnedPuzzleView | null> => {
   if (!c) return null;
+  if (!(await showsCopyAsItIsNow(ctx, e, c, viewerId))) {
+    return {
+      _id: c._id,
+      _creationTime: c._creationTime,
+      aggregateId: c.aggregateId,
+      puzzleId: c.puzzleId,
+      puzzleDefinitionId: c.puzzleDefinitionId,
+      snapshot: toCopySnapshotView(c.snapshot),
+      createdAt: c.createdAt,
+    };
+  }
   const viewerIsOwner = c.ownerId === viewerId;
   return {
     _id: c._id,
@@ -410,9 +457,17 @@ export const enrichExchangeSummary = async (
     offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
   ]);
   // Each side's card cover, as a URL, gated per copy and per viewer (coverUrlForViewer).
-  const [requestedCoverUrl, offeredCoverUrl] = await Promise.all([
+  const [
+    requestedCoverUrl,
+    offeredCoverUrl,
+    requestedCopyView,
+    offeredCopyView,
+  ] = await Promise.all([
     coverUrlForViewer(ctx, viewerId, requestedOwnedPuzzle, requestedPuzzle),
     coverUrlForViewer(ctx, viewerId, offeredOwnedPuzzle, offeredPuzzle),
+    // Gate each copy independently: the viewer sees owner-only fields only on the copy they own.
+    toOwnedPuzzleView(ctx, e, requestedOwnedPuzzle, viewerId, parties.visible),
+    toOwnedPuzzleView(ctx, e, offeredOwnedPuzzle, viewerId, parties.visible),
   ]);
   // A settled lend reads "completed" while the puzzle is still out: carry the loan it opened.
   const settledLend = e.type === "loan" && e.status === "completed";
@@ -424,22 +479,13 @@ export const enrichExchangeSummary = async (
     owner: parties.owner,
     requesterState: parties.requesterState,
     ownerState: parties.ownerState,
-    // Gate each copy independently: the viewer sees owner-only fields only on the copy they own.
-    requestedOwnedPuzzle: toOwnedPuzzleView(
-      requestedOwnedPuzzle,
-      viewerId,
-      parties.visible,
-    ),
+    requestedOwnedPuzzle: requestedCopyView,
     requestedPuzzle: toPuzzleViewFor(
       requestedPuzzle,
       requestedOwnedPuzzle,
       viewerId,
     ),
-    offeredOwnedPuzzle: toOwnedPuzzleView(
-      offeredOwnedPuzzle,
-      viewerId,
-      parties.visible,
-    ),
+    offeredOwnedPuzzle: offeredCopyView,
     offeredPuzzle: toPuzzleViewFor(offeredPuzzle, offeredOwnedPuzzle, viewerId),
     requestedCoverUrl,
     offeredCoverUrl,

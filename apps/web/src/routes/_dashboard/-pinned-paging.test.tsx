@@ -18,11 +18,20 @@ type Opts = { numItems: number; cursor: string | null; endCursor?: string };
 const pageOf = (rows: string[], { numItems, cursor, endCursor }: Opts) => {
   const start = cursor === null ? 0 : rows.indexOf(cursor) + 1;
   if (endCursor) {
-    return {
-      page: rows.slice(start, rows.indexOf(endCursor) + 1),
-      isDone: false,
-      continueCursor: endCursor,
-    };
+    const pinned = rows.slice(start, rows.indexOf(endCursor) + 1);
+    // The server's bound on a pinned page (clampPaginationOpts): it stops reading and asks for a
+    // split, and the page still ends at its pin (keepPinnedEnd).
+    if (pinned.length > pinnedBound) {
+      const read = pinned.slice(0, pinnedBound);
+      return {
+        page: read,
+        isDone: false,
+        continueCursor: endCursor,
+        pageStatus: "SplitRequired",
+        splitCursor: read[Math.floor((read.length - 1) / 2)],
+      };
+    }
+    return { page: pinned, isDone: false, continueCursor: endCursor };
   }
   const page = rows.slice(start, start + numItems);
   const isDone = start + numItems >= rows.length;
@@ -35,6 +44,7 @@ const pageOf = (rows: string[], { numItems, cursor, endCursor }: Opts) => {
 
 // A Convex client that answers from `rows` at once and keeps track of what is subscribed.
 let rows: string[];
+let pinnedBound: number;
 let subscribed: Map<() => void, Opts>;
 const client = {
   logger: console,
@@ -68,6 +78,7 @@ const write = (next: string[]) =>
 
 beforeEach(() => {
   rows = ["e", "d", "c", "b", "a"];
+  pinnedBound = Number.POSITIVE_INFINITY;
   subscribed = new Map();
 });
 
@@ -102,5 +113,13 @@ describe("the paging hook behind the stream-backed lists", () => {
     act(() => result.current.loadMore(2));
     write(rows.filter((row) => row !== "e"));
     expect(result.current.results).toEqual(["d", "c", "b"]);
+  });
+
+  it("splits a pinned page the server bounded and keeps every row", () => {
+    pinnedBound = 2;
+    const { result } = list();
+    act(() => result.current.loadMore(2));
+    write(["h", "g", "f", ...rows]);
+    expect(result.current.results).toEqual(["h", "g", "f", "e", "d", "c", "b"]);
   });
 });

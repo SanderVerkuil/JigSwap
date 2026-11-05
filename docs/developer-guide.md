@@ -171,15 +171,17 @@ patterns:
   retry a scheduled mutation on an application error, so a throwing subscriber is caught: its
   writes roll back, the others commit, and it is logged as an `events.dispatch` error wide event
   (forwarded to Axiom). Idempotent subscribers (`retry: true`) are re-dispatched with backoff up to
-  5 passes; the rest give up at once. A given-up event gets `failedAt` (index `by_failed`),
+  5 passes; the rest give up at once. A given-up event gets `failedAt`,
   `failedHandlers` and `lastError`, and needs an operator. Alert on it in Axiom with
-  `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`.
+  `['jigswap'] | where event == "events.dispatch" and outcome == "error" and will_retry == false`;
+  the wide event names the row (`event_id`).
   A payload never keeps free text a member typed or the identity they registered with
   (`REDACTED_EVENT_FIELDS` in `events/recordAndSchedule.ts`): a subscriber that needs such a field
   reads the source row. Each event's member ids are indexed in `domainEventMembers` (the account
   purge reads a member's events through it), and the daily `events/retention` sweep deletes events
-  dispatched more than 97 days ago (the activity feed's 90 days plus a week; a dry run unless
-  `RETENTION_ENFORCE` names `domainEvents`). In-flight and `failedAt` events are never deleted.
+  dispatched more than 97 days ago (the activity feed's 90 days plus a week; unless
+  `RETENTION_ENFORCE` names `domainEvents` it is a dry run, stopping after 5,000 events with
+  `capped` on its last line). In-flight and `failedAt` events are never deleted.
 
   **Replaying a `failedAt` event (manual).** Every handler in `failedHandlers` rolled back in full
   (its own sub-transaction), so re-running it cannot duplicate its own writes; handlers in

@@ -234,19 +234,27 @@ export const getPuzzleDefinitionView = query({
     // --- ownership (does the viewer own a copy of this definition?) -----------------------------
     // A copy links to a definition by EITHER its resolved `puzzleId` FK OR (when that FK is stale
     // or unresolved) its domain `puzzleDefinitionId === puzzle.aggregateId`. The `owned` set above
-    // is keyed only on `puzzleId`, so it can miss the viewer's copy. Query the viewer's own copies
-    // (a small set) directly and match on either link, so ownership shows reliably.
-    const viewerCopies = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", viewerId))
-      .collect();
+    // is keyed only on `puzzleId`, so it can miss the viewer's copy. Probe the viewer's copies by
+    // either link, one row each: never their whole library, which can run to thousands of rows
+    // and would re-run this page on every edit to any of them.
+    const definitionAggregateId = puzzle.aggregateId;
     const viewerCopy =
-      viewerCopies.find(
-        (c) =>
-          c.puzzleId === args.puzzleId ||
-          (puzzle.aggregateId != null &&
-            c.puzzleDefinitionId === puzzle.aggregateId),
-      ) ?? null;
+      (await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner_puzzle", (q) =>
+          q.eq("ownerId", viewerId).eq("puzzleId", args.puzzleId),
+        )
+        .first()) ??
+      (definitionAggregateId === undefined
+        ? null
+        : await ctx.db
+            .query("ownedPuzzles")
+            .withIndex("by_owner_definition", (q) =>
+              q
+                .eq("ownerId", viewerId)
+                .eq("puzzleDefinitionId", definitionAggregateId),
+            )
+            .first());
     const ownership = {
       viewerOwns: viewerCopy != null,
       copyId: viewerCopy ? (viewerCopy._id as string) : null,

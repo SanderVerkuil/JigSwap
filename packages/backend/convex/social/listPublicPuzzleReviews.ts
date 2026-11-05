@@ -5,7 +5,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { droppedForBlock, viewerBlocksOf, type ViewerBlocks } from "./blocks";
 import { MAX_REVIEW_PAGE_SIZE } from "./listPuzzleReviews";
@@ -61,17 +61,20 @@ const readPublicReviewsPage = async (
       .anonymous;
 
   // The block rules run while the page fills, so it stays full.
-  const result = await stream(ctx.db, schema)
-    .query("puzzleReviews")
-    .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", puzzleId))
-    .order("desc")
-    .filterWith(async (row) => {
-      // Only an author the viewer blocked needs the reveal decision.
-      const revealed =
-        blocks.byMe.has(row.userId) && (await revealedToViewer(row.userId));
-      return !droppedForBlock(blocks, row.userId, revealed);
-    })
-    .paginate(clampPaginationOpts(paginationOpts, MAX_REVIEW_PAGE_SIZE));
+  const result = await paginateBounded(
+    stream(ctx.db, schema)
+      .query("puzzleReviews")
+      .withIndex("by_puzzle_updated", (q) => q.eq("puzzleId", puzzleId))
+      .order("desc")
+      .filterWith(async (row) => {
+        // Only an author the viewer blocked needs the reveal decision.
+        const revealed =
+          blocks.byMe.has(row.userId) && (await revealedToViewer(row.userId));
+        return !droppedForBlock(blocks, row.userId, revealed);
+      }),
+    paginationOpts,
+    MAX_REVIEW_PAGE_SIZE,
+  );
 
   const page = await Promise.all(
     result.page.map(async (row): Promise<PublicPuzzleReviewView> => ({

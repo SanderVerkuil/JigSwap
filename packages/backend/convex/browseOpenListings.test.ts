@@ -2,20 +2,23 @@ import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import {
-  BROWSE_CANDIDATE_CAP,
   BROWSE_MAX_LIMIT,
-  BROWSE_PER_OWNER,
-  BROWSE_READ_BUDGET,
+  BROWSE_PAGE_OWNER_SHARE,
+  BROWSE_PAGE_READ_BUDGET,
 } from "./library/browseOwnedPuzzles";
+import { CIRCLE_SHARES_READ_PER_CIRCLE } from "./library/circleSharedCopies";
+import { LISTING_HELD_OWNERS_MAX } from "./library/openListing";
 import schema from "./schema";
 
 // Browse's candidate source (PERF-B1m, SEC-29): open copies are read newest offer first from the
-// listing indexes, so one member's pile of older listings can't hide newer ones, closed copies and
-// private members' copies are never read, and rows written before the listing fields existed (no
-// `isOpen`) are still found by their availability until library/backfillCopyOpenFlag has run. The
-// window is filled with copies the viewer may see, and one member's pile of NEWER listings only
-// fills room the others leave, so no one member can crowd the rest out.
+// listing indexes, by cursor and only as far as a page needs, so one member's pile of older listings
+// can't hide newer ones, closed copies and private members' copies are never read, and rows written
+// before the listing fields existed (no `isOpen`) are still found by their availability until
+// library/backfillCopyOpenFlag has run. One member's pile of NEWER listings takes at most a share of
+// a page, and the rest of it comes after everyone else's, so it can't push others out of reach or
+// fill the pages in front of them.
 //
 // convex-test blind spot: rows dropped by a native `.filter()` are not counted as reads, so a
 // documentsRead limit can't show what a full-table `.filter()` costs in a deployment. The bounded
@@ -121,6 +124,54 @@ const browseAsBob = (
 const idsOf = (view: { ownedPuzzles: { _id: string }[] }) =>
   view.ownedPuzzles.map((c) => c._id);
 
+// A circle with these members seated, the first its owner.
+const insertCircle = async (
+  ctx: MutationCtx,
+  aggregateId: string,
+  members: Id<"users">[],
+) => {
+  await ctx.db.insert("circles", {
+    aggregateId,
+    name: aggregateId,
+    ownerId: members[0],
+    memberships: members.map((memberId, i) => ({
+      id: `${aggregateId}-seat-${i}`,
+      memberId,
+      permission: "ViewOnly" as const,
+      joinedAt: BASE,
+    })),
+    createdAt: BASE,
+  });
+  for (const memberId of members) {
+    await ctx.db.insert("circleMembers", {
+      circleAggregateId: aggregateId,
+      memberId,
+    });
+  }
+};
+
+// Every row Browse reaches for these filters, page by page, as Load more walks them.
+const walkAsBob = async (
+  t: TestConvex<typeof schema>,
+  args: Record<string, unknown> = {},
+) => {
+  const rows: string[] = [];
+  let cursor: string | null = null;
+  let pages = 0;
+  for (;;) {
+    pages += 1;
+    const view: Awaited<ReturnType<typeof browseAsBob>> = await browseAsBob(t, {
+      limit: BROWSE_MAX_LIMIT,
+      ...args,
+      cursor,
+    });
+    rows.push(...idsOf(view));
+    if (!view.hasMore) return { rows, pages };
+    expect(view.continueCursor).not.toBeNull();
+    cursor = view.continueCursor;
+  }
+};
+
 describe.each<Flag>(["flagged", "legacy"])(
   "Browse lists the newest open copies first (%s rows)",
   (flag) => {
@@ -138,9 +189,8 @@ describe.each<Flag>(["flagged", "legacy"])(
 
       const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
       expect(idsOf(view)[0]).toBe(aliceCopy);
-      expect(view.total).toBe(501);
       expect(view.hasMore).toBe(true);
-      expect(view.totalIsLowerBound).toBe(false);
+      expect((await walkAsBob(t)).rows).toHaveLength(501);
 
       const forVista = await browseAsBob(t, { puzzleId: vista });
       expect(idsOf(forVista)).toEqual([aliceCopy]);
@@ -193,7 +243,7 @@ const insertMember = (
     return id;
   });
 
-describe("no one member can crowd Browse's window (SEC-29)", () => {
+describe("no one member can put others out of reach (SEC-29)", () => {
   test("a private and a public member with 1,000 newer open copies each can't hide an older public listing", async () => {
     const t = convexTest(schema, modules);
     const { alice, mallory, vista, harbour } = await seedWorld(t);
@@ -216,52 +266,17 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     }
     await insertCopies(t, flood);
 
-    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
-    // alice's listing plus as many of mallory's as fit; carol's are never shown.
-    expect(view.total).toBe(BROWSE_CANDIDATE_CAP);
-    expect(view.totalIsLowerBound).toBe(true);
-    const last = await browseAsBob(t, {
-      limit: BROWSE_MAX_LIMIT,
-      offset: BROWSE_CANDIDATE_CAP - BROWSE_MAX_LIMIT,
-    });
-    expect(idsOf(last).slice(-1)).toEqual([aliceCopy]);
+    // Mallory's share, then alice's, then the rest of mallory's; carol's are never shown.
+    const { rows } = await walkAsBob(t);
+    expect(rows).toHaveLength(1001);
+    expect(rows.indexOf(aliceCopy)).toBe(BROWSE_PAGE_OWNER_SHARE);
 
-    // Every filter runs over a window alice's listing is in.
-    const search = await browseAsBob(t, { searchTerm: "mountain" });
-    expect(idsOf(search)).toEqual([aliceCopy]);
-    expect(search.totalIsLowerBound).toBe(true);
+    // Every filter reaches it too. Reading stops at each page's budget, and Load more carries on.
+    const search = await walkAsBob(t, { searchTerm: "mountain" });
+    expect(search.rows).toEqual([aliceCopy]);
+    expect(search.pages).toBeGreaterThan(1);
     const forVista = await browseAsBob(t, { puzzleId: vista });
     expect(idsOf(forVista)).toEqual([aliceCopy]);
-  });
-
-  test("a member past their share keeps every listing when there is room", async () => {
-    const t = convexTest(schema, modules);
-    const { alice, mallory, vista, harbour } = await seedWorld(t);
-    const mallorys = await insertCopies(
-      t,
-      openCopies(
-        BROWSE_PER_OWNER * 3,
-        { ownerId: mallory, puzzleId: harbour },
-        BASE + 10,
-        "flagged",
-      ),
-    );
-    const [aliceCopy] = await insertCopies(
-      t,
-      openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
-    );
-
-    const view = await browseAsBob(t, {
-      limit: BROWSE_MAX_LIMIT,
-      offset: BROWSE_PER_OWNER * 3 + 1 - BROWSE_MAX_LIMIT,
-    });
-    expect(view.total).toBe(BROWSE_PER_OWNER * 3 + 1);
-    expect(view.totalIsLowerBound).toBe(false);
-    // Still newest first.
-    expect(idsOf(view)).toEqual([
-      ...mallorys.slice(0, BROWSE_MAX_LIMIT - 1).reverse(),
-      aliceCopy,
-    ]);
   });
 
   test("copies the viewer can't see never take a slot: own, blocked, other condition", async () => {
@@ -273,13 +288,13 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     );
     await insertCopies(t, [
       ...openCopies(
-        BROWSE_CANDIDATE_CAP,
+        BROWSE_PAGE_READ_BUDGET,
         { ownerId: bob, puzzleId: harbour },
         BASE + 10,
         "flagged",
       ),
       ...openCopies(
-        BROWSE_CANDIDATE_CAP,
+        BROWSE_PAGE_READ_BUDGET,
         { ownerId: mallory, puzzleId: harbour },
         BASE + 5_000,
         "flagged",
@@ -293,9 +308,8 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
       }),
     );
 
-    const view = await browseAsBob(t);
-    expect(idsOf(view)).toEqual([aliceCopy]);
-    expect(view.totalIsLowerBound).toBe(false);
+    const { rows } = await walkAsBob(t);
+    expect(rows).toEqual([aliceCopy]);
   });
 
   test("a private member's copies are never read, however many", async () => {
@@ -313,7 +327,7 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
     await insertCopies(
       t,
       openCopies(
-        BROWSE_READ_BUDGET + 10,
+        BROWSE_PAGE_READ_BUDGET + 10,
         { ownerId: carol, puzzleId: harbour, ownerPrivate: true },
         BASE + 10,
         "flagged",
@@ -322,25 +336,25 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
 
     const view = await browseAsBob(t);
     expect(idsOf(view)).toEqual([aliceCopy]);
-    expect(view.totalIsLowerBound).toBe(false);
+    expect(view.hasMore).toBe(false);
   });
 
-  test(`a flood not yet marked private (before the backfill) is read only up to the read budget`, async () => {
+  test("a flood not yet marked private (before the backfill) costs a page its read budget, and Load more carries on", async () => {
     const t = convexTest({
       schema,
       modules,
-      transactionLimits: { documentsRead: BROWSE_READ_BUDGET + 100 },
+      transactionLimits: { documentsRead: BROWSE_PAGE_READ_BUDGET + 100 },
     });
     const { alice, vista, harbour } = await seedWorld(t);
     const carol = await insertMember(t, "carol", "private");
-    await insertCopies(
+    const [aliceCopy] = await insertCopies(
       t,
       openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
     );
     await insertCopies(
       t,
       openCopies(
-        BROWSE_READ_BUDGET + 10,
+        BROWSE_PAGE_READ_BUDGET + 10,
         { ownerId: carol, puzzleId: harbour },
         BASE + 10,
         "flagged",
@@ -349,7 +363,10 @@ describe("no one member can crowd Browse's window (SEC-29)", () => {
 
     const view = await browseAsBob(t);
     expect(view.ownedPuzzles).toEqual([]);
-    expect(view.totalIsLowerBound).toBe(true);
+    expect(view.hasMore).toBe(true);
+    const next = await browseAsBob(t, { cursor: view.continueCursor });
+    expect(idsOf(next)).toEqual([aliceCopy]);
+    expect(next.hasMore).toBe(false);
   });
 
   test("the definition view counts an older public listing past a marked private member's pile", async () => {
@@ -473,6 +490,286 @@ describe("Browse merges flagged and legacy rows", () => {
   });
 });
 
+// The web asks for pages of 48.
+const WEB_PAGE = 48;
+
+describe.each<Flag>(["flagged", "legacy"])(
+  "no one member can crowd Browse's pages (SEC-29, %s rows)",
+  (flag) => {
+    test("500 newer copies of one member leave an older listing one Load more away", async () => {
+      const t = convexTest(schema, modules);
+      const { alice, mallory, vista, harbour } = await seedWorld(t);
+      const [aliceCopy] = await insertCopies(
+        t,
+        openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, flag),
+      );
+      const pile = await insertCopies(
+        t,
+        openCopies(
+          BROWSE_PAGE_READ_BUDGET,
+          { ownerId: mallory, puzzleId: harbour },
+          BASE + 10,
+          flag,
+        ),
+      );
+
+      const first = await browseAsBob(t, { limit: WEB_PAGE });
+      expect(idsOf(first)).toEqual(
+        [...pile].reverse().slice(0, BROWSE_PAGE_OWNER_SHARE),
+      );
+      expect(first.hasMore).toBe(true);
+
+      const next = await browseAsBob(t, {
+        limit: WEB_PAGE,
+        cursor: first.continueCursor,
+      });
+      expect(idsOf(next)[0]).toBe(aliceCopy);
+    });
+
+    test("every row comes once, with the rest of a member's pile after everyone else's", async () => {
+      const t = convexTest(schema, modules);
+      const { alice, mallory, vista, harbour } = await seedWorld(t);
+      const older = await insertCopies(
+        t,
+        openCopies(3, { ownerId: alice, puzzleId: vista }, BASE, flag),
+      );
+      const pile = await insertCopies(
+        t,
+        openCopies(
+          60,
+          { ownerId: mallory, puzzleId: harbour },
+          BASE + 10,
+          flag,
+        ),
+      );
+
+      const { rows } = await walkAsBob(t, { limit: WEB_PAGE });
+      const newestPile = [...pile].reverse();
+      expect(rows).toEqual([
+        ...newestPile.slice(0, BROWSE_PAGE_OWNER_SHARE),
+        ...[...older].reverse(),
+        ...newestPile.slice(BROWSE_PAGE_OWNER_SHARE),
+      ]);
+    });
+  },
+);
+
+describe("a member's share of a page", () => {
+  test("a pile of newer listings leaves room for everyone else on the first page", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, mallory, vista, harbour } = await seedWorld(t);
+    const others = await insertCopies(
+      t,
+      openCopies(
+        WEB_PAGE - BROWSE_PAGE_OWNER_SHARE,
+        { ownerId: alice, puzzleId: vista },
+        BASE,
+        "flagged",
+      ),
+    );
+    const pile = await insertCopies(
+      t,
+      openCopies(
+        100,
+        { ownerId: mallory, puzzleId: harbour },
+        BASE + 1_000,
+        "flagged",
+      ),
+    );
+
+    const view = await browseAsBob(t, { limit: WEB_PAGE });
+    expect(idsOf(view)).toEqual([
+      ...[...pile].reverse().slice(0, BROWSE_PAGE_OWNER_SHARE),
+      ...[...others].reverse(),
+    ]);
+    expect(view.hasMore).toBe(true);
+  });
+
+  test("a member past their share keeps every listing when there is room", async () => {
+    const t = convexTest(schema, modules);
+    const { mallory, harbour } = await seedWorld(t);
+    const pile = await insertCopies(
+      t,
+      openCopies(
+        BROWSE_PAGE_OWNER_SHARE + 6,
+        { ownerId: mallory, puzzleId: harbour },
+        BASE,
+        "flagged",
+      ),
+    );
+
+    const view = await browseAsBob(t, { limit: WEB_PAGE });
+    expect(idsOf(view)).toEqual([...pile].reverse());
+    expect(view.hasMore).toBe(false);
+    expect(view.continueCursor).toBeNull();
+  });
+
+  test("a member within their share isn't moved, whatever they hold further down", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, mallory, vista, harbour } = await seedWorld(t);
+    // Alternating, so neither reaches the share of a page before the page is full.
+    const specs: CopySpec[] = [];
+    for (let i = 0; i < WEB_PAGE * 2; i++) {
+      specs.push({
+        ownerId: i % 2 === 0 ? alice : mallory,
+        puzzleId: i % 2 === 0 ? vista : harbour,
+        createdAt: BASE + i,
+        isOpen: true,
+      });
+    }
+    const ids = await insertCopies(t, specs);
+    const { rows } = await walkAsBob(t, { limit: WEB_PAGE });
+    expect(rows).toEqual([...ids].reverse());
+  });
+
+  test("the walk's read budget covers the second pass, and Load more carries on", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: BROWSE_PAGE_READ_BUDGET + 150 },
+    });
+    const { alice, mallory, vista, harbour } = await seedWorld(t);
+    const others = await insertCopies(
+      t,
+      openCopies(
+        BROWSE_PAGE_READ_BUDGET + 200,
+        { ownerId: alice, puzzleId: vista },
+        BASE,
+        "flagged",
+      ),
+    );
+    const pile = await insertCopies(
+      t,
+      openCopies(
+        BROWSE_PAGE_READ_BUDGET + 200,
+        { ownerId: mallory, puzzleId: harbour },
+        BASE + 10_000,
+        "flagged",
+      ),
+    );
+
+    const { rows, pages } = await walkAsBob(t, { limit: WEB_PAGE });
+    expect([...rows].sort()).toEqual([...others, ...pile].sort());
+    expect(rows.slice(0, BROWSE_PAGE_OWNER_SHARE)).toEqual(
+      [...pile].reverse().slice(0, BROWSE_PAGE_OWNER_SHARE),
+    );
+    expect(pages).toBeGreaterThan(2);
+  });
+
+  test("past the owners a cursor can remember, the next ones simply stay in order", async () => {
+    const t = convexTest(schema, modules);
+    const { harbour } = await seedWorld(t);
+    const specs: CopySpec[] = [];
+    const owners = LISTING_HELD_OWNERS_MAX + 6;
+    for (let o = 0; o < owners; o++) {
+      const ownerId = await insertMember(t, `pile${o}`, "public");
+      for (let i = 0; i < BROWSE_PAGE_OWNER_SHARE + 2; i++) {
+        specs.push({
+          ownerId,
+          puzzleId: harbour,
+          createdAt: BASE + specs.length,
+          isOpen: true,
+        });
+      }
+    }
+    const ids = await insertCopies(t, specs);
+
+    const { rows } = await walkAsBob(t, { limit: BROWSE_MAX_LIMIT });
+    expect(rows).toHaveLength(ids.length);
+    expect([...rows].sort()).toEqual([...ids].sort());
+  });
+
+  test("a private member's circle copies are held the same way, and each reached once", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, alice, vista, harbour } = await seedWorld(t);
+    const carol = await insertMember(t, "carol", "private");
+    const [aliceCopy] = await insertCopies(
+      t,
+      openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
+    );
+    const pile = await insertCopies(
+      t,
+      Array.from({ length: BROWSE_PAGE_OWNER_SHARE + 5 }, (_, i) => ({
+        ownerId: carol,
+        puzzleId: harbour,
+        createdAt: BASE + 10 + i,
+        isOpen: true,
+        ownerPrivate: true as const,
+      })),
+    );
+    await t.run(async (ctx) => {
+      await insertCircle(ctx, "circle-carol", [carol, bob]);
+      for (const copyId of pile) {
+        const copy = await ctx.db.get(copyId);
+        if (!copy?.aggregateId) throw new Error("seeded without aggregateId");
+        await ctx.db.insert("circleCopyShares", {
+          circleId: "circle-carol",
+          copyId: copy.aggregateId,
+          sharedAt: BASE,
+        });
+      }
+    });
+
+    const { rows } = await walkAsBob(t, { limit: WEB_PAGE });
+    const newestPile = [...pile].reverse();
+    expect(rows).toEqual([
+      ...newestPile.slice(0, BROWSE_PAGE_OWNER_SHARE),
+      aliceCopy,
+      ...newestPile.slice(BROWSE_PAGE_OWNER_SHARE),
+    ]);
+  });
+
+  test("a made-up cursor can't show a row the viewer may not see, and can't grow without end", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, vista, harbour } = await seedWorld(t);
+    const carol = await insertMember(t, "carol", "private");
+    const [aliceCopy] = await insertCopies(
+      t,
+      openCopies(1, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
+    );
+    await insertCopies(
+      t,
+      openCopies(
+        3,
+        { ownerId: carol, puzzleId: harbour, ownerPrivate: true },
+        BASE + 10,
+        "flagged",
+      ),
+    );
+    await insertCopies(
+      t,
+      openCopies(
+        3,
+        { ownerId: carol, puzzleId: harbour },
+        BASE + 20,
+        "flagged",
+      ),
+    );
+
+    const held = [
+      [carol, 9e15, 9e15],
+      [alice, 9e15, 9e15],
+      ...Array.from({ length: 5_000 }, (_, i) => [`nobody${i}`, 9e15, 9e15]),
+    ];
+    const view = await browseAsBob(t, {
+      limit: 1,
+      cursor: JSON.stringify({ secondPass: true, held }),
+    });
+    expect(idsOf(view)).toEqual([aliceCopy]);
+    expect(view.hasMore).toBe(false);
+
+    for (const garbled of [
+      { held: "everyone" },
+      { held: [[1, 2, 3]] },
+      { held: [["x", "y", "z"]] },
+      { secondPass: "yes" },
+    ]) {
+      const page = await browseAsBob(t, { cursor: JSON.stringify(garbled) });
+      expect(idsOf(page)).toEqual([aliceCopy]);
+    }
+  });
+});
+
 describe("Browse reads a bounded window", () => {
   test("thousands of closed copies are never read (all copies and per definition)", async () => {
     const t = convexTest({
@@ -505,77 +802,160 @@ describe("Browse reads a bounded window", () => {
 
     const all = await browseAsBob(t);
     expect(idsOf(all)).toEqual([...open].reverse());
-    expect(all.total).toBe(3);
+    expect(all.hasMore).toBe(false);
     const forVista = await browseAsBob(t, { puzzleId: vista });
     expect(idsOf(forVista)).toEqual([...open].reverse());
   });
 
-  test(`past ${BROWSE_CANDIDATE_CAP} open copies the total is a lower bound and the newest stay listed`, async () => {
-    const t = convexTest(schema, modules);
-    const { alice, vista } = await seedWorld(t);
-    const ids = await insertCopies(
-      t,
-      openCopies(
-        BROWSE_CANDIDATE_CAP + 5,
-        { ownerId: alice, puzzleId: vista },
-        BASE,
-        "flagged",
-      ),
+  // Seeds `count` open copies, each by its own owner, of its own definition, with box art: the most
+  // a row can cost. Newest last.
+  const seedManyOwners = async (
+    t: TestConvex<typeof schema>,
+    count: number,
+    fields: Partial<Doc<"ownedPuzzles">> = {},
+    visibility?: "public" | "private",
+  ) => {
+    const image = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["x"], { type: "image/webp" })),
     );
+    for (let start = 0; start < count; start += 200) {
+      await t.run(async (ctx) => {
+        for (let i = start; i < Math.min(count, start + 200); i++) {
+          const ownerId = await ctx.db.insert("users", {
+            clerkId: `clerk_owner_${i}`,
+            email: `owner${i}@example.com`,
+            name: `owner ${i}`,
+            isActive: true,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          if (visibility) {
+            await ctx.db.insert("profiles", {
+              memberId: ownerId,
+              displayName: `owner ${i}`,
+              visibility,
+              updatedAt: BASE,
+            });
+          }
+          const puzzleId = await ctx.db.insert("puzzles", {
+            title: `Puzzle ${i}`,
+            pieceCount: 500,
+            status: "approved",
+            image,
+            submittedBy: ownerId,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: `copy-${i}`,
+            puzzleId,
+            ownerId,
+            condition: "good",
+            availability: OPEN,
+            isOpen: true,
+            listedAt: BASE + i,
+            createdAt: BASE + i,
+            updatedAt: BASE + i,
+            ...fields,
+          });
+        }
+      });
+    }
+  };
 
-    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
-    expect(view.totalIsLowerBound).toBe(true);
-    expect(view.total).toBe(BROWSE_CANDIDATE_CAP);
-    expect(idsOf(view)).toEqual(ids.slice(-BROWSE_MAX_LIMIT).reverse());
-  });
+  test("a page reads what it shows: 1,200 owners and definitions cost no more than one page's rows", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      // A page's 48 rows, one more to see there is more, and what the cards join: well under the
+      // about 3,000 documents a run read when it built its whole window first.
+      transactionLimits: { documentsRead: 200 },
+    });
+    await seedWorld(t);
+    await seedManyOwners(t, 1200);
 
-  test("a full window of distinct owners and definitions stays inside Convex's limits", async () => {
+    const view = await browseAsBob(t, { limit: 48 });
+    expect(view.ownedPuzzles).toHaveLength(48);
+    expect(view.hasMore).toBe(true);
+
+    const next = await browseAsBob(t, {
+      limit: 48,
+      cursor: view.continueCursor,
+    });
+    expect(next.ownedPuzzles).toHaveLength(48);
+    expect(idsOf(next).some((id) => idsOf(view).includes(id))).toBe(false);
+  }, 300_000);
+
+  test("a filter that matches nothing stops at its budget, under Convex's real limits", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     await seedWorld(t);
-    await t.run(async (ctx) => {
-      for (let i = 0; i <= BROWSE_CANDIDATE_CAP; i++) {
-        const ownerId = await ctx.db.insert("users", {
-          clerkId: `clerk_owner_${i}`,
-          email: `owner${i}@example.com`,
-          name: `owner ${i}`,
-          isActive: true,
-          createdAt: BASE,
-          updatedAt: BASE,
-        });
-        const puzzleId = await ctx.db.insert("puzzles", {
-          title: `Puzzle ${i}`,
-          pieceCount: 500,
-          status: "approved",
-          submittedBy: ownerId,
-          createdAt: BASE,
-          updatedAt: BASE,
-        });
-        await ctx.db.insert("ownedPuzzles", {
-          aggregateId: `copy-${i}`,
-          puzzleId,
-          ownerId,
-          condition: "good",
-          availability: OPEN,
-          isOpen: true,
-          listedAt: BASE + i,
-          createdAt: BASE + i,
-          updatedAt: BASE + i,
-        });
-      }
-    });
+    await seedManyOwners(t, BROWSE_PAGE_READ_BUDGET + 50);
 
+    const view = await browseAsBob(t, { searchTerm: "no such puzzle" });
+    expect(view.ownedPuzzles).toEqual([]);
+    expect(view.hasMore).toBe(true);
+
+    const next = await browseAsBob(t, {
+      searchTerm: "no such puzzle",
+      cursor: view.continueCursor,
+    });
+    expect(next.ownedPuzzles).toEqual([]);
+    expect(next.hasMore).toBe(false);
+  }, 300_000);
+
+  test("private owners not yet marked cost a lookup each, and hold under Convex's real limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    await seedWorld(t);
+    await seedManyOwners(t, BROWSE_PAGE_READ_BUDGET + 50, {}, "private");
+
+    const view = await browseAsBob(t, { minPieceCount: 1 });
+    expect(view.ownedPuzzles).toEqual([]);
+    expect(view.hasMore).toBe(true);
+  }, 300_000);
+
+  test("a member of many busy circles can still browse, under Convex's real limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const { bob, alice, vista } = await seedWorld(t);
+    const CIRCLES = 12;
+    for (let c = 0; c < CIRCLES; c++) {
+      await t.run(async (ctx) => {
+        const circleAggregateId = `circle-${c}`;
+        await insertCircle(ctx, circleAggregateId, [alice, bob]);
+        for (let i = 0; i < CIRCLE_SHARES_READ_PER_CIRCLE; i++) {
+          const copyId = `circle-copy-${c}-${i}`;
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: copyId,
+            puzzleId: vista,
+            ownerId: alice,
+            condition: "good",
+            availability: OPEN,
+            isOpen: true,
+            listedAt: BASE + i,
+            createdAt: BASE + i,
+            updatedAt: BASE + i,
+          });
+          await ctx.db.insert("circleCopyShares", {
+            circleId: circleAggregateId,
+            copyId,
+            sharedAt: BASE + i,
+          });
+        }
+      });
+    }
+
+    // All of them alice's, more than one read budget: her share, and Load more for the rest.
     const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
-    expect(view.ownedPuzzles).toHaveLength(BROWSE_MAX_LIMIT);
-    expect(view.totalIsLowerBound).toBe(true);
-  });
+    expect(view.ownedPuzzles).toHaveLength(BROWSE_PAGE_OWNER_SHARE);
+    expect(view.hasMore).toBe(true);
+  }, 300_000);
 });
 
-describe("Browse paging arguments", () => {
-  const seedMany = async (t: TestConvex<typeof schema>) => {
+describe("Browse's cursor", () => {
+  const seedMany = async (t: TestConvex<typeof schema>, count = 150) => {
     const { alice, vista } = await seedWorld(t);
     return insertCopies(
       t,
-      openCopies(150, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
+      openCopies(count, { ownerId: alice, puzzleId: vista }, BASE, "flagged"),
     );
   };
 
@@ -590,18 +970,182 @@ describe("Browse paging arguments", () => {
     expect((await browseAsBob(t)).ownedPuzzles).toHaveLength(20);
   });
 
-  test("offset pages through the window without gaps or repeats", async () => {
+  test("pages reach every row once, newest first, and only the last says there is no more", async () => {
     const t = convexTest(schema, modules);
     const ids = await seedMany(t);
-    const pages = [];
-    for (const offset of [0, 50, 100]) {
-      pages.push(await browseAsBob(t, { limit: 50, offset }));
-    }
-    expect(pages.map((p) => p.hasMore)).toEqual([true, true, false]);
-    expect(pages.every((p) => p.total === 150)).toBe(true);
-    expect(pages.flatMap(idsOf)).toEqual([...ids].reverse());
+    const { rows, pages } = await walkAsBob(t);
+    expect(rows).toEqual([...ids].reverse());
+    expect(pages).toBe(3);
+  });
 
-    const negative = await browseAsBob(t, { limit: 5, offset: -10 });
-    expect(idsOf(negative)).toEqual(ids.slice(-5).reverse());
+  test("a page holding exactly the last rows has nothing to offer after it", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seedMany(t, BROWSE_MAX_LIMIT);
+    const view = await browseAsBob(t, { limit: BROWSE_MAX_LIMIT });
+    expect(idsOf(view)).toEqual([...ids].reverse());
+    expect(view.hasMore).toBe(false);
+    expect(view.continueCursor).toBeNull();
+  });
+
+  test("copies listed at the same moment are all reached across a page boundary", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, vista } = await seedWorld(t);
+    const ids = await insertCopies(
+      t,
+      Array.from({ length: 7 }, () => ({
+        ownerId: alice,
+        puzzleId: vista,
+        createdAt: BASE,
+        isOpen: true,
+        listedAt: BASE,
+      })),
+    );
+    const { rows } = await walkAsBob(t, { limit: 3 });
+    expect([...rows].sort()).toEqual([...ids].sort());
+    expect(rows).toHaveLength(7);
+  });
+
+  test("a new listing doesn't shift a page already read: the next page carries on from its cursor", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seedMany(t, 10);
+    const { alice, vista } = await t.run(async (ctx) => {
+      const copy = (await ctx.db.get(ids[0]))!;
+      return { alice: copy.ownerId, vista: copy.puzzleId };
+    });
+    const first = await browseAsBob(t, { limit: 4 });
+
+    await insertCopies(t, [
+      { ownerId: alice, puzzleId: vista, createdAt: BASE + 100, isOpen: true },
+    ]);
+
+    const next = await browseAsBob(t, {
+      limit: 4,
+      cursor: first.continueCursor,
+    });
+    expect([...idsOf(first), ...idsOf(next)]).toEqual(ids.slice(-8).reverse());
+  });
+
+  test.each(["not json", "42", "null", "[]", '{"flagged":"x","sortKey":[1]}'])(
+    "an unreadable cursor (%s) reads from the top instead of failing",
+    async (cursor) => {
+      const t = convexTest(schema, modules);
+      const ids = await seedMany(t, 3);
+      const view = await browseAsBob(t, { cursor });
+      expect(idsOf(view)).toEqual([...ids].reverse());
+    },
+  );
+
+  test("rows with no listing time sit below the timed ones and are all reached", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, vista } = await seedWorld(t);
+    const timed = await insertCopies(
+      t,
+      openCopies(3, { ownerId: alice, puzzleId: vista }, BASE + 100, "flagged"),
+    );
+    // Flagged open by an earlier run of the backfill, before it set `listedAt`.
+    const untimed = await t.run(async (ctx) => {
+      const out: Id<"ownedPuzzles">[] = [];
+      for (let i = 0; i < 3; i++) {
+        out.push(
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: crypto.randomUUID(),
+            puzzleId: vista,
+            ownerId: alice,
+            condition: "good",
+            availability: OPEN,
+            isOpen: true,
+            createdAt: BASE + i,
+            updatedAt: BASE + i,
+          }),
+        );
+      }
+      return out;
+    });
+
+    const { rows } = await walkAsBob(t, { limit: 2 });
+    expect(rows).toEqual([...[...timed].reverse(), ...[...untimed].reverse()]);
+  });
+
+  test("legacy rows page by cursor too, closed ones counted against the budget", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, mallory, vista } = await seedWorld(t);
+    const specs: CopySpec[] = [];
+    for (let i = 0; i < 20; i++) {
+      specs.push({
+        ownerId: i % 2 === 0 ? alice : mallory,
+        puzzleId: vista,
+        createdAt: BASE + i * 10,
+        ...(i % 3 === 0 ? { isOpen: true } : {}),
+      });
+      specs.push({
+        ownerId: alice,
+        puzzleId: vista,
+        createdAt: BASE + i * 10 + 5,
+        availability: CLOSED,
+      });
+    }
+    const ids = await insertCopies(t, specs);
+    const openIds = ids.filter((_, i) => i % 2 === 0);
+
+    const { rows } = await walkAsBob(t, { limit: 3 });
+    expect(rows).toEqual([...openIds].reverse());
+  });
+});
+
+describe("circle-shared copies in Browse's pages", () => {
+  // A private member's open copies shared into a circle the viewer is in, interleaved in time with
+  // a public member's listings.
+  const seedCircle = async (t: TestConvex<typeof schema>) => {
+    const { bob, alice, vista } = await seedWorld(t);
+    const carol = await insertMember(t, "carol", "private");
+    const specs: CopySpec[] = [];
+    for (let i = 0; i < 12; i++) {
+      specs.push({
+        ownerId: i % 2 === 0 ? alice : carol,
+        puzzleId: vista,
+        createdAt: BASE + i,
+        isOpen: true,
+        ...(i % 2 === 0 ? {} : { ownerPrivate: true as const }),
+      });
+    }
+    const ids = await insertCopies(t, specs);
+    await t.run(async (ctx) => {
+      await insertCircle(ctx, "circle-1", [carol, bob, alice]);
+      // Every copy, so a public member's appears through the index and the circle both.
+      for (const id of ids) {
+        const copy = (await ctx.db.get(id))!;
+        await ctx.db.insert("circleCopyShares", {
+          circleId: "circle-1",
+          copyId: copy.aggregateId!,
+          sharedAt: BASE,
+        });
+      }
+    });
+    return ids;
+  };
+
+  test.each([1, 2, 3, 5, 12])(
+    "pages of %i keep the merged order, with every copy once",
+    async (limit) => {
+      const t = convexTest(schema, modules);
+      const ids = await seedCircle(t);
+      const { rows } = await walkAsBob(t, { limit });
+      expect(rows).toEqual([...ids].reverse());
+    },
+  );
+
+  test("a private member's copy stays out once the viewer has left the circle", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seedCircle(t);
+    await t.run(async (ctx) => {
+      const links = await ctx.db
+        .query("circleCopyShares")
+        .withIndex("by_circle", (q) => q.eq("circleId", "circle-1"))
+        .collect();
+      for (const link of links) await ctx.db.delete(link._id);
+    });
+    const { rows } = await walkAsBob(t, { limit: 3 });
+    // Only the public member's (even indexes), through the index.
+    expect(rows).toEqual(ids.filter((_, i) => i % 2 === 0).reverse());
   });
 });

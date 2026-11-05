@@ -59,6 +59,8 @@ const errorKeyFor = (error: unknown): string => {
       return "edit.errors.invalidPieceCount";
     case "TextTooLong":
       return "edit.errors.textTooLong";
+    case "InvalidDimensions":
+      return "edit.errors.invalidDimensions";
     default:
       return "edit.failed";
   }

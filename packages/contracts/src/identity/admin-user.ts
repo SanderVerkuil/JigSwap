@@ -19,6 +19,8 @@ export interface AdminUserView extends ConvexSystemFields {
   role?: string;
   /** Size of the member's library (ownedPuzzles via by_owner). */
   ownedCopyCount: number;
+  /** The count stopped at a bound because the member has no counter row: there may be more. */
+  ownedCopyCountIsLowerBound?: boolean;
   createdAt: number;
 }
 

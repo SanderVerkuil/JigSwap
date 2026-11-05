@@ -4,7 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
 
@@ -25,11 +25,14 @@ export const listReports = query({
     await requireMember(ctx);
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
-    const result = await ctx.db
-      .query("reports")
-      .withIndex("by_status_created", (q) => q.eq("status", args.status))
-      .order("desc")
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+    const result = await paginateBounded(
+      ctx.db
+        .query("reports")
+        .withIndex("by_status_created", (q) => q.eq("status", args.status))
+        .order("desc"),
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     const openCounts = new Map<Id<"users">, Promise<number>>();
     const openCountOf = (userId: Id<"users">) => {

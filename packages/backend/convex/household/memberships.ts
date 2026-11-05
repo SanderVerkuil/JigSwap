@@ -1,6 +1,7 @@
 import { HOUSEHOLD_INVITE_TTL_MS } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isBlockedEitherWay } from "../social/blocks";
 
 // Read-side helpers over `householdMembers` shared by the household queries and the copy-access
 // gate. Kept tiny: membership is the only fact the read side needs.
@@ -50,22 +51,24 @@ export const householdMateIds = async (
 };
 
 // Whether a pending household invite can still be accepted, as acceptHouseholdInvite decides: not
-// lapsed (HOUSEHOLD_INVITE_TTL_MS after it was sent, the domain's HouseholdInvite.isExpired) and
-// its inviter still the household's admin (an invite speaks for the household only while the
-// admin who sent it runs it). Every read of pending invites hides the rest, so nobody is shown an
-// invite that no longer works.
+// lapsed (HOUSEHOLD_INVITE_TTL_MS after it was sent, the domain's HouseholdInvite.isExpired), its
+// inviter still the household's admin (an invite speaks for the household only while the admin who
+// sent it runs it), and no block either way between inviter and invitee. Every read of pending
+// invites hides the rest, so nobody is shown an invite that no longer works, and a refused Accept
+// can't single out a block (spec 2.6).
 export const isOpenHouseholdInvite = async (
   ctx: QueryCtx,
   invite: Pick<
     Doc<"householdInvites">,
-    "status" | "createdAt" | "householdId" | "inviterId"
+    "status" | "createdAt" | "householdId" | "inviterId" | "inviteeId"
   >,
   now: number,
 ): Promise<boolean> => {
   if (invite.status !== "pending") return false;
   if (now >= invite.createdAt + HOUSEHOLD_INVITE_TTL_MS) return false;
   const inviter = await membershipOf(ctx, invite.inviterId);
-  return (
-    inviter?.householdId === invite.householdId && inviter.role === "admin"
-  );
+  if (inviter?.householdId !== invite.householdId || inviter.role !== "admin") {
+    return false;
+  }
+  return !(await isBlockedEitherWay(ctx, invite.inviterId, invite.inviteeId));
 };

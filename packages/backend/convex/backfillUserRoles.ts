@@ -38,11 +38,11 @@ async function clerkRoleOf(
 // Daily reconcile of the mirrored `users.role` field (display and admin-only notification
 // targeting) with Clerk, its source of truth. The user webhook (users.updateOrCreateUser) keeps
 // the mirror current, but a lost or dropped webhook would leave it stale, so this pages the Clerk
-// Backend API and patches EVERY member's mirror by clerkId, including clearing rows whose Clerk
-// role was removed. Unchanged rows are not written. Then it checks the role holders the pages did
-// not return: a member whose user.deleted webhook was lost for good is gone from Clerk (404), so
-// only its role is cleared; one the offset paging skipped is reconciled like the rest; and one
-// Clerk could not answer for is left for the next run. Runs from crons.ts; to run it now:
+// Backend API and patches, by clerkId, every member who has or should have a role, including clearing
+// rows whose Clerk role was removed. Unchanged rows are not written. Then it checks the role holders
+// the pages did not return: a member whose user.deleted webhook was lost for good is gone from Clerk
+// (404), so only its role is cleared; one the offset paging skipped is reconciled like the rest; and
+// one Clerk could not answer for is left for the next run. Runs from crons.ts; to run it now:
 //   npx convex run backfillUserRoles:run '{}'
 // A deployment without CLERK_SECRET_KEY (a preview) skips it with a warning.
 export const run = internalAction({
@@ -65,15 +65,24 @@ export const run = internalAction({
     let scanned = 0;
     let patched = 0;
     const seen = new Set<string>();
+    const holders = await ctx.runQuery(
+      internal.users.listRoleHolderClerkIds,
+      {},
+    );
+    const holderSet = new Set(holders);
 
     // Clerk's list endpoint is offset-paginated; totalCount says when to stop.
     for (;;) {
       const page = await clerkClient.users.getUserList({ limit, offset });
       for (const clerkUser of page.data) {
         seen.add(clerkUser.id);
+        const role = roleOf(clerkUser);
+        // No role in Clerk and none mirrored, as for nearly every member: nothing to write, so no
+        // function call per member per run.
+        if (role === undefined && !holderSet.has(clerkUser.id)) continue;
         const changed = await ctx.runMutation(internal.users.patchUserRole, {
           clerkId: clerkUser.id,
-          role: roleOf(clerkUser),
+          role,
         });
         if (changed) patched += 1;
       }
@@ -83,10 +92,6 @@ export const run = internalAction({
     }
 
     let cleared = 0;
-    const holders = await ctx.runQuery(
-      internal.users.listRoleHolderClerkIds,
-      {},
-    );
     for (const clerkId of holders) {
       if (seen.has(clerkId)) continue;
       const answer = await clerkRoleOf(clerkClient, clerkId);

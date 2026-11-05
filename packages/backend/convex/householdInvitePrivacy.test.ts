@@ -135,4 +135,25 @@ describe("SEC-10: household invites respect a private profile", () => {
     });
     await expect(invite(t, u.victim)).resolves.toEqual(expect.any(String));
   });
+
+  test("a household link names a private admin by their display name, not their account name", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await as(t, "attacker").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+    const { token } = await as(t, "attacker").mutation(
+      api.social.createHouseholdInviteLink.createHouseholdInviteLink,
+      {},
+    );
+    const landing = await as(t, "victim").query(
+      api.social.getHouseholdLinkInvite.getHouseholdLinkInvite,
+      { token },
+    );
+    expect(landing).toEqual({
+      state: "can-accept",
+      inviterName: "Admin Pseudonym",
+    });
+  });
 });

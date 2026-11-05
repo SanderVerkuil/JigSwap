@@ -62,13 +62,12 @@ export const toDomain = (row: Doc<"exchanges">): Exchange => {
       break;
     case "sale": {
       // salePrice.amount carries minor units (cents); the column has a currency too.
-      const price = row.salePrice
-        ? Money.create(row.salePrice.amount, row.salePrice.currency)
-        : undefined;
       state = {
         ...base,
         kind: "sale",
-        price: price && price.isOk ? price.value : undefined,
+        price: row.salePrice
+          ? Money.fromState(row.salePrice.amount, row.salePrice.currency)
+          : undefined,
       };
       break;
     }

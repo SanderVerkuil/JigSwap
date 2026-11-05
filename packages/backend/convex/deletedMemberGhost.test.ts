@@ -143,9 +143,19 @@ const seed = async (t: TestConvex<typeof schema>) =>
     });
 
     // Dora's recent solve, in the viewer's feed.
+    const doraSolve = crypto.randomUUID();
+    await ctx.db.insert("completions", {
+      aggregateId: doraSolve,
+      userId: dora,
+      startDate: now,
+      photos: [],
+      isCompleted: true,
+      createdAt: now,
+      updatedAt: now,
+    });
     await ctx.db.insert("domainEvents", {
       name: "CompletionRecorded",
-      payload: { userId: dora, completionId: crypto.randomUUID() },
+      payload: { userId: dora, completionId: doraSolve },
       occurredAt: now,
       context: "solving",
     });

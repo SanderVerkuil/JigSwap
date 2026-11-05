@@ -141,6 +141,7 @@ describe("admin/getPuzzleDefinitionDetail", () => {
       submitter: { _id: carol, name: "Carol" },
     });
     expect(result.stats).toEqual({
+      capped: false,
       ownerCount: 2,
       copies: { total: 3, forTrade: 1, forSale: 1, forLend: 1 },
     });
@@ -214,6 +215,7 @@ describe("admin/getPuzzleDefinitionDetail", () => {
     );
     expect(result.audit).toEqual([]);
     expect(result.stats).toEqual({
+      capped: false,
       ownerCount: 0,
       copies: { total: 0, forTrade: 0, forSale: 0, forLend: 0 },
     });

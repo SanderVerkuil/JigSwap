@@ -1,4 +1,5 @@
 import { DomainError } from "../../shared-kernel";
+import type { LibraryTextField } from "./text-limits";
 
 // A closed set of reasons a Library aggregate operation can fail. The `code` is the stable,
 // machine-readable discriminant a transport adapter maps to (the human message is for
@@ -9,6 +10,7 @@ export type LibraryErrorCode =
   | "InvalidCondition"
   | "InvalidPrice"
   | "InvalidAcquisitionDate"
+  | "InvalidMissingPieces"
   | "DuplicateCollectionName"
   | "CannotDeleteDefaultCollection"
   | "CopyNotInCollection"
@@ -23,6 +25,7 @@ export type LibraryErrorCode =
   | "AlreadyLentOut"
   | "TooManyImages"
   | "ImageTextTooLong"
+  | "TextTooLong"
   | "OffersBatchTooLarge";
 
 export class LibraryError extends DomainError {
@@ -55,6 +58,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "InvalidAcquisitionDate",
       "Not a date a copy can have been acquired on",
+    );
+  }
+
+  // A missing-piece count that isn't a whole number within MAX_MISSING_PIECES.
+  static invalidMissingPieces(): LibraryError {
+    return new LibraryError(
+      "InvalidMissingPieces",
+      "The number of missing pieces must be a whole number",
     );
   }
 
@@ -164,6 +175,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "ImageTextTooLong",
       `A photo ${field} can be at most ${max} characters`,
+    );
+  }
+
+  // A collection, category or copy text is longer than its bound (LIBRARY_TEXT_LIMITS).
+  static textTooLong(field: LibraryTextField, max: number): LibraryError {
+    return new LibraryError(
+      "TextTooLong",
+      `The ${field} can be at most ${max} characters`,
     );
   }
 

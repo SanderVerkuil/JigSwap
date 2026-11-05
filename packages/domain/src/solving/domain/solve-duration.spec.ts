@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SolveDuration } from "./solve-duration";
+import {
+  isPlausibleSolveMinutes,
+  MAX_SOLVE_MINUTES,
+  SolveDuration,
+} from "./solve-duration";
 
 describe("SolveDuration", () => {
   it("accepts a positive number of minutes", () => {
@@ -36,6 +40,17 @@ describe("SolveDuration", () => {
       if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
     },
   );
+
+  // One solve of Number.MAX_VALUE minutes used to become a definition's public average.
+  it("accepts a duration up to ten years and nothing longer", () => {
+    expect(MAX_SOLVE_MINUTES).toBe(10 * 365 * 1440);
+    expect(SolveDuration.ofMinutes(MAX_SOLVE_MINUTES).isOk).toBe(true);
+    for (const minutes of [MAX_SOLVE_MINUTES + 1, 1e300, Number.MAX_VALUE]) {
+      const result = SolveDuration.ofMinutes(minutes);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("InvalidDuration");
+    }
+  });
 
   it("derives a duration from a start/end span", () => {
     const start = new Date("2026-06-01T10:00:00Z");
@@ -76,5 +91,24 @@ describe("SolveDuration", () => {
     const thirty = SolveDuration.fromState(30);
     expect(thirty.equals(SolveDuration.fromState(30))).toBe(true);
     expect(thirty.equals(SolveDuration.fromState(31))).toBe(false);
+  });
+});
+
+describe("isPlausibleSolveMinutes", () => {
+  it("holds for what a solve can be stored with", () => {
+    expect(isPlausibleSolveMinutes(1)).toBe(true);
+    expect(isPlausibleSolveMinutes(90)).toBe(true);
+    expect(isPlausibleSolveMinutes(MAX_SOLVE_MINUTES)).toBe(true);
+  });
+
+  it.each([
+    0,
+    -5,
+    MAX_SOLVE_MINUTES + 1,
+    Number.MAX_VALUE,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+  ])("refuses %p, whatever a row already holds", (minutes) => {
+    expect(isPlausibleSolveMinutes(minutes)).toBe(false);
   });
 });

@@ -5,10 +5,12 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
+import { readMemberLibraryCounts } from "../library/memberLibraryCounts";
 
-// Admin-only, but the page size is still the client's request: one page joins each member's
-// library size, so it holds at most this many members (the console asks for 25).
+// Admin-only, but the page size is still the client's request (the console asks for 25). A member's
+// library size comes from their counter row, one read however many copies they hold, so a member
+// adding copies by the thousand can't break the page used to find them.
 const MAX_PAGE_SIZE = 50;
 
 // Admin read model: every member, paginated newest-first, with the display-only mirrored Clerk
@@ -21,23 +23,22 @@ const MAX_PAGE_SIZE = 50;
 const toAdminUserView = async (
   ctx: QueryCtx,
   user: Doc<"users">,
-): Promise<AdminUserView> => ({
-  _id: user._id,
-  _creationTime: user._creationTime,
-  name: user.name,
-  username: user.username,
-  email: user.email,
-  avatar: user.avatar,
-  isActive: user.isActive,
-  role: user.role,
-  ownedCopyCount: (
-    await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", user._id))
-      .collect()
-  ).length,
-  createdAt: user.createdAt,
-});
+): Promise<AdminUserView> => {
+  const { owned, complete } = await readMemberLibraryCounts(ctx, user._id);
+  return {
+    _id: user._id,
+    _creationTime: user._creationTime,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    avatar: user.avatar,
+    isActive: user.isActive,
+    role: user.role,
+    ownedCopyCount: owned,
+    ...(complete ? {} : { ownedCopyCountIsLowerBound: true }),
+    createdAt: user.createdAt,
+  };
+};
 
 // "local@domain" with no spaces: looked up as an exact address, not searched by name.
 const EMAIL_SHAPED = /^[^\s@]+@[^\s@]+$/;
@@ -74,10 +75,6 @@ export const listUsers = query({
     }
 
     const search = term.toLowerCase();
-    const paginationOpts = clampPaginationOpts(
-      args.paginationOpts,
-      MAX_PAGE_SIZE,
-    );
     const result =
       search.length > 0
         ? await ctx.db
@@ -85,8 +82,14 @@ export const listUsers = query({
             .withSearchIndex("by_searchable_name", (q) =>
               q.search("searchableName", search),
             )
-            .paginate(paginationOpts)
-        : await ctx.db.query("users").order("desc").paginate(paginationOpts);
+            .paginate(
+              clampUnpinnedPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+            )
+        : await paginateBounded(
+            ctx.db.query("users").order("desc"),
+            args.paginationOpts,
+            MAX_PAGE_SIZE,
+          );
 
     return {
       ...result,

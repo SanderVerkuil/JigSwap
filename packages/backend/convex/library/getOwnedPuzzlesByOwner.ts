@@ -5,7 +5,7 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { buildCopyViewContext, canViewCopyWithContext } from "./canViewCopy";
 import { toOwnedCopyView } from "./mappers";
-import { LIBRARY_INDEX_CAP } from "./myLibraryRows";
+import { LIBRARY_WINDOW_MAX } from "./myLibraryRows";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
 // The most of another member's library this read covers, newest first. The app pages a visited
@@ -25,9 +25,10 @@ const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
 // `includeUnavailable` is ignored for non-owners. Filtering, the newest-first ordering, and the
 // join are preserved from legacy puzzles.getOwnedPuzzlesByOwner; rows map to typed copy DTOs.
 //
-// Bounded: the owner's newest LIBRARY_INDEX_CAP copies, for the pickers that offer every copy (a
+// Bounded: the owner's newest LIBRARY_WINDOW_MAX copies, for the pickers that offer every copy (a
 // collection's Add puzzles, sharing with a circle, arranging the shelf, logging a solve), and a
-// non-owner's newest NON_OWNER_READ_CAP. Lists page instead (library/listMyLibraryWindow).
+// non-owner's newest NON_OWNER_READ_CAP. Lists page instead (library/listMyLibraryWindow). A picker
+// that gets the maximum back says older copies were left out.
 export const getOwnedPuzzlesByOwner = query({
   args: {
     ownerId: v.id("users"),
@@ -41,7 +42,7 @@ export const getOwnedPuzzlesByOwner = query({
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .order("desc")
-      .take(isOwner ? LIBRARY_INDEX_CAP : NON_OWNER_READ_CAP);
+      .take(isOwner ? LIBRARY_WINDOW_MAX : NON_OWNER_READ_CAP);
 
     if (!isOwner) {
       // A non-owner only sees copies that pass THE canonical copy-reachability gate (canViewCopy),

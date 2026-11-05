@@ -7,7 +7,7 @@ import { v } from "convex/values";
 import type { DataModel, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -87,8 +87,10 @@ export const listProfileCopies = query({
         : seesPrivate
           ? base
           : base.filter(notPrivate);
-    const result = await scoped.paginate(
-      clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+    const result = await paginateBounded(
+      scoped,
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
     );
 
     // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.

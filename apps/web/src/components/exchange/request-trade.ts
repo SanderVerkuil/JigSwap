@@ -112,13 +112,16 @@ const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
 export const proposeErrorKey = (error: unknown): ProposeErrorKey =>
   CODE_TO_KEY[convexErrorCode(error) ?? ""] ?? "generic";
 
+// The highest price the server takes (exchange/domain/terms.ts MAX_MONEY_CENTS).
+const MAX_PRICE_CENTS = 100_000_000;
+
 /** Parse a euro amount ("12", "12.5", "12,99") into positive integer cents, else undefined. */
 export const parsePriceCents = (input: string): number | undefined => {
   const match = /^(\d+)(?:[.,](\d{1,2}))?$/.exec(input.trim());
   if (!match) return undefined;
   const cents =
     Number(match[1]) * 100 + Number((match[2] ?? "").padEnd(2, "0"));
-  return cents > 0 ? cents : undefined;
+  return cents > 0 && cents <= MAX_PRICE_CENTS ? cents : undefined;
 };
 
 /** "Return by" choices on a borrow request; "none" sends no date (the loan stays open-ended). */

@@ -9,6 +9,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import {
   copyNotFound,
   isCopySharedInto,
@@ -54,6 +55,18 @@ export const shareCopiesToCircle = mutation({
       if (!(await isCopySharedInto(ctx, args.circleId, copyId))) {
         toShare.push(copyId);
       }
+    }
+
+    // Each copy actually shared counts against the member's daily budget; a batch that doesn't fit
+    // is refused whole. Copies already there cost nothing.
+    if (toShare.length > 0) {
+      await enforceRateLimit(
+        ctx,
+        "circleShare",
+        actorId,
+        undefined,
+        toShare.length,
+      );
     }
 
     // Runs even when everything was already shared, so the seat gate always answers.

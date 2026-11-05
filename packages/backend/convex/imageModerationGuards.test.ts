@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { appExtensionDifferentialGif } from "../test-fixtures/craftGif";
+import { progressiveJpeg } from "../test-fixtures/craftJpeg";
 import {
   craftPng,
   iendChunk,
@@ -290,6 +291,12 @@ describe("input guards (copy photos)", () => {
       "interlaced",
     ],
     ["the review's 25 MP JPEG", JPEG_25MP, "image/jpeg", "too_many_pixels"],
+    [
+      "a small progressive JPEG whose scans would hold a moderation slot for minutes",
+      progressiveJpeg({ width: 3538, height: 3538, scans: 1_600 }),
+      "image/jpeg",
+      "too_many_pixels",
+    ],
     [
       "a 779-byte JPEG whose frame header makes jpeg-js allocate over 1 GiB",
       JPEG_BLOCK_BOMB,

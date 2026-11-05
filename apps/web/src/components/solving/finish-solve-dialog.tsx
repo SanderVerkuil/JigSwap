@@ -31,7 +31,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
-import { solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
 
 interface FinishSolveDialogProps {
   open: boolean;
@@ -103,7 +103,7 @@ export function FinishSolveDialog({
       toast.error(
         solvingErrorCode(error) === "InvalidTimeRange"
           ? t("endBeforeStartError")
-          : t("saveError"),
+          : t(solveSaveErrorKey(error)),
       );
     }
   };

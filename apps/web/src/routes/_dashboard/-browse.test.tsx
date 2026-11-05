@@ -87,7 +87,6 @@ const ROW = {
 };
 const BASE = {
   rows: [],
-  total: 0,
   hasMore: false,
   loadingMore: false,
   loading: false,
@@ -171,14 +170,14 @@ describe("Browse page", () => {
   });
 
   it("says the first page failed", async () => {
-    browse.current = { ...BASE, failed: true, total: undefined };
+    browse.current = { ...BASE, failed: true };
     await open("/browse");
     expect(text()).toContain(copy.loadFailed);
     expect(text()).not.toContain(copy.empty.noOffersTitle);
   });
 
   it("shows placeholders, not an empty state, on a first visit", async () => {
-    browse.current = { ...BASE, loading: true, total: undefined };
+    browse.current = { ...BASE, loading: true };
     await open("/browse");
     expect(text()).toContain("placeholder");
     expect(text()).not.toContain(copy.empty.noOffersTitle);
@@ -190,13 +189,30 @@ describe("Browse page", () => {
     browse.current = {
       ...BASE,
       rows: [ROW],
-      total: 3,
       hasMore: true,
       loadMore,
     };
     await open("/browse");
-    expect(text()).toContain("Showing 1 of 3 puzzles");
+    expect(text()).toContain("1+ puzzles found");
     await act(async () => button(copy.loadMore)?.click());
+    expect(loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives the count without a + once the end of the list is on screen", async () => {
+    browse.current = { ...BASE, rows: [ROW] };
+    await open("/browse");
+    expect(text()).toContain("1 puzzle found");
+    expect(button(copy.loadMore)).toBeFalsy();
+  });
+
+  it("doesn't call it empty while the server hasn't finished looking", async () => {
+    const loadMore = vi.fn();
+    browse.current = { ...BASE, hasMore: true, loadMore };
+    await open("/browse?q=rare");
+    expect(text()).toContain(copy.noMatchesYet);
+    expect(text()).not.toContain(copy.empty.filteredTitle);
+    expect(text()).not.toContain("0+");
+    await act(async () => button(copy.keepLooking)?.click());
     expect(loadMore).toHaveBeenCalledTimes(1);
   });
 
@@ -205,7 +221,6 @@ describe("Browse page", () => {
     browse.current = {
       ...BASE,
       rows: [ROW],
-      total: 3,
       hasMore: true,
       loadMoreFailed: true,
       loadMore,
@@ -224,7 +239,6 @@ describe("Browse page", () => {
     browse.current = {
       ...BASE,
       rows: [ROW],
-      total: 3,
       loadingMore: true,
       loadMore,
     };

@@ -395,6 +395,7 @@
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
     "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or continue without a photo.",
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
+    "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000.",
     "noPuzzleSelected": "Please select a puzzle first",
     "puzzleAdded": "Added to My Puzzles",
     "addedNotOffered": "Added to My Puzzles, but we couldn't offer it. You can switch that on from the puzzle's page.",
@@ -540,6 +541,7 @@
     "resultCount": "{count} of {total} puzzles",
     "showMore": "Show more",
     "rowsAtMax": "Showing the first {max} puzzles. Search or filter to find the rest.",
+    "pickerAtMax": "Showing your newest {max} puzzles.",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",
@@ -910,7 +912,7 @@
     "noOfferable": "You have no puzzles you can offer in a swap.",
     "priceLabel": "Your offer (EUR)",
     "pricePlaceholder": "e.g. 15.00",
-    "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
+    "priceInvalid": "Enter an amount above zero and up to 1,000,000, like 15 or 15.50.",
     "revealNotice": {
       "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
       "emailPrivate": "Your email address stays private unless you choose to share it once the owner accepts.",
@@ -1331,6 +1333,7 @@
       "nowPrivate": "Your profile is now private",
       "undo": "Undo",
       "saveError": "Couldn't change who can see your profile. Please try again.",
+      "rateLimited": "You've changed this a lot lately. Try again later.",
       "inviteLink": "Invite link",
       "inviteLinkHelp": "Anyone who opens your QR code or invite link can make you follow each other in one tap. Reset it if you want links and QR codes you've already shared to stop working.",
       "resetConfirmTitle": "Reset your invite link?",
@@ -1527,7 +1530,9 @@
     "filterAll": "All",
     "available": "Available",
     "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
-    "showingCount": "Showing {shown} of {total, plural, one {# puzzle} other {# puzzles}}",
+    "resultsCountMore": "{count}+ puzzles found",
+    "noMatchesYet": "No matches among the offers checked so far.",
+    "keepLooking": "Keep looking",
     "loadMore": "Load more",
     "loadMoreFailed": "Couldn't load more puzzles.",
     "loadMoreRetry": "Try again",
@@ -2153,6 +2158,7 @@
     "create": "Create",
     "created": "Created “{name}”. Now add some puzzles to it.",
     "createError": "Couldn't create the collection. Please try again.",
+    "createRateLimited": "You've created the most collections allowed for now. Try again {when}.",
     "duplicateName": "You already have a collection called “{name}”.",
     "save": "Save",
     "saveError": "Couldn't save your changes. Please try again.",
@@ -2162,6 +2168,7 @@
     "addPuzzlesToCollection": "Add Puzzles to Collection",
     "noPuzzlesInCollection": "No puzzles in this collection yet",
     "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
+    "newestOnly": "The newest {count} puzzles in this collection. Older ones aren't shown here.",
     "selectPuzzlesToAdd": "Select puzzles to add to collection",
     "noAvailablePuzzles": "No available puzzles",
     "allPuzzlesInCollection": "All your puzzles are already in this collection or match your search",
@@ -2510,6 +2517,7 @@
       "namePlaceholder": "e.g. Saturday Puzzlers",
       "nameCounter": "{count}/{max}",
       "nameInvalid": "A circle name must be 1 to 100 characters.",
+      "createRateLimited": "You've created the most circles allowed for today. Try again tomorrow.",
       "cancel": "Cancel",
       "create": "Create",
       "title": "Manage {name}",
@@ -2563,6 +2571,7 @@
       "CircleNotFound": "This circle is no longer available.",
       "CannotShareCopy": "You have view-only access in this circle, so you can't share puzzles here.",
       "BatchTooLarge": "You can share at most 100 puzzles at once.",
+      "RateLimited": "You've shared the most puzzles allowed for today. Try again tomorrow.",
       "generic": "Something went wrong. Please try again."
     },
     "page": {
@@ -3339,6 +3348,8 @@
       "finishDescription": "When did you finish {puzzle}?",
       "finishDescriptionGeneric": "When did you finish this puzzle?",
       "startedOn": "You started on {date}.",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've logged a lot of solves today. Try again tomorrow.",
       "endBeforeStartError": "The finish date can't be before the start date.",
@@ -3358,6 +3369,8 @@
       "submit": "Start",
       "started": "Puzzle started",
       "finishTrigger": "Finish solve",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've started or logged a lot of solves today. Try again tomorrow."
     },
@@ -3431,7 +3444,7 @@
         "titleTooLong": "Keep the title to {max} characters.",
         "descriptionTooLong": "Keep the description to {max} characters.",
         "targetRequired": "Enter how many puzzles you want to finish.",
-        "targetInvalid": "Use a whole number of 1 or more.",
+        "targetInvalid": "Use a whole number from 1 to 100,000.",
         "toBeforeFrom": "The end date can't be before the start date.",
         "toPast": "Pick an end date from today on."
       },
@@ -4629,6 +4642,7 @@
       "saved": "Changes saved",
       "cancel": "Cancel",
       "editFailed": "Could not save your changes. Please try again.",
+      "rateLimited": "You're changing this very quickly. Wait a minute and try again.",
       "copyReserved": "This puzzle is part of an exchange in progress or is out on loan, so you can't change how it's offered or shared right now. You can again once the exchange is completed, declined or cancelled, or once the puzzle is back.",
       "cover": "Cover image",
       "useCatalogueImage": "Use catalogue image",
@@ -4744,6 +4758,7 @@
       "rateLimited": "You've sent the most suggestions allowed for now. Try again {when}.",
       "coverRateLimited": "You've uploaded the most images allowed for now. Try again {when}.",
       "textTooLong": "One of the fields is too long. Shorten it and try again.",
+      "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000.",
       "generic": "Couldn't submit your suggestion"
     }
   },
@@ -4761,7 +4776,8 @@
     "autoCropNothing": "No uniform border to trim",
     "autoCropFailed": "Couldn't analyse this image",
     "editingBlocked": "Your browser blocks image editing to protect your privacy, so your changes can't be applied. You can upload the original photo, unedited, instead.",
-    "useOriginal": "Upload original"
+    "useOriginal": "Upload original",
+    "loadFailed": "Couldn't open the photo editor. Check your connection and try again."
   },
   "mySuggestions": {
     "title": "My suggestions",
@@ -5266,6 +5282,8 @@
     "docFeedback": {
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
+      "partial": "Totals of the newest {count, plural, one {# vote} other {# votes}}. Load more to count older ones.",
+      "loadMore": "Load more",
       "helpful": "Helpful",
       "notHelpful": "Not helpful",
       "helpfulCount": "{count} helpful",
@@ -5334,6 +5352,7 @@
       "pieces": "{count, plural, one {# piece} other {# pieces}}",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
+      "ownerCountLowerBound": "{count}+ owners",
       "imageMissing": "Box art missing",
       "status": {
         "pending": "Pending",
@@ -5366,7 +5385,8 @@
           "invalidBarcode": "One of the barcodes is not valid",
           "duplicateBarcode": "Another puzzle already uses one of these barcodes",
           "invalidPieceCount": "The piece count must be a positive number",
-          "textTooLong": "One of the fields is too long. Shorten it and try again."
+          "textTooLong": "One of the fields is too long. Shorten it and try again.",
+          "invalidDimensions": "Check the width and height: both must be above zero and at most 10,000."
         },
         "cancel": "Cancel"
       },
@@ -5389,6 +5409,7 @@
         "auditTitle": "Moderation activity",
         "auditEmpty": "No moderation activity for this puzzle yet.",
         "proposalsTitle": "Suggested edits",
+        "proposalsCapped": "Showing the newest {count} suggested edits.",
         "proposalsEmpty": "No suggested edits for this puzzle."
       }
     },
@@ -5875,6 +5896,8 @@
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
+      "invalidDate": "That date isn't possible. Check the year.",
+      "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
       "saveError": "Couldn't log these puzzles. Nothing was saved, so you can try again.",
       "rateLimited": "You've logged a lot of puzzles today. Nothing was saved, so try again tomorrow."
     },
@@ -6098,6 +6121,18 @@
         "photoComment": "A comment on a photo",
         "puzzleReview": "A puzzle review"
       }
+    },
+    "formerCopyPhotos": {
+      "title": "Photos of puzzles you no longer have",
+      "description": "You added these photos to a puzzle that now belongs to someone else, or that you no longer manage. You can still remove them.",
+      "photo": "Your photo",
+      "added": "Added {date}",
+      "remove": "Remove",
+      "removeName": "Remove {name}, added {date}",
+      "confirmBody": "Remove this photo for good? It also goes for whoever has the puzzle now.",
+      "showMore": "Show more",
+      "noneYet": "None among your newest photos.",
+      "keepLooking": "Keep looking"
     }
   },
   "ownContent": {

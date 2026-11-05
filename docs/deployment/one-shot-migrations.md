@@ -488,6 +488,11 @@ images whose structure can't be parsed are left alone and counted.
 - `"table":"boxArt"`: `puzzles.image`, plus the proposals of that definition whose
   `baseline.image` or `changes.image` is the same blob.
 - `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+- For both box-art tables, a blob's `boxArtUploads` listing decides. A listing that may be
+  served moves to the clean blob, so the publication gate and any later rejection follow it.
+  One that may not (pending, unscored, rejected, quarantined, or its hash check not passed)
+  is left alone with its blob, unserved: it counts in `withMetadata` but not in `stripped`,
+  and a re-run strips it once it is cleared.
 - `"table":"copy"` / `"table":"completion"`: `ownedPuzzleImages` / `completionImages`
   (a completion's `photos` entry is switched too). Pending and quarantined rows are
   skipped: the moderation pipeline owns them.
@@ -552,6 +557,11 @@ check is skipped.
 
 - `"table":"boxArt"`: `puzzles.image`.
 - `"table":"proposals"`: `puzzleChangeProposals.changes.image` (proposed box art).
+- For both box-art tables, a blob's `boxArtUploads` listing decides. A listing that may be
+  served moves to the clean blob, so the publication gate and any later rejection follow it.
+  One that may not (pending, unscored, rejected, quarantined, or its hash check not passed)
+  is left alone with its blob, unserved: it counts in `withMetadata` but not in `stripped`,
+  and a re-run strips it once it is cleared.
 
 `dryRun` defaults to **true**: without `"dryRun":false` it only counts (`unchecked`) and calls
 nothing outside. **Safe to re-run:** yes; checked box art is skipped.
@@ -823,9 +833,10 @@ SEC-29) are deployed there. There is no ordering pressure: every copy save, ever
 exchange and every profile visibility change already writes the fields, and until a row has
 them, Browse still finds it through a fallback that reads the rows without a flag and checks
 their availability and owner. That fallback reads legacy closed copies and private members'
-copies too, and they count against Browse's read budget (3,000 rows per call), so on a
-deployment with more copies than that Browse can miss older listings until the backfill has
-run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
+copies too, and they count against Browse's read budget (500 rows per page), so on a
+deployment with more copies than that a page can come back short until the backfill has
+run, and the member has to press Load more to reach older listings. Run it soon after the
+deploy; once it has run, the fallback range is empty and Browse
 reads only public members' open copies.
 
 **What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
@@ -979,8 +990,10 @@ where the real run counts them as `updated`; `inserted + updated` matches.
 ## `insights/platformStats:recount` — the landing page's counters
 
 **When:** once per deployment, right after the `platformStats` table and the
-`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the cron runs the
-same recount every 6 hours. There is no ordering pressure: until the first recount has
+`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the daily
+`top up platform stats` cron runs a whole recount as long as there is no row yet, and adds
+only the new rows after that (the same recount runs weekly and corrects for deleted rows).
+There is no ordering pressure: until the first recount has
 written the row, `insights/getGlobalStats` counts the `users`, `puzzles` and
 `ownedPuzzles` tables itself, at the old full-table cost on every home page load, so run it
 soon after the deploy rather than waiting for the cron.
@@ -1022,11 +1035,15 @@ The remaining batches run as scheduled functions. The last batch logs one JSON l
 
 **When:** once per deployment, right after the `definitionStats` table, the marks on the
 write paths and the `reconcile definition stats` cron (PERF-B4m, SEC-29) are deployed there.
-Optional: the cron runs the same reconcile every night. There is no ordering pressure:
+Optional: the cron runs the same reconcile every week. There is no ordering pressure:
 every write that changes a definition's aggregates already gives it a row, and until a
 definition has one the catalog and definition pages compute its aggregates themselves, at
 the old cost (every review, copy and completion of the definition on each view), so run it
-soon after the deploy rather than waiting for the cron.
+soon after the deploy rather than waiting for the cron. Two numbers wait for a definition's next
+recompute: the catalog's average solve time reads as nothing while a stored total still holds a
+solve time no solve can have taken, and the admin list's owner count reads as a lower bound
+("100+ owners") where the totals don't hold it yet. Run it again after a deploy that changes either
+of those, so they don't wait a week.
 
 **What it does:** pages through `puzzles` (100 definitions per batch; `batchSize` overrides
 it, rounded down and clamped to 1..500; each batch its own transaction, rescheduling itself
@@ -1043,13 +1060,12 @@ stale is rewritten and logged as `"event":"library.definitionStats.drift"` with 
 or profile visibility without marking the definition (see library/definitionStats).
 
 **Watch:** an error line `"event":"library.definitionStats.recomputeOverdue"` with a
-`puzzle_id` means that definition's row stayed stale for more than five minutes: its
+`puzzle_id` means that definition's mark stayed pending for more than five minutes: its
 recompute threw (Convex read limits on a very large definition, or write conflicts until
-the retries ran out). The next mark, and the nightly reconcile, log it and schedule another
-recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
-coming back, its recompute does not fit in one transaction: the per-copy completions read
-in `computeDefinitionTotals` (one query per copy, for solves logged on a copy only) is the
-likely cause.
+the retries ran out). The next mark, and the daily `retry overdue definition stats` cron, log it
+and schedule another recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
+coming back, its recompute does not fit in one transaction: reading every copy, review and
+completion of a definition with tens of thousands of rows is the likely cause.
 
 **Commands:**
 
@@ -1068,11 +1084,42 @@ number of `definitions` it scheduled.
 **Verify:**
 
 1. In the dashboard data view, `definitionStats` has one row per `puzzles` row, each with
-   `totals` and without `stale` or `staleSince`.
+   `totals` and without `stale` or `staleSince`, and `definitionStatsPending` is empty once the
+   recomputes have landed.
 2. Run it again: no `library.definitionStats.drift` lines, and no row's `computedAt`
    changes (give or take definitions written to in between).
 3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same
    ratings, owner, completion and availability numbers as before the run.
+
+## `solving/backfillCompletionPuzzleId` — old solves get their definition link
+
+**When:** once per deployment, any time after the code that reads
+`library/definitionAggregates.completionTotalsOf` this way is deployed there. It has probably run
+on production already (it dates from June 2026); a run that patches nothing confirms that.
+
+**What it does:** pages through `completions` and gives a row with a copy link but no `puzzleId` the
+definition its copy belongs to. Every write since sets that link, so only old rows are affected, and
+a row whose copy is gone stays as it is.
+
+**Why it matters now:** a definition's completion totals no longer run one query per copy, which
+failed past about 4,000 copies. They read the definition's solves plus the solves with no definition
+link, at most `COPY_ONLY_SOLVES_READ` (1,000) of those per read. The numbers don't change either
+way, but past that bound totals undercount and each read logs
+`library.definitionStats.copyOnlySolvesCapped` at error level. Seeing that line means this backfill
+has to run.
+
+**Safe to re-run:** yes. A second run patches 0.
+
+**Commands:** one batch per call; pass `continueCursor` back as `cursor` until `isDone` is true.
+
+```bash
+cd packages/backend
+npx convex run solving/backfillCompletionPuzzleId:run
+npx convex run solving/backfillCompletionPuzzleId:run '{"cursor":"<continueCursor>"}'
+# prod: the same with --prod, after dev looks right
+```
+
+---
 
 ## `solving/recountGoals` — goals count only the solves inside their period
 

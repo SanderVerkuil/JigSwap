@@ -16,6 +16,13 @@ export const EVENT_RETENTION_MS = FEED_WINDOW_MS + 7 * DAY_MS;
 export const EVENT_RETENTION_PAGE = 500;
 
 /**
+ * A dry run stops after this many pages and reports `capped`, its counts then a lower bound from the
+ * oldest events. Counting never shrinks the backlog, so uncapped it would re-read every old event
+ * every day for as long as deleting stays off. Deleting isn't capped: its backlog only shrinks.
+ */
+export const EVENT_RETENTION_DRY_RUN_MAX_PAGES = 10;
+
+/**
  * The daily domainEvents retention sweep (crons.ts; SEC-71, PERF-B7): deletes every event that
  * was dispatched (processedAt) more than EVENT_RETENTION_MS ago, with its member lookup rows
  * (events/eventMembers), one page per run over by_processed, re-scheduling itself until the
@@ -28,10 +35,13 @@ export const sweepEventRetention = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),
     now: v.optional(v.number()),
+    // Pages this run has read before this one.
+    pages: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
     const cutoff = now - EVENT_RETENTION_MS;
+    const pages = (args.pages ?? 0) + 1;
     const enforce = retentionEnforced("domainEvents");
     const page = await ctx.db
       .query("domainEvents")
@@ -52,11 +62,13 @@ export const sweepEventRetention = internalMutation({
       await ctx.db.delete(event._id);
       acted++;
     }
-    if (!page.isDone) {
+    const capped =
+      !enforce && !page.isDone && pages >= EVENT_RETENTION_DRY_RUN_MAX_PAGES;
+    if (!page.isDone && !capped) {
       await ctx.scheduler.runAfter(
         0,
         internal.events.retention.sweepEventRetention,
-        { cursor: page.continueCursor, now },
+        { cursor: page.continueCursor, now, pages },
       );
     }
     logRetentionSweep({
@@ -64,7 +76,8 @@ export const sweepEventRetention = internalMutation({
       due,
       acted,
       dryRun: !enforce,
-      isDone: page.isDone,
+      isDone: page.isDone || capped,
+      ...(capped && { capped }),
     });
   },
 });

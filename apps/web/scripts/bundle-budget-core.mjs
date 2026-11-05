@@ -108,10 +108,10 @@ export function compareToBudget(measured, budget) {
 }
 
 /**
- * Chunks that must never be part of any route's first load (three.js and the
- * physics engine load on idle or on request), found by a marker string in
- * their content so the check survives chunk renames. Reported on the route
- * whose own preloads bring the chunk in.
+ * Chunks that must never be part of any route's first load (three.js, the
+ * physics engine and the image cropper load on idle or on request), found by a
+ * marker string in their content so the check survives chunk renames. Reported
+ * on the route whose own preloads bring the chunk in.
  * @param {ManifestRoutes} routes
  * @param {{ markers: Record<string, string>; contentOf: (url: string) => string }} io
  * @returns {{ route: string; file: string; label: string }[]}

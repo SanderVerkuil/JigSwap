@@ -380,6 +380,7 @@ import type * as library_loanReadViews from "../library/loanReadViews.js";
 import type * as library_listMyLibraryIndex from "../library/listMyLibraryIndex.js";
 import type * as library_listMyLibraryWindow from "../library/listMyLibraryWindow.js";
 import type * as library_listMyOwnedDefinitionIds from "../library/listMyOwnedDefinitionIds.js";
+import type * as library_listMyPhotosOnFormerCopies from "../library/listMyPhotosOnFormerCopies.js";
 import type * as library_mappers from "../library/mappers.js";
 import type * as library_memberLibraryCounts from "../library/memberLibraryCounts.js";
 import type * as library_moderatePhoto from "../library/moderatePhoto.js";
@@ -1009,6 +1010,7 @@ declare const fullApi: ApiFromModules<{
   "library/listMyLibraryIndex": typeof library_listMyLibraryIndex;
   "library/listMyLibraryWindow": typeof library_listMyLibraryWindow;
   "library/listMyOwnedDefinitionIds": typeof library_listMyOwnedDefinitionIds;
+  "library/listMyPhotosOnFormerCopies": typeof library_listMyPhotosOnFormerCopies;
   "library/mappers": typeof library_mappers;
   "library/memberLibraryCounts": typeof library_memberLibraryCounts;
   "library/moderatePhoto": typeof library_moderatePhoto;

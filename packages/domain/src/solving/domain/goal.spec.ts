@@ -5,6 +5,7 @@ import {
   Goal,
   GoalDefinition,
   MAX_GOAL_DESCRIPTION_LENGTH,
+  MAX_GOAL_TARGET,
   MAX_GOAL_TITLE_LENGTH,
 } from "./goal";
 import { GoalSolve } from "./goal-progress";
@@ -463,5 +464,58 @@ describe("Goal round-trip", () => {
     const rehydrated = Goal.rehydrate(state);
     expect(rehydrated.toState()).toEqual(state);
     expect(rehydrated.pullEvents()).toEqual([]);
+  });
+});
+
+describe("a goal's numbers stay within reason", () => {
+  it.each([MAX_GOAL_TARGET + 1, 1e300, Number.MAX_VALUE])(
+    "refuses a target of %p",
+    (target) => {
+      const r = create(target);
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("InvalidGoalTarget");
+    },
+  );
+
+  it("accepts the largest target", () => {
+    expect(create(MAX_GOAL_TARGET).isOk).toBe(true);
+  });
+
+  it.each([
+    ["a start before 1900", { startDate: new Date(Date.UTC(1899, 11, 31)) }],
+    [
+      "a start of a century ahead",
+      { startDate: new Date(Date.UTC(2127, 0, 1)) },
+    ],
+    [
+      "a target of a century ahead",
+      { targetDate: new Date(Date.UTC(2127, 0, 1)) },
+    ],
+    ["a start far outside any calendar", { startDate: new Date(-1e15) }],
+    ["a target far outside any calendar", { targetDate: new Date(8e15) }],
+  ])("refuses %s", (_label, period) => {
+    const r = create(3, period);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("InvalidGoalPeriod");
+  });
+
+  it("accepts a goal that runs for decades", () => {
+    expect(
+      create(3, {
+        startDate: new Date(Date.UTC(1990, 0, 1)),
+        targetDate: new Date(Date.UTC(2100, 0, 1)),
+      }).isOk,
+    ).toBe(true);
+  });
+
+  it("holds an edit to the same bounds", () => {
+    const goal = fresh();
+    const definition = { title: "Solve 3 puzzles", targetCompletions: 3 };
+    expect(
+      goal.edit({ ...definition, targetCompletions: 1e300 }, LATER).isErr,
+    ).toBe(true);
+    expect(
+      goal.edit({ ...definition, targetDate: new Date(8e15) }, LATER).isErr,
+    ).toBe(true);
   });
 });

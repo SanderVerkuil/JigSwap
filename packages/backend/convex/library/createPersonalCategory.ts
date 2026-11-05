@@ -2,6 +2,7 @@ import { makeCreatePersonalCategory, type OwnerId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexPersonalCategoryRepository } from "./adapters/convexPersonalCategoryRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { personalCategoryIdGenerator } from "./adapters/idGenerators";
@@ -18,6 +19,7 @@ export const createPersonalCategory = mutation({
   },
   handler: async (ctx, args) => {
     const ownerId = (await requireMember(ctx)) as unknown as OwnerId;
+    await enforceRateLimit(ctx, "categoryCreate", ownerId);
 
     const create = makeCreatePersonalCategory({
       categories: convexPersonalCategoryRepository(ctx),

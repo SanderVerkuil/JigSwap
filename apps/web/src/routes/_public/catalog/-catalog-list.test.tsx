@@ -240,6 +240,25 @@ describe("public catalogue empty states", () => {
     expect(screen.queryByRole("button", { name: /Clear/ })).toBeNull();
   });
 
+  it("offers more instead of 'no matches' when the server stopped a bounded read early", () => {
+    router.search = { brand: "Jumbo", pieces: "b1500" };
+    const client = queryClientFor(router.search);
+    client.setQueryData(
+      convexQuery(gateway.catalog.publicBrowse, {
+        paginationOpts: { numItems: 20, cursor: null },
+        ...publicCatalogFilterArgs(router.search),
+      }).queryKey,
+      { page: [], isDone: false, continueCursor: "cut-here" },
+    );
+    render(
+      <QueryClientProvider client={client}>{pageAt("en")}</QueryClientProvider>,
+    );
+    expect(screen.queryByText("No puzzles match these filters")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: en.publicCatalog.loadMore }),
+    ).toBeTruthy();
+  });
+
   it("offers to clear a search with no matches", () => {
     renderAt({ q: "zzz" });
     expect(screen.getByText('No puzzles match "zzz"')).toBeTruthy();

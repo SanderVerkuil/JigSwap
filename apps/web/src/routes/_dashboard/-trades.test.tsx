@@ -58,6 +58,7 @@ vi.mock("convex-helpers/react", () => ({
   }),
 }));
 vi.mock("@tanstack/react-query", () => ({
+  useQueries: () => [],
   useQuery: ({ fn }: { fn: string }) => ({
     data:
       fn === "identity.byClerkId"

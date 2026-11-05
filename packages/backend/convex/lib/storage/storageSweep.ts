@@ -14,7 +14,7 @@ import { deleteRenditions } from "../imageModeration/renditionsStore";
 import { logEvent } from "../logEvent";
 import { hasMaintenanceMarker } from "../maintenanceMarkers";
 
-// The daily storage sweep (crons.ts; SEC-20, SEC-92). Uploads are claimed once and delete paths
+// The storage sweep (crons.ts; SEC-20, SEC-92). Uploads are claimed once and delete paths
 // keep blobs that another row holds, so a blob nothing holds stays behind whenever an upload is
 // never attached (an abandoned form, a refused attach, a burst of upload URLs). This finds them:
 //
@@ -48,6 +48,11 @@ import { hasMaintenanceMarker } from "../maintenanceMarkers";
 // cutoffs are fixed when the run starts. One `storage.sweep` wide event per batch, with that
 // batch's candidate ids and the run's running totals; the event with `done: true` carries the
 // whole run.
+//
+// Two scopes, because walking every blob costs about 15 index reads per blob. Nearly every orphan is
+// an upload that was never attached, which shows within RECENT_BLOB_WINDOW_MS of being stored, so
+// the daily run reads only those (`scope: "recent"`). An older blob something has since let go of
+// waits for the monthly pass over the whole table (`scope: "all"`, the default).
 
 /** Blobs read per batch. */
 export const STORAGE_SWEEP_PAGE = 50;
@@ -57,6 +62,11 @@ export const ORPHAN_MIN_AGE_MS = 24 * 60 * 60 * 1000;
 
 /** Box art that only its listing holds is only a candidate once it is this old. */
 export const UNATTACHED_BOX_ART_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** How far back the daily run reads: past the last age at which a blob becomes a candidate, with
+ * room for a run or two that failed. */
+export const RECENT_BLOB_WINDOW_MS =
+  UNATTACHED_BOX_ART_TTL_MS + 3 * 24 * 60 * 60 * 1000;
 
 const totalsValidator = v.object({
   scanned: v.number(),
@@ -172,19 +182,30 @@ const addContentType = (
  */
 export const sweepStorage = internalMutation({
   args: {
+    scope: v.optional(v.union(v.literal("all"), v.literal("recent"))),
     cursor: v.optional(v.union(v.string(), v.null())),
     startedAt: v.optional(v.number()),
     totals: v.optional(totalsValidator),
   },
   handler: async (ctx, args): Promise<Totals & { done: boolean }> => {
+    const scope = args.scope ?? "all";
     const startedAt = args.startedAt ?? Date.now();
     const deleteRequested = process.env.STORAGE_GC_MODE === "delete";
     const deleting =
       deleteRequested &&
       (await hasMaintenanceMarker(ctx, "legacyCompletionSidecars"));
-    const page = await ctx.db.system
-      .query("_storage")
-      .paginate({ numItems: STORAGE_SWEEP_PAGE, cursor: args.cursor ?? null });
+    const blobs =
+      scope === "recent"
+        ? ctx.db.system
+            .query("_storage")
+            .withIndex("by_creation_time", (q) =>
+              q.gte("_creationTime", startedAt - RECENT_BLOB_WINDOW_MS),
+            )
+        : ctx.db.system.query("_storage");
+    const page = await blobs.paginate({
+      numItems: STORAGE_SWEEP_PAGE,
+      cursor: args.cursor ?? null,
+    });
 
     const previous = args.totals ?? NO_TOTALS;
     const totals: Totals = {
@@ -238,12 +259,13 @@ export const sweepStorage = internalMutation({
       await ctx.scheduler.runAfter(
         0,
         internal.lib.storage.storageSweep.sweepStorage,
-        { cursor: page.continueCursor, startedAt, totals },
+        { scope, cursor: page.continueCursor, startedAt, totals },
       );
     }
     logEvent({
       event: "storage.sweep",
       outcome: "success",
+      scope,
       mode: deleting ? "delete" : "dry_run",
       delete_blocked:
         deleteRequested && !deleting

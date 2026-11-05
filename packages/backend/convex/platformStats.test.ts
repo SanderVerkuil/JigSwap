@@ -214,12 +214,90 @@ describe("landing stats read a bounded number of documents", () => {
   });
 });
 
+describe("insights.platformStats.topUp", () => {
+  const statsRow = (t: T) =>
+    t.run((ctx) => ctx.db.query("platformStats").first());
+  // Past the millisecond the rows above were created in, so they are older than what comes next.
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+  const runTopUp = async (t: T) => {
+    vi.useFakeTimers();
+    try {
+      await t.mutation(internal.insights.platformStats.topUp, {});
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+    } finally {
+      vi.useRealTimers();
+    }
+  };
+
+  test("before any recount it runs a whole one, which also writes the row", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t, { activeUsers: 2, puzzleStatuses: ["approved"], copies: 1 });
+
+    await runTopUp(t);
+
+    expect(await statsRow(t)).toMatchObject({
+      users: 2,
+      puzzles: 1,
+      ownedPuzzles: 1,
+    });
+  });
+
+  test("adds only rows created since the last count, without reading the older ones", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 20 },
+    });
+    await seed(t, { activeUsers: 30 });
+    await tick();
+    await t.run((ctx) =>
+      ctx.db.insert("platformStats", {
+        key: "global",
+        users: 1000,
+        puzzles: 2000,
+        ownedPuzzles: 3000,
+        countedAt: Date.now(),
+      }),
+    );
+    await tick();
+    await seed(t, { activeUsers: 2, puzzleStatuses: ["approved"], copies: 1 });
+
+    await runTopUp(t);
+
+    expect(await statsRow(t)).toMatchObject({
+      users: 1002,
+      puzzles: 2001,
+      ownedPuzzles: 3001,
+    });
+  });
+
+  test("a second top-up with nothing new changes no number", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t, { activeUsers: 2, puzzleStatuses: ["approved"], copies: 1 });
+    await tick();
+    await runRecount(t);
+    await tick();
+
+    await runTopUp(t);
+
+    expect(await statsRow(t)).toMatchObject({
+      users: 2,
+      puzzles: 1,
+      ownedPuzzles: 1,
+    });
+  });
+});
+
 describe("crons", () => {
-  test("recount platform stats every 6 hours", () => {
-    expect(crons.crons["recount platform stats"]).toEqual({
+  test("new rows are added daily and every table is recounted weekly, not several times a day", () => {
+    expect(crons.crons["top up platform stats"]).toMatchObject({
+      name: getFunctionName(internal.insights.platformStats.topUp),
+      schedule: { type: "daily" },
+    });
+    expect(crons.crons["recount platform stats"]).toMatchObject({
       name: getFunctionName(recount),
       args: [{}],
-      schedule: { type: "interval", hours: 6 },
+      schedule: { type: "weekly" },
     });
   });
 });

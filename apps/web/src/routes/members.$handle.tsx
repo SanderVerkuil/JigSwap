@@ -22,6 +22,7 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
 import { readSidebarCookies } from "@/lib/sidebar-state";
+import { authorizeServerReads } from "@/lib/ssr-member-data";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -52,6 +53,9 @@ export const Route = createFileRoute("/members/$handle")({
   beforeLoad: () => ({ sidebar: readSidebarCookies() }),
   loaderDeps: ({ search }) => ({ invite: search.invite }),
   loader: async ({ context, params, deps }) => {
+    // What these reads answer depends on the viewer. Without a token for a signed-in viewer the page
+    // is left to the browser, which reads as them: no title from the profile for this load.
+    if (!(await authorizeServerReads(context))) return { profile: null };
     const fullProfile = await context.queryClient.ensureQueryData(
       convexQuery(gateway.social.publicProfile, {
         handle: params.handle,
@@ -166,6 +170,8 @@ function MemberPage() {
     recordLanding({ token: invite });
   }, [invite, inviteValid, userId, recordLanding]);
 
+  // Only the browser finds this out when the loader left the page to it.
+  if (fullProfile === null && teaser === null) return <MemberNotFound />;
   if (!profile) return <MemberPending />;
 
   // Logged-out: marketing chrome + the public profile body. The bottom sign-up

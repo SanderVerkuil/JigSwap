@@ -3,7 +3,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { enrichExchangeSummary, isLiveExchangeStatus } from "./readViews";
 
@@ -52,13 +52,15 @@ export const listMyExchangeHistory = query({
           ]
         : []),
     ];
-    const result = await mergedStream(streams, ["updatedAt"])
-      .filterWith(
+    const result = await paginateBounded(
+      mergedStream(streams, ["updatedAt"]).filterWith(
         async (row) =>
           !isLiveExchangeStatus(row.status) &&
           (args.status === undefined || row.status === args.status),
-      )
-      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+      ),
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     const page = await Promise.all(
       result.page.map((row) =>

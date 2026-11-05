@@ -1,4 +1,5 @@
 import {
+  isValidSortOrder,
   makeReorderCatalogCategories,
   toCatalogCategoryId,
 } from "@jigswap/domain";
@@ -25,6 +26,12 @@ export const reorderCatalogCategories = mutation({
   handler: async (ctx, args) => {
     const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    if (!args.order.every((entry) => isValidSortOrder(entry.sortOrder))) {
+      throw new ConvexError({
+        code: "InvalidSortOrder",
+        message: "Not a position in the taxonomy",
+      });
+    }
 
     const reorder = makeReorderCatalogCategories({
       categories: convexCatalogCategoryRepository(ctx),

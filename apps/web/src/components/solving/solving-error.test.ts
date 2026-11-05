@@ -19,6 +19,11 @@ describe("solveSaveErrorKey", () => {
     expect(solveSaveErrorKey(fail("RateLimited"))).toBe("rateLimited");
   });
 
+  it("names a date or a solve time no solve can have", () => {
+    expect(solveSaveErrorKey(fail("InvalidSolveDate"))).toBe("invalidDate");
+    expect(solveSaveErrorKey(fail("InvalidDuration"))).toBe("invalidDuration");
+  });
+
   it("keeps the generic save error for every other failure", () => {
     expect(solveSaveErrorKey(fail("InvalidTimeRange"))).toBe("saveError");
     expect(solveSaveErrorKey(new ConvexError("Copy not found"))).toBe(
@@ -27,7 +32,7 @@ describe("solveSaveErrorKey", () => {
     expect(solveSaveErrorKey(new Error("network"))).toBe("saveError");
   });
 
-  it("has both messages in every solve form, in en and nl", () => {
+  it("has every message in every solve form, in en and nl", () => {
     for (const [locale, messages] of [
       ["en", en],
       ["nl", nl],
@@ -35,6 +40,8 @@ describe("solveSaveErrorKey", () => {
       for (const namespace of SOLVE_FORMS) {
         const t = createTranslator({ locale, messages, namespace });
         expect(t.has("rateLimited")).toBe(true);
+        expect(t.has("invalidDate")).toBe(true);
+        expect(t.has("invalidDuration")).toBe(true);
         expect(t.has("saveError")).toBe(true);
       }
     }

@@ -187,13 +187,67 @@ describe("the listing fields Browse's candidate index reads", () => {
     await share({});
     expect(await listing(t, copyId)).toEqual({
       isOpen: false,
-      listedAt: undefined,
+      listedAt: NOW + DAY,
       ownerPrivate: undefined,
     });
 
     vi.setSystemTime(NOW + 3 * DAY);
     await share({ forTrade: true });
     expect((await listing(t, copyId)).listedAt).toBe(NOW + 3 * DAY);
+  });
+
+  // A close and reopen loop used to put a member's copies back on top of Browse.
+  test("reopening within a day keeps the listing's place; after that it counts as new", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seedMembers(t);
+    const copyId = await asAlice(t).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    );
+    const offer = (forTrade: boolean) =>
+      asAlice(t).mutation(api.library.updateCopySharing.updateCopySharing, {
+        copyId,
+        forTrade,
+      });
+    await offer(true);
+
+    for (const later of [1000, DAY - 1000]) {
+      vi.setSystemTime(NOW + later);
+      await offer(false);
+      await offer(true);
+      expect(await listing(t, copyId)).toMatchObject({
+        isOpen: true,
+        listedAt: NOW,
+      });
+    }
+
+    vi.setSystemTime(NOW + DAY);
+    await offer(false);
+    await offer(true);
+    expect((await listing(t, copyId)).listedAt).toBe(NOW + DAY);
+  });
+
+  test("the bulk offer path keeps a quick reopen's place too", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seedMembers(t);
+    const copyId = await asAlice(t).mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    );
+    const offer = (forTrade: boolean) =>
+      asAlice(t).mutation(api.library.updateCopiesOffers.updateCopiesOffers, {
+        copyIds: [copyId],
+        forTrade,
+      });
+    await offer(true);
+    vi.setSystemTime(NOW + 1000);
+    await offer(false);
+    await offer(true);
+    expect((await listing(t, copyId)).listedAt).toBe(NOW);
   });
 
   test("a copy added open is listed when it was added; a private owner's is marked", async () => {
@@ -439,7 +493,8 @@ describe("library.backfillCopyOpenFlag", () => {
       [true, NOW, undefined],
       [false, undefined, undefined],
       [true, NOW, undefined],
-      [false, undefined, undefined],
+      // Closed, but it remembers when it was listed.
+      [false, LISTED, undefined],
       [true, NOW, undefined],
       [true, NOW, true],
       [true, LISTED, undefined],

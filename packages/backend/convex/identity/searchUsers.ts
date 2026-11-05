@@ -5,7 +5,8 @@ import { query } from "../_generated/server";
 import { clampLimit } from "../lib/pageSize";
 import { blockedEitherWaySet } from "../social/blocks";
 import {
-  countKnownFollowersOf,
+  followGraphFilter,
+  knownFollowerIdsOf,
   viewerFollowingSet,
 } from "../social/knownFollowers";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
@@ -28,7 +29,8 @@ const DEFAULT_LIMIT = 20;
 // only a WITHIN-BUCKET tiebreaker — a better bucket ALWAYS outranks a worse one, so a brand-new
 // member with zero connections is still findable by exact name. 0 = exact (term equals name or
 // username), 1 = prefix (term is a startsWith of name or username), 2 = fuzzy (everything else the
-// search index surfaced).
+// search index surfaced). The count covers only known followers whose follow graph the searcher may
+// see (followGraphFilter, SEC-41): the result order must not tell whom a private member follows.
 type MatchBucket = 0 | 1 | 2;
 
 const matchBucketOf = (
@@ -69,6 +71,7 @@ export const searchUsers = query({
     // Built ONCE per query (not per candidate) so ranking every candidate against this viewer
     // doesn't re-scan `follows` by_follower CANDIDATE_LIMIT times.
     const viewerFollowing = await viewerFollowingSet(ctx, viewerId);
+    const visibleFollowGraphs = followGraphFilter(ctx, viewerId);
     // Members blocked either way with the searcher are never surfaced (spec 2.6).
     const blockedIds = await blockedEitherWaySet(ctx, viewerId);
 
@@ -91,7 +94,7 @@ export const searchUsers = query({
       // Bounded: at most CANDIDATE_LIMIT candidates survive the search index, each scanning its
       // own (capped) follower list — fine at this scale, and needed since ranking requires a
       // known-follower count for every visible candidate, not just the first `limit`.
-      const knownCount = await countKnownFollowersOf(
+      const knownFollowers = await knownFollowerIdsOf(
         ctx,
         viewerId,
         viewerFollowing,
@@ -100,7 +103,7 @@ export const searchUsers = query({
       visible.push({
         user: u,
         bucket: matchBucketOf(searchTerm, u),
-        knownCount,
+        knownCount: (await visibleFollowGraphs(knownFollowers)).length,
       });
     }
 

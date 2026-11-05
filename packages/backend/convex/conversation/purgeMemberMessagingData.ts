@@ -21,6 +21,7 @@ import {
   cancelOpenExchanges,
   closeOpenLoans,
   deleteCollections,
+  deleteOwnContactShares,
   deleteOwnCopies,
   deleteOwnRows,
   deleteUploadedCopyPhotos,
@@ -90,6 +91,9 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                The other party, if still active, gets a trade_cancelled_member_deleted
 //                notification (actor: the departed member, "Deleted member") and a system row in
 //                the exchange's thread.
+//   contactShares    } their consent to show their email on the exchanges they started or were
+//   contactSharesIn  } sent (tradeContactShares, tied to them only through exchange and side). The
+//                      other party's consent on the same exchange stays.
 //   legacyMessagesSent      } their rows in the legacy exchange chat (`messages`, from before
 //   legacyMessagesReceived  } Conversation), both directions: a row conversation/backfill has
 //                copied into its exchange thread is a duplicate and is deleted (the thread keeps the
@@ -195,6 +199,8 @@ export const PHASES = [
   "presence",
   "exchangesOpen",
   "exchangesOpenIn",
+  "contactShares",
+  "contactSharesIn",
   "legacyMessagesSent",
   "legacyMessagesReceived",
   "pairThreads",
@@ -249,6 +255,8 @@ const phaseValidator = v.union(
   v.literal("presence"),
   v.literal("exchangesOpen"),
   v.literal("exchangesOpenIn"),
+  v.literal("contactShares"),
+  v.literal("contactSharesIn"),
   v.literal("legacyMessagesSent"),
   v.literal("legacyMessagesReceived"),
   v.literal("pairThreads"),
@@ -793,6 +801,10 @@ const runPhase = async (
       return cancelOpenExchanges(ctx, memberId, "initiator", opts);
     case "exchangesOpenIn":
       return cancelOpenExchanges(ctx, memberId, "recipient", opts);
+    case "contactShares":
+      return deleteOwnContactShares(ctx, memberId, "initiator", opts);
+    case "contactSharesIn":
+      return deleteOwnContactShares(ctx, memberId, "recipient", opts);
     case "legacyMessagesSent":
     case "legacyMessagesReceived": {
       // The legacy exchange chat, both directions. A row conversation/backfill copied into its

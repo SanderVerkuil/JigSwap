@@ -8,6 +8,7 @@ import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
+import { deleteSolveActivity } from "../social/activityEntries";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -17,7 +18,8 @@ import { toConvexError } from "./errors";
 // a member may delete their own completion at any time (e.g. logged by accident). Ownership is
 // enforced in the use case; deletion triggers an in-process goal recompute in the same transaction.
 // Photo sidecars (and their blobs) are cascaded after a successful delete — captured BEFORE the
-// use case runs since the completions row is gone afterwards.
+// use case runs since the completions row is gone afterwards. Its activity feed entries go in the
+// same transaction: a member who deletes a solve no longer has it shown to their followers.
 export const deleteCompletion = mutation({
   args: {
     completionId: v.string(),
@@ -44,6 +46,7 @@ export const deleteCompletion = mutation({
     if (result.isErr) throw toConvexError(result.error);
 
     if (row) {
+      await deleteSolveActivity(ctx, row.userId, args.completionId);
       const images = await ctx.db
         .query("completionImages")
         .withIndex("by_completion", (q) =>

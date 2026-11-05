@@ -148,6 +148,15 @@ function ExchangeTimelineRow({
 export const IN_MOTION_ROWS = 3;
 export const LATEST_FEED_SIZE = 8;
 
+/**
+ * The feed rows the Latest column shows. The feed is asked for more than that, so rows of a kind
+ * this build can't render (a newer server) don't leave the column short.
+ */
+export const latestRows = <Entry extends { kind: string }>(
+  feed: Entry[],
+): Entry[] =>
+  feed.filter((entry) => isKnownActivityKind(entry.kind)).slice(0, 4);
+
 function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
   const t = useTranslations("dashboard.pulse.inMotion");
 
@@ -444,9 +453,7 @@ function LatestColumn({
   me: Member;
 }) {
   const t = useTranslations("dashboard.pulse.latest");
-  const shown = entries
-    .filter((entry) => isKnownActivityKind(entry.kind))
-    .slice(0, 4);
+  const shown = latestRows(entries);
 
   return (
     <section className="min-w-0">

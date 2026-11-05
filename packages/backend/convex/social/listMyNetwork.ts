@@ -4,7 +4,7 @@ import { paginationOptsValidator } from "convex/server";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { blockedEitherWaySet } from "./blocks";
 import { followExists } from "./readViews";
@@ -39,10 +39,11 @@ export const listMyNetwork = query({
           !blocked.has(edge.followerId) &&
           !(await followExists(ctx, viewer, edge.followerId)),
       );
-    const result = await mergedStream(
-      [following, followers],
-      ["_creationTime"],
-    ).paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
+    const result = await paginateBounded(
+      mergedStream([following, followers], ["_creationTime"]),
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     const page = await Promise.all(
       result.page.map(async (edge): Promise<NetworkMemberView> => {

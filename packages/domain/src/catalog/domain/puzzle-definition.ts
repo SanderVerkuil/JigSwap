@@ -12,7 +12,13 @@ import {
   PuzzleDefinitionUpdated,
 } from "./events";
 import { CatalogCategoryId, PuzzleDefinitionId, SubmitterId } from "./ids";
-import { Difficulty, Dimensions, PieceCount, Shape } from "./piece-count";
+import {
+  checkDimensions,
+  Difficulty,
+  Dimensions,
+  PieceCount,
+  Shape,
+} from "./piece-count";
 import { puzzleSearchableText } from "./puzzle-searchable-text";
 
 // Input to submit(): the authored product facts. Barcodes/pieceCount arrive raw and are
@@ -121,6 +127,9 @@ export class PuzzleDefinition {
     const pieceCount = PieceCount.create(props.pieceCount);
     if (pieceCount.isErr) return err(pieceCount.error);
 
+    const dimensions = checkDimensions(props.dimensions);
+    if (dimensions.isErr) return dimensions;
+
     const barcodes = validateBarcodes(props.barcodes ?? {});
     if (barcodes.isErr) return err(barcodes.error);
 
@@ -219,6 +228,9 @@ export class PuzzleDefinition {
       if (validated.isErr) return err(validated.error);
       pieceCount = validated.value.value;
     }
+
+    const dimensions = checkDimensions(changes.dimensions);
+    if (dimensions.isErr) return dimensions;
 
     let barcodeFields: Pick<
       PuzzleDefinitionState,

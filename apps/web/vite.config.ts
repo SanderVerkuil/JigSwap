@@ -44,8 +44,9 @@ export default defineConfig({
       prerender: {
         enabled: true,
         // Best-effort: a page that can't be rendered at build time (e.g. no
-        // Clerk/Convex env in CI) is skipped and served via SSR instead of
-        // failing the build. With real env the docs render to static HTML.
+        // Clerk/Convex env) is skipped and served via SSR instead of failing
+        // the build. With env set the docs render to static HTML; bundle:check
+        // fails on a build that prerendered none.
         failOnError: false,
         crawlLinks: true,
         filter: (page: { path: string }) => page.path.startsWith("/docs"),

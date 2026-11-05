@@ -57,6 +57,19 @@ const COPY = {
     updatedAt: 1,
   },
 };
+const feedRow = (
+  memberId: string,
+  title = "A puzzle",
+  kind = "acquisition",
+) => ({
+  kind,
+  memberId,
+  occurredAt: 1,
+  ref: `${memberId}-${title}`,
+  actorName: memberId,
+  actor: { handle: memberId },
+  title,
+});
 const ANSWERS: Record<string, unknown> = {
   [name(gateway.identity.currentUser)]: { _id: "me", name: "Henk" },
   [name(gateway.exchange.myLive)]: [],
@@ -75,19 +88,9 @@ const ANSWERS: Record<string, unknown> = {
   },
   [name(gateway.identity.byId)]: { _id: "anna", name: "Anna" },
   [name(gateway.social.activityFeed)]: [
-    {
-      kind: "added",
-      memberId: "anna",
-      createdAt: 1,
-      puzzle: { title: "Windmill", _id: "p2" },
-    },
-    { kind: "added", memberId: "me", createdAt: 1, puzzle: { title: "Mine" } },
-    {
-      kind: "added",
-      memberId: "anna",
-      createdAt: 1,
-      puzzle: { title: "Ship" },
-    },
+    feedRow("anna", "Windmill"),
+    feedRow("me", "Mine"),
+    feedRow("anna", "Ship"),
   ],
   [name(gateway.onboarding.quickStart)]: null,
   [name(gateway.social.connectionOffers)]: [],
@@ -158,6 +161,41 @@ describe("the dashboard home on the server", () => {
     ).toEqual([
       JSON.stringify([name(gateway.identity.byId), { userId: "anna" }]),
     ]);
+  });
+
+  it("reads the members of the rows the Latest column shows, and no others", async () => {
+    const { queryClient, asked } = clientAnswering();
+    const feed = ANSWERS[name(gateway.social.activityFeed)];
+    // A kind from a newer server takes no row; the column shows the first four it knows.
+    ANSWERS[name(gateway.social.activityFeed)] = [
+      feedRow("future", "From a newer server", "some-future-kind"),
+      feedRow("m1"),
+      feedRow("m2"),
+      feedRow("m2", "Again"),
+      feedRow("m3"),
+      feedRow("m4"),
+      feedRow("m5"),
+      feedRow("m6"),
+    ];
+    try {
+      await prefetchDashboardHome(queryClient);
+      renderPage(queryClient);
+    } finally {
+      ANSWERS[name(gateway.social.activityFeed)] = feed;
+    }
+    expect(
+      asked.filter((key) => key.includes(name(gateway.identity.byId))),
+    ).toEqual(
+      ["m1", "m2", "m3"].map((userId) =>
+        JSON.stringify([name(gateway.identity.byId), { userId }]),
+      ),
+    );
+    const left = queryClient
+      .getQueryCache()
+      .getAll()
+      .filter((query) => query.queryKey[2] !== "skip")
+      .filter((query) => query.state.status !== "success");
+    expect(left).toEqual([]);
   });
 
   it("still renders, with skeletons, when a read fails", async () => {

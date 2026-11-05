@@ -1,5 +1,10 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { DatePrecision, MIN_SOLVE_YEAR, yearSentinel } from "./date-precision";
+import {
+  DatePrecision,
+  isPossibleSolveDate,
+  MIN_SOLVE_YEAR,
+  yearSentinel,
+} from "./date-precision";
 import { SolvingError } from "./errors";
 import {
   CompletionEdited,
@@ -8,10 +13,13 @@ import {
 } from "./events";
 import { CompletionId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 import { Photo } from "./photo";
-import { SolveDuration } from "./solve-duration";
+import { isSpanLongerThanAnySolve, SolveDuration } from "./solve-duration";
 
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
+
+// The longest a solve's notes may be. Checked where notes are written, never on rehydrate.
+export const MAX_SOLVE_NOTES_LENGTH = 5_000;
 
 // Edits are only allowed within this window. It is anchored on the solve's end date (see
 // completionEditableUntil), which is a calendar date stored as UTC midnight, so a back-dated or
@@ -103,7 +111,8 @@ export function completionEditableUntil(
 // aggregates. It can be in-progress (no end, isCompleted=false) or done (end + duration).
 //
 // Invariants: a new completion names a puzzle definition or a copy (at least one, so a solve
-// can't be logged against nothing; SEC-30); endDate ≥ startDate; the duration is consistent with
+// can't be logged against nothing; SEC-30); its dates are ones a solve can have (checked where they
+// are supplied, so a row that predates that stays editable); endDate ≥ startDate; the duration is consistent with
 // the recorded end; at most five photos; edits only within 24h of completion (photo attachment is
 // exempt — see attachPhotos).
 export class Completion {
@@ -136,6 +145,12 @@ export class Completion {
   static start(props: StartCompletionProps): Result<Completion, SolvingError> {
     if (!props.puzzleDefinitionId && !props.copyId) {
       return err(SolvingError.targetRequired());
+    }
+    if (!isPossibleSolveDate(props.startDate, props.now)) {
+      return err(SolvingError.invalidSolveDate());
+    }
+    if ((props.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
     }
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
@@ -182,6 +197,9 @@ export class Completion {
     const dates = Completion.resolveRecordDates(props);
     if (dates.isErr) return err(dates.error);
     const { startDate, endDate } = dates.value;
+    if ((props.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
+    }
 
     const photos = props.photos ?? [];
     if (photos.length > MAX_PHOTOS) {
@@ -243,6 +261,9 @@ export class Completion {
     allPiecesPresent?: boolean,
   ): Result<void, SolvingError> {
     if (this.state.isCompleted) return ok(undefined);
+    if (!isPossibleSolveDate(endDate, now)) {
+      return err(SolvingError.invalidSolveDate());
+    }
     if (endDate.getTime() < this.state.startDate.getTime()) {
       return err(SolvingError.invalidTimeRange());
     }
@@ -292,6 +313,15 @@ export class Completion {
     const editableUntil = this.editableUntil;
     if (editableUntil && now.getTime() > editableUntil.getTime()) {
       return err(SolvingError.editWindowClosed());
+    }
+
+    for (const date of [changes.startDate, changes.endDate]) {
+      if (date && !isPossibleSolveDate(date, now)) {
+        return err(SolvingError.invalidSolveDate());
+      }
+    }
+    if ((changes.notes?.length ?? 0) > MAX_SOLVE_NOTES_LENGTH) {
+      return err(SolvingError.notesTooLong(MAX_SOLVE_NOTES_LENGTH));
     }
 
     // A "year"/"unknown" row's dates are sentinels, not facts. Setting a real date upgrades it to
@@ -408,6 +438,12 @@ export class Completion {
       if (!startDate || !endDate || year !== undefined) {
         return err(SolvingError.invalidDatePrecision());
       }
+      if (
+        !isPossibleSolveDate(startDate, now) ||
+        !isPossibleSolveDate(endDate, now)
+      ) {
+        return err(SolvingError.invalidSolveDate());
+      }
       if (endDate.getTime() < startDate.getTime()) {
         return err(SolvingError.invalidTimeRange());
       }
@@ -431,9 +467,10 @@ export class Completion {
   }
 
   // Reconcile a supplied duration with the start/end span. Returns the resolved minutes. An
-  // explicit minutes value must be a positive number. An explicit end-before-start is rejected
-  // before this helper is called, so the only span-derived cases are start < end (actual span)
-  // and start == end (date-only same-day completion, no explicit time given).
+  // explicit minutes value must be a valid SolveDuration. An explicit end-before-start is rejected
+  // before this helper is called, so the only span-derived cases are start < end (actual span, with
+  // no duration when it is too long to be a solve time) and start == end (date-only same-day
+  // completion, no explicit time given).
   private static resolveDuration(
     start: Date,
     end: Date,
@@ -444,6 +481,7 @@ export class Completion {
       if (duration.isErr) return err(duration.error);
       return ok(duration.value.minutes);
     }
+    if (isSpanLongerThanAnySolve(start, end)) return ok(undefined);
     if (end.getTime() > start.getTime()) {
       const duration = SolveDuration.between(start, end);
       if (duration.isErr) return err(duration.error);

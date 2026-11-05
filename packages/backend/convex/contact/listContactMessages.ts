@@ -4,7 +4,7 @@ import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
-import { clampPaginationOpts } from "../lib/pageSize";
+import { paginateBounded } from "../lib/pageSize";
 
 // Admin-only, but the page size is still the client's request (the inbox asks for 25).
 const MAX_PAGE_SIZE = 50;
@@ -26,19 +26,15 @@ export const listContactMessages = query({
     await requireMember(ctx);
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
     const { status } = args;
-    const paginationOpts = clampPaginationOpts(
+    return await paginateBounded(
+      status
+        ? ctx.db
+            .query("contactMessages")
+            .withIndex("by_status", (q) => q.eq("status", status))
+            .order("desc")
+        : ctx.db.query("contactMessages").order("desc"),
       args.paginationOpts,
       MAX_PAGE_SIZE,
     );
-    return status
-      ? await ctx.db
-          .query("contactMessages")
-          .withIndex("by_status", (q) => q.eq("status", status))
-          .order("desc")
-          .paginate(paginationOpts)
-      : await ctx.db
-          .query("contactMessages")
-          .order("desc")
-          .paginate(paginationOpts);
   },
 });

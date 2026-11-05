@@ -395,6 +395,7 @@
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
     "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of ga verder zonder foto.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+    "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Toegevoegd aan je puzzels",
     "addedNotOffered": "Toegevoegd aan je puzzels, maar aanbieden is niet gelukt. Dat kun je aanzetten op de pagina van de puzzel.",
@@ -540,6 +541,7 @@
     "resultCount": "{count} van {total} puzzels",
     "showMore": "Meer tonen",
     "rowsAtMax": "Je ziet de eerste {max} puzzels. Zoek of filter om de rest te vinden.",
+    "pickerAtMax": "Je ziet je nieuwste {max} puzzels.",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
@@ -910,7 +912,7 @@
     "noOfferable": "Je hebt geen puzzels die je kunt aanbieden om te ruilen.",
     "priceLabel": "Jouw bod (EUR)",
     "pricePlaceholder": "bijv. 15,00",
-    "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
+    "priceInvalid": "Vul een bedrag boven nul en tot 1.000.000 in, zoals 15 of 15,50.",
     "revealNotice": {
       "title": "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.",
       "emailPrivate": "Je e-mailadres blijft privé, tenzij je het zelf deelt nadat de eigenaar heeft geaccepteerd.",
@@ -1331,6 +1333,7 @@
       "nowPrivate": "Je profiel is nu privé",
       "undo": "Ongedaan maken",
       "saveError": "Het is niet gelukt om te wijzigen wie je profiel kan zien. Probeer het opnieuw.",
+      "rateLimited": "Je hebt dit de laatste tijd vaak gewijzigd. Probeer het later opnieuw.",
       "inviteLink": "Uitnodigingslink",
       "inviteLinkHelp": "Wie je QR-code of uitnodigingslink opent, kan met één tik zorgen dat jullie elkaar volgen. Reset de link als je wilt dat links en QR-codes die je al hebt gedeeld niet meer werken.",
       "resetConfirmTitle": "Je uitnodigingslink resetten?",
@@ -1527,7 +1530,9 @@
     "filterAll": "Alle",
     "available": "Beschikbaar",
     "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
-    "showingCount": "{shown} van {total, plural, one {# puzzel} other {# puzzels}} getoond",
+    "resultsCountMore": "{count}+ puzzels gevonden",
+    "noMatchesYet": "Nog geen resultaten in de aanbiedingen die we tot nu toe hebben bekeken.",
+    "keepLooking": "Verder zoeken",
     "loadMore": "Meer laden",
     "loadMoreFailed": "Meer puzzels konden niet worden geladen.",
     "loadMoreRetry": "Opnieuw proberen",
@@ -2153,6 +2158,7 @@
     "create": "Maken",
     "created": "“{name}” is aangemaakt. Voeg er nu puzzels aan toe.",
     "createError": "Kon de collectie niet aanmaken. Probeer het opnieuw.",
+    "createRateLimited": "Je hebt voorlopig het maximale aantal collecties aangemaakt. Probeer het {when} opnieuw.",
     "duplicateName": "Je hebt al een collectie met de naam “{name}”.",
     "save": "Opslaan",
     "saveError": "Kon je wijzigingen niet opslaan. Probeer het opnieuw.",
@@ -2162,6 +2168,7 @@
     "addPuzzlesToCollection": "Puzzels toevoegen aan collectie",
     "noPuzzlesInCollection": "Nog geen puzzels in deze collectie",
     "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "newestOnly": "De nieuwste {count} puzzels in deze collectie. Oudere zie je hier niet.",
     "selectPuzzlesToAdd": "Selecteer puzzels om toe te voegen aan collectie",
     "noAvailablePuzzles": "Geen beschikbare puzzels",
     "allPuzzlesInCollection": "Al je puzzels zijn al in deze collectie of komen overeen met je zoekopdracht",
@@ -2510,6 +2517,7 @@
       "namePlaceholder": "bijv. Zaterdagpuzzelaars",
       "nameCounter": "{count}/{max}",
       "nameInvalid": "Een kringnaam moet 1 tot 100 tekens lang zijn.",
+      "createRateLimited": "Je hebt vandaag het maximale aantal kringen aangemaakt. Probeer het morgen opnieuw.",
       "cancel": "Annuleren",
       "create": "Aanmaken",
       "title": "{name} beheren",
@@ -2563,6 +2571,7 @@
       "CircleNotFound": "Deze kring is niet langer beschikbaar.",
       "CannotShareCopy": "Je kunt in deze kring alleen bekijken, dus je kunt hier geen puzzels delen.",
       "BatchTooLarge": "Je kunt maximaal 100 puzzels tegelijk delen.",
+      "RateLimited": "Je hebt vandaag het maximale aantal puzzels gedeeld. Probeer het morgen opnieuw.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
     },
     "page": {
@@ -3339,6 +3348,8 @@
       "finishDescription": "Wanneer heb je {puzzle} afgemaakt?",
       "finishDescriptionGeneric": "Wanneer heb je deze puzzel afgemaakt?",
       "startedOn": "Je bent op {date} begonnen.",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel voltooiingen vastgelegd. Probeer het morgen opnieuw.",
       "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
@@ -3358,6 +3369,8 @@
       "submit": "Starten",
       "started": "Puzzel gestart",
       "finishTrigger": "Puzzel afronden",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel puzzels gestart of vastgelegd. Probeer het morgen opnieuw."
     },
@@ -3431,7 +3444,7 @@
         "titleTooLong": "Houd de titel op maximaal {max} tekens.",
         "descriptionTooLong": "Houd de beschrijving op maximaal {max} tekens.",
         "targetRequired": "Vul in hoeveel puzzels je wilt afmaken.",
-        "targetInvalid": "Gebruik een heel getal van 1 of meer.",
+        "targetInvalid": "Gebruik een heel getal van 1 tot en met 100.000.",
         "toBeforeFrom": "De einddatum mag niet vóór de begindatum liggen.",
         "toPast": "Kies een einddatum vanaf vandaag."
       },
@@ -4629,6 +4642,7 @@
       "saved": "Wijzigingen opgeslagen",
       "cancel": "Annuleren",
       "editFailed": "Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.",
+      "rateLimited": "Je wijzigt dit erg snel. Wacht een minuutje en probeer het opnieuw.",
       "copyReserved": "Deze puzzel hoort bij een lopende uitwisseling of is uitgeleend, dus je kunt nu niet aanpassen hoe je hem aanbiedt of deelt. Dat kan weer zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
       "cover": "Omslagafbeelding",
       "useCatalogueImage": "Catalogusafbeelding gebruiken",
@@ -4744,6 +4758,7 @@
       "rateLimited": "Je hebt voorlopig het maximale aantal voorstellen ingediend. Probeer het {when} opnieuw.",
       "coverRateLimited": "Je hebt voorlopig het maximale aantal afbeeldingen geüpload. Probeer het {when} opnieuw.",
       "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+      "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000.",
       "generic": "Voorstel indienen mislukt"
     }
   },
@@ -4761,7 +4776,8 @@
     "autoCropNothing": "Geen egale rand om bij te snijden",
     "autoCropFailed": "Deze afbeelding kon niet worden geanalyseerd",
     "editingBlocked": "Je browser blokkeert het bewerken van afbeeldingen om je privacy te beschermen, dus je wijzigingen kunnen niet worden toegepast. Je kunt in plaats daarvan de originele, onbewerkte foto uploaden.",
-    "useOriginal": "Origineel uploaden"
+    "useOriginal": "Origineel uploaden",
+    "loadFailed": "De foto-editor kon niet worden geopend. Controleer je verbinding en probeer het opnieuw."
   },
   "mySuggestions": {
     "title": "Mijn voorstellen",
@@ -5266,6 +5282,8 @@
     "docFeedback": {
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
+      "partial": "Totalen van de nieuwste {count, plural, one {# stem} other {# stemmen}}. Laad meer om oudere mee te tellen.",
+      "loadMore": "Meer laden",
       "helpful": "Nuttig",
       "notHelpful": "Niet nuttig",
       "helpfulCount": "{count} nuttig",
@@ -5334,6 +5352,7 @@
       "pieces": "{count, plural, one {# stukje} other {# stukjes}}",
       "submittedBy": "door {name}",
       "ownerCount": "{count, plural, one {# eigenaar} other {# eigenaren}}",
+      "ownerCountLowerBound": "{count}+ eigenaren",
       "imageMissing": "Afbeelding ontbreekt",
       "status": {
         "pending": "In afwachting",
@@ -5366,7 +5385,8 @@
           "invalidBarcode": "Een van de barcodes is ongeldig",
           "duplicateBarcode": "Een andere puzzel gebruikt al een van deze barcodes",
           "invalidPieceCount": "Het aantal stukjes moet een positief getal zijn",
-          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw."
+          "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
+          "invalidDimensions": "Controleer de breedte en hoogte: ze moeten boven nul liggen en mogen niet hoger zijn dan 10.000."
         },
         "cancel": "Annuleren"
       },
@@ -5389,6 +5409,7 @@
         "auditTitle": "Moderatie-activiteit",
         "auditEmpty": "Nog geen moderatie-activiteit voor deze puzzel.",
         "proposalsTitle": "Wijzigingsvoorstellen",
+        "proposalsCapped": "Je ziet de nieuwste {count} voorgestelde wijzigingen.",
         "proposalsEmpty": "Geen wijzigingsvoorstellen voor deze puzzel."
       }
     },
@@ -5875,6 +5896,8 @@
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
+      "invalidDate": "Die datum kan niet. Controleer het jaar.",
+      "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
       "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen.",
       "rateLimited": "Je hebt vandaag al veel puzzels vastgelegd. Er is niets opgeslagen, dus probeer het morgen opnieuw."
     },
@@ -6098,6 +6121,18 @@
         "photoComment": "Een reactie op een foto",
         "puzzleReview": "Een puzzelreview"
       }
+    },
+    "formerCopyPhotos": {
+      "title": "Foto's van puzzels die je niet meer hebt",
+      "description": "Deze foto's heb je toegevoegd aan een puzzel die nu van iemand anders is, of die je niet meer beheert. Je kunt ze nog steeds verwijderen.",
+      "photo": "Je foto",
+      "added": "Toegevoegd op {date}",
+      "remove": "Verwijderen",
+      "removeName": "{name} verwijderen, toegevoegd op {date}",
+      "confirmBody": "Deze foto definitief verwijderen? Hij verdwijnt dan ook voor wie de puzzel nu heeft.",
+      "showMore": "Meer tonen",
+      "noneYet": "Geen bij je nieuwste foto's.",
+      "keepLooking": "Verder zoeken"
     }
   },
   "ownContent": {

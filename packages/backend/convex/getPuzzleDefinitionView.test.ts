@@ -453,6 +453,88 @@ describe("getPuzzleDefinitionView", () => {
     expect(view?.ownership.condition).toBeNull();
   });
 
+  test("ownership follows the domain link when the copy's FK points elsewhere", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+    const elsewhere = await t.run((ctx) =>
+      ctx.db.insert("puzzles", {
+        aggregateId: "def-elsewhere",
+        title: "Elsewhere",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: viewer,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+    const copy = await t.run((ctx) =>
+      ctx.db.insert("ownedPuzzles", {
+        aggregateId: "c-stale-fk",
+        puzzleId: elsewhere,
+        puzzleDefinitionId: "def-1",
+        ownerId: viewer,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    const view = await get(t, puzzleId);
+    expect(view?.ownership.viewerOwns).toBe(true);
+    expect(view?.ownership.copyId).toBe(copy as string);
+  });
+
+  test("ownership doesn't read the viewer's library, however large", async () => {
+    const t = convexTest({
+      schema,
+      modules,
+      transactionLimits: { documentsRead: 100 },
+    });
+    const { now, viewer, puzzleId } = await seed(t);
+    await t.run(async (ctx) => {
+      const other = await ctx.db.insert("puzzles", {
+        aggregateId: "def-other",
+        title: "Other",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: viewer,
+        createdAt: now,
+        updatedAt: now,
+      });
+      for (let i = 0; i < 500; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId: `c-other-${i}`,
+          puzzleId: other,
+          puzzleDefinitionId: "def-other",
+          ownerId: viewer,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+      await ctx.db.insert("definitionStats", {
+        puzzleId,
+        computedAt: now,
+        totals: {
+          ratingCount: 0,
+          ratingSum: 0,
+          breakdown: [0, 0, 0, 0, 0],
+          completedCount: 0,
+          finishDaysSum: 0,
+          finishDaysCount: 0,
+          communityOwners: 0,
+          ownerCount: 0,
+          publicAvailable: { swap: 0, lend: 0, sale: 0 },
+        },
+      });
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.ownership.viewerOwns).toBe(false);
+  });
+
   test("availableCopies: excludes own, excludes private non-circle, includes public + circle-shared; swapType + owner avgRating; totalAvailable", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, puzzleId } = await seed(t);

@@ -6,18 +6,33 @@ import {
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { ConvexReactClient } from "convex/react";
 import { makeFunctionReference } from "convex/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  authorizeServerReads,
   CONVEX_HOLD_MAX_MS,
   holdConvexUntilAuth,
   loadMemberDataOnServer,
   SSR_MEMBER_DATA_BUDGET_MS,
 } from "./ssr-member-data";
 
+// Clerk's server SDK: with a template, getToken is a call to Clerk's API.
+const clerk = vi.hoisted(() => ({
+  getToken: vi.fn<(options: object) => Promise<string | null>>(),
+}));
+vi.mock("@clerk/tanstack-react-start/server", () => ({
+  auth: async () => ({ userId: "user_1", getToken: clerk.getToken }),
+}));
+
 const signedIn = (queryClient = new QueryClient()) => ({
   userId: "user_1",
-  ssrAuthed: true,
   queryClient,
+  convexQueryClient: { serverHttpClient: { setAuth: vi.fn() } },
+});
+const signedOut = () => ({ ...signedIn(), userId: null });
+
+beforeEach(() => {
+  clerk.getToken.mockReset();
+  clerk.getToken.mockResolvedValue("jwt");
 });
 
 afterEach(() => {
@@ -26,24 +41,103 @@ afterEach(() => {
 });
 
 describe("loadMemberDataOnServer", () => {
-  it("reads for a member the server holds a token for", async () => {
-    const prefetch = vi.fn(async () => {});
+  it("reads as the member, with the token handed over before the first read", async () => {
     const context = signedIn();
+    const { setAuth } = context.convexQueryClient.serverHttpClient;
+    const prefetch = vi.fn(async () => {
+      expect(setAuth).toHaveBeenCalledExactlyOnceWith("jwt");
+    });
     await loadMemberDataOnServer(context, async () => prefetch);
+    expect(clerk.getToken).toHaveBeenCalledExactlyOnceWith({
+      template: "convex",
+    });
     expect(prefetch).toHaveBeenCalledExactlyOnceWith(context.queryClient);
   });
 
-  it.each([
-    ["signed out", { userId: null, ssrAuthed: false }],
-    // Signed in, but no Convex token: the reads would run as nobody and put that in the page.
-    ["without a token", { userId: "user_1", ssrAuthed: false }],
-  ])("reads nothing %s", async (_, context) => {
+  it("calls Clerk for nobody who is signed out", async () => {
     const prefetch = vi.fn(async () => {});
-    await loadMemberDataOnServer(
-      { ...context, queryClient: new QueryClient() },
-      async () => prefetch,
-    );
+    await loadMemberDataOnServer(signedOut(), async () => prefetch);
+    expect(clerk.getToken).not.toHaveBeenCalled();
     expect(prefetch).not.toHaveBeenCalled();
+  });
+
+  // Signed in, but no Convex token: the reads would run as nobody and put that in the page.
+  it.each([
+    ["has no token", () => clerk.getToken.mockResolvedValue(null)],
+    ["fails", () => clerk.getToken.mockRejectedValue(new Error("Clerk down"))],
+  ])("reads nothing when Clerk %s", async (_, arrange) => {
+    arrange();
+    const prefetch = vi.fn(async () => {});
+    const context = signedIn();
+    await expect(
+      loadMemberDataOnServer(context, async () => prefetch),
+    ).resolves.toBeUndefined();
+    expect(prefetch).not.toHaveBeenCalled();
+    expect(
+      context.convexQueryClient.serverHttpClient.setAuth,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("holds a slow Clerk to the budget, and starts nothing when its token comes late", async () => {
+    vi.useFakeTimers();
+    clerk.getToken.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(resolve, 5_000, "late");
+        }),
+    );
+    const prefetch = vi.fn(async () => {});
+    const context = signedIn();
+    let settled = false;
+    const loading = loadMemberDataOnServer(context, async () => prefetch).then(
+      () => {
+        settled = true;
+      },
+    );
+    await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await loading;
+    expect(settled).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(prefetch).not.toHaveBeenCalled();
+    expect(
+      context.convexQueryClient.serverHttpClient.setAuth,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("spends one budget on the token and the reads together", async () => {
+    vi.useFakeTimers();
+    const tokenMs = SSR_MEMBER_DATA_BUDGET_MS - 100;
+    clerk.getToken.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(resolve, tokenMs, "jwt");
+        }),
+    );
+    const queryClient = new QueryClient();
+    let settled = false;
+    const loading = loadMemberDataOnServer(
+      signedIn(queryClient),
+      async () => (client) =>
+        client.fetchQuery({
+          queryKey: ["slow"],
+          queryFn: () =>
+            new Promise((resolve) => {
+              setTimeout(resolve, 200, "too late");
+            }),
+        }),
+    ).then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await loading;
+    expect(settled).toBe(true);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(queryClient.getQueryData(["slow"])).toBeUndefined();
   });
 
   it("does nothing in the browser, so a navigation never waits on it", async () => {
@@ -206,6 +300,58 @@ describe("loadMemberDataOnServer", () => {
       }
       expect(streamed).toEqual([]);
     });
+  });
+});
+
+describe("authorizeServerReads", () => {
+  it("hands the server's client a signed-in viewer's token", async () => {
+    const context = signedIn();
+    await expect(authorizeServerReads(context)).resolves.toBe(true);
+    expect(
+      context.convexQueryClient.serverHttpClient.setAuth,
+    ).toHaveBeenCalledExactlyOnceWith("jwt");
+  });
+
+  it("lets a signed-out visitor read as who they are, with no call to Clerk", async () => {
+    await expect(authorizeServerReads(signedOut())).resolves.toBe(true);
+    expect(clerk.getToken).not.toHaveBeenCalled();
+  });
+
+  it("does nothing in the browser, whose socket carries the member's own token", async () => {
+    vi.stubGlobal("window", {});
+    await expect(authorizeServerReads(signedIn())).resolves.toBe(true);
+    expect(clerk.getToken).not.toHaveBeenCalled();
+  });
+
+  // Reading as nobody could tell a member a profile they may open doesn't exist.
+  it.each([
+    ["has no token", () => clerk.getToken.mockResolvedValue(null)],
+    ["fails", () => clerk.getToken.mockRejectedValue(new Error("Clerk down"))],
+  ])("says no when Clerk %s", async (_, arrange) => {
+    arrange();
+    const context = signedIn();
+    await expect(authorizeServerReads(context)).resolves.toBe(false);
+    expect(
+      context.convexQueryClient.serverHttpClient.setAuth,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("says no at the budget when Clerk is slow, and ignores its late token", async () => {
+    vi.useFakeTimers();
+    clerk.getToken.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(resolve, 5_000, "late");
+        }),
+    );
+    const context = signedIn();
+    const authorizing = authorizeServerReads(context);
+    await vi.advanceTimersByTimeAsync(SSR_MEMBER_DATA_BUDGET_MS);
+    await expect(authorizing).resolves.toBe(false);
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(
+      context.convexQueryClient.serverHttpClient.setAuth,
+    ).not.toHaveBeenCalled();
   });
 });
 

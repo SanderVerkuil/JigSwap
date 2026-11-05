@@ -171,6 +171,216 @@ describe("rule P is bound to the copy's current owner", () => {
   });
 });
 
+// An exchange row outlives what it shows. Its copy keeps changing after the trade, and may belong to
+// someone else entirely, so the live copy reaches a party only while the trade is about it or while
+// the party may still open the copy (canViewCopy). Anyone else gets just the catalogue facts the
+// copy carries.
+const LIVE_COPY_FACTS = [
+  "ownerId",
+  "condition",
+  "missingPiecesCount",
+  "notes",
+  "availability",
+  "visibility",
+  "salePrice",
+  "acquisitionDate",
+  "acquisitionSource",
+  "acquisitionPrice",
+  "updatedAt",
+];
+
+const expectSnapshotOnly = (view: object | null | undefined) => {
+  expect(view).toMatchObject({
+    snapshot: { title: "Harbour Lights", pieceCount: 1000 },
+  });
+  for (const fact of LIVE_COPY_FACTS) expect(view).not.toHaveProperty(fact);
+};
+
+const exchangeRowId = async (t: T, exchangeId: string) => {
+  const row = await t.run((ctx) =>
+    ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+      .unique(),
+  );
+  if (!row) throw new Error("seed: exchange not found");
+  return row._id;
+};
+
+const exchangeViews = async (t: T, name: Name, exchangeId: string) => {
+  const reader = as(t, name);
+  const detail = await reader.query(
+    api.exchange.getExchangeById.getExchangeById,
+    { exchangeId: await exchangeRowId(t, exchangeId) },
+  );
+  const listed = await reader.query(
+    api.exchange.getUserExchanges.getUserExchanges,
+    {},
+  );
+  return {
+    detail: detail?.ownerPuzzle,
+    summary: listed.find((row) => row.aggregateId === exchangeId)
+      ?.requestedOwnedPuzzle,
+  };
+};
+
+describe("an old exchange's copy, once the party has no access to it", () => {
+  // Ann sells to Ben, Ben sells to Cat (private). Cat then marks it private and describes it.
+  const resold = async (t: T) => {
+    const { ids, puzzleAggregateId } = await seed(t);
+    const copyAggregateId = (await as(t, "ann").mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+    const copy = (await copyRowOf(t, copyAggregateId))._id;
+    await setSharing(t, "ann", copyAggregateId, "forSale");
+    const annToBen = await proposeSale(t, "ben", copy);
+    await settle(t, annToBen, "ben", "ann");
+    await setSharing(t, "ben", copyAggregateId, "forSale");
+    const benToCat = await proposeSale(t, "cat", copy);
+    await settle(t, benToCat, "cat", "ben");
+    await setSharing(t, "cat", copyAggregateId, "private");
+    await t.run((ctx) =>
+      ctx.db.patch(copy, {
+        condition: "fair",
+        missingPiecesCount: 3,
+        notes: "cats-private-note",
+        acquisitionPrice: { amount: 777, currency: "EUR" },
+      }),
+    );
+    return { ids, copy, copyAggregateId, annToBen, benToCat };
+  };
+
+  test("the seller two owners back reads only the snapshot, in every exchange view", async () => {
+    const t = convexTest(schema, modules);
+    const { annToBen } = await resold(t);
+
+    const ann = await exchangeViews(t, "ann", annToBen);
+    expectSnapshotOnly(ann.detail);
+    expectSnapshotOnly(ann.summary);
+    const json = JSON.stringify(ann);
+    expect(json).not.toContain("fair");
+    expect(json).not.toContain("cats-private-note");
+
+    const history = await as(t, "ann").query(
+      api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expectSnapshotOnly(history.page[0]?.requestedOwnedPuzzle);
+    const summary = await as(t, "ann").query(
+      api.exchange.getMyExchangeSummary.getMyExchangeSummary,
+      { exchange: annToBen },
+    );
+    expectSnapshotOnly(summary?.requestedOwnedPuzzle);
+  });
+
+  test("the current owner and a party who may still open the copy read it live", async () => {
+    const t = convexTest(schema, modules);
+    const { benToCat } = await resold(t);
+
+    const cat = await exchangeViews(t, "cat", benToCat);
+    expect(cat.detail).toMatchObject({
+      condition: "fair",
+      notes: "cats-private-note",
+    });
+    // Ben sold it to Cat: rule P still shows him the copy, so the exchange may too.
+    const ben = await exchangeViews(t, "ben", benToCat);
+    expect(ben.detail).toMatchObject({ condition: "fair" });
+    expect(ben.detail).not.toHaveProperty("notes");
+    expect(ben.summary).toMatchObject({ condition: "fair" });
+  });
+
+  test("a copy the party may open again reads live again", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, annToBen, copyAggregateId } = await resold(t);
+    expectSnapshotOnly((await exchangeViews(t, "ann", annToBen)).detail);
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", ids.cat))
+        .unique();
+      await ctx.db.patch(profile!._id, { visibility: "public" });
+    });
+    await setSharing(t, "cat", copyAggregateId, "forSale");
+
+    expect((await exchangeViews(t, "ann", annToBen)).detail).toMatchObject({
+      condition: "fair",
+    });
+  });
+
+  test("a request a former owner never answered shows only the snapshot", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const copyAggregateId = (await as(t, "ann").mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+    const copy = (await copyRowOf(t, copyAggregateId))._id;
+    await setSharing(t, "ann", copyAggregateId, "forSale");
+    const dansRequest = await proposeSale(t, "dan", copy);
+    await settle(t, await proposeSale(t, "cat", copy), "cat", "ann");
+    expect((await copyRowOf(t, copyAggregateId)).ownerId).toBe(ids.cat);
+    expect(await exchangeStatus(t, dansRequest)).toBe("proposed");
+
+    expectSnapshotOnly((await exchangeViews(t, "dan", dansRequest)).detail);
+  });
+
+  test("a declined request keeps the facts only while the owner still shows the copy", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzleAggregateId } = await seed(t);
+    const copyAggregateId = (await as(t, "ann").mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+    const copy = (await copyRowOf(t, copyAggregateId))._id;
+    await setSharing(t, "ann", copyAggregateId, "forSale");
+    const request = await proposeSale(t, "dan", copy);
+    await as(t, "ann").mutation(api.exchange.decline.decline, {
+      exchangeId: request,
+    });
+
+    expect((await exchangeViews(t, "dan", request)).detail).toMatchObject({
+      condition: "good",
+    });
+
+    await setSharing(t, "ann", copyAggregateId, "private");
+    expectSnapshotOnly((await exchangeViews(t, "dan", request)).detail);
+  });
+
+  test("a live trade keeps its copy's facts for the other party, whatever the owner's privacy", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const copyAggregateId = (await as(t, "cat").mutation(
+      api.library.acquireCopy.acquireCopy,
+      { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+    )) as string;
+    const copy = (await copyRowOf(t, copyAggregateId))._id;
+    // Cat (private) took the copy off the market with the request open: no rule opens it for Dan.
+    const exchangeId = "live-trade";
+    const rowId = await t.run((ctx) =>
+      ctx.db.insert("exchanges", {
+        aggregateId: exchangeId,
+        initiatorId: ids.dan,
+        recipientId: ids.cat,
+        type: "sale",
+        requestedPuzzleId: copy,
+        status: "accepted",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(await viewCopy(t, "dan", copy)).toBeNull();
+
+    for (const status of ["proposed", "accepted", "disputed"] as const) {
+      await t.run((ctx) => ctx.db.patch(rowId, { status }));
+      expect((await exchangeViews(t, "dan", exchangeId)).detail).toMatchObject({
+        condition: "good",
+      });
+    }
+  });
+});
+
 // A household co-manager may offer the owner's copy in a swap (mayOfferCopy). The swap's recipient
 // then sees that copy while it is private, as long as it still belongs to the owner it was offered
 // for (the exchange records them as offeredPuzzleOwnerId) and the co-manager may still offer it.
@@ -301,5 +511,41 @@ describe("rule P for a copy a household co-manager offered", () => {
     );
     expect(await exchangeStatus(t, swap)).toBe("proposed");
     expect(await rexSees(t, x.id)).toBeNull();
+  });
+
+  // The exchange views follow the same rule: the offered copy is the trade's while it is on offer.
+  const offeredCopyView = async (t: T, exchangeId: string) =>
+    (
+      await asMember(t, "rex").query(
+        api.exchange.getExchangeById.getExchangeById,
+        { exchangeId: await exchangeRowId(t, exchangeId) },
+      )
+    )?.requesterPuzzle;
+
+  test("the recipient reads the offered copy's facts while it is on offer, and only the snapshot after", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, x, swap } = await seedHousehold(t);
+    expect(await offeredCopyView(t, swap)).toMatchObject({ condition: "good" });
+
+    // Not private, not offered and a private owner: no rule but the live offer opens it.
+    await asMember(t, "mara").mutation(
+      api.library.updateCopySharing.updateCopySharing,
+      { copyId: x.aggregateId, visibility: "visible" },
+    );
+    await t.run((ctx) =>
+      ctx.db.insert("profiles", {
+        memberId: ids.mara,
+        visibility: "private",
+        updatedAt: 1,
+      }),
+    );
+    expect(await rexSees(t, x.id)).toBeNull();
+    expect(await offeredCopyView(t, swap)).toMatchObject({ condition: "good" });
+
+    await asMember(t, "mara").mutation(
+      api.household.removeHouseholdMember.removeHouseholdMember,
+      { memberId: ids.hugo },
+    );
+    expectSnapshotOnly(await offeredCopyView(t, swap));
   });
 });

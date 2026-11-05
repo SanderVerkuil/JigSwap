@@ -10,10 +10,14 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { recordMaintenanceMarker } from "./lib/maintenanceMarkers";
-import { STORAGE_SWEEP_PAGE } from "./lib/storage/storageSweep";
+import {
+  RECENT_BLOB_WINDOW_MS,
+  STORAGE_SWEEP_PAGE,
+  UNATTACHED_BOX_ART_TTL_MS,
+} from "./lib/storage/storageSweep";
 import schema from "./schema";
 
-// SEC-20 / SEC-92: the daily storage sweep deletes only blobs nothing holds (older than a day),
+// SEC-20 / SEC-92: the storage sweep deletes only blobs nothing holds (older than a day),
 // and box art that only its listing holds (older than a week, its checks done). It is a dry run
 // unless STORAGE_GC_MODE is "delete" and the legacy completion photos have their sidecars;
 // otherwise it only reports.
@@ -48,6 +52,7 @@ afterEach(() => {
 
 type SweepEvent = {
   event: string;
+  scope: "all" | "recent";
   mode: "dry_run" | "delete";
   delete_blocked?: string;
   done: boolean;
@@ -401,6 +406,79 @@ describe("lib/storage/storageSweep", () => {
       expect(await listingOf(t, art)).not.toBeNull();
     },
   );
+
+  // The daily run: only blobs recent enough to have just become candidates. A monthly pass over the
+  // whole table finds an older blob something has since let go of.
+  describe("the recent scope", () => {
+    const sweepRecent = async (t: T, at: number) => {
+      vi.setSystemTime(at);
+      logs = [];
+      await t.mutation(sweep, { scope: "recent" });
+      await t.finishAllScheduledFunctions(vi.runAllTimers);
+      const events = logs
+        .filter((line) => line.startsWith("{"))
+        .map((line) => JSON.parse(line) as SweepEvent)
+        .filter((e) => e.event === "storage.sweep");
+      return events[events.length - 1]!;
+    };
+
+    test("reads no blob older than its window, and leaves it to the whole pass", async () => {
+      const t = convexTest(schema, modules);
+      const old = await t.run((ctx) => ctx.storage.store(new Blob(["old"])));
+      vi.setSystemTime(T0 + RECENT_BLOB_WINDOW_MS);
+      const recent = await t.run((ctx) =>
+        ctx.storage.store(new Blob(["recent"])),
+      );
+
+      const at = T0 + RECENT_BLOB_WINDOW_MS + 2 * DAY;
+      const total = await sweepRecent(t, at);
+      expect(total).toMatchObject({
+        scope: "recent",
+        scanned: 1,
+        candidates: 1,
+      });
+      expect(total.batch_candidate_ids).toEqual([recent]);
+
+      const whole = await sweepOnce(t, at, "");
+      expect(whole.total).toMatchObject({
+        scope: "all",
+        scanned: 2,
+        candidates: 2,
+      });
+      expect(whole.candidateIds.sort()).toEqual([old, recent].sort());
+    });
+
+    test("is wide enough to see box art turn into a candidate", () => {
+      expect(RECENT_BLOB_WINDOW_MS).toBeGreaterThan(UNATTACHED_BOX_ART_TTL_MS);
+    });
+
+    test("pages by cursor and keeps its window through the batches", async () => {
+      const t = convexTest(schema, modules);
+      await t.run(async (ctx) => {
+        await ctx.storage.store(new Blob(["old"]));
+      });
+      vi.setSystemTime(T0 + RECENT_BLOB_WINDOW_MS);
+      const count = STORAGE_SWEEP_PAGE + 5;
+      await t.run(async (ctx) => {
+        for (let i = 0; i < count; i++) {
+          await ctx.storage.store(new Blob([`recent ${i}`]));
+        }
+      });
+
+      const total = await sweepRecent(t, T0 + RECENT_BLOB_WINDOW_MS + 2 * DAY);
+      expect(total).toMatchObject({ scanned: count, done: true });
+    });
+
+    test("deletes in delete mode like the whole pass does", async () => {
+      const t = convexTest(schema, modules);
+      vi.stubEnv("STORAGE_GC_MODE", "delete");
+      await markSidecarsBackfilled(t);
+      const blob = await t.run((ctx) => ctx.storage.store(new Blob(["x"])));
+      const total = await sweepRecent(t, T0 + 2 * DAY);
+      expect(total).toMatchObject({ mode: "delete", deleted: 1 });
+      expect(await exists(t, blob)).toBe(false);
+    });
+  });
 
   test("pages through every blob, one batch per page", async () => {
     const t = convexTest(schema, modules);

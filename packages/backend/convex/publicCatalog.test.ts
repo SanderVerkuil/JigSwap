@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { PUBLIC_CATALOG_FILTER_READS } from "./catalog/browsePublicCatalog";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -464,6 +465,151 @@ describe("browsePublicCatalog", () => {
       { paginationOpts: firstPage, pieceMax: 499 },
     );
     expect(under500.page.map((p) => p.title)).toEqual(["Tiny Meadow"]);
+  });
+
+  // PERF-R8: the piece range is an index range, so it never walks the approved catalogue.
+  describe("the piece range", () => {
+    const seedPuzzles = (
+      t: TestConvex<typeof schema>,
+      rows: { title: string; pieceCount: number; brand?: string }[],
+    ) =>
+      t.run(async (ctx) => {
+        const submittedBy = await mkUser(ctx, "clerk_seed", "Seed");
+        for (const [i, row] of rows.entries()) {
+          await ctx.db.insert("puzzles", {
+            ...row,
+            aggregateId: `def-${row.title}`,
+            status: "approved",
+            submittedBy,
+            createdAt: NOW + i,
+            updatedAt: NOW + i,
+          });
+        }
+      });
+
+    const browse = (
+      t: TestConvex<typeof schema>,
+      args: {
+        pieceMin?: number;
+        pieceMax?: number;
+        brand?: string;
+        cursor?: string | null;
+        numItems?: number;
+        maximumRowsRead?: number;
+      },
+    ) => {
+      const { cursor, numItems, maximumRowsRead, ...filters } = args;
+      return t.query(api.catalog.browsePublicCatalog.browsePublicCatalog, {
+        paginationOpts: {
+          numItems: numItems ?? 20,
+          cursor: cursor ?? null,
+          ...(maximumRowsRead === undefined ? {} : { maximumRowsRead }),
+        },
+        ...filters,
+      });
+    };
+
+    test("lists the largest first and, within one count, the newest first", async () => {
+      const t = convexTest(schema, modules);
+      await seedPuzzles(t, [
+        { title: "big", pieceCount: 1400 },
+        { title: "old-1000", pieceCount: 1000 },
+        { title: "new-1000", pieceCount: 1000 },
+        { title: "under", pieceCount: 999 },
+        { title: "over", pieceCount: 1500 },
+      ]);
+      const view = await browse(t, { pieceMin: 1000, pieceMax: 1499 });
+      expect(view.page.map((p) => p.title)).toEqual([
+        "big",
+        "new-1000",
+        "old-1000",
+      ]);
+    });
+
+    test("walks every match by cursor, with no row twice", async () => {
+      const t = convexTest(schema, modules);
+      await seedPuzzles(
+        t,
+        Array.from({ length: 9 }, (_, i) => ({
+          title: `p${i}`,
+          pieceCount: 500 + (i % 3),
+        })),
+      );
+      const seen: string[] = [];
+      let cursor: string | null = null;
+      for (let pages = 0; pages < 20; pages++) {
+        const view: Awaited<ReturnType<typeof browse>> = await browse(t, {
+          pieceMin: 500,
+          numItems: 2,
+          cursor,
+        });
+        seen.push(...view.page.map((p) => p.title));
+        if (view.isDone) break;
+        cursor = view.continueCursor;
+      }
+      expect([...seen].sort()).toEqual(
+        Array.from({ length: 9 }, (_, i) => `p${i}`),
+      );
+    });
+
+    test("a range nothing is in comes back finished", async () => {
+      const t = convexTest(schema, modules);
+      await seedPuzzles(
+        t,
+        Array.from({ length: 50 }, (_, i) => ({
+          title: `p${i}`,
+          pieceCount: 1000,
+        })),
+      );
+      const view = await browse(t, { pieceMin: 1_000_000_000 });
+      expect(view.page).toEqual([]);
+      expect(view.isDone).toBe(true);
+    });
+
+    test("a minimum above the maximum finds nothing and doesn't fail", async () => {
+      const t = convexTest(schema, modules);
+      await seedPuzzles(t, [{ title: "p", pieceCount: 1000 }]);
+      const view = await browse(t, { pieceMin: 2000, pieceMax: 1000 });
+      expect(view.page).toEqual([]);
+      expect(view.isDone).toBe(true);
+    });
+
+    test("within a brand it stops after a bounded read and carries on from there", async () => {
+      const t = convexTest(schema, modules);
+      const matches = 3;
+      await seedPuzzles(t, [
+        ...Array.from({ length: matches }, (_, i) => ({
+          title: `match${i}`,
+          pieceCount: 2000,
+          brand: "Jumbo",
+        })),
+        ...Array.from({ length: PUBLIC_CATALOG_FILTER_READS + 5 }, (_, i) => ({
+          title: `small${i}`,
+          pieceCount: 100,
+          brand: "Jumbo",
+        })),
+      ]);
+      // Newest first: the matches are older than a whole bounded read of other rows, and a client
+      // can't ask for a longer one.
+      const first = await browse(t, {
+        brand: "Jumbo",
+        pieceMin: 1000,
+        maximumRowsRead: 1_000_000,
+      });
+      expect(first.page).toEqual([]);
+      expect(first.isDone).toBe(false);
+
+      const next = await browse(t, {
+        brand: "Jumbo",
+        pieceMin: 1000,
+        cursor: first.continueCursor,
+      });
+      expect(next.page.map((p) => p.title).sort()).toEqual([
+        "match0",
+        "match1",
+        "match2",
+      ]);
+    });
   });
 
   test("card payload leaks no owner or member data", async () => {

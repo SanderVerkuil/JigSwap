@@ -7,7 +7,7 @@ import {
   SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
-import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
+import { LazyImageEditorDialog } from "@/components/image-editor/lazy-image-editor-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -409,7 +409,7 @@ export function CoverImageField({
         </div>
       </div>
 
-      <ImageEditorDialog
+      <LazyImageEditorDialog
         src={editing?.src ?? null}
         fileName={editing?.fileName ?? "cover.jpg"}
         onApply={(file) => {

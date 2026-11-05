@@ -8,7 +8,7 @@ import { householdMateIds } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
 import { toCopyPuzzleView } from "../library/mappers";
-import { LIBRARY_INDEX_CAP, newestCopiesOf } from "../library/myLibraryRows";
+import { LIBRARY_WINDOW_MAX, newestCopiesOf } from "../library/myLibraryRows";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { toCopyView } from "./adapters/convexCopyPort";
 
@@ -18,7 +18,7 @@ import { toCopyView } from "./adapters/convexCopyPort";
 // on loan can't be offered, over the same CopyPort view: toCopyView + the co-manager rule
 // coManagerIdsFrom), so the list never offers a copy propose would reject. Empty when the requested
 // copy is missing or not viewable — the query must not confirm a hidden copy exists. Bounded: the
-// newest LIBRARY_INDEX_CAP copies of those owners, like the other pickers.
+// newest LIBRARY_WINDOW_MAX copies of those owners, like the other pickers.
 export const getOfferableCopies = query({
   args: { requestedPuzzleId: v.id("ownedPuzzles") },
   handler: async (ctx, args) => {
@@ -32,7 +32,7 @@ export const getOfferableCopies = query({
     const recipient = toMemberId(requested.ownerId);
 
     const ownerIds = [viewerId, ...(await householdMateIds(ctx, viewerId))];
-    const copies = await newestCopiesOf(ctx, ownerIds, LIBRARY_INDEX_CAP);
+    const copies = await newestCopiesOf(ctx, ownerIds, LIBRARY_WINDOW_MAX);
     const rows = [];
     for (const ownerId of ownerIds) {
       const owned = copies.filter((copy) => copy.ownerId === ownerId);

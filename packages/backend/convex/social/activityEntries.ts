@@ -33,6 +33,44 @@ export const FEED_WINDOW_MS = 90 * 24 * 60 * 60 * 1000;
 // The readModelStatus row the backfill writes once every event in the window is projected.
 export const ACTIVITY_READ_MODEL = "activityEntries";
 
+// The kinds whose `ref` is a solve (completions.aggregateId). Their entries live and die with it.
+const isSolveKind = (kind: ActivityKind): boolean =>
+  kind === "completion" || kind === "started";
+
+/**
+ * Whether an entry of this kind and ref may still be shown: anything but a solve that has been
+ * deleted. A solve's events stay in the log after it is gone, so both paths that read them ask:
+ * projectActivityEvent, or a late dispatch, a retry or the backfill would write the entry back, and
+ * the feed's legacy read (social/getActivityFeed fromEventLog).
+ */
+export const activityRefExists = async (
+  ctx: QueryCtx,
+  kind: ActivityKind,
+  ref: string,
+): Promise<boolean> =>
+  !isSolveKind(kind) ||
+  (await ctx.db
+    .query("completions")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", ref))
+    .first()) !== null;
+
+/** Take a deleted solve off the feed: its "completion" and "started" rows (solving/deleteCompletion). */
+export const deleteSolveActivity = async (
+  ctx: MutationCtx,
+  actorId: Id<"users">,
+  completionId: string,
+): Promise<void> => {
+  for (const kind of ["completion", "started"] as const) {
+    const rows = await ctx.db
+      .query("activityEntries")
+      .withIndex("by_actor_kind_ref", (q) =>
+        q.eq("actorId", actorId).eq("kind", kind).eq("ref", completionId),
+      )
+      .collect();
+    for (const row of rows) await ctx.db.delete(row._id);
+  }
+};
+
 export type ActivityRow = {
   actorId: string;
   kind: ActivityKind;
@@ -67,7 +105,7 @@ export const activityRowsOf = async (
       ];
     case "CompletionStarted":
       // The payload is frozen at emission: a later startDate edit does not move the feed's
-      // "not begun yet" gate (accepted, like the deletion residual).
+      // "not begun yet" gate (accepted).
       return [
         {
           actorId: p.userId as string,
@@ -133,7 +171,8 @@ export type ProjectionCounts = { inserted: number; updated: number };
 // keeps its newest event time. Events are not projected in order (retries, the backfill), so the
 // read side orders a batch's copies itself. Rows are written only for an active member: a payload
 // the account purge scrubbed ("deleted-member") or a departed actor gets none, so an event
-// dispatched after the purge cannot bring their activity back. `dryRun` counts without writing.
+// dispatched after the purge cannot bring their activity back; and only for a solve that still
+// exists (activityRefExists), for the same reason. `dryRun` counts without writing.
 export const projectActivityEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
@@ -145,6 +184,7 @@ export const projectActivityEvent = async (
     if (actorId === null) continue;
     const actor = await ctx.db.get(actorId);
     if (!actor?.isActive) continue;
+    if (!(await activityRefExists(ctx, row.kind, row.ref))) continue;
     const existing = await ctx.db
       .query("activityEntries")
       .withIndex("by_actor_kind_ref", (q) =>

@@ -38,7 +38,7 @@ import {
 //                    exponential backoff, up to MAX_ATTEMPTS passes; completed handlers are skipped.
 //   - retry: false — re-running could duplicate a member-visible effect, so it gives up at once.
 // A handler that gave up lands in failedHandlers; once nothing is left to retry the event gets
-// failedAt (queryable via by_failed) and needs an operator (replay: docs/developer-guide.md 1.5).
+// failedAt and needs an operator (the error event names it; replay: docs/developer-guide.md 1.5).
 // `events` lists the event names a handler reacts to, so dispatch opens no sub-transaction for the
 // rest; omitted = every event. Each handler derives or keeps its list next to its own switch
 // (Notifications: NOTIFYING_EVENT_NAMES, checked against its switch by

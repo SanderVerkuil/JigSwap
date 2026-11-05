@@ -22,6 +22,13 @@ import {
 } from "./events";
 import { CopyId, OwnerId, PuzzleDefinitionId } from "./ids";
 import { SharingSetting } from "./sharing-setting";
+import { checkLibraryText } from "./text-limits";
+
+// The most missing pieces a copy can report: the largest puzzles have a few tens of thousands.
+export const MAX_MISSING_PIECES = 100_000;
+
+const isValidMissingPieces = (count: number): boolean =>
+  Number.isInteger(count) && count >= 0 && count <= MAX_MISSING_PIECES;
 
 // Input to acquire(): a new copy of a known PuzzleDefinition, with its cached snapshot.
 export interface AcquireCopyProps {
@@ -98,6 +105,14 @@ export class Copy {
     if (acquired && !isPossibleAcquisitionDate(acquired, props.now)) {
       return err(LibraryError.invalidAcquisitionDate());
     }
+    if (
+      props.missingPiecesCount !== undefined &&
+      !isValidMissingPieces(props.missingPiecesCount)
+    ) {
+      return err(LibraryError.invalidMissingPieces());
+    }
+    const text = checkLibraryText({ copyNotes: props.notes });
+    if (text.isErr) return err(text.error);
     const state: CopyState = {
       id: props.id,
       ownerId: props.ownerId,
@@ -243,6 +258,14 @@ export class Copy {
     if (acquired && !isPossibleAcquisitionDate(acquired, now)) {
       return err(LibraryError.invalidAcquisitionDate());
     }
+    if (
+      changes.missingPiecesCount !== undefined &&
+      !isValidMissingPieces(changes.missingPiecesCount)
+    ) {
+      return err(LibraryError.invalidMissingPieces());
+    }
+    const text = checkLibraryText({ copyNotes: changes.notes });
+    if (text.isErr) return text;
     this.state = {
       ...this.state,
       missingPiecesCount:

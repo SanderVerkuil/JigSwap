@@ -72,14 +72,19 @@ export function defaultGoalPeriod(now: Date = new Date()): {
 
 export type TargetError = "required" | "invalid";
 
-// The target as typed: a whole number of at least 1 (the server refuses anything else).
+// The most a goal can aim for (backend solving/domain/goal.ts MAX_GOAL_TARGET).
+const MAX_GOAL_TARGET = 100_000;
+
+// The target as typed: a whole number from 1 to MAX_GOAL_TARGET (the server refuses anything else).
 export function parseTarget(
   raw: string,
 ): { ok: true; value: number } | { ok: false; error: TargetError } {
   const value = raw.trim();
   if (value === "") return { ok: false, error: "required" };
   const n = /^\d+$/.test(value) ? Number(value) : Number.NaN;
-  if (!Number.isSafeInteger(n) || n < 1) return { ok: false, error: "invalid" };
+  if (!Number.isSafeInteger(n) || n < 1 || n > MAX_GOAL_TARGET) {
+    return { ok: false, error: "invalid" };
+  }
   return { ok: true, value: n };
 }
 

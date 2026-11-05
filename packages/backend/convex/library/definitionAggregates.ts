@@ -3,8 +3,10 @@
 // getPuzzleDefinitionView.ts so the two views can't drift on the shared math.
 
 import type { CopyOfferSwapType } from "@jigswap/contracts";
+import { isPlausibleSolveMinutes, MAX_SOLVE_MINUTES } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { logEvent } from "../lib/logEvent";
 import { profileVisibilityOf } from "../social/privacy";
 import { isCopyPrivate } from "./copyVisibility";
 import { isOpenAvailability } from "./openListing";
@@ -14,23 +16,30 @@ const MS_PER_DAY = 86_400_000;
 /** Round to 1 decimal place. */
 export const round1 = (n: number): number => Math.round(n * 10) / 10;
 
+/** The longest solve an average counts, in days: MAX_SOLVE_MINUTES. */
+const MAX_FINISH_DAYS = MAX_SOLVE_MINUTES / 1440;
+
 /** Whole-day solve duration: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's the
  * domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
  * explicit-vs-derived and applies the same-day => 1 day floor), converted to whole days. The
- * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration.
- * A non-positive fallback result means the span is unusable as a duration (e.g. a legacy same-day
- * row) and returns null (unknown) rather than a misleading 0. Null when neither is recorded. */
+ * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration,
+ * and for dates too far apart to have a duration. A fallback result that isn't positive means the
+ * span is unusable as a duration (e.g. a legacy same-day row) and returns null (unknown) rather than
+ * a misleading 0. So does a number no solve can have taken, stored before the domain bounded it:
+ * one row must not swamp a definition's public average. Null when neither is recorded. */
 export const finishDaysOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
 }): number | null => {
   if (c.completionTimeMinutes != null) {
-    return Math.round(c.completionTimeMinutes / 1440);
+    return isPlausibleSolveMinutes(c.completionTimeMinutes)
+      ? Math.round(c.completionTimeMinutes / 1440)
+      : null;
   }
   if (c.endDate != null) {
     const days = Math.round((c.endDate - c.startDate) / MS_PER_DAY);
-    return days > 0 ? days : null;
+    return days > 0 && days <= MAX_FINISH_DAYS ? days : null;
   }
   return null;
 };
@@ -147,10 +156,17 @@ export interface CompletionTotals {
   finishDaysCount: number;
 }
 
+// How many solves stored against a copy alone (no `puzzleId`) one read looks through. Only rows from
+// before solves got their definition link are like that: every write since sets it, and
+// solving/backfillCompletionPuzzleId gives the old ones theirs, leaving only those whose copy is gone.
+// So this holds few rows once that has run; past the bound the totals undercount, and say so.
+export const COPY_ONLY_SOLVES_READ = 1000;
+
 /** Completion sums for a definition: finished solves, and the whole-day durations of those that
- * have one. A solve is recorded against the definition (puzzleId) OR against a copy (ownedPuzzleId
- * only); both are counted, deduped by _id. `ownedCopies` is the definition's ownedPuzzles rows (the
- * caller already has them). */
+ * have one. A solve is recorded against the definition (puzzleId) OR, on an old row, only against a
+ * copy (ownedPuzzleId); both are counted. `ownedCopies` is the definition's ownedPuzzles rows (the
+ * caller already has them). Costs two index ranges however many copies there are: a definition can
+ * have more copies than a function may read index ranges. */
 export const completionTotalsOf = async (
   ctx: QueryCtx,
   puzzleId: Id<"puzzles">,
@@ -160,21 +176,26 @@ export const completionTotalsOf = async (
     .query("completions")
     .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
     .collect();
-  const byCopy = (
-    await Promise.all(
-      ownedCopies.map((copy) =>
-        ctx.db
-          .query("completions")
-          .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy._id))
-          .collect(),
-      ),
-    )
-  ).flat();
-  const deduped = new Map<string, (typeof byDefinition)[number]>();
-  for (const c of [...byDefinition, ...byCopy]) {
-    deduped.set(c._id as unknown as string, c);
+  const copyOnly = await ctx.db
+    .query("completions")
+    .withIndex("by_puzzle", (q) => q.eq("puzzleId", undefined))
+    .take(COPY_ONLY_SOLVES_READ + 1);
+  if (copyOnly.length > COPY_ONLY_SOLVES_READ) {
+    logEvent({
+      event: "library.definitionStats.copyOnlySolvesCapped",
+      outcome: "error",
+      puzzle_id: puzzleId,
+      read: COPY_ONLY_SOLVES_READ,
+    });
   }
-  const completed = [...deduped.values()].filter((c) => c.isCompleted);
+  const copies = new Set<Id<"ownedPuzzles">>(ownedCopies.map((c) => c._id));
+  const solves = [
+    ...byDefinition,
+    ...copyOnly
+      .slice(0, COPY_ONLY_SOLVES_READ)
+      .filter((c) => c.ownedPuzzleId && copies.has(c.ownedPuzzleId)),
+  ];
+  const completed = solves.filter((c) => c.isCompleted);
   const finishDaysList = completed
     .map(finishDaysOf)
     .filter((d): d is number => d != null);
@@ -186,7 +207,8 @@ export const completionTotalsOf = async (
 };
 
 /** Completion aggregate shown on the definition pages (count of finished solves + average
- * whole-day duration), from its sums. */
+ * whole-day duration), from its sums. Stored sums that average past any solve were written before
+ * finishDaysOf left such rows out: unknown until the row's next recompute (weekly at the latest). */
 export const completionStatsFromTotals = ({
   completedCount,
   finishDaysSum,
@@ -194,11 +216,14 @@ export const completionStatsFromTotals = ({
 }: CompletionTotals): {
   totalCompletions: number;
   avgCompletionDays: number | null;
-} => ({
-  totalCompletions: completedCount,
-  avgCompletionDays:
-    finishDaysCount > 0 ? round1(finishDaysSum / finishDaysCount) : null,
-});
+} => {
+  const average = finishDaysCount > 0 ? finishDaysSum / finishDaysCount : null;
+  return {
+    totalCompletions: completedCount,
+    avgCompletionDays:
+      average !== null && average <= MAX_FINISH_DAYS ? round1(average) : null,
+  };
+};
 
 /** Completion aggregate for a definition, read live. */
 export const completionStatsOf = async (
@@ -235,18 +260,22 @@ export const publicAvailabilityOf = async (
   ownedCopies: Doc<"ownedPuzzles">[],
   visibilityCache: Map<string, "public" | "private"> = new Map(),
 ): Promise<PublicAvailability> => {
-  const ownerIsPublic = async (ownerId: Id<"users">): Promise<boolean> => {
-    const key = ownerId as unknown as string;
+  const ownerIsPublic = async (copy: Doc<"ownedPuzzles">): Promise<boolean> => {
+    // A row with its listing fields says so itself (a profile change re-stamps them and then marks
+    // the definition, library/ownerListingVisibility), so a definition with thousands of owners
+    // costs no read per owner. Only a row from before those fields needs the lookup.
+    if (copy.isOpen !== undefined) return copy.ownerPrivate !== true;
+    const key = copy.ownerId as unknown as string;
     let cached = visibilityCache.get(key);
     if (cached === undefined) {
-      cached = await profileVisibilityOf(ctx, ownerId);
+      cached = await profileVisibilityOf(ctx, copy.ownerId);
       visibilityCache.set(key, cached);
     }
     return cached === "public";
   };
   const byType = { swap: 0, lend: 0, sale: 0 };
   for (const copy of ownedCopies.filter(isOpen)) {
-    if (await ownerIsPublic(copy.ownerId)) {
+    if (await ownerIsPublic(copy)) {
       byType[swapTypeOf(copy)] += 1;
     }
   }

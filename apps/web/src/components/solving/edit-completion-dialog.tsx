@@ -17,11 +17,12 @@ import { gateway } from "@/gateway";
 import { dateInputToMs, msToDateInput } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
+import { MAX_SOLVE_NOTES_LENGTH } from "@jigswap/contracts";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
 
 interface EditCompletionDialogProps {
   open: boolean;
@@ -97,7 +98,7 @@ export function EditCompletionDialog({
         toast.error(tCompletions("editWindowClosed"));
       } else {
         console.error("Failed to edit completion:", error);
-        toast.error(t("saveError"));
+        toast.error(t(solveSaveErrorKey(error)));
       }
     }
   };
@@ -162,6 +163,7 @@ export function EditCompletionDialog({
               placeholder={t("notesPlaceholder")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              maxLength={MAX_SOLVE_NOTES_LENGTH}
             />
           </div>
         </div>

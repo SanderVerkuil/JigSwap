@@ -17,10 +17,13 @@ import { toAuditEntry } from "./auditEntry";
 // (moderationActions.by_target on the Catalog aggregateId — the id stampModerationAction
 // writes for definition rows; legacy rows without an aggregateId get an empty trail).
 // Admin-only, gated exactly like listPuzzleDefinitions. Owners capped, newest-first audit
-// capped (no pagination in v1, same as the user detail view).
+// capped (no pagination in v1, same as the user detail view). The copies read are capped too, oldest
+// first, so a member adding them by the thousand can't break this page: past COPY_SCAN_CAP the stats
+// are of those copies and say so (`capped`).
 
 const OWNERS_CAP = 50;
 const AUDIT_CAP = 20;
+const COPY_SCAN_CAP = 2000;
 
 export const getPuzzleDefinitionDetail = query({
   args: { puzzleId: v.id("puzzles") },
@@ -34,10 +37,11 @@ export const getPuzzleDefinitionDetail = query({
     const puzzle = await ctx.db.get(puzzleId);
     if (!puzzle) throw new ConvexError("Puzzle definition not found");
 
-    const copies = await ctx.db
+    const scanned = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
-      .collect();
+      .take(COPY_SCAN_CAP + 1);
+    const copies = scanned.slice(0, COPY_SCAN_CAP);
 
     // Group copies per owner, rolling up the availability flags (true when ANY
     // of that member's copies has the flag). Map preserves insertion order.
@@ -117,6 +121,7 @@ export const getPuzzleDefinitionDetail = query({
           : null,
       },
       stats: {
+        capped: scanned.length > COPY_SCAN_CAP,
         ownerCount: perOwner.size,
         copies: {
           total: copies.length,

@@ -151,6 +151,12 @@ describe("parsePriceCents", () => {
     expect(parsePriceCents(" 0.01 ")).toBe(1);
   });
 
+  it("takes the highest price the server does, and nothing above it", () => {
+    expect(parsePriceCents("1000000")).toBe(100_000_000);
+    expect(parsePriceCents("1000000.01")).toBeUndefined();
+    expect(parsePriceCents("9".repeat(400))).toBeUndefined();
+  });
+
   it("rejects empty, non-positive, and malformed input", () => {
     expect(parsePriceCents("")).toBeUndefined();
     expect(parsePriceCents("0")).toBeUndefined();

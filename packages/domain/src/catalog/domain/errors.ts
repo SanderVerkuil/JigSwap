@@ -10,6 +10,7 @@ import { ProposalStatus } from "./proposal-status";
 export type CatalogErrorCode =
   | "EmptyTitle"
   | "InvalidPieceCount"
+  | "InvalidDimensions"
   | "InvalidBarcode"
   | "IllegalApprovalTransition"
   | "EmptyCategoryName"
@@ -41,6 +42,14 @@ export class CatalogError extends DomainError {
     return new CatalogError(
       "InvalidPieceCount",
       `Piece count must be a positive integer, got ${value}`,
+    );
+  }
+
+  // A box dimension that isn't a positive number within MAX_DIMENSION.
+  static invalidDimensions(): CatalogError {
+    return new CatalogError(
+      "InvalidDimensions",
+      "A puzzle's width and height must be positive numbers",
     );
   }
 

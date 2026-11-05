@@ -2,7 +2,7 @@
 
 import { gateway, type Id } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
-import type { MyLibraryCopyView } from "@jigswap/contracts";
+import { LIBRARY_ROWS_MAX, type MyLibraryCopyView } from "@jigswap/contracts";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
@@ -21,9 +21,8 @@ import { useMemo, useState } from "react";
 // How many rows a page adds.
 export const LIBRARY_PAGE_SIZE = 48;
 
-// Mirrors the backend's LIBRARY_WINDOW_MAX: the deepest one list can be scrolled. Past it the member
-// is told to search or filter.
-export const LIBRARY_ROWS_MAX = 1000;
+// The deepest one list can be scrolled. Past it the member is told to search or filter.
+export { LIBRARY_ROWS_MAX };
 
 // The window each view had open when the member last left it. In memory only: a reload starts afresh.
 const openRows = new Map<string, number>();

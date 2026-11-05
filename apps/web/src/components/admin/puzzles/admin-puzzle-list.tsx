@@ -227,7 +227,14 @@ function PuzzleRows({
                 <span>
                   {format.dateTime(row.createdAt, { dateStyle: "medium" })}
                 </span>
-                <span>{t("ownerCount", { count: row.ownerCount })}</span>
+                <span>
+                  {t(
+                    row.ownerCountIsLowerBound
+                      ? "ownerCountLowerBound"
+                      : "ownerCount",
+                    { count: row.ownerCount },
+                  )}
+                </span>
               </div>
               <div className="flex shrink-0 items-center">
                 {row.status === "pending" ? (

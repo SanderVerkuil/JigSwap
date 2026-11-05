@@ -1,4 +1,7 @@
-import { computeCompletionTrends } from "@jigswap/domain";
+import {
+  computeCompletionTrends,
+  isPlausibleSolveMinutes,
+} from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -27,7 +30,9 @@ export const getCompletionTrends = query({
     return computeCompletionTrends(
       finished.map((c) => ({
         completedAt: c.endDate,
-        completionTimeMinutes: c.completionTimeMinutes,
+        completionTimeMinutes: isPlausibleSolveMinutes(c.completionTimeMinutes)
+          ? c.completionTimeMinutes
+          : undefined,
         datePrecision: c.datePrecision,
       })),
     );

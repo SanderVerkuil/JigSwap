@@ -71,6 +71,8 @@ const errorKeyFor = (error: unknown): string => {
       return "errors.invalidBarcode";
     case "TextTooLong":
       return "errors.textTooLong";
+    case "InvalidDimensions":
+      return "errors.invalidDimensions";
     default:
       return "errors.generic";
   }

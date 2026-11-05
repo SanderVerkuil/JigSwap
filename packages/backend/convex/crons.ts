@@ -33,12 +33,19 @@ crons.interval(
 
 // Blobs nothing holds (older than a day) and box art only its listing holds (older than a week):
 // a DRY RUN that only logs `storage.sweep`, unless the deployment env STORAGE_GC_MODE is "delete"
-// (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md).
+// (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md). Daily over the
+// blobs recent enough to have just become candidates, monthly over all of them.
 crons.daily(
   "sweep unheld storage blobs",
   { hourUTC: 4, minuteUTC: 15 },
   internal.lib.storage.storageSweep.sweepStorage,
-  {},
+  { scope: "recent" },
+);
+crons.monthly(
+  "sweep all storage blobs",
+  { day: 1, hourUTC: 5, minuteUTC: 15 },
+  internal.lib.storage.storageSweep.sweepStorage,
+  { scope: "all" },
 );
 
 // The users.role mirror (admin-only notification targeting) reconciled with Clerk, in case a user
@@ -81,8 +88,8 @@ crons.daily(
 );
 
 // Domain events dispatched more than the activity feed's 90 days plus a week ago are deleted with
-// their member lookup rows (dry run unless RETENTION_ENFORCE names "domainEvents"); events in
-// flight or failed are kept (events/retention).
+// their member lookup rows (a dry run over the oldest few thousand unless RETENTION_ENFORCE names
+// "domainEvents"); events in flight or failed are kept (events/retention).
 crons.daily(
   "domain event retention",
   { hourUTC: 4, minuteUTC: 45 },
@@ -101,21 +108,38 @@ crons.weekly(
   { mode: "dry-run" },
 );
 
-// The public landing page's counters: users, puzzles and ownedPuzzles recounted into the
-// platformStats row that insights/getGlobalStats reads (insights/platformStats).
-crons.interval(
+// The public landing page's counters, in the platformStats row that insights/getGlobalStats reads
+// (insights/platformStats): the rows created since the last count added daily, and every row of
+// users, puzzles and ownedPuzzles recounted weekly, which also corrects for deleted ones.
+crons.daily(
+  "top up platform stats",
+  { hourUTC: 4, minuteUTC: 10 },
+  internal.insights.platformStats.topUp,
+  {},
+);
+crons.weekly(
   "recount platform stats",
-  { hours: 6 },
+  { dayOfWeek: "sunday", hourUTC: 4, minuteUTC: 55 },
   internal.insights.platformStats.recount,
   {},
 );
 
 // The catalog and definition pages' aggregates: every definition's definitionStats row recomputed
-// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile).
-crons.daily(
+// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile). Writes
+// mark what they change, so this is a safety net, and it costs a function per definition: weekly.
+crons.weekly(
   "reconcile definition stats",
-  { hourUTC: 4, minuteUTC: 35 },
+  { dayOfWeek: "sunday", hourUTC: 4, minuteUTC: 35 },
   internal.library.definitionStats.reconcile,
+  {},
+);
+
+// A definition whose recompute was lost is logged and recomputed again, reading only what is
+// pending (library/definitionStats.retryOverdueMarks).
+crons.daily(
+  "retry overdue definition stats",
+  { hourUTC: 4, minuteUTC: 20 },
+  internal.library.definitionStats.retryOverdueMarks,
   {},
 );
 

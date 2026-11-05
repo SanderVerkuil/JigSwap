@@ -10,7 +10,9 @@ import type {
   ProjectedMember,
 } from "@jigswap/contracts";
 import {
+  isPlausibleSolveMinutes,
   MAX_COPY_IMAGES,
+  MAX_SOLVE_MINUTES,
   resolveHouseholdCopyPermission,
 } from "@jigswap/domain";
 import { v } from "convex/values";
@@ -44,7 +46,7 @@ import { viewerMayRequestCopy } from "./exchangeRoutes";
 // explicit-vs-derived and applies the same-day => 1 day floor). The (endDate - startDate) diff is
 // only a FALLBACK for legacy rows that predate persisting a duration. A non-positive fallback
 // result means the span is unusable as a duration (e.g. a legacy same-day row) and returns null
-// (unknown) rather than a misleading 0. Returned raw (not rounded to days) so the UI can humanize it
+// (unknown) rather than a misleading 0, like a number no solve can have taken. Returned raw (not rounded to days) so the UI can humanize it
 // (e.g. "2 hours", "1 day", "4 days", "1 week") instead of collapsing a sub-day solve to "0 days".
 const finishMinutesOf = (c: {
   startDate: number;
@@ -52,11 +54,13 @@ const finishMinutesOf = (c: {
   completionTimeMinutes?: number;
 }): number | null => {
   if (c.completionTimeMinutes != null) {
-    return Math.round(c.completionTimeMinutes);
+    return isPlausibleSolveMinutes(c.completionTimeMinutes)
+      ? Math.round(c.completionTimeMinutes)
+      : null;
   }
   if (c.endDate != null) {
     const diff = Math.round((c.endDate - c.startDate) / 60000);
-    return diff > 0 ? diff : null;
+    return diff > 0 && diff <= MAX_SOLVE_MINUTES ? diff : null;
   }
   return null;
 };

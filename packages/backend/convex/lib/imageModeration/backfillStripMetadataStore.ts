@@ -8,6 +8,7 @@ import {
 } from "../../_generated/server";
 import { isReferenced } from "./blobReferences";
 import { boxArtHolders, repointBoxArt } from "./boxArtReferences";
+import { isBoxArtServable } from "./boxArtUrl";
 import { deleteRenditions, scheduleRenditions } from "./renditionsStore";
 
 // The database side of the one-shot lib/imageModeration/backfillStripMetadata (a Node action,
@@ -97,6 +98,13 @@ const replaceRenditions = async (
  * Point everything that holds `from` at `to`, provided the row still holds `from`, and move the
  * renditions over with it (replaceRenditions). Returns whether it did; afterwards the old blob is
  * deleted unless something else still uses it.
+ *
+ * Box art answers to its `boxArtUploads` listing: the publication gate and every later verdict find
+ * the blob through it, and a blob with no listing counts as predating the gate. So a listing that
+ * may be served moves with the box art. One that may not (pending, unscored, rejected, quarantined,
+ * or its hash check not passed) is left alone with its blob: nothing serves it, so its metadata
+ * reaches nobody, the blob's hashes may still have to be checked, and a re-run strips it once it is
+ * cleared.
  */
 export const swapBlob = internalMutation({
   args: {
@@ -143,7 +151,15 @@ export const swapBlob = internalMutation({
     ) {
       return false;
     }
+    const listings = await ctx.db
+      .query("boxArtUploads")
+      .withIndex("by_storage", (q) => q.eq("storageId", from))
+      .collect();
+    if (!listings.every(isBoxArtServable)) return false;
     await repointBoxArt(ctx, holders, from, to);
+    for (const listing of listings) {
+      await ctx.db.patch(listing._id, { storageId: to });
+    }
     await replaceRenditions(ctx, from, to);
     return true;
   },

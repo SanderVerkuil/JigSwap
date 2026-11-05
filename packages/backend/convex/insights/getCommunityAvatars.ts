@@ -5,6 +5,7 @@ import {
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { clampLimit } from "../lib/pageSize";
 import { explicitVisibilityOf } from "../social/privacy";
 import { mulberry32, partialShuffle } from "./sampling";
 
@@ -12,7 +13,6 @@ import { mulberry32, partialShuffle } from "./sampling";
 const CANDIDATE_SCAN_LIMIT = 200;
 
 // Marketing decoration: cap the caller's requested count.
-const LIMIT_MIN = 1;
 const LIMIT_MAX = 8;
 
 // Pure mapper: derive a privacy-minimal view of a community member. The raw
@@ -68,10 +68,10 @@ export const getCommunityAvatars = query({
     seed: v.number(),
   },
   handler: async (ctx, args): Promise<CommunityAvatarView[]> => {
-    const limit = Math.max(
-      LIMIT_MIN,
-      Math.min(LIMIT_MAX, Math.trunc(args.limit)),
-    );
+    const limit = clampLimit(args.limit, {
+      fallback: LIMIT_MAX,
+      max: LIMIT_MAX,
+    });
 
     // Bounded pool: most-recent active members (no auth required — only
     // privacy-safe initials + opt-in avatar URLs are returned by the mapper).

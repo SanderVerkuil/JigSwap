@@ -6,6 +6,7 @@ import {
 } from "../../shared-kernel";
 import { PersonalCategoryCreated } from "./events";
 import { PersonalCategory } from "./personal-category";
+import { LIBRARY_TEXT_LIMITS } from "./text-limits";
 
 const id = toPersonalCategoryId("pc1");
 const owner = toOwnerId("alice");
@@ -64,5 +65,26 @@ describe("PersonalCategory rehydrate / pullEvents", () => {
     const category = create();
     expect(category.pullEvents()).toHaveLength(1);
     expect(category.pullEvents()).toHaveLength(0);
+  });
+});
+
+describe("a category's text is bounded", () => {
+  it.each([
+    ["name", LIBRARY_TEXT_LIMITS.categoryName],
+    ["description", LIBRARY_TEXT_LIMITS.categoryDescription],
+    ["color", LIBRARY_TEXT_LIMITS.color],
+  ] as const)("create refuses a %s past %i characters", (field, max) => {
+    const r = PersonalCategory.create({
+      id,
+      ownerId: owner,
+      name: "Animals",
+      now: NOW,
+      [field]: "x".repeat(max + 1),
+    });
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("TextTooLong");
+    expect(create({ [field]: "x".repeat(max) }).toState()[field]).toHaveLength(
+      max,
+    );
   });
 });

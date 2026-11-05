@@ -116,15 +116,26 @@ export interface BrowseOwnedCopyView extends Omit<
   viewerMayRequest: boolean;
 }
 
-/** The paginated wrapper `library.browseOwned` returns (offset/limit paging, not Convex cursors). */
+/**
+ * One page of `library.browseOwned`. There is no total: counting matches would mean reading them.
+ * A filter that matches little can come back short, even empty, with `hasMore` still true.
+ */
 export interface BrowseOwnedCopiesView {
   ownedPuzzles: BrowseOwnedCopyView[];
-  total: number;
+  /** More may follow. False only once the walk reached the end of the listings. */
   hasMore: boolean;
-  /** True when Browse's candidate window (the newest open copies) was cut short, so `total` counts
-   * only the matches inside it and more may exist. Optional for older servers. */
-  totalIsLowerBound?: boolean;
+  /** Pass back as `cursor` for the next page; null when there is no next page. */
+  continueCursor: string | null;
 }
+
+/**
+ * The most rows one read joins to their cards: My Puzzles' deepest window and every picker that
+ * offers a whole library (`library.ownedByOwner` for the owner, `exchange.offerableCopies`,
+ * `household.copies`). A row costs up to four index ranges (its puzzle, a cover photo still being
+ * checked, then the box art and its renditions), and Convex allows 4,096 per function. A picker that
+ * returns this many has left older copies out and should say so.
+ */
+export const LIBRARY_ROWS_MAX = 800;
 
 /**
  * The signed-in member's own shelf summary (`library.myShelf`) for the dashboard and profile
@@ -270,7 +281,10 @@ export interface CollectionDetailView {
   personalNotes?: string;
   createdAt: number;
   updatedAt: number;
+  /** The members the viewer may see of the collection's newest ones, oldest of those first. */
   puzzles: OwnedCopyView[];
+  /** True when older members were left out to keep the read inside Convex's limits. */
+  hasMorePuzzles: boolean;
 }
 
 // --- Copy instance (owned-copy) timeline -------------------------------------------------------
@@ -458,6 +472,22 @@ export interface CopyPhoto {
    * transfer.
    */
   viewerMayRemove: boolean;
+}
+
+/**
+ * One of the caller's own photos on a copy they no longer manage, e.g. the previous owner after a
+ * transfer (library.listMyPhotosOnFormerCopies). Just enough to recognise the photo and remove it
+ * (library.removeCopyPhoto); PRIVACY: nothing about the copy, its puzzle or who has it now.
+ */
+export interface MyPhotoOnFormerCopyView {
+  /** The `ownedPuzzleImages` _id as a string: what removeCopyPhoto takes. */
+  imageId: string;
+  /** A thumbnail-sized URL, or null while the photo's checks have not passed. */
+  url: string | null;
+  /** The caption the uploader gave it, if any. */
+  title?: string;
+  /** When it was uploaded (ms). */
+  createdAt: number;
 }
 
 /**

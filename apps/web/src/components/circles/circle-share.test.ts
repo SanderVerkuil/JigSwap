@@ -31,6 +31,7 @@ describe("circleShareErrorKey", () => {
       "CircleNotFound",
       "CannotShareCopy",
       "BatchTooLarge",
+      "RateLimited",
     ]) {
       const key = circleShareErrorKey(new ConvexError({ code, message: "x" }));
       expect(key).toBe(`shareErrors.${code}`);

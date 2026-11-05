@@ -9,6 +9,7 @@ import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
+import { LIVE_EXCHANGES_PER_READ } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
@@ -230,7 +231,11 @@ export function ShelfSection() {
     },
     active: {
       href: "/trades",
-      value: activeExchanges,
+      // One read holds a window of what's in play: a full one may have more behind it.
+      value:
+        activeExchanges >= LIVE_EXCHANGES_PER_READ
+          ? `${activeExchanges}+`
+          : activeExchanges,
       label: t("stats.activeLabel"),
       sub: t("stats.activeSub"),
     },

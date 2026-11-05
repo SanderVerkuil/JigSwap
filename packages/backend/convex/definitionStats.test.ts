@@ -3,6 +3,8 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import crons from "./crons";
+import { COPY_ONLY_SOLVES_READ } from "./library/definitionAggregates";
 import {
   computeDefinitionTotals,
   markDefinitionStatsStale,
@@ -12,7 +14,7 @@ import schema from "./schema";
 
 // The definitionStats read model (PERF-B4m, SEC-29): one row per catalogue definition holding the
 // viewer-independent aggregates the catalog and definition pages show, recomputed from source by a
-// scheduled job whenever a write marks the definition, and by a nightly reconcile that doubles as
+// scheduled job whenever a write marks the definition, and by a weekly reconcile that doubles as
 // the backfill. Reads fall back to the live helpers until a definition's totals exist.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -245,6 +247,14 @@ const statsRow = (t: T, puzzleId: Id<"puzzles">) =>
       .unique(),
   );
 
+const pendingRow = (t: T, puzzleId: Id<"puzzles">) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("definitionStatsPending")
+      .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+      .unique(),
+  );
+
 const liveTotals = (t: T, puzzleId: Id<"puzzles">) =>
   t.run((ctx) => computeDefinitionTotals(ctx, puzzleId));
 
@@ -257,6 +267,7 @@ const reconcile = async (t: T, args: { batchSize?: number } = {}) => {
 const expectInStep = async (t: T, puzzleId: Id<"puzzles">) => {
   await settle(t);
   const row = await statsRow(t, puzzleId);
+  expect(await pendingRow(t, puzzleId)).toBeNull();
   expect(row?.stale).toBeUndefined();
   expect(row?.totals).toEqual(await liveTotals(t, puzzleId));
   return row!.totals!;
@@ -269,7 +280,7 @@ const recomputeJobs = (t: T) =>
     ),
   );
 
-describe("definitionStats backfill and nightly reconcile", () => {
+describe("definitionStats backfill and weekly reconcile", () => {
   test("writes one row per definition with the live aggregates", async () => {
     const t = newT();
     const w = await seedWorld(t);
@@ -287,6 +298,8 @@ describe("definitionStats backfill and nightly reconcile", () => {
       finishDaysCount: 2,
       // alice, bob (their open copy is visible) and noah; carol holds only a private copy.
       communityOwners: 3,
+      // The admin console's count takes carol in.
+      ownerCount: 4,
       // noah's profile is private, so his copy for sale is not counted publicly.
       publicAvailable: { swap: 1, lend: 1, sale: 0 },
     });
@@ -298,6 +311,7 @@ describe("definitionStats backfill and nightly reconcile", () => {
       finishDaysSum: 0,
       finishDaysCount: 0,
       communityOwners: 0,
+      ownerCount: 0,
       publicAvailable: { swap: 0, lend: 0, sale: 0 },
     });
   });
@@ -352,17 +366,165 @@ describe("definitionStats backfill and nightly reconcile", () => {
   });
 });
 
+// A definition can gather thousands of copies, and its recompute runs under Convex's real limits:
+// 4,096 index ranges per function, so nothing in it may cost a read per copy.
+describe("a definition with more copies than Convex allows index ranges", () => {
+  const COPIES = 4_200;
+
+  const seedCopies = async (
+    t: T,
+    puzzleId: Id<"puzzles">,
+    fields: (i: number) => Partial<Doc<"ownedPuzzles">>,
+  ) => {
+    for (let start = 0; start < COPIES; start += 500) {
+      await t.run(async (ctx) => {
+        for (let i = start; i < Math.min(COPIES, start + 500); i++) {
+          const ownerId = await ctx.db.insert("users", {
+            clerkId: `clerk_many_${i}`,
+            email: `many${i}@example.com`,
+            name: `many ${i}`,
+            isActive: true,
+            createdAt: BASE,
+            updatedAt: BASE,
+          });
+          await ctx.db.insert("ownedPuzzles", {
+            aggregateId: `many-${i}`,
+            puzzleId,
+            ownerId,
+            condition: "good",
+            availability: { ...CLOSED, forTrade: true },
+            isOpen: true,
+            listedAt: BASE,
+            createdAt: BASE,
+            updatedAt: BASE,
+            ...fields(i),
+          });
+        }
+      });
+    }
+  };
+
+  test("its recompute holds, each public listing and owner counted", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seedWorld(t);
+    const privateOwners = 3;
+    await seedCopies(t, w.vista.id, (i) =>
+      i < privateOwners ? { ownerPrivate: true } : {},
+    );
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    const totals = (await statsRow(t, w.vista.id))?.totals;
+    expect(totals?.ownerCount).toBe(COPIES);
+    expect(totals?.publicAvailable.swap).toBe(COPIES - privateOwners);
+  }, 300_000);
+
+  test("a solve stored against a copy only still counts, without one read per copy", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const w = await seedWorld(t);
+    await seedCopies(t, w.vista.id, () => ({}));
+    await t.run(async (ctx) => {
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", w.vista.id))
+        .first();
+      await ctx.db.insert("completions", {
+        aggregateId: "legacy-copy-only",
+        userId: w.alice,
+        ownedPuzzleId: copy!._id,
+        startDate: BASE,
+        endDate: BASE + 2 * DAY,
+        photos: [],
+        isCompleted: true,
+        createdAt: BASE,
+        updatedAt: BASE,
+      });
+    });
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    expect((await statsRow(t, w.vista.id))?.totals?.completedCount).toBe(1);
+  }, 300_000);
+});
+
+describe("completion totals, across the two ways a solve links to a definition", () => {
+  test("a copy-only solve counts for its copy's definition only, a named one once", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    const vistaCopy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.vista.id,
+    });
+    const harbourCopy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.harbour.id,
+    });
+    await insertCompletion(t, { userId: w.alice, ownedPuzzleId: vistaCopy });
+    await insertCompletion(t, { userId: w.alice, ownedPuzzleId: harbourCopy });
+    // Both links to one definition: one solve.
+    await insertCompletion(t, {
+      userId: w.alice,
+      puzzleId: w.vista.id,
+      ownedPuzzleId: vistaCopy,
+    });
+    // An unfinished solve never counts.
+    await insertCompletion(t, {
+      userId: w.alice,
+      ownedPuzzleId: vistaCopy,
+      isCompleted: false,
+    });
+
+    expect((await liveTotals(t, w.vista.id)).completedCount).toBe(2);
+    expect((await liveTotals(t, w.harbour.id)).completedCount).toBe(1);
+  });
+
+  test("past its read bound it says so, instead of counting short in silence", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const t = newT();
+    const w = await seedWorld(t);
+    const copy = await insertCopy(t, {
+      ownerId: w.alice,
+      puzzleId: w.vista.id,
+    });
+    await t.run(async (ctx) => {
+      for (let i = 0; i < COPY_ONLY_SOLVES_READ + 1; i++) {
+        await ctx.db.insert("completions", {
+          aggregateId: `copy-only-${i}`,
+          userId: w.alice,
+          ownedPuzzleId: copy,
+          startDate: BASE,
+          endDate: BASE + DAY,
+          photos: [],
+          isCompleted: true,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+      }
+    });
+
+    expect((await liveTotals(t, w.vista.id)).completedCount).toBe(
+      COPY_ONLY_SOLVES_READ,
+    );
+    expect(String(vi.mocked(console.error).mock.calls[0]?.[0])).toContain(
+      "copyOnlySolvesCapped",
+    );
+  });
+});
+
 describe("a recompute that never landed", () => {
-  // A stale row with no recompute pending, as a recompute that threw leaves it.
+  // A mark with no recompute pending, as a recompute that threw leaves it.
   const leaveStale = async (t: T, puzzleId: Id<"puzzles">, since: number) => {
     const row = await statsRow(t, puzzleId);
-    await t.run((ctx) =>
-      ctx.db.patch(row!._id, {
-        stale: true,
-        staleSince: since,
+    await t.run(async (ctx) => {
+      await ctx.db.patch(row!._id, {
         totals: { ...row!.totals!, communityOwners: 99 },
-      }),
-    );
+      });
+      await ctx.db.insert("definitionStatsPending", { puzzleId, since });
+    });
   };
   const overdueLogs = () =>
     vi
@@ -388,7 +550,7 @@ describe("a recompute that never landed", () => {
 
     expect((await expectInStep(t, w.vista.id)).communityOwners).toBe(1);
     expect(overdueLogs()).toHaveLength(1);
-    expect((await statsRow(t, w.vista.id))?.staleSince).toBeUndefined();
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
   });
 
   test("a recompute still due is not scheduled twice", async () => {
@@ -406,7 +568,7 @@ describe("a recompute that never landed", () => {
     expect(overdueLogs()).toHaveLength(0);
   });
 
-  test("the nightly reconcile reports a definition stuck stale and repairs it", async () => {
+  test("the reconcile reports a definition stuck stale and repairs it", async () => {
     const t = newT();
     const w = await seedWorld(t);
     await reconcile(t);
@@ -417,6 +579,65 @@ describe("a recompute that never landed", () => {
     expect(overdueLogs()).toHaveLength(1);
     expect(String(overdueLogs()[0]![0])).toContain(w.harbour.id);
     expect((await expectInStep(t, w.harbour.id)).communityOwners).toBe(0);
+  });
+});
+
+describe("the daily retry of a lost recompute", () => {
+  const retry = (t: T) =>
+    t.mutation(internal.library.definitionStats.retryOverdueMarks, {});
+
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  test("re-schedules what is overdue and logs it, without walking the catalogue", async () => {
+    const t = newT({ documentsRead: 50 });
+    const w = await seedWorld(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 200; i++) {
+        await ctx.db.insert("puzzles", {
+          title: `p${i}`,
+          pieceCount: 500,
+          status: "approved",
+          submittedBy: w.alice,
+          createdAt: BASE,
+          updatedAt: BASE,
+        });
+      }
+      await ctx.db.insert("definitionStatsPending", {
+        puzzleId: w.vista.id,
+        since: Date.now() - STALE_RETRY_MS - 1,
+      });
+      await ctx.db.insert("definitionStatsPending", {
+        puzzleId: w.harbour.id,
+        since: Date.now(),
+      });
+    });
+
+    await retry(t);
+
+    const jobs = await recomputeJobs(t);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].args[0]).toEqual({ puzzleId: w.vista.id });
+    expect(vi.mocked(console.error).mock.calls).toHaveLength(1);
+  });
+
+  test("nothing pending, nothing scheduled", async () => {
+    const t = newT();
+    await seedWorld(t);
+    await retry(t);
+    expect(await recomputeJobs(t)).toEqual([]);
+  });
+});
+
+describe("crons", () => {
+  test("the whole-catalogue reconcile runs weekly and the retry of lost recomputes daily", () => {
+    expect(crons.crons["reconcile definition stats"]?.schedule).toMatchObject({
+      type: "weekly",
+    });
+    expect(
+      crons.crons["retry overdue definition stats"]?.schedule,
+    ).toMatchObject({ type: "daily" });
   });
 });
 
@@ -502,7 +723,60 @@ describe("every write that changes a definition's aggregates marks it", () => {
     await settle(t);
 
     expect(await recomputeJobs(t)).toHaveLength(jobs);
-    expect((await statsRow(t, w.vista.id))?.stale).toBeUndefined();
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
+  });
+
+  test("a mark that changes no number never touches the row pages subscribe to", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await acquire(t, "alice", w.vista.aggregateId);
+    await reconcile(t);
+    const before = await statsRow(t, w.vista.id);
+
+    await t.run(async (ctx) => {
+      await markDefinitionStatsStale(ctx, w.vista.id);
+    });
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+    expect(await pendingRow(t, w.vista.id)).not.toBeNull();
+
+    await settle(t);
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+    expect(await pendingRow(t, w.vista.id)).toBeNull();
+  });
+
+  test("a mark that does change a number writes the row once, when it lands", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await acquire(t, "alice", w.vista.aggregateId);
+    await reconcile(t);
+    const before = await statsRow(t, w.vista.id);
+
+    await asUser(t, "bob").mutation(api.library.acquireCopies.acquireCopies, {
+      items: [{ puzzleDefinitionId: w.vista.aggregateId }],
+    });
+    // Marked, not yet recomputed: readers still see the row as it was.
+    expect(await statsRow(t, w.vista.id)).toEqual(before);
+
+    expect((await expectInStep(t, w.vista.id)).communityOwners).toBe(2);
+  });
+
+  test("a row stale from before marks had their own table is cleared by its recompute", async () => {
+    const t = newT();
+    const w = await seedWorld(t);
+    await reconcile(t);
+    const row = await statsRow(t, w.vista.id);
+    await t.run((ctx) =>
+      ctx.db.patch(row!._id, { stale: true, staleSince: BASE }),
+    );
+
+    await t.mutation(internal.library.definitionStats.recompute, {
+      puzzleId: w.vista.id,
+    });
+
+    const after = await statsRow(t, w.vista.id);
+    expect(after?.stale).toBeUndefined();
+    expect(after?.staleSince).toBeUndefined();
+    expect(after?.totals).toEqual(row?.totals);
   });
 
   test("recording, editing and deleting a completion", async () => {

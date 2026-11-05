@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { recordEventMembers } from "./events/eventMembers";
-import { EVENT_RETENTION_MS, EVENT_RETENTION_PAGE } from "./events/retention";
+import {
+  EVENT_RETENTION_DRY_RUN_MAX_PAGES,
+  EVENT_RETENTION_MS,
+  EVENT_RETENTION_PAGE,
+} from "./events/retention";
 import { DAY_MS } from "./lib/retention";
 import schema from "./schema";
 import { FEED_WINDOW_MS } from "./social/activityEntries";
@@ -145,6 +149,17 @@ describe("domainEvents retention", () => {
     vi.stubEnv("RETENTION_ENFORCE", "all");
     const t = convexTest(schema, modules);
     const alice = await seedAlice(t);
+    await t.run((ctx) =>
+      ctx.db.insert("completions", {
+        aggregateId: "c-recent",
+        userId: alice,
+        startDate: NOW - FEED_WINDOW_MS,
+        photos: [],
+        isCompleted: true,
+        createdAt: NOW,
+        updatedAt: NOW,
+      }),
+    );
     await insertEvent(
       t,
       FEED_WINDOW_MS - DAY_MS,
@@ -177,6 +192,35 @@ describe("domainEvents retention", () => {
     await sweep(t);
 
     expect(await eventIds(t)).toEqual([old]);
+  });
+
+  test("a dry run stops after a capped number of pages and says so", async () => {
+    const t = convexTest(schema, modules);
+    const pages = EVENT_RETENTION_DRY_RUN_MAX_PAGES;
+    await t.run(async (ctx) => {
+      for (let i = 0; i < EVENT_RETENTION_PAGE * pages + 3; i++) {
+        const at = NOW - EVENT_RETENTION_MS - DAY_MS - i;
+        await ctx.db.insert("domainEvents", {
+          name: "CopyMadeAvailable",
+          payload: { copyId: `copy-${i}` },
+          context: "test",
+          occurredAt: at,
+          processedAt: at,
+        });
+      }
+    });
+
+    await sweep(t);
+
+    const events = sweepEvents();
+    expect(events).toHaveLength(pages);
+    expect(events[events.length - 1]).toMatchObject({
+      is_done: true,
+      capped: true,
+      dry_run: true,
+      due: EVENT_RETENTION_PAGE,
+    });
+    expect(await eventIds(t)).toHaveLength(EVENT_RETENTION_PAGE * pages + 3);
   });
 
   test("pages past the page size: the whole backlog goes", async () => {

@@ -5,6 +5,7 @@ import {
   ok,
   Result,
 } from "../../shared-kernel";
+import { MIN_SOLVE_YEAR } from "./date-precision";
 import { SolvingError } from "./errors";
 import { GoalAchieved, GoalCreated, GoalProgressed } from "./events";
 import {
@@ -17,6 +18,12 @@ import { GoalId, MemberId } from "./ids";
 
 export const MAX_GOAL_TITLE_LENGTH = 100;
 export const MAX_GOAL_DESCRIPTION_LENGTH = 1000;
+// The most completions a goal can aim for. Far more than anyone solves: it only keeps nonsense out.
+export const MAX_GOAL_TARGET = 100_000;
+
+// A goal's period has to fall between the earliest year a solve can have and a century ahead.
+const EARLIEST_GOAL_DAY = Date.UTC(MIN_SOLVE_YEAR, 0, 1);
+const LATEST_GOAL_AHEAD_MS = 100 * 365.25 * 24 * 60 * 60 * 1000;
 
 // What a member decides about a goal: its wording, its target and the period it counts solves in.
 // `startDate` and `targetDate` are calendar dates (UTC midnight). Without a `startDate` the goal
@@ -63,8 +70,9 @@ export interface GoalState {
 // announced path (driven by completion changes) and emits GoalAchieved at most once per target,
 // the moment progress first crosses it; recount() is the silent path (creating, editing or
 // restoring a goal), which never announces anything. The title shows at least one visible character, title
-// and description stay within their limits, `targetCompletions` is a positive integer and the
-// period is real and never empty (start day on or before the target day). An archived goal
+// and description stay within their limits, `targetCompletions` is a positive integer up to
+// MAX_GOAL_TARGET and the period is real, within reach and never empty (start day on or before the
+// target day). An archived goal
 // (`isActive` false) is left alone by progressFrom's callers.
 export class Goal {
   private events: DomainEvent[] = [];
@@ -238,8 +246,8 @@ export class Goal {
   // --- internals ---
 
   // A definition is valid with a title that shows something, wording within the limits, a positive
-  // integer target and a real, non-empty period, measured from its start date or, without one, from
-  // `createdAt`.
+  // integer target up to MAX_GOAL_TARGET and a real, non-empty period within reach, measured from
+  // its start date or, without one, from `createdAt`.
   private static validate(
     definition: GoalDefinition,
     createdAt: Date,
@@ -258,17 +266,23 @@ export class Goal {
     }
     if (
       !Number.isInteger(definition.targetCompletions) ||
-      definition.targetCompletions <= 0
+      definition.targetCompletions <= 0 ||
+      definition.targetCompletions > MAX_GOAL_TARGET
     ) {
       return SolvingError.invalidGoalTarget();
     }
     const window = goalCountingWindow({ ...definition, createdAt });
     const from = window.from.getTime();
     const toExclusive = window.toExclusive?.getTime();
+    const latest = createdAt.getTime() + LATEST_GOAL_AHEAD_MS;
     if (
       Number.isNaN(from) ||
+      from < EARLIEST_GOAL_DAY ||
+      from > latest ||
       (toExclusive !== undefined &&
-        (Number.isNaN(toExclusive) || toExclusive <= from))
+        (Number.isNaN(toExclusive) ||
+          toExclusive <= from ||
+          toExclusive > latest))
     ) {
       return SolvingError.invalidGoalPeriod();
     }

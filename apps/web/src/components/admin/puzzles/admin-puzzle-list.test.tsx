@@ -110,6 +110,23 @@ const renderList = (props: Props = {}, locale: "en" | "nl" = "en") =>
 const lastArgs = () => mocks.paginated.mock.lastCall?.[1];
 
 describe("AdminPuzzleList", () => {
+  it("shows an owner count the server only counted part of as a lower bound", () => {
+    mocks.paginated.mockReturnValue(
+      page([row({ ownerCount: 100, ownerCountIsLowerBound: true })]),
+    );
+    renderList();
+    expect(screen.getByText("100+ owners")).toBeTruthy();
+    cleanup();
+
+    renderList({}, "nl");
+    expect(screen.getByText("100+ eigenaren")).toBeTruthy();
+    cleanup();
+
+    mocks.paginated.mockReturnValue(page([row({ ownerCount: 1 })]));
+    renderList();
+    expect(screen.getByText("1 owner")).toBeTruthy();
+  });
+
   it("asks the server for the URL's status and search, and nothing more without them", () => {
     mocks.paginated.mockReturnValue(page([row()]));
     renderList();

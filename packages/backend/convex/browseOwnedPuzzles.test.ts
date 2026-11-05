@@ -257,7 +257,7 @@ describe("library.browseOwnedPuzzles puzzleId filter", () => {
     expect(ids(view)).toEqual(
       new Set(["copy-public-open", "copy-circle-open"]),
     );
-    expect(view.total).toBe(2);
+    expect(view.hasMore).toBe(false);
   });
 
   test("still hides a private owner's copy of the filtered definition", async () => {
@@ -273,7 +273,7 @@ describe("library.browseOwnedPuzzles puzzleId filter", () => {
     await seed(t);
     const view = await browse(t, { puzzleId: "not-a-real-id" });
     expect(view.ownedPuzzles).toEqual([]);
-    expect(view.total).toBe(0);
+    expect(view.hasMore).toBe(false);
   });
 
   test("a well-formed id of a deleted definition yields an empty result", async () => {
@@ -296,7 +296,7 @@ describe("library.browseOwnedPuzzles puzzleId filter", () => {
   });
 });
 
-// SEC-49 / PERF-B9: limit and offset are clamped server-side, whatever the client sends.
+// SEC-49 / PERF-B9: limit is clamped server-side, whatever the client sends.
 describe("library.browseOwnedPuzzles page size", () => {
   const seedManyOpen = (t: TestConvex<typeof schema>, puzzle: Id<"puzzles">) =>
     t.run(async (ctx) => {
@@ -326,16 +326,21 @@ describe("library.browseOwnedPuzzles page size", () => {
     expect(view.hasMore).toBe(true);
   });
 
-  test("a negative offset reads the first page", async () => {
+  // Web builds from before cursors ask for pages by offset until they have aged out.
+  test("a build that still sends an offset gets its first page, and past it the end of the list", async () => {
     const t = convexTest(schema, modules);
     const { puzzle } = await seed(t);
     await seedManyOpen(t, puzzle);
     const first = await browse(t, { limit: 10 });
-    const negative = await browse(t, { limit: 10, offset: -5 });
-    expect(negative.ownedPuzzles.map((c) => c.aggregateId)).toEqual(
-      first.ownedPuzzles.map((c) => c.aggregateId),
-    );
-    expect(negative.ownedPuzzles).toHaveLength(10);
+    for (const offset of [0, -5]) {
+      const again = await browse(t, { limit: 10, offset });
+      expect(again.ownedPuzzles.map((c) => c.aggregateId)).toEqual(
+        first.ownedPuzzles.map((c) => c.aggregateId),
+      );
+    }
+    const later = await browse(t, { limit: 10, offset: 10 });
+    expect(later.ownedPuzzles).toEqual([]);
+    expect(later.hasMore).toBe(false);
   });
 });
 
@@ -367,13 +372,12 @@ describe("library.browseOwnedPuzzles availability filter", () => {
       }
     });
 
-  test("one channel returns only copies offered that way, with an exact total", async () => {
+  test("one channel returns only copies offered that way", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     await seedChannels(t);
     const view = await browse(t, { availability: ["forLend"] });
     expect(ids(view)).toEqual(new Set(["copy-lend"]));
-    expect(view.total).toBe(1);
     expect(view.hasMore).toBe(false);
   });
 
@@ -383,7 +387,6 @@ describe("library.browseOwnedPuzzles availability filter", () => {
     await seedChannels(t);
     const view = await browse(t, { availability: ["forLend", "forSale"] });
     expect(ids(view)).toEqual(new Set(["copy-lend", "copy-sale"]));
-    expect(view.total).toBe(2);
   });
 
   test("the filter applies to circle-shared copies too", async () => {
@@ -404,7 +407,6 @@ describe("library.browseOwnedPuzzles availability filter", () => {
     await seedChannels(t);
     const all = await browse(t);
     const empty = await browse(t, { availability: [] });
-    expect(empty.total).toBe(all.total);
     expect(ids(empty)).toEqual(ids(all));
   });
 
@@ -413,10 +415,12 @@ describe("library.browseOwnedPuzzles availability filter", () => {
     await seed(t);
     await seedChannels(t);
     const availability = ["forTrade", "forSale"];
-    const first = await browse(t, { availability, offset: 0, limit: 2 });
-    const second = await browse(t, { availability, offset: 2, limit: 2 });
-    expect(first.total).toBe(3);
-    expect(second.total).toBe(3);
+    const first = await browse(t, { availability, limit: 2 });
+    const second = await browse(t, {
+      availability,
+      limit: 2,
+      cursor: first.continueCursor,
+    });
     expect(first.ownedPuzzles).toHaveLength(2);
     expect(first.hasMore).toBe(true);
     expect(second.ownedPuzzles).toHaveLength(1);
@@ -498,9 +502,8 @@ describe("library.browseOwnedPuzzles category filter", () => {
       );
       expect(view).toEqual({
         ownedPuzzles: [],
-        total: 0,
         hasMore: false,
-        totalIsLowerBound: false,
+        continueCursor: null,
       });
     }
   });

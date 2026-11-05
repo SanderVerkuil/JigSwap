@@ -10,7 +10,7 @@ import {
   useRouteContext,
   useRouter,
 } from "@tanstack/react-router";
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import type { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import * as React from "react";
@@ -50,19 +50,6 @@ const fetchClerkUserId = createServerFn({ method: "GET" }).handler(async () => {
     // is no session, so `auth()` cannot resolve. Fall back to unauthenticated
     // so public routes like /docs can still be generated.
     return { userId: null };
-  }
-});
-
-// Server only: the Convex JWT ("convex" template in Clerk) that authenticates
-// SSR loaders' reads. Never returned from a server fn or put in the route
-// context, which is dehydrated into the page HTML; in the browser,
-// ConvexProviderWithClerk fetches its own token from Clerk.
-const getSsrConvexToken = createServerOnlyFn(async () => {
-  try {
-    const { userId, getToken } = await auth();
-    return userId ? await getToken({ template: "convex" }) : null;
-  } catch {
-    return null;
   }
 });
 
@@ -163,9 +150,9 @@ export const Route = createRootRouteWithContext<{
   // dehydrated to the client by Start's SSR, and child head() functions can
   // read it for localized titles (loaderData is NOT reliably resolved by the
   // time a child head runs, so this must live in context, not a loader).
-  beforeLoad: async (ctx) => {
+  beforeLoad: async () => {
     const isBrowser = typeof window !== "undefined";
-    const [auth, intl, ssrToken] = await Promise.all([
+    const [auth, intl] = await Promise.all([
       (isBrowser && clientAuthCache) || fetchClerkUserId(),
       // The catalog stays out of this context (it is dehydrated into every
       // document); it is loaded into lib/i18n-catalog before the context
@@ -175,18 +162,14 @@ export const Route = createRootRouteWithContext<{
         await loadCatalog(payload.locale);
         return payload;
       }),
-      isBrowser ? null : getSsrConvexToken(),
     ]);
     if (isBrowser) {
       clientAuthCache = { userId: auth.userId };
     }
-    if (ssrToken) {
-      // Hand the Clerk token to the server HTTP client so SSR loaders see the auth.
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(ssrToken);
-    }
-    // No token here: this context is serialized into the HTML. ssrAuthed only says the server client
-    // has one, so a loader never reads member data as nobody.
-    return { userId: auth.userId, intl, ssrAuthed: Boolean(ssrToken) };
+    // No Convex token here: asking Clerk for one is a network call most routes have no use for, and
+    // this context is serialized into the HTML. A loader whose reads depend on the member asks for
+    // it itself (lib/ssr-member-data.ts).
+    return { userId: auth.userId, intl };
   },
   errorComponent: (props) => (
     <RootDocument>

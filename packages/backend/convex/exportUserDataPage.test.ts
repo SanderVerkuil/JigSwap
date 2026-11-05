@@ -724,4 +724,55 @@ describe("insights.exportUserDataPage", () => {
       to: { name: "Erin" },
     });
   });
+
+  // Art. 15: a member's consent to show their email on one trade is theirs to read. Only their own:
+  // the other party's consent stays out of this member's row.
+  test("each party's exchange row carries their own email-sharing consent, and only theirs", async () => {
+    const t = convexTest(schema, modules);
+    const { sharedAt } = await t.run(async (ctx) => {
+      const alice = await insertUser(ctx, "alice");
+      const bob = await insertUser(ctx, "bob");
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Harbour Lights",
+        pieceCount: 1000,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const requestedPuzzleId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: true, forLend: false },
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const exchangeId = await ctx.db.insert("exchanges", {
+        initiatorId: alice,
+        recipientId: bob,
+        type: "sale",
+        requestedPuzzleId,
+        status: "accepted",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      const sharedAt = 1_234_567;
+      await ctx.db.insert("tradeContactShares", {
+        exchangeId,
+        side: "initiator",
+        sharedAt,
+      });
+      return { sharedAt };
+    });
+
+    const proposed = await exportSection(t, "alice", "exchangesProposed");
+    expect(proposed.rows[0]).toMatchObject({
+      emailShared: true,
+      emailSharedAt: sharedAt,
+    });
+    const received = await exportSection(t, "bob", "exchangesReceived");
+    expect(received.rows[0]).toMatchObject({ emailShared: false });
+    expect(received.rows[0]).not.toHaveProperty("emailSharedAt");
+  });
 });
