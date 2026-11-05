@@ -1,10 +1,10 @@
 ---
-title: Uitlenen, Ruilen & Verkopen
+title: Uitlenen, ruilen en verkopen
 order: 2
 summary: "Vind een exemplaar, vraag het aan, stuur de eigenaar een bericht en beheer je uitwisselingen."
 ---
 
-# Uitlenen, Ruilen & Verkopen
+# Uitlenen, ruilen en verkopen
 
 JigSwap ondersteunt drie soorten uitwisselingen:
 
@@ -91,7 +91,7 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
     van de puzzel zelf. Heb je er geen, dan linkt het naar **Puzzels
     Ontdekken**.
   - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
-    beheren) die zijn uitgeleend, en bij wie ze zijn. In **Mijn Puzzels** laat
+    beheren) die zijn uitgeleend, en bij wie ze zijn. In **Mijn puzzels** laat
     het filter **Uitgeleend** dezelfde puzzels zien tussen de rest van je
     verzameling.
 
@@ -125,7 +125,7 @@ Een uitwisseling doorloopt duidelijke stappen:
    **Annuleren** vragen we je eerst om te bevestigen, omdat je ze niet ongedaan
    kunt maken; het andere lid krijgt in beide gevallen een melding.
 3. **Afronding** — eenmaal geaccepteerd moeten **beide partijen** de afronding
-   bevestigen. Gebruik **Markeren als Voltooid** zodra de puzzel echt is
+   bevestigen. Gebruik **Markeren als voltooid** zodra de puzzel echt is
    overgedragen. Een venster vertelt je eerst wat afronden doet: bij een ruil
    of verkoop gaat de puzzel naar de bibliotheek van het andere lid en dat kun
    je niet ongedaan maken; bij een lening gaat de lening in. Na je bevestiging
@@ -150,7 +150,7 @@ de puzzel weer vrij is. Loopt de uitwisseling vast, dan kunnen jullie hem
 allebei **Annuleren**. De puzzel is dan weer vrij.
 
 **Accepteren** lukt niet zolang een puzzel in de uitwisseling gereserveerd is
-voor een andere uitwisseling. **Accepteren** en **Markeren als Voltooid** lukken
+voor een andere uitwisseling. **Accepteren** en **Markeren als voltooid** lukken
 niet zolang een puzzel in de uitwisseling is uitgeleend, en ook niet meer als
 een puzzel sinds het verzoek van eigenaar is gewisseld of niet meer bestaat. Je
 krijgt een melding waarom. Een uitwisseling waarvan een puzzel van eigenaar is
@@ -165,7 +165,7 @@ om te bevestigen: geef hem pas terug als de uitlener de puzzel echt terug
 heeft, want daarna is de lening definitief afgesloten.
 
 Ben je de uitlener, gebruik dan **Terugvragen** onder **Leningen ›
-Uitgeleend**, of op de kaart van de puzzel in **Mijn Puzzels**, zodra je de
+Uitgeleend**, of op de kaart van de puzzel in **Mijn puzzels**, zodra je de
 puzzel terug hebt. De lening is dan definitief afgesloten, en wie de puzzel
 leende krijgt daar geen melding van. We vragen je eerst om te bevestigen. Onder
 **Leningen** spreek je met **Bericht** ernaast af hoe je de puzzel terugkrijgt,
@@ -182,4 +182,4 @@ pagina van de puzzel om hem weer aan te bieden.
 Je kunt je uitwisselingspartner ook vanuit de uitwisseling een **Bericht**
 sturen om details af te stemmen. Wil je een probleem met een ruil melden, open
 dan het menu **Ruilacties** en kies **Lid melden**. Zie
-[Blokkeren & Melden](/docs/discovering-and-community/blocking-and-reporting).
+[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).

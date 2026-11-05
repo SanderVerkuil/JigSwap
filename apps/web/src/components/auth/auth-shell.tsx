@@ -1,6 +1,8 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { LangToggle, ModeToggle } from "@/components/marketing/header";
 import { Wordmark } from "@/components/marketing/wordmark";
+import { openCookieSettings } from "@/lib/analytics-consent";
 import type * as React from "react";
 import { useTranslations } from "use-intl";
 
@@ -28,7 +30,10 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <ModeToggle />
         </div>
       </header>
-      <main className="flex-1 flex items-start sm:items-center justify-center px-4 py-4 sm:py-10">
+      <main
+        id={MAIN_CONTENT_ID}
+        className="flex-1 flex items-start sm:items-center justify-center px-4 py-4 sm:py-10"
+      >
         <div className="w-full max-w-md">{children}</div>
       </main>
       <footer className="font-mk-sans border-t border-mk-border">
@@ -42,6 +47,14 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <Link href="/catalog" className={footerLinkCls}>
             {t("nav.catalog")}
           </Link>
+          {/* Consent can be changed or withdrawn from here too (GDPR Art. 7(3)). */}
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className={`${footerLinkCls} cursor-pointer`}
+          >
+            {t("footer.cookieSettings")}
+          </button>
         </div>
       </footer>
     </div>

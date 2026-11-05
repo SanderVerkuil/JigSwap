@@ -46,6 +46,20 @@ export function goalStatus(
   return statusOn(goal, localTodayMs(now));
 }
 
+// A goal's progress as a whole percentage, for every bar and label. Rounded down, so a goal just
+// short of its target never reads 100% while it is still open. Multiplies first: 29 / 100 * 100 is
+// 28.999999999999996.
+export function goalPercent(goal: {
+  currentCompletions: number;
+  targetCompletions: number;
+}): number {
+  if (goal.targetCompletions <= 0) return 0;
+  return Math.min(
+    100,
+    Math.floor((goal.currentCompletions * 100) / goal.targetCompletions),
+  );
+}
+
 // The goals worth showing as "your goal" outside the goals page (the dashboard ring and briefing):
 // the ones still being chased first, then achieved ones whose period is still running. A goal whose
 // last day has passed never appears, even when it was achieved (it stays under Achieved on the goals

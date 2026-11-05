@@ -298,7 +298,8 @@
     "welcomeBack": "Welcome back to the puzzle trading community",
     "joinCommunity": "Join the puzzle trading community",
     "signInToAccount": "Sign in to your account",
-    "createNewAccount": "Create a new account"
+    "createNewAccount": "Create a new account",
+    "sharedPuzzle": "Someone shared a puzzle with you on JigSwap. Create a free account to see it, or sign in if you already have one."
   },
   "activity": {
     "completion": {
@@ -362,15 +363,15 @@
     "myPuzzles": "My Puzzles",
     "managePuzzles": "Manage your puzzle collection",
     "noPuzzles": "No puzzles here yet",
-    "addFirstPuzzle": "Add your first puzzle to start trading.",
+    "addFirstPuzzle": "Add your first puzzle to start your shelf.",
     "noMatch": {
       "title": "No puzzles match “{filters}”",
       "sub": "Try a different search or filter, or show your whole library.",
       "showAll": "Show all"
     },
     "librarySearch": {
-      "label": "Search your puzzles",
-      "placeholder": "Search title, brand or tag"
+      "label": "Search your puzzles by title, brand or tag",
+      "placeholder": "Search your puzzles"
     },
     "sort": {
       "label": "Sort by",
@@ -472,7 +473,10 @@
       "subtitle": "Browse and discover puzzles from the community",
       "searchPlaceholder": "Title, brand, artist or tag…",
       "searchLabel": "Search the catalogue",
+      "availableCopies": "{count} available",
+      "availableCopiesLabel": "{count} available, see the {count, plural, one {copy} other {copies}} from members",
       "filtersLabel": "Filters",
+      "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Clear Filters",
       "puzzlesFound": "{count, plural, one {# puzzle found} other {# puzzles found}}",
       "puzzlesFoundSoFar": "{count, plural, one {# puzzle found so far} other {# puzzles found so far}}",
@@ -501,10 +505,8 @@
         "brandsUnavailable": "Couldn't load brands",
         "minPieces": "Min Pieces",
         "selectMinPieces": "Select minimum pieces",
-        "noMinimum": "No minimum",
         "maxPieces": "Max Pieces",
         "selectMaxPieces": "Select maximum pieces",
-        "noMaximum": "No maximum",
         "difficulty": "Difficulty",
         "selectDifficulty": "Select difficulty",
         "allDifficulties": "All difficulties",
@@ -515,7 +517,11 @@
         "tags": "Tags",
         "tagsUnavailable": "Couldn't load tags",
         "removeTag": "Remove tag {tag}",
-        "customRange": "Custom Range",
+        "pieces": "Pieces",
+        "piecesRange": "{min}–{max} pieces",
+        "piecesFrom": "From {min} pieces",
+        "piecesUpTo": "Up to {max} pieces",
+        "removeFilter": "Remove filter: {label}",
         "min": "Min",
         "max": "Max"
       },
@@ -568,11 +574,11 @@
     "importImported": "Details imported",
     "boxPhoto": "Box photo",
     "boxPhotoHint": "A photo of the box front. Once it has been checked, it becomes this puzzle's picture in the catalogue.",
-    "addToLibrary": "Add to Library",
+    "addToLibrary": "Add to my puzzles",
     "saveAndAddAnother": "Save & Add Another",
     "addReadyHint": "Fill in title and piece count to continue.",
     "livePreview": "Live preview",
-    "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
+    "livePreviewCaption": "How your puzzle will look in My Puzzles.",
     "contributePreviewCaption": "This is how it will look in the catalogue once it's approved.",
     "contributeDone": {
       "pendingTitle": "“{title}” is waiting for review",
@@ -638,7 +644,8 @@
     "advancedDetails": "More details (optional)",
     "cancel": "Cancel",
     "chooser": {
-      "searchPlaceholder": "Search by title, brand or barcode…",
+      "searchLabel": "Search the catalogue by title, brand or barcode",
+      "searchPlaceholder": "Title, brand or barcode",
       "yourSubmissions": "Your submissions",
       "yourSubmissionsHint": "Puzzles you've added to the catalogue that aren't approved yet.",
       "allPuzzles": "All puzzles",
@@ -654,6 +661,9 @@
       "details": "Details",
       "detailsOf": "Details of {title}",
       "chosenPuzzle": "Adding a copy of",
+      "addAnotherCopy": "Add another copy",
+      "alreadyOwned": "You already have this puzzle.",
+      "viewOwned": "View",
       "copyDetails": "Your copy",
       "addYourCopy": "Add your copy",
       "addYourCopyHint": "Record its condition and how you'd like to share it.",
@@ -667,6 +677,14 @@
       "mine": "Mine",
       "household": "Household members'",
       "trigger": "Whose: {owner, select, mine {Mine} household {Household members''} other {All}}"
+    },
+    "filterSheet": {
+      "title": "Filters",
+      "active": "active",
+      "status": "Status",
+      "show": "{count, plural, one {Show # puzzle} other {Show # puzzles}}",
+      "close": "Done",
+      "remove": "Remove filter: {filter}"
     },
     "boxArtCheck": {
       "label": "Being checked",
@@ -788,16 +806,16 @@
     "statusFilter": "Filter by status",
     "tradeRequest": "Exchange Request",
     "yourRequest": "Your Request",
-    "theyWant": "They Want",
-    "youWant": "You Want",
-    "theyOffer": "They Offer",
-    "youOffer": "You Offer",
+    "theyWant": "They want",
+    "youWant": "You want",
+    "theyOffer": "They offer",
+    "youOffer": "You offer",
     "from": "From",
     "to": "To",
     "accept": "Accept",
     "decline": "Decline",
     "cancel": "Cancel",
-    "markComplete": "Mark Complete",
+    "markComplete": "Mark complete",
     "message": "Message",
     "all": "All",
     "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
@@ -866,7 +884,7 @@
       "hiddenNote": "Their details appear once they accept or reply.",
       "reviewsHeading": "Reviews received",
       "shareEmail": "Share my email with {name}",
-      "shareEmailHint": "Only for this trade. You can turn this off at any time.",
+      "shareEmailHint": "Only for this exchange. You can turn this off at any time.",
       "shareEmailError": "Couldn't change your email sharing. Please try again."
     },
     "pendingLabel": {
@@ -914,7 +932,7 @@
     "pricePlaceholder": "e.g. 15.00",
     "priceInvalid": "Enter an amount above zero and up to 1,000,000, like 15 or 15.50.",
     "revealNotice": {
-      "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
+      "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this request only.",
       "emailPrivate": "Your email address stays private unless you choose to share it once the owner accepts.",
       "profilePrivate": "Your profile itself stays private."
     },
@@ -1006,7 +1024,8 @@
     "self": "This is your own puzzle.",
     "ownerHidden": "This owner keeps their profile private, so you can't message them from here.",
     "unavailable": "This puzzle isn't available to message about.",
-    "backToPuzzle": "Back to the puzzle"
+    "backToPuzzle": "Back to the puzzle",
+    "findACopy": "Find a copy"
   },
   "messages": {
     "anonymous": "Anonymous user",
@@ -1101,7 +1120,7 @@
     "puzzlesMenu": "Puzzles ({count})",
     "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "removeAttachment": "Remove {title}",
-    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
+    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this request only. Your email address stays private.",
     "retry": "Try again",
     "searchConversations": "Search conversations",
     "searchConversationsPlaceholder": "Search conversations…",
@@ -1434,7 +1453,7 @@
     "actions": {
       "addPuzzle": "Add a Puzzle",
       "browse": "Browse Community",
-      "logCompletion": "Log a Completion"
+      "logCompletion": "Log a solve"
     },
     "shelf": {
       "title": "Your Shelf",
@@ -1525,25 +1544,27 @@
     "allConditions": "All Conditions",
     "minPieces": "Min Pieces",
     "maxPieces": "Max Pieces",
+    "min": "Min",
+    "max": "Max",
     "clearFilters": "Clear All",
     "tryDifferentFilters": "Try adjusting your filters.",
     "filterAll": "All",
     "available": "Available",
-    "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
-    "resultsCountMore": "{count}+ puzzles found",
+    "resultsCount": "{count, plural, one {# copy found} other {# copies found}}",
+    "resultsCountMore": "{count}+ copies found",
     "noMatchesYet": "No matches among the offers checked so far.",
     "keepLooking": "Keep looking",
     "loadMore": "Load more",
-    "loadMoreFailed": "Couldn't load more puzzles.",
+    "loadMoreFailed": "Couldn't load more copies.",
     "loadMoreRetry": "Try again",
-    "loadFailed": "Couldn't load puzzles",
+    "loadFailed": "Couldn't load copies",
     "loadFailedHint": "Check your connection and reload the page.",
     "searchHint": "Press ⌘K to search by title or brand",
     "addFilter": "Add Filter",
     "addFilterSearch": "Filter by…",
     "noFilters": "No filters left to add.",
     "removeFilter": "Remove filter",
-    "fieldText": "Text",
+    "searchLabel": "Search copies",
     "fieldAvailability": "Availability",
     "textPlaceholder": "Title, brand or theme…",
     "card": {
@@ -1868,7 +1889,7 @@
       "title": "What JigSwap Is",
       "description": "JigSwap helps jigsaw puzzle collectors keep track of their puzzles and exchange them with other members. The service includes:",
       "features": [
-        "A community-maintained puzzle catalog that members can add puzzles to",
+        "A community-maintained puzzle catalogue that members can add puzzles to",
         "A personal library to track the copies you own, their condition, and photos of them",
         "Logging completions (when you finished a puzzle and how long it took) and organising copies into collections",
         "Exchanges between members — swaps, sales, and loans — with messaging to arrange them",
@@ -1937,11 +1958,11 @@
       "description": "Different things on JigSwap belong to different people:",
       "yourContent": {
         "title": "Your content",
-        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Messages you post in a circle's group chat stay visible to its members after you leave the circle. Puzzles you add to the shared catalog become part of the community catalog that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
+        "description": "Photos, reviews, comments, and other content you post remain yours. By posting, you give us a non-exclusive licence to store and display that content so the service can work — for example, showing your puzzle photos to the members you have shared them with. Messages you post in a circle's group chat stay visible to its members after you leave the circle. Puzzles you add to the shared catalogue become part of the community catalogue that all members can use. Uploaded photos pass through an automated safety check before other members can see them (see the Privacy Policy for details)."
       },
       "platform": {
         "title": "The platform and puzzle artwork",
-        "description": "The JigSwap software is open source under the MIT licence. Puzzle images and artwork in the catalog belong to their respective publishers and rights holders and are used to identify puzzles. If you hold rights to content shown on JigSwap and want it corrected or removed, please contact us."
+        "description": "The JigSwap software is open source under the MIT licence. Puzzle images and artwork in the catalogue belong to their respective publishers and rights holders and are used to identify puzzles. If you hold rights to content shown on JigSwap and want it corrected or removed, please contact us."
       }
     },
     "privacy": {
@@ -2125,9 +2146,11 @@
     "notListed": "Can't find it?",
     "register": "Register \"{query}\"",
     "registerNew": "Register a new puzzle",
-    "forTrade": "Available to swap",
+    "forTrade": "For swap",
+    "forLend": "To lend",
     "forTradeLabel": "{title} available to swap",
-    "availabilityNote": "Added puzzles aren't offered for swap or loan. You can offer each one for swap after picking it, and change that per puzzle later.",
+    "forLendLabel": "{title} available to lend",
+    "availabilityNote": "Added puzzles aren't offered for swap or loan unless you switch that on here. You can change it per puzzle later.",
     "limitReached": "You can add up to {max} puzzles at once.",
     "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
@@ -2459,7 +2482,7 @@
     "invite": {
       "title": "Invite",
       "searchPlaceholder": "Search people you can invite…",
-      "permissionLabel": "Permission",
+      "permissionLabel": "Invite as",
       "send": "Send invite",
       "sent": "Invite sent",
       "empty": "You can invite people you follow each other with.",
@@ -2520,6 +2543,8 @@
       "createRateLimited": "You've created the most circles allowed for today. Try again tomorrow.",
       "cancel": "Cancel",
       "create": "Create",
+      "created": "Circle created",
+      "createFailed": "Couldn't create the circle. Please try again.",
       "title": "Manage {name}",
       "fallbackName": "circle",
       "description": "Invite or remove members, set permissions, and share copies.",
@@ -2539,6 +2564,7 @@
       "searchPlaceholder": "Search your puzzles…",
       "noMatches": "No puzzles match your search.",
       "noCopies": "Your library is empty. Add puzzles to share them here.",
+      "housematesNote": "Only your own puzzles are listed. Housemates share theirs themselves.",
       "loadError": "Couldn't load your puzzles.",
       "shared": "Shared",
       "willShare": "Will be shared",
@@ -2578,19 +2604,21 @@
       "memberCount": "{count, plural, one {# member} other {# members}}",
       "manage": "Manage",
       "manageNamed": "Manage {circle}",
+      "invitePeople": "Invite people",
       "chatTitle": "Group chat",
       "chatEmpty": "No messages yet. Open the group chat to say hello.",
       "chatError": "Couldn't load the latest messages.",
       "sharedTitle": "Shared puzzles",
       "sharedEmpty": "No puzzles have been shared in this circle yet.",
       "sharedError": "Couldn't load the shared puzzles.",
-      "viewOnlyHint": "You have view-only access in this circle. Ask an admin for “Can exchange” to share your puzzles here and request theirs."
+      "viewOnlyHint": "You have view-only access in this circle. Ask an admin for “Can exchange” to share your puzzles here and request theirs.",
+      "viewOnlyHintNamed": "You have view-only access in this circle. Ask {name} for “Can exchange” to share your puzzles here and request theirs."
     }
   },
   "people": {
     "yourNetwork": "Your Network",
-    "memberCount": "{count, plural, one {# member} other {# members}}",
-    "memberCountMore": "{count}+ members",
+    "memberCount": "{count, plural, one {# member} other {# members}} in your network",
+    "memberCountMore": "{count}+ members in your network",
     "showMoreMembers": "Show more",
     "followsYou": "Follows you",
     "requests": {
@@ -2669,6 +2697,7 @@
     "errorRateLimited": "You've followed and unfollowed a lot. Try again later."
   },
   "members": {
+    "metaDescription": "Follow {name} on JigSwap, the place to lend and swap jigsaw puzzles.",
     "memberSince": "Member since {date}",
     "loading": "Loading member…",
     "collects": "Collects ~{count, plural, one {# puzzle} other {# puzzles}} on JigSwap",
@@ -2680,7 +2709,6 @@
     "notFoundTitle": "Member not found",
     "notFoundSub": "This link may be outdated, or the member may have changed their username.",
     "findPeople": "Find people",
-    "backHome": "Back to home",
     "profile": {
       "ratingPill": "{rating} · {reviewCount, plural, one {# review} other {# reviews}}",
       "privateBadge": "Private",
@@ -2707,7 +2735,7 @@
       "previewBanner": "Preview — this is how visitors see your profile.",
       "previewBannerPrivate": "Preview — this is how visitors see your profile. Approved followers see everything.",
       "editProfile": "Edit profile",
-      "backToApp": "Back to app"
+      "backToProfile": "Back to my profile"
     },
     "followersYouKnow": {
       "title": "Followers you know",
@@ -2759,6 +2787,7 @@
     "undo": "Undo",
     "backToNotifications": "Back to notifications",
     "jumpTo": "Jump to",
+    "preferencesByType": "Per notification type",
     "channelInApp": "In-app",
     "channelEmail": "Email",
     "channelPush": "Push",
@@ -2773,12 +2802,10 @@
       "trade_completed": "Trade completed",
       "trade_cancelled": "Trade cancelled",
       "trade_cancelled_member_deleted": "Trade cancelled (account deleted)",
-      "exchange_proposed": "Exchange proposed",
       "exchange_disputed": "Exchange disputed",
       "message_received": "New messages",
       "circle_message_received": "Circle messages",
       "review_received": "Reviews received",
-      "puzzle_favorited": "Puzzle favorited",
       "puzzle_approved": "Puzzle approved",
       "puzzle_rejected": "Puzzle rejected",
       "proposal_approved": "Suggestion approved",
@@ -2815,7 +2842,7 @@
       },
       "social": {
         "title": "Social",
-        "description": "Followers, follow requests, reviews, favorites and goals"
+        "description": "Followers, follow requests, reviews and goals"
       },
       "submissions": {
         "title": "My submissions",
@@ -2998,18 +3025,16 @@
     "pushError": "Couldn't update push notifications",
     "matrixLabel": "Notification channels by type",
     "typeDesc": {
-      "trade_request": "When someone proposes a trade for one of your puzzles.",
+      "trade_request": "When someone asks to swap, borrow or buy one of your puzzles.",
       "trade_accepted": "When someone accepts a trade you proposed.",
       "trade_declined": "When someone declines a trade you proposed.",
       "trade_completed": "When a trade is completed.",
       "trade_cancelled": "When a trade is cancelled.",
       "trade_cancelled_member_deleted": "When a trade is cancelled because the other member deleted their account.",
-      "exchange_proposed": "When someone proposes an exchange — a swap, sale, or lend.",
       "exchange_disputed": "When an exchange you're part of is disputed.",
       "message_received": "When you receive a new message.",
       "circle_message_received": "When someone writes in the group chat of one of your circles. Email comes as a short digest, never per message.",
       "review_received": "When someone leaves you a review after an exchange.",
-      "puzzle_favorited": "When someone favourites a puzzle you added.",
       "puzzle_approved": "When a puzzle you submitted is approved for the catalogue.",
       "puzzle_rejected": "When a puzzle you submitted is rejected.",
       "proposal_approved": "When an edit you suggested to a catalogue puzzle is approved.",
@@ -3251,7 +3276,7 @@
       "empty": "No completions yet",
       "emptyHint": "Log a solve for any puzzle you own, borrow or share in your household to start your history.",
       "emptyLog": "Log a solve",
-      "emptyPastSolves": "Already solved some? <link>Mark past solves</link>",
+      "pastSolvesPrompt": "Already solved some? <link>Mark past solves</link>",
       "inProgressSection": "In progress",
       "historySection": "History",
       "inProgress": "In progress",
@@ -3265,6 +3290,7 @@
       "noTime": "No time recorded",
       "finish": "Finish solve",
       "edit": "Edit",
+      "updated": "Solve updated",
       "editDescription": "Change the dates, time or notes of this solve.",
       "editInProgressDescription": "Change when you started or your notes. Finish the solve when you're done.",
       "editWindowClosed": "This completion can no longer be edited (the 24-hour window has closed).",
@@ -3277,7 +3303,7 @@
         "thisYear": "This year"
       },
       "log": "Completion Log",
-      "logAction": "Log Completion",
+      "logAction": "Log a solve",
       "mostRecent": "Most recent first",
       "pieces": "{pieces, plural, one {# piece} other {# pieces}}",
       "sameDay": "in one day",
@@ -3291,7 +3317,7 @@
       "piecesComplete": "was complete",
       "piecesMissing": "had missing pieces",
       "new": {
-        "title": "Log a completion",
+        "title": "Log a solve",
         "subtitle": "Pick a puzzle to log a solve against.",
         "searchLabel": "Search puzzles",
         "sections": {
@@ -3311,6 +3337,12 @@
         "addPuzzle": "Add a puzzle",
         "findToBorrow": "Find a puzzle to borrow"
       },
+      "past": {
+        "title": "Mark past solves",
+        "subtitle": "Tick the puzzles you finished earlier. You can log up to 25 at a time.",
+        "back": "Back to Completions",
+        "empty": "No puzzles left to mark. Puzzles you've logged a solve for don't show here."
+      },
       "delete": "Delete",
       "deleteConfirmTitle": "Delete this completion?",
       "deleteConfirmBody": "This will permanently remove the completion from your history. This can't be undone.",
@@ -3326,7 +3358,7 @@
     "logSolve": {
       "trigger": "Log a solve",
       "title": "Log a solve",
-      "description": "Record a completion for {puzzle}.",
+      "description": "Record a solve of {puzzle}.",
       "statusLabel": "Have you finished it?",
       "statusFinished": "Finished",
       "statusInProgress": "Still solving",
@@ -3353,6 +3385,9 @@
       "saveError": "Could not save the solve. Please try again.",
       "rateLimited": "You've logged a lot of solves today. Try again tomorrow.",
       "endBeforeStartError": "The finish date can't be before the start date.",
+      "endInFutureError": "The finish date can't be in the future.",
+      "dateRequired": "Pick a date.",
+      "timeInvalid": "Use whole numbers: hours from 0, minutes from 0 to 59.",
       "allPiecesPresent": "All pieces were present",
       "updateCopyPiecesTitle": "Update this copy?",
       "updateCopyPiecesBody": "You marked pieces missing. Update this copy's missing-pieces count too?",
@@ -3488,6 +3523,7 @@
     "stats": {
       "completions": "Completions",
       "solveTime": "Total solve time",
+      "solveTimeNone": "—",
       "puzzlesOwned": "Puzzles owned",
       "distinctDefinitions": "Distinct titles",
       "collections": "Collections",
@@ -3501,10 +3537,10 @@
     "trends": {
       "title": "Completion trends",
       "description": "Solves finished per month over the last 12 months.",
-      "minutesDescription": "Solve time in minutes per month over the last 12 months.",
+      "hoursDescription": "Solve time in hours per month over the last 12 months.",
       "count": "Completions",
-      "minutes": "Solve minutes",
-      "empty": "No finished solves yet."
+      "hours": "Solve hours",
+      "empty": "No dated solves in the last 12 months."
     },
     "breakdown": {
       "title": "Collection breakdown",
@@ -3544,7 +3580,7 @@
     },
     "charts": {
       "completionsPerMonth": "Completions / month",
-      "minutesPerMonth": "Solve minutes / month",
+      "hoursPerMonth": "Solve hours / month",
       "swapsPerMonth": "Swaps / month",
       "month": "Month"
     }
@@ -3556,12 +3592,13 @@
     "copyLink": "Copy link",
     "copied": "Copied!",
     "copyError": "Couldn't copy the link. Please try again.",
+    "linkError": "Couldn't get your invite link. Check your connection and try again.",
+    "retry": "Try again",
     "inviteLinkHint": "The code and these buttons share your personal invite link, not just your profile address, so you can follow each other.",
     "share": "Share",
     "resetLink": "Reset invite link",
-    "needUsernameTitle": "Set a username first",
-    "needUsernameBody": "Your QR caption shows your profile link, which needs a username or a custom link. Set one in your account settings, then come back.",
-    "openSettings": "Open account settings",
+    "customLinkNote": "Pick a custom link to show a readable address here. You don't need one to share this code.",
+    "setCustomLink": "Set a custom link",
     "invitedYou": "{name} invited you to JigSwap",
     "followEachOther": "{name} shared their code with you — follow each other?",
     "followEachOtherCta": "Follow each other",
@@ -3599,11 +3636,14 @@
   },
   "inviteShare": {
     "share": "Share invite link",
+    "sharePuzzle": "Share link",
     "email": "Email",
     "whatsapp": "WhatsApp",
     "subject": "Join me on JigSwap",
     "message": "Join me on JigSwap, where I keep track of my puzzles: {url}",
     "householdMessage": "Join our household on JigSwap so we can share one puzzle shelf: {url}",
+    "puzzleSubject": "A puzzle on JigSwap",
+    "puzzleMessage": "I'm offering “{title}” on JigSwap. Have a look: {url}",
     "privacy": "JigSwap doesn't see or store who you send this to.",
     "inviteLink": "Invite with a link",
     "createLink": "Create invite link",
@@ -3906,7 +3946,7 @@
       "trustRowEarly": "Be one of our first puzzlers",
       "stats": {
         "puzzlers": "Puzzlers signed up",
-        "catalog": "Puzzles in the catalog",
+        "catalog": "Puzzles in the catalogue",
         "shelves": "Puzzles on shelves"
       },
       "how": {
@@ -3946,7 +3986,7 @@
         "puzzlesCount": "{count} puzzles",
         "onYourShelf": "On your shelf",
         "withName": "with {name}",
-        "notificationSent": "notification sent",
+        "backWithYou": "back with you",
         "available": "Available",
         "lentOut": "Lent out",
         "recalled": "Recalled",
@@ -4004,7 +4044,7 @@
       "faq2Q": "Can I borrow a puzzle indefinitely?",
       "faq2A": "Yes. Agree with the owner how long you keep it — that can be indefinitely. The owner always sees who has the puzzle and can ask for it back.",
       "faq3Q": "How does the owner keep track of their puzzle?",
-      "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it: available, lent out or recalled. A recall automatically sends the borrower a notification.",
+      "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it. Want it back? Message the borrower to arrange it, and choose Recall once you have the puzzle again: that closes the loan.",
       "faq4Q": "How do I hand the puzzle over?",
       "faq4A": "In person. You agree a place and time to hand the puzzle over — easy and free of shipping costs. For now we don't arrange shipping."
     },
@@ -4033,7 +4073,7 @@
       "g3i1Title": "Smart filters",
       "g3i1Body": "Filter by piece count, difficulty, condition and category.",
       "g3i2Title": "Fresh finds",
-      "g3i2Body": "See the newest puzzles in the catalog as the community adds them.",
+      "g3i2Body": "See the newest puzzles in the catalogue as the community adds them.",
       "g3i3Title": "Exchanges, end to end",
       "g3i3Body": "Propose, accept and complete swaps — with clear statuses every step of the way.",
       "g4Eyebrow": "Community & trust",
@@ -4199,7 +4239,8 @@
     "goals": "Goals — JigSwap",
     "insights": "Insights — JigSwap",
     "completions": "Completions — JigSwap",
-    "completionNew": "Log a completion — JigSwap",
+    "completionNew": "Log a solve — JigSwap",
+    "completionPast": "Mark past solves — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
     "admin": "Admin — JigSwap",
@@ -4214,9 +4255,14 @@
     "library": "My Library — JigSwap",
     "people": "People — JigSwap",
     "members": "Members — JigSwap",
-    "copyInstance": "Owned copy — JigSwap",
+    "copyInstance": "Copy — JigSwap",
+    "named": "{name} — JigSwap",
+    "suggestEditOf": "Suggest an edit: {name} — JigSwap",
+    "threadOf": "{name} — Messages — JigSwap",
     "whatsNew": "What's new — JigSwap",
-    "quickSetup": "Quick setup — JigSwap"
+    "quickSetup": "Quick setup — JigSwap",
+    "mySuggestions": "My suggestions — JigSwap",
+    "suggestEdit": "Suggest an edit — JigSwap"
   },
   "shell": {
     "search": {
@@ -4235,9 +4281,11 @@
       "noResultsFor": "No results for “{term}”"
     },
     "actions": {
+      "add": "Add",
       "addToMyPuzzles": "Add to my puzzles",
       "addAPuzzle": "Add a Puzzle",
-      "logCompletion": "Log a Completion",
+      "logCompletion": "Log a solve",
+      "markPastSolves": "Mark past solves",
       "createCircle": "Create a Circle",
       "browseCommunity": "Browse Community",
       "exportData": "Export my data"
@@ -4298,9 +4346,14 @@
         "description": "Your finished-puzzle log"
       },
       "completionNew": {
-        "title": "Log a completion",
+        "title": "Log a solve",
         "subtitle": "Pick a puzzle to log a solve against.",
-        "description": "Log a new completion"
+        "description": "Log a new solve"
+      },
+      "completionPast": {
+        "title": "Mark past solves",
+        "subtitle": "Tick the puzzles you finished earlier.",
+        "description": "Log the puzzles you finished earlier"
       },
       "goals": {
         "title": "Goals",
@@ -4371,7 +4424,7 @@
         "subtitle": "Everything that needs your attention."
       },
       "copyInstance": {
-        "title": "Owned copy",
+        "title": "Copy",
         "subtitle": "The provenance and history of a single copy."
       },
       "notificationPreferences": {
@@ -4390,7 +4443,7 @@
       },
       "adminPuzzles": {
         "title": "Puzzles",
-        "subtitle": "Every catalog definition with its moderation status; disable or re-enable approved definitions.",
+        "subtitle": "Every catalogue definition with its moderation status; disable or re-enable approved definitions.",
         "description": "Browse all puzzle definitions and manage their lifecycle"
       },
       "adminCategories": {
@@ -4569,9 +4622,9 @@
     "exchangesCount": "{count} exchanges",
     "noSwaps": "No swaps or trades for this puzzle yet.",
     "you": "you",
-    "finishedIn": "finished in {duration}",
     "communityRating": "Community Rating",
-    "communityRatings": "{count} community ratings",
+    "noRatings": "No ratings yet",
+    "communityRatings": "{count, plural, one {# community rating} other {# community ratings}}",
     "copyReviews": "Copy Reviews",
     "copyReviewsHint": "Anyone who logs a solve of this copy can rate it.",
     "noCopyReviews": "No reviews of this copy yet.",
@@ -4617,14 +4670,24 @@
       "swapHint": "Members can propose a swap for it.",
       "lendLabel": "Offer to lend",
       "lendHint": "Members can ask to borrow it.",
+      "saleLabel": "Offer for sale",
+      "saleHint": "Members can ask to buy it.",
       "lockedOnLoan": "It's on loan. You can offer it again once it's back.",
       "swapOn": "Offered for swap",
       "swapOff": "No longer offered for swap",
       "lendOn": "Offered to lend",
       "lendOff": "No longer offered to lend",
+      "saleOn": "Offered for sale",
+      "saleOff": "No longer offered for sale",
       "visibleWhileOffered": "It's visible while it's on offer and private again once you withdraw every offer.",
       "privateAgain": "It's private again.",
       "undo": "Undo"
+    },
+    "sendLink": {
+      "trigger": "Send a link",
+      "title": "Send a link to this puzzle",
+      "description": "Whoever opens it sees “{title}” and can ask for it. New to JigSwap? They sign up first and land right here.",
+      "privateNote": "Your profile is private, so this link only opens for people you follow each other with, your household, and circles you share this puzzle in."
     },
     "status": {
       "onLoan": "On loan to {name} since {date}",
@@ -4633,7 +4696,10 @@
       "offerLend": "lending",
       "offerSale": "sale",
       "visibleWhileOffered": "Visible while offered, private again when you withdraw",
-      "notOffered": "Not offered"
+      "notOffered": "Not offered",
+      "visibleToCommunity": "Visible to the community",
+      "visibleToCircles": "Visible to friends and shared circles",
+      "friendsCanSee": "Friends can see it"
     },
     "editCopy": {
       "title": "Edit copy",
@@ -4656,14 +4722,16 @@
       "sourceUnknown": "Not recorded",
       "visibility": {
         "label": "Who can see this copy",
-        "visible": "Visible to the community",
-        "visibleHint": "Your friends can see it in your library.",
+        "visible": "Visible",
+        "visibleHint": "Friends can see it, and all members can while it's on offer.",
+        "visibleHintPrivateProfile": "Friends can see it, and circles it's shared with can while it's on offer.",
         "private": "Private — only you and your household",
         "privateHint": "Hidden from everyone else, friends included.",
         "offerNote": "Offering a puzzle for swap, lend or sale makes it visible while the offer lasts.",
         "privateWhileOffered": "On offer, so it's visible for now. It goes back to private when you withdraw every offer."
       }
     },
+    "viewCoverLarger": "View cover larger",
     "photoCover": "Cover",
     "photoPending": "Pending review"
   },
@@ -4681,7 +4749,7 @@
   },
   "puzzleDefinition": {
     "notFound": "Puzzle not found",
-    "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
+    "notFoundSub": "This puzzle may have been removed from the catalogue, or the link is wrong.",
     "suggestEdit": "Suggest an edit",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
@@ -4694,6 +4762,7 @@
     "viewYourCopy": "View your copy",
     "findCopyToSwap": "Find a Copy to Swap",
     "noCopiesOffered": "No copies offered yet",
+    "noOtherCopiesOffered": "No other members offer this yet",
     "favorite": "Favorite",
     "writeReview": "Write a Review",
     "communityRating": "Community Rating",
@@ -4704,6 +4773,7 @@
     "copiesCount": "{count, plural, one {# copy} other {# copies}}",
     "seeAllCopies": "{count, plural, one {View the available copy →} other {See all # available copies →}}",
     "noCopies": "No copies are available to swap yet.",
+    "noOtherCopies": "No other members offer this yet.",
     "reviews": "Reviews",
     "reviewPlaceholder": "Write a review (optional)…",
     "yourRating": "Your rating",
@@ -4834,7 +4904,7 @@
         "rejected": "Rejected “{title}” — {count} left in queue.",
         "removed": "Removed image on “{title}” — {count} left in queue.",
         "restored": "Restored photo on “{title}” — {count} left in queue.",
-        "restoredToUnchecked": "Moved the photo on “{title}” back to Unchecked Photos — {count} left in queue.",
+        "restoredToUnchecked": "Moved the photo on “{title}” back to Unchecked — {count} left in queue.",
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
         "hashCheckWaived": "Approved photo on “{title}” without a hash check — {count} left in queue.",
@@ -4855,12 +4925,13 @@
       },
       "tabs": {
         "submissions": "Submissions",
-        "flagged": "Flagged Images",
+        "flagged": "Flagged",
         "activity": "Activity Log",
-        "unchecked": "Unchecked Photos",
+        "unchecked": "Unchecked",
         "appeals": "Review Requests",
         "hashMatches": "Hash matches",
-        "reports": "Reports"
+        "reports": "Reports",
+        "label": "Moderation queue"
       },
       "detail": {
         "submitted": "Submitted",
@@ -4882,7 +4953,7 @@
         "reveal": "Click or tap to reveal the photo",
         "hide": "Hide again"
       },
-      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalog. Review before approving.",
+      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalogue. Review before approving.",
       "rejectAsDuplicate": "Reject as duplicate",
       "actions": {
         "approve": "Approve & Publish",
@@ -4929,7 +5000,7 @@
         "confirmBody": "The photo is deleted from the copy and its uploader is told it was removed. This can't be undone.",
         "confirmAction": "Remove photo",
         "restore": "Restore Photo",
-        "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it."
+        "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked, where only Approve without hash check publishes it."
       },
       "flaggedEmpty": "No flagged images. The community's happy.",
       "activity": {
@@ -5004,7 +5075,7 @@
         "category_updated": "<actorLink>{actor}</actorLink> edited the category <targetLink>{target}</targetLink>",
         "category_deactivated": "<actorLink>{actor}</actorLink> deactivated the category <targetLink>{target}</targetLink>",
         "category_reactivated": "<actorLink>{actor}</actorLink> reactivated the category <targetLink>{target}</targetLink>",
-        "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalog categories",
+        "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalogue categories",
         "contact_message_handled": "<actorLink>{actor}</actorLink> marked a contact message as handled",
         "contact_message_reopened": "<actorLink>{actor}</actorLink> moved a contact message back to New"
       },
@@ -5059,7 +5130,7 @@
         "effects": {
           "copy": {
             "approve": "Approving shows the photo on its copy to other members.",
-            "reject": "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good."
+            "reject": "Rejecting hides it and moves it to Flagged, where it can still be restored or removed for good."
           },
           "completion": {
             "approve": "Approving shows the photo on its completion to other members.",
@@ -5147,7 +5218,7 @@
         "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
         "addNote": "Add note",
-        "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos."
+        "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked."
       },
       "reports": {
         "statusFilter": "Report status",
@@ -5295,11 +5366,11 @@
       "add": "Add Category",
       "empty": {
         "title": "No categories yet",
-        "description": "Create the first category to organize the catalog."
+        "description": "Create the first category to organize the catalogue."
       },
       "form": {
         "createTitle": "Create New Category",
-        "createDescription": "Add a new category to the catalog. It becomes active immediately.",
+        "createDescription": "Add a new category to the catalogue. It becomes active immediately.",
         "editTitle": "Edit Category",
         "editDescription": "Update the names, descriptions, and color of this category.",
         "name": "Name",
@@ -5522,8 +5593,8 @@
           "collections": "Collections",
           "solves": "Solves"
         },
-        "submissionsTitle": "Catalog submissions",
-        "submissionsEmpty": "No catalog submissions yet.",
+        "submissionsTitle": "Catalogue submissions",
+        "submissionsEmpty": "No catalogue submissions yet.",
         "status": {
           "pending": "Pending",
           "approved": "Approved",
@@ -5568,12 +5639,11 @@
     "availabilityTitle": "Available in the community",
     "copiesAvailableNow": "{count, plural, one {copy available to swap right now} other {copies available to swap right now}}",
     "joinToSeeWho": "Join to see who",
-    "ownersHaveIt": "{count, plural, one {# member has this in their collection} other {# members have this in their collection}}",
-    "chipSwap": "{count} swap",
-    "chipLend": "{count} lend",
-    "chipSale": "{count} sale",
+    "chipSwap": "{count} to swap",
+    "chipLend": "{count} to lend",
+    "chipSale": "{count} for sale",
     "statAvailable": "Available to swap",
-    "statOwners": "Community owners",
+    "statOwners": "{count, plural, one {Community owner} other {Community owners}}",
     "statCompletions": "Times completed",
     "statAvgDays": "Avg. days to finish",
     "communityRating": "Community rating",
@@ -5787,7 +5857,7 @@
         },
         "complete": {
           "title": "Both of you confirm",
-          "body": "Once the puzzle has changed hands, you both press Mark Complete. The exchange is completed when both of you have."
+          "body": "Once the puzzle has changed hands, you both press Mark complete. The exchange is completed when both of you have."
         },
         "borrowed": {
           "title": "Your loans",
@@ -5851,7 +5921,7 @@
         },
         "log-past": {
           "title": "Log a past solve",
-          "body": "Finished one before? Press Log Completion, pick the puzzle, and fill in when you did it and how long it took."
+          "body": "Finished one before? Press Log a solve, pick the puzzle, and fill in when you did it and how long it took."
         },
         "goals": {
           "title": "Set a goal",
@@ -5895,6 +5965,8 @@
       "showMore": "Show more",
       "empty": "Add a puzzle first, then come back to log it.",
       "submit": "{count, plural, one {Log # puzzle} other {Log # puzzles}}",
+      "batchFull": "{count} is the most for one batch. Log these first, then mark the rest.",
+      "futureDate": "Pick a date up to today.",
       "saved": "{count, plural, one {# puzzle logged} other {# puzzles logged}}",
       "invalidDate": "That date isn't possible. Check the year.",
       "invalidDuration": "That solve time isn't possible. Check the hours and minutes.",
@@ -5974,6 +6046,7 @@
         "title": "Leave without saving?",
         "puzzles": "{count, plural, one {The puzzle you picked hasn't been added to your shelf yet.} other {The # puzzles you picked haven't been added to your shelf yet.}}",
         "solves": "{count, plural, one {The puzzle you ticked hasn't been logged yet.} other {The # puzzles you ticked haven't been logged yet.}}",
+        "addForm": "The puzzle you filled in hasn't been added yet.",
         "profile": "Your new location hasn't been saved yet.",
         "keep": "Keep editing",
         "discard": "Discard"

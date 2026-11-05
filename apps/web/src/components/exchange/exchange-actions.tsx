@@ -166,7 +166,8 @@ export function ExchangeActions({
             </span>
           </p>
         )}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* On a phone the labels carry the buttons: their icons would push the row into a second one. */}
+      <div className="flex flex-wrap items-center gap-2 max-sm:[&>button>svg]:hidden">
         {exchange.status === "proposed" && incoming && (
           <>
             <Button

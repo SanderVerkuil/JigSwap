@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { addErrorKey } from "./add-error";
 import { CataloguePickerView } from "./catalogue-picker-view";
+import { clearPickTray, trayOutlivesLeavingTo, usePickTray } from "./pick-tray";
 import {
   acquireInChunks,
   buildPickerRows,
@@ -17,6 +18,7 @@ import {
   pickerSearchResults,
   removeLastPick,
   removePick,
+  setPickForLend,
   setPickForTrade,
   togglePick,
   type Pick,
@@ -49,11 +51,11 @@ function useCatalogueSearch(term: string) {
 }
 
 // The multi-select catalogue picker: search, pick many (up to PICK_LIMIT), optionally offer each
-// for swap, and add them with `library.acquireCopies` calls of at most 25 each, one after the
+// for swap or to lend, and add them with `library.acquireCopies` calls of at most 25 each, one after the
 // other. Each call is all or nothing; if one is refused, the picks already added leave the tray
 // and the rest stay picked to retry. `returnTo` is where "Register" comes back to after the full
-// add form. Inside quick setup the flow's Continue makes those calls instead of the picker's own
-// submit.
+// add form, and the tray (see pick-tray) is still there when it does. Inside quick setup the flow's
+// Continue makes those calls instead of the picker's own submit.
 export function CataloguePicker({
   returnTo,
   onAdded,
@@ -66,7 +68,7 @@ export function CataloguePicker({
 }) {
   const t = useTranslations("cataloguePicker");
   const [term, setTerm] = useState("");
-  const [picks, setPicks] = useState<Pick[]>([]);
+  const { picks, update: setPicks } = usePickTray();
   const deferredTerm = useDeferredValue(term);
 
   const { member } = useCurrentMember();
@@ -95,7 +97,7 @@ export function CataloguePicker({
 
   const acquireCopies = useConvexMutation(gateway.library.acquireCopies);
   const submit = useMutation({
-    mutationFn: (tray: Pick[]) =>
+    mutationFn: (tray: readonly Pick[]) =>
       acquireInChunks(tray, (items) => acquireCopies({ items })),
     onSuccess: ({ copyIds, added, remaining, error }, tray) => {
       // Only the picks that were added leave the tray (anything picked meanwhile stays).
@@ -138,6 +140,7 @@ export function CataloguePicker({
         return false;
       }
     },
+    kept: { outlives: trayOutlivesLeavingTo, discard: clearPickTray },
   });
 
   return (
@@ -156,6 +159,9 @@ export function CataloguePicker({
       onRemoveLast={() => setPicks((current) => removeLastPick(current))}
       onForTradeChange={(id, forTrade) =>
         setPicks((current) => setPickForTrade(current, id, forTrade))
+      }
+      onForLendChange={(id, forLend) =>
+        setPicks((current) => setPickForLend(current, id, forLend))
       }
       onSubmit={() => submit.mutate(picks)}
     />

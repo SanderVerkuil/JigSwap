@@ -109,9 +109,9 @@ beforeEach(() => {
 afterEach(cleanup);
 
 const EN_NOTICE =
-  "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.";
+  "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this request only.";
 const NL_NOTICE =
-  "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.";
+  "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor dit verzoek.";
 // Sending a request never shares the email (SEC-08): only the member's own later share does.
 const EN_EMAIL =
   "Your email address stays private unless you choose to share it once the owner accepts.";

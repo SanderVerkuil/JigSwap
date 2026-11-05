@@ -1,29 +1,29 @@
 ---
-title: Veelgestelde Vragen & Problemen Oplossen
+title: Veelgestelde vragen en problemen oplossen
 order: 1
 summary: "Antwoorden op veelgestelde vragen en oplossingen voor zaken die misgaan."
 ---
 
-# Veelgestelde Vragen & Problemen Oplossen
+# Veelgestelde vragen en problemen oplossen
 
 Tik op een vraag om het antwoord uit te klappen.
 
 <details>
 <summary>Ik heb een puzzel toegevoegd, maar hij staat niet in de openbare catalogus. Waarom?</summary>
 
-Nieuwe puzzel*definities* die je bijdraagt gaan naar een moderatiewachtrij en moeten **door een beheerder worden goedgekeurd** voordat ze openbaar verschijnen. Je eigen kopie staat nog steeds in je bibliotheek — alleen de gedeelde catalogusvermelding wacht op goedkeuring. Tot dan staat hij bovenaan in je keuzescherm bij Puzzel Toevoegen als niet-goedgekeurde inzending.
+Nieuwe puzzel*definities* die je bijdraagt gaan naar een moderatiewachtrij en moeten **door een beheerder worden goedgekeurd** voordat ze openbaar verschijnen. Je eigen kopie staat nog steeds in je bibliotheek — alleen de gedeelde catalogusvermelding wacht op goedkeuring. Tot dan staat hij bovenaan in je keuzescherm bij Puzzel toevoegen als niet-goedgekeurde inzending.
 
 </details>
 
 <details>
 <summary>Wat is het verschil tussen een "puzzel" en een "kopie"?</summary>
 
-Een **puzzel** (catalogusdefinitie) is het product — titel, merk, aantal stukken, afbeelding. Een **kopie** is de specifieke fysieke puzzel die _jij_ bezit, met een eigen conditie, foto's, notities en voltooiingsgeschiedenis. Meerdere mensen kunnen kopieën van dezelfde puzzel bezitten.
+Een **puzzel** (catalogusdefinitie) is het product — titel, merk, aantal stukjes, afbeelding. Een **kopie** is de specifieke fysieke puzzel die _jij_ bezit, met een eigen conditie, foto's, notities en voltooiingsgeschiedenis. Meerdere mensen kunnen kopieën van dezelfde puzzel bezitten.
 
 </details>
 
 <details>
-<summary>Ik heb een puzzel weggeruild. Ben ik mijn oplossingsgeschiedenis kwijt?</summary>
+<summary>Ik heb een puzzel weggeruild. Ben ik mijn voltooiingsgeschiedenis kwijt?</summary>
 
 Nee. Je voltooiingsregistraties en statistieken blijven bij **jou**, niet bij de puzzel. De nieuwe eigenaar krijgt een verse geschiedenis voor zijn kopie.
 
@@ -44,7 +44,7 @@ Dat is normaal — een kopie die is uitgeleend wordt automatisch als onbeschikba
 </details>
 
 <details>
-<summary>Hoe rond ik een uitwisseling af? Ik klikte op "Markeren als Voltooid" maar er werd niets afgerond.</summary>
+<summary>Hoe rond ik een uitwisseling af? Ik klikte op "Markeren als voltooid" maar er werd niets afgerond.</summary>
 
 Uitwisselingen gebruiken **dubbele bevestiging** — _beide_ partijen moeten de afronding bevestigen voordat het eigendom/bezit overgaat. Wacht tot je partner het ook als voltooid markeert.
 
@@ -67,7 +67,7 @@ Staat er in een gesprek "Je kunt niet meer reageren in dit gesprek.", dan kun
 je het andere lid niet meer bereiken, bijvoorbeeld omdat diegene jou heeft
 geblokkeerd. Heb je diegene zelf geblokkeerd, dan biedt het gesprek in plaats
 daarvan **Deblokkeren**. Zie
-[Blokkeren & Melden](/docs/discovering-and-community/blocking-and-reporting).
+[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).
 
 </details>
 
@@ -100,7 +100,7 @@ Zie [Berichten](/docs/staying-informed/messages#fotocontrole).
 Meldt iemand zich aan via jouw uitnodigingslink, dan vraagt JigSwap of jullie
 elkaar willen volgen. Jullie volgen elkaar pas zodra diegene **Elkaar volgen**
 kiest, en dan krijg je een melding. Diegene heeft 30 dagen om te reageren. Zie
-[Mensen & Volgen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen).
+[Mensen en volgen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen).
 
 </details>
 
@@ -135,7 +135,7 @@ Gebruik **Mijn gegevens exporteren** onderaan **Inzichten**, onder **Je
 gegevens** op de pagina **Privacy en veiligheid** van je account, of in snel
 zoeken (**Cmd/Ctrl + K**). Je downloadt dan een JSON-bestand met je
 persoonlijke gegevens. Zie
-[Inzichten & Statistieken](/docs/your-library/insights-and-stats#je-gegevens-exporteren).
+[Inzichten en statistieken](/docs/your-library/insights-and-stats#je-gegevens-exporteren).
 
 </details>
 

@@ -6,6 +6,7 @@ import { DomainError } from "../../shared-kernel";
 // Result interchangeably (mirrors LibraryError / ExchangeError).
 export type SolvingErrorCode =
   | "InvalidTimeRange"
+  | "FutureEndDate"
   | "TooManyPhotos"
   | "EditWindowClosed"
   | "NotCompletionOwner"
@@ -54,6 +55,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidTimeRange",
       "A completion's end date must be on or after its start date",
+    );
+  }
+
+  // A completion's end date lies after today.
+  static futureEndDate(): SolvingError {
+    return new SolvingError(
+      "FutureEndDate",
+      "A completion can't be finished on a date in the future",
     );
   }
 

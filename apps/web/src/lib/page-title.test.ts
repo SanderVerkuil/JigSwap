@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import type { Locale } from "./i18n";
-import { defaultDocumentTitle, pageTitle } from "./page-title";
+import {
+  defaultDocumentTitle,
+  namedDocumentTitle,
+  pageTitle,
+} from "./page-title";
 
 // The loaded catalogs, by locale: the title comes from the catalog of the locale in the root
 // context, not from the context itself.
@@ -73,5 +77,26 @@ describe("pageTitle", () => {
     delete catalogs.nl;
     expect(pageTitle(context("nl"), "catalog")).toBe("JigSwap");
     catalogs.nl = nl;
+  });
+});
+
+describe("namedDocumentTitle", () => {
+  it("has the same shape as the catalog's titles", () => {
+    expect(namedDocumentTitle("My puzzles")).toBe(en.titles.myPuzzles);
+  });
+});
+
+// Their routes used to borrow their parent's title, under a different h1.
+describe("the suggestion pages' own titles", () => {
+  it.each([
+    ["mySuggestions", "My suggestions — JigSwap", "Mijn voorstellen — JigSwap"],
+    [
+      "suggestEdit",
+      "Suggest an edit — JigSwap",
+      "Wijziging voorstellen — JigSwap",
+    ],
+  ])("%s", (key, english, dutch) => {
+    expect(pageTitle(context("en"), key)).toBe(english);
+    expect(pageTitle(context("nl"), key)).toBe(dutch);
   });
 });

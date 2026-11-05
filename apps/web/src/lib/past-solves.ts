@@ -32,18 +32,21 @@ export function pastSolveCandidates<
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
-// The recordPastCompletions item for one ticked row, or null while "Pick a date" has no date yet.
-// It never invents a date: "I don't remember" sends none and "Which year" sends only the year.
+// The recordPastCompletions item for one ticked row, or null while "Pick a date" has no date yet or
+// one after `today` (the member's local today as a `yyyy-mm-dd`; the server refuses a later one and
+// would fail the whole batch). It never invents a date: "I don't remember" sends none and "Which
+// year" sends only the year.
 export function toPastCompletionItem(
   copyId: string,
   choice: PastSolveChoice,
+  today: string,
 ): PastCompletionItem | null {
   if (choice.when === "unknown") return { copyId, datePrecision: "unknown" };
   if (choice.when === "year") {
     return { copyId, datePrecision: "year", year: choice.year };
   }
   const date = dateInputToMs(choice.date);
-  if (date === undefined) return null;
+  if (date === undefined || choice.date > today) return null;
   return { copyId, datePrecision: "day", date };
 }
 

@@ -80,6 +80,7 @@ const pick = (definitionId: string, extra: Partial<Pick> = {}): Pick => ({
   title: `Puzzle ${definitionId}`,
   pending: false,
   forTrade: false,
+  forLend: false,
   ...extra,
 });
 
@@ -105,6 +106,7 @@ const render = (
         onRemove={noop}
         onRemoveLast={noop}
         onForTradeChange={noop}
+        onForLendChange={noop}
         onSubmit={noop}
         {...props}
       />
@@ -171,13 +173,19 @@ describe("CataloguePickerView", () => {
     expect(live && text(live)).toBe("3 picked");
   });
 
-  it("gives each picked row a swap switch and a remove button named after the puzzle", () => {
-    const els = render({ picks: [pick("a"), pick("b", { forTrade: true })] });
+  it("gives each picked row swap and lend switches and a remove button named after the puzzle", () => {
+    const els = render({
+      picks: [pick("a"), pick("b", { forTrade: true, forLend: true })],
+    });
     const [switchA] = byLabel(els, "Puzzle a available to swap");
     const [switchB] = byLabel(els, "Puzzle b available to swap");
     expect(attr(switchA, "role")).toBe("switch");
     expect(attr(switchA, "aria-checked")).toBe("false");
     expect(attr(switchB, "aria-checked")).toBe("true");
+    const [lendA] = byLabel(els, "Puzzle a available to lend");
+    const [lendB] = byLabel(els, "Puzzle b available to lend");
+    expect(attr(lendA, "aria-checked")).toBe("false");
+    expect(attr(lendB, "aria-checked")).toBe("true");
     expect(byLabel(buttons(els), "Remove Puzzle a")).toHaveLength(1);
   });
 
@@ -259,7 +267,7 @@ describe("CataloguePickerView", () => {
       els.some(
         (el) =>
           text(el) ===
-          "Added puzzles aren't offered for swap or loan. You can offer each one for swap after picking it, and change that per puzzle later.",
+          "Added puzzles aren't offered for swap or loan unless you switch that on here. You can change it per puzzle later.",
       ),
     ).toBe(true);
   });
@@ -346,6 +354,7 @@ describe("CataloguePickerView stickyFooter", () => {
           onRemove={noop}
           onRemoveLast={noop}
           onForTradeChange={noop}
+          onForLendChange={noop}
           onSubmit={noop}
         />
       </IntlProvider>,

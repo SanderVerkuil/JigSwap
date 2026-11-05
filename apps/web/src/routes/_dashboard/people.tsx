@@ -10,6 +10,7 @@ import {
   MemberTile,
   MemberTileSkeleton,
 } from "@/components/social/member-tile";
+import { NetworkInvite } from "@/components/social/network-invite";
 import { QrDialog } from "@/components/social/qr-dialog";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { Button } from "@/components/ui/button";
@@ -199,6 +200,7 @@ function ActivityTab() {
 
 function PeoplePage() {
   const t = useTranslations("people");
+  const tInvite = useTranslations("quickStart.people");
   const { tab } = Route.useSearch();
   const activeTab: PeopleTab = tab ?? "network";
   const navigate = useNavigate({ from: Route.fullPath });
@@ -225,14 +227,16 @@ function PeoplePage() {
   const loading = networkStatus === "LoadingFirstPage";
 
   // The page title ("People") lives in the shell page head; publish the
-  // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and the
-  // network member count there so the body carries no duplicate header. Kept in
-  // the always-mounted page so the header stays stable across tab switches.
-  const headerMeta = loading
-    ? undefined
-    : t(networkStatus === "Exhausted" ? "memberCount" : "memberCountMore", {
-        count: members.length,
-      });
+  // member-profiles guide ("?"), the QR dialog (self-service invite/QR) and, on the
+  // network tab, the network member count there so the body carries no duplicate
+  // header. Kept in the always-mounted page so the actions stay stable across tab
+  // switches. On another tab the count would read as the members found there.
+  const headerMeta =
+    loading || activeTab !== "network"
+      ? undefined
+      : t(networkStatus === "Exhausted" ? "memberCount" : "memberCountMore", {
+          count: members.length,
+        });
   const { startTour } = useTourLauncher();
   usePageHeader(
     () => ({
@@ -304,12 +308,18 @@ function PeoplePage() {
         </TabsContent>
         <TabsContent value="find" className="mt-4 flex flex-col gap-8">
           <FindPeople />
-          <EmailInvite
-            kind="follow"
-            heading={
-              <SectionHead title={t("find.emailInviteTitle")} icon={Mail} />
-            }
-          />
+          <section className="flex flex-col gap-4">
+            <SectionHead
+              title={t("find.emailInviteTitle")}
+              icon={Mail}
+              className="mb-1"
+            />
+            <p className="text-muted-foreground text-sm">
+              {tInvite("inviteBody")}
+            </p>
+            {me ? <NetworkInvite memberId={me._id} /> : null}
+            <EmailInvite kind="follow" />
+          </section>
         </TabsContent>
         <TabsContent value="activity" className="mt-4">
           <ActivityTab />

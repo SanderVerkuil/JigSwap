@@ -1,3 +1,4 @@
+import { parseThreadSearch } from "@/components/messaging/copy-conversation";
 import {
   LIST_PANE_CLASS,
   MESSAGES_FRAME_CLASS,
@@ -13,6 +14,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
+import { useEffect, useState } from "react";
 
 // This route is deep-linked (message notifications carry thread ids), so a
 // stale or foreign id surfaces here as a ConvexError from listThreadMessages.
@@ -29,6 +31,7 @@ function ThreadError({ error }: ErrorComponentProps) {
 }
 
 export const Route = createFileRoute("/_dashboard/messages/$threadId")({
+  validateSearch: parseThreadSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "messages") }],
   }),
@@ -43,6 +46,16 @@ export const Route = createFileRoute("/_dashboard/messages/$threadId")({
 // Deliberately thin — all data access lives in the messaging components.
 function MessageThreadPage() {
   const { threadId } = Route.useParams();
+  const { attach } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  // ?attach=<copyId>: a copy's "Message" brought its puzzle along. The page keeps the id for the
+  // composer and takes it off the URL straight away, so a reload or a shared link stages nothing.
+  const [attachCopyId] = useState(attach);
+  useEffect(() => {
+    if (attach) {
+      void navigate({ search: {}, replace: true, resetScroll: false });
+    }
+  }, [attach, navigate]);
 
   return (
     <div className={cn(MESSAGES_IMMERSIVE_CLASS, MESSAGES_FRAME_CLASS)}>
@@ -50,7 +63,7 @@ function MessageThreadPage() {
         <ThreadList activeThreadId={threadId} />
       </div>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <ThreadView threadId={threadId} />
+        <ThreadView threadId={threadId} attachCopyId={attachCopyId} />
       </div>
     </div>
   );

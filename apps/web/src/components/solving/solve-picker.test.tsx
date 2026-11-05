@@ -23,7 +23,7 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 
-// The "Log a completion" picker: every puzzle is a real button with a name that says what picking
+// The "Log a solve" picker: every puzzle is a real button with a name that says what picking
 // it does, under visible section headings, with the solves in progress first.
 
 const STARTED = Date.UTC(2026, 9, 3);
@@ -159,6 +159,12 @@ describe("SolvePicker", () => {
     expectButtonNames([
       "Untitled puzzle: finish solve, In progress since Oct 3, 2026",
     ]);
+  });
+
+  it("makes cards in one row the same height, however long a title is", () => {
+    renderPicker(SECTIONS);
+    const card = screen.getAllByRole("button")[0];
+    expect(card?.className.split(/\s+/)).toContain("h-full");
   });
 
   it("shows no copy condition or availability badges", () => {

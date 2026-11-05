@@ -35,7 +35,7 @@ const SECTION_ICON: Record<SolvePickerSectionId, LucideIcon> = {
   household: House,
 };
 
-// The "Log a completion" picker: a search over every section, then each non-empty section under
+// The "Log a solve" picker: a search over every section, then each non-empty section under
 // its own heading. Every puzzle is a real button whose name says what picking it does ("log a
 // solve" or "finish solve"), so it works with a keyboard and a screen reader. Rows are compact
 // (a 48px cover, title, brand and pieces) and carry nothing about the copy's condition or
@@ -154,7 +154,7 @@ function SolvePickerRow({
     <button
       type="button"
       onClick={(event) => onPick(event.currentTarget)}
-      className="bg-card hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring flex min-h-16 w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2"
+      className="bg-card hover:bg-accent/60 focus-visible:border-ring focus-visible:ring-ring flex h-full min-h-16 w-full items-center gap-3 rounded-xl border p-2.5 text-left transition-[color,background-color,box-shadow] outline-none focus-visible:ring-2"
     >
       {item.imageUrl ? (
         <Image

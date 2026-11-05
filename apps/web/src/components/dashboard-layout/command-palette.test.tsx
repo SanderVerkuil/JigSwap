@@ -169,6 +169,98 @@ describe("CommandPalette", () => {
     await waitFor(() => expect(option("Berichten")).not.toBeNull());
   });
 
+  // cmdk's default also takes letters scattered across words: "mess" matched "People" and "My
+  // Puzzles" through their keywords, and Dutch "swap" matched "Mijn gegevens exporteren".
+  it.each([
+    [
+      "en",
+      "mess",
+      "Messages",
+      ["People", "My Puzzles", "Completions", "Dashboard", "Export my data"],
+    ],
+    ["nl", "swap", "Uitwisselingen", ["Mijn gegevens exporteren"]],
+    ["en", "gol", "Goals", ["Messages", "Household"]],
+  ] as const)(
+    "lists only real matches: %s %s",
+    async (locale, term, wanted, unrelated) => {
+      renderPalette({ locale });
+      type(term);
+      await waitFor(() => expect(option(wanted)).not.toBeNull());
+      for (const name of unrelated) expect(option(name)).toBeNull();
+    },
+  );
+
+  // A search word is often an inflected form of a keyword: longer than it, so neither "inside the
+  // keyword" nor "letters in order" can match it.
+  it.each([
+    ["en", "trades", "Exchanges"],
+    ["en", "traded", "Exchanges"],
+    ["en", "trading", "Exchanges"],
+    ["en", "swaps", "Exchanges"],
+    ["en", "swapped", "Exchanges"],
+    ["en", "loans", "Exchanges"],
+    ["en", "sales", "Exchanges"],
+    ["en", "exports", "Export my data"],
+    ["en", "exported", "Export my data"],
+    ["en", "downloads", "Export my data"],
+    ["en", "logs", "Log a solve"],
+    ["en", "solving", "Completions"],
+    ["en", "completed", "Completions"],
+    ["en", "messaging", "Messages"],
+    ["nl", "trades", "Uitwisselingen"],
+    ["nl", "verkoop", "Uitwisselingen"],
+    ["nl", "ruilt", "Uitwisselingen"],
+    ["nl", "leent", "Uitwisselingen"],
+    ["nl", "exemplaar", "Mijn puzzels"],
+    ["nl", "exporteert", "Mijn gegevens exporteren"],
+  ] as const)(
+    "finds an inflected word: %s %s",
+    async (locale, term, wanted) => {
+      renderPalette({ locale });
+      type(term);
+      await waitFor(() => expect(option(wanted)).not.toBeNull());
+    },
+  );
+
+  // A longer word that merely starts with a keyword is a different word.
+  it.each([
+    ["login", "Log a solve"],
+    ["logo", "Log a solve"],
+    ["address", "Add a Puzzle"],
+    ["database", "Export my data"],
+  ])("doesn't take %s for a form of a keyword", async (term, unrelated) => {
+    renderPalette();
+    type("mess");
+    await waitFor(() => expect(option("Messages")).not.toBeNull());
+    type(term);
+    await waitFor(() => expect(option("Messages")).toBeNull());
+    expect(option(unrelated)).toBeNull();
+  });
+
+  it("matches the words of a search in any order", async () => {
+    renderPalette();
+    type("completion log");
+    await waitFor(() => expect(option("Log a solve")).not.toBeNull());
+    expect(option("Messages")).toBeNull();
+  });
+
+  it("still matches anywhere in a word, and in any case", async () => {
+    renderPalette();
+    type("PUZZ");
+    await waitFor(() => expect(option("My Puzzles")).not.toBeNull());
+    expect(option("Puzzles catalogue")).not.toBeNull();
+  });
+
+  it("ranks the group of the real match first, with unrelated matches not counting", async () => {
+    renderPalette();
+    type("export");
+    await waitFor(() => expect(option("Export my data")).not.toBeNull());
+    const headings = [...document.querySelectorAll("[cmdk-group-heading]")].map(
+      (heading) => heading.textContent,
+    );
+    expect(headings[0]).toBe(en.shell.search.quickActions);
+  });
+
   it("drops destinations that do not match the term", async () => {
     renderPalette();
     type("ruil");
@@ -227,13 +319,23 @@ describe("CommandPalette", () => {
   // UX-58: quick actions open the action itself, not the list page behind it.
   it.each([
     ["Add a Puzzle", "/my-puzzles/add"],
-    ["Log a Completion", "/completions/new"],
+    ["Log a solve", "/completions/new"],
+    ["Mark past solves", "/completions/past"],
     ["Create a Circle", "/circles?create=1"],
     ["Browse Community", "/browse"],
   ])("“%s” goes to %s", (name, href) => {
     renderPalette();
     fireEvent.click(screen.getByRole("option", { name }));
     expect(mocks.push).toHaveBeenCalledWith(href);
+  });
+
+  // A member with a long history looks for this under either language's word, wherever they are.
+  it.each(["past", "eerdere"])("finds marking past solves by “%s”", (term) => {
+    renderPalette();
+    type(term);
+    expect(
+      screen.getByRole("option", { name: "Mark past solves" }),
+    ).toBeTruthy();
   });
 
   // UX-06: Users stands for Community (its tab and hub); Circles has its own glyph everywhere.

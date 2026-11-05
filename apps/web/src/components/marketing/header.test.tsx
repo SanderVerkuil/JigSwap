@@ -32,7 +32,11 @@ vi.mock("@/compat/link", () => ({
     </a>
   ),
 }));
-vi.mock("@/components/marketing/wordmark", () => ({ Wordmark: () => null }));
+vi.mock("@/components/marketing/wordmark", () => ({
+  Wordmark: ({ textClassName }: { textClassName?: string }) => (
+    <span data-testid="wordmark-name" className={textClassName} />
+  ),
+}));
 
 // Signed out: the header's auth-gated actions render their Unauthenticated branch.
 vi.mock("convex/react", () => ({
@@ -116,6 +120,14 @@ describe("MarketingHeader breakpoints", () => {
     ).toContain("min-[1200px]:hidden");
   });
 
+  // At 360px the Dutch bar was measured to fit: wordmark 16-134, CTA 152-296, toggle 304-344.
+  it("keeps the product name in the bar down to 360px", () => {
+    renderHeader("nl");
+    expect(screen.getByTestId("wordmark-name").className).toBe(
+      "max-[360px]:hidden",
+    );
+  });
+
   it("opens the burger menu at every width the burger shows", () => {
     renderHeader("nl");
     fireEvent.click(screen.getByRole("button", { name: "Menu openen" }));
@@ -186,6 +198,73 @@ describe("MarketingHeader mobile menu", () => {
     const desktopNav = screen.getByRole("navigation", { name: "Main" });
     expect(
       within(desktopNav).getByRole("link", { name: "How it works" }),
+    ).toBeTruthy();
+  });
+
+  // No layout here, so the scrolling itself was measured in a browser (844x390, 320x180). This
+  // guards what makes it hold.
+  it("scrolls inside the panel, so its last items stay reachable on a short screen", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    expect(
+      screen.getByRole("navigation", { name: "Menu" }).className.split(/\s+/),
+    ).toEqual(
+      expect.arrayContaining([
+        "max-h-[calc(100dvh-71px)]",
+        "overflow-y-auto",
+        "overscroll-contain",
+      ]),
+    );
+  });
+
+  // No layout here either, so the taps were run in a browser (touch emulation at 390 and 820). The
+  // menu closes on the press, before the tap's click is aimed: if the panel took up room in the
+  // page, the page would jump up under the finger and the click would open something else.
+  it("floats over the page, so closing it leaves everything under a tap in place", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    expect(
+      screen.getByRole("navigation", { name: "Menu" }).className.split(/\s+/),
+    ).toEqual(expect.arrayContaining(["absolute", "inset-x-0", "top-full"]));
+  });
+
+  it("closes on a press outside the header, leaving focus where the press put it", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+
+    fireEvent.pointerDown(document.body);
+
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+    expect(document.activeElement).not.toBe(menuToggle());
+  });
+
+  it("stays open on a press inside the header", () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+
+    fireEvent.pointerDown(screen.getByRole("navigation", { name: "Menu" }));
+    fireEvent.pointerDown(screen.getByRole("link", { name: "JigSwap" }));
+
+    expect(screen.getByRole("navigation", { name: "Menu" })).toBeTruthy();
+  });
+
+  it("stays open while the language menu, in its portal, takes the press", async () => {
+    renderHeader();
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    fireEvent.pointerDown(
+      within(panel).getByRole("button", {
+        name: "Switch language: English, EN",
+      }),
+      { button: 0, ctrlKey: false },
+    );
+    const [item] = await screen.findAllByRole("menuitemradio");
+
+    fireEvent.pointerDown(item);
+
+    // The open dropdown hides the rest of the page from assistive technology.
+    expect(
+      screen.getByRole("navigation", { name: "Menu", hidden: true }),
     ).toBeTruthy();
   });
 

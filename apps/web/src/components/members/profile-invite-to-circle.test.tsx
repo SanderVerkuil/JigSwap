@@ -204,7 +204,7 @@ describe("Invite to a circle on a profile", () => {
     expect(mocks.mutation).toHaveBeenCalledWith(INVITE, {
       circleId: "c_family",
       inviteeId: ANNA,
-      permission: "ViewOnly",
+      permission: "Exchange",
     });
     await waitFor(() =>
       expect(mocks.toast.success).toHaveBeenCalledWith(

@@ -233,7 +233,9 @@ function HeroSection({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <h1 className="font-heading text-3xl [overflow-wrap:anywhere]">
+            {/* The same weight as the member's own /profile (identity-header): this page claims to
+                show how visitors see them. */}
+            <h1 className="font-heading text-3xl font-bold tracking-tight [overflow-wrap:anywhere]">
               {name}
             </h1>
             {hero.reviewCount > 0 && (

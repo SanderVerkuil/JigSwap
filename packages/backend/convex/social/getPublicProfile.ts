@@ -2,7 +2,7 @@ import type {
   CurrentlySolvingItemView,
   PublicProfileView,
 } from "@jigswap/contracts";
-import { isPlausibleSolveMinutes } from "@jigswap/domain";
+import { typedSolveMinutes } from "@jigswap/domain";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
@@ -185,12 +185,11 @@ export const getPublicProfile = query({
         hardest = { title, pieceCount };
       }
 
-      if (
-        isPlausibleSolveMinutes(completion.completionTimeMinutes) &&
-        title !== undefined
-      ) {
-        if (!fastest || completion.completionTimeMinutes < fastest.minutes) {
-          fastest = { title, minutes: completion.completionTimeMinutes };
+      // Only a time the member typed is a record: the duration stored from the dates isn't one.
+      const typedMinutes = typedSolveMinutes(completion);
+      if (typedMinutes !== undefined && title !== undefined) {
+        if (!fastest || typedMinutes < fastest.minutes) {
+          fastest = { title, minutes: typedMinutes };
         }
       }
     }

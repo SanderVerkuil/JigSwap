@@ -96,6 +96,13 @@ describe("StatCards", () => {
     );
   });
 
+  it("shows a dash, not zero, for the total solve time while no solve has a typed time", () => {
+    renderStats({ completionsCount: 5, totalSolveMinutes: 0 });
+    expect(cellOf("Total solve time")?.firstElementChild?.textContent).toBe(
+      "—",
+    );
+  });
+
   it("drops the zero solve figures while there is no finished solve", () => {
     renderStats({ completionsCount: 0, totalSolveMinutes: 0 });
     expect(screen.queryByText("Completions")).toBeNull();

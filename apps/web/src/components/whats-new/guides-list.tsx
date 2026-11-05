@@ -167,7 +167,8 @@ function GuideCard({
             <p className="text-muted-foreground text-sm">
               {t(keys.description)}
             </p>
-            <p className="text-muted-foreground flex flex-wrap gap-x-3 text-xs">
+            {/* Centred: on touch the link beside the count grows to a 44px target. */}
+            <p className="text-muted-foreground flex flex-wrap items-center gap-x-3 text-xs">
               <span>
                 {t("whatsNew.guides.steps", { count: tour.steps.length })}
               </span>

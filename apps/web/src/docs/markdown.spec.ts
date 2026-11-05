@@ -53,6 +53,20 @@ describe("compileMarkdown", () => {
     expect(r.html).toContain('data-tone="info"');
   });
 
+  it("adds no spaces around inline markup in the plain text", async () => {
+    const r = await compileMarkdown(
+      'Mark it **for trade**, *for lend*, and/or `for sale`. "**Mara** asks (**now**)".\n\nNext block.',
+    );
+    expect(r.text).toBe(
+      'Mark it for trade, for lend, and/or for sale. "Mara asks (now)". Next block.',
+    );
+  });
+
+  it("writes & and < in the plain text as themselves", async () => {
+    const r = await compileMarkdown("Privacy & safety: 1 < 2.");
+    expect(r.text).toBe("Privacy & safety: 1 < 2.");
+  });
+
   it("produces plain text for search", async () => {
     const r = await compileMarkdown(SRC);
     expect(r.text).toContain("Intro paragraph");

@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from "@testing-library/react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
+import { AvailabilityChips } from "../add-puzzle/availability-chips";
+import { SegmentedPills } from "../add-puzzle/segmented-pills";
+import { TagInput } from "../add-puzzle/tag-input";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import {
@@ -11,7 +16,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./dropdown-menu";
+import { Input } from "./input";
+import { Select, SelectTrigger, SelectValue } from "./select";
 import { Switch } from "./switch";
+import { Tabs, TabsList, TabsTrigger } from "./tabs";
+import { TAB_TRIGGER_CLASS, UNDERLINE_TABS_LIST_CLASS } from "./underline-tabs";
 
 // Under a finger (pointer: coarse) the shared controls reach the 44px touch target the app uses
 // in onboarding and Reports (UX-70). The sizing lives in the primitives, behind pointer-coarse:,
@@ -79,6 +88,95 @@ describe("coarse-pointer touch targets", () => {
         "pointer-coarse:after:absolute",
         // 16 + 2×14px = 44.
         "pointer-coarse:after:-inset-3.5",
+      ]),
+    );
+  });
+
+  it("makes an Input 44px tall on touch, keeping its compact size for a mouse", () => {
+    render(<Input aria-label="Title" />);
+    const list = classes(screen.getByRole("textbox", { name: "Title" }));
+    expect(list).toEqual(
+      expect.arrayContaining(["h-9", "pointer-coarse:min-h-11"]),
+    );
+  });
+
+  it.each(["default", "sm"] as const)(
+    "makes a %s Select trigger 44px tall on touch",
+    (size) => {
+      render(
+        <Select>
+          <SelectTrigger aria-label="Status" size={size}>
+            <SelectValue />
+          </SelectTrigger>
+        </Select>,
+      );
+      expect(classes(screen.getByRole("combobox"))).toContain(
+        "pointer-coarse:min-h-11",
+      );
+    },
+  );
+
+  it("makes the Difficulty and Condition pills 44px tall on touch", () => {
+    render(
+      <SegmentedPills
+        value="easy"
+        onChange={() => {}}
+        options={[{ value: "easy", label: "Easy" }]}
+        ariaLabel="Difficulty"
+      />,
+    );
+    expect(classes(screen.getByRole("radio", { name: "Easy" }))).toContain(
+      "pointer-coarse:min-h-11",
+    );
+  });
+
+  it("makes the Availability chips 44px tall on touch", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <AvailabilityChips
+          value={{ forTrade: false, forLend: false, forSale: false }}
+          onChange={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(
+      classes(screen.getByRole("button", { name: "For Trade" })),
+    ).toContain("pointer-coarse:min-h-11");
+  });
+
+  it("makes an underline tab 44px tall on touch", () => {
+    render(
+      <Tabs defaultValue="a">
+        <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+          <TabsTrigger value="a" className={TAB_TRIGGER_CLASS}>
+            Following
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>,
+    );
+    expect(classes(screen.getByRole("tab", { name: "Following" }))).toContain(
+      "pointer-coarse:min-h-11",
+    );
+  });
+
+  it("grows a tag's remove button to 44px on touch without changing the chip", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <TagInput value={["cats"]} onChange={() => {}} />
+      </IntlProvider>,
+    );
+    expect(
+      classes(
+        screen.getByRole("button", {
+          name: "Remove cats",
+        }),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "relative",
+        "size-6",
+        "pointer-coarse:after:absolute",
+        "pointer-coarse:after:-inset-2.5",
       ]),
     );
   });

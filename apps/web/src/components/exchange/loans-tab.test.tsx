@@ -188,6 +188,17 @@ describe("LoansTab", () => {
         within(borrowed).getByRole("button", { name: action }),
       ).toBeTruthy();
     }
+    // Return depends on handing it back, so the way to arrange that sits right before it.
+    const buttons = within(borrowed)
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+    expect(buttons.at(-2)).toBe("Message");
+    expect(buttons.at(-1)).toBe("Return");
+    expect(
+      within(borrowed)
+        .getByRole("button", { name: "Message" })
+        .getAttribute("data-member"),
+    ).toBe("u_anna");
 
     fireEvent.click(
       within(borrowed).getByRole("button", { name: "Start puzzle" }),
@@ -256,6 +267,15 @@ describe("LoansTab", () => {
     expect(message.getAttribute("data-member")).toBe("u_bas");
     expect(message.getAttribute("data-size")).toBe("sm");
     expect(within(lent).getByRole("button", { name: "Recall" })).toBeTruthy();
+  });
+
+  it("offers no Message for a lender who has left", () => {
+    renderTab({ borrowed: [loan({ lender: null })], lentOut: [] });
+    expect(
+      within(section("Borrowed by you 1")).queryByRole("button", {
+        name: "Message",
+      }),
+    ).toBeNull();
   });
 
   it("offers no Message for a borrower who has left", () => {

@@ -75,7 +75,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
     await ctx.db.insert("completions", {
       userId: alice,
       puzzleId: puzzleA,
-      startDate: now - 2 * HOUR,
+      startDate: now - HOUR,
       endDate: now - HOUR,
       completionTimeMinutes: 60,
       photos: [],
@@ -86,7 +86,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
     await ctx.db.insert("completions", {
       userId: alice,
       puzzleId: puzzleB,
-      startDate: now - 3 * HOUR,
+      startDate: now - HOUR,
       endDate: now - HOUR,
       completionTimeMinutes: 120,
       photos: [],
@@ -198,6 +198,42 @@ describe("insights.getPersonalStats", () => {
     expect(stats.goalsActive).toBe(1);
     expect(stats.goalsAchieved).toBe(0);
     expect(stats.goalsTotal).toBe(1);
+  });
+
+  // Completion stores one day for an untimed same-day solve and the span for an untimed multi-day
+  // one: neither is a time the member typed, so neither adds up to a solve time.
+  test("a stored duration derived from the dates is no solve time", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const day = Date.UTC(2026, 5, 1);
+    await t.run(async (ctx) => {
+      const base = {
+        userId: alice,
+        photos: [],
+        isCompleted: true,
+        createdAt: day,
+        updatedAt: day,
+      };
+      await ctx.db.insert("completions", {
+        ...base,
+        startDate: day,
+        endDate: day,
+        completionTimeMinutes: 1440,
+      });
+      await ctx.db.insert("completions", {
+        ...base,
+        startDate: day,
+        endDate: day + 3 * 24 * 60 * 60 * 1000,
+        completionTimeMinutes: 3 * 1440,
+      });
+    });
+    const stats = await asAlice(t).query(
+      api.insights.getPersonalStats.getPersonalStats,
+      {},
+    );
+    expect(stats.completionsCount).toBe(4);
+    expect(stats.totalSolveMinutes).toBe(180);
+    expect(stats.averageSolveMinutes).toBe(90);
   });
 
   test("counts archived goals in the goal total, so achieved never exceeds it", async () => {
@@ -349,6 +385,35 @@ describe("insights.getCompletionTrends / getTradeActivity", () => {
     );
     expect(trends).toHaveLength(12);
     expect(trends.reduce((acc, p) => acc + p.count, 0)).toBe(2);
+  });
+
+  test("trends add up only typed times, not the durations stored from the dates", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const before = await asAlice(t).query(
+      api.insights.getCompletionTrends.getCompletionTrends,
+      {},
+    );
+    const typedBefore = before.reduce((acc, p) => acc + p.totalMinutes, 0);
+    const today = Date.now();
+    await t.run(async (ctx) => {
+      await ctx.db.insert("completions", {
+        userId: alice,
+        startDate: today,
+        endDate: today,
+        completionTimeMinutes: 1440,
+        photos: [],
+        isCompleted: true,
+        createdAt: today,
+        updatedAt: today,
+      });
+    });
+    const after = await asAlice(t).query(
+      api.insights.getCompletionTrends.getCompletionTrends,
+      {},
+    );
+    expect(after.reduce((acc, p) => acc + p.count, 0)).toBe(3);
+    expect(after.reduce((acc, p) => acc + p.totalMinutes, 0)).toBe(typedBefore);
   });
 
   test("trade activity counts the completed exchange", async () => {

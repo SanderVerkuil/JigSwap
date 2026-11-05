@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { Container } from "@/components/marketing/container";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
@@ -112,7 +113,7 @@ export function MarketingNotFoundContent({
 // The public 404 as a page body: used inside the marketing layout's Outlet (_public).
 export function MarketingNotFound() {
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <MarketingNotFoundContent />
     </main>
   );

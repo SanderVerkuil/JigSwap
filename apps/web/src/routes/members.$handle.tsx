@@ -1,3 +1,4 @@
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
@@ -9,6 +10,7 @@ import {
   type PublicProfileView,
 } from "@/components/members/profile-body";
 import { lockedProfileFromTeaser } from "@/components/members/teaser-profile";
+import { MarketingNotFoundContent } from "@/components/NotFound";
 import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
 import {
   INVITE_KEY,
@@ -21,6 +23,7 @@ import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { safeStorage } from "@/lib/safe-storage";
+import { headMessage, seoHead } from "@/lib/seo-head";
 import { readSidebarCookies } from "@/lib/sidebar-state";
 import { authorizeServerReads } from "@/lib/ssr-member-data";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -97,18 +100,35 @@ export const Route = createFileRoute("/members/$handle")({
   // navigation is acceptable. The dynamic entity title is intentional (public
   // member pages are shareable/indexable per the spec); the pre-load fallback
   // reuses the localized page-title machinery.
-  head: ({ loaderData, match }) => ({
-    meta: [
-      {
-        title: loaderData?.profile?.hero.displayName
-          ? `${loaderData.profile.hero.displayName} — JigSwap`
-          : pageTitle(match.context, "members"),
-      },
-      ...(loaderData?.profile?.hero.visibility === "private"
-        ? [{ name: "robots", content: "noindex" }]
-        : []),
-    ],
-  }),
+  // These tags are what a shared invite link shows in WhatsApp and the like, so they say what the
+  // link is for. They use no profile field beyond the display name the title already exposes.
+  head: ({ loaderData, match }) => {
+    const hero = loaderData?.profile?.hero;
+    if (!hero?.displayName) {
+      return {
+        meta: [
+          {
+            title: pageTitle(
+              match.context,
+              match.status === "notFound" ? "notFound" : "members",
+            ),
+          },
+        ],
+      };
+    }
+    const { meta } = seoHead(match, "members", {
+      title: `${hero.displayName} — JigSwap`,
+      description: headMessage(match.context, "members.metaDescription", {
+        name: hero.displayName,
+      }),
+    });
+    return {
+      meta:
+        hero.visibility === "private"
+          ? [...meta, { name: "robots", content: "noindex" }]
+          : meta,
+    };
+  },
   pendingComponent: MemberPending,
   notFoundComponent: MemberNotFound,
   component: MemberPage,
@@ -182,7 +202,7 @@ function MemberPage() {
     return (
       <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
         <MarketingHeader />
-        <main className="flex-1">
+        <main id={MAIN_CONTENT_ID} className="flex-1">
           <ProfileBody
             profile={profile}
             viewer="public"
@@ -275,8 +295,9 @@ function AuthedMemberPage({
   usePageHeader(
     () => ({
       title: name,
-      // ProfileBody's hero renders the name as this page's h1 once `me` resolves.
-      ownsHeading: Boolean(me),
+      // ProfileBody's hero renders the name as this page's h1 once `me` resolves: the head then
+      // keeps it only as the breadcrumb leaf, so the name isn't printed twice.
+      titleInContent: Boolean(me),
       crumbs: [
         { label: tShell("groups.community.label"), href: "/community" },
         { label: tShell("pages.members.title"), href: "/people" },
@@ -311,7 +332,7 @@ function AuthedMemberPage({
 
 // Owner-preview banner: signed-in self no longer redirects to /profile — they
 // see exactly what visitors see, with an explicit "this is a preview" frame and
-// escape hatches back to editing / the app. For a private profile the body
+// ways back to their profile and its open editor. For a private profile the body
 // shows the locked state; the banner notes that approved followers see it all.
 function OwnerPreviewBanner({ locked }: { locked: boolean }) {
   const t = useTranslations("members.profile");
@@ -323,12 +344,14 @@ function OwnerPreviewBanner({ locked }: { locked: boolean }) {
           {locked ? t("previewBannerPrivate") : t("previewBanner")}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Button asChild size="sm" variant="outline">
-          <Link to="/dashboard">{t("backToApp")}</Link>
+          <Link to="/profile">{t("backToProfile")}</Link>
         </Button>
         <Button asChild size="sm">
-          <Link to="/profile">{t("editProfile")}</Link>
+          <Link to="/profile" search={{ edit: "profile" }}>
+            {t("editProfile")}
+          </Link>
         </Button>
       </div>
     </div>
@@ -339,28 +362,30 @@ function MemberNotFound() {
   const { userId } = useRouteContext({ from: "__root__" });
   const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   const t = useTranslations("members");
-  const body = (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-      <h1 className="font-heading text-2xl">{t("notFoundTitle")}</h1>
-      <p className="text-muted-foreground">{t("notFoundSub")}</p>
-      {userId ? (
-        <Button asChild>
-          <Link to="/people">{t("findPeople")}</Link>
-        </Button>
-      ) : (
-        <Button asChild>
-          <Link to="/">{t("backHome")}</Link>
-        </Button>
-      )}
-    </div>
-  );
   // App convention: 404 inside the authed app renders within the dashboard
   // shell (see _dashboard/route.tsx's notFoundComponent).
-  if (userId) return <DashboardShell sidebar={sidebar}>{body}</DashboardShell>;
+  if (userId) {
+    return (
+      <DashboardShell sidebar={sidebar}>
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
+          <h1 className="font-heading text-2xl">{t("notFoundTitle")}</h1>
+          <p className="text-muted-foreground">{t("notFoundSub")}</p>
+          <Button asChild>
+            <Link to="/people">{t("findPeople")}</Link>
+          </Button>
+        </div>
+      </DashboardShell>
+    );
+  }
   return (
     <div className="mk-root font-mk-sans flex min-h-screen flex-col overflow-x-clip">
       <MarketingHeader />
-      <main className="flex-1">{body}</main>
+      <main id={MAIN_CONTENT_ID} className="flex-1">
+        <MarketingNotFoundContent
+          title={t("notFoundTitle")}
+          message={t("notFoundSub")}
+        />
+      </main>
       <MarketingFooter />
     </div>
   );

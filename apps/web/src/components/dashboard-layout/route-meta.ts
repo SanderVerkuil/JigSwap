@@ -43,7 +43,8 @@ export type ShellNavItem = {
   /**
    * Extra words the ⌘K palette matches besides the localized title: the other language's title
    * and common synonyms, in English AND Dutch, so a member finds the page in either language.
-   * Lower case; never shown.
+   * Lower case; never shown. A word's plain endings match by themselves ("trade" finds "trades"),
+   * so list the base form, plus any form that changes the word ("verkoop" next to "verkopen").
    */
   keywords?: readonly string[];
 };
@@ -79,7 +80,14 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         key: "myPuzzles",
         href: "/my-puzzles",
         icon: Puzzle,
-        keywords: ["my puzzles", "mijn puzzels", "copies", "exemplaren"],
+        keywords: [
+          "my puzzles",
+          "mijn puzzels",
+          "copy",
+          "copies",
+          "exemplaar",
+          "exemplaren",
+        ],
       },
       {
         key: "collections",
@@ -99,9 +107,9 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         icon: CircleCheck,
         keywords: [
           "completions",
+          "complete",
           "voltooiingen",
-          "solves",
-          "solved",
+          "solve",
           "voltooid",
         ],
       },
@@ -157,32 +165,61 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         href: "/trades",
         icon: ArrowLeftRight,
         keywords: [
+          "exchange",
           "exchanges",
           "uitwisselingen",
           "swap",
           "trade",
           "lend",
+          "lent",
           "borrow",
           "loan",
           "sell",
+          "sold",
+          "sales",
           "ruil",
           "ruilen",
+          "geruild",
+          "leen",
           "lenen",
+          "lening",
+          "geleend",
+          "uitleen",
           "uitlenen",
+          "verkoop",
+          "verkoper",
           "verkopen",
+          "verkocht",
         ],
       },
       {
         key: "messages",
         href: "/messages",
         icon: MessageSquare,
-        keywords: ["messages", "berichten", "chat", "inbox", "gesprekken"],
+        keywords: [
+          "message",
+          "messages",
+          "berichten",
+          "chat",
+          "inbox",
+          "gesprekken",
+        ],
       },
       {
         key: "people",
         href: "/people",
         icon: Globe,
-        keywords: ["people", "mensen", "members", "leden", "follow", "volgen"],
+        keywords: [
+          "people",
+          "person",
+          "mensen",
+          "members",
+          "lid",
+          "leden",
+          "follow",
+          "volg",
+          "volgen",
+        ],
       },
     ],
   },
@@ -240,6 +277,8 @@ export type ShellRouteMeta = {
   pageKey: string;
   /** Breadcrumb parent; the crumb links to the group's landing page. */
   group?: ShellGroupKey;
+  /** The page above this one on a route outside the nav groups: the phone's back chevron's way up. */
+  parent?: { href: string; pageKey: string };
   /**
    * - "dashboard": personalised welcome title, no crumb row.
    * - "landing": group landing page, no crumb row.
@@ -273,6 +312,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/household": { pageKey: "household", group: "library" },
   "/completions": { pageKey: "completions", group: "library" },
   "/completions/new": { pageKey: "completionNew", group: "library" },
+  "/completions/past": { pageKey: "completionPast", group: "library" },
   "/goals": { pageKey: "goals", group: "library" },
   "/insights": { pageKey: "insights", group: "library" },
 
@@ -324,7 +364,10 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/notifications": { pageKey: "notifications" },
   // Ungrouped like its parent (no ShellGroupKey fits); the page itself publishes
   // an explicit "Notifications" crumb via usePageHeader.
-  "/notifications/preferences": { pageKey: "notificationPreferences" },
+  "/notifications/preferences": {
+    pageKey: "notificationPreferences",
+    parent: { href: "/notifications", pageKey: "notifications" },
+  },
 };
 
 /** Resolve the shell meta for a pathname (exact, then longest prefix). */

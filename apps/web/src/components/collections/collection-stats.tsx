@@ -82,7 +82,10 @@ export function computeCollectionStats(
 
 type StatCell = { value: string; label: string };
 
-/** Open, divided row of big-number-over-muted-label stat cells. */
+/**
+ * Open, divided row of big-number-over-muted-label stat cells. Below sm, where a divided row wraps
+ * into staggered cells, a plain two-column grid with the trailing content full width under it.
+ */
 export function StatsBar({
   cells,
   children,
@@ -93,9 +96,9 @@ export function StatsBar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-      <dl className="flex flex-1 flex-wrap items-stretch divide-x divide-border">
+      <dl className="grid w-full grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:w-auto sm:flex-1 sm:flex-wrap sm:items-stretch sm:gap-0 sm:divide-x sm:divide-border">
         {cells.map((cell) => (
-          <div key={cell.label} className="px-5 first:pl-0">
+          <div key={cell.label} className="min-w-0 sm:px-5 sm:first:pl-0">
             <dd className="font-heading text-2xl font-bold tracking-tight">
               {cell.value}
             </dd>
@@ -133,7 +136,7 @@ export function DifficultyMix({
   const segments = TIER_ORDER.filter((tier) => mix[tier] > 0);
 
   return (
-    <div className="min-w-[12rem]">
+    <div className="w-full min-w-[12rem] sm:w-auto">
       <div className="mb-1.5 text-[0.625rem] font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </div>

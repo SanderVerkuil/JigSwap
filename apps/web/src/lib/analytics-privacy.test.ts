@@ -138,7 +138,6 @@ describe("sanitizeAnalyticsEvent: URLs", () => {
     const properties = {
       $pathname: "/catalog",
       $el_text: "Swap this one?",
-      title: "Which puzzle? | JigSwap",
       $referring_domain: "$direct",
       count: 3,
     };
@@ -151,6 +150,55 @@ describe("sanitizeAnalyticsEvent: URLs", () => {
     const original = event("$pageview", { $current_url: PAGE });
     sanitizeAnalyticsEvent(original);
     expect(original.properties.$current_url).toBe(PAGE);
+  });
+});
+
+describe("sanitizeAnalyticsEvent: page titles", () => {
+  // PostHog copies document.title into every $pageview, and the tab carries the page's own name:
+  // a circle, a household, a collection, or the member an admin is looking at.
+  it("never lets the tab's title out, whichever event carries it", () => {
+    for (const name of ["$pageview", "$pageleave", "$autocapture", "clicked"]) {
+      const result = sanitizeAnalyticsEvent(
+        event(name, {
+          $pathname: "/circles/c1",
+          title: "De familie Jansen — JigSwap",
+        }),
+      );
+      expect(result?.properties).toEqual({ $pathname: "/circles/c1" });
+    }
+  });
+
+  // A thread's tab title names the other member.
+  it("drops it on the messaging screens", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageview", {
+        $pathname: "/messages/thread_1",
+        title: "Mara — Messages — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/messages/thread_1" });
+  });
+
+  // Leaving a thread, $pathname is already the next route while document.title still names the
+  // member, so the path can't tell which titles are safe to send.
+  it("drops it on the page after a thread", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageview", {
+        $pathname: "/puzzles",
+        title: "Mara — Messages — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/puzzles" });
+  });
+
+  it("drops it from every event, on every page", () => {
+    const result = sanitizeAnalyticsEvent(
+      event("$pageleave", {
+        $pathname: "/puzzles/p1",
+        title: "Café — JigSwap",
+      }),
+    );
+    expect(result?.properties).toEqual({ $pathname: "/puzzles/p1" });
   });
 });
 

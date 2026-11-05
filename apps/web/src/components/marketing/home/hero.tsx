@@ -1,11 +1,11 @@
 import { Link } from "@/compat/link";
 import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { MK_AVATAR_TONES } from "@/components/marketing/avatar-colors";
-import { type PlankBox } from "@/components/marketing/plank";
+import { FittedPlank, type PlankBox } from "@/components/marketing/plank";
 import { JigPlank3D } from "@/components/marketing/plank-3d";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow } from "@/components/marketing/section";
-import { useStartHref } from "@/components/marketing/use-start-href";
+import { useStartLink } from "@/components/marketing/use-start-link";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { globalStatsQuery, hasSocialProof } from "@/lib/marketing-queries";
@@ -218,14 +218,17 @@ function TrustRow() {
   // Prefetched in the home route loader, so the count is present on first paint.
   const { data: stats } = useQuery(globalStatsQuery);
 
+  const socialProof = hasSocialProof(stats);
+
   // Hour-bucket seed shared by all visitors, client-only (SSR-safe). The
   // query is skipped until the seed is ready; the cluster stays hidden
-  // meanwhile.
+  // meanwhile. The faces belong with the member count: beside the invitation to
+  // be among the first they would explain nothing, so they aren't even read.
   const seed = useHourlySeed();
   const { data } = useQuery(
     convexQuery(
       gateway.insights.communityAvatars,
-      seed === null ? "skip" : { limit: 4, seed },
+      seed === null || !socialProof ? "skip" : { limit: 4, seed },
     ),
   );
   const communityAvatars: CommunityAvatar[] | undefined = data;
@@ -233,7 +236,7 @@ function TrustRow() {
   // Only render the avatar cluster once real community members are loaded — never
   // fake placeholder users. Until then (loading or no members) the cluster is hidden.
   const hasLiveAvatars =
-    communityAvatars != null && communityAvatars.length >= 1;
+    socialProof && communityAvatars != null && communityAvatars.length >= 1;
 
   return (
     <div className="flex items-center gap-3.5 mt-[30px] flex-wrap">
@@ -270,7 +273,7 @@ function TrustRow() {
       )}
       {stats != null && (
         <div className="text-[14.5px] text-mk-text-muted leading-snug">
-          {hasSocialProof(stats)
+          {socialProof
             ? t("trustRow", { count: format.number(stats.totalUsers) })
             : t("trustRowEarly")}
         </div>
@@ -281,12 +284,12 @@ function TrustRow() {
 
 function HeroCTAs() {
   const t = useTranslations("marketing");
-  const startHref = useStartHref();
+  const start = useStartLink();
   return (
     <div className="flex gap-3 flex-wrap mt-[30px]">
       <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
-        <Link href={startHref}>
-          {t("nav.startTrading")}
+        <Link href={start.href}>
+          {start.label}
           <ArrowRight size={17} />
         </Link>
       </Button>
@@ -305,6 +308,9 @@ function HeroCTAs() {
 // Hero — full-bleed 3D backdrop
 // The puzzle plank covers the entire hero background. A readability scrim
 // (horizontal + bottom fade) sits above the canvas so text stays legible.
+// Below 768px no 3D loads (three-gate), so nothing goes behind the copy: the
+// copy sits on the page and a sharp plank follows it in the normal flow. All of
+// this is decided in CSS, so the server's HTML is right for every width.
 // ---------------------------------------------------------------------------
 
 export function Hero() {
@@ -322,15 +328,14 @@ export function Hero() {
       seed === null ? "skip" : { limit: 12, seed },
     ),
   );
-  const rows = React.useMemo(
+  const boxes = React.useMemo(
     () =>
-      toRows(
-        livePuzzles && livePuzzles.length >= 3
-          ? livePuzzles.map(toPlankBox)
-          : PLANK_WIDE,
-      ),
+      livePuzzles && livePuzzles.length >= 3
+        ? livePuzzles.map(toPlankBox)
+        : PLANK_WIDE,
     [livePuzzles],
   );
+  const rows = React.useMemo(() => toRows(boxes), [boxes]);
 
   return (
     <div className="relative overflow-hidden">
@@ -347,6 +352,7 @@ export function Hero() {
           panel behind the text provides its own local contrast. */}
       <div
         aria-hidden="true"
+        className="max-[767px]:hidden"
         style={{
           position: "absolute",
           inset: 0,
@@ -365,27 +371,23 @@ export function Hero() {
         <div className="min-h-[520px] pt-[clamp(48px,7vw,100px)] pb-[clamp(64px,8vw,112px)]">
           {/* Frosted-glass callout — provides local contrast behind the hero
               text. Borderless and shadowless so it reads as part of the page
-              rather than a floating card. */}
-          <div
-            className="max-w-[640px] rounded-3xl"
-            style={{
-              background: "color-mix(in oklab, var(--mk-bg) 58%, transparent)",
-              backdropFilter: "blur(9px)",
-              WebkitBackdropFilter: "blur(9px)",
-              padding: "clamp(24px, 3.5vw, 44px)",
-            }}
-          >
+              rather than a floating card. Only from 768px: on phones there is
+              nothing behind the text to frost over. */}
+          <div className="max-w-[640px] rounded-3xl min-[768px]:bg-[color-mix(in_oklab,var(--mk-bg)_58%,transparent)] min-[768px]:backdrop-blur-[9px] min-[768px]:p-[clamp(24px,3.5vw,44px)]">
             <Reveal>
               <Eyebrow>{t("eyebrow")}</Eyebrow>
               <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(38px,6vw,62px)] leading-[1.04] mt-[18px]">
                 {t("heroTitle")}
               </h1>
-              <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-muted mt-[22px] max-w-[520px] text-pretty">
+              <p className="text-[clamp(17px,1.4vw,20px)] leading-relaxed text-mk-text-body mt-[22px] max-w-[520px] text-pretty">
                 {t("heroLead")}
               </p>
               <HeroCTAs />
               <TrustRow />
             </Reveal>
+          </div>
+          <div className="mt-6 min-[768px]:hidden">
+            <FittedPlank boxes={boxes.slice(0, 3)} depth={14} />
           </div>
         </div>
       </div>

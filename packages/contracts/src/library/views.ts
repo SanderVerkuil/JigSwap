@@ -64,7 +64,13 @@ export interface OwnedCopyView {
   missingPiecesCount?: number;
   notes?: string;
   availability: CopyAvailability;
+  /** The copy's EFFECTIVE visibility: an offered copy is always "visible". */
   visibility?: "private" | "visible";
+  /**
+   * The owner's chosen visibility, kept while the copy is offered. Present only for whoever may
+   * manage the copy (with the other owner-only fields).
+   */
+  visibilityPreference?: "private" | "visible";
   salePrice?: { amount: number; currency: string };
   acquisitionDate?: number;
   acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
@@ -357,13 +363,15 @@ export interface CopyCompletionEntry {
   solver: ProjectedMember;
   /** Whether the solver is the acting viewer. */
   isYou: boolean;
+  /** Epoch millis the solve started, so the UI can say how many days it spanned. */
+  startedAt: number;
   /** Epoch millis the completion is sorted/dated on (its `endDate`, else `startDate`). */
   occurredAt: number;
   /** Absent = "day"; label "year"/"unknown" solves instead of showing `occurredAt` as a date. */
   datePrecision?: CompletionDatePrecision;
   /**
-   * How long the solve took, in whole MINUTES: `endDate - startDate` when both are present, else
-   * `completionTimeMinutes`, else null. Raw minutes so the UI can humanize (hours/days/weeks).
+   * The time the solver typed, in whole MINUTES, or null when they typed none. Never the duration
+   * stored from the dates (domain `typedSolveMinutes`): a solve's dates don't say how long it took.
    */
   finishMinutes: number | null;
 }
@@ -409,7 +417,7 @@ export interface CopyTransferEntry {
 export interface CopyInstanceStats {
   /** Number of completed completions of this copy. */
   timesCompleted: number;
-  /** The smallest `finishMinutes` across completed completions, or null when none. */
+  /** The smallest typed `finishMinutes` across completed completions, or null when none. */
   fastestFinishMinutes: number | null;
   /** Number of loans recorded for this copy. */
   timesLentOut: number;
@@ -586,6 +594,12 @@ export interface CopyInstanceView {
      * only when `viewerCanManage`; the edit controls show this, not `visibility`.
      */
     visibilityPreference?: "private" | "visible";
+    /**
+     * The copy owner's profile visibility, which decides how far an offer reaches: a public profile
+     * opens an offered copy to all members, a private one only to friends and shared circles.
+     * Present only when `viewerCanManage`.
+     */
+    ownerProfileVisibility?: "public" | "private";
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
     /** The puzzle definition's difficulty, when set. */

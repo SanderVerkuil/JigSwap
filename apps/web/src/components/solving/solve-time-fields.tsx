@@ -3,6 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { hasSolveFormErrors, type SolveFormErrors } from "@/lib/solve-form";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -33,6 +35,72 @@ export function useSolveTimeOptOut(): (() => void) | undefined {
   };
 }
 
+// What to fix on a field of a solve form, next to that field.
+export function SolveFieldError({
+  id,
+  message,
+}: {
+  id: string;
+  message?: string;
+}) {
+  if (!message) return null;
+  return (
+    <p id={id} className="text-destructive mt-1.5 text-xs">
+      {message}
+    </p>
+  );
+}
+
+// The inline errors of a solve form, shown as the goal form shows its own: Save stays enabled, it
+// checks the whole form, says what to fix next to each field and moves focus to the first one.
+// `fieldIds` are the inputs to focus: the fields this form has.
+export function useSolveFormErrors(fieldIds: {
+  start?: string;
+  end?: string;
+  time?: string;
+}) {
+  const t = useTranslations("solving.logSolve");
+  const [errors, setErrors] = useState<SolveFormErrors>({});
+
+  const show = (next: SolveFormErrors) => {
+    setErrors(next);
+    if (!hasSolveFormErrors(next)) return;
+    const first = (["start", "end", "time"] as const).find((f) => next[f]);
+    const id = first && fieldIds[first];
+    if (id) document.getElementById(id)?.focus();
+  };
+  // Either date can fix or cause an error on the end date, so a date change clears both.
+  const clearDates = () =>
+    setErrors((current) => ({
+      ...current,
+      start: undefined,
+      end: undefined,
+    }));
+  const clearTime = () =>
+    setErrors((current) => ({ ...current, time: undefined }));
+
+  const endError =
+    errors.end &&
+    t(
+      errors.end === "required"
+        ? "dateRequired"
+        : errors.end === "future"
+          ? "endInFutureError"
+          : "endBeforeStartError",
+    );
+
+  return {
+    show,
+    clearDates,
+    clearTime,
+    startError: errors.start && t("dateRequired"),
+    endError,
+    timeError:
+      errors.time &&
+      t(errors.time === "impossible" ? "invalidDuration" : "timeInvalid"),
+  };
+}
+
 interface SolveTimeFieldsProps {
   // Prefix for the input ids (one dialog may sit next to another on the page).
   idPrefix: string;
@@ -43,6 +111,8 @@ interface SolveTimeFieldsProps {
   // Offered while the member hasn't chosen yet: turns the time question off for good (it can be
   // turned back on under Preferences).
   onOptOut?: () => void;
+  // What to fix, shown under the fields (useSolveFormErrors).
+  error?: string;
 }
 
 // The optional "How long did it take?" question shared by the Log, Finish and Edit solve
@@ -54,8 +124,13 @@ export function SolveTimeFields({
   onHoursChange,
   onMinutesChange,
   onOptOut,
+  error,
 }: SolveTimeFieldsProps) {
   const t = useTranslations("solving.logSolve");
+  const errorId = `${idPrefix}-error`;
+  const invalid = error
+    ? { "aria-invalid": true, "aria-describedby": errorId }
+    : {};
   return (
     <fieldset className="min-w-0">
       {/* leading-snug, not the labels' leading-none: the question wraps on phones (e.g. Dutch). */}
@@ -77,6 +152,7 @@ export function SolveTimeFields({
             inputMode="numeric"
             value={hours}
             onChange={(e) => onHoursChange(e.target.value)}
+            {...invalid}
           />
         </div>
         <div className="space-y-1.5">
@@ -94,9 +170,11 @@ export function SolveTimeFields({
             inputMode="numeric"
             value={minutes}
             onChange={(e) => onMinutesChange(e.target.value)}
+            {...invalid}
           />
         </div>
       </div>
+      <SolveFieldError id={errorId} message={error} />
       {onOptOut && (
         <button
           type="button"

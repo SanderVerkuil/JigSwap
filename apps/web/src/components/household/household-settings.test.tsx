@@ -166,6 +166,21 @@ describe("HouseholdSettings", () => {
     expect(input && attr(input, "maxlength")).toBe("100");
   });
 
+  // Beside Save at 390 the field shrank to 173px and cut "Bijvoorbeeld: De familie Jansen" off.
+  it("lets Save wrap below the name field rather than squeeze it", () => {
+    const els = elementsOf(
+      render({
+        isAdmin: true,
+        defaultCopyPermission: "manage",
+        copiesUsingDefault: 0,
+      }),
+    );
+    const input = els.find((e) => e.tagName === "input");
+    const classes = (input && attr(input, "class")) ?? "";
+    expect(classes).toContain("basis-56");
+    expect(classes).toContain("flex-1");
+  });
+
   it("shows members the name read-only, or that it has none", () => {
     const named = render({
       isAdmin: false,

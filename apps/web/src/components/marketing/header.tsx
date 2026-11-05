@@ -42,12 +42,15 @@ const BAR_CTA = "h-10 px-3.5 min-[1200px]:h-9 min-[1200px]:px-4";
 // moves with it. Below it the nav folds into the burger, and below 861px the login
 // link follows. The bar keeps the brand CTA next to the menu toggle at every width;
 // on phones (<640px) the language and theme switches move into the menu to make
-// room for it, and below 375px the wordmark shrinks to its logo mark.
+// room for it. Below 375px the bar tightens so the wordmark still fits beside the
+// longest CTA (Dutch: 360px is just enough), and only below 360px, under the
+// width of common Android phones, does it shrink to its logo mark.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const headerRef = React.useRef<HTMLElement>(null);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
 
   // Escape closes the open menu and hands focus back to its toggle. An Escape
@@ -62,6 +65,25 @@ export function MarketingHeader() {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // A press outside the header closes the menu; focus stays wherever the press
+  // puts it. The language dropdown lives in a portal outside the header, and
+  // while it is open the press is its to handle.
+  React.useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        headerRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) return;
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   React.useEffect(() => {
@@ -90,6 +112,7 @@ export function MarketingHeader() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "sticky top-0 z-50 transition-[background-color,border-color] duration-250",
         "border-b",
@@ -100,9 +123,9 @@ export function MarketingHeader() {
     >
       {/* First Tab stop on every marketing page: jumps to the page's <main>. */}
       <SkipLink />
-      <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-3 sm:gap-5 h-[70px]">
+      <div className="w-full max-w-[1200px] mx-auto px-6 max-[375px]:px-4 flex items-center gap-3 max-[375px]:gap-2 sm:gap-5 h-[70px]">
         <Link href="/" aria-label="JigSwap">
-          <Wordmark priority textClassName="max-[375px]:hidden" />
+          <Wordmark priority textClassName="max-[360px]:hidden" />
         </Link>
         <nav
           aria-label={t("primaryNav")}
@@ -110,7 +133,7 @@ export function MarketingHeader() {
         >
           {NAV.map((item) => navLink(item))}
         </nav>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-2.5 max-[375px]:gap-2">
           <LangToggle className="hidden sm:inline-flex" />
           <ModeToggle className="hidden sm:inline-flex" />
           <Unauthenticated>
@@ -146,7 +169,12 @@ export function MarketingHeader() {
         <nav
           id="mk-mobile-nav"
           aria-label={t("menuLabel")}
-          className="min-[1200px]:hidden border-t border-mk-border bg-mk-card"
+          // Floats over the page: the press outside that closes it comes before the tap's
+          // click is aimed, so a panel taking up room would let the page jump under the
+          // finger and the click land on something else. Scrolls by itself: the sticky
+          // header doesn't move with the page, so what doesn't fit below the bar could not
+          // be reached otherwise.
+          className="absolute inset-x-0 top-full min-[1200px]:hidden max-h-[calc(100dvh-71px)] overflow-y-auto overscroll-contain border-y border-mk-border bg-mk-card shadow-mk-md"
         >
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}

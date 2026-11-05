@@ -599,7 +599,7 @@ admins have approved photos without a hash check during a later hash-service out
 two kinds of photo, and nothing re-checks either on its own:
 
 - A photo whose hash check could not be done within 7 days goes to Admin → Moderation →
-  Unchecked photos; an admin who publishes it with **Approve without hash check** leaves it
+  Unchecked; an admin who publishes it with **Approve without hash check** leaves it
   marked `hashCheckWaivedBy` with its stored hashes (`pendingHashes`) (photo-moderation.md, "A
   timed-out photo: the admin decides").
 - A photo uploaded while hash matching was switched off (provider unset or `none`) is
@@ -1168,3 +1168,33 @@ Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Log
 2. Run the dry run again: its final totals show `"changed":0`.
 3. Spot-check a member with older solves: their goal shows only the solves since the day it was
    set (or since its start date), and the `domainEvents` table gained no `GoalAchieved` rows.
+
+---
+
+## `catalog/backfillSearchableText` — catalogue search ignores accents
+
+**When:** once per deployment, after the code that folds `puzzles.searchableText` and the
+search terms (`puzzleSearchableText`, `puzzleSearchTerm`) is deployed there. There is no
+ordering pressure: until a row is reached it still matches its accented spelling ("Café"
+finds "Café"), it just can't be found without the accent yet ("cafe"). New and edited
+puzzles are folded when saved.
+
+**What it does:** pages through `puzzles` (100 rows per batch, each batch its own
+transaction, rescheduling itself until the table is exhausted) and recomputes
+`searchableText` with the projection the aggregate saves. It writes a row only when the
+value changes, and never touches `updatedAt` or any other field or table.
+
+**Safe to re-run:** yes. A second run patches nothing.
+
+**Commands** (the running totals are in the logs, on the `catalog/backfillSearchableText`
+lines; the last one has `isDone: true`):
+
+```sh
+npx convex run catalog/backfillSearchableText:backfillSearchableText '{"dryRun":true}'
+npx convex run catalog/backfillSearchableText:backfillSearchableText
+npx convex run --prod catalog/backfillSearchableText:backfillSearchableText '{"dryRun":true}'
+npx convex run --prod catalog/backfillSearchableText:backfillSearchableText
+```
+
+**Verify:** the last log line of a second dry run says `patched: 0` in its totals, and a
+search for `cafe` on `/puzzles` finds a puzzle called `Café`.

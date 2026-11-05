@@ -1,4 +1,4 @@
-import { catalogueSearchKey } from "./catalogue-search";
+import { catalogueSearchKey, foldForSearch } from "./catalogue-search";
 
 // The member catalogue's (/puzzles) filters: the form values the toolbar and the Filters panel
 // edit, the catalog.search arguments they turn into, and the same predicate on the client for the
@@ -59,9 +59,13 @@ export function catalogueSearchArgs(
   const term = catalogueSearchKey(filters.searchTerm);
   if (term) args.searchTerm = term;
   if (filters.brand) args.brand = filters.brand;
-  const pieceMin = pieceBound(filters.minPieces);
+  const lower = pieceBound(filters.minPieces);
+  const upper = pieceBound(filters.maxPieces);
+  // Bounds typed the wrong way round still mean a range, not "no puzzles".
+  const inverted = lower !== undefined && upper !== undefined && lower > upper;
+  const pieceMin = inverted ? upper : lower;
+  const pieceMax = inverted ? lower : upper;
   if (pieceMin !== undefined) args.pieceMin = pieceMin;
-  const pieceMax = pieceBound(filters.maxPieces);
   if (pieceMax !== undefined) args.pieceMax = pieceMax;
   if (isDifficulty(filters.difficulty)) args.difficulty = filters.difficulty;
   if (filters.category) args.category = filters.category;
@@ -75,6 +79,19 @@ export function hasActiveCatalogueFilters(filters: CatalogueFilters): boolean {
   );
 }
 
+/** How many facets narrow the results: a piece range counts once, each tag on its own. The term
+ *  is not one: it shows in the toolbar's box. */
+export function activeFacetCount(filters: CatalogueFilters): number {
+  return (
+    [
+      filters.brand,
+      filters.minPieces || filters.maxPieces,
+      filters.difficulty,
+      filters.category,
+    ].filter((value) => value.trim() !== "").length + filters.tags.length
+  );
+}
+
 interface FilterablePuzzle {
   title: string;
   brand?: string;
@@ -85,17 +102,20 @@ interface FilterablePuzzle {
 }
 
 // The client-side twin of catalog.search's facets. The term can't use the search index here, so
-// every word of it must appear in the title, brand or tags (the summary fields the index covers).
+// every word of it must appear in the title, brand or tags (the summary fields the index covers),
+// accents aside, as on the server.
 export function matchesCatalogueSearch(
   puzzle: FilterablePuzzle,
   args: CatalogueSearchArgs,
 ): boolean {
-  const haystack = [puzzle.title, puzzle.brand ?? "", ...(puzzle.tags ?? [])]
-    .join(" ")
-    .toLowerCase();
+  const haystack = foldForSearch(
+    [puzzle.title, puzzle.brand ?? "", ...(puzzle.tags ?? [])].join(" "),
+  );
   return (
     (args.searchTerm === undefined ||
-      args.searchTerm.split(" ").every((word) => haystack.includes(word))) &&
+      foldForSearch(args.searchTerm)
+        .split(" ")
+        .every((word) => haystack.includes(word))) &&
     (args.brand === undefined || puzzle.brand === args.brand) &&
     (args.pieceMin === undefined || puzzle.pieceCount >= args.pieceMin) &&
     (args.pieceMax === undefined || puzzle.pieceCount <= args.pieceMax) &&

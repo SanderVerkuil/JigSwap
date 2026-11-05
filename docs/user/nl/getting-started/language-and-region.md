@@ -1,5 +1,5 @@
 ---
-title: Taal & Regio
+title: Taal en regio
 order: 5
 summary: "Wissel tussen Engels en Nederlands; je keuze wordt onthouden."
 ---

@@ -101,6 +101,60 @@ const summary = (extra: Partial<Summary> = {}): Summary => ({
   ...extra,
 });
 
+describe("catalogue PuzzleCard: on your shelf", () => {
+  it.each(["grid", "list"] as const)(
+    "marks a puzzle the member owns in the %s view, and keeps the + for another copy",
+    (viewMode) => {
+      render(<CatalogCard puzzle={summary()} onShelf />, viewMode);
+      expect(container.textContent).toContain(en.cataloguePicker.onShelf);
+      expect(
+        screen.getByRole("link", { name: en.puzzles.addToLibrary }),
+      ).toBeTruthy();
+    },
+  );
+
+  it("shows no marker on a puzzle they don't own", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(container.textContent).not.toContain(en.cataloguePicker.onShelf);
+  });
+});
+
+describe("catalogue PuzzleCard: copies available", () => {
+  it("links to Browse for this puzzle, above the card's stretched link", () => {
+    render(<CatalogCard puzzle={summary({ availableCount: 3 })} />);
+    const chip = screen.getByRole("link", {
+      name: "3 available, see the copies from members",
+    });
+    expect(chip.getAttribute("href")).toBe("/browse?puzzle=p1");
+    expect(chip.textContent).toBe("3 available");
+    expect(chip.className).toContain("z-10");
+  });
+
+  it("speaks one copy in the singular, and Dutch", () => {
+    render(
+      <CatalogCard puzzle={summary({ availableCount: 1 })} />,
+      "grid",
+      "nl",
+    );
+    const chip = screen.getByRole("link", {
+      name: "1 beschikbaar, bekijk het exemplaar van leden",
+    });
+    expect(chip.textContent).toBe("1 beschikbaar");
+  });
+
+  it("shows nothing without a count", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(container.querySelector('a[href^="/browse"]')).toBeNull();
+  });
+
+  it("isn't offered on the chooser's card", () => {
+    render(
+      <CatalogCard puzzle={summary({ availableCount: 3 })} variant="pick" />,
+    );
+    expect(container.querySelector('a[href^="/browse"]')).toBeNull();
+  });
+});
+
 describe("catalogue PuzzleCard cover", () => {
   it("lets the browser pick a rendition for the app's puzzle grid", () => {
     render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />);
@@ -109,9 +163,9 @@ describe("catalogue PuzzleCard cover", () => {
     expect(cover().getAttribute("sizes")).toBe(PUZZLE_GRID_COVER_SIZES);
   });
 
-  it("uses the list view's cover column in list view", () => {
+  it("uses the list view's thumbnail in list view", () => {
     render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />, "list");
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("shows the original alone before renditions exist", () => {
@@ -156,9 +210,9 @@ describe("owned-copy PuzzleCard cover", () => {
     expect(cover().getAttribute("sizes")).toBe("214px");
   });
 
-  it("uses the list view's cover column in list view", () => {
+  it("uses the list view's thumbnail in list view", () => {
     render(<CopyCard puzzle={copy({ coverSrcSet: SRC_SET })} />, "list");
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("shows the cover alone without renditions (a cover photo, or before the backfill)", () => {
@@ -216,7 +270,9 @@ describe("catalogue PuzzleCard", () => {
         .getAttribute("aria-pressed"),
     ).toBe("false");
     expect(
-      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Add to my puzzles" })
+        .getAttribute("href"),
     ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });
 
@@ -224,7 +280,7 @@ describe("catalogue PuzzleCard", () => {
     render(<CatalogCard puzzle={summary()} />, "grid", "nl");
     expect(
       screen
-        .getByRole("link", { name: "Toevoegen aan bibliotheek" })
+        .getByRole("link", { name: "Toevoegen aan mijn puzzels" })
         .getAttribute("href"),
     ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });

@@ -16,8 +16,8 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 
-vi.mock("@/components/marketing/use-start-href", () => ({
-  useStartHref: () => "/sign-up",
+vi.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
 }));
 
 vi.mock("@/components/marketing/reveal", () => ({

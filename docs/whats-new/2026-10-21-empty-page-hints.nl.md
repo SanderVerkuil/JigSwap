@@ -9,7 +9,7 @@ category: improvement
 Staat er nog niets op een pagina, dan vertelt hij nu wat er komt te staan en
 hoe je begint.
 
-- **Collecties** legt uit wat een collectie is, met **Nieuwe Collectie**.
-- **Geleend** legt uit hoe lenen werkt en linkt naar **Puzzels Ontdekken**.
+- **Collecties** legt uit wat een collectie is, met **Nieuwe collectie**.
+- **Geleend** legt uit hoe lenen werkt en linkt naar **Puzzels ontdekken**.
 - **Berichten** legt uit hoe een gesprek begint, met **Bericht aan een lid**.
-- **Doelen** legt uit wat een doel is, met **Nieuw Doel**.
+- **Doelen** legt uit wat een doel is, met **Nieuw doel**.

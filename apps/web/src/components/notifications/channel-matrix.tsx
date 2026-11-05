@@ -109,7 +109,7 @@ export function ChannelMatrix({
           role="row"
           className={cn(
             COLS,
-            "bg-background/95 sticky top-[var(--app-sticky-top,0px)] z-10 border-b px-4 py-2.5 backdrop-blur-sm",
+            "bg-background sticky top-[var(--app-sticky-top,0px)] z-10 border-b px-4 py-2.5",
           )}
         >
           <span
@@ -197,10 +197,11 @@ export function ChannelMatrix({
                         role="rowheader"
                         className="flex min-w-0 items-center gap-3 pr-4"
                       >
+                        {/* The text's room on a phone, where three switch columns leave little. */}
                         <span
                           aria-hidden
                           className={cn(
-                            "bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                            "bg-muted hidden h-8 w-8 shrink-0 items-center justify-center rounded-full @md/matrix:flex",
                             notificationAccent(type),
                           )}
                         >
@@ -213,11 +214,11 @@ export function ChannelMatrix({
                           >
                             {t(`types.${type}`)}
                           </span>
-                          {/* Clamped only where there's room for a wide row; on a phone the
-                              whole description shows (e.g. "Email comes as a short digest"). */}
+                          {/* Never clamped: touch has no tooltip to read the rest, and some of
+                              it matters ("Email comes as a short digest"). */}
                           <span
                             id={`row-${type}-desc`}
-                            className="text-muted-foreground text-xs @2xl/matrix:line-clamp-2"
+                            className="text-muted-foreground text-xs"
                           >
                             {t(`typeDesc.${type}`)}
                           </span>

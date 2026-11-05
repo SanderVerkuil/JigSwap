@@ -187,6 +187,20 @@ describe("PastSolvesList", () => {
     ).toBe(true);
   });
 
+  it("says what the caller gives it when there is nothing to log", () => {
+    const els = elementsOf(
+      render(
+        <PastSolvesList
+          candidates={[]}
+          pending={false}
+          onSubmit={submit}
+          emptyText="Nothing left."
+        />,
+      ),
+    );
+    expect(els.some((el) => textOf(el) === "Nothing left.")).toBe(true);
+  });
+
   it("shows the empty state with the caller's action when there is nothing to log", () => {
     const els = elementsOf(
       render(
@@ -289,6 +303,96 @@ describe("PastSolvesList (ticking)", () => {
     ]);
     // Logged rows clear, so nothing is pending any more.
     expect(store.getSnapshot()?.count).toBe(0);
+  });
+
+  it("says the batch limit at the cap, and stops the other rows", () => {
+    const candidates = Array.from({ length: 26 }, (_, i) => ({
+      copyId: `c${i}`,
+      title: `Puzzle ${i}`,
+    }));
+    renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PastSolvesList
+          candidates={candidates}
+          pending={false}
+          onSubmit={async () => true}
+        />
+      </IntlProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show more" }));
+    const message =
+      "25 is the most for one batch. Log these first, then mark the rest.";
+    for (let i = 0; i < 24; i++) tick(`Puzzle ${i}`);
+    expect(screen.queryByText(message)).toBeNull();
+    tick("Puzzle 24");
+    expect(screen.getByRole("status").textContent).toBe(message);
+    expect(
+      screen
+        .getByRole("checkbox", { name: "I finished Puzzle 25" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: "Log 25 puzzles" })).toBeTruthy();
+  });
+
+  it("refuses a typed date after today, next to the row, with nothing to submit", () => {
+    list(async () => true);
+    tick("Cats");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    act(() => {
+      fireEvent.change(screen.getByLabelText("Pick a date"), {
+        target: { value: "2999-01-01" },
+      });
+    });
+    expect(screen.getByText("Pick a date up to today.")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "Log 1 puzzle" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("links a refused date to its reason, and a valid date to nothing", () => {
+    list(async () => true);
+    tick("Cats");
+    act(() => {
+      fireEvent.click(screen.getByRole("radio", { name: "Pick a date" }));
+    });
+    const input = screen.getByLabelText("Pick a date");
+    act(() => {
+      fireEvent.change(input, { target: { value: "2999-01-01" } });
+    });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(input.getAttribute("aria-describedby")).toBe(
+      screen.getByText("Pick a date up to today.").id,
+    );
+    expect(input.getAttribute("aria-describedby")).toBeTruthy();
+    act(() => {
+      fireEvent.change(input, { target: { value: "2020-01-01" } });
+    });
+    expect(input.getAttribute("aria-invalid")).toBeNull();
+    expect(input.getAttribute("aria-describedby")).toBeNull();
+  });
+
+  // The room a browser leaves when focus scrolls: at its tallest, with the two-line cap message, the
+  // bar is 135px on a phone (above the tab bar) and 97px on a tablet. Its own button stays out of
+  // this, or tabbing to a bar already on screen would scroll the page.
+  it("keeps a focused row control clear of the sticky bars", () => {
+    list(async () => true);
+    tick("Cats");
+    const rows = screen.getByRole("list").parentElement!;
+    const classes = rows.className.split(/\s+/);
+    expect(classes).toContain(
+      "[&_:is(button,input,select)]:scroll-mb-[calc(var(--mobile-tab-bar-height,3.5rem)+9rem)]",
+    );
+    expect(classes).toContain("md:[&_:is(button,input,select)]:scroll-mb-28");
+    expect(classes).toContain(
+      "[&_:is(button,input,select)]:scroll-mt-[calc(var(--app-sticky-top,0px)+0.5rem)]",
+    );
+    expect(
+      rows.contains(screen.getByRole("button", { name: "Log 1 puzzle" })),
+    ).toBe(false);
   });
 
   it("keeps the ticks when saving fails", async () => {

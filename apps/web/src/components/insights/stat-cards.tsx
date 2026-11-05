@@ -54,8 +54,13 @@ export function StatCards({ stats }: { stats: PersonalStats }) {
                   value: String(stats.completionsCount),
                 },
                 {
+                  // Only times the member typed add up here (typedSolveMinutes), so a member who
+                  // never typed one has no total rather than a total of zero.
                   label: t("solveTime"),
-                  value: formatSolveTime(tSolve, stats.totalSolveMinutes),
+                  value:
+                    stats.totalSolveMinutes > 0
+                      ? formatSolveTime(tSolve, stats.totalSolveMinutes)
+                      : t("solveTimeNone"),
                 },
               ]
             : []),

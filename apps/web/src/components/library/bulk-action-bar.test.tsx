@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import {
   cleanup,
   fireEvent,
@@ -47,6 +48,13 @@ const ACTIONS = [
 afterEach(cleanup);
 
 describe("BulkActionBar", () => {
+  it("reports the bottom of the screen as taken while it is up, so the install tip steps aside", () => {
+    renderBar({});
+    expect(isSurfaceBusy()).toBe(true);
+    cleanup();
+    expect(isSurfaceBusy()).toBe(false);
+  });
+
   it("is a named region that announces the selected count", () => {
     renderBar({ selectedCount: 3 });
     const region = screen.getByRole("region", {

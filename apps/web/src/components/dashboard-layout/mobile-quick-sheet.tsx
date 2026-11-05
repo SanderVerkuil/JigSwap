@@ -2,9 +2,9 @@
 
 // Quick-action bottom sheet opened by the tab bar's raised center "+": the
 // most-used actions as 56px rows — violet round icon chip, title with a
-// one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
-// handle and safe-area bottom padding. Below the actions, the theme and
-// language choices: phones have no top-bar menus for them.
+// one-line sub, chevron — sliding up over the dimmed backdrop, with a title row
+// holding the close button and safe-area bottom padding. Below the actions, the
+// theme and language choices: phones have no top-bar menus for them.
 import {
   requestInstallTip,
   runInstallPrompt,
@@ -139,15 +139,16 @@ export function MobileQuickSheet({
       <SheetContent
         side="bottom"
         aria-describedby={undefined}
-        // The drag handle replaces the default X close affordance (the only
-        // direct child <button> of the content is that close button). On short
-        // phones the sheet scrolls rather than running off the top, keeping a
-        // strip of the dimmed page in view.
-        className="max-h-[calc(100dvh-3rem)] gap-0 overflow-y-auto overscroll-contain rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
+        // On short phones the sheet scrolls rather than running off the top, keeping a strip of the
+        // dimmed page in view.
+        className="max-h-[calc(100dvh-3rem)] gap-0 overflow-y-auto overscroll-contain rounded-t-[20px] border-t-0 bg-card p-0"
       >
-        <SheetTitle className="sr-only">{t("search.quickActions")}</SheetTitle>
-        <div className="px-3.5 pt-2.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
-          <div className="bg-border mx-auto mb-3 h-1 w-10 rounded-full" />
+        {/* Beside the sheet's close button, which screen-reader and switch users need: they can't
+            reach the dimmed backdrop. */}
+        <SheetTitle className="flex min-h-12 items-center pr-12 pl-6 text-sm font-semibold">
+          {t("search.quickActions")}
+        </SheetTitle>
+        <div className="px-3.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
           <div className="flex flex-col gap-0.5">
             {ACTIONS.map((action) => (
               <button

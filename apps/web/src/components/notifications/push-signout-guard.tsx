@@ -9,9 +9,9 @@ import { useEffect } from "react";
 // when the push service answers 410 Gone on the next send.
 //
 // useUser, not useAuth: useAuth answers from the page's SSR state until clerk-js has loaded, and
-// that state can say signed out for a signed-in member (prerendered /docs carries the build's
-// signed-out state; SSR may refuse a token the browser still holds). useUser stays "not loaded"
-// until clerk-js itself reports, because SSR state never carries a user.
+// that state can say signed out for a signed-in member (SSR may refuse a token the browser still
+// holds). useUser stays "not loaded" until clerk-js itself reports, because SSR state never
+// carries a user.
 export function PushSignOutGuard(): null {
   const { isLoaded, isSignedIn } = useUser();
 

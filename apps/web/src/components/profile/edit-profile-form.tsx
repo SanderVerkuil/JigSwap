@@ -9,14 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { CUSTOM_LINK_FIELD_ID } from "@/lib/profile-search";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { Save } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import type { Member } from "./member-view";
@@ -116,20 +118,27 @@ const LOCATION_MAX_LENGTH = 80;
 // queries the same profile, and Clerk loads early for auth.
 export function EditProfileForm({
   member,
+  focusCustomLink = false,
   onDone,
 }: {
   member: Member;
+  // Arriving to set a custom link (?edit=link): focus lands on that field, not the page top.
+  focusCustomLink?: boolean;
   onDone: () => void;
 }) {
   const { isLoaded } = useUser();
   const { data: socialProfile } = useQuery(
     convexQuery(gateway.social.profile, {}),
   );
+  // /profile is not a form route, so the install tip would float over these fields; while the form
+  // is open it steps aside, as it does on the form routes (installTipBlockedOn).
+  useReportSurfaceBusy("profileEdit", true);
   if (!isLoaded || socialProfile === undefined) return null;
   return (
     <EditProfileFormLoaded
       member={member}
       socialProfile={socialProfile}
+      focusCustomLink={focusCustomLink}
       onDone={onDone}
     />
   );
@@ -138,10 +147,12 @@ export function EditProfileForm({
 function EditProfileFormLoaded({
   member,
   socialProfile,
+  focusCustomLink,
   onDone,
 }: {
   member: Member;
   socialProfile: SocialProfile;
+  focusCustomLink: boolean;
   onDone: () => void;
 }) {
   const t = useTranslations("profile");
@@ -166,6 +177,10 @@ function EditProfileFormLoaded({
     user?.username ?? member.username ?? "",
   );
   const [slug, setSlugValue] = useState(member.slug ?? "");
+  const slugInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (focusCustomLink) slugInput.current?.focus();
+  }, [focusCustomLink]);
   const [location, setLocation] = useState(member.location ?? "");
   const [bio, setBio] = useState(socialProfile?.bio ?? "");
   // Empty when the member never chose one: other members then see the account
@@ -342,9 +357,10 @@ function EditProfileFormLoaded({
         />
       </div>
       <div className="space-y-2 sm:col-span-2">
-        <Label htmlFor="profile-slug">{t("slug.label")}</Label>
+        <Label htmlFor={CUSTOM_LINK_FIELD_ID}>{t("slug.label")}</Label>
         <Input
-          id="profile-slug"
+          ref={slugInput}
+          id={CUSTOM_LINK_FIELD_ID}
           value={slug}
           onChange={(e) => {
             setSlugValue(e.target.value);

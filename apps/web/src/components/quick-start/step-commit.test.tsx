@@ -90,6 +90,20 @@ describe("createLeaveGuard", () => {
     expect(guard.shouldAsk()).toBe(true);
   });
 
+  it("doesn't ask on the way to a page the step's kept work survives, but does otherwise", () => {
+    const { store, guard } = setup();
+    store.publish({ kind: "puzzles", count: 2, ready: true });
+    store.setKept({
+      outlives: (pathname) => pathname === "/register",
+      discard: () => {},
+    });
+    expect(guard.shouldAsk("/register")).toBe(false);
+    expect(guard.shouldBlock({ next: { pathname: "/register" } })).toBe(false);
+    expect(guard.shouldAsk("/dashboard")).toBe(true);
+    // Closing the tab has no destination, and loses the work.
+    expect(guard.shouldAsk()).toBe(true);
+  });
+
   it("never asks once the member moves on on purpose", () => {
     const { store, guard } = setup();
     store.publish({ kind: "puzzles", count: 2, ready: true });

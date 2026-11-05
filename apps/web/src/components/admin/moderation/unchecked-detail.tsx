@@ -16,6 +16,7 @@ import type { FunctionReturnType } from "convex/server";
 import { Check, ImageOff, RotateCw, ShieldAlert, X } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { ConfirmAction } from "./confirm-action";
+import { DetailActions } from "./detail-actions";
 import { RevealGuard } from "./reveal-guard";
 
 export type UncheckedPhoto = FunctionReturnType<
@@ -71,14 +72,17 @@ export function UncheckedDetail({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
+      <div
+        data-detail-preview
+        className="relative aspect-[16/10] max-h-[40svh] w-full overflow-hidden rounded-2xl bg-muted"
+      >
         {photo.url ? (
           <RevealGuard>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo.url}
               alt={photo.puzzleTitle}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
           </RevealGuard>
         ) : (
@@ -124,7 +128,7 @@ export function UncheckedDetail({
         )}
       </ul>
 
-      <div className="flex flex-wrap items-center gap-2.5">
+      <DetailActions>
         {timedOut ? (
           <ConfirmAction
             trigger={
@@ -168,7 +172,7 @@ export function UncheckedDetail({
             {t("recheck")}
           </Button>
         )}
-      </div>
+      </DetailActions>
     </div>
   );
 }

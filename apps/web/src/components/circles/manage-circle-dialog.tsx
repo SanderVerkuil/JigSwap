@@ -36,6 +36,7 @@ import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -44,17 +45,21 @@ const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
 export function ManageCircleDialog({
   circleId,
   viewerId,
+  focusInvite = false,
   onClose,
   onDeleted = onClose,
 }: {
   circleId: string;
   viewerId: string;
+  // Open at the invite section (the page's "Invite people"), not at the top of the dialog.
+  focusInvite?: boolean;
   onClose: () => void;
   // After the owner deletes the circle; closing the dialog by default.
   onDeleted?: () => void;
 }) {
   const t = useTranslations("circles");
   const seatName = useCircleSeatName();
+  const inviteSection = useRef<HTMLElement>(null);
   const { data: detail, isPending: detailPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -103,7 +108,16 @@ export function ManageCircleDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       {/* Scrolls when the invite picker and pending list make it taller than a phone screen. */}
-      <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto">
+      <DialogContent
+        className="max-h-[90dvh] max-w-2xl overflow-y-auto"
+        // On the section, not its search box: that would pop up a phone's keyboard over the people
+        // to invite. Focusing it scrolls it into view.
+        onOpenAutoFocus={(event) => {
+          if (!focusInvite || !inviteSection.current) return;
+          event.preventDefault();
+          inviteSection.current.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {t("manage.title", {
@@ -207,6 +221,7 @@ export function ManageCircleDialog({
             )}
 
             <CircleInviteSection
+              ref={inviteSection}
               circleId={circleId}
               viewerPermission={detail.viewerPermission}
             />

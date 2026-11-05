@@ -3,7 +3,7 @@
 import type { Availability } from "@/components/add-puzzle/add-puzzle-mappers";
 import { RecallLoanButton } from "@/components/exchange/recall-loan-button";
 import { cn } from "@/lib/utils";
-import { ArrowLeftRight, Globe, Lock, Package } from "lucide-react";
+import { ArrowLeftRight, Lock, Package, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -25,18 +25,23 @@ const OFFER_WORDS = [
 // The one line under a copy's title that says where it is and who can see it, replacing the
 // cover's "Available" chip and the For Trade/Lend/Sale badges. For whoever manages the copy
 // (`detailed`): an open loan ("On loan to Anna since 3 Mar 2026 · Recall"), otherwise the offers
-// plus who can see it, from the owner's own choice (`visibilityPreference`): visible to the
-// community, visible only while offered, or private. Visitors only see what it is offered for,
-// and nothing when it isn't offered.
+// plus who can see it, from the owner's own choice (`visibilityPreference`): friends while nothing
+// is offered, and while something is, the community if the owner's profile is public and friends
+// and shared circles if it is private (library/canViewCopy: an offer only opens a copy to everyone
+// through a public profile), visible only while offered, or private. Visitors only see what it is
+// offered for, and nothing when it isn't offered.
 export function CopyStatusLine({
   detailed,
   availability,
   visibilityPreference,
+  ownerProfileVisibility,
   openLoan,
 }: {
   detailed: boolean;
   availability: Availability;
   visibilityPreference: "private" | "visible";
+  /** A backend that doesn't send it yet reads as public, the default for a profile. */
+  ownerProfileVisibility?: "public" | "private";
   openLoan: OpenLoan | null;
 }) {
   const t = useTranslations("copyInstance.status");
@@ -73,15 +78,17 @@ export function CopyStatusLine({
           offered,
           visibilityPreference === "private"
             ? t("visibleWhileOffered")
-            : tVisibility("visible"),
+            : ownerProfileVisibility === "private"
+              ? t("visibleToCircles")
+              : t("visibleToCommunity"),
         ]
       : [offered];
   } else if (detailed) {
-    icon = visibilityPreference === "private" ? <Lock /> : <Globe />;
+    icon = visibilityPreference === "private" ? <Lock /> : <Users />;
     parts =
       visibilityPreference === "private"
         ? [tVisibility("private")]
-        : [t("notOffered"), tVisibility("visible")];
+        : [t("notOffered"), t("friendsCanSee")];
   } else {
     return null;
   }

@@ -147,6 +147,18 @@ describe("MyHouseholdCopies", () => {
     ).toEqual(["https://img/a.jpg"]);
   });
 
+  // Touch has no tooltip: similar titles must stay tellable apart before a bulk change.
+  it("gives a long title two lines instead of cutting it to one", () => {
+    const long = "Oostenrijk, Tirol, sellrainer berge in de zomer";
+    const els = elementsOf(render([copy("a", long, "manage")]));
+    const title = els.find(
+      (el) => el.tagName === "div" && textOf(el) === long,
+    )!;
+    const classes = title.attrs.find((a) => a.name === "class")?.value ?? "";
+    expect(classes).toContain("line-clamp-2");
+    expect(classes).not.toContain("truncate");
+  });
+
   it("keeps the toolbar to the filter and Select all while nothing is selected", () => {
     const els = elementsOf(render([copy("a", "Harbour", "manage")]));
     const buttons = els.filter((e) => e.tagName === "button").map(textOf);

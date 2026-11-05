@@ -16,8 +16,9 @@ Your personal analytics dashboard shows:
   "2 of 5 goals" below it once you have a goal; archived goals count too) and
   the **average ratings** you gave and received.
 - **Completions / month**: a bar per month over the past 12 months, with the
-  number above each bar. Switch between **Completions** and **Solve minutes**
-  with the pills next to the title.
+  number above each bar. Switch between **Completions** and **Solve hours**
+  with the pills next to the title. Solve hours and your total solve time only
+  add up the times you entered; a solve with only dates has no time.
 - **Swaps / month**: the swaps you started in each of the past 12 months,
   quiet months included.
 - A **collection breakdown**: your puzzles by piece count, by difficulty (a bar with a legend that lists each difficulty with its count and share) and your top brands. Puzzles without a brand are counted under the brand chart instead of ranking as a brand.

@@ -10,6 +10,7 @@ import {
 import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
+  useCircleSeatRole,
   type CircleMemberView,
   type CirclePermissionLevel,
 } from "@/components/circles/circle-seat";
@@ -121,17 +122,25 @@ function CirclesPage() {
     mutationFn: useConvexMutation(gateway.sharing.createCircle),
   });
 
+  // A new circle has nobody in it yet, so the member goes on to its page, which prompts to invite
+  // people. Arriving via ?create=1, the replace drops that entry: Back must not reopen the dialog.
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || createCircle.isPending) return;
     try {
-      await createCircle.mutateAsync({ name: name.trim() });
+      const circleId = await createCircle.mutateAsync({ name: name.trim() });
       setName("");
-      setIsCreateOpen(false);
+      setCreateOpenedHere(false);
+      toast.success(t("manage.created"));
+      void navigate({
+        to: "/circles/$circleId",
+        params: { circleId },
+        replace: createRequested === true,
+      });
     } catch (error) {
       if (isInvalidCircleName(error)) setNameInvalid(true);
       else if (convexErrorCode(error) === "RateLimited") {
         toast.error(t("manage.createRateLimited"));
-      } else console.error("Failed to create circle:", error);
+      } else toast.error(t("manage.createFailed"));
     }
   };
 
@@ -207,7 +216,9 @@ function CirclesPage() {
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
               {t("manage.cancel")}
             </Button>
-            <Button onClick={handleCreate}>{t("manage.create")}</Button>
+            <Button disabled={createCircle.isPending} onClick={handleCreate}>
+              {t("manage.create")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -408,6 +419,7 @@ function CircleMembersStack({
   circleName: string;
 }) {
   const seatName = useCircleSeatName();
+  const seatRole = useCircleSeatRole();
   const { data: detail, isPending } = useQuery(
     convexQuery(gateway.sharing.circle, { circleId }),
   );
@@ -426,6 +438,7 @@ function CircleMembersStack({
         members={detail.members.map((member: CircleMemberView) => ({
           key: member.membershipId,
           name: seatName(member),
+          role: seatRole(member),
           avatar: member.avatar,
           fallback: <MemberInitial source={member} />,
         }))}

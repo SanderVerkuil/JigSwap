@@ -14,10 +14,11 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import { getFunctionName } from "convex/server";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +31,8 @@ const mocks = vi.hoisted(() => ({
   call: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   navigate: vi.fn(),
   search: {} as Record<string, unknown>,
+  // The leave guard's useBlocker options on the latest render.
+  blocker: { disabled: true } as { disabled?: boolean },
 }));
 
 // The head reads the title from the loaded catalog of the context's locale.
@@ -42,8 +45,21 @@ vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ history: {}, invalidate: vi.fn() }),
   useLocation: () => ({ pathname: "/my-puzzles/add/new" }),
   useParams: () => ({}),
+  useBlocker: (options: { disabled?: boolean }) => {
+    mocks.blocker = options;
+    return { status: "idle" };
+  },
   redirect: vi.fn(),
   notFound: vi.fn(),
+  Link: ({
+    to,
+    search,
+    children,
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children?: ReactNode;
+  }) => <a href={`${to}?${new URLSearchParams(search)}`}>{children}</a>,
 }));
 
 vi.mock("@convex-dev/react-query", async (importOriginal) => {
@@ -100,7 +116,10 @@ const PUZZLE: PuzzleDefinitionView = {
 const callsTo = (name: string) =>
   mocks.call.mock.calls.filter(([n]) => n === name).map(([, args]) => args);
 
-const renderPage = (search: Record<string, unknown> = {}) => {
+const renderPage = (
+  search: Record<string, unknown> = {},
+  ownedDefinitionIds: string[] = [],
+) => {
   mocks.search = search;
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -119,6 +138,10 @@ const renderPage = (search: Record<string, unknown> = {}) => {
     convexQuery(gateway.catalog.puzzleById, { puzzleId: PUZZLE_DOC_ID })
       .queryKey,
     PUZZLE,
+  );
+  queryClient.setQueryData(
+    convexQuery(gateway.library.myOwnedDefinitionIds, {}).queryKey,
+    ownedDefinitionIds,
   );
   const Page = routeOptions.component;
   render(
@@ -192,7 +215,7 @@ describe("adding a copy of a catalogue puzzle", () => {
       expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
     }
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalled());
@@ -203,7 +226,7 @@ describe("adding a copy of a catalogue puzzle", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     fireEvent.click(offerChip("For Loan"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(UPDATE_SHARING)).toHaveLength(1));
     expect(callsTo(UPDATE_SHARING)[0]).toMatchObject({
@@ -228,7 +251,7 @@ describe("adding a copy of a catalogue puzzle", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     fireEvent.click(offerChip("For Loan"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(en.puzzles.addedNotOffered),
@@ -238,7 +261,31 @@ describe("adding a copy of a catalogue puzzle", () => {
     expect(mocks.navigate).toHaveBeenCalledWith({
       to: "/my-puzzles/$id",
       params: { id: "copy_doc_1" },
+      ignoreBlocker: true,
     });
+  });
+});
+
+describe("a puzzle the member already owns", () => {
+  it("says so at the top of the form, with a way to the copy they have", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID }, ["puzzle_agg_1"]);
+    expect(screen.getByText(/You already have this puzzle/)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "View" }).getAttribute("href"),
+    ).toBe("/my-puzzles?q=Caf%C3%A9");
+    // A second copy stays possible.
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Add to my puzzles",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  });
+
+  it("says nothing about a puzzle they don't own", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID }, ["some_other_puzzle"]);
+    expect(screen.queryByText(/You already have this puzzle/)).toBeNull();
   });
 });
 
@@ -253,7 +300,7 @@ describe("condition", () => {
     ).toEqual(["New (sealed)", "Like new", "Good", "Fair", "Poor"]);
 
     fireEvent.click(screen.getByRole("radio", { name: "New (sealed)" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
     expect(callsTo(ACQUIRE)[0]).toMatchObject({ condition: "new_sealed" });
@@ -274,11 +321,12 @@ describe("creating a new puzzle", () => {
 describe("after adding", () => {
   it("lands on the new copy's page and offers to add another", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
     expect(await landing()).toEqual({
       to: "/my-puzzles/$id",
       params: { id: "copy_doc_1" },
+      ignoreBlocker: true,
     });
     expect(callsTo(COPY_DOC_ID)).toEqual([{ copyId: "copy_agg_1" }]);
     expect(toast.error).not.toHaveBeenCalled();
@@ -301,9 +349,9 @@ describe("after adding", () => {
       return null;
     });
     renderPage({ puzzleId: PUZZLE_DOC_ID });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
-    expect(await landing()).toEqual({ to: "/my-puzzles" });
+    expect(await landing()).toEqual({ to: "/my-puzzles", ignoreBlocker: true });
     // The copy was added: no failure toast.
     expect(toast.error).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalled();
@@ -311,9 +359,12 @@ describe("after adding", () => {
 
   it("goes back to the flow it came from when returnTo is set", async () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID, returnTo: "/welcome?step=puzzles" });
-    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
 
-    expect(await landing()).toEqual({ href: "/welcome?step=puzzles" });
+    expect(await landing()).toEqual({
+      href: "/welcome?step=puzzles",
+      ignoreBlocker: true,
+    });
     expect(callsTo(COPY_DOC_ID)).toEqual([]);
   });
 });
@@ -431,6 +482,37 @@ describe("on phones and tablets", () => {
     ).toBeTruthy();
   });
 
+  it("previews the real My Puzzles card, following the form", () => {
+    renderPage();
+    fireEvent.change(screen.getByRole("textbox", { name: "Puzzle Title" }), {
+      target: { value: "Kattenshow" },
+    });
+    fireEvent.click(offerChip("For Trade"));
+    const preview = screen.getByText("Live preview").parentElement!;
+    expect(
+      within(preview).getByRole("heading", { name: "Kattenshow" }),
+    ).toBeTruthy();
+    expect(within(preview).getByTestId("copy-condition").textContent).toContain(
+      "Good",
+    );
+    expect(within(preview).getByTestId("copy-offers").textContent).toBe(
+      "For Trade",
+    );
+    expect(within(preview).queryByText("Available")).toBeNull();
+    // Nothing to open or act on: there is no copy yet.
+    expect(within(preview).queryByRole("link")).toBeNull();
+  });
+
+  it("previews no piece count until one is entered, as a real card can't have none", () => {
+    renderPage();
+    const preview = screen.getByText("Live preview").parentElement!;
+    expect(within(preview).queryByText(/piece/)).toBeNull();
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+    expect(within(preview).getByText("1,000 pieces")).toBeTruthy();
+  });
+
   it("shows no look-alike buttons in the live preview", () => {
     renderPage({ puzzleId: PUZZLE_DOC_ID });
     expect(screen.queryByRole("button", { name: "View" })).toBeNull();
@@ -457,6 +539,55 @@ describe("cancelling", () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+});
+
+describe("leaving with unsaved work", () => {
+  const asks = () => mocks.blocker.disabled === false;
+
+  it("doesn't ask about an untouched form, even one prefilled from the link", () => {
+    renderPage({ title: "Zzzznotfound", ean: "4005556123456" });
+    expect(asks()).toBe(false);
+  });
+
+  it("asks once a field differs, and not after it is put back", () => {
+    renderPage();
+    const title = screen.getByRole("textbox", { name: "Puzzle Title" });
+    fireEvent.change(title, { target: { value: "Kattenshow" } });
+    expect(asks()).toBe(true);
+    fireEvent.change(title, { target: { value: "" } });
+    expect(asks()).toBe(false);
+  });
+
+  it("counts a chosen box photo as work", () => {
+    renderPage();
+    fireEvent.change(
+      document.querySelector<HTMLInputElement>('input[type="file"]')!,
+      {
+        target: { files: [new File(["x"], "box.png", { type: "image/png" })] },
+      },
+    );
+    expect(asks()).toBe(true);
+  });
+
+  it("in copy mode ignores what the catalogue filled in, but not the member's own fields", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(asks()).toBe(false);
+    fireEvent.change(screen.getByRole("textbox", { name: /Notes/ }), {
+      target: { value: "Missing one piece" },
+    });
+    expect(asks()).toBe(true);
+  });
+
+  it("is clear again after Save & Add Another emptied the form", async () => {
+    renderPage({ title: "Zzzznotfound" });
+    fireEvent.change(screen.getByLabelText("Piece Count"), {
+      target: { value: "500" },
+    });
+    expect(asks()).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Save & Add Another" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    await waitFor(() => expect(asks()).toBe(false));
   });
 });
 

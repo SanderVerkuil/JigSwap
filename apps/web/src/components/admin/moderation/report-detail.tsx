@@ -233,7 +233,8 @@ export function ReportDetail({
                     </span>
                     <time dateTime={new Date(message.sentAt).toISOString()}>
                       {format.dateTime(new Date(message.sentAt), {
-                        dateStyle: "short",
+                        // "Nov 2, 2026": a numeric 11/2/26 reads as 11 February to a Dutch admin.
+                        dateStyle: "medium",
                         timeStyle: "short",
                       })}
                     </time>

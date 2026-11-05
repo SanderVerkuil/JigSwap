@@ -67,6 +67,12 @@ export function DocsSearch({
     if (searchStore.failed(locale)) void searchStore.load(locale);
   };
   const hits = React.useMemo(() => index?.search(query) ?? [], [index, query]);
+  // New results start at the top. cmdk selects the first one but doesn't reliably scroll to it,
+  // which left the top result cut off under the search box.
+  const listRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+  }, [hits]);
 
   const go = (slug: string) => {
     onOpenChange(false);
@@ -97,7 +103,7 @@ export function DocsSearch({
             value={query}
             onValueChange={onQueryChange}
           />
-          <CommandList>
+          <CommandList ref={listRef}>
             {query.trim() !== "" && hits.length === 0 && (
               <CommandEmpty>
                 {index

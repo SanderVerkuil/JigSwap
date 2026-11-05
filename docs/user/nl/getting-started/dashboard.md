@@ -1,10 +1,10 @@
 ---
-title: Je Dashboard
+title: Je dashboard
 order: 3
 summary: "Lees je persoonlijke overzicht van uitwisselingen, doelen, statistieken en nieuwe puzzels, en richt je plank in met Snel instellen."
 ---
 
-# Je Dashboard (Ochtendoverzicht)
+# Je dashboard (ochtendoverzicht)
 
 **Waar:** het startscherm na het inloggen (`/dashboard`).
 
@@ -13,7 +13,7 @@ Je dashboard is een persoonlijk overzicht dat je puzzelleven in één oogopslag 
 - Een **kopzin** die je lopende uitwisselingen en doelvoortgang samenvat, of,
   als er nog niets loopt, je plank en wat je daarvan te ruil hebt staan.
 - Een **banner voor openstaande verzoeken** als iemand je een inkomend uitwisselingsverzoek heeft gestuurd dat een reactie nodig heeft.
-- **Snelle-actie-chips**: _Puzzel Toevoegen_, _Bladeren_ en _Voltooiing Vastleggen_.
+- **Snelle-actie-chips**: _Puzzel toevoegen_, _Bladeren_ en _Voltooiing Vastleggen_.
 - Een **3D-plank** die je echte puzzelkopieën toont als fysieke objecten die je kunt bekijken.
 - **Live statistieken**: hoeveel puzzels je bezit. Afgeronde ruilen, je
   gemiddelde beoordeling en lopende uitwisselingen komen erbij zodra je je eerste
@@ -39,13 +39,13 @@ De vier stappen zijn:
 
 1. **Voeg je puzzels toe**: kies de puzzels die je bezit uit de catalogus,
    meerdere tegelijk. Zie
-   [Puzzels Toevoegen & Importeren](/docs/your-library/adding-and-importing).
+   [Puzzels toevoegen en importeren](/docs/your-library/adding-and-importing).
 2. **Leg vast wat je al hebt afgemaakt**: markeer de puzzels die je al hebt
    opgelost, met een datum, een jaar of "Weet ik niet meer". Zie
-   [Voltooiingen & Doelen](/docs/your-library/completions-and-goals).
+   [Voltooiingen en doelen](/docs/your-library/completions-and-goals).
 3. **Vind je puzzelmaatjes**: volg mensen die je misschien kent, zoek leden op
    of deel je uitnodigingslink. Zie
-   [Mensen & Volgen](/docs/discovering-and-community/people-and-following).
+   [Mensen en volgen](/docs/discovering-and-community/people-and-following).
 4. **Maak het persoonlijk**: stel je foto en locatie in, en wie je profiel kan
    zien.
 
@@ -87,4 +87,4 @@ accountmenu.
 
 Ben je lid geworden via iemands uitnodigingslink, dan vraagt een kaart
 **Uitnodigingen** of jullie elkaar willen volgen. Zie
-[Mensen & Volgen](/docs/discovering-and-community/people-and-following#als-iemand-jou-heeft-uitgenodigd).
+[Mensen en volgen](/docs/discovering-and-community/people-and-following#als-iemand-jou-heeft-uitgenodigd).

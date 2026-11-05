@@ -3,6 +3,7 @@
 // publishes through the page-header slot. Layout is asserted through the class contract that
 // keeps it from breaking: rows that wrap instead of overflowing, a crumb row that is always
 // there so the h1 sits at the same height on every page, and page meta in one fixed spot.
+import { APP_SCROLL_REGION_ID } from "@/lib/scroll-restoration";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -15,7 +16,7 @@ import {
   usePageHeaderActions,
   type PageHeaderContent,
 } from "./page-header-slot";
-import { MobilePageActions } from "./shell";
+import { DashboardShell, MobilePageActions } from "./shell";
 
 const mocks = vi.hoisted(() => ({ pathname: "/notifications" }));
 
@@ -116,6 +117,14 @@ describe("PageHead crumb row", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(
       "Henk",
     );
+  });
+
+  // A 16px line plus 14px either side; the row itself stays as tall as it was (UX-70).
+  it("gives a crumb a 44px hit area on touch", () => {
+    const { container } = renderShellHead("/circles");
+    const crumb = slot(container, "page-head-crumbs")?.querySelector("a");
+    expect(crumb?.className).toContain("pointer-coarse:py-3.5");
+    expect(crumb?.className).toContain("pointer-coarse:-my-3.5");
   });
 
   it("fills the same row with the breadcrumb on a grouped page", () => {
@@ -285,5 +294,32 @@ describe("PageHead published title", () => {
     });
 
     expect(screen.getByRole("button", { name: "Act" })).toBeTruthy();
+  });
+});
+
+// In a short window (a phone in landscape) the top bar and a sticky head took over a third of the
+// screen. The head scrolls away there, and what sticks to it (--app-sticky-top) sticks to the top.
+describe("PageHead in a short window", () => {
+  const SHORT = "[@media(max-height:500px)]";
+
+  it("stops sticking", () => {
+    const { container } = renderShellHead("/my-puzzles");
+    const classes = slot(container, "page-head")?.classList;
+    expect(classes).toContain("sticky");
+    expect(classes).toContain(`${SHORT}:static`);
+  });
+
+  it("no longer offsets what sticks below it", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <DashboardShell>
+          <p>page</p>
+        </DashboardShell>
+      </IntlProvider>,
+    );
+    const region = document.querySelector(
+      `[data-scroll-restoration-id="${APP_SCROLL_REGION_ID}"]`,
+    );
+    expect(region?.classList).toContain(`${SHORT}:md:[--app-sticky-top:0px]`);
   });
 });

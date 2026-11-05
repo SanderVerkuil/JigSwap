@@ -191,7 +191,18 @@ describe("getCopyConversation", () => {
       api.conversation.getCopyConversation.getCopyConversation,
       { copyId: openCopy },
     );
-    expect(view).toEqual({ status: "existing", threadId });
+    // The thread opens with the puzzle staged, so the card travels with it.
+    expect(view).toEqual({
+      status: "existing",
+      threadId,
+      copy: {
+        copyId: openCopy,
+        title: "Mountain Vista",
+        brand: "Ravensburger",
+        pieceCount: 1000,
+        coverUrl: null,
+      },
+    });
   });
 });
 

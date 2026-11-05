@@ -9,6 +9,12 @@ import type { CaptureResult } from "posthog-js";
 //  - Clicks, rage clicks, dead clicks and copies on the messaging screens are
 //    dropped, so private-message text and link targets never reach PostHog,
 //    even if a component loses its `ph-no-capture` class.
+//  - The page title is dropped from every event. PostHog copies document.title
+//    into each $pageview, and the tab names the page after what it shows
+//    (ShellDocumentTitle): a circle, a household, another member. Leaving a
+//    thread, $pathname is already the next route while document.title still
+//    names the member, so no path can vouch for a title. $pathname already says
+//    which page it was.
 
 type Properties = CaptureResult["properties"];
 
@@ -59,6 +65,7 @@ export function sanitizeAnalyticsEvent(
 function sanitizeProperties(properties: Properties): Properties {
   const out: Properties = {};
   for (const [key, value] of Object.entries(properties)) {
+    if (key === "title") continue;
     if (key === "$elements_chain" && typeof value === "string") {
       out[key] = stripChainHrefs(value);
     } else if (key === "$heatmap_data" && isRecord(value)) {

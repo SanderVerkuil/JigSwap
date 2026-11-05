@@ -461,12 +461,13 @@ describe("goals", () => {
 });
 
 describe("insights", () => {
-  // A legacy row: no aggregateId and no datePrecision, so it must read as "day".
+  // A legacy row: no aggregateId and no datePrecision, so it must read as "day". Its 120 minutes
+  // differ from its dates, so they count as a typed time.
   const insertLegacy = (t: T, userId: Id<"users">, endDate: number) =>
     t.run(async (ctx) => {
       await ctx.db.insert("completions", {
         userId,
-        startDate: endDate - 2 * 60 * 60 * 1000,
+        startDate: endDate,
         endDate,
         completionTimeMinutes: 120,
         photos: [],

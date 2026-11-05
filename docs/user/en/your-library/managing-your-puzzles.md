@@ -23,11 +23,15 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
    - **All**
    - **Available**
    - **For Trade**
-   - **For Lend**
+   - **For Loan**
    - **In Progress**
    - **Completed**
-6. In a household, the **Whose** menu shows everyone's puzzles, only yours, or
-   only your housemates'.
+6. In a household with someone else in it, the **Whose** menu shows everyone's
+   puzzles, only yours, or only your housemates'.
+
+On a phone, the status pills, **Whose** and the sort order are behind the
+**Filters** button next to the search box. Filters that are on show as chips
+under it: tap one to remove it.
 
 Your search, sort, filters and layout are kept in the page address, so they're
 still there when you come back from a puzzle, reload the page or share the
@@ -42,6 +46,7 @@ From a puzzle card you can:
 
 - **View** — open the full copy detail page.
 - **Edit** — change the copy's details.
+- **Offer for swap** and **Offer to lend** — switch that offer on or off, with an Undo.
 - **Delete** — remove the copy from your library (with confirmation).
 - **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
 - **Recall** — once a lent-out puzzle is back with you, use this to close the
@@ -77,18 +82,20 @@ ends the selection.
 
 The detail page is the rich record of a single owned copy. It includes:
 
-- A **hero image** with condition and difficulty chips. On a phone or tablet,
-  pinch it to zoom in and drag to look around; double-tap to zoom back out.
+- A **hero image** with condition and difficulty chips. On a phone, tap it to
+  see it large. There, and on a tablet, pinch it to zoom in and drag to look
+  around; double-tap to zoom back out.
 - A **status line** under the title. On your own copy it says where the copy
-  is and who can see it: "On loan to _name_ since _date_" (with **Recall**),
-  or what it's offered for and whether it's visible to the community, visible
-  only while offered, or private. Other members only see what it's offered
-  for.
+  is and who can see it: "On loan to _name_ since _date_" (with **Recall**);
+  what it's offered for and who can see it now: the community if your profile
+  is public, friends and shared circles if it's private, or only while offered
+  if you chose **Private**; or, when it isn't offered, that friends can see it
+  or that it's private. Other members only see what it's offered for.
 - **Acquisition details** (when and how you got it) and your private notes.
   Only you (and household members who can manage the copy) see them. If
   nothing is recorded yet, click **Add details** to fill in the month, year
   and source.
-- A **stats strip**: times completed, fastest finish, times lent out, and your
+- A **stats strip**: times completed, fastest finish (from the times solvers entered), times lent out, and your
   own rating of the copy (shown to you and your household, or to anyone who
   rated it).
 - The **Owner**: their avatar and name, which links to their profile when you're
@@ -148,8 +155,9 @@ Only approved photos can be used as a cover.
 Each copy is either visible or private. Set it when you **Edit** the copy,
 under **Who can see this copy**:
 
-- **Visible to the community**: members you follow each other with can see it
-  in your library.
+- **Visible**: members you follow each other with can see it in your library.
+  While it's on offer, so can all members if your profile is public, and
+  members of circles you've shared it into if it's private.
 - **Private — only you and your household**: hidden from everyone else,
   friends included.
 

@@ -50,10 +50,10 @@ const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 // Shorter set for the cramped mobile dashboard (see sub-project ②).
 const MOBILE_BOX_HEIGHTS = [118, 104, 124, 100, 114];
 
-// Boxes on the shelf. The 3D scene fits the whole row into the canvas, so a
-// phone shows one box fewer to keep the covers big enough to recognise.
+// Boxes on the shelf. The shelf is scaled to fit its column, so a phone shows
+// fewer to keep the covers big enough to recognise.
 const SHELF_BOX_COUNT = 5;
-const PHONE_SHELF_BOX_COUNT = 4;
+const PHONE_SHELF_BOX_COUNT = 3;
 
 // How many copies the shelf shows on this device (useIsMobile()). Fresh on the
 // Shelf compares against it, so it only appears once it adds something.
@@ -278,9 +278,10 @@ export function ShelfSection() {
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
           {/* The scene fits the row to the canvas width, so the height follows
               the width (16:9) instead of leaving a narrow column mostly empty;
-              wide columns keep the 360px desktop shelf. */}
-          <div className="aspect-video max-h-[360px] w-full min-w-0">
-            <PuzzlePlank3D boxes={plankBoxes} />
+              wide columns keep the 360px desktop shelf. Below md there is no
+              scene, only the CSS plank, and this is as tall as that is. */}
+          <div className="aspect-video max-h-[360px] w-full min-w-0 max-md:aspect-auto">
+            <PuzzlePlank3D boxes={plankBoxes} fitHeightBelowMd />
           </div>
           {/* Below lg the rows sit under the plank as a compact 2×2 grid. */}
           <div

@@ -22,7 +22,7 @@ import { PuzzlesClient } from "./puzzle-client";
 // What the catalogue read reports. Mutable per test; `results` keep their identity between renders,
 // as usePaginatedQuery's do.
 type Paginated = {
-  results: { _id: string; title: string }[];
+  results: { _id: string; title: string; aggregateId?: string }[];
   status: "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
 };
 const paginated = vi.hoisted(() => ({
@@ -47,8 +47,16 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 vi.mock("./puzzle-card", () => ({
-  PuzzleCard: ({ puzzle }: { puzzle: { title: string } }) => (
-    <div data-testid="card">{puzzle.title}</div>
+  PuzzleCard: ({
+    puzzle,
+    onShelf,
+  }: {
+    puzzle: { title: string };
+    onShelf?: boolean;
+  }) => (
+    <div data-testid="card" data-on-shelf={onShelf ? "" : undefined}>
+      {puzzle.title}
+    </div>
   ),
 }));
 vi.mock("./puzzle-card-skeleton", () => ({
@@ -56,6 +64,7 @@ vi.mock("./puzzle-card-skeleton", () => ({
 }));
 
 const favouritesKey = convexQuery(gateway.catalog.listMyFavorites, {}).queryKey;
+const ownedKey = convexQuery(gateway.library.myOwnedDefinitionIds, {}).queryKey;
 
 const LOADING: Paginated = { results: [], status: "LoadingFirstPage" };
 const NOTHING: Paginated = { results: [], status: "Exhausted" };
@@ -81,7 +90,7 @@ function Harness({ initial }: { initial: PuzzlesSearch }) {
 
 const renderClient = (
   initial: PuzzlesSearch = {},
-  { favourites }: { favourites?: unknown[] } = {},
+  { favourites, owned }: { favourites?: unknown[]; owned?: string[] } = {},
 ) => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -89,6 +98,7 @@ const renderClient = (
     },
   });
   if (favourites) queryClient.setQueryData(favouritesKey, favourites);
+  if (owned) queryClient.setQueryData(ownedKey, owned);
   // Fresh elements each time: a rerender has to reach PuzzlesClient for the read's new state to show.
   const tree = () => (
     <QueryClientProvider client={queryClient}>
@@ -107,7 +117,7 @@ const url = () =>
 const placeholders = () => screen.queryAllByTestId("placeholder").length;
 const cards = () => screen.queryAllByTestId("card").map((c) => c.textContent);
 const filtersToggle = () =>
-  screen.getByRole("button", { name: copy.filtersLabel });
+  screen.getByRole("button", { name: /^Filters( \(\d+\))?$/ });
 
 beforeEach(() => {
   paginated.current = LOADING;
@@ -188,6 +198,21 @@ describe("PuzzlesClient results", () => {
     expect(screen.getByText("2 puzzles found so far")).toBeTruthy();
   });
 
+  it("tells each card whether the member owns the puzzle, by its aggregate id", () => {
+    paginated.current = {
+      results: [
+        { ...row("a"), aggregateId: "agg-a" },
+        { ...row("b"), aggregateId: "agg-b" },
+      ],
+      status: "Exhausted",
+    };
+    renderClient({}, { owned: ["agg-b"] });
+    const shelf = screen
+      .getAllByTestId("card")
+      .map((card) => card.hasAttribute("data-on-shelf"));
+    expect(shelf).toEqual([false, true]);
+  });
+
   it("sends the term and every facet to the server search", () => {
     renderClient({
       q: "Lake",
@@ -207,6 +232,103 @@ describe("PuzzlesClient results", () => {
       category: "cat-1",
       tags: ["water"],
     });
+  });
+});
+
+describe("PuzzlesClient active filters", () => {
+  const removeButton = (label: string) =>
+    screen.getByRole("button", { name: `Remove filter: ${label}` });
+  // The panel starts open for a search with a facet; close it as a member would.
+  const withPanelClosed = (search: PuzzlesSearch) => {
+    renderClient(search);
+    fireEvent.click(filtersToggle());
+    expect(filtersToggle().getAttribute("aria-expanded")).toBe("false");
+  };
+
+  it("counts the facets on the toggle: a range once, each tag on its own", () => {
+    withPanelClosed({
+      brand: "Jumbo count",
+      minPieces: 500,
+      maxPieces: 1000,
+      tags: ["water", "nature"],
+    });
+    expect(filtersToggle().textContent).toBe("Filters (4)");
+  });
+
+  it("leaves the term and favourites out of the count", () => {
+    renderClient({ q: "lake count", fav: true });
+    expect(filtersToggle().textContent).toBe("Filters");
+  });
+
+  it("marks the toggle while it is open or a facet is set", () => {
+    renderClient({ q: "marks" });
+    expect(filtersToggle().hasAttribute("data-active")).toBe(false);
+    fireEvent.click(filtersToggle());
+    expect(filtersToggle().hasAttribute("data-active")).toBe(true);
+    cleanup();
+    withPanelClosed({ brand: "Jumbo marks" });
+    expect(filtersToggle().hasAttribute("data-active")).toBe(true);
+  });
+
+  it("lists the facets as removable chips while the panel is closed", () => {
+    withPanelClosed({
+      brand: "Jumbo chips",
+      minPieces: 500,
+      maxPieces: 1000,
+      difficulty: "hard",
+      tags: ["water"],
+    });
+    expect(removeButton("Jumbo chips")).toBeTruthy();
+    expect(removeButton("500–1,000 pieces")).toBeTruthy();
+    expect(removeButton("Hard")).toBeTruthy();
+    expect(removeButton("water")).toBeTruthy();
+
+    fireEvent.click(filtersToggle());
+    expect(
+      screen.queryByRole("button", { name: "Remove filter: Hard" }),
+    ).toBeNull();
+  });
+
+  it.each<[PuzzlesSearch, string]>([
+    [{ brand: "Jumbo label", minPieces: 500 }, "From 500 pieces"],
+    [{ brand: "Jumbo label", maxPieces: 500 }, "Up to 500 pieces"],
+    [
+      { brand: "Jumbo label", minPieces: 1000, maxPieces: 1000 },
+      "1,000 pieces",
+    ],
+    [
+      { brand: "Jumbo label", minPieces: 777, maxPieces: 100 },
+      "100–777 pieces",
+    ],
+  ])("names the range of %j", (search, label) => {
+    withPanelClosed(search);
+    expect(removeButton(label)).toBeTruthy();
+  });
+
+  it("removes only that facet and hands focus to the toggle", () => {
+    withPanelClosed({
+      brand: "Jumbo gone",
+      difficulty: "hard",
+      tags: ["a", "b"],
+    });
+    const remove = removeButton("a");
+    remove.focus();
+    fireEvent.click(remove);
+    expect(url()).toEqual({
+      brand: "Jumbo gone",
+      difficulty: "hard",
+      tags: ["b"],
+    });
+    expect(document.activeElement).toBe(filtersToggle());
+
+    fireEvent.click(removeButton("Hard"));
+    expect(url()).toEqual({ brand: "Jumbo gone", tags: ["b"] });
+  });
+
+  it("clears both ends of the range together", () => {
+    withPanelClosed({ brand: "Jumbo range", minPieces: 500, maxPieces: 1000 });
+    fireEvent.click(removeButton("500–1,000 pieces"));
+    expect(url()).toEqual({ brand: "Jumbo range" });
   });
 });
 
@@ -378,13 +500,11 @@ describe("PuzzlesClient piece range", () => {
     expect(minInput().value).toBe("");
   });
 
-  it("follows a value picked in the select", () => {
+  it("follows a preset", () => {
     renderClient({ minPieces: 500 });
-    fireEvent.keyDown(screen.getByRole("combobox", { name: "Min Pieces" }), {
-      key: "Enter",
-    });
-    fireEvent.click(screen.getByRole("option", { name: "1,000 pieces" }));
+    fireEvent.click(screen.getByRole("button", { name: "1,000 pieces" }));
     expect(url().minPieces).toBe(1000);
+    expect(url().maxPieces).toBe(1000);
     expect(minInput().value).toBe("1000");
   });
 

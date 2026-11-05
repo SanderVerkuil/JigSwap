@@ -52,21 +52,22 @@ describe("planAcquireBatch", () => {
     expect(result.value[0]).toEqual({
       puzzleDefinitionId: id(0),
       forTrade: false,
+      forLend: false,
     });
   });
 
-  it("defaults forTrade to false and keeps a per-item override", () => {
+  it("defaults each offer to false and keeps a per-item override", () => {
     const result = planAcquireBatch([
       { puzzleDefinitionId: id(1) },
       { puzzleDefinitionId: id(2), forTrade: true },
-      { puzzleDefinitionId: id(3), forTrade: false },
+      { puzzleDefinitionId: id(3), forTrade: false, forLend: true },
     ]);
     expect(result.isOk).toBe(true);
     if (!result.isOk) return;
     expect(result.value).toEqual([
-      { puzzleDefinitionId: id(1), forTrade: false },
-      { puzzleDefinitionId: id(2), forTrade: true },
-      { puzzleDefinitionId: id(3), forTrade: false },
+      { puzzleDefinitionId: id(1), forTrade: false, forLend: false },
+      { puzzleDefinitionId: id(2), forTrade: true, forLend: false },
+      { puzzleDefinitionId: id(3), forTrade: false, forLend: true },
     ]);
   });
 });

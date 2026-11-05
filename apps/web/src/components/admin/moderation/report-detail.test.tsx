@@ -133,6 +133,26 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("ReportDetail", () => {
+  it("writes an evidence message's date with the month in words, never as 11/2/26", () => {
+    renderDetail(
+      report({
+        evidence: {
+          messages: [
+            {
+              messageId: "msg_1",
+              authorId: "user_reporter",
+              kind: "text",
+              body: "Hi!",
+              sentAt: Date.UTC(2026, 10, 2, 16, 30),
+            },
+          ],
+        },
+      } as Partial<ReportDetailView>),
+    );
+    const sent = document.querySelector("time");
+    expect(sent?.textContent).toContain("Nov 2, 2026");
+  });
+
   it("quotes the thread excerpt with the reported message highlighted", () => {
     renderDetail(report());
     const current = document.querySelector('li[aria-current="true"]');

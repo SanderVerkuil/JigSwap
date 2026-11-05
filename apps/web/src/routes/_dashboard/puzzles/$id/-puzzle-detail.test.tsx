@@ -313,7 +313,8 @@ describe("puzzle detail page: actions", () => {
     renderPage();
 
     const viewCopy = screen.getByRole("link", { name: t.viewYourCopy });
-    expect(viewCopy.getAttribute("href")).toBe("/copies/copy_9");
+    // The owner's frame of the copy: My Library › My Puzzles › <name>, not Browse's.
+    expect(viewCopy.getAttribute("href")).toBe("/my-puzzles/copy_9");
     // It is the primary action, ahead of adding another copy, and the only link to the copy.
     const addAnother = screen.getByRole("button", {
       name: en.puzzles.addToLibrary,
@@ -352,6 +353,23 @@ describe("puzzle detail page: actions", () => {
     );
   });
 
+  it("says nobody else offers it when the viewer owns the puzzle", () => {
+    setView({
+      ...emptyView(),
+      ownership: { viewerOwns: true, copyId: "copy_9", condition: "good" },
+    });
+    renderPage();
+
+    const find = screen.getByRole("button", { name: t.findCopyToSwap });
+    const hintId = find.getAttribute("aria-describedby");
+    expect(document.getElementById(hintId!)?.textContent).toBe(
+      t.noOtherCopiesOffered,
+    );
+    expect(screen.getByText(t.noOtherCopies)).toBeTruthy();
+    expect(screen.queryByText(t.noCopies)).toBeNull();
+    expect(screen.queryByText(t.noCopiesOffered)).toBeNull();
+  });
+
   it("lets the member find a copy when one is offered", () => {
     setView({
       ...emptyView(),
@@ -364,6 +382,16 @@ describe("puzzle detail page: actions", () => {
     expect((find as HTMLButtonElement).disabled).toBe(false);
     expect(find.getAttribute("aria-describedby")).toBeNull();
     expect(screen.queryByText(t.noCopiesOffered)).toBeNull();
+  });
+
+  it("shows no difficulty badge for a puzzle without a difficulty", () => {
+    const view = emptyView();
+    const { difficulty: _difficulty, ...definition } = view.definition;
+    setView({ ...view, definition });
+    renderPage();
+    expect(
+      screen.queryByText(en.puzzles.puzzles.difficulty.unknown),
+    ).toBeNull();
   });
 
   it("makes favourite a named toggle that reports its state", () => {
@@ -399,6 +427,14 @@ describe("puzzle detail page: actions", () => {
   });
 });
 
+describe("puzzle detail page: tab title", () => {
+  it("names the puzzle once it has loaded", () => {
+    setView(emptyView());
+    renderPage();
+    expect(document.title).toBe("Café — JigSwap");
+  });
+});
+
 describe("puzzle detail page: wording", () => {
   it("opens with the puzzle's name, not an internal 'puzzle definition' label", () => {
     setView(emptyView());
@@ -429,6 +465,19 @@ describe("puzzle detail page: review composer", () => {
     expect(
       text.compareDocumentPosition(post()) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("writes a review in a multi-line field where Enter is a new line, not Post", () => {
+    setView(emptyView());
+    renderPage();
+    fireEvent.click(screen.getByRole("radio", { name: /^4/ }));
+
+    const text = screen.getByRole("textbox");
+    expect(text.tagName).toBe("TEXTAREA");
+    fireEvent.change(text, { target: { value: "First line" } });
+    // Not prevented: the browser inserts the line break.
+    expect(fireEvent.keyDown(text, { key: "Enter" })).toBe(true);
+    expect(mocks.postReview).not.toHaveBeenCalled();
   });
 
   it("says a rating is needed to post until one is chosen", () => {

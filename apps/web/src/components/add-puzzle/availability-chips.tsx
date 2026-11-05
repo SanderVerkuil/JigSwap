@@ -34,7 +34,7 @@ export function AvailabilityChips({
             disabled={isLocked?.(key) ?? false}
             onClick={() => onChange({ ...value, [key]: !on })}
             className={[
-              "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+              "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors disabled:cursor-not-allowed disabled:opacity-50 pointer-coarse:min-h-11",
               on
                 ? "bg-jigsaw-secondary-tint text-jigsaw-secondary-text border-jigsaw-secondary/40"
                 : "bg-card text-foreground border-border hover:bg-accent",

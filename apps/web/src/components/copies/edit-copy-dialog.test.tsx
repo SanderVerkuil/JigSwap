@@ -60,6 +60,7 @@ const copyOf = (
   acquisition: {
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
+    ownerProfileVisibility?: "private" | "public";
   } = {},
 ) =>
   ({
@@ -187,6 +188,28 @@ describe("EditCopyDialog visibility", () => {
         "aria-checked",
       ),
     ).toBe("true");
+  });
+
+  it("says how far an offer reaches: all members with a public profile", () => {
+    renderDialog(
+      copyOf(CLOSED, "visible", "visible", [], {
+        ownerProfileVisibility: "public",
+      }),
+    );
+    expect(radio("Visible").textContent).toContain(
+      "Friends can see it, and all members can while it's on offer.",
+    );
+  });
+
+  it("says how far an offer reaches: shared circles with a private profile", () => {
+    renderDialog(
+      copyOf(CLOSED, "visible", "visible", [], {
+        ownerProfileVisibility: "private",
+      }),
+    );
+    expect(radio("Visible").textContent).toContain(
+      "Friends can see it, and circles it's shared with can while it's on offer.",
+    );
   });
 
   it("saving without changes sends no sharing write", async () => {

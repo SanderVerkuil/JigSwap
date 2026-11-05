@@ -83,7 +83,9 @@ describe("PuzzleCard variant='pick'", () => {
       screen.getByRole("link", { name: "Puzzle a" }).getAttribute("href"),
     ).toBe(addHref);
     expect(
-      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+      screen
+        .getByRole("link", { name: "Add to my puzzles" })
+        .getAttribute("href"),
     ).toBe(addHref);
   });
 
@@ -106,6 +108,17 @@ describe("PuzzleCard variant='pick'", () => {
     cleanup();
     renderPick(false);
     expect(screen.queryByText("On your shelf")).toBeNull();
+  });
+
+  it("makes another copy of an owned puzzle the quieter choice, by name and by look", () => {
+    renderPick(true);
+    const add = screen.getByRole("link", { name: "Add another copy" });
+    expect(add.getAttribute("data-variant") ?? add.className).toContain(
+      "outline",
+    );
+    expect(
+      screen.queryByRole("link", { name: "Add to my puzzles" }),
+    ).toBeNull();
   });
 
   it("leaves the catalogue card as it was: the card opens the catalogue page", () => {
@@ -145,7 +158,7 @@ describe("PuzzlePickList", () => {
     expect(rows.className).toContain("sm:hidden");
     // Named by what it shows (label in name), ending in what it does.
     const add = within(rows).getByRole("link", {
-      name: "Puzzle a Ravensburger · 1,000 pieces Add to Library",
+      name: "Puzzle a 1,000 pieces · Ravensburger Add to my puzzles",
     });
     expect(add.getAttribute("href")).toBe("/my-puzzles/add/new?puzzleId=doc_a");
     expect(add.className).toContain("min-h-12");
@@ -158,7 +171,9 @@ describe("PuzzlePickList", () => {
 
   it("renders the pick cards from sm up", () => {
     renderList();
-    const adds = screen.getAllByRole("link", { name: "Add to Library" });
+    const adds = screen.getAllByRole("link", {
+      name: /^(Add to my puzzles|Add another copy)$/,
+    });
     expect(adds).toHaveLength(3);
     const grid = adds[0].closest(".sm\\:grid");
     expect(grid?.className).toMatch(/(^| )hidden( |$)/);
@@ -174,11 +189,19 @@ describe("PuzzlePickList", () => {
     ).toEqual([false, true, false]);
   });
 
+  it("says an owned row adds another copy, with pieces before the brand it may cut short", () => {
+    renderList();
+    const rows = screen.getByTestId("pick-rows");
+    const owned = within(rows).getAllByRole("listitem")[1]!;
+    expect(owned.textContent).toContain("Add another copy");
+    expect(owned.textContent).toMatch(/pieces · /);
+  });
+
   it("speaks Dutch", () => {
     renderList("nl");
     expect(
       screen.getByRole("link", {
-        name: "Puzzle a Ravensburger · 1.000 stukjes Toevoegen aan bibliotheek",
+        name: "Puzzle a 1.000 stukjes · Ravensburger Toevoegen aan mijn puzzels",
       }),
     ).toBeTruthy();
     expect(screen.getAllByText("Op je plank").length).toBeGreaterThan(0);

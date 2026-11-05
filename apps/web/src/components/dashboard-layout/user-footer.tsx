@@ -4,14 +4,16 @@
 // desktop): the Clerk user button (avatar → account dropdown, which carries the
 // "My profile" link to /profile) plus the name + email. Clicking the name/email
 // opens the same account dropdown as the avatar, so the whole row acts as one
-// control instead of competing click targets. The email blurs (and becomes
-// unselectable) when the hide-email preference is on.
+// control instead of competing click targets. For the keyboard it is one control
+// too: the avatar, which the icon rail also keeps, so the name adds no Tab stop.
+// The email blurs (and becomes unselectable) when the hide-email preference is on.
 //
 // The shell preferences (content width, hide email) live INSIDE Clerk's own
 // profile UI as a custom <UserButton.UserProfilePage> ("Preferences"), persisted
 // to the Clerk user (see preferences.tsx). Admins reach /admin via the gated
 // sidebar group and the user menu's Admin link (shell-user-button.tsx).
 import { useUser } from "@/compat/clerk";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
@@ -24,8 +26,11 @@ export function UserFooter() {
   const { hideEmail } = useShellPreferences();
   const rootRef = useRef<HTMLDivElement>(null);
   const menuWasOpenRef = useRef(false);
+  const { inSheet } = useSidebar();
 
-  if (!user) {
+  // Clerk portals its menu out of the modal sheet (the sidebar overlay below 1024px), where it can't
+  // take a tap or keep focus. The rail keeps its own avatar, one tap away once the sheet closes.
+  if (!user || inSheet) {
     return null;
   }
 
@@ -64,6 +69,7 @@ export function UserFooter() {
       <ShellUserButton />
       <button
         type="button"
+        tabIndex={-1}
         onPointerDown={rememberMenuState}
         onClick={openUserMenu}
         aria-haspopup="menu"

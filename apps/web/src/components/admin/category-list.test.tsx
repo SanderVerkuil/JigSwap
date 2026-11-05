@@ -161,6 +161,19 @@ describe("CategoryList", () => {
     expect(mocks.mutation).not.toHaveBeenCalled();
   });
 
+  it("dims an inactive row's swatch and name, never the row: its text must stay readable", () => {
+    const { container } = renderList([
+      { ...category, isActive: false, color: "#123456" },
+    ]);
+    const name = screen.getByText("Landscapes");
+    expect(name.className).toContain("text-muted-foreground");
+    const row = container.querySelector(".border-b");
+    expect(row?.className).not.toContain("opacity-60");
+    expect(
+      container.querySelector("span[aria-hidden].h-9")?.className,
+    ).toContain("opacity-60");
+  });
+
   it("gives the drag grip a touch-sized hit area and disables the menu on legacy rows", () => {
     renderList([
       {

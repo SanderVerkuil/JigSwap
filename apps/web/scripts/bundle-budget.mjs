@@ -10,7 +10,8 @@
 // the physics engine, the image cropper), which must only load on idle or on
 // request, and when a prerendered document carries an inline script above
 // `documents.maxInlineScriptKB` (the dehydrated router state; the message
-// catalog must stay out of it). It reports the message catalogs' gzip size,
+// catalog must stay out of it). It refuses a build without VITE_CONVEX_URL,
+// whose weights are not what ships. It reports the message catalogs' gzip size,
 // fetched on every first visit. Raising a budget is a reviewed edit to
 // bundle-budget.json, normally via --update.
 import fs from "node:fs";
@@ -23,6 +24,7 @@ import {
   measureRoutes,
   nextBudget,
   oversizedDocuments,
+  UNCONFIGURED_BUILD_MARKER,
 } from "./bundle-budget-core.mjs";
 
 const appDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -72,6 +74,19 @@ const read = (url) => {
 };
 const gzipSize = (url) => zlib.gzipSync(read(url), { level: 9 }).length;
 
+// Such a build succeeds, but router.tsx throws and the minifier drops the router and the Convex
+// client behind the throw, so every route would weigh about 34 KB too little. Stop before --update
+// can accept those weights.
+const unconfigured = findForbiddenInitial(routes, {
+  markers: { "the missing-URL throw": UNCONFIGURED_BUILD_MARKER },
+  contentOf: (url) => read(url).toString("utf8"),
+});
+if (unconfigured.length) {
+  fail(
+    "this build has no VITE_CONVEX_URL, so its weights are not what ships; build with VITE_CONVEX_URL and VITE_CLERK_PUBLISHABLE_KEY set (placeholders do, see ci.yml)",
+  );
+}
+
 const budget = JSON.parse(fs.readFileSync(budgetFile, "utf8"));
 const built = Object.keys(budget.routes).filter((id) => routes[id]);
 const measured = measureRoutes(routes, built, { gzipSize, globalCss });
@@ -118,12 +133,11 @@ if (budget.documents) {
     `Prerendered documents: ${htmlFiles.length}, none may inline a script above ${maxInlineScriptKB} KB` +
       (largest ? ` (largest: ${largest.inlineKB} KB, ${largest.file}).` : "."),
   );
-  // Prerendering is best-effort (vite.config.ts), so a build that couldn't do it still succeeds, and
-  // without Convex env its route weights are wrong too (the router throws and is minified away).
+  // Nothing is prerendered until the docs get locale URLs (vite.config.ts), so there is nothing to
+  // measure yet. Say so instead of failing: the route budgets above still ran.
   if (htmlFiles.length === 0) {
-    documentProblems++;
-    console.error(
-      "  OVER no prerendered .html in .output/public; build with VITE_CONVEX_URL, VITE_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY set (placeholders do, see ci.yml)",
+    console.log(
+      "  SKIP no prerendered .html in .output/public; the inline-script guard did not run",
     );
   }
   for (const doc of oversized) {

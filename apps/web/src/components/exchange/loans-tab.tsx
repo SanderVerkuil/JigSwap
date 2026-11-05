@@ -1,7 +1,7 @@
 // Exchanges › Loans: the one home for every open loan the viewer is part of, in two sections.
 // - Borrowed by you (lending.borrowed): copies the viewer holds. A borrower solves here (Start or
-//   Finish a solve, Log a past one; the old /borrowed page's actions) and hands the copy back with
-//   Return, behind a confirm.
+//   Finish a solve, Log a past one; the old /borrowed page's actions), messages the lender (to
+//   arrange the handback) and hands the copy back with Return, behind a confirm.
 // - Lent out (lending.lentOut): the viewer's copies (and household copies they may manage) that
 //   are out on loan, with Message (to arrange getting it back) and Recall behind a confirm.
 // Each title links to the copy. Each section loads and empties on its own, and an empty one says
@@ -98,7 +98,7 @@ function LoanSection({
 // One loan as an open divided row: the copy's cover (the loan chip without one), the title (linking
 // to the copy) with its piece count, a meta line, when it is due back (only when the loan has a
 // return date), and the row's actions.
-// Below lg the actions sit under the text (a row of up to three buttons would squeeze the title on
+// Below lg the actions sit under the text (a row of up to four buttons would squeeze the title on
 // a tablet), full width on phones so they wrap at most once.
 function LoanRow({
   loan,
@@ -249,6 +249,14 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
                     {tSolve("trigger")}
                   </Button>
                 </>
+              )}
+              {/* Return is for once the lender has it back: this is how to arrange that. It gates
+                  itself on the members being connected; a departed lender has nobody to message. */}
+              {loan.lender && (
+                <MessageButton
+                  memberId={loan.lender._id as Id<"users">}
+                  size="sm"
+                />
               )}
               <ReturnLoanButton
                 loanId={loan.loanId}

@@ -10,15 +10,17 @@ export const MAX_ACQUIRE_BATCH = 25;
 export interface AcquireBatchRequest {
   readonly puzzleDefinitionId: PuzzleDefinitionId;
   readonly forTrade?: boolean;
+  readonly forLend?: boolean;
 }
 
 export interface AcquireBatchItem {
   readonly puzzleDefinitionId: PuzzleDefinitionId;
   readonly forTrade: boolean;
+  readonly forLend: boolean;
 }
 
 // Normalise a requested batch add: duplicates collapse to their first occurrence (one copy per
-// definition per batch), each item's forTrade defaults to false (the SharingSetting default),
+// definition per batch), each item's offers default to false (the SharingSetting default),
 // and an empty batch or more distinct definitions than the cap reject the whole batch.
 export const planAcquireBatch = (
   requests: readonly AcquireBatchRequest[],
@@ -29,6 +31,7 @@ export const planAcquireBatch = (
     byDefinition.set(request.puzzleDefinitionId, {
       puzzleDefinitionId: request.puzzleDefinitionId,
       forTrade: request.forTrade ?? false,
+      forLend: request.forLend ?? false,
     });
   }
   const items = [...byDefinition.values()];

@@ -55,10 +55,10 @@ export function PageHead() {
       ? group.items.find((item) => item.key === meta.pageKey)
       : undefined;
 
-  // On touch the crumb's hit box grows to 40px tall; the matching negative margin keeps the
+  // On touch the crumb's hit box grows to 44px tall; the matching negative margin keeps the
   // breadcrumb row's height unchanged.
   const crumbLink =
-    "transition-colors hover:text-sidebar-accent-foreground hover:underline pointer-coarse:-my-3 pointer-coarse:py-3";
+    "transition-colors hover:text-sidebar-accent-foreground hover:underline pointer-coarse:relative pointer-coarse:-my-3.5 pointer-coarse:py-3.5";
 
   const crumbTrail =
     crumbs && crumbs.length > 0 ? (
@@ -107,11 +107,12 @@ export function PageHead() {
   return (
     // Glass head: sticks to the top of the shared scroll region and frosts the content scrolling
     // beneath it. Solid bg is the fallback; where backdrop-filter is supported the bg goes
-    // translucent so the blur reads. z-20 keeps it above the scrolling content.
+    // translucent so the blur reads. z-20 keeps it above the scrolling content. In a short window (a
+    // phone in landscape) it scrolls away: top bar plus head would take over a third of the screen.
     <div
       ref={measureRef}
       data-slot="page-head"
-      className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7"
+      className="bg-background supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 hidden border-b px-4 pt-3.5 pb-3 backdrop-blur-md md:block md:px-7 [@media(max-height:500px)]:static"
     >
       {/* Reserved even when empty (one text-xs line) so the h1 never shifts between pages. */}
       <div

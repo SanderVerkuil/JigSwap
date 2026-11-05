@@ -66,10 +66,10 @@ describe("PuzzleCardShell cover renditions", () => {
     expect(cover().getAttribute("sizes")).toBe(GRID_SIZES);
   });
 
-  it("sizes the list view's cover to its fixed 128px column", () => {
+  it("sizes the list view's cover to its fixed thumbnail", () => {
     render(puzzle({ imageSrcSet: SRC_SET }), "list", GRID_SIZES);
     expect(cover().getAttribute("srcset")).toBe(SRC_SET);
-    expect(cover().getAttribute("sizes")).toBe("128px");
+    expect(cover().getAttribute("sizes")).toBe("56px");
   });
 
   it("renders the original alone, exactly as before, without renditions", () => {
@@ -137,13 +137,15 @@ const renderDensity = (
   const byText = (text: string) =>
     [...host.querySelectorAll("*")].find(
       (el) => el.children.length === 0 && el.textContent === text,
-    )!;
+    );
   return {
     cover: host.querySelector("img")!.parentElement!.classList,
+    thumbnail:
+      host.querySelector("img")!.parentElement!.parentElement!.classList,
     // The content column is the card's second child in grid mode.
-    content: byText("Sheep everywhere").parentElement!.classList,
-    description: byText("Sheep everywhere").classList,
-    tags: byText("#cartoon").parentElement!.classList,
+    content: byText("Sheep everywhere")?.parentElement?.classList,
+    description: byText("Sheep everywhere")?.classList,
+    tags: byText("#cartoon")?.parentElement?.classList,
   };
 };
 
@@ -158,20 +160,87 @@ describe("PuzzleCardShell density", () => {
     expect(card.tags).toContain("max-sm:hidden");
   });
 
-  it("keeps the list row unchanged at every width", () => {
-    const card = renderDensity("list");
+  it("lets a contained cover fill the list row's thumbnail, so no blank block sits under it", () => {
+    const card = renderDensity("list", "contain");
+    expect(card.cover).toContain("h-full");
+    expect(card.cover).not.toContain("aspect-square");
+    // A minimum height would overflow the fixed thumbnail and crop the box.
+    expect(card.cover).not.toContain("min-h-32");
+    expect(card.thumbnail).toContain("size-14");
+    expect(card.thumbnail).toContain("sm:size-12");
+  });
+
+  it("is one compact line in list mode: a small thumbnail, no description or tags", () => {
+    const card = renderDensity("list", "cover");
     expect(card.cover).toContain("aspect-square");
     expect(card.cover).not.toContain("aspect-[4/3]");
-    expect(card.content).toContain("p-4");
-    expect(card.content).not.toContain("p-3");
-    expect(card.description).not.toContain("max-sm:hidden");
-    expect(card.tags).not.toContain("max-sm:hidden");
+    expect(card.thumbnail).toContain("size-14");
+    expect(card.thumbnail).toContain("sm:size-12");
+    expect(card.description).toBeUndefined();
+    expect(card.tags).toBeUndefined();
   });
 
   it("frames a contained cover on a muted backdrop instead of bare letterbox bands", () => {
     expect(renderDensity("grid", "contain").cover).toContain("bg-muted");
     expect(renderDensity("list", "contain").cover).toContain("bg-muted");
     expect(renderDensity("grid", "cover").cover).not.toContain("bg-muted");
+  });
+});
+
+describe("PuzzleCardShell list row", () => {
+  const renderRow = (extra: {
+    actions?: ReactNode;
+    rowEnd?: ReactNode;
+    footer?: ReactNode;
+  }) => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" messages={en} timeZone="UTC">
+        <PuzzleViewProvider viewMode="list">
+          <PuzzleCardShell
+            puzzle={densityPuzzle}
+            imageHref="/puzzles/p1"
+            {...extra}
+          />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const title = host.querySelector("h3")!;
+    const columns = title.parentElement!.parentElement!;
+    const line = columns.parentElement!;
+    return { host, line, columns, row: line.parentElement! };
+  };
+
+  // happy-dom has no layout: this pins the class contract; the widths were measured in a browser.
+  it("gives the thumbnail and columns a minimum width, so wide actions wrap instead of squeezing the title", () => {
+    const { host, line, row } = renderRow({
+      actions: <button type="button">Request swap</button>,
+    });
+    expect(line.classList).toContain("flex-[1_1_34rem]");
+    expect(line.querySelector("img")).toBeTruthy();
+    // Free to wrap at every width: whether the actions fit beside the line depends on the actions.
+    expect(row.classList).toContain("flex-wrap");
+    expect(row.className).not.toContain("flex-nowrap");
+    const actions = host.querySelector("button")!.parentElement!;
+    expect(actions.parentElement).toBe(row);
+    expect(line.contains(actions)).toBe(false);
+    expect(actions.classList).toContain("sm:ml-auto");
+  });
+
+  it("keeps the small row-end control on the title's line", () => {
+    const { host, line } = renderRow({
+      rowEnd: <button type="button">More</button>,
+    });
+    expect(line.contains(host.querySelector("button"))).toBe(true);
+  });
+
+  it("wraps the footer with the actions, not inside the title's line", () => {
+    const { host, line, row } = renderRow({
+      footer: <span data-testid="loan">On loan</span>,
+    });
+    const footer = host.querySelector('[data-testid="loan"]')!;
+    expect(footer.parentElement?.parentElement).toBe(row);
+    expect(line.contains(footer)).toBe(false);
   });
 });
 
@@ -200,6 +269,13 @@ describe("PuzzleCardShell piece count", () => {
       expect(html).toContain(`>${expected}<`);
     },
   );
+});
+
+describe("PuzzleCardShell without a piece count", () => {
+  it.each(["grid", "list"] as const)("shows none in %s view", (viewMode) => {
+    render(puzzle({ pieceCount: 0 }), viewMode);
+    expect(container.textContent).not.toContain("0 pieces");
+  });
 });
 
 describe("PuzzleCardShell difficulty pill", () => {

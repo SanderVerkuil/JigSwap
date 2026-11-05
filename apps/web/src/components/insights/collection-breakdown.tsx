@@ -41,6 +41,24 @@ export function bucketLabel(
   return label;
 }
 
+// A piece-count bucket's display label: the numbers in the member's own format ("1.000–1.999" in
+// Dutch, "1,000–1,999" in English). Only for this chart: a brand may well be called "2000".
+export function pieceCountLabel(
+  label: string,
+  names: { unknown: string; other: string },
+  formatNumber: (value: number) => string,
+): string {
+  const range = /^(\d+)-(\d+)$/.exec(label);
+  if (range) {
+    return `${formatNumber(Number(range[1]))}–${formatNumber(Number(range[2]))}`;
+  }
+  const open = /^(< )?(\d+)(\+)?$/.exec(label);
+  if (open) {
+    return `${open[1] ?? ""}${formatNumber(Number(open[2]))}${open[3] ?? ""}`;
+  }
+  return bucketLabel(label, names);
+}
+
 // The brand bars in the query's order (top brands by count, then Other) without the copies that
 // have no brand: those are counted apart for a note under the chart, so they never rank as a brand.
 export function brandSeries(data: DistributionEntry[]): {
@@ -77,68 +95,45 @@ function hasValues(entries: DistributionEntry[]): boolean {
   return entries.some((e) => e.value > 0);
 }
 
-function PieceCountChart({ data }: { data: DistributionEntry[] }) {
+// Height of one bar's row: a bar of at most BAR_SIZE plus the gap to the next one.
+const BAR_SIZE = 28;
+const BAR_ROW_HEIGHT = 40;
+
+// Labelled horizontal bars with their values drawn, shared by Piece count and Top brands. The chart
+// grows with its rows, so one or two get thin bars instead of bars stretched to a fixed height, and
+// any number of labels stay legible at any width. It reads without hovering, so the bars don't
+// animate: Recharts hides the labels while an animation runs, and any re-render with new rows would
+// replay it. The drawing is aria-hidden and off the Tab order (accessibilityLayer would make the SVG
+// an unnamed keyboard stop); screen readers get the same numbers from the table, in a figure named
+// after the chart.
+function BreakdownBars({
+  title,
+  rows,
+  color,
+}: {
+  title: string;
+  rows: DistributionEntry[];
+  color: string;
+}) {
   const t = useTranslations("insights.breakdown");
+  const format = useFormatter();
   const config = {
-    value: { label: t("count"), color: "var(--chart-1)" },
-  } satisfies ChartConfig;
-  const names = { unknown: t("unknown"), other: t("other") };
-  const buckets = data.map((e) => ({
-    ...e,
-    label: bucketLabel(e.label, names),
-  }));
-
-  return (
-    <ChartContainer config={config} className="h-[220px] w-full">
-      <BarChart data={buckets} margin={{ left: 4, right: 8 }}>
-        <XAxis
-          dataKey="label"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          interval={0}
-        />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          width={28}
-          allowDecimals={false}
-        />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" fill="var(--color-value)" radius={4} />
-      </BarChart>
-    </ChartContainer>
-  );
-}
-
-// Height of one brand row: a bar of at most BRAND_BAR_SIZE plus the gap to the next one.
-const BRAND_BAR_SIZE = 28;
-const BRAND_ROW_HEIGHT = 40;
-
-// Top brands as horizontal bars, in the query's order: the six biggest brands, then Other. Copies
-// without a brand are not a brand; a note under the bars counts them. The chart grows with its rows,
-// so one or two brands get thin bars instead of bars stretched to fill a fixed height.
-function BrandChart({ data }: { data: DistributionEntry[] }) {
-  const t = useTranslations("insights.breakdown");
-  const names = { unknown: t("unknown"), other: t("other") };
-  const { bars, withoutBrand } = brandSeries(data);
-  const rows = bars.map((e) => ({ ...e, label: bucketLabel(e.label, names) }));
-  const config = {
-    value: { label: t("count"), color: "var(--chart-2)" },
+    value: { label: t("count"), color },
   } satisfies ChartConfig;
 
   return (
-    <div className="space-y-2">
-      {rows.length > 0 && (
+    <figure aria-label={title}>
+      <div aria-hidden="true">
         <ChartContainer
           config={config}
           className="w-full"
-          style={{ height: rows.length * BRAND_ROW_HEIGHT }}
+          style={{ height: rows.length * BAR_ROW_HEIGHT }}
         >
           <BarChart
+            accessibilityLayer={false}
             data={rows}
             layout="vertical"
-            margin={{ left: 8, right: 24 }}
+            margin={{ left: 8, right: 32 }}
           >
             <YAxis
               dataKey="label"
@@ -148,22 +143,89 @@ function BrandChart({ data }: { data: DistributionEntry[] }) {
               width={96}
               tickMargin={4}
             />
-            <XAxis type="number" hide allowDecimals={false} />
+            {/* The longest bar fills the row. With the default domain a maximum of 1 drew a
+                quarter of it, on a scale from 0 to 4. */}
+            <XAxis
+              type="number"
+              hide
+              allowDecimals={false}
+              domain={[0, "dataMax"]}
+            />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar
               dataKey="value"
               fill="var(--color-value)"
               radius={4}
-              maxBarSize={BRAND_BAR_SIZE}
+              maxBarSize={BAR_SIZE}
+              isAnimationActive={false}
             >
               <LabelList
                 dataKey="value"
                 position="right"
                 className="fill-foreground text-xs"
+                formatter={(value) =>
+                  typeof value === "number" ? format.number(value) : value
+                }
               />
             </Bar>
           </BarChart>
         </ChartContainer>
+      </div>
+      <table aria-label={title} className="sr-only">
+        <thead>
+          <tr>
+            <th scope="col">{title}</th>
+            <th scope="col">{t("count")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ label, value }) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td>{format.number(value)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
+  );
+}
+
+// Piece-count ranges in the query's order, low to high, then the copies without a count.
+function PieceCountChart({ data }: { data: DistributionEntry[] }) {
+  const t = useTranslations("insights.breakdown");
+  const format = useFormatter();
+  const names = { unknown: t("unknown"), other: t("other") };
+  return (
+    <BreakdownBars
+      title={t("pieceCount")}
+      color="var(--chart-1)"
+      rows={data.map((e) => ({
+        ...e,
+        label: pieceCountLabel(e.label, names, (value) => format.number(value)),
+      }))}
+    />
+  );
+}
+
+// Top brands in the query's order: the six biggest brands, then Other. Copies without a brand are
+// not a brand; a note under the bars counts them.
+function BrandChart({ data }: { data: DistributionEntry[] }) {
+  const t = useTranslations("insights.breakdown");
+  const names = { unknown: t("unknown"), other: t("other") };
+  const { bars, withoutBrand } = brandSeries(data);
+
+  return (
+    <div className="space-y-2">
+      {bars.length > 0 && (
+        <BreakdownBars
+          title={t("brands")}
+          color="var(--chart-2)"
+          rows={bars.map((e) => ({
+            ...e,
+            label: bucketLabel(e.label, names),
+          }))}
+        />
       )}
       {withoutBrand > 0 && (
         <p className="text-muted-foreground text-xs">
@@ -260,15 +322,17 @@ function DifficultyChart({ data }: { data: DistributionEntry[] }) {
 function BreakdownBlock({
   title,
   data,
+  className,
   children,
 }: {
   title: string;
   data: DistributionEntry[];
+  className?: string;
   children: React.ReactNode;
 }) {
   const t = useTranslations("insights.breakdown");
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <h3 className="text-muted-foreground mb-4 border-b pb-2 text-sm font-semibold">
         {title}
       </h3>
@@ -292,8 +356,14 @@ export function CollectionBreakdown({
   return (
     <section>
       <SectionHead title={t("title")} icon={FolderOpen} />
-      <div className="grid gap-8 lg:grid-cols-3">
-        <BreakdownBlock title={t("pieceCount")} data={data.byPieceCount}>
+      {/* Three columns next to an open sidebar leave a chart 209px at 1024 wide, most of it taken by
+          the labels: the piece-count block takes the full width until 1280. */}
+      <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+        <BreakdownBlock
+          title={t("pieceCount")}
+          data={data.byPieceCount}
+          className="lg:col-span-2 xl:col-span-1"
+        >
           <PieceCountChart data={data.byPieceCount} />
         </BreakdownBlock>
         <BreakdownBlock title={t("difficulty")} data={data.byDifficulty}>

@@ -9,9 +9,10 @@ import { QrDialog } from "@/components/social/qr-dialog";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
+import { validateProfileSearch } from "@/lib/profile-search";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -23,6 +24,8 @@ import { useTranslations } from "use-intl";
 // link lands on it before the slower sections below have loaded.
 // The shell chrome owns the "Profile" page title, so there is no page h1 here.
 export const Route = createFileRoute("/_dashboard/profile")({
+  // `edit` opens the Edit Profile form from elsewhere (see profile-search.ts).
+  validateSearch: validateProfileSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "profile") }],
   }),
@@ -32,7 +35,18 @@ export const Route = createFileRoute("/_dashboard/profile")({
 
 function ProfilePage() {
   const t = useTranslations("profile");
-  const [isEditing, setIsEditing] = useState(false);
+  const { edit } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const [editOpenedHere, setEditOpenedHere] = useState(false);
+  // Open when opened from this page, or when arriving via ?edit (the QR dialog, the public
+  // preview). The flag lives in the URL, so closing drops it (replace: Back must not reopen it).
+  const isEditing = editOpenedHere || edit !== undefined;
+  const setIsEditing = (open: boolean) => {
+    setEditOpenedHere(open);
+    if (!open && edit !== undefined) {
+      void navigate({ search: {}, replace: true, resetScroll: false });
+    }
+  };
 
   const { data: member } = useQuery(
     convexQuery(gateway.identity.currentUser, {}),
@@ -65,12 +79,16 @@ function ProfilePage() {
       <IdentityHeader
         member={member}
         isEditing={isEditing}
-        onToggleEdit={() => setIsEditing((editing) => !editing)}
+        onToggleEdit={() => setIsEditing(!isEditing)}
       />
       {isEditing && (
-        <EditProfileForm member={member} onDone={() => setIsEditing(false)} />
+        <EditProfileForm
+          member={member}
+          focusCustomLink={edit === "link"}
+          onDone={() => setIsEditing(false)}
+        />
       )}
-      <PrivacySection />
+      <PrivacySection memberId={member._id} />
       <ProfileShelfSection member={member} />
       <ProfileStatsSection member={member} />
       <ReputationSection memberId={member._id as Id<"users">} />

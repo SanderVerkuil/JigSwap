@@ -25,6 +25,13 @@ const router = vi.hoisted(() => ({
   search: {} as PublicCatalogSearch,
   navigate: vi.fn(),
 }));
+const auth = vi.hoisted(() => ({ signedIn: false }));
+
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  Unauthenticated: ({ children }: { children: ReactNode }) =>
+    auth.signedIn ? null : children,
+}));
 
 vi.mock("@/compat/link", () => ({
   Link: ({
@@ -54,7 +61,33 @@ vi.mock("@tanstack/react-router", () => ({
 
 const emptyPage = { page: [], isDone: true, continueCursor: "" };
 
-const queryClientFor = (search: PublicCatalogSearch) => {
+const card = (title: string) => ({
+  _id: title,
+  title,
+  brand: "Jumbo",
+  pieceCount: 1000,
+  image: null,
+  rating: { value: 0, count: 0 },
+  availableToSwap: 0,
+});
+
+// Three pages of one card each, by the cursor that asks for them.
+const THREE_PAGES = {
+  first: { page: [card("Harbour")], isDone: false, continueCursor: "c2" },
+  c2: { page: [card("Windmill")], isDone: false, continueCursor: "c3" },
+  c3: { page: [card("Tulips")], isDone: true, continueCursor: "end" },
+};
+
+const pageQueryKey = (search: PublicCatalogSearch, cursor: string | null) =>
+  convexQuery(gateway.catalog.publicBrowse, {
+    paginationOpts: { numItems: 20, cursor },
+    ...publicCatalogFilterArgs(search),
+  }).queryKey;
+
+const queryClientFor = (
+  search: PublicCatalogSearch,
+  pages: Record<string, unknown> = { first: emptyPage },
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -72,13 +105,12 @@ const queryClientFor = (search: PublicCatalogSearch) => {
     convexQuery(gateway.catalog.allBrands, {}).queryKey,
     ["Jumbo"],
   );
-  queryClient.setQueryData(
-    convexQuery(gateway.catalog.publicBrowse, {
-      paginationOpts: { numItems: 20, cursor: null },
-      ...publicCatalogFilterArgs(search),
-    }).queryKey,
-    emptyPage,
-  );
+  for (const [cursor, page] of Object.entries(pages)) {
+    queryClient.setQueryData(
+      pageQueryKey(search, cursor === "first" ? null : cursor),
+      page,
+    );
+  }
   return queryClient;
 };
 
@@ -95,9 +127,13 @@ const pageAt = (locale: "en" | "nl") => (
   </IntlProvider>
 );
 
-const renderAt = (search: PublicCatalogSearch, locale: "en" | "nl" = "en") => {
+const renderAt = (
+  search: PublicCatalogSearch,
+  locale: "en" | "nl" = "en",
+  pages?: Record<string, unknown>,
+) => {
   router.search = search;
-  const client = queryClientFor(search);
+  const client = queryClientFor(search, pages);
   const view = render(
     <QueryClientProvider client={client}>{pageAt(locale)}</QueryClientProvider>,
   );
@@ -139,6 +175,7 @@ const advanceDebounce = () => {
 
 beforeEach(() => {
   router.navigate.mockClear();
+  auth.signedIn = false;
 });
 
 afterEach(() => {
@@ -168,6 +205,27 @@ describe("public catalogue controls", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Results" }),
     ).toBeTruthy();
+  });
+
+  it("titles the cards one level below the Results heading", () => {
+    renderAt({}, "en", { first: THREE_PAGES.first });
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Harbour" }),
+    ).toBeTruthy();
+  });
+
+  it("asks visitors to join, but not members", () => {
+    const { unmount } = renderAt({});
+    expect(
+      screen.getByRole("link", { name: "Join JigSwap to request a swap" }),
+    ).toBeTruthy();
+    unmount();
+
+    auth.signedIn = true;
+    renderAt({});
+    expect(
+      screen.queryByRole("link", { name: "Join JigSwap to request a swap" }),
+    ).toBeNull();
   });
 
   it("shows the URL's filters", () => {
@@ -228,6 +286,95 @@ describe("public catalogue search in the URL", () => {
     advanceDebounce();
 
     expect(lastUrlWrite().search.q).toBeUndefined();
+  });
+});
+
+describe("public catalogue Load more in the URL", () => {
+  const loader = (
+    Route as unknown as {
+      options: {
+        loader: (args: {
+          context: { queryClient: QueryClient };
+          deps: PublicCatalogSearch;
+          cause: string;
+        }) => Promise<void>;
+      };
+    }
+  ).options.loader;
+
+  it("writes how many pages show, keeping the filters and the scroll position", async () => {
+    renderAt({ brand: "Jumbo" }, "en", {
+      first: THREE_PAGES.first,
+      c2: THREE_PAGES.c2,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await vi.waitFor(() => expect(router.navigate).toHaveBeenCalled());
+
+    expect(lastUrlWrite()).toEqual({
+      search: { brand: "Jumbo", pages: 2 },
+      replace: true,
+      resetScroll: false,
+    });
+  });
+
+  it("restores the pages a URL names from what the loader fetched", () => {
+    renderAt({ pages: 3 }, "en", THREE_PAGES);
+    for (const title of ["Harbour", "Windmill", "Tulips"]) {
+      expect(screen.getByRole("heading", { name: title })).toBeTruthy();
+    }
+    expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
+  });
+
+  it("stops at the pages it has when the URL names more than exist", () => {
+    renderAt({ pages: 9 }, "en", THREE_PAGES);
+    expect(screen.getByRole("heading", { name: "Tulips" })).toBeTruthy();
+  });
+
+  it("shows only the first page without a page count, as after a Catalogue link", () => {
+    const { changeUrl } = renderAt({ pages: 2 }, "en", THREE_PAGES);
+    expect(screen.getByRole("heading", { name: "Windmill" })).toBeTruthy();
+
+    changeUrl({});
+
+    expect(screen.queryByRole("heading", { name: "Windmill" })).toBeNull();
+  });
+
+  it("starts over at one page when a filter changes", () => {
+    vi.useFakeTimers();
+    renderAt({ q: "castle", pages: 3 });
+
+    fireEvent.change(searchBox(), { target: { value: "bridge" } });
+    advanceDebounce();
+
+    expect(lastUrlWrite().search).toEqual({ q: "bridge" });
+  });
+
+  it("loads every page the URL names before the page renders", async () => {
+    const asked: unknown[] = [];
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryFn: ({ queryKey }) => {
+            const { paginationOpts } = queryKey[2] as {
+              paginationOpts: { cursor: string | null };
+            };
+            asked.push(paginationOpts.cursor);
+            const pages: Record<string, unknown> = THREE_PAGES;
+            return pages[paginationOpts.cursor ?? "first"];
+          },
+        },
+      },
+    });
+
+    await loader({
+      context: { queryClient },
+      deps: { pages: 9 },
+      cause: "enter",
+    });
+
+    // Stops at the last page, however many the URL names.
+    expect(asked).toEqual([null, "c2", "c3"]);
   });
 });
 

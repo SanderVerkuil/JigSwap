@@ -1,6 +1,13 @@
 // @vitest-environment happy-dom
+import { gateway } from "@/gateway";
 import type { CopyInstanceView } from "@jigswap/contracts";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { getFunctionName, type FunctionReference } from "convex/server";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -10,6 +17,8 @@ import { CopyInstanceScreen } from "./copy-instance-screen";
 
 const mocks = vi.hoisted(() => ({
   copy: undefined as unknown,
+  household: undefined as unknown,
+  navigate: vi.fn(),
   editProps: undefined as { onAddPhotos?: () => void } | undefined,
 }));
 
@@ -18,15 +27,17 @@ const managedCopy = (over: {
   snapshot?: object;
   pendingPhotos?: object[];
   photoLimit?: number;
+  household?: object;
+  viewerIsOwner?: boolean;
 }) =>
   ({
     copyId: "copy_1",
     aggregateId: "aggregate_1",
     puzzleId: "puzzle_1",
-    viewerIsOwner: true,
+    viewerIsOwner: over.viewerIsOwner ?? true,
     viewerCanManage: true,
     viewerMayRequest: false,
-    household: null,
+    household: over.household ?? null,
     owner: { anonymous: true },
     completions: [],
     copyReviews: [],
@@ -70,7 +81,7 @@ vi.mock("@/compat/link", () => ({
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mocks.navigate,
 }));
 vi.mock("@convex-dev/react-query", () => ({
   convexQuery: (ref: FunctionReference<"query">, args: unknown) => ({
@@ -81,7 +92,11 @@ vi.mock("@convex-dev/react-query", () => ({
 }));
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
-    data: name.endsWith("getCopyInstanceView") ? mocks.copy : undefined,
+    data: name.endsWith("getCopyInstanceView")
+      ? mocks.copy
+      : name === getFunctionName(gateway.household.mine)
+        ? mocks.household
+        : undefined,
     isPending: false,
     isError: false,
   }),
@@ -92,12 +107,16 @@ vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeaderActions: () => {},
 }));
 
-const renderCopy = (copy: CopyInstanceView) => {
+const renderCopy = (
+  copy: CopyInstanceView,
+  screenProps: Partial<Parameters<typeof CopyInstanceScreen>[0]> = {},
+) => {
   mocks.copy = copy;
   mocks.editProps = undefined;
+  mocks.navigate.mockReset();
   render(
     <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-      <CopyInstanceScreen copyId="copy_1" owned />
+      <CopyInstanceScreen copyId="copy_1" owned {...screenProps} />
     </IntlProvider>,
   );
 };
@@ -119,6 +138,160 @@ describe("Edit copy's Add photo", () => {
       }),
     );
     expect(mocks.editProps?.onAddPhotos).toBeUndefined();
+  });
+});
+
+describe("/copies/$id for a copy in the viewer's own library", () => {
+  it("moves the owner to /my-puzzles, in place of this history entry", () => {
+    renderCopy(managedCopy({}), { owned: false });
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/my-puzzles/$id",
+      params: { id: "copy_1" },
+      search: {},
+      replace: true,
+    });
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  it("keeps the collection it came from", () => {
+    renderCopy(managedCopy({}), {
+      owned: false,
+      navContext: { kind: "collection", id: "col_1" },
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith(
+      expect.objectContaining({ search: { from: "collection:col_1" } }),
+    );
+  });
+
+  it("moves a housemate too: the copy is in their library", () => {
+    renderCopy(
+      managedCopy({
+        viewerIsOwner: false,
+        household: { viewerAccess: "view", permission: "view" },
+      }),
+      { owned: false },
+    );
+    expect(mocks.navigate).toHaveBeenCalled();
+  });
+
+  it("leaves a visitor on the public page", () => {
+    renderCopy(managedCopy({ viewerIsOwner: false }), { owned: false });
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
+  });
+
+  it("stays put on /my-puzzles", () => {
+    renderCopy(managedCopy({}));
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe("Household access", () => {
+  const ownerFacts = {
+    permission: "manage",
+    viewerAccess: "owner",
+    inheritsDefault: true,
+    householdDefault: "manage",
+  };
+  const accessLabel = en.household.copyAccess.label;
+
+  it("is offered to an owner sharing a household", () => {
+    mocks.household = { members: [{ _id: "me" }, { _id: "anna" }] };
+    renderCopy(managedCopy({ household: ownerFacts }));
+    expect(screen.getByText(accessLabel)).toBeTruthy();
+  });
+
+  it("isn't offered to an owner alone in their household", () => {
+    mocks.household = { members: [{ _id: "me" }] };
+    renderCopy(managedCopy({ household: ownerFacts }));
+    expect(screen.queryByText(accessLabel)).toBeNull();
+  });
+
+  it("still tells a housemate what they may do", () => {
+    mocks.household = undefined;
+    renderCopy(
+      managedCopy({
+        viewerIsOwner: false,
+        household: { ...ownerFacts, viewerAccess: "view" },
+      }),
+    );
+    expect(screen.getByText(en.household.copyAccess.memberView)).toBeTruthy();
+  });
+});
+
+describe("the community rating", () => {
+  it("says there are none yet, instead of a zero and five empty bars", () => {
+    renderCopy(managedCopy({}));
+    expect(screen.getByText("No ratings yet")).toBeTruthy();
+    expect(screen.queryByText("5★")).toBeNull();
+  });
+});
+
+describe("the hero on a phone", () => {
+  // happy-dom has no layout: this pins the class contract; the geometry was checked in a browser.
+  it("puts the cover beside the title and the rest full width below", () => {
+    renderCopy(managedCopy({}));
+    const hero = screen.getByRole("heading", { level: 1 }).closest("section");
+    expect(hero?.className).toContain("grid-cols-[7.5rem_minmax(0,1fr)]");
+    expect(hero?.className).toContain("sm:grid-cols-1");
+    expect(
+      screen.getByTestId("copy-status-line").closest(".max-sm\\:col-span-2"),
+    ).toBeTruthy();
+  });
+});
+
+describe("the cover on a phone", () => {
+  // A thumbnail there, too small to judge the box art or to pinch in: a tap opens it large.
+  it("opens large from a phone-only button, where a pinch has room", () => {
+    renderCopy(
+      managedCopy({ snapshot: { image: "https://cdn.test/box.jpg" } }),
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const open = screen.getByRole("button", {
+      name: en.copyInstance.viewCoverLarger,
+    });
+    expect(open.classList).toContain("sm:hidden");
+
+    fireEvent.click(open);
+    const dialog = screen.getByRole("dialog", { name: "The Night Watch" });
+    expect(within(dialog).getByTestId("photo-zoom-surface")).toBeTruthy();
+    expect(within(dialog).getByRole("img").getAttribute("src")).toBe(
+      "https://cdn.test/box.jpg",
+    );
+    expect(
+      within(dialog).getByRole("button", {
+        name: en.copyInstance.photoLightbox.zoomIn,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("offers no large view without a cover", () => {
+    renderCopy(managedCopy({}));
+    expect(
+      screen.queryByRole("button", { name: en.copyInstance.viewCoverLarger }),
+    ).toBeNull();
+  });
+});
+
+describe("Send a link", () => {
+  const sendLink = () =>
+    screen.queryByRole("button", { name: en.copyInstance.sendLink.trigger });
+
+  it("is there while the copy is on offer", () => {
+    renderCopy(
+      managedCopy({
+        snapshot: {
+          availability: { forTrade: false, forSale: false, forLend: true },
+        },
+      }),
+    );
+    expect(sendLink()).toBeTruthy();
+  });
+
+  // Nobody can ask for a copy that isn't on offer, and the link wouldn't open for most people.
+  it("isn't there while it isn't", () => {
+    renderCopy(managedCopy({}));
+    expect(sendLink()).toBeNull();
   });
 });
 

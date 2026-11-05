@@ -8,8 +8,10 @@ import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
 import { CopyStatusLine } from "@/components/copies/copy-status-line";
 import { formatCopyTenure } from "@/components/copies/copy-tenure";
+import { CoverLightbox } from "@/components/copies/cover-lightbox";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
+import { SendCopyLinkDialog } from "@/components/copies/send-copy-link-dialog";
 import { type NavContext } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import {
@@ -44,11 +46,15 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
-import { formatCompletionDate } from "@/lib/completion-format";
+import {
+  formatCompletionDate,
+  formatSolveTime,
+  solveDurationText,
+} from "@/lib/completion-format";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
-import { durationParts } from "@/lib/humanize-duration";
 import {
   projectedAuthorOf,
   useMemberDisplayName,
@@ -69,6 +75,8 @@ import {
   Edit,
   Gift,
   ImagePlus,
+  Link2,
+  Maximize2,
   MessageCircle,
   Package,
   Puzzle,
@@ -97,8 +105,8 @@ type PuzzleComment = FunctionReturnType<
 >[number];
 // Shared copy-detail screen used by BOTH the public route (/copies/$id, owned=false)
 // and the owner route (/my-puzzles/$id, owned=true). `owned` drives the breadcrumb
-// framing and gates the owner route: viewing a copy you don't own under /my-puzzles
-// bounces to the public /copies view.
+// framing and gates both routes: viewing a copy you don't own under /my-puzzles bounces
+// to the public /copies view, and one in your library under /copies to /my-puzzles.
 export function CopyInstanceScreen({
   copyId,
   owned,
@@ -129,6 +137,23 @@ export function CopyInstanceScreen({
   useEffect(() => {
     if (notOwner) router.push(`/copies/${copyId}`);
   }, [notOwner, copyId, router]);
+  // And the other way: a copy in the viewer's own library lives under /my-puzzles (one URL per copy
+  // for them), whichever link brought them here. Replace, so Back doesn't land here again.
+  const navigate = useNavigate();
+  const inLibraryElsewhere =
+    !owned &&
+    copy != null &&
+    (copy.viewerIsOwner === true || copy.household !== null);
+  const fromCollection = navContext?.id;
+  useEffect(() => {
+    if (!inLibraryElsewhere) return;
+    void navigate({
+      to: "/my-puzzles/$id",
+      params: { id: copyId },
+      search: fromCollection ? { from: `collection:${fromCollection}` } : {},
+      replace: true,
+    });
+  }, [inLibraryElsewhere, copyId, fromCollection, navigate]);
 
   // A missing copy resolves to `null`; a malformed id or any other query failure surfaces as
   // `isError` with `copy` stuck at `undefined`. Treat both as not-found so an unresolvable copy
@@ -137,7 +162,7 @@ export function CopyInstanceScreen({
     return <CopyInstanceNotFound />;
   }
 
-  if (copyPending || copy === undefined || notOwner) {
+  if (copyPending || copy === undefined || notOwner || inLibraryElsewhere) {
     return <CopyInstanceSkeleton />;
   }
 
@@ -154,8 +179,8 @@ export function CopyInstanceScreen({
 function CopyInstanceSkeleton() {
   return (
     <div className="w-full space-y-8">
-      <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <Skeleton className="mx-auto aspect-square w-full max-w-[40vh] rounded-2xl lg:mx-0 lg:max-w-none" />
+      <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-1 sm:gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <Skeleton className="aspect-square w-full rounded-2xl sm:mx-auto sm:max-w-[40vh] lg:mx-0 lg:max-w-none" />
         <div className="space-y-4">
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
@@ -225,6 +250,10 @@ function CopyInstanceDetail({
   };
   // The owner's "Share with circles" dialog.
   const [shareOpen, setShareOpen] = useState(false);
+  // The cover's large view (phones).
+  const [coverOpen, setCoverOpen] = useState(false);
+  // "Send a link", for a manager while the copy is on offer.
+  const [sendLinkOpen, setSendLinkOpen] = useState(false);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -280,6 +309,15 @@ function CopyInstanceDetail({
       }
     : null;
 
+  // The owner picks what their household may do with this copy; alone in the household there is no
+  // one to pick for. (A housemate viewing it is by definition not alone.)
+  const ownerInHousehold = copy.household?.viewerAccess === "owner";
+  const { data: ownerHousehold } = useQuery(
+    convexQuery(gateway.household.mine, ownerInHousehold ? {} : "skip"),
+  );
+  const showHouseholdAccess =
+    !ownerInHousehold || (ownerHousehold?.members.length ?? 0) > 1;
+
   // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
   // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
   // (no query) when there's no context; unreadable/missing collections resolve to null and
@@ -294,7 +332,7 @@ function CopyInstanceDetail({
   );
 
   // Publish the page head: the puzzle name as the title (replacing the generic
-  // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
+  // "Copy"), the breadcrumb trail, and the owner-only Edit action. For the
   // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
   // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
   // the public route publishes an explicit Community › Browse Puzzles › <name> trail (the crumb
@@ -302,11 +340,19 @@ function CopyInstanceDetail({
   // A readable `?from=collection:<id>` context overrides both with My Library ›
   // Collections › <name> and highlights Collections in the sidebar; no context (or an
   // unreadable/malformed one) falls back to the behavior above, byte-identical.
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(tTitles("named", { name: snapshot.title }));
   usePageHeader(
     () => ({
       title: snapshot.title,
       // The body renders the title as this page's h1 below md; from md the head's h1 is it.
       ownsHeading: "phone",
+      // That h1 sits right under the phone's top bar, which names where the copy lives instead.
+      mobileTitle: navCollection
+        ? tShell("pages.collections.title")
+        : inLibrary
+          ? tShell("pages.myPuzzles.title")
+          : tShell("pages.browse.title"),
       crumbs: navCollection
         ? [
             { label: tShell("groups.library.label"), href: "/library" },
@@ -375,28 +421,35 @@ function CopyInstanceDetail({
       ? snapshot.acquisitionDate
       : null;
 
-  // Humanize a solve duration (minutes) to a localized "2 hours" / "1 day" / "1 week" via the
-  // largest sensible unit — Intl unit formatting handles plurals + locale.
-  const formatDuration = (minutes: number) => {
-    const { value, unit } = durationParts(minutes);
-    return format.number(value, { style: "unit", unit, unitDisplay: "long" });
-  };
-
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — capped at 40vh and centred below lg so the title, status and actions start on the
-            first screen of a phone; beside the info column at lg. Hovering opens a side panel that
-            magnifies where the cursor points. */}
-        <div className="bg-muted relative mx-auto aspect-square w-full max-w-[40vh] overflow-hidden rounded-2xl shadow-sm lg:mx-0 lg:max-w-[300px]">
+      {/* On a phone the cover sits small beside the title, so the offers and Log a solve fit the first
+          screen. From sm it is capped at 40vh and centred above the info; at lg it is a column
+          beside it, spanning its two rows. */}
+      <section className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-7">
+        {/* Cover. Hovering opens a side panel that magnifies where the cursor points. On a phone it
+            is too small to judge the box or to pinch in, so a tap opens it large instead. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm sm:mx-auto sm:mb-7 sm:max-w-[40vh] lg:row-span-2 lg:mx-0 lg:mb-0 lg:max-w-[300px]">
           {snapshot.image ? (
-            <ImageZoom
-              src={snapshot.image}
-              alt={snapshot.title}
-              fill
-              priority
-            />
+            <>
+              <ImageZoom
+                src={snapshot.image}
+                alt={snapshot.title}
+                fill
+                priority
+              />
+              <button
+                type="button"
+                aria-label={t("viewCoverLarger")}
+                onClick={() => setCoverOpen(true)}
+                className="focus-visible:ring-ring absolute inset-0 grid touch-pan-x touch-pan-y cursor-zoom-in place-items-end rounded-2xl p-1.5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset sm:hidden"
+              >
+                <span className="bg-background/70 border-border/50 text-foreground grid size-6 place-items-center rounded-full border shadow-sm backdrop-blur-md">
+                  <Maximize2 className="size-3" aria-hidden />
+                </span>
+              </button>
+            </>
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
@@ -404,13 +457,13 @@ function CopyInstanceDetail({
           )}
         </div>
 
-        {/* Info */}
-        <div className="min-w-0">
+        {/* What it is: beside the cover on a phone. */}
+        <div className="min-w-0 max-sm:self-center">
           {/* From md the shell page head already shows the title (published above). */}
-          <h1 className="font-heading text-3xl font-bold tracking-tight md:hidden">
+          <h1 className="font-heading text-xl font-bold tracking-tight sm:text-3xl md:hidden">
             {snapshot.title}
           </h1>
-          <p className="text-muted-foreground mt-1 text-base md:mt-0">
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
               {format.number(snapshot.pieceCount)}
@@ -425,14 +478,18 @@ function CopyInstanceDetail({
                 {" · "}
                 <Link
                   href={`/puzzles/${copy.puzzleId}`}
-                  className="text-primary-text font-semibold hover:underline"
+                  // Inline: on touch the padding grows its hit area, not the line.
+                  className="text-primary-text font-semibold hover:underline pointer-coarse:py-3"
                 >
                   {t("viewPuzzlePage")}
                 </Link>
               </>
             )}
           </p>
+        </div>
 
+        {/* Where it stands and what can be done with it: full width from here on. */}
+        <div className="min-w-0 max-sm:col-span-2">
           {/* Status: custody, offers and who can see it, in one line (offers only for visitors). */}
           <CopyStatusLine
             detailed={copy.viewerCanManage}
@@ -440,6 +497,7 @@ function CopyInstanceDetail({
             visibilityPreference={
               snapshot.visibilityPreference ?? snapshot.visibility
             }
+            ownerProfileVisibility={snapshot.ownerProfileVisibility}
             openLoan={openLoan}
           />
 
@@ -489,12 +547,19 @@ function CopyInstanceDetail({
                   snapshot.visibilityPreference ?? snapshot.visibility
                 }
                 onLoan={openLoanEntry !== undefined}
+                onSendLink={() => setSendLinkOpen(true)}
               />
             </div>
           )}
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
+            {copy.viewerCanManage && isAvailable && (
+              <Button variant="outline" onClick={() => setSendLinkOpen(true)}>
+                <Link2 className="h-4 w-4" />
+                {t("sendLink.trigger")}
+              </Button>
+            )}
             {canSolve && (
               <>
                 {/* Circle shares are the owner's alone (sharing/shareCopiesToCircle). */}
@@ -636,7 +701,8 @@ function CopyInstanceDetail({
                     <button
                       type="button"
                       onClick={() => openEditor("acquisition")}
-                      className="text-primary-text hover:underline"
+                      // On touch a 44px target; the negative margin keeps the row's height.
+                      className="text-primary-text hover:underline pointer-coarse:-my-3 pointer-coarse:py-3"
                     >
                       {t("addDetails")}
                     </button>
@@ -660,7 +726,7 @@ function CopyInstanceDetail({
             )}
           </div>
 
-          {copy.household && (
+          {copy.household && showHouseholdAccess && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}
           <RequestTradeDialog
@@ -678,7 +744,7 @@ function CopyInstanceDetail({
         <Stat
           value={
             stats.fastestFinishMinutes != null
-              ? formatDuration(stats.fastestFinishMinutes)
+              ? formatSolveTime(tCompletions, stats.fastestFinishMinutes)
               : "—"
           }
           label={t("statFastestFinish")}
@@ -761,9 +827,16 @@ function CopyInstanceDetail({
                         startDate: c.occurredAt,
                         datePrecision: c.datePrecision,
                       })
-                    : c.finishMinutes != null
-                      ? `${formatSolveDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
-                      : formatSolveDay(c.occurredAt)
+                    : [
+                        formatSolveDay(c.occurredAt),
+                        solveDurationText(tCompletions, {
+                          startDate: c.startedAt,
+                          endDate: c.occurredAt,
+                          completionTimeMinutes: c.finishMinutes ?? undefined,
+                        }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
                 }
               />
             ))}
@@ -842,6 +915,15 @@ function CopyInstanceDetail({
         </div>
       </div>
 
+      {snapshot.image && (
+        <CoverLightbox
+          src={snapshot.image}
+          alt={snapshot.title}
+          open={coverOpen}
+          onOpenChange={setCoverOpen}
+        />
+      )}
+
       {/* Solve dialogs (owner, household members and the borrower; keyed by aggregateId) + the
           inline copy editor (managers only). */}
       {canSolve && (
@@ -881,6 +963,15 @@ function CopyInstanceDetail({
                   : undefined
               }
               focus={editFocus}
+            />
+          )}
+          {copy.viewerCanManage && (
+            <SendCopyLinkDialog
+              copyId={copyId}
+              title={snapshot.title}
+              viewerIsOwner={copy.viewerIsOwner}
+              open={sendLinkOpen}
+              onOpenChange={setSendLinkOpen}
             />
           )}
           {copy.viewerIsOwner && copy.aggregateId != null && (
@@ -1245,6 +1336,15 @@ function CommunityRating({
   community: CopyInstanceView["community"];
 }) {
   const t = useTranslations("copyInstance");
+  // Not rated by anyone: a big "0" and five empty bars would read as rated zero.
+  if (community.count === 0) {
+    return (
+      <section>
+        <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
+        <p className="text-muted-foreground text-sm">{t("noRatings")}</p>
+      </section>
+    );
+  }
   return (
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />

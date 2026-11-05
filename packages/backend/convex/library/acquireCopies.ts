@@ -30,8 +30,8 @@ const condition = v.union(
 
 // Composition root for the quick-start batch add: one copy per picked definition, owned by the
 // caller. Each item runs the same makeAcquireCopy use case as acquireCopy (so the same catalogue
-// rule applies: approved, or the caller's own submission). An item marked forTrade is then offered
-// for swap through the same makeUpdateCopySharing use case as updateCopySharing. Any refusal throws,
+// rule applies: approved, or the caller's own submission). An item marked forTrade or forLend is then
+// offered through the same makeUpdateCopySharing use case as updateCopySharing. Any refusal throws,
 // and one mutation is one transaction, so the batch is all or nothing. One call is one batch: its
 // fresh batch id is on every CopyAcquired event (the activity feed groups them into one entry
 // instead of one per box) and on every copy row it creates (provenance).
@@ -41,6 +41,7 @@ export const acquireCopies = mutation({
       v.object({
         puzzleDefinitionId: v.string(),
         forTrade: v.optional(v.boolean()),
+        forLend: v.optional(v.boolean()),
       }),
     ),
     condition: v.optional(condition),
@@ -52,6 +53,7 @@ export const acquireCopies = mutation({
       args.items.map((item) => ({
         puzzleDefinitionId: toPuzzleDefinitionId(item.puzzleDefinitionId),
         forTrade: item.forTrade,
+        forLend: item.forLend,
       })),
     );
     if (plan.isErr) throw toConvexError(plan.error);
@@ -97,12 +99,13 @@ export const acquireCopies = mutation({
         .unique();
       if (row) await ctx.db.patch(row._id, { acquisitionBatchId: batchId });
 
-      if (item.forTrade) {
+      if (item.forTrade || item.forLend) {
         const shared = await share({
           actingMemberId: ownerId,
           copyId: acquired.value,
           visibility: "visible",
-          forTrade: true,
+          forTrade: item.forTrade,
+          forLend: item.forLend,
         });
         if (shared.isErr) throw toConvexError(shared.error);
       }

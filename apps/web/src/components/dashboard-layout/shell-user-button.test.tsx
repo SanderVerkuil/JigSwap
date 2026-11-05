@@ -17,6 +17,9 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { ShellUserButton } from "./shell-user-button";
 
+const consent = vi.hoisted(() => ({ openCookieSettings: vi.fn() }));
+vi.mock("@/lib/analytics-consent", () => consent);
+
 const mocks = vi.hoisted(() => ({
   settings: undefined as PresenceSettingsView | undefined,
   setPreference: vi.fn<(key: string, value: unknown) => void>(),
@@ -123,7 +126,10 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 const SET = getFunctionName(gateway.social.setPresencePreferences);
 const UNREGISTER = getFunctionName(gateway.notifications.unregisterPush);
 
-const renderButton = (locale: "en" | "nl" = "en") => {
+const renderButton = (
+  locale: "en" | "nl" = "en",
+  { tapTarget = false } = {},
+) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false, queryFn: () => new Promise<never>(() => {}) },
@@ -136,7 +142,7 @@ const renderButton = (locale: "en" | "nl" = "en") => {
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <ShellUserButton />
+        <ShellUserButton tapTarget={tapTarget} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -150,6 +156,23 @@ afterEach(cleanup);
 
 const statusItems = () =>
   screen.queryAllByRole("button", { name: /^Status: / });
+
+describe("ShellUserButton cookie settings", () => {
+  it.each([
+    ["en", "Cookie settings"],
+    ["nl", "Cookie-instellingen"],
+  ] as const)(
+    "reopens the cookie banner from the menu (%s)",
+    async (locale, name) => {
+      consent.openCookieSettings.mockClear();
+      renderButton(locale);
+      fireEvent.click(screen.getByRole("button", { name }));
+      await waitFor(() =>
+        expect(consent.openCookieSettings).toHaveBeenCalledTimes(1),
+      );
+    },
+  );
+});
 
 describe("ShellUserButton status menu", () => {
   it.each<[string, PresenceSettingsView | undefined]>([
@@ -383,4 +406,18 @@ describe("ShellUserButton help entry (UX-91)", () => {
       "/whats-new?tab=guides",
     ]);
   });
+});
+
+// Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar.
+describe("ShellUserButton focus ring", () => {
+  it.each([[false], [true]])(
+    "draws the app's solid ring around the trigger (tapTarget: %s)",
+    (tapTarget) => {
+      renderButton("en", { tapTarget });
+      const classes = mocks.appearance?.elements?.userButtonTrigger ?? "";
+      expect(classes).toContain("focus-visible:ring-2!");
+      expect(classes).toContain("focus-visible:ring-ring!");
+      expect(classes).toContain("focus-visible:ring-offset-2!");
+    },
+  );
 });

@@ -10,6 +10,7 @@ import {
   NOTIFICATION_TYPES,
   notificationCopy,
   notificationIcon,
+  UNSENT_NOTIFICATION_TYPES,
   type NotificationCopySource,
 } from "./notification-meta";
 
@@ -21,10 +22,21 @@ describe("notificationIcon", () => {
 });
 
 describe("NOTIFICATION_CATEGORIES", () => {
-  it("covers every notification type exactly once", () => {
+  it("covers every type that can still be sent, exactly once", () => {
     const all = NOTIFICATION_CATEGORIES.flatMap((c) => c.types);
-    expect(all.sort()).toEqual([...NOTIFICATION_TYPES].sort());
+    expect(all.sort()).toEqual(
+      NOTIFICATION_TYPES.filter(
+        (type) => !UNSENT_NOTIFICATION_TYPES.has(type),
+      ).sort(),
+    );
     expect(new Set(all).size).toBe(all.length);
+  });
+
+  // Nothing emits these: a switch for them would control nothing.
+  it("offers no preference for a type nothing sends", () => {
+    const all = NOTIFICATION_CATEGORIES.flatMap((c) => c.types);
+    expect(all).not.toContain("exchange_proposed");
+    expect(all).not.toContain("puzzle_favorited");
   });
 });
 

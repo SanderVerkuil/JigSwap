@@ -6,7 +6,7 @@ import { cleanup, render } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { MobileTopBar } from "./mobile-top-bar";
 import { PageHead } from "./page-head";
@@ -15,7 +15,7 @@ import {
   usePageHeader,
   type PageHeaderContent,
 } from "./page-header-slot";
-import { ShellHeading } from "./shell-title";
+import { ShellDocumentTitle, ShellHeading } from "./shell-title";
 
 // One h1 per page (UX-66). The desktop page head's title is the h1 from md (the head itself is
 // hidden below md); below md an sr-only ShellHeading inside main is the h1, and the top-bar title
@@ -32,12 +32,14 @@ vi.mock("@/compat/link", () => ({
   Link: ({
     href,
     children,
+    activeOptions,
     ...rest
   }: {
     href: string;
     children?: ReactNode;
+    activeOptions?: { exact?: boolean };
   }) => (
-    <a href={href} {...rest}>
+    <a href={href} data-exact-active={activeOptions?.exact} {...rest}>
       {children}
     </a>
   ),
@@ -167,5 +169,67 @@ describe("shell page title headings", () => {
       "Book club",
       "Book club",
     ]);
+  });
+});
+
+// The router's head() runs before a detail page's data is in, so it can only say "My puzzles". The
+// shell names the tab after the title the page publishes, and hands the tab back on the way out.
+describe("ShellDocumentTitle", () => {
+  const ROUTE_TITLE = "My puzzles — JigSwap";
+
+  const renderTitle = (content: PageHeaderContent) => {
+    const tree = (published: PageHeaderContent) => (
+      <PageHeaderSlotProvider>
+        <ShellDocumentTitle />
+        <Publish content={published} />
+      </PageHeaderSlotProvider>
+    );
+    const view = render(tree(content));
+    return { update: (next: PageHeaderContent) => view.rerender(tree(next)) };
+  };
+
+  beforeEach(() => {
+    document.title = ROUTE_TITLE;
+  });
+
+  it("names the tab after the title the page publishes", () => {
+    renderTitle({ title: "Oostenrijk, Tirol" });
+    expect(document.title).toBe("Oostenrijk, Tirol — JigSwap");
+  });
+
+  it("keeps the route's title while nothing is published yet, then follows renames", () => {
+    const { update } = renderTitle({ title: undefined });
+    expect(document.title).toBe(ROUTE_TITLE);
+    update({ title: "Café" });
+    expect(document.title).toBe("Café — JigSwap");
+    update({ title: "Bistro" });
+    expect(document.title).toBe("Bistro — JigSwap");
+  });
+
+  it("puts the route's title back when the page goes, since the router won't redo an unchanged one", () => {
+    const { update } = renderTitle({ title: "Café" });
+    update({});
+    expect(document.title).toBe(ROUTE_TITLE);
+  });
+
+  it("leaves a title alone that the next route's head has already set", () => {
+    const { update } = renderTitle({ title: "Café" });
+    document.title = "Owned copy — JigSwap";
+    update({});
+    expect(document.title).toBe("Owned copy — JigSwap");
+  });
+
+  // Switching language re-runs the router's head on the same page.
+  it("takes the tab back when the router's head changes under it, then hands that one back", async () => {
+    const { update } = renderTitle({ title: "Café" });
+    document.title = "Mijn puzzels — JigSwap";
+    await vi.waitFor(() => expect(document.title).toBe("Café — JigSwap"));
+    update({});
+    expect(document.title).toBe("Mijn puzzels — JigSwap");
+  });
+
+  it("leaves the tab alone for a title that is not plain text", () => {
+    renderTitle({ title: <em>Café</em> });
+    expect(document.title).toBe(ROUTE_TITLE);
   });
 });

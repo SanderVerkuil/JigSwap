@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { Container } from "@/components/marketing/container";
+import { useStartLink } from "@/components/marketing/use-start-link";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { openCookieSettings } from "@/lib/analytics-consent";
 import { Link as RouterLink } from "@tanstack/react-router";
@@ -8,16 +9,18 @@ import { useTranslations } from "use-intl";
 
 type FooterLink = { href: string; label: string };
 
+// On touch screens the links grow to 34px while the list's gap closes, so the rhythm stays.
 const linkCls =
-  "text-[14.5px] text-mk-text-muted hover:text-mk-violet-600 transition-colors";
+  "text-[14.5px] text-mk-text-muted hover:text-mk-violet-600 transition-colors pointer-coarse:py-1.5";
 
 // Four-column marketing footer: brand blurb + Product / Community / Legal.
 export function MarketingFooter() {
   const t = useTranslations("marketing");
+  const start = useStartLink();
 
   const col = (title: string, links: FooterLink[], extra?: React.ReactNode) => (
-    <div className="flex flex-col gap-3">
-      <div className="font-mk-heading font-semibold text-sm text-mk-text-strong">
+    <div className="flex flex-col gap-3 pointer-coarse:gap-0">
+      <div className="font-mk-heading font-semibold text-sm text-mk-text-strong pointer-coarse:mb-1.5">
         {title}
       </div>
       {links.map((lk) => (
@@ -44,7 +47,7 @@ export function MarketingFooter() {
             { href: "/catalog", label: t("nav.catalog") },
             { href: "/features", label: t("nav.features") },
             { href: "/docs", label: t("nav.docs") },
-            { href: "/sign-up", label: t("nav.startTrading") },
+            start,
           ])}
           {col(t("footer.community"), [
             { href: "/about", label: t("nav.about") },

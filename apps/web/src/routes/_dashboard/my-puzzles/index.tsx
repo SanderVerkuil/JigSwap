@@ -33,6 +33,7 @@ import {
   type MyPuzzlesSort,
   type MyPuzzlesStatus,
 } from "@/components/library/my-puzzles-filters";
+import { MyPuzzlesPhoneFilters } from "@/components/library/my-puzzles-phone-filters";
 import { useBulkCopyActions } from "@/components/library/use-bulk-copy-actions";
 import {
   LIBRARY_ROWS_MAX,
@@ -229,10 +230,13 @@ function PuzzlesPage() {
     ),
   );
   // The viewer's household (null when in none): My puzzles points at its Puzzles tab, where every
-  // puzzle in the household can be filtered by owner.
+  // puzzle in the household can be filtered by owner. Alone in it there is no one else's puzzle to
+  // filter or see, so neither the pointer nor the whose filter shows (unless a link set the filter).
   const { data: myHousehold } = useQuery(
     convexQuery(gateway.household.mine, signedIn ? {} : "skip"),
   );
+  const householdShared = (myHousehold?.members.length ?? 0) > 1;
+  const showOwnerFilter = householdShared || filters.owner !== "all";
 
   // Open loans where the caller is the lender; the source of truth for "which of my copies are out".
   const { data: lentOut } = useQuery(convexQuery(gateway.lending.lentOut, {}));
@@ -279,6 +283,8 @@ function PuzzlesPage() {
   );
   const matchedCount = wholeLibrary ? matches?.length : list.counts?.matched;
   const totalCount = wholeLibrary ? index?.length : list.counts?.total;
+  // Nothing to filter, select or open a ⋯ menu on: an empty library shows its empty state alone.
+  const libraryEmpty = totalCount === 0 && list.entries.length === 0;
 
   // What the viewer may do with a housemate's copy; their own copies are absent.
   const householdAccessById = useMemo(() => {
@@ -299,6 +305,7 @@ function PuzzlesPage() {
     copies: loadedCopies,
     householdAccessById,
     solveStateByCopyId,
+    isOnLoan: (copyId) => loanByCopyDocId.has(copyId),
   });
 
   const borrowerName = (loan: LoanView) =>
@@ -327,6 +334,22 @@ function PuzzlesPage() {
   const showAll = () =>
     setSearch({ q: undefined, status: undefined, owner: undefined });
 
+  // Every puzzle in the household lives on the household's Puzzles tab.
+  const householdLink = myHousehold && householdShared && (
+    <Link
+      href="/household"
+      className="text-muted-foreground hover:text-foreground inline-flex max-w-full min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
+    >
+      <House className="size-4 shrink-0" aria-hidden />
+      <span className="min-w-0 truncate">
+        {myHousehold.name
+          ? t("householdPointerNamed", { name: myHousehold.name })
+          : t("householdPointer")}
+      </span>
+      <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+    </Link>
+  );
+
   const isSelectable = (copy: { _id: string; aggregateId?: string }) =>
     canSelectCopy(copy, householdAccessById.get(copy._id));
   // Everything the filters show once the index is in; until then what's loaded.
@@ -349,7 +372,8 @@ function PuzzlesPage() {
 
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
-  // destinations (My suggestions) sit in a ⋯ menu so Add Puzzle is the one header button.
+  // destinations (My suggestions) sit in a ⋯ menu so Add Puzzle is the one header button. On an
+  // empty library the empty state's own Add is the one Add on the page.
   usePageHeader(
     () => ({
       actions: (
@@ -376,21 +400,23 @@ function PuzzlesPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="brand"
-            size="sm"
-            asChild
-            className="pointer-coarse:min-h-11"
-          >
-            <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
-              <Plus className="h-4 w-4" />
-              {t("addPuzzle")}
-            </Link>
-          </Button>
+          {!libraryEmpty && (
+            <Button
+              variant="brand"
+              size="sm"
+              asChild
+              className="pointer-coarse:min-h-11"
+            >
+              <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
+                <Plus className="h-4 w-4" />
+                {t("addPuzzle")}
+              </Link>
+            </Button>
+          )}
         </>
       ),
     }),
-    [t],
+    [t, libraryEmpty],
   );
 
   if (!member) {
@@ -401,138 +427,163 @@ function PuzzlesPage() {
     <div className="flex flex-col gap-[18px]">
       <PhoneActionsRowPlaceholder />
 
-      {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
-      <ActionsCoachmark />
+      {!libraryEmpty && (
+        <>
+          {/* One-time coachmark: points users at the ⋯ overflow menu on each card */}
+          <ActionsCoachmark />
 
-      {/* Every puzzle in the household lives on the household's Puzzles tab. */}
-      {myHousehold && (
-        <Link
-          href="/household"
-          className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1.5 self-start text-sm underline-offset-4 hover:underline pointer-coarse:min-h-11"
-        >
-          <House className="size-4 shrink-0" aria-hidden />
-          <span className="min-w-0 truncate">
-            {myHousehold.name
-              ? t("householdPointerNamed", { name: myHousehold.name })
-              : t("householdPointer")}
-          </span>
-          <ArrowRight className="size-3.5 shrink-0" aria-hidden />
-        </Link>
-      )}
-
-      {/* Toolbar: search on the left; whose, sort and the view toggle on the right. On a phone the
-          search shares its row with the view toggle and the selects drop to a row of their own.
-          The Add Puzzle action lives in the shell page head. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <LibrarySearchInput
-          value={filters.q}
-          onCommit={(q) => setSearch({ q: q || undefined })}
-          label={t("librarySearch.label")}
-          placeholder={t("librarySearch.placeholder")}
-          maxLength={MAX_SEARCH_LENGTH}
-          className="min-w-0 flex-1 basis-56 xl:max-w-sm"
-        />
-        <div className="order-last flex w-full flex-wrap items-center gap-2 sm:order-none sm:ml-auto sm:w-auto">
-          {myHousehold && (
-            <Select
-              value={filters.owner}
-              onValueChange={(value: MyPuzzlesOwner) =>
-                setSearch({ owner: value === "all" ? undefined : value })
-              }
-            >
-              <SelectTrigger
-                className="max-sm:flex-1 pointer-coarse:min-h-11"
-                aria-label={t("ownerFilter.label")}
-              >
-                {/* Say what the select filters ("Whose: All"), so it doesn't read as a second "All"
-                    beside the status pills. */}
-                <SelectValue>
-                  {t("ownerFilter.trigger", { owner: filters.owner })}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("ownerFilter.all")}</SelectItem>
-                <SelectItem value="mine">{t("ownerFilter.mine")}</SelectItem>
-                <SelectItem value="household">
-                  {t("ownerFilter.household")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Beside the filters from sm; a phone only finds it in the Filters sheet. */}
+          {householdLink && (
+            <div className="max-sm:hidden">{householdLink}</div>
           )}
-          <Select
-            value={filters.sort}
-            onValueChange={(value: MyPuzzlesSort) =>
-              setSearch({ sort: value === "recent" ? undefined : value })
-            }
-          >
-            <SelectTrigger
-              className="max-sm:flex-1 pointer-coarse:min-h-11"
-              aria-label={t("sort.label")}
-            >
-              {/* Icon and value stay together on the left when the trigger stretches on a phone. */}
-              <span className="flex min-w-0 items-center gap-2">
-                <ArrowUpDown aria-hidden />
-                {/* Spelled out: Radix only knows the chosen label once hydrated. */}
-                <SelectValue>{t(`sort.${filters.sort}`)}</SelectValue>
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recent">{t("sort.recent")}</SelectItem>
-              <SelectItem value="title">{t("sort.title")}</SelectItem>
-              <SelectItem value="pieces">{t("sort.pieces")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="icon"
-            aria-label={t("gridView")}
-            aria-pressed={viewMode === "grid"}
-            onClick={() => setSearch({ view: undefined })}
-          >
-            <Grid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "secondary" : "ghost"}
-            size="icon"
-            aria-label={t("listView")}
-            aria-pressed={viewMode === "list"}
-            onClick={() => setSearch({ view: "list" })}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
 
-      {/* Status pills + result count */}
-      <FilterBar
-        options={filterOptions}
-        value={filters.status}
-        onChange={(status) =>
-          setSearch({ status: status === "all" ? undefined : status })
-        }
-        count={
-          <span className="flex items-center gap-3">
-            {matchedCount !== undefined &&
-              totalCount !== undefined &&
-              t("resultCount", { count: matchedCount, total: totalCount })}
-            {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
-            {selectionPool.some(isSelectable) && (
-              <Button
-                type="button"
-                variant={selecting ? "secondary" : "outline"}
-                size="sm"
-                onClick={toggleSelecting}
-                className="text-foreground pointer-coarse:min-h-11"
+          {/* Toolbar: search on the left; whose and sort on the right. On a phone, where these and
+            the pills would fill the first screen, the search shares its row with one Filters button
+            and the rest moves into its sheet. The Add Puzzle action lives in the shell page head. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <LibrarySearchInput
+              value={filters.q}
+              onCommit={(q) => setSearch({ q: q || undefined })}
+              label={t("librarySearch.label")}
+              placeholder={t("librarySearch.placeholder")}
+              maxLength={MAX_SEARCH_LENGTH}
+              className="min-w-0 flex-1 basis-56 xl:max-w-sm"
+            />
+            <MyPuzzlesPhoneFilters
+              statusOptions={filterOptions}
+              filters={filters}
+              showOwner={showOwnerFilter}
+              matchedCount={matchedCount}
+              householdLink={householdLink}
+              onStatusChange={(status) =>
+                setSearch({ status: status === "all" ? undefined : status })
+              }
+              onOwnerChange={(owner) =>
+                setSearch({ owner: owner === "all" ? undefined : owner })
+              }
+              onSortChange={(sort) =>
+                setSearch({ sort: sort === "recent" ? undefined : sort })
+              }
+            />
+            <div className="ml-auto flex flex-wrap items-center gap-2 max-sm:hidden">
+              {(householdShared || filters.owner !== "all") && (
+                <Select
+                  value={filters.owner}
+                  onValueChange={(value: MyPuzzlesOwner) =>
+                    setSearch({ owner: value === "all" ? undefined : value })
+                  }
+                >
+                  <SelectTrigger
+                    className="max-sm:flex-1 pointer-coarse:min-h-11"
+                    aria-label={t("ownerFilter.label")}
+                  >
+                    {/* Say what the select filters ("Whose: All"), so it doesn't read as a second "All"
+                      beside the status pills. */}
+                    <SelectValue>
+                      {t("ownerFilter.trigger", { owner: filters.owner })}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("ownerFilter.all")}</SelectItem>
+                    <SelectItem value="mine">
+                      {t("ownerFilter.mine")}
+                    </SelectItem>
+                    <SelectItem value="household">
+                      {t("ownerFilter.household")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Select
+                value={filters.sort}
+                onValueChange={(value: MyPuzzlesSort) =>
+                  setSearch({ sort: value === "recent" ? undefined : value })
+                }
               >
-                {selecting ? <Check aria-hidden /> : <ListChecks aria-hidden />}
-                {selecting ? t("bulk.done") : t("bulk.select")}
-              </Button>
-            )}
-          </span>
-        }
-      />
+                <SelectTrigger
+                  className="max-sm:flex-1 pointer-coarse:min-h-11"
+                  aria-label={t("sort.label")}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ArrowUpDown aria-hidden />
+                    {/* Spelled out: Radix only knows the chosen label once hydrated. */}
+                    <SelectValue>{t(`sort.${filters.sort}`)}</SelectValue>
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">{t("sort.recent")}</SelectItem>
+                  <SelectItem value="title">{t("sort.title")}</SelectItem>
+                  <SelectItem value="pieces">{t("sort.pieces")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Status pills + result count */}
+          <FilterBar
+            options={filterOptions}
+            value={filters.status}
+            onChange={(status) =>
+              setSearch({ status: status === "all" ? undefined : status })
+            }
+            pillsClassName="max-sm:hidden"
+            countClassName="max-sm:w-full"
+            count={
+              <span className="flex items-center justify-between gap-3">
+                <span className="min-w-0">
+                  {matchedCount !== undefined &&
+                    totalCount !== undefined &&
+                    t("resultCount", {
+                      count: matchedCount,
+                      total: totalCount,
+                    })}
+                </span>
+                <span className="flex shrink-0 items-center gap-1 sm:gap-3">
+                  <span className="flex items-center gap-1">
+                    <Button
+                      variant={viewMode === "grid" ? "secondary" : "ghost"}
+                      size="icon"
+                      aria-label={t("gridView")}
+                      aria-pressed={viewMode === "grid"}
+                      onClick={() => setSearch({ view: undefined })}
+                      className="text-foreground pointer-coarse:size-11"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "secondary" : "ghost"}
+                      size="icon"
+                      aria-label={t("listView")}
+                      aria-pressed={viewMode === "list"}
+                      onClick={() => setSearch({ view: "list" })}
+                      className="text-foreground pointer-coarse:size-11"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </span>
+                  {/* Selection mode for bulk actions, offered once there is a copy the viewer manages. */}
+                  {selectionPool.some(isSelectable) && (
+                    <Button
+                      type="button"
+                      variant={selecting ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={toggleSelecting}
+                      className="text-foreground pointer-coarse:min-h-11"
+                    >
+                      {selecting ? (
+                        <Check aria-hidden />
+                      ) : (
+                        <ListChecks aria-hidden />
+                      )}
+                      {selecting ? t("bulk.done") : t("bulk.select")}
+                    </Button>
+                  )}
+                </span>
+              </span>
+            }
+          />
+        </>
+      )}
 
       {/* Puzzles Grid/List */}
       {list.loading ? (
@@ -541,13 +592,13 @@ function PuzzlesPage() {
             <PuzzleCardSkeleton key={i} />
           ))}
         </PuzzleViewProvider>
-      ) : totalCount === 0 && list.entries.length === 0 ? (
+      ) : libraryEmpty ? (
         <EmptyState
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
           action={
             <Button variant="brand" asChild>
-              <Link href="/my-puzzles/add">
+              <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
                 <Plus className="h-4 w-4" />
                 {t("addPuzzle")}
               </Link>

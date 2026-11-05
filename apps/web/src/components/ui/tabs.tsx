@@ -20,7 +20,7 @@ function Tabs({
 
 // A list wider than its container scrolls sideways (no visible scrollbar) and fades the edge(s)
 // with more tabs behind them; see tabs-scroll.ts for the wheel and active-tab behaviour.
-const TABS_LIST_OVERFLOW_CLASS =
+export const TABS_LIST_OVERFLOW_CLASS =
   "max-w-full overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [--fade-start:0px] [--fade-end:0px] data-[overflow-start]:[--fade-start:2rem] data-[overflow-end]:[--fade-end:2rem] [mask-image:linear-gradient(to_right,transparent,#000_var(--fade-start),#000_calc(100%_-_var(--fade-end)),transparent)]";
 
 function TabsList({

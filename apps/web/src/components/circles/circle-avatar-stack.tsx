@@ -25,6 +25,8 @@ export interface StackMember {
   key: string;
   // Already resolved through the identity projection (never an email).
   name: string;
+  // What the seat is in the circle (Owner, Admin…), named with the member wherever they are.
+  role?: string;
   avatar?: string;
   // The avatar fallback (the member's initial, or a person glyph).
   fallback: ReactNode;
@@ -96,6 +98,9 @@ export function CircleAvatarStack({
           const separated =
             active !== null && (index === active || index === active + 1);
           const lifted = index === active;
+          const label = member.role
+            ? `${member.name} · ${member.role}`
+            : member.name;
           return (
             <TooltipPrimitive.Root
               key={member.key}
@@ -110,7 +115,7 @@ export function CircleAvatarStack({
               <TooltipPrimitive.Trigger asChild>
                 <button
                   type="button"
-                  aria-label={member.name}
+                  aria-label={label}
                   onPointerEnter={(event) => {
                     if (event.pointerType === "mouse") setPointed(index);
                   }}
@@ -154,7 +159,7 @@ export function CircleAvatarStack({
                   </Avatar>
                 </button>
               </TooltipPrimitive.Trigger>
-              <CoverTooltipContent>{member.name}</CoverTooltipContent>
+              <CoverTooltipContent>{label}</CoverTooltipContent>
             </TooltipPrimitive.Root>
           );
         })}

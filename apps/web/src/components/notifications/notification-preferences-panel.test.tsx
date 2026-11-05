@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -29,13 +29,64 @@ const elementsWithClass = (name: string) =>
 
 afterEach(cleanup);
 
+const renderPanel = () =>
+  render(
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <NotificationPreferencesPanel />
+    </IntlProvider>,
+  );
+
+describe("NotificationPreferencesPanel on touch", () => {
+  const jumpNav = () =>
+    screen.getByRole("navigation", { name: en.notifications.jumpTo });
+
+  // A vertical list of 44px links pushed the settings off the first phone screen. On one column
+  // they share the scrolling row (see the layout tests); beside the table they wrap.
+  it("wraps the jump links on coarse pointers in two columns, and stacks them only for a mouse", () => {
+    renderPanel();
+    const classes = within(jumpNav()).getByRole("list").classList;
+    expect(classes).toContain("@4xl/prefs:flex-col");
+    expect(classes).toContain("@4xl/prefs:pointer-coarse:flex-row");
+    expect(classes).toContain("@4xl/prefs:pointer-coarse:flex-wrap");
+  });
+
+  it("makes each jump link a 44px pill that reads as tappable on coarse pointers", () => {
+    renderPanel();
+    const classes = within(jumpNav()).getAllByRole("link")[0].classList;
+    expect(classes).toContain("pointer-coarse:min-h-11");
+    expect(classes).toContain("pointer-coarse:rounded-full");
+    expect(classes).toContain("pointer-coarse:border");
+    expect(classes).toContain("pointer-coarse:text-foreground");
+  });
+});
+
+describe("NotificationPreferencesPanel section heading", () => {
+  it("says what the section holds, instead of repeating the page's h1", () => {
+    renderPanel();
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Per notification type",
+    });
+    expect(heading.textContent).not.toBe(en.notifications.preferences);
+    expect(
+      screen.queryByRole("heading", { name: en.notifications.preferences }),
+    ).toBeNull();
+  });
+});
+
 describe("NotificationPreferencesPanel layout (UX-33)", () => {
-  const renderPanel = () =>
-    render(
-      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <NotificationPreferencesPanel />
-      </IntlProvider>,
-    );
+  // A list of six took a phone's whole first screen, pushing the first switch below it.
+  it("lays Jump to out as one scrolling row until the two-column layout", () => {
+    renderPanel();
+    const list = screen.getByRole("list");
+    const classes = [...list.classList];
+    expect(classes).toContain("overflow-x-auto");
+    expect(classes).toContain("@4xl/prefs:flex-col");
+    expect(classes).not.toContain("flex-col");
+    for (const link of within(list).getAllByRole("link")) {
+      expect(link.classList).toContain("whitespace-nowrap");
+    }
+  });
 
   it("puts the query container above the two-column grid, never on it", () => {
     renderPanel();
@@ -51,14 +102,17 @@ describe("NotificationPreferencesPanel layout (UX-33)", () => {
     expect(container.contains(grid)).toBe(true);
   });
 
-  it("makes the aside sticky only in the two-column layout, below the sticky page head", () => {
+  // A sticky whole aside (764px of it) ran off a laptop screen with most links out of reach.
+  it("sticks only Jump to, in the two-column layout, below the sticky page head", () => {
     renderPanel();
-    const aside = screen
-      .getByRole("navigation", { name: "Jump to" })
-      .closest("aside")!;
+    const nav = screen.getByRole("navigation", { name: "Jump to" });
+    const aside = nav.closest("aside")!;
     const grid = elementsWithClass(TWO_COLUMNS)[0];
     expect(aside.parentElement).toBe(grid);
-    const classes = [...aside.classList];
+    expect(
+      [...aside.classList].filter((name) => /sticky|self-start/.test(name)),
+    ).toEqual([]);
+    const classes = [...nav.classList];
     // Same container breakpoint as the two columns, and no unconditional sticky.
     expect(classes).toContain("@4xl/prefs:sticky");
     expect(classes).not.toContain("sticky");

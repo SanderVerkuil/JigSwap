@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-// UX-05: the desktop sidebar remembers the member's toggle (sidebar_state cookie, read during SSR
-// and passed in by the route) and, with no choice yet, shows the icon rail below 1024px so a
-// tablet keeps a usable content card.
+// UX-05: from 1024px the desktop sidebar remembers the member's toggle (sidebar_state cookie, read
+// during SSR and passed in by the route). Below 1024px it always rests as the icon rail so a tablet
+// keeps a usable content card; the toggle opens the labelled sidebar over the page instead, and
+// that is neither docked nor remembered.
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   SIDEBAR_COOKIE_NAME,
@@ -22,12 +23,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { DashboardShell } from "./shell";
 
+const route = vi.hoisted(() => ({ pathname: "/dashboard" }));
+
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   useLocation: (opts?: {
     select?: (location: { pathname: string }) => unknown;
   }) => {
-    const location = { pathname: "/dashboard" };
+    const location = { pathname: route.pathname };
     return opts?.select ? opts.select(location) : location;
   },
 }));
@@ -45,9 +48,14 @@ vi.mock("@/compat/link", () => ({
 
 // Stand-in for the real sidebar: shows the provider's state and offers the toggle.
 function SidebarProbe() {
-  const { state, toggleSidebar } = useSidebar();
+  const { state, openMobile, toggleSidebar } = useSidebar();
   return (
-    <button type="button" data-testid="sidebar" onClick={toggleSidebar}>
+    <button
+      type="button"
+      data-testid="sidebar"
+      data-overlay={openMobile}
+      onClick={toggleSidebar}
+    >
       {state}
     </button>
   );
@@ -75,6 +83,7 @@ function setWide(wide: boolean) {
 }
 
 beforeEach(() => {
+  route.pathname = "/dashboard";
   media.wide = true;
   media.listeners.clear();
   vi.stubGlobal("matchMedia", (query: string) => ({
@@ -97,14 +106,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const shell = (sidebar?: SidebarCookies) => (
+  <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+    <DashboardShell sidebar={sidebar}>
+      <p>page</p>
+    </DashboardShell>
+  </IntlProvider>
+);
+
 function renderShell(sidebar?: SidebarCookies) {
-  render(
-    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-      <DashboardShell sidebar={sidebar}>
-        <p>page</p>
-      </DashboardShell>
-    </IntlProvider>,
-  );
+  render(shell(sidebar));
   return screen.getByTestId("sidebar");
 }
 
@@ -120,14 +131,19 @@ describe("DashboardShell sidebar state", () => {
     expect(renderShell(NO_COOKIES).textContent).toBe("expanded");
   });
 
-  it("keeps a remembered choice whatever the window width", () => {
-    media.wide = false;
-    expect(renderShell({ open: true, wide: false }).textContent).toBe(
-      "expanded",
+  it("keeps a remembered choice on a wide window", () => {
+    expect(renderShell({ open: false, wide: true }).textContent).toBe(
+      "collapsed",
     );
     cleanup();
-    media.wide = true;
-    expect(renderShell({ open: false, wide: true }).textContent).toBe(
+    expect(renderShell({ open: true, wide: true }).textContent).toBe(
+      "expanded",
+    );
+  });
+
+  it("rests as the icon rail on a tablet-width window, even when open was remembered", () => {
+    media.wide = false;
+    expect(renderShell({ open: true, wide: false }).textContent).toBe(
       "collapsed",
     );
   });
@@ -146,6 +162,44 @@ describe("DashboardShell sidebar state", () => {
     setWide(false);
     setWide(true);
     expect(sidebar.textContent).toBe("collapsed");
+  });
+
+  describe("below 1024px, the toggle", () => {
+    it("opens the overlay and leaves the rail and the remembered choice alone", () => {
+      media.wide = false;
+      const sidebar = renderShell(NO_COOKIES);
+
+      fireEvent.click(sidebar);
+      expect(sidebar.dataset.overlay).toBe("true");
+      expect(sidebar.textContent).toBe("collapsed");
+      expect(document.cookie).not.toContain(SIDEBAR_COOKIE_NAME);
+
+      fireEvent.click(sidebar);
+      expect(sidebar.dataset.overlay).toBe("false");
+    });
+
+    it("gets the overlay closed by navigating, however that happens", () => {
+      media.wide = false;
+      const view = render(shell(NO_COOKIES));
+      const sidebar = screen.getByTestId("sidebar");
+      fireEvent.click(sidebar);
+      expect(sidebar.dataset.overlay).toBe("true");
+
+      route.pathname = "/library";
+      view.rerender(shell(NO_COOKIES));
+      expect(sidebar.dataset.overlay).toBe("false");
+    });
+
+    it("gets the overlay closed when the window grows past 1024px, for good", () => {
+      media.wide = false;
+      const sidebar = renderShell(NO_COOKIES);
+      fireEvent.click(sidebar);
+
+      setWide(true);
+      expect(sidebar.dataset.overlay).toBe("false");
+      setWide(false);
+      expect(sidebar.dataset.overlay).toBe("false");
+    });
   });
 
   it("remembers which side of 1024px the window is on for the next server render", () => {

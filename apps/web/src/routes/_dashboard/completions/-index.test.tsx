@@ -74,9 +74,15 @@ vi.mock("@/components/solving/completion-row", () => ({
   ),
 }));
 
-vi.mock("@/components/solving/completions-empty-state", () => ({
-  CompletionsEmptyState: () => <p>nothing logged yet</p>,
-}));
+vi.mock(
+  "@/components/solving/completions-empty-state",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("@/components/solving/completions-empty-state")
+    >()),
+    CompletionsEmptyState: () => <p>nothing logged yet</p>,
+  }),
+);
 
 const INDEX = getFunctionName(gateway.solving.myCompletionIndex);
 const BY_IDS = getFunctionName(gateway.solving.myCompletionsByIds);
@@ -171,11 +177,45 @@ describe("completion log", () => {
     expect(shownRows()).toEqual(["a Harbour Lights"]);
   });
 
+  it("opens an empty log on its empty state, without three zeros above it", () => {
+    renderLog([]);
+    expect(screen.queryByText(en.solving.completions.stats.pieces)).toBeNull();
+    expect(screen.getByText("nothing logged yet")).toBeTruthy();
+  });
+
   it("shows the empty state, and joins nothing, with no solves at all", () => {
     renderLog([]);
     expect(screen.queryAllByTestId("row")).toEqual([]);
     expect(mocks.asked[BY_IDS]).toBe("skip");
     expect(screen.getByText("nothing logged yet")).toBeTruthy();
+  });
+
+  it("keeps marking past solves within reach once there is a log", () => {
+    renderLog([finished("a", 2024)]);
+    expect(
+      screen
+        .getByRole("link", { name: "Mark past solves" })
+        .getAttribute("href"),
+    ).toBe("/completions/past");
+  });
+
+  // A member with hundreds of puzzles passes a full page of rows after two batches. Under the log
+  // the link would be three screens down and move further with every Show more.
+  it("puts marking past solves above the log, however long the log is", () => {
+    const history = Array.from({ length: 40 }, (_, i) =>
+      finished(`h${i}`, 2020 - i),
+    );
+    renderLog([...history, open("p", 9)]);
+    const link = screen.getByRole("link", { name: "Mark past solves" });
+    const [firstRow] = screen.getAllByTestId("row");
+    expect(
+      link.compareDocumentPosition(firstRow) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      link.compareDocumentPosition(
+        screen.getByText(en.solving.completions.inProgressSection),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("never reads the member's library", () => {

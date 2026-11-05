@@ -2,15 +2,21 @@
 // UX-05: on a touch screen (coarse pointer) the sidebar's rows, labels and icon rail are 44px
 // targets; with a mouse they keep the compact 32px desktop sizing. Asserted through the class
 // contract, since happy-dom does not evaluate media queries.
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
 import {
+  Sidebar,
+  SidebarContent,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
 } from "./sidebar";
 
 afterEach(cleanup);
@@ -97,5 +103,135 @@ describe("sidebar group label on the icon rail", () => {
     expect(classes).toContain("group-data-[collapsible=icon]:invisible");
     // Visibility transitions with the fade, so it only switches once the label has faded out.
     expect(classes).toContain("transition-[margin,opacity,visibility]");
+  });
+});
+
+describe("sidebar content on the icon rail", () => {
+  // The rail is the default below 1024px, so a short window (a phone in landscape, a small tablet)
+  // leaves it shorter than its links: they must stay reachable by swipe and wheel, while the
+  // labels stay clipped sideways.
+  it("scrolls vertically without a scrollbar and clips sideways while collapsed", () => {
+    render(
+      <SidebarProvider>
+        <SidebarContent data-testid="content" />
+      </SidebarProvider>,
+    );
+    const classes = classesOf(screen.getByTestId("content"));
+    expect(classes).not.toContain(
+      "group-data-[collapsible=icon]:overflow-hidden",
+    );
+    expect(classes).toContain(
+      "group-data-[collapsible=icon]:overflow-x-hidden",
+    );
+    expect(classes).toContain("group-data-[collapsible=icon]:overflow-y-auto");
+    expect(classes).toContain(
+      "group-data-[collapsible=icon]:[scrollbar-width:none]",
+    );
+  });
+});
+
+describe("sidebar overlay", () => {
+  function renderOverlay() {
+    return render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <SidebarProvider open={false} overlay>
+          <SidebarTrigger />
+          <Sidebar collapsible="icon">
+            <SidebarMenuButton tooltip="Messages">Messages</SidebarMenuButton>
+          </Sidebar>
+        </SidebarProvider>
+      </IntlProvider>,
+    );
+  }
+  const openIt = () =>
+    fireEvent.click(
+      screen.getByRole("button", { name: en.shell.toggleSidebar }),
+    );
+
+  it("keeps the rail docked and opens the labelled sidebar over the page", () => {
+    const { container } = renderOverlay();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const rail = container.querySelector('[data-slot="sidebar"]');
+    expect(rail?.getAttribute("data-collapsible")).toBe("icon");
+
+    openIt();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.textContent).toContain("Messages");
+    expect(rail?.getAttribute("data-collapsible")).toBe("icon");
+  });
+
+  it("offers a close button that assistive tech can reach", () => {
+    renderOverlay();
+    openIt();
+    const close = screen.getByRole("button", { name: en.common.close });
+    expect(screen.getByRole("dialog").className).not.toContain(
+      "[&>button]:hidden",
+    );
+    fireEvent.click(close);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("focuses the first link when it opens", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <SidebarProvider open={false} overlay>
+          <SidebarTrigger />
+          <Sidebar collapsible="icon">
+            <a href="/dashboard">Dashboard</a>
+            <button type="button">Account</button>
+          </Sidebar>
+        </SidebarProvider>
+      </IntlProvider>,
+    );
+    openIt();
+    expect(document.activeElement?.textContent).toBe("Dashboard");
+  });
+
+  it("tells what's inside that it is in the sheet, and the docked sidebar that it is not", () => {
+    function Probe() {
+      return <span data-testid="probe">{String(useSidebar().inSheet)}</span>;
+    }
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <SidebarProvider open={false} overlay>
+          <SidebarTrigger />
+          <Sidebar collapsible="icon">
+            <Probe />
+          </Sidebar>
+        </SidebarProvider>
+      </IntlProvider>,
+    );
+    openIt();
+    const probes = screen.getAllByTestId("probe");
+    const inDialog = probes.find((probe) =>
+      screen.getByRole("dialog").contains(probe),
+    );
+    expect(inDialog?.textContent).toBe("true");
+    expect(probes.find((probe) => probe !== inDialog)?.textContent).toBe(
+      "false",
+    );
+  });
+
+  // A row's rail tooltip would open on focus and take the first Escape, even hidden.
+  it("has no rail tooltips inside, so one Escape closes it from a focused row", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <SidebarProvider open={false} overlay>
+          <SidebarTrigger />
+          <Sidebar collapsible="icon">
+            <SidebarMenuButton asChild tooltip="Dashboard">
+              <a href="/dashboard">Dashboard</a>
+            </SidebarMenuButton>
+          </Sidebar>
+        </SidebarProvider>
+      </IntlProvider>,
+    );
+    openIt();
+    const row = document.activeElement as HTMLElement;
+    expect(row.textContent).toBe("Dashboard");
+    fireEvent.focus(row);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    fireEvent.keyDown(row, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

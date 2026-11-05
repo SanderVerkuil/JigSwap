@@ -16,6 +16,8 @@ import { CopyOfferSwitches } from "./copy-offer-switches";
 type ToastOptions = {
   description?: string;
   action?: { label: string; onClick: () => void };
+  cancel?: { label: string; onClick: () => void };
+  classNames?: { toast?: string; cancelButton?: string; actionButton?: string };
 };
 
 const mocks = vi.hoisted(() => ({
@@ -106,6 +108,32 @@ describe("CopyOfferSwitches", () => {
     expect(message).toBe("Offered for swap");
     expect(options.description).toBeUndefined();
     expect(options.action?.label).toBe("Undo");
+  });
+
+  it("offers Send a link in the toast when an offer goes on, not when it comes off", async () => {
+    const onSendLink = vi.fn();
+    renderSwitches({ onSendLink });
+    fireEvent.click(lendSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    const { message, options } = lastToast();
+    expect(message).toBe("Offered to lend");
+    expect(options.action?.label).toBe("Undo");
+    expect(options.cancel?.label).toBe(en.copyInstance.sendLink.trigger);
+    // Two buttons beside the title squeezed it letter by letter on a Dutch phone.
+    expect(options.classNames?.toast).toContain("flex-wrap");
+    // Sonner gives each button an auto margin: without this, Send a link floats mid-toast.
+    expect(options.classNames?.toast).toContain("justify-end");
+    expect(options.classNames?.cancelButton).toContain("!ml-0");
+    expect(options.classNames?.actionButton).toContain("!ml-0");
+    options.cancel?.onClick();
+    expect(onSendLink).toHaveBeenCalled();
+    cleanup();
+
+    mocks.toastSuccess.mockReset();
+    renderSwitches({ onSendLink, availability: { ...CLOSED, forLend: true } });
+    fireEvent.click(lendSwitch());
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    expect(lastToast().options.cancel).toBeUndefined();
   });
 
   it("Undo puts back only the offer that changed, again without a visibility", async () => {
@@ -264,6 +292,46 @@ describe("CopyOfferSwitches", () => {
     ]);
     expect(lastToast().message).toBe("No longer offered for swap");
     expect(lastToast().options.action).toBeUndefined();
+  });
+
+  it("shows no sale row on a copy that isn't offered for sale", () => {
+    renderSwitches({
+      availability: { forTrade: true, forLend: false, forSale: false },
+    });
+    expect(screen.queryByRole("switch", { name: "Offer for sale" })).toBeNull();
+  });
+
+  it("lets a copy on offer for sale be withdrawn from the same place", async () => {
+    const availability = { forTrade: false, forLend: false, forSale: true };
+    const { rerender } = renderSwitches({ availability });
+    const sale = screen.getByRole("switch", { name: "Offer for sale" });
+    expect(sale.getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(sale);
+    await vi.waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+    expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_SHARING, {
+      copyId: "agg1",
+      forTrade: false,
+      forLend: false,
+      forSale: false,
+    });
+    expect(lastToast().message).toBe("No longer offered for sale");
+
+    // The switch the member just used stays where it is, off, so focus has somewhere to be.
+    rerender(switches({ availability: CLOSED }));
+    expect(
+      screen
+        .getByRole("switch", { name: "Offer for sale" })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+
+    lastToast().options.action?.onClick();
+    await vi.waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_OFFERS, {
+        copyIds: ["agg1"],
+        forSale: true,
+      }),
+    );
   });
 
   it("a copy without a domain id cannot be changed", () => {

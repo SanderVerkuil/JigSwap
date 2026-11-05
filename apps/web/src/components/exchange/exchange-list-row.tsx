@@ -29,7 +29,7 @@ export type ListRowExchange = Pick<
   ExchangeSummaryView,
   | "type"
   | "status"
-  | "createdAt"
+  | "updatedAt"
   | "requester"
   | "owner"
   | "requesterState"
@@ -147,7 +147,8 @@ export function ExchangeListRow({
             {t("rowMeta", {
               direction: t(`direction.${direction}`),
               who,
-              when: elapsedTime(exchange.createdAt),
+              // The last activity, which is also what /trades sorts by.
+              when: elapsedTime(exchange.updatedAt),
             })}
           </span>
           <span

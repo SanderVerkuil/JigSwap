@@ -168,7 +168,11 @@ const renderPage = ({
   hasMore = false,
 }: {
   copies: OwnedCopyView[];
-  household?: { householdId: string; name?: string } | null;
+  household?: {
+    householdId: string;
+    name?: string;
+    members: { _id: string }[];
+  } | null;
   lentOut?: LoanView[];
   search?: SearchParams;
   // The first rows, when they are fewer than the library; `total` is what the counters say.
@@ -210,11 +214,40 @@ afterEach(() => {
   localStorage.clear();
 });
 
+const HOUSEHOLD_OF_TWO = {
+  householdId: "h1",
+  members: [{ _id: "me" }, { _id: "anna" }],
+};
+const HOUSEHOLD_OF_ONE = { householdId: "h1", members: [{ _id: "me" }] };
+
 describe("My Puzzles empty states", () => {
   it("invites a member with an empty library to add their first puzzle", () => {
     renderPage({ copies: [] });
     expect(screen.getByText("No puzzles here yet")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Show all" })).toBeNull();
+  });
+
+  it("shows an empty library nothing else: no filters, count, Select or hint about cards", () => {
+    renderPage({ copies: [], household: HOUSEHOLD_OF_TWO });
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("button", { name: "All" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Select" })).toBeNull();
+    expect(screen.queryByText("0 of 0 puzzles")).toBeNull();
+    expect(screen.queryByText(en.puzzles.coachmark.body)).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "All puzzles in your household" }),
+    ).toBeNull();
+    expect(screen.getByRole("link", { name: "Add Puzzle" })).toBeTruthy();
+  });
+
+  it("keeps the tour's Add target on the empty state's one Add button", () => {
+    renderPage({ copies: [] });
+    expect(
+      screen
+        .getByRole("link", { name: "Add Puzzle" })
+        .getAttribute("data-tour"),
+    ).toBe("my-puzzles-add");
   });
 
   it("says the filter matches nothing, and Show all brings the puzzles back", () => {
@@ -233,14 +266,133 @@ describe("My Puzzles empty states", () => {
   });
 });
 
+describe("My Puzzles filters on a phone", () => {
+  const openSheet = () => {
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
+    return within(screen.getByRole("dialog", { name: "Filters" }));
+  };
+  const copies = [
+    copy("c1", "Lam Gelegd", {
+      availability: { forTrade: true, forLend: false, forSale: false },
+    }),
+    copy("c2", "De Kattenshow"),
+  ];
+
+  it("keeps the pills and selects out of the first screen, in CSS so the server render agrees", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    const pills = screen
+      .getByRole("button", { name: "For Trade" })
+      .closest('[role="group"]');
+    expect(pills?.classList).toContain("max-sm:hidden");
+    expect(
+      screen
+        .getByRole("combobox", { name: "Sort by" })
+        .closest(".max-sm\\:hidden"),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Filters" }).classList).toContain(
+      "sm:hidden",
+    );
+  });
+
+  it("holds the status pills, whose and sort in its sheet, each applied at once", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    const sheet = openSheet();
+    fireEvent.click(sheet.getByRole("button", { name: "For Trade" }));
+    expect(mocks.location.get()).toEqual({ status: "forTrade" });
+    expect(sheet.getByRole("button", { name: "Show 1 puzzle" })).toBeTruthy();
+
+    fireEvent.click(sheet.getByRole("button", { name: "Mine" }));
+    expect(mocks.location.get()).toEqual({ status: "forTrade", owner: "mine" });
+
+    fireEvent.click(sheet.getByRole("button", { name: "Title A–Z" }));
+    expect(mocks.location.get()).toMatchObject({ sort: "title" });
+  });
+
+  it("leaves whose out of the sheet in a household of one", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_ONE });
+    const sheet = openSheet();
+    expect(sheet.queryByRole("heading", { name: "Whose puzzles" })).toBeNull();
+    expect(sheet.queryByRole("link")).toBeNull();
+  });
+
+  it("offers the household's own list in the sheet once there is one", () => {
+    renderPage({ copies, household: HOUSEHOLD_OF_TWO });
+    expect(
+      openSheet().getByRole("link", { name: "All puzzles in your household" }),
+    ).toBeTruthy();
+  });
+
+  it("shows what's on as chips that can be removed, and counts them on the button", () => {
+    renderPage({
+      copies,
+      household: HOUSEHOLD_OF_TWO,
+      search: { status: "forTrade", owner: "mine" },
+    });
+    // The name comes from what the button shows, plus a word for screen readers (WCAG 2.5.3).
+    const button = screen.getByRole("button", { name: "Filters 2 active" });
+    expect(button.hasAttribute("aria-label")).toBe(false);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove filter: For Trade" }),
+    );
+    expect(mocks.location.get()).toEqual({ owner: "mine" });
+    expect(document.activeElement).toBe(button);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove filter: Mine" }),
+    );
+    expect(mocks.location.get()).toEqual({});
+    expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+  });
+
+  it("names no filter as a chip while none is on", () => {
+    renderPage({ copies, search: { sort: "title", view: "list" } });
+    expect(screen.queryByRole("button", { name: /^Remove filter/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+  });
+});
+
 describe("My Puzzles owner select", () => {
   it("names what it filters instead of a bare “All”", () => {
     renderPage({
       copies: [copy("c1", "Lam Gelegd")],
-      household: { householdId: "h1" },
+      household: HOUSEHOLD_OF_TWO,
     });
     const trigger = screen.getByRole("combobox", { name: "Whose puzzles" });
     expect(trigger.textContent).toBe("Whose: All");
+  });
+
+  it("is there, with the household link, once someone else is in the household", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_TWO,
+    });
+    expect(
+      screen.getByRole("link", { name: "All puzzles in your household" }),
+    ).toBeTruthy();
+  });
+
+  it("stays out of a household of one, where “household members'” can only be empty", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_ONE,
+    });
+    expect(
+      screen.queryByRole("combobox", { name: "Whose puzzles" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "All puzzles in your household" }),
+    ).toBeNull();
+  });
+
+  it("stays while its filter is on, so it can be undone", () => {
+    renderPage({
+      copies: [copy("c1", "Lam Gelegd")],
+      household: HOUSEHOLD_OF_ONE,
+      search: { owner: "household" },
+    });
+    expect(
+      screen.getByRole("combobox", { name: "Whose puzzles" }),
+    ).toBeTruthy();
   });
 });
 
@@ -285,7 +437,7 @@ describe("My Puzzles coachmark on a server-rendered page", () => {
         rows: [],
         hasMore: false,
         matched: 0,
-        total: 0,
+        total: 1,
       },
       [getFunctionName(gateway.household.mine)]: null,
       [getFunctionName(gateway.lending.lentOut)]: [],
@@ -343,7 +495,7 @@ describe("My Puzzles URL state", () => {
     expect(
       (
         screen.getByRole("searchbox", {
-          name: "Search your puzzles",
+          name: en.puzzles.librarySearch.label,
         }) as HTMLInputElement
       ).value,
     ).toBe("katten");
@@ -390,7 +542,7 @@ describe("My Puzzles URL state", () => {
     try {
       renderPage({ copies: library });
       fireEvent.change(
-        screen.getByRole("searchbox", { name: "Search your puzzles" }),
+        screen.getByRole("searchbox", { name: en.puzzles.librarySearch.label }),
         { target: { value: "alpen " } },
       );
       act(() => {
@@ -414,7 +566,7 @@ describe("My Puzzles URL state", () => {
     expect(
       (
         screen.getByRole("searchbox", {
-          name: "Search your puzzles",
+          name: en.puzzles.librarySearch.label,
         }) as HTMLInputElement
       ).value,
     ).toBe("");

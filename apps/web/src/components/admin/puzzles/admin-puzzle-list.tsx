@@ -171,16 +171,19 @@ function PuzzleRows({
           </p>
         </div>
       ) : (
-        <div className="rounded-xl border bg-card">
+        <div className="@container rounded-xl border bg-card">
           {rows.map((row) => (
+            // In a list narrower than @2xl (672px: phones, and tablets beside the sidebar) the
+            // action wraps onto its own line under the title, as in the category list, so a long
+            // (Dutch) title and the button's label never compete for one row.
             <div
               key={row._id}
-              className="flex items-center gap-3 border-b px-4 py-3 last:border-0"
+              className="flex flex-wrap items-center gap-3 border-b px-4 py-3 last:border-0 @2xl:flex-nowrap"
             >
               <Link
                 to="/admin/puzzles/$puzzleId"
                 params={{ puzzleId: row._id }}
-                className="flex min-w-0 flex-1 items-center gap-3"
+                className="flex min-w-0 flex-1 basis-full items-center gap-3 @2xl:basis-0"
               >
                 {row.image ? (
                   <img
@@ -198,7 +201,7 @@ function PuzzleRows({
                 )}
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="truncate font-semibold underline-offset-4 hover:underline">
+                    <span className="line-clamp-2 min-w-0 font-semibold break-words underline-offset-4 hover:underline">
                       {row.title}
                     </span>
                     <Badge variant={STATUS_VARIANT[row.status]}>
@@ -215,7 +218,7 @@ function PuzzleRows({
                       </Badge>
                     )}
                   </div>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="line-clamp-2 text-xs break-words text-muted-foreground">
                     {row.brand && `${row.brand} · `}
                     {t("pieces", { count: row.pieceCount })}
                     {row.submitterName &&
@@ -236,7 +239,7 @@ function PuzzleRows({
                   )}
                 </span>
               </div>
-              <div className="flex shrink-0 items-center">
+              <div className="ml-auto flex shrink-0 items-center">
                 {row.status === "pending" ? (
                   // A pending definition is decided in the moderation queue: open its item there.
                   <Button

@@ -4,6 +4,7 @@
 import { CircleInvitePicker } from "@/components/circles/circle-invite-picker";
 import { CirclePendingInvites } from "@/components/circles/circle-pending-invites";
 import { DeleteCircleAction } from "@/components/circles/delete-circle-action";
+import { useId, type Ref } from "react";
 import { useTranslations } from "use-intl";
 
 type CirclePermissionLevel = "ViewOnly" | "Exchange" | "Admin";
@@ -47,17 +48,27 @@ export const memberRowControls = (
 
 // Invite: members join only by accepting. Any Admin, not only the owner.
 export function CircleInviteSection({
+  ref,
   circleId,
   viewerPermission,
 }: {
+  ref?: Ref<HTMLElement>;
   circleId: string;
   viewerPermission: CirclePermissionLevel;
 }) {
   const t = useTranslations("circles");
+  const headingId = useId();
   if (!canManageCircle(viewerPermission)) return null;
   return (
-    <section className="space-y-3">
-      <h3 className="font-medium">{t("invite.title")}</h3>
+    <section
+      ref={ref}
+      tabIndex={-1}
+      aria-labelledby={headingId}
+      className="scroll-mt-4 space-y-3 outline-none"
+    >
+      <h3 id={headingId} className="font-medium">
+        {t("invite.title")}
+      </h3>
       <CircleInvitePicker circleId={circleId} />
       <CirclePendingInvites circleId={circleId} />
     </section>

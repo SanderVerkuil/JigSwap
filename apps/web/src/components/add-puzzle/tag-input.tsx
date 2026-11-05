@@ -58,7 +58,7 @@ export function TagInput({
               type="button"
               aria-label={tCommon("removeTag", { tag })}
               onClick={() => onChange(value.filter((x) => x !== tag))}
-              className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring"
+              className="relative inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:after:absolute pointer-coarse:after:-inset-2.5"
             >
               <X className="size-3.5" />
             </button>
@@ -86,7 +86,8 @@ export function TagInput({
           placeholder={
             value.length ? "" : (placeholder ?? t("tagsPlaceholder"))
           }
-          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm"
+          // On touch the field reaches into the box's padding: a 44px target at the box's height.
+          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm pointer-coarse:-my-2 pointer-coarse:py-2.5"
         />
       </div>
       <p

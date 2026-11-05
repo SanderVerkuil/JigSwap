@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   isAnyDialogOpen,
   isSurfaceBusy,
+  useSurfaceBusy,
 } from "@/components/whats-new/surface-busy";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { safeStorage } from "@/lib/safe-storage";
@@ -72,7 +73,8 @@ function useTextEntryFocused(): boolean {
 // The mobile "Add JigSwap to your home screen" tip: a non-modal row stuck just above the tab bar
 // that expands into the install steps. It shows itself from the second session on this device,
 // never when installed / unsupported / on desktop, never on the pages installTipBlockedOn lists
-// (an open thread, the quick start, forms), and only when no tour, dialog or prompt is on screen;
+// (an open thread, the quick start, forms) or while a surface reports busy, and only when no tour,
+// dialog or prompt is on screen;
 // the quick sheet's "Install app" row can also open it (expanded) on iOS, on Android Chrome when
 // no install prompt was captured, and on Firefox (Android and iOS), which never fires one.
 // Mounted in the dashboard shell only, so public and auth pages never see it.
@@ -84,6 +86,7 @@ export function InstallAppTip() {
   const textFocused = useTextEntryFocused();
   const [autoShown, setAutoShown] = useState(false);
   const blocked = installTipBlockedOn(pathname);
+  const surfaceBusy = useSurfaceBusy();
 
   // Count this session once (the first visit is never shown the tip).
   useEffect(() => {
@@ -124,10 +127,13 @@ export function InstallAppTip() {
   }, [requested, method]);
 
   const open = (autoShown || requested) && method !== null && mobile;
-  // A tip that is up steps aside on blocked pages, and is back on the next one: nothing is
-  // dismissed. One the member asked for still shows there, except on an open thread, whose
-  // composer owns the bottom of the screen.
-  const hidden = requested ? isImmersiveMobileRoute(pathname) : blocked;
+  // A tip that is up steps aside on blocked pages and while a surface owns the bottom of the screen
+  // (My Puzzles' selection bar sits exactly where the tip docks, and would be untappable under it),
+  // and is back afterwards: nothing is dismissed. One the member asked for still shows there, except
+  // on an open thread, whose composer owns the bottom of the screen.
+  const hidden = requested
+    ? isImmersiveMobileRoute(pathname)
+    : blocked || surfaceBusy;
   if (!open || textFocused || hidden) return null;
 
   const close = (action: "snooze" | "never" | "installed") => {

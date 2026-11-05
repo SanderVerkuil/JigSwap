@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -124,8 +125,11 @@ function AddPuzzlesToCollectionPage() {
 
   // Publish an explicit breadcrumb trail + the route title so the chrome reads
   // My Library › Collections › <name> › Add Puzzles, plus the primary actions
-  // (Cancel + the count-aware confirm) into the page head.
+  // (Cancel + the count-aware confirm) into the page head. On a phone that row scrolls away from
+  // whoever is ticking far down the list, so there the confirm docks above the tab bar instead,
+  // once something is picked (and the install tip, which docks there too, steps aside).
   const selectedCount = selectedPuzzles.size;
+  useReportSurfaceBusy("collectionPicker", selectedCount > 0);
   usePageHeader(
     () => ({
       title: t("addPuzzles"),
@@ -150,6 +154,7 @@ function AddPuzzlesToCollectionPage() {
             size="sm"
             onClick={() => addSelected.mutate()}
             disabled={selectedCount === 0 || addSelected.isPending}
+            className="max-sm:hidden"
           >
             <Plus className="h-4 w-4" />
             {t("addSelected", { count: selectedCount })}
@@ -238,9 +243,30 @@ function AddPuzzlesToCollectionPage() {
               variant="selection"
               isSelected={selectedPuzzles.has(puzzle._id as Id<"ownedPuzzles">)}
               onSelect={togglePuzzleSelection}
+              // The whole box, as My Puzzles shows it.
+              imageFit="contain"
             />
           ))}
         </PuzzleViewProvider>
+      )}
+
+      {/* Sticky just above the tab bar (bottom-14, as Add several's footer); the bottom padding clears
+          the tab bar's raised "+" button. Bleeds to the screen edges. */}
+      {selectedCount > 0 && (
+        <div
+          data-testid="picker-footer"
+          className="bg-card sticky bottom-14 z-20 -mx-4 border-t px-4 pt-3 pb-[30px] sm:hidden"
+        >
+          <Button
+            variant="brand"
+            onClick={() => addSelected.mutate()}
+            disabled={addSelected.isPending}
+            className="min-h-11 w-full"
+          >
+            <Plus className="h-4 w-4" />
+            {t("addSelected", { count: selectedCount })}
+          </Button>
+        </div>
       )}
     </div>
   );

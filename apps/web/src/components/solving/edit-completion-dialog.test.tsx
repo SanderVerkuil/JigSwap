@@ -31,7 +31,8 @@ vi.mock("@tanstack/react-query", () => ({
   }) => ({ mutateAsync: mutationFn, isPending: false }),
 }));
 
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const toasts = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast: toasts }));
 
 const START = Date.UTC(2026, 9, 12);
 const END = Date.UTC(2026, 9, 14);
@@ -40,6 +41,8 @@ const renderDialog = (props: {
   inProgress?: boolean;
   initialEndDate?: number;
   initialTimeMinutes?: number;
+  initialNotes?: string;
+  datePrecision?: "day" | "year" | "unknown";
 }) =>
   render(
     <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
@@ -55,6 +58,7 @@ const renderDialog = (props: {
 
 beforeEach(() => {
   calls.edit = [];
+  toasts.success.mockClear();
 });
 afterEach(() => cleanup());
 
@@ -113,5 +117,70 @@ describe("EditCompletionDialog", () => {
       endDate: undefined,
       completionTimeMinutes: undefined,
     });
+  });
+
+  it("sends an emptied note as empty, so the server clears it", async () => {
+    renderDialog({ initialEndDate: END, initialNotes: "Missing a corner" });
+    fireEvent.change(screen.getByLabelText("Notes"), {
+      target: { value: "   " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.edit).toHaveLength(1));
+    expect(calls.edit[0]?.notes).toBe("");
+  });
+
+  it("says a saved edit updated the solve, not that it logged one", async () => {
+    renderDialog({ initialEndDate: END });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() =>
+      expect(toasts.success).toHaveBeenCalledWith("Solve updated"),
+    );
+  });
+
+  it("refuses an end before the start or in the future, next to the end date", () => {
+    renderDialog({ initialEndDate: END });
+    const end = screen.getByLabelText("End date");
+    fireEvent.change(end, { target: { value: "2026-10-01" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    expect(
+      screen.getByText("The finish date can't be before the start date."),
+    ).toBeDefined();
+    expect(document.activeElement).toBe(end);
+
+    fireEvent.change(end, { target: { value: "2999-01-01" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    expect(
+      screen.getByText("The finish date can't be in the future."),
+    ).toBeDefined();
+    expect(calls.edit).toEqual([]);
+  });
+
+  it("doesn't save a dated solve whose date was cleared: the server would keep the old one", () => {
+    renderDialog({ initialEndDate: END });
+    fireEvent.change(screen.getByLabelText("End date"), {
+      target: { value: "" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    expect(screen.getByText("Pick a date.")).toBeDefined();
+    expect(calls.edit).toEqual([]);
+  });
+
+  it("lets an undated solve save with its dates still empty", async () => {
+    renderDialog({ initialEndDate: END, datePrecision: "unknown" });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.edit).toHaveLength(1));
+    expect(calls.edit[0]).toMatchObject({
+      startDate: undefined,
+      endDate: undefined,
+    });
+  });
+
+  it("still lets a solve in progress move its start into the future", async () => {
+    renderDialog({ inProgress: true });
+    const start = screen.getByLabelText("Start date");
+    expect(start.getAttribute("max")).toBeNull();
+    fireEvent.change(start, { target: { value: "2999-01-01" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save solve" }));
+    await vi.waitFor(() => expect(calls.edit).toHaveLength(1));
   });
 });

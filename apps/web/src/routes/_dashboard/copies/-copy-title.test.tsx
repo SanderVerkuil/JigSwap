@@ -98,3 +98,49 @@ describe("Copy page title", () => {
     expect(heading.className.split(/\s+/)).toContain("md:hidden");
   });
 });
+
+describe("Copy page tab title", () => {
+  it("names the puzzle, so several open tabs can be told apart", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CopyInstanceScreen copyId="copy_1" owned={false} />
+      </IntlProvider>,
+    );
+    expect(document.title).toBe("The Night Watch — JigSwap");
+  });
+});
+
+describe("Copy page community rating", () => {
+  const renderScreen = () =>
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CopyInstanceScreen copyId="copy_1" owned={false} />
+      </IntlProvider>,
+    );
+
+  it("says nobody has rated it instead of a 0 over five empty bars", () => {
+    renderScreen();
+    expect(screen.getByText(en.copyInstance.noRatings)).toBeTruthy();
+    expect(screen.queryByText("0 community ratings")).toBeNull();
+    expect(screen.queryByText("5★")).toBeNull();
+  });
+
+  it("shows the score and histogram once someone has", () => {
+    const unrated = copy.community;
+    copy.community = {
+      ...unrated,
+      count: 1,
+      rating: 4,
+      breakdown: [0, 1, 0, 0, 0],
+      percentages: [0, 100, 0, 0, 0],
+    } as CopyInstanceView["community"];
+    try {
+      renderScreen();
+      expect(screen.queryByText(en.copyInstance.noRatings)).toBeNull();
+      expect(screen.getByText("1 community rating")).toBeTruthy();
+      expect(screen.getByText("5★")).toBeTruthy();
+    } finally {
+      copy.community = unrated;
+    }
+  });
+});

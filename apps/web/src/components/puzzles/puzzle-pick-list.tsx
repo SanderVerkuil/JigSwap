@@ -70,10 +70,11 @@ export function PuzzlePickList({
                     </Badge>
                   )}
                   <span className="text-muted-foreground truncate">
+                    {/* Pieces first: beside the shelf mark only the brand may be cut short. */}
                     {[
-                      puzzle.brand,
                       puzzle.pieceCount &&
                         `${format.number(puzzle.pieceCount)} ${t("pieces", { count: puzzle.pieceCount })}`,
+                      puzzle.brand,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
@@ -84,7 +85,11 @@ export function PuzzlePickList({
                 aria-hidden
                 className="text-muted-foreground size-5 shrink-0"
               />
-              <span className="sr-only">{t("addToLibrary")}</span>
+              <span className="sr-only">
+                {onShelf(puzzle)
+                  ? t("chooser.addAnotherCopy")
+                  : t("addToLibrary")}
+              </span>
             </Link>
             <Button
               variant="ghost"

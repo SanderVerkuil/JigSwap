@@ -1,18 +1,18 @@
 ---
-title: Puzzels Toevoegen & Importeren
+title: Puzzels toevoegen en importeren
 order: 2
 summary: "Voeg eigen kopieën één voor één of meerdere tegelijk toe, zoek op barcode, importeer via een winkellink en draag bij aan de catalogus."
 ---
 
-# Puzzels Toevoegen & Importeren
+# Puzzels toevoegen en importeren
 
-**Waar:** **Mijn Puzzels → Puzzel Toevoegen** (`/my-puzzles/add`).
+**Waar:** **Mijn puzzels → Puzzel toevoegen** (`/my-puzzles/add`).
 
 Een puzzel toevoegen gaat in twee stappen:
 
 ## Stap 1 — Kiezen of zoeken
 
-1. Klik op **Puzzel Toevoegen**.
+1. Klik op **Puzzel toevoegen**.
 2. Je ziet een keuzepagina. Die toont:
    - **Jouw inzendingen**: puzzels die je aan de catalogus hebt toegevoegd en
      die nog niet zijn goedgekeurd (bovenaan).
@@ -27,7 +27,7 @@ Een puzzel toevoegen gaat in twee stappen:
    op Android), kun je ook op **Barcode scannen** naast het zoekveld tikken en
    je camera op de doos richten.
 5. Staat je puzzel al in de catalogus, klik er dan op (of op
-   **Toevoegen aan bibliotheek**) om er een kopie van toe te voegen aan je
+   **Toevoegen aan mijn puzzels**) om er een kopie van toe te voegen aan je
    bibliotheek. Met **Details** open je in plaats daarvan de cataloguspagina.
    Puzzels die je al bezit, zijn gemarkeerd met **Op je plank**. Is hij nieuw,
    klik dan op **Nieuwe aanmaken**.
@@ -45,7 +45,7 @@ Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 
 **Vul de gegevens handmatig in (of pas de geïmporteerde aan):**
 
-- **Titel**, **merk**, **aantal stukken**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
+- **Titel**, **merk**, **aantal stukjes**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
 - **Beschikbaarheids-chips**: markeer als _voor ruil_, _voor uitlenen_ en/of _te koop_.
 - Een **foto van de doos** (optioneel, voor een nieuwe puzzel in de catalogus) — upload er een, of kies er een die de import heeft gevonden. Na de controle wordt hij de afbeelding van de puzzel in de catalogus. Hij wordt automatisch gecontroleerd (zoals elke foto die je uploadt) voordat iemand hem ziet; een foto die de controle tegenhoudt kan niet worden gebruikt, en zolang de controle nog loopt toont de puzzel zijn standaardafbeelding. Duurt de controle langer, dan krijg je na het opslaan een melding, en bij je eigen puzzels staat op de standaardafbeelding **Wordt gecontroleerd**; je hoeft niets te doen. Foto's van je eigen kopie zet je op de pagina van die kopie, zodra je hem hebt toegevoegd.
 - **Tags** en **notities**.
@@ -57,7 +57,7 @@ Op een groot scherm staan een **live voorbeeldkaart** en een **gereedheidscheckl
 
 ## Meerdere puzzels tegelijk toevoegen
 
-**Waar:** **Mijn Puzzels → Puzzel Toevoegen → Meerdere toevoegen**
+**Waar:** **Mijn puzzels → Puzzel toevoegen → Meerdere toevoegen**
 (`/my-puzzles/add/quick`).
 
 Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
@@ -67,9 +67,9 @@ Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
 3. Klik op elke puzzel die je bezit om hem te kiezen. Klik er nog eens op om
    hem weer weg te halen. Puzzels die je al bezit, zijn gemarkeerd met
    **Op je plank**.
-4. Bekijk je keuzes onder **Gekozen**. Per puzzel kun je
-   **Beschikbaar om te ruilen** aanzetten. Doe je dat niet, dan worden je
-   keuzes niet aangeboden om te ruilen of uit te lenen. Op een telefoon blijft
+4. Bekijk je keuzes onder **Gekozen**. Per puzzel kun je **Te ruil** en
+   **Te leen** aanzetten. Doe je dat niet, dan worden je keuzes niet aangeboden
+   om te ruilen of uit te lenen. Op een telefoon blijft
    de knop **N puzzels toevoegen** onderaan het scherm staan zodra je iets hebt
    gekozen; tik op **Gekozen (N)** ernaast om je keuzes te zien.
 5. Klik op **N puzzels toevoegen** (bijvoorbeeld **4 puzzels toevoegen**).

@@ -56,7 +56,7 @@ export function SegmentedPills<T extends string>({
               }
             }}
             className={[
-              "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors",
+              "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors pointer-coarse:min-h-11",
               on
                 ? "bg-primary text-primary-foreground border-transparent"
                 : "bg-card text-foreground border-border hover:bg-accent",

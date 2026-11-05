@@ -26,6 +26,7 @@ import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
 import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
+import { usePageHeaderContent } from "./page-header-slot";
 import {
   getNavGroup,
   isImmersiveMobileRoute,
@@ -35,9 +36,9 @@ import { useShellTitle } from "./shell-title";
 import { ShellUserButton } from "./shell-user-button";
 import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
-// Shared 44px touch target for every control in the bar.
+// Shared 44px touch target for every control in the bar; the page's own control shows as current.
 const tapTarget =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent aria-[current=page]:text-primary-text";
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
@@ -62,13 +63,22 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   // A page-published title (dynamic routes) overrides the static route title,
   // same precedence as the desktop page head.
   const { meta, title: shellTitle, titleOverride } = useShellTitle();
+  const { mobileTitle } = usePageHeaderContent();
   const isHome = meta?.variant === "dashboard";
-  // Deep pages (a route with a parent section) trade the breadcrumb row for a
-  // back chevron; landings, the profile and the pages a tab opens (/trades sits
-  // in Community but is the Swaps tab) show only a title.
+  // Deep pages (a route with a parent section or page) trade the breadcrumb row
+  // for a back chevron; landings, the profile and the pages a tab opens (/trades
+  // sits in Community but is the Swaps tab) show only a title.
   const group =
     meta?.group && meta.variant === undefined && !isMobileTabRoot(pathname)
       ? getNavGroup(meta.group)
+      : undefined;
+  const up = group
+    ? { href: group.href, label: t(`groups.${group.key}.label`) }
+    : meta?.parent
+      ? {
+          href: meta.parent.href,
+          label: t(`pages.${meta.parent.pageKey}.title`),
+        }
       : undefined;
   // The chevron is a real Back: when the previous history entry is one of ours
   // (TanStack numbers only in-app entries, so canGoBack is false on a cold load
@@ -101,7 +111,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     router.history.back();
   };
   // Home shows the brand lockup instead of a title (the greeting is the sr-only h1 in main).
-  const title = isHome && titleOverride == null ? undefined : shellTitle;
+  const title =
+    mobileTitle ?? (isHome && titleOverride == null ? undefined : shellTitle);
   // Sticky page content (tab bars) sticks just below this bar.
   const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 
@@ -114,16 +125,16 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
       className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
     >
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5 max-sm:gap-0">
-        {group ? (
+        {up ? (
           <Link
-            href={group.href}
+            href={up.href}
+            // On a child of that page the router would call this link the current page.
+            activeOptions={{ exact: true }}
             onClick={goBack}
             aria-label={
               canGoBack
                 ? t("mobile.backGeneric")
-                : t("mobile.back", {
-                    section: t(`groups.${group.key}.label`),
-                  })
+                : t("mobile.back", { section: up.label })
             }
             className={tapTarget}
           >
@@ -158,7 +169,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               className={cn(
                 // The controls leave a phone about 126px: two smaller lines before an ellipsis.
                 "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
-                !group && "pl-2",
+                !up && "pl-2",
               )}
             >
               {title}
@@ -200,6 +211,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <Link
           href="/notifications"
           aria-label={bellLabel}
+          aria-current={pathname === "/notifications" ? "page" : undefined}
+          // Preferences isn't the notifications page, though it sits below it.
+          activeOptions={{ exact: true }}
           className={cn(tapTarget, "relative text-muted-foreground")}
         >
           <Bell className="size-5" />

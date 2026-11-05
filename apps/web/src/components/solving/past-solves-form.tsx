@@ -18,6 +18,7 @@ import {
   type PastSolveChoice,
   type PastSolveWhen,
 } from "@/lib/past-solves";
+import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
@@ -34,11 +35,14 @@ const PAGE = 25;
 // (I don't remember / Which year / Pick a date). One submit logs every ticked row through
 // solving.recordPastCompletions. It deliberately does NOT reuse LogSolveDialog, whose success path
 // chains a follow-up and duration prompt per solve, and never asks for a time, photos or reviews.
-// Q7 places it on /welcome?step=solves; `emptyAction` is that page's link to step 1.
+// It sits on /welcome?step=solves (the flow's Continue logs the ticks) and on /completions/past (its
+// own submit does). `emptyText` and `emptyAction` are each page's words for "nothing to log".
 export function PastSolvesForm({
+  emptyText,
   emptyAction,
   onLogged,
 }: {
+  emptyText?: string;
   emptyAction?: ReactNode;
   onLogged?: (count: number) => void;
 }) {
@@ -89,6 +93,7 @@ export function PastSolvesForm({
         title: copy.snapshot?.title ?? copy.puzzle?.title ?? "",
       }))}
       pending={record.isPending}
+      emptyText={emptyText}
       emptyAction={emptyAction}
       onSubmit={submit}
     />
@@ -96,17 +101,20 @@ export function PastSolvesForm({
 }
 
 // The rows and the submit button, given the candidate copies (newest first). Holds the ticks and
-// each row's "When?" answer; at most PAGE rows are ticked at once (the mutation's cap). The submit
-// only shows once something is ticked (never "Log 0"); inside quick setup it never shows, because
-// the flow's Continue logs the ticks ("Log 3 and continue").
+// each row's "When?" answer; at most PAGE rows are ticked at once (the mutation's cap), which it
+// says at the cap. The submit only shows once something is ticked (never "Log 0") and stays in view
+// while the list scrolls; inside quick setup it never shows, because the flow's Continue logs the
+// ticks ("Log 3 and continue").
 export function PastSolvesList({
   candidates,
   pending,
+  emptyText,
   emptyAction,
   onSubmit,
 }: {
   candidates: readonly { copyId: string; title: string }[];
   pending: boolean;
+  emptyText?: string;
   emptyAction?: ReactNode;
   onSubmit: (items: PastCompletionItem[]) => Promise<boolean>;
 }) {
@@ -115,8 +123,10 @@ export function PastSolvesList({
   const [choices, setChoices] = useState<Map<string, PastSolveChoice>>(
     () => new Map(),
   );
+  // The member's local today: the latest day a past solve may be picked for.
+  const maxDate = localTodayInput();
   const items = [...choices].map(([copyId, choice]) =>
-    toPastCompletionItem(copyId, choice),
+    toPastCompletionItem(copyId, choice, maxDate),
   );
   const ready = items.every((item) => item !== null);
 
@@ -136,15 +146,15 @@ export function PastSolvesList({
   if (candidates.length === 0) {
     return (
       <div className="space-y-3">
-        <p className="text-muted-foreground text-sm">{t("empty")}</p>
+        <p className="text-muted-foreground text-sm">
+          {emptyText ?? t("empty")}
+        </p>
         {emptyAction}
       </div>
     );
   }
 
   const years = yearOptions(new Date().getFullYear());
-  // The member's local today: the latest day a past solve may be picked for.
-  const maxDate = localTodayInput();
   const full = choices.size >= PAGE;
   const showMore = shown < candidates.length;
   const showSubmit = !inFlow && choices.size > 0;
@@ -160,47 +170,58 @@ export function PastSolvesList({
   return (
     <div className="space-y-4">
       <p className="font-medium">{t("lead")}</p>
-      <ul className="flex flex-col">
-        {candidates.slice(0, shown).map(({ copyId, title }, index, list) => {
-          const choice = choices.get(copyId);
-          return (
-            <li
-              key={copyId}
-              className={index < list.length - 1 ? "border-b" : undefined}
-            >
-              <PastSolveRow
-                id={copyId}
-                title={title}
-                choice={choice}
-                disabled={!choice && full}
-                years={years}
-                maxDate={maxDate}
-                onChange={(next) => setChoice(copyId, next)}
-              />
-            </li>
-          );
-        })}
-      </ul>
-      {(showMore || showSubmit) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {showMore ? (
-            <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
-              {t("showMore")}
-            </Button>
-          ) : (
-            <span />
-          )}
-          {showSubmit && (
-            <Button
-              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white"
-              onClick={() => void submit()}
-              disabled={!ready || pending}
-            >
-              {t("submit", { count: choices.size })}
-            </Button>
-          )}
-        </div>
-      )}
+      {/* Tabbing through the rows never leaves focus behind what stays on screen: the shell's top
+          chrome, the bar below at its tallest (the cap message wraps), and the phone's tab bar.
+          Reserved before anything is ticked too, so ticking the focused row can't hide it behind
+          the bar that appears. Inside quick setup the flow's footer is no taller. */}
+      <div className="space-y-4 [&_:is(button,input,select)]:scroll-mt-[calc(var(--app-sticky-top,0px)+0.5rem)] [&_:is(button,input,select)]:scroll-mb-[calc(var(--mobile-tab-bar-height,3.5rem)+9rem)] md:[&_:is(button,input,select)]:scroll-mb-28">
+        <ul className="flex flex-col">
+          {candidates.slice(0, shown).map(({ copyId, title }, index, list) => {
+            const choice = choices.get(copyId);
+            return (
+              <li
+                key={copyId}
+                className={index < list.length - 1 ? "border-b" : undefined}
+              >
+                <PastSolveRow
+                  id={copyId}
+                  title={title}
+                  choice={choice}
+                  disabled={!choice && full}
+                  years={years}
+                  maxDate={maxDate}
+                  onChange={(next) => setChoice(copyId, next)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+        {showMore && (
+          <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
+            {t("showMore")}
+          </Button>
+        )}
+      </div>
+      <div
+        className={cn(
+          showSubmit &&
+            "bg-background sticky bottom-[var(--mobile-tab-bar-height,3.5rem)] z-20 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t py-3 pb-[30px] md:bottom-0 md:pb-3",
+        )}
+      >
+        {/* A live region from the start, so reaching the cap is announced. */}
+        <p role="status" className="text-sm empty:hidden">
+          {full ? t("batchFull", { count: PAGE }) : null}
+        </p>
+        {showSubmit && (
+          <Button
+            className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 ms-auto text-white"
+            onClick={() => void submit()}
+            disabled={!ready || pending}
+          >
+            {t("submit", { count: choices.size })}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -226,6 +247,8 @@ export function PastSolveRow({
 }) {
   const t = useTranslations("quickStart.solves");
   const checkboxId = `past-solve-${id}`;
+  const dateErrorId = `${checkboxId}-date-error`;
+  const dateRefused = choice?.when === "day" && choice.date > maxDate;
   return (
     <div className="space-y-2 py-3">
       <div className="flex items-center gap-3">
@@ -282,8 +305,15 @@ export function PastSolveRow({
               max={maxDate}
               value={choice.date}
               onChange={(e) => onChange({ ...choice, date: e.target.value })}
+              aria-invalid={dateRefused ? true : undefined}
+              aria-describedby={dateRefused ? dateErrorId : undefined}
               className="w-auto"
             />
+          )}
+          {dateRefused && (
+            <p id={dateErrorId} className="text-destructive text-xs">
+              {t("futureDate")}
+            </p>
           )}
         </div>
       )}

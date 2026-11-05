@@ -1,34 +1,38 @@
 ---
-title: Je Puzzels Beheren
+title: Je puzzels beheren
 order: 1
 summary: "Bekijk je eigen kopieën, zoek, sorteer en filter ze, en verken de detailpagina van een kopie."
 ---
 
-# Je Puzzelbibliotheek Beheren
+# Je puzzelbibliotheek beheren
 
 Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk bezit. (Een "kopie" is één fysieke puzzel die je bezit — het platform houdt elke kopie apart bij, zodat je geschiedenis bij jou blijft.)
 
-**Waar:** **Mijn Puzzels** (`/my-puzzles`).
+**Waar:** **Mijn puzzels** (`/my-puzzles`).
 
 ## Je puzzels bekijken
 
-1. Open **Mijn Puzzels** vanuit de zijbalk of de tabbalk.
+1. Open **Mijn puzzels** vanuit de zijbalk of de tabbalk.
 2. Wissel tussen de weergaven **raster** en **lijst**.
 3. Typ in het **zoekvak** om puzzels te vinden op titel, merk of tag. Elk
    woord dat je typt moet erin voorkomen; hoofdletters en accenten maken niet
    uit, en een tag mag je met of zonder **#** typen.
 4. Kies een volgorde in het **sorteermenu**: **Onlangs toegevoegd** (de
-   standaard), **Titel A–Z** of **Minste stukken eerst**.
+   standaard), **Titel A–Z** of **Minste stukjes eerst**.
 5. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
    - **Alles**
    - **Beschikbaar**
-   - **Te Ruilen**
-   - **Te Leen**
+   - **Te ruil**
+   - **Te leen**
    - **Bezig**
    - **Voltooid**
-6. Zit je in een huishouden, dan kies je in het menu **Van wie** of je de
-   puzzels van iedereen ziet, alleen die van jou of alleen die van je
+6. Zit er nog iemand in je huishouden, dan kies je in het menu **Van wie** of
+   je de puzzels van iedereen ziet, alleen die van jou of alleen die van je
    huisgenoten.
+
+Op een telefoon staan de statuspillen, **Van wie** en de volgorde achter de knop
+**Filters** naast het zoekvak. Filters die aanstaan, zie je daaronder als
+chips: tik op een chip om hem weg te halen.
 
 Je zoekterm, volgorde, filters en weergave staan in het adres van de pagina.
 Ze blijven dus staan als je terugkomt van een puzzel, de pagina herlaadt of de
@@ -43,6 +47,7 @@ Vanaf een puzzelkaart kun je:
 
 - **Bekijken** — open de volledige detailpagina van de kopie.
 - **Bewerken** — wijzig de details van de kopie.
+- **Aanbieden voor ruil** en **Aanbieden om uit te lenen** — zet dat aanbod aan of uit, en maak het zo nodig ongedaan.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
 - **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
@@ -81,18 +86,21 @@ een kring delen. Met **Klaar** stop je met selecteren.
 De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 
 - Een **hero-afbeelding** met chips voor conditie en moeilijkheid. Op een
-  telefoon of tablet knijp je erin om in te zoomen en sleep je om rond te
-  kijken; dubbeltik om weer uit te zoomen.
+  telefoon tik je erop om hem groot te zien. Daar, en op een tablet, knijp je
+  erin om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te
+  zoomen.
 - Een **statusregel** onder de titel. Op je eigen kopie staat daar waar de
   kopie is en wie hem kan zien: "Uitgeleend aan _naam_ sinds _datum_" (met
-  **Terugvragen**), of waarvoor hij wordt aangeboden en of hij zichtbaar is
-  voor de community, alleen zichtbaar zolang je hem aanbiedt, of privé. Andere
-  leden zien alleen waarvoor hij wordt aangeboden.
+  **Terugvragen**); waarvoor hij wordt aangeboden en wie hem nu kan zien: de
+  community als je profiel openbaar is, vrienden en gedeelde kringen als het
+  privé is, of alleen zolang je hem aanbiedt als je **Privé** hebt gekozen; of,
+  als je hem niet aanbiedt, dat vrienden hem kunnen zien of dat hij privé is.
+  Andere leden zien alleen waarvoor hij wordt aangeboden.
 - **Verwervingsgegevens** (wanneer en hoe je hem kreeg) en je privénotities.
   Alleen jij (en leden van je huishouden die de kopie mogen beheren) zien ze.
   Staat er nog niets, klik dan op **Details toevoegen** om de maand, het jaar
   en de bron in te vullen.
-- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd, aantal keer
+- Een **statistiekenstrook**: aantal keer voltooid, snelste tijd (uit de ingevulde tijden), aantal keer
   uitgeleend en je eigen beoordeling van de kopie (te zien voor jou en je
   huishouden, of voor wie hem beoordeeld heeft).
 - De **Eigenaar**: avatar en naam, met een link naar het profiel als je dat
@@ -157,8 +165,10 @@ Alleen goedgekeurde foto's kunnen als omslag worden gebruikt.
 Elke kopie is zichtbaar of privé. Je stelt dit in als je de kopie **Bewerkt**,
 onder **Wie kan dit exemplaar zien**:
 
-- **Zichtbaar voor de community**: leden die je wederzijds volgt, kunnen hem
-  zien in je bibliotheek.
+- **Zichtbaar**: leden die je wederzijds volgt, kunnen hem zien in je
+  bibliotheek. Zolang je hem aanbiedt, kunnen ook alle leden hem zien als je
+  profiel openbaar is, en leden van kringen waarin je hem hebt gedeeld als het
+  privé is.
 - **Privé — alleen jij en je huishouden**: verborgen voor alle anderen, ook
   voor je vrienden.
 
@@ -166,7 +176,7 @@ Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is
 zichtbaar zolang het aanbod loopt. Koos je **Privé**, dan blijft dat je keuze:
 trek je elk aanbod in, dan is de kopie weer privé. Zie voor het volledige
 overzicht
-[Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+[Zichtbaarheid en privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Kopieën van je huishouden
 

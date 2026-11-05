@@ -16,6 +16,7 @@ import type { FunctionReturnType } from "convex/server";
 import { ImageOff, Trash2, Undo2 } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 import { ConfirmAction } from "./confirm-action";
+import { DetailActions } from "./detail-actions";
 import { RevealGuard } from "./reveal-guard";
 import { severityBand, type SeverityBand } from "./severity";
 
@@ -76,14 +77,17 @@ export function FlagDetail({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
+      <div
+        data-detail-preview
+        className="relative aspect-[16/10] max-h-[40svh] w-full overflow-hidden rounded-2xl bg-muted"
+      >
         {photo.url ? (
           <RevealGuard>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo.url}
               alt={photo.puzzleTitle}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
           </RevealGuard>
         ) : (
@@ -111,7 +115,7 @@ export function FlagDetail({
         <p className="text-xs text-muted-foreground">{t("hashTimedOutHint")}</p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+      <DetailActions>
         <ConfirmAction
           trigger={
             <Button variant="destructive" disabled={busy}>
@@ -129,7 +133,7 @@ export function FlagDetail({
           <Undo2 aria-hidden />
           {t("restore")}
         </Button>
-      </div>
+      </DetailActions>
     </div>
   );
 }

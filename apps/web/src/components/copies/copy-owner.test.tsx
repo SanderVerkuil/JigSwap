@@ -116,6 +116,18 @@ describe("CopyOwner", () => {
     expect(textOf(fallback(html).childNodes)).toBe("O");
   });
 
+  // The name's line stays as tall as it was; only the hit area grows (UX-70).
+  it("gives the owner's name a 44px hit area on touch", () => {
+    const [link] = anchors(
+      render({
+        owner: revealed({ name: "Olivia Owner", username: "olivia" }),
+        viewerIsOwner: false,
+      }),
+    );
+    expect(attr(link!, "class")).toContain("pointer-coarse:py-3");
+    expect(attr(link!, "class")).toContain("pointer-coarse:-my-3");
+  });
+
   it("links by the member id when there is no username either", () => {
     const html = render({
       owner: revealed({ name: "Olivia Owner" }),

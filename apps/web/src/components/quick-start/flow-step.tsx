@@ -20,8 +20,9 @@ import {
  * (single flight) and calls `onNext` only once it saved. A failed save keeps the member on the
  * step with their work (the step toasts why). Leaving any other way while work is unsaved
  * (Finish later, a stepper link, Back, a link in the step, Skip, closing the tab) asks "Leave
- * without saving?" first; Skip is only stored (`onSkip`) after Discard. `renderBody` gets that
- * guarded skip for steps with their own skip-like action.
+ * without saving?" first, unless the step keeps that work for the page it's leaving for (the
+ * picker's Register); Skip is only stored (`onSkip`) after Discard. `renderBody` gets that guarded
+ * skip for steps with their own skip-like action.
  */
 export function QuickStartFlowStep({
   step,
@@ -53,7 +54,8 @@ export function QuickStartFlowStep({
   // through even before the cleared step has published "nothing pending".
   const [guard] = useState(() => createLeaveGuard(store, runner));
   const blocker = useBlocker({
-    shouldBlockFn: guard.shouldAsk,
+    shouldBlockFn: guard.shouldBlock,
+    // Called without a destination, so it asks for any work: closing the tab loses it either way.
     enableBeforeUnload: guard.shouldAsk,
     withResolver: true,
   });
@@ -78,6 +80,7 @@ export function QuickStartFlowStep({
   };
   const discard = () => {
     setAskingSkip(false);
+    store.discard();
     if (blocker.status === "blocked") {
       blocker.proceed();
       return;

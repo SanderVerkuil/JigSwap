@@ -1,3 +1,4 @@
+import { useShortcutHint } from "@/components/dashboard-layout/shortcut-hint";
 import { useOpenDocsSearch } from "@/components/docs/docs-search-context";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -94,6 +95,7 @@ function GroupIcon({ slug }: { slug: string }) {
 function DocsHeroSearch() {
   const t = useTranslations("marketing.docs");
   const openSearch = useOpenDocsSearch();
+  const shortcut = useShortcutHint();
   if (!openSearch) return null;
   return (
     <button
@@ -105,12 +107,16 @@ function DocsHeroSearch() {
     >
       <Search className="size-[18px] opacity-70" aria-hidden="true" />
       <span>{t("searchTrigger")}</span>
-      <kbd
-        aria-hidden="true"
-        className="ml-auto max-md:hidden font-mono text-[12px] px-1.5 py-0.5 rounded-[5px] bg-mk-muted border border-mk-border"
-      >
-        ⌘K
-      </kbd>
+      {/* Known only after mount; touch screens have no keyboard to press it with. The muted text
+          colour is only 3.58:1 on the muted chip. */}
+      {shortcut && (
+        <kbd
+          aria-hidden="true"
+          className="ml-auto max-md:hidden font-mono text-[12px] text-mk-text-body px-1.5 py-0.5 rounded-[5px] bg-mk-muted border border-mk-border pointer-coarse:hidden"
+        >
+          {shortcut}
+        </kbd>
+      )}
     </button>
   );
 }

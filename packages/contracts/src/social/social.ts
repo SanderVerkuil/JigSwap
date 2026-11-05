@@ -409,7 +409,7 @@ export interface PublicProfileStats {
 }
 
 /** Standout completions, UNLOCKED only. Either entry is null when the member has no completions
- * carrying the relevant field (no timed completion for `fastest`, no sized completion for
+ * carrying the relevant field (no solve with a typed time for `fastest`, no sized completion for
  * `hardest`). */
 export interface PublicProfileRecords {
   fastest: { title: string; minutes: number } | null;

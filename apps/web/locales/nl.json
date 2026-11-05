@@ -298,7 +298,8 @@
     "welcomeBack": "Welkom terug bij de puzzelruil community",
     "joinCommunity": "Doe mee met de puzzelruil community",
     "signInToAccount": "Log in op je account",
-    "createNewAccount": "Maak een nieuw account"
+    "createNewAccount": "Maak een nieuw account",
+    "sharedPuzzle": "Iemand heeft een puzzel met je gedeeld op JigSwap. Maak een gratis account aan om die te bekijken, of log in als je er al een hebt."
   },
   "activity": {
     "completion": {
@@ -362,15 +363,15 @@
     "myPuzzles": "Mijn puzzels",
     "managePuzzles": "Beheer je puzzelcollectie",
     "noPuzzles": "Nog geen puzzels hier",
-    "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
+    "addFirstPuzzle": "Voeg je eerste puzzel toe om je plank te vullen.",
     "noMatch": {
       "title": "Geen puzzels gevonden voor “{filters}”",
       "sub": "Zoek of filter op iets anders, of bekijk je hele bibliotheek.",
       "showAll": "Alles tonen"
     },
     "librarySearch": {
-      "label": "Zoek in je puzzels",
-      "placeholder": "Zoek op titel, merk of tag"
+      "label": "Zoek in je puzzels op titel, merk of tag",
+      "placeholder": "Zoek in je puzzels"
     },
     "sort": {
       "label": "Sorteren op",
@@ -472,7 +473,10 @@
       "subtitle": "Blader en ontdek puzzels van de community",
       "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
       "searchLabel": "Zoek in de catalogus",
+      "availableCopies": "{count} beschikbaar",
+      "availableCopiesLabel": "{count} beschikbaar, bekijk {count, plural, one {het exemplaar} other {de exemplaren}} van leden",
       "filtersLabel": "Filters",
+      "filtersLabelCount": "Filters ({count})",
       "clearFilters": "Filters wissen",
       "puzzlesFound": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
       "puzzlesFoundSoFar": "{count, plural, one {Tot nu toe # puzzel gevonden} other {Tot nu toe # puzzels gevonden}}",
@@ -501,10 +505,8 @@
         "brandsUnavailable": "Merken konden niet worden geladen",
         "minPieces": "Min. stukjes",
         "selectMinPieces": "Selecteer minimaal aantal stukjes",
-        "noMinimum": "Geen minimum",
         "maxPieces": "Max. stukjes",
         "selectMaxPieces": "Selecteer maximaal aantal stukjes",
-        "noMaximum": "Geen maximum",
         "difficulty": "Moeilijkheidsgraad",
         "selectDifficulty": "Selecteer moeilijkheidsgraad",
         "allDifficulties": "Alle moeilijkheidsgraden",
@@ -515,7 +517,11 @@
         "tags": "Tags",
         "tagsUnavailable": "Tags konden niet worden geladen",
         "removeTag": "Tag {tag} verwijderen",
-        "customRange": "Aangepast bereik",
+        "pieces": "Stukjes",
+        "piecesRange": "{min}–{max} stukjes",
+        "piecesFrom": "Vanaf {min} stukjes",
+        "piecesUpTo": "Tot {max} stukjes",
+        "removeFilter": "Filter verwijderen: {label}",
         "min": "Min",
         "max": "Max"
       },
@@ -532,7 +538,7 @@
     "filters": {
       "all": "Alles",
       "available": "Beschikbaar",
-      "forTrade": "Te ruilen",
+      "forTrade": "Te ruil",
       "forLend": "Te leen",
       "lentOut": "Uitgeleend",
       "inProgress": "Bezig",
@@ -568,11 +574,11 @@
     "importImported": "Details geïmporteerd",
     "boxPhoto": "Foto van de doos",
     "boxPhotoHint": "Een foto van de voorkant van de doos. Na de controle wordt dit de afbeelding van de puzzel in de catalogus.",
-    "addToLibrary": "Toevoegen aan bibliotheek",
+    "addToLibrary": "Toevoegen aan mijn puzzels",
     "saveAndAddAnother": "Opslaan & nog een toevoegen",
     "addReadyHint": "Vul titel en aantal stukjes in om door te gaan.",
     "livePreview": "Live voorbeeld",
-    "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
+    "livePreviewCaption": "Zo ziet je puzzel eruit in Mijn puzzels.",
     "contributePreviewCaption": "Zo komt de puzzel in de catalogus te staan zodra hij is goedgekeurd.",
     "contributeDone": {
       "pendingTitle": "“{title}” wacht op controle",
@@ -596,7 +602,7 @@
     "fieldPublisher": "Uitgever",
     "fieldPublisherPlaceholder": "bijv. Jumbo, Ravensburger",
     "fieldPieceCount": "Aantal stukjes",
-    "fieldDifficulty": "Moeilijkheid",
+    "fieldDifficulty": "Moeilijkheidsgraad",
     "fieldCondition": "Conditie",
     "fieldAvailability": "Beschikbaarheid",
     "availabilityHint": "Optioneel: zet er een aan om dit exemplaar aan te bieden bij Puzzels ontdekken. Laat ze uit om het gewoon in je bibliotheek te houden.",
@@ -618,7 +624,7 @@
     },
     "dividerManual": "of vul de gegevens zelf in",
     "dividerCover": "omslag & extra's",
-    "difficulty_easy": "Makkelijk",
+    "difficulty_easy": "Gemakkelijk",
     "difficulty_medium": "Gemiddeld",
     "difficulty_hard": "Moeilijk",
     "difficulty_expert": "Expert",
@@ -638,7 +644,8 @@
     "advancedDetails": "Meer details (optioneel)",
     "cancel": "Annuleren",
     "chooser": {
-      "searchPlaceholder": "Zoek op titel, merk of barcode…",
+      "searchLabel": "Zoek in de catalogus op titel, merk of barcode",
+      "searchPlaceholder": "Titel, merk of barcode",
       "yourSubmissions": "Jouw inzendingen",
       "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
       "allPuzzles": "Alle puzzels",
@@ -654,6 +661,9 @@
       "details": "Details",
       "detailsOf": "Details van {title}",
       "chosenPuzzle": "Een exemplaar toevoegen van",
+      "addAnotherCopy": "Nog een exemplaar toevoegen",
+      "alreadyOwned": "Deze puzzel heb je al.",
+      "viewOwned": "Bekijken",
       "copyDetails": "Jouw exemplaar",
       "addYourCopy": "Exemplaar toevoegen",
       "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen.",
@@ -667,6 +677,14 @@
       "mine": "Van mij",
       "household": "Van huisgenoten",
       "trigger": "{owner, select, mine {Van mij} household {Van huisgenoten} other {Van iedereen}}"
+    },
+    "filterSheet": {
+      "title": "Filters",
+      "active": "actief",
+      "status": "Status",
+      "show": "{count, plural, one {Toon # puzzel} other {Toon # puzzels}}",
+      "close": "Klaar",
+      "remove": "Filter verwijderen: {filter}"
     },
     "boxArtCheck": {
       "label": "Wordt gecontroleerd",
@@ -866,7 +884,7 @@
       "hiddenNote": "Hun gegevens verschijnen zodra ze accepteren of reageren.",
       "reviewsHeading": "Ontvangen reviews",
       "shareEmail": "Deel mijn e-mailadres met {name}",
-      "shareEmailHint": "Alleen voor deze ruil. Je kunt dit altijd weer uitzetten.",
+      "shareEmailHint": "Alleen voor deze uitwisseling. Je kunt dit altijd weer uitzetten.",
       "shareEmailError": "Kon het delen van je e-mailadres niet aanpassen. Probeer het opnieuw."
     },
     "pendingLabel": {
@@ -914,7 +932,7 @@
     "pricePlaceholder": "bijv. 15,00",
     "priceInvalid": "Vul een bedrag boven nul en tot 1.000.000 in, zoals 15 of 15,50.",
     "revealNotice": {
-      "title": "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.",
+      "title": "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor dit verzoek.",
       "emailPrivate": "Je e-mailadres blijft privé, tenzij je het zelf deelt nadat de eigenaar heeft geaccepteerd.",
       "profilePrivate": "Je profiel zelf blijft privé."
     },
@@ -1006,7 +1024,8 @@
     "self": "Dit is je eigen puzzel.",
     "ownerHidden": "Deze eigenaar heeft een privéprofiel, dus vanaf hier kun je geen bericht sturen.",
     "unavailable": "Over deze puzzel kun je geen bericht sturen.",
-    "backToPuzzle": "Terug naar de puzzel"
+    "backToPuzzle": "Terug naar de puzzel",
+    "findACopy": "Zoek een exemplaar"
   },
   "messages": {
     "anonymous": "Anonieme gebruiker",
@@ -1101,7 +1120,7 @@
     "puzzlesMenu": "Puzzels ({count})",
     "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
     "removeAttachment": "{title} verwijderen",
-    "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
+    "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor dit verzoek. Je e-mailadres blijft privé.",
     "retry": "Opnieuw proberen",
     "searchConversations": "Zoek gesprekken",
     "searchConversationsPlaceholder": "Zoek gesprekken…",
@@ -1525,25 +1544,27 @@
     "allConditions": "Alle condities",
     "minPieces": "Min. stukjes",
     "maxPieces": "Max. stukjes",
+    "min": "Min",
+    "max": "Max",
     "clearFilters": "Alles wissen",
     "tryDifferentFilters": "Pas je filters aan.",
     "filterAll": "Alle",
     "available": "Beschikbaar",
-    "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
-    "resultsCountMore": "{count}+ puzzels gevonden",
+    "resultsCount": "{count, plural, one {# exemplaar gevonden} other {# exemplaren gevonden}}",
+    "resultsCountMore": "{count}+ exemplaren gevonden",
     "noMatchesYet": "Nog geen resultaten in de aanbiedingen die we tot nu toe hebben bekeken.",
     "keepLooking": "Verder zoeken",
     "loadMore": "Meer laden",
-    "loadMoreFailed": "Meer puzzels konden niet worden geladen.",
+    "loadMoreFailed": "Meer exemplaren konden niet worden geladen.",
     "loadMoreRetry": "Opnieuw proberen",
-    "loadFailed": "Puzzels konden niet worden geladen",
+    "loadFailed": "Exemplaren konden niet worden geladen",
     "loadFailedHint": "Controleer je verbinding en laad de pagina opnieuw.",
     "searchHint": "Druk op ⌘K om op titel of merk te zoeken",
     "addFilter": "Filter toevoegen",
     "addFilterSearch": "Filteren op…",
     "noFilters": "Geen filters meer om toe te voegen.",
     "removeFilter": "Filter verwijderen",
-    "fieldText": "Tekst",
+    "searchLabel": "Exemplaren zoeken",
     "fieldAvailability": "Beschikbaarheid",
     "textPlaceholder": "Titel, merk of thema…",
     "card": {
@@ -2125,9 +2146,11 @@
     "notListed": "Niet gevonden?",
     "register": "\"{query}\" registreren",
     "registerNew": "Een nieuwe puzzel registreren",
-    "forTrade": "Beschikbaar om te ruilen",
+    "forTrade": "Te ruil",
+    "forLend": "Te leen",
     "forTradeLabel": "{title} beschikbaar om te ruilen",
-    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen. Na het kiezen kun je elke puzzel apart aanbieden om te ruilen, en dat later per puzzel aanpassen.",
+    "forLendLabel": "{title} beschikbaar om uit te lenen",
+    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen, tenzij je dat hier aanzet. Later kun je dat per puzzel aanpassen.",
     "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
@@ -2230,7 +2253,7 @@
   "household": {
     "loading": "Je huishouden laden…",
     "joined": "Je bent lid geworden van het huishouden",
-    "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Oplossingen blijven persoonlijk.",
+    "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Voltooiingen blijven persoonlijk.",
     "empty": {
       "title": "Je zit nog niet in een huishouden",
       "sub": "Maak een huishouden aan om je puzzelbibliotheek te delen met de mensen met wie je samenwoont, en nodig ze daarna uit.",
@@ -2459,7 +2482,7 @@
     "invite": {
       "title": "Uitnodigen",
       "searchPlaceholder": "Zoek mensen die je kunt uitnodigen…",
-      "permissionLabel": "Rechten",
+      "permissionLabel": "Uitnodigen als",
       "send": "Uitnodiging versturen",
       "sent": "Uitnodiging verstuurd",
       "empty": "Je kunt mensen uitnodigen met wie je elkaar volgt.",
@@ -2520,6 +2543,8 @@
       "createRateLimited": "Je hebt vandaag het maximale aantal kringen aangemaakt. Probeer het morgen opnieuw.",
       "cancel": "Annuleren",
       "create": "Aanmaken",
+      "created": "Kring aangemaakt",
+      "createFailed": "Kring aanmaken is niet gelukt. Probeer het opnieuw.",
       "title": "{name} beheren",
       "fallbackName": "kring",
       "description": "Leden uitnodigen of verwijderen, rechten instellen en exemplaren delen.",
@@ -2539,6 +2564,7 @@
       "searchPlaceholder": "Zoek in je puzzels…",
       "noMatches": "Geen puzzels gevonden.",
       "noCopies": "Je bibliotheek is nog leeg. Voeg puzzels toe om ze hier te delen.",
+      "housematesNote": "Alleen je eigen puzzels staan hier. Huisgenoten delen die van hen zelf.",
       "loadError": "Je puzzels konden niet worden geladen.",
       "shared": "Gedeeld",
       "willShare": "Wordt gedeeld",
@@ -2578,19 +2604,21 @@
       "memberCount": "{count, plural, one {# lid} other {# leden}}",
       "manage": "Beheren",
       "manageNamed": "{circle} beheren",
+      "invitePeople": "Mensen uitnodigen",
       "chatTitle": "Groepschat",
       "chatEmpty": "Nog geen berichten. Open de groepschat en zeg hallo.",
       "chatError": "De nieuwste berichten konden niet worden geladen.",
       "sharedTitle": "Gedeelde puzzels",
       "sharedEmpty": "Er zijn nog geen puzzels gedeeld in deze kring.",
       "sharedError": "De gedeelde puzzels konden niet worden geladen.",
-      "viewOnlyHint": "Je kunt in deze kring alleen bekijken. Vraag een beheerder om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen."
+      "viewOnlyHint": "Je kunt in deze kring alleen bekijken. Vraag een beheerder om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen.",
+      "viewOnlyHintNamed": "Je kunt in deze kring alleen bekijken. Vraag {name} om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen."
     }
   },
   "people": {
     "yourNetwork": "Jouw netwerk",
-    "memberCount": "{count, plural, one {# lid} other {# leden}}",
-    "memberCountMore": "{count}+ leden",
+    "memberCount": "{count, plural, one {# lid} other {# leden}} in je netwerk",
+    "memberCountMore": "{count}+ leden in je netwerk",
     "showMoreMembers": "Meer tonen",
     "followsYou": "Volgt jou",
     "requests": {
@@ -2669,6 +2697,7 @@
     "errorRateLimited": "Je hebt vaak gevolgd en ontvolgd. Probeer het later opnieuw."
   },
   "members": {
+    "metaDescription": "Volg {name} op JigSwap, dé plek om legpuzzels uit te lenen en te ruilen.",
     "memberSince": "Lid sinds {date}",
     "loading": "Lid laden…",
     "collects": "Verzamelt ~{count, plural, one {# puzzel} other {# puzzels}} op JigSwap",
@@ -2678,9 +2707,8 @@
     "ratingLabel": "Gem. rating",
     "bioTitle": "Over",
     "notFoundTitle": "Lid niet gevonden",
-    "notFoundSub": "Deze link is mogelijk verouderd, of het lid heeft hun gebruikersnaam gewijzigd.",
+    "notFoundSub": "Deze link is mogelijk verouderd, of dit lid heeft een andere gebruikersnaam gekozen.",
     "findPeople": "Mensen vinden",
-    "backHome": "Terug naar home",
     "profile": {
       "ratingPill": "{rating} · {reviewCount, plural, one {# review} other {# reviews}}",
       "privateBadge": "Privé",
@@ -2707,7 +2735,7 @@
       "previewBanner": "Voorbeeld — zo zien bezoekers jouw profiel.",
       "previewBannerPrivate": "Voorbeeld — zo zien bezoekers jouw profiel. Goedgekeurde volgers zien alles.",
       "editProfile": "Profiel bewerken",
-      "backToApp": "Terug naar app"
+      "backToProfile": "Terug naar mijn profiel"
     },
     "followersYouKnow": {
       "title": "Volgers die je kent",
@@ -2759,6 +2787,7 @@
     "undo": "Ongedaan maken",
     "backToNotifications": "Terug naar meldingen",
     "jumpTo": "Ga naar",
+    "preferencesByType": "Per soort melding",
     "channelInApp": "In-app",
     "channelEmail": "E-mail",
     "channelPush": "Push",
@@ -2773,12 +2802,10 @@
       "trade_completed": "Ruil voltooid",
       "trade_cancelled": "Ruil geannuleerd",
       "trade_cancelled_member_deleted": "Ruil geannuleerd (account verwijderd)",
-      "exchange_proposed": "Ruil voorgesteld",
       "exchange_disputed": "Ruilgeschil",
       "message_received": "Nieuwe berichten",
       "circle_message_received": "Kringberichten",
       "review_received": "Ontvangen beoordelingen",
-      "puzzle_favorited": "Puzzel favoriet gemaakt",
       "puzzle_approved": "Puzzel goedgekeurd",
       "puzzle_rejected": "Puzzel afgewezen",
       "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
@@ -2815,7 +2842,7 @@
       },
       "social": {
         "title": "Sociaal",
-        "description": "Volgers, volgverzoeken, beoordelingen, favorieten en doelen"
+        "description": "Volgers, volgverzoeken, beoordelingen en doelen"
       },
       "submissions": {
         "title": "Mijn inzendingen",
@@ -2998,18 +3025,16 @@
     "pushError": "Kon pushmeldingen niet bijwerken",
     "matrixLabel": "Meldingskanalen per type",
     "typeDesc": {
-      "trade_request": "Wanneer iemand een ruil voorstelt voor een van je puzzels.",
+      "trade_request": "Wanneer iemand een van je puzzels wil ruilen, lenen of kopen.",
       "trade_accepted": "Wanneer iemand een ruil accepteert die je hebt voorgesteld.",
       "trade_declined": "Wanneer iemand een ruil afwijst die je hebt voorgesteld.",
       "trade_completed": "Wanneer een ruil is voltooid.",
       "trade_cancelled": "Wanneer een ruil is geannuleerd.",
       "trade_cancelled_member_deleted": "Wanneer een ruil wordt geannuleerd omdat het account van het andere lid is verwijderd.",
-      "exchange_proposed": "Wanneer iemand een uitwisseling voorstelt — ruil, verkoop of uitlenen.",
       "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
       "message_received": "Wanneer je een nieuw bericht ontvangt.",
       "circle_message_received": "Wanneer iemand schrijft in de groepschat van een van je kringen. E-mail komt als korte samenvatting, nooit per bericht.",
       "review_received": "Wanneer iemand je een beoordeling geeft na een uitwisseling.",
-      "puzzle_favorited": "Wanneer iemand een puzzel die je hebt toegevoegd als favoriet markeert.",
       "puzzle_approved": "Wanneer een puzzel die je hebt ingediend is goedgekeurd voor de catalogus.",
       "puzzle_rejected": "Wanneer een puzzel die je hebt ingediend is afgewezen.",
       "proposal_approved": "Wanneer een wijziging die je voor een cataloguspuzzel voorstelde wordt goedgekeurd.",
@@ -3251,7 +3276,7 @@
       "empty": "Nog geen voltooiingen",
       "emptyHint": "Leg een voltooiing vast voor een puzzel die je hebt, leent of met je huishouden deelt, en begin zo je geschiedenis.",
       "emptyLog": "Voltooiing vastleggen",
-      "emptyPastSolves": "Al een paar puzzels afgemaakt? <link>Leg eerdere voltooiingen vast</link>",
+      "pastSolvesPrompt": "Al een paar puzzels afgemaakt? <link>Leg eerdere voltooiingen vast</link>",
       "inProgressSection": "Bezig",
       "historySection": "Geschiedenis",
       "inProgress": "Bezig",
@@ -3265,6 +3290,7 @@
       "noTime": "Geen tijd vastgelegd",
       "finish": "Voltooiing afronden",
       "edit": "Bewerken",
+      "updated": "Voltooiing bijgewerkt",
       "editDescription": "Pas de datums, de tijd of de notities van deze voltooiing aan.",
       "editInProgressDescription": "Pas je startdatum of je notities aan. Rond de voltooiing af als je klaar bent.",
       "editWindowClosed": "Deze voltooiing kan niet meer worden bewerkt (het venster van 24 uur is gesloten).",
@@ -3311,6 +3337,12 @@
         "addPuzzle": "Puzzel toevoegen",
         "findToBorrow": "Zoek een puzzel om te lenen"
       },
+      "past": {
+        "title": "Eerdere voltooiingen vastleggen",
+        "subtitle": "Vink de puzzels aan die je al eerder hebt afgemaakt. Je legt er tot 25 tegelijk vast.",
+        "back": "Terug naar voltooiingen",
+        "empty": "Geen puzzels meer om vast te leggen. Puzzels met een voltooiing staan hier niet tussen."
+      },
       "delete": "Verwijderen",
       "deleteConfirmTitle": "Voltooiing verwijderen?",
       "deleteConfirmBody": "Dit verwijdert de voltooiing definitief uit je geschiedenis. Dit kan niet ongedaan worden gemaakt.",
@@ -3353,6 +3385,9 @@
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
       "rateLimited": "Je hebt vandaag al veel voltooiingen vastgelegd. Probeer het morgen opnieuw.",
       "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
+      "endInFutureError": "De einddatum kan niet in de toekomst liggen.",
+      "dateRequired": "Kies een datum.",
+      "timeInvalid": "Gebruik hele getallen: uren vanaf 0, minuten van 0 tot 59.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
       "updateCopyPiecesBody": "Je gaf aan dat er stukjes ontbreken. Wil je het aantal ontbrekende stukjes van dit exemplaar ook bijwerken?",
@@ -3488,6 +3523,7 @@
     "stats": {
       "completions": "Voltooiingen",
       "solveTime": "Totale oplostijd",
+      "solveTimeNone": "—",
       "puzzlesOwned": "Puzzels in bezit",
       "distinctDefinitions": "Unieke titels",
       "collections": "Collecties",
@@ -3501,10 +3537,10 @@
     "trends": {
       "title": "Voltooiingstrends",
       "description": "Voltooiingen per maand over de laatste 12 maanden.",
-      "minutesDescription": "Oplostijd in minuten per maand over de laatste 12 maanden.",
+      "hoursDescription": "Oplostijd in uren per maand over de laatste 12 maanden.",
       "count": "Voltooiingen",
-      "minutes": "Oplosminuten",
-      "empty": "Nog geen voltooiingen."
+      "hours": "Oplosuren",
+      "empty": "Geen voltooiingen met een datum in de laatste 12 maanden."
     },
     "breakdown": {
       "title": "Collectie-uitsplitsing",
@@ -3544,7 +3580,7 @@
     },
     "charts": {
       "completionsPerMonth": "Voltooiingen / maand",
-      "minutesPerMonth": "Oplosminuten / maand",
+      "hoursPerMonth": "Oplosuren / maand",
       "swapsPerMonth": "Ruilacties / maand",
       "month": "Maand"
     }
@@ -3556,12 +3592,13 @@
     "copyLink": "Link kopiëren",
     "copied": "Gekopieerd!",
     "copyError": "Link kopiëren is niet gelukt. Probeer het opnieuw.",
+    "linkError": "Je uitnodigingslink ophalen is niet gelukt. Controleer je verbinding en probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
     "inviteLinkHint": "De code en deze knoppen delen je persoonlijke uitnodigingslink, niet alleen je profieladres, zodat jullie elkaar kunnen volgen.",
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
-    "needUsernameTitle": "Stel eerst een gebruikersnaam in",
-    "needUsernameBody": "Je QR-bijschrift toont je profiellink, en die heeft een gebruikersnaam of een eigen link nodig. Stel er een in bij je accountinstellingen en kom dan terug.",
-    "openSettings": "Accountinstellingen openen",
+    "customLinkNote": "Kies een eigen link om hier een leesbaar adres te tonen. Om deze code te delen heb je die niet nodig.",
+    "setCustomLink": "Eigen link instellen",
     "invitedYou": "{name} heeft je uitgenodigd voor JigSwap",
     "followEachOther": "{name} heeft hun code met je gedeeld — elkaar volgen?",
     "followEachOtherCta": "Elkaar volgen",
@@ -3599,11 +3636,14 @@
   },
   "inviteShare": {
     "share": "Uitnodigingslink delen",
+    "sharePuzzle": "Link delen",
     "email": "E-mail",
     "whatsapp": "WhatsApp",
     "subject": "Kom ook op JigSwap",
     "message": "Kom ook op JigSwap, daar houd ik mijn puzzels bij: {url}",
     "householdMessage": "Word lid van ons huishouden op JigSwap, dan delen we één puzzelplank: {url}",
+    "puzzleSubject": "Een puzzel op JigSwap",
+    "puzzleMessage": "Ik bied “{title}” aan op JigSwap. Kijk maar: {url}",
     "privacy": "JigSwap ziet en bewaart niet naar wie je dit stuurt.",
     "inviteLink": "Uitnodigen met een link",
     "createLink": "Uitnodigingslink maken",
@@ -3723,7 +3763,7 @@
       },
       "series": {
         "label": "Serie",
-        "placeholder": "bijv. Natuur Collectie"
+        "placeholder": "bijv. Natuurcollectie"
       },
       "pieceCount": {
         "label": "Aantal stukjes",
@@ -3946,7 +3986,7 @@
         "puzzlesCount": "{count} puzzels",
         "onYourShelf": "Op je plank",
         "withName": "bij {name}",
-        "notificationSent": "melding verstuurd",
+        "backWithYou": "weer bij jou",
         "available": "Beschikbaar",
         "lentOut": "Uitgeleend",
         "recalled": "Teruggevraagd",
@@ -4004,7 +4044,7 @@
       "faq2Q": "Kan ik een puzzel voor onbepaalde tijd lenen?",
       "faq2A": "Ja. Spreek met de eigenaar af hoe lang je 'm houdt — dat mag ook voor onbepaalde tijd zijn. De eigenaar ziet altijd bij wie de puzzel is en kan 'm terugvragen.",
       "faq3Q": "Hoe houdt de eigenaar zicht op zijn puzzel?",
-      "faq3A": "Elke puzzel staat in je overzicht 'Mijn puzzels', met de status en bij wie 'm is: beschikbaar, uitgeleend of teruggevraagd. Bij terugvragen krijgt de lener automatisch een melding.",
+      "faq3A": "Elke puzzel staat in je overzicht 'Mijn puzzels', met de status en bij wie 'm is. Wil je 'm terug? Stuur de lener een bericht om het af te spreken en kies Terugvragen zodra je de puzzel weer hebt: daarmee sluit je de uitlening.",
       "faq4Q": "Hoe geef ik de puzzel door?",
       "faq4A": "In persoon. Jullie spreken een plek en tijd af om de puzzel over te dragen — handig en zonder verzendkosten. Voorlopig regelen we geen verzending."
     },
@@ -4200,6 +4240,7 @@
     "insights": "Inzichten — JigSwap",
     "completions": "Voltooiingen — JigSwap",
     "completionNew": "Voltooiing vastleggen — JigSwap",
+    "completionPast": "Eerdere voltooiingen vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
     "admin": "Beheer — JigSwap",
@@ -4214,9 +4255,14 @@
     "library": "Mijn bibliotheek — JigSwap",
     "people": "Mensen — JigSwap",
     "members": "Leden — JigSwap",
-    "copyInstance": "Exemplaar in bezit — JigSwap",
+    "copyInstance": "Exemplaar — JigSwap",
+    "named": "{name} — JigSwap",
+    "suggestEditOf": "Wijziging voorstellen: {name} — JigSwap",
+    "threadOf": "{name} — Berichten — JigSwap",
     "whatsNew": "Wat is er nieuw — JigSwap",
-    "quickSetup": "Snel instellen — JigSwap"
+    "quickSetup": "Snel instellen — JigSwap",
+    "mySuggestions": "Mijn voorstellen — JigSwap",
+    "suggestEdit": "Wijziging voorstellen — JigSwap"
   },
   "shell": {
     "search": {
@@ -4235,9 +4281,11 @@
       "noResultsFor": "Geen resultaten voor “{term}”"
     },
     "actions": {
+      "add": "Toevoegen",
       "addToMyPuzzles": "Toevoegen aan mijn puzzels",
       "addAPuzzle": "Een puzzel toevoegen",
       "logCompletion": "Een voltooiing vastleggen",
+      "markPastSolves": "Eerdere voltooiingen vastleggen",
       "createCircle": "Een kring aanmaken",
       "browseCommunity": "Community verkennen",
       "exportData": "Mijn gegevens exporteren"
@@ -4302,6 +4350,11 @@
         "subtitle": "Kies een puzzel om een voltooiing voor te registreren.",
         "description": "Nieuwe voltooiing vastleggen"
       },
+      "completionPast": {
+        "title": "Eerdere voltooiingen vastleggen",
+        "subtitle": "Vink de puzzels aan die je al eerder hebt afgemaakt.",
+        "description": "Leg de puzzels vast die je al eerder hebt afgemaakt"
+      },
       "goals": {
         "title": "Doelen",
         "subtitle": "Persoonlijke doelen voor dit jaar.",
@@ -4315,7 +4368,7 @@
       "browse": {
         "title": "Puzzels ontdekken",
         "subtitle": "Exemplaren die leden te ruil, te leen of te koop aanbieden.",
-        "description": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden"
+        "description": "Te ruil, te leen of te koop bij andere leden"
       },
       "circles": {
         "title": "Kringen",
@@ -4371,7 +4424,7 @@
         "subtitle": "Alles wat je aandacht vraagt."
       },
       "copyInstance": {
-        "title": "Exemplaar in bezit",
+        "title": "Exemplaar",
         "subtitle": "De herkomst en geschiedenis van één exemplaar."
       },
       "notificationPreferences": {
@@ -4385,8 +4438,8 @@
       },
       "adminModeration": {
         "title": "Moderatie",
-        "subtitle": "Beoordeel inzendingen, foto's en meldingen van leden op één plek.",
-        "description": "Beoordeel inzendingen, foto's en meldingen"
+        "subtitle": "Beoordeel inzendingen, foto's en rapportages van leden op één plek.",
+        "description": "Beoordeel inzendingen, foto's en rapportages"
       },
       "adminPuzzles": {
         "title": "Puzzels",
@@ -4569,9 +4622,9 @@
     "exchangesCount": "{count} ruilen",
     "noSwaps": "Nog geen ruilen of handel voor deze puzzel.",
     "you": "jij",
-    "finishedIn": "voltooid in {duration}",
     "communityRating": "Communitybeoordeling",
-    "communityRatings": "{count} communitybeoordelingen",
+    "noRatings": "Nog geen beoordelingen",
+    "communityRatings": "{count, plural, one {# communitybeoordeling} other {# communitybeoordelingen}}",
     "copyReviews": "Beoordelingen van dit exemplaar",
     "copyReviewsHint": "Wie een voltooiing van dit exemplaar vastlegt, kan het beoordelen.",
     "noCopyReviews": "Nog geen beoordelingen van dit exemplaar.",
@@ -4617,14 +4670,24 @@
       "swapHint": "Leden kunnen een ruil voorstellen.",
       "lendLabel": "Aanbieden om uit te lenen",
       "lendHint": "Leden kunnen vragen of ze hem mogen lenen.",
+      "saleLabel": "Te koop aanbieden",
+      "saleHint": "Leden kunnen vragen of ze hem mogen kopen.",
       "lockedOnLoan": "Hij is uitgeleend. Zodra je hem terug hebt, kun je hem weer aanbieden.",
       "swapOn": "Aangeboden voor ruil",
       "swapOff": "Niet meer aangeboden voor ruil",
       "lendOn": "Aangeboden om uit te lenen",
       "lendOff": "Niet meer aangeboden om uit te lenen",
+      "saleOn": "Te koop aangeboden",
+      "saleOff": "Niet meer te koop",
       "visibleWhileOffered": "Zolang je hem aanbiedt, is hij zichtbaar. Trek je elk aanbod in, dan is hij weer privé.",
       "privateAgain": "Hij is weer privé.",
       "undo": "Ongedaan maken"
+    },
+    "sendLink": {
+      "trigger": "Stuur een link",
+      "title": "Stuur een link naar deze puzzel",
+      "description": "Wie de link opent, ziet “{title}” en kan erom vragen. Nog niet op JigSwap? Dan meldt diegene zich eerst aan en komt daarna meteen hier terecht.",
+      "privateNote": "Je profiel is privé, dus deze link werkt alleen voor mensen met wie je elkaar volgt, je huishouden en kringen waarin je deze puzzel deelt."
     },
     "status": {
       "onLoan": "Uitgeleend aan {name} sinds {date}",
@@ -4633,7 +4696,10 @@
       "offerLend": "uitlenen",
       "offerSale": "verkoop",
       "visibleWhileOffered": "Zichtbaar zolang je hem aanbiedt, daarna weer privé",
-      "notOffered": "Niet aangeboden"
+      "notOffered": "Niet aangeboden",
+      "visibleToCommunity": "Zichtbaar voor de community",
+      "visibleToCircles": "Zichtbaar voor vrienden en gedeelde kringen",
+      "friendsCanSee": "Vrienden kunnen hem zien"
     },
     "editCopy": {
       "title": "Exemplaar bewerken",
@@ -4656,14 +4722,16 @@
       "sourceUnknown": "Niet ingevuld",
       "visibility": {
         "label": "Wie kan dit exemplaar zien",
-        "visible": "Zichtbaar voor de community",
-        "visibleHint": "Je vrienden zien het in je bibliotheek.",
+        "visible": "Zichtbaar",
+        "visibleHint": "Vrienden kunnen hem zien, en alle leden zolang je hem aanbiedt.",
+        "visibleHintPrivateProfile": "Vrienden kunnen hem zien, en kringen waarmee hij gedeeld is zolang je hem aanbiedt.",
         "private": "Privé — alleen jij en je huishouden",
         "privateHint": "Verborgen voor alle anderen, ook voor je vrienden.",
         "offerNote": "Bied je een puzzel aan om te ruilen, uit te lenen of te verkopen, dan is hij zichtbaar zolang het aanbod loopt.",
         "privateWhileOffered": "Hij wordt aangeboden en is dus nu zichtbaar. Trek je elk aanbod in, dan is hij weer privé."
       }
     },
+    "viewCoverLarger": "Omslag groter bekijken",
     "photoCover": "Omslag",
     "photoPending": "Wacht op controle"
   },
@@ -4694,6 +4762,7 @@
     "viewYourCopy": "Bekijk jouw exemplaar",
     "findCopyToSwap": "Vind een exemplaar om te ruilen",
     "noCopiesOffered": "Nog geen exemplaren aangeboden",
+    "noOtherCopiesOffered": "Nog geen andere leden bieden deze aan",
     "favorite": "Favoriet",
     "writeReview": "Schrijf een review",
     "communityRating": "Communitybeoordeling",
@@ -4704,6 +4773,7 @@
     "copiesCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
     "seeAllCopies": "{count, plural, one {Bekijk het beschikbare exemplaar →} other {Bekijk alle # beschikbare exemplaren →}}",
     "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
+    "noOtherCopies": "Nog geen andere leden bieden deze aan.",
     "reviews": "Reviews",
     "reviewPlaceholder": "Schrijf een review (optioneel)…",
     "yourRating": "Jouw beoordeling",
@@ -4834,7 +4904,7 @@
         "rejected": "“{title}” afgewezen — nog {count} in de wachtrij.",
         "removed": "Afbeelding verwijderd bij “{title}” — nog {count} in de wachtrij.",
         "restored": "Foto hersteld bij “{title}” — nog {count} in de wachtrij.",
-        "restoredToUnchecked": "Foto bij “{title}” terug naar Niet-gecontroleerde foto's — nog {count} in de wachtrij.",
+        "restoredToUnchecked": "Foto bij “{title}” terug naar Niet gecontroleerd — nog {count} in de wachtrij.",
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
         "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
@@ -4857,10 +4927,11 @@
         "submissions": "Inzendingen",
         "flagged": "Gemarkeerd",
         "activity": "Activiteitenlog",
-        "unchecked": "Niet-gecontroleerde foto's",
-        "appeals": "Beoordelingsverzoeken",
+        "unchecked": "Niet gecontroleerd",
+        "appeals": "Herbeoordelingen",
         "hashMatches": "Hash-matches",
-        "reports": "Gemeld"
+        "reports": "Rapportages",
+        "label": "Moderatiewachtrij"
       },
       "detail": {
         "submitted": "Ingezonden",
@@ -4870,7 +4941,7 @@
           "submissions": "Inzending",
           "flagged": "Gemarkeerde afbeelding",
           "unchecked": "Niet-gecontroleerde foto",
-          "appeals": "Beoordelingsverzoek"
+          "appeals": "Herbeoordeling"
         }
       },
       "handledElsewhere": {
@@ -4929,7 +5000,7 @@
         "confirmBody": "De foto wordt van het exemplaar verwijderd en de uploader krijgt bericht dat hij is verwijderd. Dit kun je niet ongedaan maken.",
         "confirmAction": "Foto verwijderen",
         "restore": "Foto herstellen",
-        "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert."
+        "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet gecontroleerd, waar alleen Goedkeuren zonder hash-check hem publiceert."
       },
       "flaggedEmpty": "Geen gemarkeerde afbeeldingen. De community is tevreden.",
       "activity": {
@@ -4961,9 +5032,9 @@
           "csam_escalation_updated": "Hash-match-escalatie bijgewerkt",
           "role_granted": "Beheerdersrol toegekend",
           "role_revoked": "Beheerdersrol ingetrokken",
-          "report_dismissed": "Melding afgewezen",
+          "report_dismissed": "Rapportage afgewezen",
           "report_content_removed": "Gemelde inhoud verwijderd",
-          "report_warned": "Lid gewaarschuwd na een melding",
+          "report_warned": "Lid gewaarschuwd na een rapportage",
           "message_image_auto_rejected": "Foto in bericht automatisch gemarkeerd",
           "message_image_restored": "Foto in bericht hersteld",
           "photo_recheck_requested": "Niet-gecontroleerde foto opnieuw gecontroleerd",
@@ -4994,9 +5065,9 @@
         "photo_hash_check_waived": "<actorLink>{actor}</actorLink> keurde een foto zonder hash-check goed bij <targetLink>{target}</targetLink>",
         "image_quarantined": "<actorLink>{actor}</actorLink> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<targetLink>{target}</targetLink>)",
         "csam_escalation_updated": "<actorLink>{actor}</actorLink> werkte een hash-match-escalatie bij (<targetLink>{target}</targetLink>)",
-        "report_dismissed": "<actorLink>{actor}</actorLink> wees een melding over <targetLink>{target}</targetLink> af",
+        "report_dismissed": "<actorLink>{actor}</actorLink> wees een rapportage over <targetLink>{target}</targetLink> af",
         "report_content_removed": "<actorLink>{actor}</actorLink> verwijderde gemelde inhoud van <targetLink>{target}</targetLink>",
-        "report_warned": "<actorLink>{actor}</actorLink> waarschuwde <targetLink>{target}</targetLink> na een melding",
+        "report_warned": "<actorLink>{actor}</actorLink> waarschuwde <targetLink>{target}</targetLink> na een rapportage",
         "message_image_auto_rejected": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> automatisch gemarkeerd",
         "message_image_restored": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> hersteld na een verzoek om herbeoordeling",
         "photo_recheck_requested": "<actorLink>{actor}</actorLink> liet een niet-gecontroleerde foto opnieuw controleren (<targetLink>{target}</targetLink>)",
@@ -5059,7 +5130,7 @@
         "effects": {
           "copy": {
             "approve": "Goedkeuren toont de foto bij het exemplaar aan andere leden.",
-            "reject": "Afwijzen verbergt de foto en zet hem bij Gemarkeerde afbeeldingen, waar je hem nog kunt herstellen of definitief verwijderen."
+            "reject": "Afwijzen verbergt de foto en zet hem bij Gemarkeerd, waar je hem nog kunt herstellen of definitief verwijderen."
           },
           "completion": {
             "approve": "Goedkeuren toont de foto bij de gelegde puzzel aan andere leden.",
@@ -5081,17 +5152,17 @@
         },
         "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, nadat je dat bevestigt (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
       },
-      "appealsEmpty": "Er wachten geen foto's op een beoordeling.",
+      "appealsEmpty": "Er wachten geen foto's op een herbeoordeling.",
       "appeal": {
-        "loading": "Beoordelingsverzoeken laden…",
-        "intro": "De afzender vroeg om een beoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
+        "loading": "Herbeoordelingen laden…",
+        "intro": "De afzender vroeg om een herbeoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
         "imageAlt": "Foto in bericht ter beoordeling",
         "rowSource": "Foto in bericht",
         "label": "Label",
         "score": "Score",
         "sentBy": "Verstuurd door",
         "uploadedAt": "Geüpload",
-        "requestedAt": "Beoordeling gevraagd",
+        "requestedAt": "Herbeoordeling gevraagd",
         "reason": "Reden",
         "noPreview": "Geen voorbeeld: deze foto is nog niet door de hash-check, of het bestand is weg. Zolang hij hier niet te zien is, kun je hem niet herstellen.",
         "effects": {
@@ -5103,7 +5174,7 @@
         "keepConfirmTitle": "Deze foto verwijderd laten?",
         "keepConfirmBody": "De foto wordt definitief gewist en de afzender ziet dat de beslissing blijft staan. Dit kun je niet ongedaan maken.",
         "keepConfirmAction": "Verwijderd laten",
-        "notAwaiting": "Over dit beoordelingsverzoek is al beslist.",
+        "notAwaiting": "Over deze herbeoordeling is al beslist.",
         "cannotRestore": "Deze foto kan niet worden hersteld: hij is niet door de hash-check, of het bestand is weg."
       },
       "csam": {
@@ -5147,16 +5218,16 @@
         "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
         "addNote": "Notitie toevoegen",
-        "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's."
+        "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet gecontroleerd."
       },
       "reports": {
-        "statusFilter": "Status van melding",
-        "loading": "Meldingen laden…",
+        "statusFilter": "Status van rapportage",
+        "loading": "Rapportages laden…",
         "loadMore": "Meer laden",
         "empty": {
-          "open": "Geen open meldingen.",
-          "actioned": "Nog geen meldingen met maatregel.",
-          "dismissed": "Nog geen afgewezen meldingen."
+          "open": "Geen open rapportages.",
+          "actioned": "Nog geen rapportages met maatregel.",
+          "dismissed": "Nog geen afgewezen rapportages."
         },
         "statuses": {
           "open": "Open",
@@ -5174,19 +5245,19 @@
           "puzzleReview": "Puzzelreview"
         },
         "reportedArrow": "meldde",
-        "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
-        "detailTitle": "Melding",
-        "detailDescription": "Het bewijs bij deze melding en het beslisformulier.",
-        "notFoundTitle": "Deze melding bestaat niet meer",
-        "notFound": "Misschien is de melding verwijderd, of is de link verouderd.",
+        "openCount": "{count, plural, one {# open rapportage tegen dit lid} other {# open rapportages tegen dit lid}}",
+        "detailTitle": "Rapportage",
+        "detailDescription": "Het bewijs bij deze rapportage en het beslisformulier.",
+        "notFoundTitle": "Deze rapportage bestaat niet meer",
+        "notFound": "Misschien is de rapportage verwijderd, of is de link verouderd.",
         "reason": "Reden",
         "targetKind": "Onderwerp",
         "reporter": "Melder",
         "reported": "Gemeld lid",
-        "filed": "Gemeld",
+        "filed": "Ingediend",
         "status": "Status",
         "details": "Toelichting van de melder",
-        "illegalNotice": "Melding van illegale inhoud",
+        "illegalNotice": "Rapportage van illegale inhoud",
         "goodFaith": "Verklaring te goeder trouw bevestigd.",
         "photo": "Gemelde foto",
         "photoGone": "Deze foto bestaat niet meer.",
@@ -5197,21 +5268,21 @@
         "deletedMember": "Verwijderd lid",
         "anonymisedReporter": "Geanonimiseerd",
         "otherParticipant": "Andere deelnemer",
-        "otherReports": "{count, plural, =0 {Geen andere meldingen tegen dit lid} one {# andere melding tegen dit lid} other {# andere meldingen tegen dit lid}}",
+        "otherReports": "{count, plural, =0 {Geen andere rapportages tegen dit lid} one {# andere rapportage tegen dit lid} other {# andere rapportages tegen dit lid}}",
         "decisions": {
           "dismissed": "Afgewezen",
           "warned": "Lid gewaarschuwd",
           "content_removed": "Inhoud verwijderd"
         },
         "decidedBy": "Besloten door {name}",
-        "nextOpenReport": "Volgende open melding",
+        "nextOpenReport": "Volgende open rapportage",
         "decisionLegend": "Besluit",
         "decide": {
           "dismissed": "Afwijzen",
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
-        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
+        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij rapportages over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
         "insertTemplate": "Sjabloon invoegen",
@@ -5243,7 +5314,7 @@
         },
         "submit": {
           "none": "Kies een besluit",
-          "dismissed": "Melding afwijzen",
+          "dismissed": "Rapportage afwijzen",
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
@@ -5568,12 +5639,11 @@
     "availabilityTitle": "Beschikbaar in de community",
     "copiesAvailableNow": "{count, plural, one {exemplaar nu beschikbaar om te ruilen} other {exemplaren nu beschikbaar om te ruilen}}",
     "joinToSeeWho": "Word lid om te zien wie",
-    "ownersHaveIt": "{count, plural, one {# lid heeft deze in de verzameling} other {# leden hebben deze in hun verzameling}}",
-    "chipSwap": "{count} ruilen",
-    "chipLend": "{count} lenen",
-    "chipSale": "{count} kopen",
+    "chipSwap": "{count} te ruilen",
+    "chipLend": "{count} te leen",
+    "chipSale": "{count} te koop",
     "statAvailable": "Beschikbaar om te ruilen",
-    "statOwners": "Eigenaren in de community",
+    "statOwners": "{count, plural, one {Eigenaar in de community} other {Eigenaren in de community}}",
     "statCompletions": "Keer gelegd",
     "statAvgDays": "Gem. dagen om te leggen",
     "communityRating": "Communitybeoordeling",
@@ -5696,7 +5766,7 @@
       },
       "guide": {
         "title": "Ledenprofielen",
-        "description": "Bekijk de puzzels en oplossingen van mensen in je netwerk, en kies wie de jouwe ziet."
+        "description": "Bekijk de puzzels en voltooiingen van mensen in je netwerk, en kies wie de jouwe ziet."
       }
     },
     "in-progress-solves": {
@@ -5723,7 +5793,7 @@
       "steps": {
         "shelf": {
           "title": "Je plank",
-          "body": "Elke puzzel die je toevoegt komt hier. Open er een om een oplossing vast te leggen of hem te ruilen."
+          "body": "Elke puzzel die je toevoegt komt hier. Open er een om een voltooiing vast te leggen of hem te ruilen."
         },
         "solving-now": {
           "title": "Nu aan het puzzelen",
@@ -5731,7 +5801,7 @@
         },
         "people": {
           "title": "Je netwerk",
-          "body": "Mensen met wie je elkaar volgt. Hun planken en oplossingen zie je hier."
+          "body": "Mensen met wie je elkaar volgt. Hun planken en voltooiingen zie je hier."
         },
         "account-menu": {
           "title": "Instellingen en snel instellen",
@@ -5895,6 +5965,8 @@
       "showMore": "Meer tonen",
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
+      "batchFull": "{count} is het maximum per keer. Leg deze eerst vast en ga daarna verder met de rest.",
+      "futureDate": "Kies een datum tot en met vandaag.",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
       "invalidDate": "Die datum kan niet. Controleer het jaar.",
       "invalidDuration": "Die puzzeltijd kan niet. Controleer de uren en minuten.",
@@ -5974,6 +6046,7 @@
         "title": "Weggaan zonder op te slaan?",
         "puzzles": "{count, plural, one {De puzzel die je hebt gekozen, staat nog niet op je plank.} other {De # puzzels die je hebt gekozen, staan nog niet op je plank.}}",
         "solves": "{count, plural, one {De puzzel die je hebt aangevinkt, is nog niet vastgelegd.} other {De # puzzels die je hebt aangevinkt, zijn nog niet vastgelegd.}}",
+        "addForm": "De gegevens die je hebt ingevuld, zijn nog niet opgeslagen.",
         "profile": "Je nieuwe locatie is nog niet opgeslagen.",
         "keep": "Verder bewerken",
         "discard": "Niet opslaan"

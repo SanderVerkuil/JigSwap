@@ -287,7 +287,7 @@ describe("ExchangeActions: cancel an accepted exchange", () => {
       },
       direction: "incoming",
     });
-    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mark complete" })).toBeNull();
     expect(button("Cancel").disabled).toBe(false);
   });
 
@@ -335,7 +335,7 @@ describe("ExchangeActions: cancel an accepted exchange", () => {
 
 describe("ExchangeActions: complete", () => {
   const completeDialog = () => {
-    fireEvent.click(button("Mark Complete"));
+    fireEvent.click(button("Mark complete"));
     return screen.getByRole("alertdialog");
   };
 
@@ -429,7 +429,7 @@ describe("ExchangeActions: complete", () => {
     expect(
       screen.getByText("You confirmed 3 hours ago · Waiting for Anna"),
     ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Mark Complete" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Mark complete" })).toBeNull();
     expect(screen.queryByText("Your turn")).toBeNull();
   });
 

@@ -1,8 +1,8 @@
-// Typed search params for the public /catalog page: `q` (search term), `brand`
-// and `pieces` (a piece-count bucket). Keeping the filters in the URL lets Back
-// from a puzzle restore them and makes a filtered view shareable. Anything
-// unknown, blank or unusable is dropped, so a hand-edited URL shows the unfiltered
-// catalogue instead of failing.
+// Typed search params for the public /catalog page: `q` (search term), `brand`,
+// `pieces` (a piece-count bucket) and `pages` (how many pages "Load more" has
+// opened). Keeping them in the URL lets Back from a puzzle restore them and makes
+// a filtered view shareable. Anything unknown, blank or unusable is dropped, so a
+// hand-edited URL shows the unfiltered catalogue instead of failing.
 
 // Piece-count buckets from the spec: <500 / 500 / 1000 / 1500+.
 export const PIECE_BUCKETS = {
@@ -17,7 +17,20 @@ export type PublicCatalogSearch = {
   q?: string;
   brand?: string;
   pieces?: PieceBucket;
+  pages?: number;
 };
+
+// The most pages one URL can ask for: the loader reads them one after the other
+// before the page renders, on the server for a shared link.
+export const MAX_CATALOG_PAGES = 25;
+
+// Absent for one page, which is what a bare URL shows anyway.
+function validatePageCount(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 2) {
+    return undefined;
+  }
+  return Math.min(value, MAX_CATALOG_PAGES);
+}
 
 export function isPieceBucket(value: unknown): value is PieceBucket {
   return typeof value === "string" && Object.hasOwn(PIECE_BUCKETS, value);
@@ -44,6 +57,7 @@ export function validatePublicCatalogSearch(
     q: normalizeCatalogQuery(search.q),
     brand: normalizeCatalogQuery(search.brand),
     pieces: isPieceBucket(search.pieces) ? search.pieces : undefined,
+    pages: validatePageCount(search.pages),
   };
 }
 

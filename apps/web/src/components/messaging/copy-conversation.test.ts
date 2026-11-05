@@ -3,6 +3,7 @@ import {
   copyMessageRoute,
   isOwnCopy,
   parseCopyMessageSearch,
+  parseThreadSearch,
 } from "./copy-conversation";
 
 describe("parseCopyMessageSearch", () => {
@@ -29,6 +30,21 @@ describe("parseCopyMessageSearch", () => {
     expect(parseCopyMessageSearch({ copy: "c1", to: "someone" })).toEqual({
       copy: "c1",
     });
+  });
+});
+
+describe("parseThreadSearch", () => {
+  it("keeps a non-empty puzzle to attach", () => {
+    expect(parseThreadSearch({ attach: " k57abc " })).toEqual({
+      attach: "k57abc",
+    });
+  });
+
+  it("drops a missing, blank, or non-string value and unrelated params", () => {
+    expect(parseThreadSearch({})).toEqual({});
+    expect(parseThreadSearch({ attach: "  " })).toEqual({});
+    expect(parseThreadSearch({ attach: 42 })).toEqual({});
+    expect(parseThreadSearch({ copy: "c1" })).toEqual({});
   });
 });
 

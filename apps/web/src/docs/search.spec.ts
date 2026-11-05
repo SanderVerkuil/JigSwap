@@ -54,6 +54,39 @@ describe("docs search", () => {
     expect(hits[0].slug).toBe("sharing-and-exchanges/visibility-and-privacy");
   });
 
+  it("starts and ends a snippet on a whole word", () => {
+    const text =
+      "Swap means trading one puzzle for another puzzle. Sale means selling a puzzle for a price. Lend means letting someone borrow a puzzle and get it back later on, when they are done with it and it is ready for the next one.";
+    const index = createDocsIndex([
+      {
+        id: "a",
+        slug: "a",
+        title: "Exchanges",
+        group: "g",
+        summary: "",
+        text,
+      },
+    ]);
+    const [hit] = index.search("Lend");
+    expect(hit.snippet).toMatch(/^…(\S+ )+Lend means /);
+    expect(hit.snippet).toMatch(/ \S+…$/);
+    // Every word in it is a whole word of the text.
+    const words = new Set(text.split(" "));
+    for (const word of hit.snippet.replaceAll("…", "").split(" ")) {
+      expect(words).toContain(word);
+    }
+  });
+
+  it("shows a long text's opening when the term isn't literally in it", () => {
+    const text = "Word ".repeat(40).trim();
+    const index = createDocsIndex([
+      { id: "a", slug: "a", title: "Sales", group: "g", summary: "", text },
+    ]);
+    const [hit] = index.search("sales");
+    expect(hit.snippet.startsWith("Word Word")).toBe(true);
+    expect(hit.snippet.endsWith("Word…")).toBe(true);
+  });
+
   it("returns no hits for an empty query", () => {
     const index = createDocsIndex(buildSearchDocs(pages));
     expect(index.search("   ")).toEqual([]);

@@ -6,7 +6,10 @@ import {
   CompletionRow,
   type CompletionDialogRequest,
 } from "@/components/solving/completion-row";
-import { CompletionsEmptyState } from "@/components/solving/completions-empty-state";
+import {
+  CompletionsEmptyState,
+  PastSolvesPrompt,
+} from "@/components/solving/completions-empty-state";
 import { EditCompletionDialog } from "@/components/solving/edit-completion-dialog";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { ReviewPuzzleDialog } from "@/components/solving/review-puzzle-dialog";
@@ -204,16 +207,23 @@ function CompletionsPage() {
 
   return (
     <div className="flex flex-col gap-[26px]">
-      {/* Divided stat row — open, no boxes */}
-      <StatRow
-        stats={[
-          { label: t("stats.completed"), value: String(history.length) },
-          { label: t("stats.pieces"), value: format.number(piecesPlaced) },
-          { label: t("stats.thisYear"), value: String(thisYear) },
-        ]}
-      />
+      {/* Divided stat row — open, no boxes. Three zeros would only push an empty log's way in down
+          the screen. */}
+      {completions.length > 0 && (
+        <>
+          <StatRow
+            stats={[
+              { label: t("stats.completed"), value: String(history.length) },
+              { label: t("stats.pieces"), value: format.number(piecesPlaced) },
+              { label: t("stats.thisYear"), value: String(thisYear) },
+            ]}
+          />
+          {/* Above the rows, so it stays in reach however long the log grows. */}
+          <PastSolvesPrompt />
+        </>
+      )}
 
-      {/* The log title, meta + Log Completion action now live in the shell
+      {/* The log title, meta + Log action now live in the shell
           page head; the stat row above stays as a distinct sub-section. */}
       <section>
         {completions.length === 0 ? (

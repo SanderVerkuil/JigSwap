@@ -32,7 +32,7 @@ vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
 
 afterEach(cleanup);
 
-describe("Log a completion page head", () => {
+describe("Log a solve page head", () => {
   it("roots the crumbs at My Library", () => {
     const NewCompletionPage = Route.options.component as ComponentType;
     render(

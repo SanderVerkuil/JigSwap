@@ -40,6 +40,11 @@ export type PageHeaderContent = {
    */
   ownsHeading?: boolean | "phone";
   /**
+   * What the mobile top bar prints instead of `title`, for a page whose hero shows the title right
+   * under the bar: name where this page sits (e.g. "My Puzzles"), not the same words twice.
+   */
+  mobileTitle?: ReactNode;
+  /**
    * Explicit breadcrumb parent trail (excluding the current leaf, which is the
    * title). When set, the page head renders these crumbs instead of the
    * auto-derived Group › Page trail — use for deep routes like a collection's

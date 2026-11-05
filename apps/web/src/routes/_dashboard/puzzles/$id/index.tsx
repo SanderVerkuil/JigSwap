@@ -17,9 +17,9 @@ import { ReportDialog } from "@/components/safety/report-dialog";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
   authorMemberIdOf,
@@ -163,10 +164,11 @@ function PuzzleDefinitionDetail({
     availableCopies,
     totalAvailable,
   } = view;
-  // The member's own copy, when they have one, is the page's primary destination.
+  // The member's own copy, when they have one, is the page's primary destination. It opens in the
+  // owner's frame (My Library › My Puzzles), not Browse's /copies frame.
   const ownCopyHref =
     ownership.viewerOwns && ownership.copyId
-      ? `/copies/${ownership.copyId}`
+      ? `/my-puzzles/${ownership.copyId}`
       : null;
   const noCopiesOffered = totalAvailable === 0;
   const noCopiesHintId = useId();
@@ -179,6 +181,8 @@ function PuzzleDefinitionDetail({
     () => ({ title: definition.title, titleInContent: true }),
     [definition.title],
   );
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(tTitles("named", { name: definition.title }));
 
   // Only an approved definition (or the viewer's own submission) takes reviews; the server
   // refuses the rest, so neither the action nor the composer is offered there. Loading, or a
@@ -205,9 +209,6 @@ function PuzzleDefinitionDetail({
       ?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
       ?.focus();
   };
-
-  const difficultyLabel = (difficulty?: string) =>
-    difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
 
   // The "topics" pills: the category name first (if any), then each tag.
   const topics = [
@@ -265,14 +266,16 @@ function PuzzleDefinitionDetail({
                 {t("noRatingsYet")}
               </span>
             )}
-            <Badge
-              className={cn(
-                "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
-                difficultyClasses(definition.difficulty),
-              )}
-            >
-              {difficultyLabel(definition.difficulty)}
-            </Badge>
+            {definition.difficulty && (
+              <Badge
+                className={cn(
+                  "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                  difficultyClasses(definition.difficulty),
+                )}
+              >
+                {tDifficulty(definition.difficulty)}
+              </Badge>
+            )}
             {topics.map((topic, i) => (
               <span
                 key={`${topic}-${i}`}
@@ -357,7 +360,11 @@ function PuzzleDefinitionDetail({
               id={noCopiesHintId}
               className="text-muted-foreground mt-2 text-sm"
             >
-              {t("noCopiesOffered")}
+              {t(
+                ownership.viewerOwns
+                  ? "noOtherCopiesOffered"
+                  : "noCopiesOffered",
+              )}
             </p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-x-5">
@@ -429,6 +436,7 @@ function PuzzleDefinitionDetail({
             copies={availableCopies}
             totalAvailable={totalAvailable}
             puzzleId={puzzleId}
+            viewerOwns={ownership.viewerOwns}
           />
         </div>
 
@@ -533,10 +541,13 @@ function AvailableToSwap({
   copies,
   totalAvailable,
   puzzleId,
+  viewerOwns,
 }: {
   copies: AvailableCopy[];
   totalAvailable: number;
   puzzleId: string;
+  /** This list leaves out the viewer's own copies, so "nobody offers it" would be untrue. */
+  viewerOwns: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const displayName = useMemberDisplayName();
@@ -548,7 +559,9 @@ function AvailableToSwap({
         meta={t("copiesCount", { count: totalAvailable })}
       />
       {copies.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t("noCopies")}</p>
+        <p className="text-muted-foreground text-sm">
+          {t(viewerOwns ? "noOtherCopies" : "noCopies")}
+        </p>
       ) : (
         <div className="flex flex-col">
           {copies.map((copy, i) => (
@@ -667,8 +680,6 @@ function ReviewsSection({
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
-    // isPending guard: the Enter-key path bypasses the disabled button and could double-fire.
-    if (postReview.isPending || needsRating) return;
     const trimmed = text.trim();
     try {
       await postReview.mutateAsync({
@@ -729,24 +740,19 @@ function ReviewsSection({
                 </p>
               )}
             </div>
-            {/* Phones stack the text above Post so the placeholder is not cut off. */}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
+            {/* Grows with the text, and Enter is a line break: a review is public, so only Post
+                publishes it. Same field as the post-solve follow-up (two-level-review-fields). */}
+            <div className="flex flex-col gap-2">
+              <Textarea
                 placeholder={t("reviewPlaceholder")}
                 value={text}
                 maxLength={REVIEW_TEXT_MAX_LENGTH}
                 onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void submit();
-                  }
-                }}
-                className="flex-1"
+                className="max-h-60"
               />
               <Button
                 variant="brand"
-                className="self-end sm:self-auto"
+                className="self-end"
                 onClick={() => void submit()}
                 disabled={postReview.isPending || needsRating}
                 aria-describedby={needsRating ? ratingHintId : undefined}
@@ -870,7 +876,7 @@ function ReviewRow({
           </span>
         </div>
         {review.text != null && (
-          <p className="text-foreground/90 mt-1 text-sm leading-relaxed">
+          <p className="text-foreground/90 mt-1 text-sm leading-relaxed whitespace-pre-wrap">
             {review.text}
           </p>
         )}

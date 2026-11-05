@@ -1,8 +1,32 @@
 // @vitest-environment happy-dom
-import { cleanup, renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { toPlankBox, useHourlySeed } from "./hero";
+import en from "../../../../locales/en.json";
+import { Hero, toPlankBox, useHourlySeed } from "./hero";
+
+vi.mock("@/compat/link", () => ({
+  Link: ({ href, ...rest }: ComponentProps<"a"> & { href: string }) => (
+    <a href={href} {...rest} />
+  ),
+}));
+const auth = vi.hoisted(() => ({ isAuthenticated: false }));
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  useConvexAuth: () => auth,
+}));
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ resolvedTheme: "light" }),
+}));
 
 function Probe() {
   const seed = useHourlySeed();
@@ -76,5 +100,110 @@ describe("toPlankBox", () => {
       toPlankBox({ ...puzzle, image: "https://cdn.test/original" }, 0).cover,
     ).toBe("https://cdn.test/original");
     expect(toPlankBox({ ...puzzle, image: null }, 0).cover).toBeUndefined();
+  });
+});
+
+describe("Hero", () => {
+  afterEach(() => {
+    cleanup();
+    auth.isAuthenticated = false;
+  });
+
+  // Answers the hero's Convex reads: the platform count and one member's avatar. The sample
+  // plank's puzzles stay unloaded, as on a server render.
+  const renderHero = (totalUsers = 0) =>
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: {
+              queries: {
+                queryFn: ({ queryKey }) => {
+                  const fn = String(queryKey[1]);
+                  if (fn.includes("getGlobalStats")) return { totalUsers };
+                  if (fn.includes("getCommunityAvatars"))
+                    return [{ initials: "SV", image: null }];
+                  return [];
+                },
+              },
+            },
+          })
+        }
+      >
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <Hero />
+        </IntlProvider>
+      </QueryClientProvider>,
+    );
+
+  // The plank titles are on the sample boxes. A title can sit in the backdrop and in the phone's
+  // plank at once, so these find the plank by how it is shown.
+  const planksOf = (container: HTMLElement, selector: string) =>
+    [...container.querySelectorAll<HTMLElement>(selector)].filter((el) =>
+      el.textContent?.includes("Boslicht"),
+    );
+
+  it("puts the phone's plank in the page flow below the copy, not behind it", () => {
+    const { container } = renderHero();
+    const [plank] = planksOf(container, ".min-\\[768px\\]\\:hidden");
+    expect(plank).toBeTruthy();
+    const trustRowOrCtas = screen.getByRole("link", {
+      name: "See the features",
+    });
+    expect(
+      trustRowOrCtas.compareDocumentPosition(plank) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Sharp: outside the frosted panel, whose blur only applies from 768px up.
+    expect(
+      plank.closest(".min-\\[768px\\]\\:backdrop-blur-\\[9px\\]"),
+    ).toBeNull();
+  });
+
+  // The panel ends at x=664 up to 1200px. Measured with a 15px scrollbar and the shelf's overhang
+  // counted, a row of three boxes reaches 537 at 1040 and 631 at 1140, and clears the panel from
+  // 1175. A catalogue with 9 puzzles clears it sooner, but the first paint and a full one don't.
+  it("shows the backdrop's CSS planks only where they clear the copy's panel", () => {
+    const { container } = renderHero();
+    const stacks = planksOf(container, ".max-\\[1199px\\]\\:hidden");
+    expect(stacks).toHaveLength(1);
+    // An inline display would beat the class that hides it.
+    expect(stacks[0].style.display).toBe("");
+  });
+
+  it("invites a visitor to start", () => {
+    renderHero();
+    expect(
+      screen.getByRole("link", { name: "Start trading" }).getAttribute("href"),
+    ).toBe("/sign-up");
+  });
+
+  it("takes a member to their dashboard, under that name", () => {
+    auth.isAuthenticated = true;
+    renderHero();
+    expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
+    ).toBe("/dashboard");
+  });
+
+  it("sets the lead in the body colour, which holds its contrast over the shelf art", () => {
+    renderHero();
+    const lead = screen.getByText(en.marketing.home.heroLead);
+    expect(lead.className).toContain("text-mk-text-body");
+    expect(lead.className).not.toContain("text-mk-text-muted");
+  });
+
+  it("shows no one's initials beside the invitation to be among the first", async () => {
+    renderHero(1);
+    await screen.findByText(en.marketing.home.trustRowEarly);
+    // Long enough for the avatars' read to answer, were it asked.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(screen.queryByText("SV")).toBeNull();
+  });
+
+  it("shows the members' initials once the count is shown as social proof", async () => {
+    renderHero(5000);
+    await screen.findByText("SV");
   });
 });

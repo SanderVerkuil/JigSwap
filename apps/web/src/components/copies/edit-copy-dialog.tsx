@@ -294,6 +294,7 @@ function EditCopyDialogForm({
               value={visibility}
               onChange={setVisibility}
               offered={offered}
+              ownerProfileVisibility={snapshot.ownerProfileVisibility}
               disabled={!domainEditable}
             />
           </div>

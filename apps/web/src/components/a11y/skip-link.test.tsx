@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
@@ -76,5 +78,35 @@ describe("SkipLink", () => {
     fireEvent(link, click);
     expect(click.defaultPrevented).toBe(true);
     expect(document.activeElement?.id).toBe(MAIN_CONTENT_ID);
+  });
+});
+
+// The link's href must resolve on its own: without JS (or before hydration) the browser follows it
+// natively, and a <main> without this id leaves focus on the header (UX-08).
+describe("every <main> is the skip link's target", () => {
+  const src = join(import.meta.dirname, "../..");
+  const sources = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return sources(path);
+      return /\.tsx$/.test(entry.name) && !/\.test\.tsx$/.test(entry.name)
+        ? [path]
+        : [];
+    });
+
+  it("carries MAIN_CONTENT_ID", () => {
+    const offenders = sources(src).flatMap((path) => {
+      const file = relative(src, path);
+      // The shell gives its SidebarInset, this primitive's <main>, the id.
+      if (file === join("components", "ui", "sidebar.tsx")) return [];
+      const code = readFileSync(path, "utf8")
+        .split("\n")
+        .filter((line) => !/^\s*(\/\/|\*|\/\*|\{\/\*)/.test(line))
+        .join("\n");
+      return (code.match(/<main\b[^>]*>/g) ?? [])
+        .filter((tag) => !tag.includes("id={MAIN_CONTENT_ID}"))
+        .map((tag) => `${file}: ${tag}`);
+    });
+    expect(offenders).toEqual([]);
   });
 });

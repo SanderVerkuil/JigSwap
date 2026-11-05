@@ -1,7 +1,7 @@
 ---
 title: Adding & Importing Puzzles
 order: 2
-summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalog."
+summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalogue."
 ---
 
 # Adding & Importing Puzzles
@@ -26,9 +26,9 @@ Adding a puzzle is a two-step flow:
    Android), you can also tap **Scan a barcode** next to the search box and
    point your camera at the box.
 5. If your puzzle already exists in the catalogue, click it (or its
-   **Add to Library** button) to add a copy of it to your library. **Details**
-   opens its catalogue page instead. Puzzles you already own are marked
-   **On your shelf**. If it's new, click **Create new**.
+   **Add to my puzzles** button) to add a copy of it to your library.
+   **Details** opens its catalogue page instead. Puzzles you already own are
+   marked **On your shelf**. If it's new, click **Create new**.
 
 ## Step 2 — Create or copy
 
@@ -64,7 +64,8 @@ Use this to fill your shelf quickly, for example when you first join.
 3. Click each puzzle you own to pick it. Click it again to remove it. Puzzles
    you already own are marked **On your shelf**.
 4. Review your picks under **Picked**. For each one, you can switch on
-   **Available to swap**. Picks aren't offered for swap or loan unless you do.
+   **For swap** and **To lend**. Picks aren't offered for swap or loan unless
+   you do.
    On a phone, the **Add N puzzles** button stays at the bottom of the screen
    once you've picked something; tap **Picked (N)** next to it to see your
    picks.

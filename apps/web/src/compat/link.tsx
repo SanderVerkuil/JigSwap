@@ -1,4 +1,4 @@
-import { Link as RouterLink } from "@tanstack/react-router";
+import { Link as RouterLink, type ActiveOptions } from "@tanstack/react-router";
 import * as React from "react";
 
 // next/link compat: ported `next/link` usages just swap the import. Accepts a
@@ -13,6 +13,8 @@ export interface LinkProps extends AnchorProps {
   prefetch?: boolean | null;
   scroll?: boolean;
   children?: React.ReactNode;
+  // TanStack marks a link aria-current on its child routes too; `exact` limits it to its own page.
+  activeOptions?: ActiveOptions;
 }
 
 function isExternal(href: string): boolean {
@@ -26,6 +28,7 @@ export function Link({
   // Accepted from the next/link API surface but not forwarded to the DOM.
   prefetch,
   scroll,
+  activeOptions,
   ...rest
 }: LinkProps) {
   void prefetch;
@@ -40,7 +43,12 @@ export function Link({
   }
 
   return (
-    <RouterLink to={href} replace={replace} {...rest}>
+    <RouterLink
+      to={href}
+      replace={replace}
+      activeOptions={activeOptions}
+      {...rest}
+    >
       {children}
     </RouterLink>
   );

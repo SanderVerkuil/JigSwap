@@ -8,7 +8,7 @@ import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Check, Heart, Plus } from "lucide-react";
+import { ArrowLeftRight, Check, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import {
   PuzzleCardShell,
@@ -25,10 +25,10 @@ interface PuzzleCardProps {
   /**
    * "catalogue" (default): the card opens the catalogue page, with a heart and a + to add a copy.
    * "pick": the Add Puzzle chooser's card. The whole card opens the add-a-copy form, with a
-   * labelled "Add to Library" button and a small Details link; no heart.
+   * labelled "Add to my puzzles" button and a small Details link; no heart.
    */
   variant?: "catalogue" | "pick";
-  /** pick variant: the member already owns a copy of this puzzle ("On your shelf"). */
+  /** The member already owns a copy of this puzzle ("On your shelf"). */
   onShelf?: boolean;
   /** Card title heading level; 2 when the grid sits directly under the page h1. */
   headingLevel?: PuzzleCardShellProps["headingLevel"];
@@ -51,14 +51,30 @@ export function PuzzleCard({
       headingLevel={headingLevel}
     />
   ) : (
-    <CataloguePuzzleCard puzzle={puzzle} headingLevel={headingLevel} />
+    <CataloguePuzzleCard
+      puzzle={puzzle}
+      onShelf={onShelf}
+      headingLevel={headingLevel}
+    />
+  );
+}
+
+// "On your shelf": the same marker on the catalogue's cards and the chooser's.
+function OnShelfBadge() {
+  const t = useTranslations("cataloguePicker");
+  return (
+    <Badge variant="outline">
+      <Check aria-hidden />
+      {t("onShelf")}
+    </Badge>
   );
 }
 
 function CataloguePuzzleCard({
   puzzle,
+  onShelf,
   headingLevel,
-}: Pick<PuzzleCardProps, "puzzle" | "headingLevel">) {
+}: Pick<PuzzleCardProps, "puzzle" | "headingLevel"> & { onShelf: boolean }) {
   const t = useTranslations("puzzles");
   // Catalog-card strings (the favourite labels) live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
@@ -89,6 +105,28 @@ function CataloguePuzzleCard({
       imageFit="contain"
       headingLevel={headingLevel}
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
+      badges={
+        onShelf || puzzle.availableCount ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            {onShelf && <OnShelfBadge />}
+            {puzzle.availableCount && (
+              <Link
+                href={`/browse?puzzle=${puzzle._id}`}
+                aria-label={tCat("availableCopiesLabel", {
+                  count: puzzle.availableCount,
+                })}
+                // Above the title's stretched link; a 44px touch target without moving the row.
+                className="relative z-10 inline-flex items-center pointer-coarse:-my-3 pointer-coarse:py-3"
+              >
+                <span className="border-jigsaw-secondary/40 bg-jigsaw-secondary-tint hover:bg-jigsaw-secondary/20 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium text-green-800 transition-colors dark:text-green-300">
+                  <ArrowLeftRight className="size-3 shrink-0" aria-hidden />
+                  {tCat("availableCopies", { count: puzzle.availableCount })}
+                </span>
+              </Link>
+            )}
+          </div>
+        ) : undefined
+      }
       actions={
         // The card opens the puzzle through its title's stretched link (one Tab stop per card), so
         // the row only holds the card's own actions: compact icon buttons with accessible names.
@@ -134,7 +172,6 @@ function PickPuzzleCard({
   headingLevel,
 }: Pick<PuzzleCardProps, "puzzle" | "headingLevel"> & { onShelf: boolean }) {
   const t = useTranslations("puzzles");
-  const tPicker = useTranslations("cataloguePicker");
   const boxArtInCheck = useBoxArtInCheck();
   const addHref = addCopyHref(puzzle._id);
 
@@ -160,10 +197,7 @@ function PickPuzzleCard({
       badges={
         onShelf ? (
           <div className="mb-2">
-            <Badge variant="outline">
-              <Check aria-hidden />
-              {tPicker("onShelf")}
-            </Badge>
+            <OnShelfBadge />
           </div>
         ) : undefined
       }
@@ -171,14 +205,16 @@ function PickPuzzleCard({
         // Wraps instead of truncating: on a narrow card (or with a long Dutch label) Details drops
         // to its own line, and the Add label may still wrap inside its button, so neither is cut.
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          {/* Already on the shelf: still possible, but no longer the obvious next step. */}
           <Button
             size="sm"
+            variant={onShelf ? "outline" : "default"}
             asChild
             className="h-auto min-h-8 min-w-0 flex-auto py-1.5 whitespace-normal"
           >
             <Link href={addHref}>
               <Plus aria-hidden className="h-4 w-4" />
-              {t("addToLibrary")}
+              {onShelf ? t("chooser.addAnotherCopy") : t("addToLibrary")}
             </Link>
           </Button>
           <Button

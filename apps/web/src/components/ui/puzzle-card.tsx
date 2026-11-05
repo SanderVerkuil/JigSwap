@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { CollectionMenuItems } from "@/components/ui/collection-dropdown";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -95,6 +96,13 @@ interface PuzzleCardProps {
    *  PuzzleViewProvider grid's PUZZLE_GRID_COVER_SIZES. */
   imageSizes?: string;
   onDelete?: (puzzleId: Id<"ownedPuzzles">) => void;
+  /** Switches an offer from the ⋯ menu (useCopyOfferToggle); `offersLocked`: it's out on loan. */
+  onToggleOffer?: (
+    puzzleId: Id<"ownedPuzzles">,
+    flag: "forTrade" | "forLend",
+    on: boolean,
+  ) => void;
+  offersLocked?: boolean;
   onRemove?: (puzzleId: Id<"ownedPuzzles">) => void;
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
@@ -157,13 +165,20 @@ const OFFERS: ReadonlyArray<{
 // dimmed at rest on hover-capable devices, full on card-hover/focus/touch. 44px hit area via
 // negative margin + padding.
 const CORNER_CHIP_CLASS = [
-  "flex h-[40px] w-[40px] items-center justify-center rounded-full",
+  "flex h-[40px] w-[40px] items-center justify-center rounded-full pointer-coarse:size-11",
   "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
   "-m-[2px] p-[2px]",
   "motion-safe:transition-opacity motion-safe:duration-150",
   "[@media(hover:hover)_and_(pointer:fine)]:opacity-60",
   "group-hover:opacity-100 focus-within:opacity-100",
 ].join(" ");
+
+// The offers a card's ⋯ menu can switch directly, by the words the copy page's switches use. Going up
+// for sale stays with the Edit dialog, as on that page.
+const MENU_OFFERS = [
+  { flag: "forTrade", label: "swapLabel" },
+  { flag: "forLend", label: "lendLabel" },
+] as const;
 
 interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
@@ -184,11 +199,16 @@ interface PuzzleOverflowMenuProps {
     opener: RefObject<HTMLElement | null>,
   ) => void;
   onDelete?: (id: Id<"ownedPuzzles">) => void;
+  onToggleOffer?: PuzzleCardProps["onToggleOffer"];
+  offersLocked?: boolean;
+  availability: { forTrade: boolean; forLend: boolean };
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
   showCollection?: boolean;
   copyAggregateId?: string;
   // On a collection's page: take this copy out of the collection (the copy itself stays).
   onRemoveFromCollection?: (id: Id<"ownedPuzzles">) => void;
+  // In a list row, at the row's end instead of over the cover.
+  inline?: boolean;
 }
 
 function PuzzleOverflowMenu({
@@ -200,14 +220,19 @@ function PuzzleOverflowMenu({
   onEdit,
   onShareWithCircles,
   onDelete,
+  onToggleOffer,
+  offersLocked = false,
+  availability,
   showCollection = false,
   copyAggregateId,
   onRemoveFromCollection,
+  inline = false,
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
   const tCircles = useTranslations("circles");
+  const tOffers = useTranslations("copyInstance.offers");
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Don't mount the chip at all when nothing is wired.
@@ -217,6 +242,7 @@ function PuzzleOverflowMenu({
     !onEdit &&
     !onShareWithCircles &&
     !onDelete &&
+    !onToggleOffer &&
     !showCollection &&
     !onRemoveFromCollection
   )
@@ -225,7 +251,7 @@ function PuzzleOverflowMenu({
   return (
     // `relative z-10` wrapper sits above the stretched-link overlay (z-[1]).
     // The 44px touch target is achieved via negative margin + extra padding.
-    <div className="absolute top-2 right-2 z-10">
+    <div className={inline ? undefined : "absolute top-2 right-2 z-10"}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -279,6 +305,21 @@ function PuzzleOverflowMenu({
               {t("overflowMenu.edit")}
             </DropdownMenuItem>
           )}
+          {onToggleOffer &&
+            MENU_OFFERS.map(({ flag, label }) => (
+              <DropdownMenuCheckboxItem
+                key={flag}
+                // Lines the words up with the items that lead with an icon.
+                className="pl-10"
+                checked={availability[flag]}
+                // A copy on loan can't go on offer until it is back; withdrawing still works.
+                disabled={offersLocked && !availability[flag]}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={(on) => onToggleOffer(ownedId, flag, on)}
+              >
+                {tOffers(label)}
+              </DropdownMenuCheckboxItem>
+            ))}
           {onShareWithCircles && (
             <DropdownMenuItem
               onClick={(e) => {
@@ -346,6 +387,8 @@ export function PuzzleCard({
   imageFit,
   imageSizes = PUZZLE_GRID_COVER_SIZES,
   onDelete,
+  onToggleOffer,
+  offersLocked,
   onRemove,
   onSelect,
   onRequestExchange,
@@ -374,6 +417,7 @@ export function PuzzleCard({
   const conditionLabel = useConditionLabel();
   const boxArtInCheck = useBoxArtInCheck();
   const { viewMode } = usePuzzleView();
+  const listRow = viewMode === "list";
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -443,7 +487,7 @@ export function PuzzleCard({
       {offers.map(({ flag, label, Icon }) => (
         <span
           key={flag}
-          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-300"
+          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium whitespace-nowrap text-green-800 dark:text-green-300"
         >
           <Icon className="size-3 shrink-0" aria-hidden />
           {t(label)}
@@ -460,15 +504,19 @@ export function PuzzleCard({
   );
 
   // On Browse a card is an offer, so whose copy it is and how it is offered (swap, lend, sell)
-  // come first; the condition follows. Elsewhere the copy's own state leads.
-  const badges =
+  // come first, right under the title, ahead of the puzzle's facts; the condition follows them.
+  // Elsewhere the copy's own state leads.
+  const leadingMeta =
     variant === "browse" ? (
       <>
         {owner}
         {ownerRow}
         {availabilityRow}
-        {conditionRow}
       </>
+    ) : undefined;
+  const badges =
+    variant === "browse" ? (
+      conditionRow
     ) : (
       <>
         {owner}
@@ -494,61 +542,71 @@ export function PuzzleCard({
       onEdit ||
       onShareWithCircles ||
       onDelete ||
+      onToggleOffer ||
       showCollectionDropdown ||
       onRemoveFromCollection
     );
 
-  // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
-  // check, and the selection-variant checkbox.
+  const solveBadge = solveInProgress && (
+    <Badge
+      variant="secondary"
+      className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+    >
+      <Clock className="mr-1 h-3 w-3" />
+      {tCompletions("inProgress")}
+    </Badge>
+  );
+  const overflowMenu = showOverflowMenu && (
+    <PuzzleOverflowMenu
+      ownedId={ownedId}
+      title={view.title}
+      onLogSolve={onLogSolve}
+      onStartSolve={onStartSolve}
+      solveInProgress={solveInProgress}
+      onEdit={onEdit}
+      onShareWithCircles={onShareWithCircles}
+      onDelete={onDelete}
+      onToggleOffer={onToggleOffer}
+      offersLocked={offersLocked}
+      availability={puzzle.availability}
+      showCollection={showCollectionDropdown}
+      copyAggregateId={puzzle.aggregateId}
+      onRemoveFromCollection={onRemoveFromCollection}
+      inline={listRow}
+    />
+  );
+  const selectCheckbox = variant === "selection" && (
+    <input
+      type="checkbox"
+      checked={isSelected}
+      // Named after the puzzle; disabled when the page gives this copy no way to select it
+      // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
+      aria-label={t("bulk.selectCopy", { title: view.title })}
+      disabled={!onSelect}
+      onChange={() => onSelect?.(ownedId)}
+      // The whole card already toggles selection; stop the click here from
+      // bubbling to the card so the toggle doesn't fire twice and cancel out.
+      onClick={(e) => e.stopPropagation()}
+      className="h-4 w-4"
+    />
+  );
+
+  // Image overlays: the selection ring's check and, on a grid card's cover, the in-progress badge,
+  // the ⋯ overflow chip (top-right) and the selection-variant checkbox. A list row's thumbnail is
+  // too small for those: there the badge joins the row's badges, the rest its end (rowEnd).
   const overlay = (
     <>
-      {solveInProgress && (
-        <div className="absolute top-2 left-2 z-10">
-          <Badge
-            variant="secondary"
-            className="bg-background/70 backdrop-blur-md border border-border/50 shadow-sm text-xs"
-          >
-            <Clock className="mr-1 h-3 w-3" />
-            {tCompletions("inProgress")}
-          </Badge>
-        </div>
+      {!listRow && solveBadge && (
+        <div className="absolute top-2 left-2 z-10">{solveBadge}</div>
       )}
-      {showOverflowMenu && (
-        <PuzzleOverflowMenu
-          ownedId={ownedId}
-          title={view.title}
-          onLogSolve={onLogSolve}
-          onStartSolve={onStartSolve}
-          solveInProgress={solveInProgress}
-          onEdit={onEdit}
-          onShareWithCircles={onShareWithCircles}
-          onDelete={onDelete}
-          showCollection={showCollectionDropdown}
-          copyAggregateId={puzzle.aggregateId}
-          onRemoveFromCollection={onRemoveFromCollection}
-        />
-      )}
+      {!listRow && overflowMenu}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
           <Check className="h-8 w-8 text-primary-text" />
         </div>
       )}
-      {variant === "selection" && (
-        <div className="absolute top-2 right-2">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            // Named after the puzzle; disabled when the page gives this copy no way to select it
-            // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
-            aria-label={t("bulk.selectCopy", { title: view.title })}
-            disabled={!onSelect}
-            onChange={() => onSelect?.(ownedId)}
-            // The whole card already toggles selection; stop the click here from
-            // bubbling to the card so the toggle doesn't fire twice and cancel out.
-            onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4"
-          />
-        </div>
+      {!listRow && selectCheckbox && (
+        <div className="absolute top-2 right-2">{selectCheckbox}</div>
       )}
     </>
   );
@@ -572,11 +630,11 @@ export function PuzzleCard({
   // Requesting the copy is what Browse is for, so it is a labelled primary button; Message and the
   // favourite heart are named icon buttons with a tooltip. The heart keeps one name and reports its
   // state through aria-pressed. The two icons wrap together under Request on a card too narrow
-  // for all three (two-column tablet grid, a label that names the offer, longer Dutch), so
-  // Request's label is never cut off and the icons never split up. 40px targets, 44px on touch
-  // screens.
+  // for all three (a compact phone card, a label that names the offer, longer Dutch), so Request's
+  // label is never cut off and the icons never split up; on a phone card they then share that row
+  // evenly instead of leaving its left half empty. 40px targets, 44px on touch screens.
   const iconActions = (onMessage || onFavorite) && (
-    <div className="ml-auto flex items-center gap-2">
+    <div className="ml-auto flex items-center gap-2 @max-[14rem]:w-full @max-[14rem]:[&>button]:flex-1">
       {onMessage && (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -623,7 +681,14 @@ export function PuzzleCard({
     </div>
   );
   const actions = hasBrowseRow ? (
-    <div className="flex flex-wrap items-center gap-2">
+    // A size container on a grid card only: containment gives an element no width of its own, and
+    // a list row's actions are only as wide as their content, so there it would collapse to nothing.
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2",
+        !listRow && "@container",
+      )}
+    >
       {variant !== "collection" && onRemove && (
         <Button
           variant="ghost"
@@ -639,11 +704,14 @@ export function PuzzleCard({
           onClick={() => onRequestExchange(ownedId)}
           // A list row can be 850px wide: past a phone, Request keeps its natural width there.
           // flex-auto starts from the label's one-line width, so the row wraps the icons below
-          // rather than squeeze it; only a card narrower than the label itself makes it wrap
-          // ("Vragen om te lenen" on a phone). min-w-0 lifts Button's touch minimum, which would
-          // otherwise be all the row reserves for it.
+          // rather than squeeze it. On a card too narrow for the label beside its icon the icon
+          // goes (with some padding), which also lets all three share a row on a wider grid card;
+          // only a card narrower than the label itself makes it wrap ("Vragen om te lenen" on a
+          // phone). The padding names has-[>svg] because Button's own has-[>svg]:px-3 outranks a
+          // plain px-2, and still matches while the icon is only hidden. min-w-0 lifts Button's
+          // touch minimum, which would otherwise be all the row reserves for it.
           className={cn(
-            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0",
+            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0 @max-[16.5rem]:has-[>svg]:px-2 @max-[16.5rem]:[&>svg]:hidden",
             viewMode === "list" && "sm:flex-none",
           )}
         >
@@ -663,8 +731,26 @@ export function PuzzleCard({
       // checkbox); the checkbox stays as the visible state + keyboard target.
       selectable={variant === "selection" && !!onSelect}
       onSelect={onSelect ? () => onSelect(ownedId) : undefined}
-      badges={badges}
+      leadingMeta={leadingMeta}
+      badges={
+        listRow && solveBadge ? (
+          <>
+            {solveBadge}
+            {badges}
+          </>
+        ) : (
+          badges
+        )
+      }
       overlay={overlay}
+      rowEnd={
+        listRow && (overflowMenu || selectCheckbox) ? (
+          <>
+            {overflowMenu}
+            {selectCheckbox}
+          </>
+        ) : undefined
+      }
       footer={loanBadge}
       actions={actions}
       // The cover link navigates to the puzzle's view page. With the overflow

@@ -20,7 +20,7 @@ import {
 export interface CataloguePickerViewProps {
   term: string;
   rows: PickerRow[];
-  picks: Pick[];
+  picks: readonly Pick[];
   isSearching: boolean;
   isSubmitting: boolean;
   // Where "Register" sends the member back to after creating the puzzle.
@@ -37,12 +37,13 @@ export interface CataloguePickerViewProps {
   onRemove: (definitionId: string) => void;
   onRemoveLast: () => void;
   onForTradeChange: (definitionId: string, forTrade: boolean) => void;
+  onForLendChange: (definitionId: string, forLend: boolean) => void;
   onSubmit: () => void;
 }
 
 // The multi-select catalogue picker, without data fetching (CataloguePicker wires it). Each result
-// row is an aria-pressed toggle; picks collect in a tray where each can be offered for swap or
-// removed; one submit adds them all.
+// row is an aria-pressed toggle; picks collect in a tray where each can be offered for swap, offered
+// to lend or removed; one submit adds them all.
 export function CataloguePickerView({
   term,
   rows,
@@ -57,6 +58,7 @@ export function CataloguePickerView({
   onRemove,
   onRemoveLast,
   onForTradeChange,
+  onForLendChange,
   onSubmit,
 }: CataloguePickerViewProps) {
   const t = useTranslations("cataloguePicker");
@@ -111,7 +113,7 @@ export function CataloguePickerView({
       </p>
 
       {rows.length > 0 && (
-        <ul className="divide-border flex flex-col divide-y rounded-xl border">
+        <ul className="divide-border flex flex-col divide-y overflow-hidden rounded-xl border">
           {rows.map((row) => {
             const picked = isPicked(picks, row.definitionId);
             return (
@@ -232,9 +234,10 @@ export function CataloguePickerView({
             </h3>
             <ul className="divide-border flex flex-col divide-y border-y">
               {picks.map((p) => (
+                // On a phone the offers take a line of their own, so the title keeps its room.
                 <li
                   key={p.definitionId}
-                  className="flex min-h-11 items-center gap-3 py-1.5"
+                  className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-1.5"
                 >
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">
                     {p.title}
@@ -242,17 +245,37 @@ export function CataloguePickerView({
                   {p.pending && (
                     <Badge variant="secondary">{tp("pendingReview")}</Badge>
                   )}
-                  <span className="flex items-center gap-2">
-                    <span aria-hidden className="text-muted-foreground text-xs">
-                      {t("forTrade")}
+                  <span className="flex items-center gap-3 max-sm:order-last max-sm:w-full">
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden
+                        className="text-muted-foreground text-xs"
+                      >
+                        {t("forTrade")}
+                      </span>
+                      <Switch
+                        checked={p.forTrade}
+                        onCheckedChange={(checked) =>
+                          onForTradeChange(p.definitionId, checked)
+                        }
+                        aria-label={t("forTradeLabel", { title: p.title })}
+                      />
                     </span>
-                    <Switch
-                      checked={p.forTrade}
-                      onCheckedChange={(checked) =>
-                        onForTradeChange(p.definitionId, checked)
-                      }
-                      aria-label={t("forTradeLabel", { title: p.title })}
-                    />
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden
+                        className="text-muted-foreground text-xs"
+                      >
+                        {t("forLend")}
+                      </span>
+                      <Switch
+                        checked={p.forLend}
+                        onCheckedChange={(checked) =>
+                          onForLendChange(p.definitionId, checked)
+                        }
+                        aria-label={t("forLendLabel", { title: p.title })}
+                      />
+                    </span>
                   </span>
                   <Button
                     type="button"

@@ -102,17 +102,17 @@ describe("ChannelMatrix structure and names (UX-34)", () => {
 
   it("says visibly why email is off for a type that never emails, and ties it to the switch", () => {
     renderMatrix();
-    const email = switchFor("exchange_proposed", "email");
+    const email = switchFor("exchange_disputed", "email");
     expect(email.disabled).toBe(true);
-    const note = document.getElementById("email-na-exchange_proposed");
+    const note = document.getElementById("email-na-exchange_disputed");
     expect(note?.textContent).toBe(en.notifications.emailUnavailableShort);
     expect(email.getAttribute("aria-describedby")).toBe(
-      "row-exchange_proposed-desc email-na-exchange_proposed",
+      "row-exchange_disputed-desc email-na-exchange_disputed",
     );
     // The other channels of that row do not carry the email note.
     expect(
-      switchFor("exchange_proposed", "push").getAttribute("aria-describedby"),
-    ).toBe("row-exchange_proposed-desc");
+      switchFor("exchange_disputed", "push").getAttribute("aria-describedby"),
+    ).toBe("row-exchange_disputed-desc");
   });
 
   it("shows no email note on a type that can be emailed", () => {
@@ -156,6 +156,15 @@ describe("ChannelMatrix layout (UX-34)", () => {
     expect(top[0]).toMatch(/^top-\[var\(--app-sticky-top/);
   });
 
+  it("hides the rows scrolling under the sticky header: it is opaque, not blurred", () => {
+    renderMatrix();
+    const classes = classesOf(columnHeaders()[0]!.closest('[role="row"]')!);
+    expect(classes).toContain("bg-background");
+    expect(classes.filter((name) => /backdrop-blur|\/\d+$/.test(name))).toEqual(
+      [],
+    );
+  });
+
   it("keeps the channel labels at a readable size at every width", () => {
     renderMatrix();
     const headers = columnHeaders();
@@ -172,12 +181,26 @@ describe("ChannelMatrix layout (UX-34)", () => {
     }
   });
 
-  it("shows the whole description on a narrow table; it is clamped only when wide", () => {
+  // Below @md/matrix the icon's 44px goes to the text: rows ran 8 to 12 lines on a phone.
+  it("shows a row's icon only where the table has room for it", () => {
     renderMatrix();
-    const description = document.getElementById("row-trade_request-desc")!;
-    const clamps = classesOf(description).filter((name) =>
-      /line-clamp-/.test(name),
+    const title = document.getElementById("row-trade_request-title")!;
+    const icon = title
+      .closest('[role="rowheader"]')!
+      .querySelector("svg")!.parentElement!;
+    expect(classesOf(icon)).toEqual(
+      expect.arrayContaining(["hidden", "@md/matrix:flex"]),
     );
-    expect(clamps).toEqual(["@2xl/matrix:line-clamp-2"]);
+  });
+
+  // Touch has no tooltip, so a clamped description could never be read in full.
+  it("shows the whole description at every width", () => {
+    renderMatrix();
+    for (const type of ["trade_request", "circle_message_received"]) {
+      const description = document.getElementById(`row-${type}-desc`)!;
+      expect(
+        classesOf(description).filter((name) => /line-clamp-/.test(name)),
+      ).toEqual([]);
+    }
   });
 });

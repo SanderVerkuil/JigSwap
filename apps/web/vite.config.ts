@@ -33,25 +33,11 @@ export default defineConfig({
     docsPlugin(),
     whatsNewPlugin(),
     appVersionPlugin(),
-    // Statically prerender the public docs to HTML at build time. We seed the
-    // crawler at /docs and let it follow the sidebar/TOC links; the filter keeps
-    // prerendering scoped to /docs/* so the authenticated app is never rendered
-    // without a session. Public docs don't read Convex at load, and root auth
-    // falls back to unauthenticated during prerender (see __root.tsx).
-    tanstackStart({
-      srcDirectory: "src",
-      pages: [{ path: "/docs", prerender: { enabled: true } }],
-      prerender: {
-        enabled: true,
-        // Best-effort: a page that can't be rendered at build time (e.g. no
-        // Clerk/Convex env) is skipped and served via SSR instead of failing
-        // the build. With env set the docs render to static HTML; bundle:check
-        // fails on a build that prerendered none.
-        failOnError: false,
-        crawlLinks: true,
-        filter: (page: { path: string }) => page.path.startsWith("/docs"),
-      },
-    }),
+    // Nothing is prerendered, the docs included: one static HTML file per URL can only be in one
+    // language, and the URLs don't carry a locale yet (P-24), so Dutch visitors opening a docs URL
+    // got the English guide. SSR picks the visitor's language on every request; the docs read
+    // nothing from Convex at load, so it stays cheap. Bring prerendering back with locale URLs.
+    tanstackStart({ srcDirectory: "src" }),
     viteReact(),
     // PostHog's /ingest proxy is a server route (src/routes/ingest/$.ts), not a proxy route rule:
     // on Vercel those become CDN rewrites that forward the Clerk cookie and pass PostHog's

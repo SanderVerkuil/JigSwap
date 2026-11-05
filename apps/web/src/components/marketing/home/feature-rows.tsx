@@ -5,8 +5,7 @@ import {
 } from "@/components/marketing/avatar-colors";
 import { MkBadge, type MkBadgeTone } from "@/components/marketing/badge";
 import { Container } from "@/components/marketing/container";
-import { FitToWidth } from "@/components/marketing/fit-to-width";
-import { JigPlank } from "@/components/marketing/plank";
+import { FittedPlank } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow, Section } from "@/components/marketing/section";
 import { Check } from "lucide-react";
@@ -15,8 +14,9 @@ import { useTranslations } from "use-intl";
 
 // Alternating feature rows (open layout, no cards — per the design system's
 // "cards are a last resort" rule). Copy is aligned with shipped features:
-// custody tracking says WHO has a box (no live location), recall sends an
-// in-app notification (not email), and discovery has no distance filter.
+// custody tracking says WHO has a box (no live location), recall closes the loan
+// once the puzzle is back (the borrower gets no notification), and discovery has
+// no distance filter.
 export function FeatureRows() {
   const t = useTranslations("marketing.home.rows");
 
@@ -28,30 +28,28 @@ export function FeatureRows() {
     {
       key: "library",
       visual: (
-        <FitToWidth>
-          <JigPlank
-            depth={16}
-            boxes={[
-              {
-                series: "Natuur",
-                title: "Boslicht",
-                pieceCount: 1000,
-                c1: "var(--mk-violet-400)",
-                c2: "var(--mk-violet-600)",
-                width: 96,
-              },
-              { cover: coverVillageStreet, title: "Dorpsstraat", width: 128 },
-              {
-                series: "Kunst",
-                title: "Sterrennacht",
-                pieceCount: 2000,
-                c1: "var(--mk-pink-400)",
-                c2: "var(--mk-pink-500)",
-                width: 100,
-              },
-            ]}
-          />
-        </FitToWidth>
+        <FittedPlank
+          depth={16}
+          boxes={[
+            {
+              series: "Natuur",
+              title: "Boslicht",
+              pieceCount: 1000,
+              c1: "var(--mk-violet-400)",
+              c2: "var(--mk-violet-600)",
+              width: 96,
+            },
+            { cover: coverVillageStreet, title: "Dorpsstraat", width: 128 },
+            {
+              series: "Kunst",
+              title: "Sterrennacht",
+              pieceCount: 2000,
+              c1: "var(--mk-pink-400)",
+              c2: "var(--mk-pink-500)",
+              width: 100,
+            },
+          ]}
+        />
       ),
     },
     { key: "lend", visual: <LendTrackVisual />, reverse: true },
@@ -161,7 +159,7 @@ function LendTrackVisual() {
       initial: "RJ",
       avatar: MK_AVATAR_TONES.pink,
       title: "Amsterdam",
-      sub: t("notificationSent"),
+      sub: t("backWithYou"),
       status: t("recalled"),
       tone: "warning",
     },

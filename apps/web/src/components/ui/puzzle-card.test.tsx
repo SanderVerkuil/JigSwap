@@ -155,6 +155,49 @@ describe("PuzzleCard (browse)", () => {
     ).not.toContain("sm:flex-none");
   });
 
+  it("puts ⋯ at the end of a list row, not on the thumbnail", () => {
+    renderCard({ variant: "default", onEdit: vi.fn() }, "en", "list");
+    const trigger = screen.getByRole("button", {
+      name: /More actions|actions/i,
+    });
+    expect(trigger.closest(".absolute")).toBeNull();
+    expect(trigger.closest("img")).toBeNull();
+  });
+
+  it("keeps ⋯ on the cover of a grid card", () => {
+    renderCard({ variant: "default", onEdit: vi.fn() }, "en", "grid");
+    const trigger = screen.getByRole("button", {
+      name: /More actions|actions/i,
+    });
+    expect(trigger.closest(".absolute")).toBeTruthy();
+  });
+
+  // What fits depends on the card's width, not the viewport's: the row is its own container.
+  it("sizes the action row by the card's width", () => {
+    renderCard();
+    const request = screen.getByRole("button", { name: "Request swap" });
+    const row = request.parentElement!;
+    expect(row.className).toContain("@container");
+    // Too narrow for the label beside its icon: the label stays on one line, without the icon.
+    expect(request.className).toContain("@max-[16.5rem]:[&>svg]:hidden");
+    // Must carry has-[>svg]: a plain px-2 loses to Button's has-[>svg]:px-3, hidden icon or not.
+    expect(request.className).toContain("@max-[16.5rem]:has-[>svg]:px-2");
+    // Too narrow for the icon buttons beside Request: they share their own row, with no gap.
+    const icons = screen.getByRole("button", {
+      name: "Message Sander Verkuil",
+    }).parentElement!;
+    expect(icons.className).toContain("@max-[14rem]:w-full");
+    expect(icons.className).toContain("@max-[14rem]:[&>button]:flex-1");
+  });
+
+  // Containment gives an element no width of its own, and a list row's actions are only as wide
+  // as their content: as a container the row would collapse to nothing (measured in Chrome).
+  it("leaves a list row's action row out of the size containers", () => {
+    renderCard({}, "en", "list");
+    const request = screen.getByRole("button", { name: "Request swap" });
+    expect(request.parentElement!.className).not.toContain("@container");
+  });
+
   it("names every action button, each differently", () => {
     renderCard();
     const names = screen
@@ -217,6 +260,34 @@ describe("PuzzleCard (browse)", () => {
     const owner = screen.getByText("Sander Verkuil");
     const offer = screen.getByText("For Trade");
     const condition = screen.getByText("Good");
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(owner, offer)).toBe(true);
+    expect(follows(offer, condition)).toBe(true);
+  });
+
+  // UX-23: on Browse a card is an offer, so whose it is comes before what it is.
+  it("puts the owner and the offer right under the title, before the puzzle's facts", () => {
+    renderCard();
+    const title = screen.getByRole("heading", { name: "Café" });
+    const owner = screen.getByText("Sander Verkuil");
+    const offer = screen.getByText("For Trade");
+    const brand = screen.getByText("Goliath");
+    const pieces = screen.getByText(/1,000/);
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(title, owner)).toBe(true);
+    expect(follows(owner, offer)).toBe(true);
+    expect(follows(offer, brand)).toBe(true);
+    expect(follows(offer, pieces)).toBe(true);
+  });
+
+  // A list row keeps to one line, so it has no room under the title: they lead its badges.
+  it("keeps the owner and the offer in a list row, ahead of the condition", () => {
+    renderCard({}, "en", "list");
+    const owner = screen.getByText("Sander Verkuil");
+    const offer = screen.getByText("For Trade");
+    const condition = screen.getByTestId("copy-condition");
     const follows = (a: Node, b: Node) =>
       (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
     expect(follows(owner, offer)).toBe(true);
@@ -337,6 +408,49 @@ describe("copy card menu", () => {
   it("shows no menu on a collection card the viewer can't change", () => {
     renderOwnedCard({ variant: "collection" });
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
+  });
+
+  it("offers lending and swapping right in the menu, showing what's on", () => {
+    const onToggleOffer = vi.fn();
+    renderOwnedCard({
+      onToggleOffer,
+      puzzle: ownedCopy({
+        availability: { forTrade: true, forLend: false, forSale: false },
+      }),
+    });
+    openMenu();
+    const swap = screen.getByRole("menuitemcheckbox", {
+      name: "Offer for swap",
+    });
+    const lend = screen.getByRole("menuitemcheckbox", {
+      name: "Offer to lend",
+    });
+    expect(swap.getAttribute("aria-checked")).toBe("true");
+    expect(lend.getAttribute("aria-checked")).toBe("false");
+
+    fireEvent.click(lend);
+    expect(onToggleOffer).toHaveBeenCalledWith("copy_1", "forLend", true);
+  });
+
+  it("can't put a copy on loan on offer, but can withdraw one", () => {
+    renderOwnedCard({
+      onToggleOffer: vi.fn(),
+      offersLocked: true,
+      puzzle: ownedCopy({
+        availability: { forTrade: true, forLend: false, forSale: false },
+      }),
+    });
+    openMenu();
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Offer to lend" })
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("menuitemcheckbox", { name: "Offer for swap" })
+        .getAttribute("aria-disabled"),
+    ).toBeNull();
   });
 
   it("marks Start puzzle with a play icon, unlike Log a solve", () => {

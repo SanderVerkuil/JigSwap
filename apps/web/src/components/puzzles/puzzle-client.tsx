@@ -4,11 +4,11 @@ import { Link } from "@/compat/link";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import {
+  activeFacetCount,
   catalogueEmptyState,
   catalogueSearchArgs,
   favouritesInCatalogue,
@@ -24,12 +24,21 @@ import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Filter, Heart, Plus, Search, X } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslations } from "use-intl";
+import { ActiveFacetChips } from "./active-facet-chips";
 import { PuzzleCard } from "./puzzle-card";
 import { PuzzleCardSkeleton } from "./puzzle-card-skeleton";
 import { PuzzleFilters } from "./puzzle-filters";
 import { PuzzleViewProvider } from "./puzzle-view-provider";
+import { ToolbarSearch } from "./toolbar-search";
 import { ViewModeToggle } from "./view-mode-toggle";
 
 const PAGE_SIZE = 20;
@@ -121,6 +130,11 @@ export function PuzzlesClient({
   const { data: favourites } = useQuery(
     convexQuery(gateway.catalog.listMyFavorites, favoritesOnly ? {} : "skip"),
   );
+  // What the member already has a copy of, so they can scan the catalogue for what they're missing.
+  const { data: ownedIds } = useQuery(
+    convexQuery(gateway.library.myOwnedDefinitionIds, {}),
+  );
+  const ownedDefinitionIds = useMemo(() => new Set(ownedIds), [ownedIds]);
   const puzzles = favoritesOnly
     ? favouritesInCatalogue(favourites ?? [], searchArgs)
     : showingSettledRows
@@ -165,12 +179,23 @@ export function PuzzlesClient({
     return () => observer.unobserve(element);
   }, [handleObserver]);
 
+  const applyFacets = (patch: Partial<typeof filters>) =>
+    onSearchChange((prev) => ({
+      ...prev,
+      ...facetSearch({ ...filtersFromSearch(prev), ...patch }),
+    }));
+
   const clearFilters = () => {
     searchBox.change("");
     setFiltersPanelKey((key) => key + 1);
     // Everything but the view mode.
     onSearchChange((prev) => ({ view: prev.view }));
   };
+
+  const facetCount = activeFacetCount(filters);
+  // A removed chip's button unmounts with it: focus moves here first, so keyboard and screen-reader
+  // users stay in the toolbar instead of restarting from the top of the page.
+  const filtersToggleRef = useRef<HTMLButtonElement>(null);
 
   const hasActiveFilters =
     favoritesOnly ||
@@ -205,24 +230,14 @@ export function PuzzlesClient({
       <Card>
         <CardContent>
           {/* Wraps by the toolbar's own width, not the viewport (the sidebar narrows the column on
-              a tablet): the search and the buttons share a row while the search keeps 18rem,
-              enough for its hint; otherwise the buttons move together to a second row. */}
+              a tablet): see ToolbarSearch. */}
           <div className="flex flex-wrap gap-4">
-            {/* Search */}
-            <div className="relative flex-1 basis-72">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
-              />
-              <Input
-                type="search"
-                aria-label={t("searchLabel")}
-                placeholder={t("searchPlaceholder")}
-                value={searchDraft}
-                onChange={(e) => searchBox.change(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <ToolbarSearch
+              label={t("searchLabel")}
+              placeholder={t("searchPlaceholder")}
+              value={searchDraft}
+              onChange={searchBox.change}
+            />
 
             <div className="flex flex-wrap gap-4">
               {/* Favorites Toggle */}
@@ -241,19 +256,24 @@ export function PuzzlesClient({
                 {t("favoritesOnly")}
               </Button>
 
-              {/* Filter Toggle */}
+              {/* Filter Toggle: looks pressed while open or while facets narrow the results, and
+                  counts them, so a closed panel can't hide what is filtering the list. */}
               <Button
+                ref={filtersToggleRef}
                 variant="outline"
                 aria-expanded={showFilters}
                 aria-controls={filtersPanelId}
+                data-active={showFilters || facetCount > 0 ? "" : undefined}
                 onClick={() => {
                   filterPanelChoices.set(searchKey, !showFilters);
                   setShowFilters(!showFilters);
                 }}
-                className="flex items-center gap-2"
+                className="data-active:bg-accent data-active:text-accent-foreground dark:data-active:bg-accent flex items-center gap-2"
               >
                 <Filter className="h-4 w-4" />
-                {t("filtersLabel")}
+                {facetCount > 0
+                  ? t("filtersLabelCount", { count: facetCount })
+                  : t("filtersLabel")}
               </Button>
 
               {/* Clear Filters */}
@@ -276,16 +296,20 @@ export function PuzzlesClient({
               <PuzzleFilters
                 key={filtersPanelKey}
                 filters={filters}
-                onFiltersChange={(patch) =>
-                  onSearchChange((prev) => ({
-                    ...prev,
-                    ...facetSearch({ ...filtersFromSearch(prev), ...patch }),
-                  }))
-                }
+                onFiltersChange={applyFacets}
                 className="mt-4"
               />
             )}
           </div>
+          {!showFilters && facetCount > 0 && (
+            <ActiveFacetChips
+              filters={filters}
+              onRemove={(patch) => {
+                filtersToggleRef.current?.focus();
+                applyFacets(patch);
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -326,7 +350,15 @@ export function PuzzlesClient({
         >
           <PuzzleViewProvider viewMode={viewMode}>
             {puzzles.map((puzzle) => (
-              <PuzzleCard key={puzzle._id} puzzle={puzzle} headingLevel={2} />
+              <PuzzleCard
+                key={puzzle._id}
+                puzzle={puzzle}
+                onShelf={
+                  !!puzzle.aggregateId &&
+                  ownedDefinitionIds.has(puzzle.aggregateId)
+                }
+                headingLevel={2}
+              />
             ))}
           </PuzzleViewProvider>
         </div>

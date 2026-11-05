@@ -62,11 +62,28 @@ export function createDocsIndex(docs: readonly SearchDoc[]) {
   };
 }
 
-// A short excerpt centred on the first query term, for the result list.
+const SNIPPET_LENGTH = 120;
+const SNIPPET_LEAD = 40;
+
+// A short excerpt around the first query term, for the result list. It starts and ends on a whole
+// word, with an ellipsis where it cuts the text.
 function makeSnippet(text: string, query: string): string {
   const term = query.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
-  const i = term ? text.toLowerCase().indexOf(term) : -1;
-  if (i === -1) return text.slice(0, 120);
-  const start = Math.max(0, i - 40);
-  return (start > 0 ? "…" : "") + text.slice(start, start + 120).trim() + "…";
+  const hit = term ? text.toLowerCase().indexOf(term) : -1;
+  let start = Math.max(0, hit - SNIPPET_LEAD);
+  if (start > 0 && text[start - 1] !== " ") {
+    // Unless the term is in the word being cut, skip to the next word.
+    const nextWord = text.indexOf(" ", start) + 1;
+    if (nextWord > 0 && nextWord <= hit) start = nextWord;
+  }
+  let end = start + SNIPPET_LENGTH;
+  if (end < text.length && text[end] !== " ") {
+    const lastSpace = text.lastIndexOf(" ", end);
+    if (lastSpace > Math.max(start, hit)) end = lastSpace;
+  }
+  return (
+    (start > 0 ? "…" : "") +
+    text.slice(start, end).trim() +
+    (end < text.length ? "…" : "")
+  );
 }

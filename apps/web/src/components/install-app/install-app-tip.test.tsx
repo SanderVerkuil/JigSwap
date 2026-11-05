@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import {
   act,
   cleanup,
@@ -347,6 +348,66 @@ describe("InstallAppTip", () => {
 
     mocks.pathname = "/messages";
     rerender(wrap(<InstallAppTip />));
+    expect(screen.getByRole("region")).toBeTruthy();
+  });
+
+  // What the selection bar and the in-page profile form do while they own the bottom of the screen.
+  function BusySurface({ active }: { active: boolean }) {
+    useReportSurfaceBusy("test-surface", active);
+    return null;
+  }
+
+  it("steps aside while a surface owns the bottom of the screen, without being dismissed", () => {
+    setUserAgent(IPHONE_SAFARI);
+    seenBefore();
+    const { rerender } = render(
+      wrap(
+        <>
+          <InstallAppTip />
+          <BusySurface active={false} />
+        </>,
+      ),
+    );
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByRole("region")).toBeTruthy();
+
+    // No navigation here: the page stays put and only its selection mode changes.
+    rerender(
+      wrap(
+        <>
+          <InstallAppTip />
+          <BusySurface active />
+        </>,
+      ),
+    );
+    expect(screen.queryByRole("region")).toBeNull();
+    expect(storedState().snoozedUntil).toBeNull();
+    expect(storedState().never).toBe(false);
+
+    rerender(
+      wrap(
+        <>
+          <InstallAppTip />
+          <BusySurface active={false} />
+        </>,
+      ),
+    );
+    expect(screen.getByRole("region")).toBeTruthy();
+  });
+
+  it("stays up when asked for, even while a surface is busy: the member wants it now", () => {
+    setUserAgent(IPHONE_SAFARI);
+    render(
+      wrap(
+        <>
+          <InstallAppTip />
+          <BusySurface active />
+        </>,
+      ),
+    );
+    act(() => requestInstallTip());
     expect(screen.getByRole("region")).toBeTruthy();
   });
 

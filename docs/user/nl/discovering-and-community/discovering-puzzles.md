@@ -1,10 +1,10 @@
 ---
-title: Puzzels Ontdekken
+title: Puzzels ontdekken
 order: 1
 summary: "Blader door beschikbare kopieën, verken de catalogus en lees de samengevoegde puzzeldetails."
 ---
 
-# Puzzels Ontdekken — Bladeren & Catalogus
+# Puzzels ontdekken — bladeren en catalogus
 
 ## Blader door communitypuzzels
 
@@ -16,9 +16,9 @@ Bladeren doorzoekt alle kopieën in bezit van de community die momenteel **besch
 2. Bouw je filter met de **querybouwer** en combineer:
    - Zoeken op vrije tekst.
    - Categorie, moeilijkheid, conditie.
-   - Bereik voor het aantal stukken.
+   - Bereik voor het aantal stukjes.
    - Beschikbaarheidsmarkeringen (voor ruil / uitlenen / verkoop).
-3. Resultaten verschijnen als een raster of lijst met kaarten, elk met de eigenaar, een badge voor ruil/uitlenen/verkoop en snelle acties: **Bekijken**, **Uitwisseling Aanvragen**, **Bericht**, **Favoriet**.
+3. Resultaten verschijnen als een raster of lijst met kaarten, elk met de eigenaar, een badge voor ruil/uitlenen/verkoop en snelle acties: **Bekijken**, **Uitwisseling aanvragen**, **Bericht**, **Favoriet**.
 
 ## De puzzelcatalogus
 

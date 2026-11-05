@@ -11,7 +11,8 @@
 // slim safe-area-aware top bar and a bottom tab bar with a quick-action
 // sheet; the content sits on the plain background with no inset card or page
 // head. The shadcn sidebar's mobile offcanvas becomes unreachable by design —
-// its trigger lives in the (hidden) desktop top bar.
+// its trigger lives in the (hidden) desktop top bar. From md to 1024px the top
+// bar's trigger opens that same sheet over the page, with the rail at rest.
 import { MAIN_CONTENT_ID, SkipLink } from "@/components/a11y/skip-link";
 import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -39,7 +40,7 @@ import {
 } from "./page-header-slot";
 import { ShellPreferencesProvider, useShellPreferences } from "./preferences";
 import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
-import { ShellHeading } from "./shell-title";
+import { ShellDocumentTitle, ShellHeading } from "./shell-title";
 import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
@@ -51,10 +52,10 @@ function subscribeWide(onChange: () => void) {
 
 const getWideSnapshot = () => window.matchMedia(SIDEBAR_WIDE_QUERY).matches;
 
-// The desktop sidebar's open state (UX-05, see lib/sidebar-state.ts): the member's remembered
-// toggle wins; without one it is docked open from 1024px and the icon rail below, following the
-// window live. The server and hydration render use last visit's width hint, so SSR paints the
-// same sidebar the browser settles on.
+// The desktop sidebar's open state (UX-05, see lib/sidebar-state.ts): the icon rail below 1024px,
+// where the toggle opens an overlay instead; from there the member's remembered toggle wins, else
+// docked open. It follows the window live. The server and hydration render use last visit's width
+// hint, so SSR paints the same sidebar the browser settles on.
 function useSidebarOpen(cookies: SidebarCookies) {
   const [explicit, setExplicit] = useState(cookies.open);
   const wide = useSyncExternalStore(
@@ -65,7 +66,7 @@ function useSidebarOpen(cookies: SidebarCookies) {
   useEffect(() => {
     writeSidebarCookie(SIDEBAR_WIDE_COOKIE_NAME, wide);
   }, [wide]);
-  return [resolveSidebarOpen(explicit, wide), setExplicit] as const;
+  return { open: resolveSidebarOpen(explicit, wide), setExplicit, wide };
 }
 
 const NO_SIDEBAR_COOKIES: SidebarCookies = { open: undefined, wide: undefined };
@@ -79,7 +80,7 @@ export function DashboardShell({
   sidebar?: SidebarCookies;
 }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useSidebarOpen(sidebar);
+  const sidebarState = useSidebarOpen(sidebar);
   const pathname = useLocation({ select: (location) => location.pathname });
   // Full-bleed pages (/messages) fill the card from md: no content padding and
   // no page scroll, so only the page's own panes scroll.
@@ -89,6 +90,7 @@ export function DashboardShell({
     <ShellPreferencesProvider>
       <PageHeaderSlotProvider>
         <SyncPreferredLanguage />
+        <ShellDocumentTitle />
         {/* Mobile scrolls the document itself (no height cap, no overflow clip
             below md) so the browser's address bar auto-hides on scroll-down and
             returns on scroll-up — the regular-website behaviour. The mobile top
@@ -96,10 +98,12 @@ export function DashboardShell({
             while the page scrolls under them. Desktop keeps the inset-card model:
             a fixed `svh` column that clips its own overflow and scrolls inside
             the card. */}
-        {/* Controlled: the provider still writes the sidebar_state cookie on every toggle. */}
+        {/* Controlled: the provider still writes the sidebar_state cookie on every docked toggle. */}
         <SidebarProvider
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
+          open={sidebarState.open}
+          onOpenChange={sidebarState.setExplicit}
+          overlay={!sidebarState.wide}
+          overlayKey={pathname}
           className="flex-col md:h-svh md:overflow-hidden"
         >
           {/* First Tab stop: jumps past the top bar and sidebar to the main landmark. */}
@@ -117,13 +121,14 @@ export function DashboardShell({
                   glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
                   overflow-hidden. */}
               {/* --app-sticky-top: where sticky page content (tab bars) sticks — below the mobile
-                  top bar on phones, below the page head from md (see sticky-offset.ts). Phones
-                  clip rather than hide x-overflow: `hidden` would make this a scroll container
-                  that never scrolls (the document does), and sticky children would never stick. */}
+                  top bar on phones, below the page head from md (see sticky-offset.ts), and at the
+                  top in a window too short for the head to stick. Phones clip rather than hide
+                  x-overflow: `hidden` would make this a scroll container that never scrolls (the
+                  document does), and sticky children would never stick. */}
               <div
                 data-scroll-restoration-id={APP_SCROLL_REGION_ID}
                 className={cn(
-                  "flex-1 overflow-x-clip [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[--app-sticky-top:var(--page-head-height,0px)]",
+                  "flex-1 overflow-x-clip [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[--app-sticky-top:var(--page-head-height,0px)] [@media(max-height:500px)]:md:[--app-sticky-top:0px]",
                   // Full-bleed: a column whose content area takes the rest of the card. It only
                   // scrolls (with no reserved gutter) when the window is shorter than the page's
                   // minimum height, so the composer is never clipped out of reach.

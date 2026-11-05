@@ -21,6 +21,7 @@ import { UnreadDot } from "@/components/whats-new/badges";
 import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { openCookieSettings } from "@/lib/analytics-consent";
 import { cn } from "@/lib/utils";
 import { tearDownPushForSignOut } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -31,6 +32,7 @@ import {
   Bell,
   Check,
   CircleHelp,
+  Cookie,
   House,
   ListChecks,
   LogOut,
@@ -48,6 +50,11 @@ import {
   ThemeRadios,
 } from "./display-preferences";
 import { useShellPreferences } from "./preferences";
+
+// Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar: this is
+// the ring every other control has. Important, to beat the box-shadow Clerk sets on focus.
+const TRIGGER_FOCUS_RING =
+  "focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2! focus-visible:ring-offset-background!";
 
 const STATUS_OPTIONS = [
   { override: "auto", label: "statusAuto" },
@@ -69,6 +76,7 @@ export function ShellUserButton({
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
   const tQuickStart = useTranslations("quickStart.menu");
+  const tFooter = useTranslations("marketing.footer");
   const navigate = useNavigate();
   const recordQuickStart = useConvexMutation(
     gateway.onboarding.recordQuickStart,
@@ -115,14 +123,18 @@ export function ShellUserButton({
             ...(tapTarget
               ? {
                   userButtonAvatarBox: "!w-7 !h-7",
-                  userButtonTrigger:
+                  userButtonTrigger: cn(
                     "!flex !size-11 !items-center !justify-center !rounded-lg hover:!bg-accent",
+                    TRIGGER_FOCUS_RING,
+                  ),
                 }
               : {
                   userButtonAvatarBox: "!w-8 !h-8",
                   // The desktop sidebar on a touch screen (tablets): a 44px target.
-                  userButtonTrigger:
+                  userButtonTrigger: cn(
                     "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
+                    TRIGGER_FOCUS_RING,
+                  ),
                 }),
           },
         }}
@@ -218,6 +230,15 @@ export function ShellUserButton({
                 }}
               />
             ))}
+          {/* In the menu, not on the Privacy & safety page: that page is in Clerk's modal, which
+            would cover the banner this reopens. Consent can be changed or withdrawn at any time
+            (GDPR Art. 7(3)). Reopened once the menu has closed and handed focus back to its
+            trigger, so the banner takes focus and returns it there. */}
+          <UserButton.Action
+            label={tFooter("cookieSettings")}
+            labelIcon={<Cookie className="size-4" />}
+            onClick={() => window.setTimeout(openCookieSettings)}
+          />
           <UserButton.Action label="manageAccount" />
           {/* Sign out stops push to this browser first (SEC-54), while the
             session can still unregister it on the server, so a shared browser

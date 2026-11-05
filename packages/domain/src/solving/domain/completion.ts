@@ -13,7 +13,11 @@ import {
 } from "./events";
 import { CompletionId, CopyId, MemberId, PuzzleDefinitionId } from "./ids";
 import { Photo } from "./photo";
-import { isSpanLongerThanAnySolve, SolveDuration } from "./solve-duration";
+import {
+  isSpanLongerThanAnySolve,
+  MINUTES_PER_DAY,
+  SolveDuration,
+} from "./solve-duration";
 
 // A completion may hold at most five photos (§1.4).
 export const MAX_PHOTOS = 5;
@@ -26,8 +30,12 @@ export const MAX_SOLVE_NOTES_LENGTH = 5_000;
 // year-only solve is closed as soon as it is logged.
 export const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-// A date-only same-day completion (start == end, no explicit duration) counts as one day.
-const MINUTES_PER_DAY = 1440;
+// A solve date is the member's local calendar date stored as UTC midnight, so their "today" can be
+// up to 14 hours ahead of the UTC clock (UTC+14). Anything later is a day that hasn't come anywhere.
+const LATEST_LOCAL_TODAY_MS = 14 * 60 * 60 * 1000;
+
+const isAfterToday = (date: Date, now: Date): boolean =>
+  date.getTime() > now.getTime() + LATEST_LOCAL_TODAY_MS;
 
 // Input to start(): an in-progress solve (no end yet).
 export interface StartCompletionProps {
@@ -88,6 +96,7 @@ export interface CompletionState {
 
 // Changes accepted by edit(). An undefined field leaves the current value untouched.
 export interface CompletionChanges {
+  // An empty string clears the note.
   readonly notes?: string;
   readonly photos?: readonly Photo[];
   readonly startDate?: Date;
@@ -112,8 +121,8 @@ export function completionEditableUntil(
 //
 // Invariants: a new completion names a puzzle definition or a copy (at least one, so a solve
 // can't be logged against nothing; SEC-30); its dates are ones a solve can have (checked where they
-// are supplied, so a row that predates that stays editable); endDate ≥ startDate; the duration is consistent with
-// the recorded end; at most five photos; edits only within 24h of completion (photo attachment is
+// are supplied, so a row that predates that stays editable); endDate ≥ startDate and not after today;
+// the duration is consistent with the recorded end; at most five photos; edits only within 24h of completion (photo attachment is
 // exempt — see attachPhotos).
 export class Completion {
   private events: DomainEvent[] = [];
@@ -267,6 +276,7 @@ export class Completion {
     if (endDate.getTime() < this.state.startDate.getTime()) {
       return err(SolvingError.invalidTimeRange());
     }
+    if (isAfterToday(endDate, now)) return err(SolvingError.futureEndDate());
     const duration = Completion.resolveDuration(
       this.state.startDate,
       endDate,
@@ -348,6 +358,9 @@ export class Completion {
     if (nextEnd && nextEnd.getTime() < nextStart.getTime()) {
       return err(SolvingError.invalidTimeRange());
     }
+    if (datesChanged && nextEnd && isAfterToday(nextEnd, now)) {
+      return err(SolvingError.futureEndDate());
+    }
 
     const nextPhotos = changes.photos ?? this.state.photos;
     if (nextPhotos.length > MAX_PHOTOS) {
@@ -377,7 +390,10 @@ export class Completion {
 
     this.state = {
       ...this.state,
-      notes: changes.notes ?? this.state.notes,
+      notes:
+        changes.notes === undefined
+          ? this.state.notes
+          : changes.notes || undefined,
       photos: nextPhotos,
       startDate: nextStart,
       endDate: nextEnd,
@@ -447,6 +463,7 @@ export class Completion {
       if (endDate.getTime() < startDate.getTime()) {
         return err(SolvingError.invalidTimeRange());
       }
+      if (isAfterToday(endDate, now)) return err(SolvingError.futureEndDate());
       return ok({ startDate, endDate });
     }
     if (startDate || endDate) return err(SolvingError.invalidDatePrecision());

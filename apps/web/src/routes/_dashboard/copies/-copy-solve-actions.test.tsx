@@ -115,7 +115,8 @@ const renderCopy = (view: CopyView) => {
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <CopyInstanceScreen copyId="copy-doc-1" owned={false} />
+        {/* An owner lands on /my-puzzles/$id, whichever link they followed. */}
+        <CopyInstanceScreen copyId="copy-doc-1" owned={view.viewerIsOwner} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -231,5 +232,69 @@ describe("copy page circle sharing", () => {
   it("offers it to nobody else: circle shares are the owner's alone", () => {
     renderCopy(copyView({ viewerHoldsCopy: true }));
     expect(button(share)).toBeNull();
+  });
+});
+
+// UX-133: what a solve says about its time matches the completion log. A stored duration derived
+// from the dates never reaches the viewer as a time (finishMinutes is typed time only).
+describe("CopyInstanceScreen solve durations", () => {
+  const DAY = 86_400_000;
+  const day = Date.UTC(2026, 9, 12);
+  const solve = (fields: {
+    startedAt: number;
+    occurredAt: number;
+    finishMinutes: number | null;
+  }): CopyView["completions"][number] => ({
+    solver: { anonymous: false, member: anna },
+    isYou: false,
+    ...fields,
+  });
+  const fastestFinish = () =>
+    screen.getByText("fastest finish").previousElementSibling?.textContent;
+
+  it("says a same-day solve without a typed time took one day, with no fastest finish", () => {
+    renderCopy(
+      copyView({
+        completions: [
+          solve({ startedAt: day, occurredAt: day, finishMinutes: null }),
+        ],
+      }),
+    );
+    expect(screen.getByText("Oct 12, 2026 · in one day")).toBeTruthy();
+    expect(screen.queryByText(/finished in/)).toBeNull();
+    expect(fastestFinish()).toBe("—");
+  });
+
+  it("says a multi-day solve without a typed time spanned its calendar days", () => {
+    renderCopy(
+      copyView({
+        completions: [
+          solve({
+            startedAt: day,
+            occurredAt: day + 2 * DAY,
+            finishMinutes: null,
+          }),
+        ],
+      }),
+    );
+    expect(screen.getByText("Oct 14, 2026 · over 3 days")).toBeTruthy();
+  });
+
+  it("shows a typed time as the log writes it, on the row and as the fastest finish", () => {
+    renderCopy(
+      copyView({
+        completions: [
+          solve({ startedAt: day, occurredAt: day, finishMinutes: 200 }),
+        ],
+        stats: {
+          timesCompleted: 1,
+          fastestFinishMinutes: 200,
+          timesLentOut: 0,
+          yourCopyRating: null,
+        },
+      }),
+    );
+    expect(screen.getByText("Oct 12, 2026 · 3h 20m")).toBeTruthy();
+    expect(fastestFinish()).toBe("3h 20m");
   });
 });

@@ -1,4 +1,5 @@
 import type { PublicCatalogCardView } from "@jigswap/contracts";
+import { puzzleSearchTerm } from "@jigswap/domain";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -122,7 +123,9 @@ export const browsePublicCatalog = query({
         ? await ctx.db
             .query("puzzles")
             .withSearchIndex("by_searchable_text", (q) =>
-              q.search("searchableText", term).eq("status", "approved"),
+              q
+                .search("searchableText", puzzleSearchTerm(term))
+                .eq("status", "approved"),
             )
             .filter((q) =>
               q.and(

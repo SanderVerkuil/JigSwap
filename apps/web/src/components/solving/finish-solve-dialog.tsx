@@ -3,7 +3,9 @@
 import { useCompletionFollowUp } from "@/components/solving/completion-follow-up-provider";
 import {
   showsSolveTime,
+  SolveFieldError,
   SolveTimeFields,
+  useSolveFormErrors,
   useSolveTimeOptOut,
 } from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,12 @@ import {
   localTodayInput,
   msToDateInput,
 } from "@/lib/date-input";
+import {
+  hasSolveFormErrors,
+  solveFormErrorsFromCode,
+  solveMinutes,
+  validateSolveForm,
+} from "@/lib/solve-form";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
@@ -80,12 +88,29 @@ export function FinishSolveDialog({
 
   // Same rule as the Log dialog: the time question shows unless the member turned times off.
   const showDuration = showsSolveTime(trackCompletionDuration);
+  const today = localTodayInput();
+  const earliestEnd =
+    minEndDate !== undefined ? msToDateInput(minEndDate) : undefined;
+  const { show, clearDates, clearTime, endError, timeError } =
+    useSolveFormErrors({ end: "finish-end", time: "finish-time-hours" });
 
   const handleSubmit = async () => {
+    const errors = validateSolveForm(
+      {
+        start: earliestEnd,
+        end: endDate,
+        hours: showDuration ? hours : undefined,
+        minutes: showDuration ? minutes : undefined,
+      },
+      { today, datesRequired: true },
+    );
+    if (hasSolveFormErrors(errors)) {
+      show(errors);
+      return;
+    }
     const end = dateInputToMs(endDate);
     if (end === undefined) return;
-    const totalMinutes =
-      (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
+    const totalMinutes = solveMinutes(hours, minutes);
 
     try {
       const result = await finishCompletion.mutateAsync({
@@ -99,12 +124,13 @@ export function FinishSolveDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
+      const fieldErrors = solveFormErrorsFromCode(solvingErrorCode(error));
+      if (fieldErrors) {
+        show(fieldErrors);
+        return;
+      }
       console.error("Failed to finish solve:", error);
-      toast.error(
-        solvingErrorCode(error) === "InvalidTimeRange"
-          ? t("endBeforeStartError")
-          : t(solveSaveErrorKey(error)),
-      );
+      toast.error(t(solveSaveErrorKey(error)));
     }
   };
 
@@ -136,14 +162,23 @@ export function FinishSolveDialog({
               id="finish-end"
               type="date"
               value={endDate}
-              min={
-                minEndDate !== undefined ? msToDateInput(minEndDate) : undefined
-              }
+              min={earliestEnd}
+              max={today}
+              aria-invalid={endError ? true : undefined}
               aria-describedby={
-                minEndDate !== undefined ? "finish-started-on" : undefined
+                [
+                  minEndDate !== undefined && "finish-started-on",
+                  endError && "finish-end-error",
+                ]
+                  .filter(Boolean)
+                  .join(" ") || undefined
               }
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                clearDates();
+              }}
             />
+            <SolveFieldError id="finish-end-error" message={endError} />
             {/* Says why this dialog opened (e.g. from /completions/new) and why earlier dates
                 are refused. The start is a calendar date, so it formats in UTC. */}
             {minEndDate !== undefined && (
@@ -168,9 +203,16 @@ export function FinishSolveDialog({
               idPrefix="finish-time"
               hours={hours}
               minutes={minutes}
-              onHoursChange={setHours}
-              onMinutesChange={setMinutes}
+              onHoursChange={(value) => {
+                setHours(value);
+                clearTime();
+              }}
+              onMinutesChange={(value) => {
+                setMinutes(value);
+                clearTime();
+              }}
               onOptOut={optOutOfTimes}
+              error={timeError}
             />
           )}
 
@@ -194,7 +236,7 @@ export function FinishSolveDialog({
           >
             {tCommon("cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting || !endDate}>
+          <Button onClick={handleSubmit} disabled={submitting}>
             {t("submit")}
           </Button>
         </DialogFooter>

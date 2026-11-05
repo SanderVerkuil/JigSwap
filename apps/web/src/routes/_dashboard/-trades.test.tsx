@@ -102,7 +102,7 @@ vi.mock("@/components/reputation/leave-review-dialog", () => ({
   LeaveReviewDialog: () => null,
 }));
 vi.mock("@/components/safety/exchange-report-menu", () => ({
-  ExchangeReportMenu: () => null,
+  ExchangeReportMenu: () => <button aria-label="Trade actions" />,
 }));
 vi.mock("@/components/messaging/thread-view", () => ({
   ThreadView: () => null,
@@ -253,6 +253,37 @@ describe("exchange actions", () => {
   it("offers a pending request's owner accept and decline, not cancel", async () => {
     await openExchange("incoming", "proposed");
     expect(actions()).toEqual([en.trades.accept, en.trades.decline]);
+  });
+
+  // With its label, the ⋯ wrapped alone onto a row of its own on a phone.
+  it("keeps Message's name when it goes icon-only on a phone", async () => {
+    await openExchange("incoming", "proposed");
+    const button = buttonNamed(en.trades.message);
+    expect(button?.querySelector("span")?.classList).toContain(
+      "max-sm:sr-only",
+    );
+    expect(button?.querySelector("svg")).toBeTruthy();
+  });
+
+  // Too narrow for one row, the ⋯ must not wrap alone: it goes with Message, at either end of the
+  // next row.
+  it("keeps the ⋯ with Message when the actions wrap", async () => {
+    await openExchange("incoming", "accepted");
+    const message = buttonNamed(en.trades.message);
+    const menu = document.querySelector('[aria-label="Trade actions"]');
+    expect(menu?.parentElement).toBe(message?.parentElement);
+    expect(message?.parentElement?.classList).toContain("flex-1");
+  });
+
+  // The label says it all, and without the icons Mark complete + Cancel + Message + ⋯ fit one row
+  // from 360px, and Accepteren + Afwijzen + Bericht + ⋯ too.
+  it("drops the lifecycle buttons' icons on a phone, not Message's or the ⋯'s", async () => {
+    await openExchange("incoming", "accepted");
+    const complete = buttonNamed(en.trades.markComplete);
+    const row = complete?.parentElement;
+    expect(row?.classList).toContain("max-sm:[&>button>svg]:hidden");
+    expect(buttonNamed(en.trades.cancel)?.parentElement).toBe(row);
+    expect(buttonNamed(en.trades.message)?.parentElement).not.toBe(row);
   });
 
   it("lets the requester cancel a pending request", async () => {

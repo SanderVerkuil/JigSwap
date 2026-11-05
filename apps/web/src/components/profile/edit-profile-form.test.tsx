@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { isSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -56,6 +57,7 @@ const member: Member = {
 const renderForm = (
   profile: { displayName?: string; bio?: string } = {},
   accountFields: Partial<Member> = {},
+  focusCustomLink = false,
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -84,6 +86,7 @@ const renderForm = (
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
         <EditProfileForm
           member={{ ...member, ...accountFields }}
+          focusCustomLink={focusCustomLink}
           onDone={onDone}
         />
       </IntlProvider>
@@ -103,6 +106,13 @@ afterEach(cleanup);
 // happy-dom has no layout engine, so these pin the class contract that keeps
 // the form inside a 390px screen; the geometry itself was checked in a browser.
 describe("EditProfileForm on a phone", () => {
+  it("keeps the install tip off its fields while it is open", () => {
+    renderForm();
+    expect(isSurfaceBusy()).toBe(true);
+    cleanup();
+    expect(isSurfaceBusy()).toBe(false);
+  });
+
   it("is one explicit column below sm, so no field can size the track", () => {
     renderForm();
     const grid = screen.getByLabelText("Username").closest(".grid");
@@ -117,6 +127,21 @@ describe("EditProfileForm on a phone", () => {
     expect(preview?.textContent).toContain("Your profile link:");
     expect(preview?.classList).not.toContain("truncate");
     expect(url.classList).toContain("break-all");
+  });
+});
+
+// Arriving from the QR dialog to set a custom link: the member lands on that field.
+describe("EditProfileForm focus", () => {
+  it("focuses the custom-link field when asked to", () => {
+    renderForm({}, {}, true);
+    expect(document.activeElement).toBe(
+      screen.getByLabelText(en.profile.slug.label),
+    );
+  });
+
+  it("leaves focus alone when opened from its own toggle", () => {
+    renderForm();
+    expect(document.activeElement).toBe(document.body);
   });
 });
 

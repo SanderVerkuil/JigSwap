@@ -1,12 +1,12 @@
 ---
-title: Mensen & Volgen
+title: Mensen en volgen
 order: 2
 summary: "Bouw je netwerk op, nodig vrienden uit, volg leden, volg de activiteitenfeed en laat opmerkingen en beoordelingen achter."
 ---
 
-# Sociale & Communityfuncties
+# Sociale en communityfuncties
 
-## Mensen / Sociale Hub
+## Mensen / sociale hub
 
 **Waar:** **Mensen** (`/people`).
 
@@ -31,7 +31,7 @@ De items in de feed zijn klikbaar:
   (alleen als je eraan meedeed).
 
 Items linken alleen naar pagina's die je mag zien. Puzzels die in één keer
-zijn toegevoegd, en eerdere oplossingen die in één keer zijn vastgelegd,
+zijn toegevoegd, en eerdere voltooiingen die in één keer zijn vastgelegd,
 verschijnen niet in de feed.
 
 ## Wat wederzijds volgen oplevert
@@ -43,7 +43,7 @@ lenen of te verkopen. Wissel tussen de twee met het filter **Alle puzzels** en
 
 Leden die elkaar niet volgen, zien alleen de aangeboden puzzels. Zie voor de
 details
-[Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+[Zichtbaarheid en privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
 ## Vrienden uitnodigen
 
@@ -110,7 +110,7 @@ Heb je al een account en nodigt iemand jouw e-mailadres uit, dan krijg je geen
 e-mail. De uitnodiging komt dan in JigSwap bij je binnen, als dezelfde kaart
 **Uitnodigingen**.
 
-## Opmerkingen & beoordelingen
+## Opmerkingen en beoordelingen
 
 - **Puzzelbeoordelingen:** plaats op een catalogusdefinitiepagina een communityopmerking met een waardering van 1 tot 5 sterren.
 - **Opmerkingen bij kopieën:** bespreek een specifieke kopie op de detailpagina.

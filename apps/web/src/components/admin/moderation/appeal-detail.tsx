@@ -18,6 +18,7 @@ import type { FunctionReturnType } from "convex/server";
 import { ImageOff, Trash2, Undo2 } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 import { ConfirmAction } from "./confirm-action";
+import { DetailActions } from "./detail-actions";
 import { SEVERITY_BADGE } from "./flag-detail";
 import { RevealGuard } from "./reveal-guard";
 import { severityBand } from "./severity";
@@ -67,14 +68,17 @@ export function AppealDetail({
     <div className="flex flex-col gap-5">
       <p className="text-sm text-muted-foreground">{t("intro")}</p>
 
-      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
+      <div
+        data-detail-preview
+        className="relative aspect-[16/10] max-h-[40svh] w-full overflow-hidden rounded-2xl bg-muted"
+      >
         {request.url ? (
           <RevealGuard>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={request.url}
               alt={t("imageAlt")}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
           </RevealGuard>
         ) : (
@@ -114,7 +118,7 @@ export function AppealDetail({
         </li>
       </ul>
 
-      <div className="flex flex-wrap items-center gap-2.5">
+      <DetailActions>
         <Button onClick={onRestore} disabled={busy || request.url === null}>
           <Undo2 aria-hidden />
           {t("restore")}
@@ -132,7 +136,7 @@ export function AppealDetail({
           destructive
           onConfirm={onKeepRemoved}
         />
-      </div>
+      </DetailActions>
     </div>
   );
 }

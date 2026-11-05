@@ -5,6 +5,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
   Outlet,
   RouterProvider,
   useNavigate,
@@ -44,7 +45,13 @@ const VIEW: QuickStartView = {
 };
 
 // Stands in for the picker: "pick" adds unsaved work; the commit is the test's.
-function FakePicker({ save }: { save: () => Promise<boolean> }) {
+function FakePicker({
+  save,
+  onDiscard,
+}: {
+  save: () => Promise<boolean>;
+  onDiscard: () => void;
+}) {
   const [picks, setPicks] = useState(0);
   useStepCommitRegistration({
     kind: "puzzles",
@@ -54,6 +61,11 @@ function FakePicker({ save }: { save: () => Promise<boolean> }) {
       const saved = await save();
       if (saved) setPicks(0);
       return saved;
+    },
+    // The picker's tray outlives its Register link.
+    kept: {
+      outlives: (pathname) => pathname === "/goals",
+      discard: onDiscard,
     },
   });
   return (
@@ -69,6 +81,7 @@ function setup({
   save = async () => true,
 }: { save?: () => Promise<boolean> } = {}) {
   const onSkip = vi.fn();
+  const onDiscard = vi.fn();
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const welcomeRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -96,7 +109,12 @@ function setup({
         onNext={() =>
           void navigate({ to: "/welcome", search: { step: "solves" } })
         }
-        renderBody={() => <FakePicker save={save} />}
+        renderBody={() => (
+          <>
+            <FakePicker save={save} onDiscard={onDiscard} />
+            <Link to="/goals">register</Link>
+          </>
+        )}
       />
     );
   }
@@ -105,8 +123,17 @@ function setup({
     path: "/dashboard",
     component: () => <p>dashboard</p>,
   });
+  const registerRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/goals",
+    component: () => <p>register form</p>,
+  });
   const router = createRouter({
-    routeTree: rootRoute.addChildren([welcomeRoute, dashboardRoute]),
+    routeTree: rootRoute.addChildren([
+      welcomeRoute,
+      dashboardRoute,
+      registerRoute,
+    ]),
     history: createMemoryHistory({ initialEntries: ["/welcome?step=puzzles"] }),
   });
   render(
@@ -114,7 +141,7 @@ function setup({
       <RouterProvider router={router} />
     </IntlProvider>,
   );
-  return { router, onSkip };
+  return { router, onSkip, onDiscard };
 }
 
 const pick = async () => {
@@ -203,13 +230,35 @@ describe("QuickStartFlowStep", () => {
     expect(continueButton().textContent).toBe("Add 1 and continue");
   });
 
-  it("goes where the member was heading after Discard", async () => {
-    const { router } = setup();
+  it("goes where the member was heading after Discard, and drops the kept work", async () => {
+    const { router, onDiscard } = setup();
     await pick();
     fireEvent.click(await finishLater());
     fireEvent.click(await screen.findByRole("button", { name: "Discard" }));
     await screen.findByText("dashboard");
     expect(href(router)).toBe("/dashboard");
+    expect(onDiscard).toHaveBeenCalledOnce();
+  });
+
+  it("keeps the kept work when Keep editing is chosen", async () => {
+    const { onDiscard } = setup();
+    await pick();
+    fireEvent.click(await finishLater());
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Keep editing" }),
+    );
+    await waitFor(() => expect(leaveDialog()).toBeNull());
+    expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  it("doesn't ask on the way to a page the kept work survives (Register)", async () => {
+    const { router, onDiscard } = setup();
+    await pick();
+    fireEvent.click(screen.getByRole("link", { name: "register" }));
+    await screen.findByText("register form");
+    expect(href(router)).toBe("/goals");
+    expect(leaveDialog()).toBeNull();
+    expect(onDiscard).not.toHaveBeenCalled();
   });
 
   it("stores Skip only after Discard", async () => {

@@ -1,11 +1,12 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 
-// The desktop sidebar's open state (UX-05). A choice the member made with the
-// toggle is remembered in `sidebar_state` (written by the sidebar primitive)
-// and always wins. Without one, the sidebar fits the window: docked open from
-// 1024px, the icon rail below it, so an 820px tablet keeps a ~700px content
-// card instead of losing a third of its width to the sidebar.
+// The desktop sidebar's open state (UX-05). From 1024px a choice the member made
+// with the toggle is remembered in `sidebar_state` (written by the sidebar
+// primitive) and wins, and without one the sidebar is docked open. Below 1024px
+// it always rests as the icon rail, so an 820px tablet keeps a ~700px content
+// card instead of losing a third of its width to the sidebar; there the toggle
+// opens the labelled sidebar over the page, which is never docked or remembered.
 //
 // The width is only known in the browser, so the shell also remembers which
 // side of 1024px the window was on last time (`sidebar_wide`). SSR reads both
@@ -15,8 +16,8 @@ import { getCookie } from "@tanstack/react-start/server";
 export const SIDEBAR_COOKIE_NAME = "sidebar_state";
 export const SIDEBAR_WIDE_COOKIE_NAME = "sidebar_wide";
 export const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-// Below this the sidebar defaults to the icon rail. Not P-32's 1280px: a
-// 1024-1279px laptop keeps the docked sidebar it has today.
+// Below this the sidebar rests as the icon rail. Not P-32's 1280px: a 1024-1279px
+// laptop keeps the docked sidebar it has today.
 export const SIDEBAR_WIDE_QUERY = "(min-width: 1024px)";
 
 export type SidebarCookies = {
@@ -56,7 +57,7 @@ export function resolveSidebarOpen(
   explicit: boolean | undefined,
   wide: boolean,
 ): boolean {
-  return explicit ?? wide;
+  return wide && (explicit ?? true);
 }
 
 // For route beforeLoad: the request cookies during SSR, document.cookie in the

@@ -12,6 +12,12 @@
  * @typedef {{ route: string; metric: string; budgetKB: number | null; actualKB: number | null; limitKB: number | null; over: boolean }} BudgetRow
  */
 
+/**
+ * The message of router.tsx's throw for a missing Convex URL. With a URL set the
+ * minifier removes the throw, so only a build without one has this in its bundle.
+ */
+export const UNCONFIGURED_BUILD_MARKER = "missing VITE_CONVEX_URL envar";
+
 /** @param {number} bytes */
 const toKB = (bytes) => Math.round((bytes / 1024) * 10) / 10;
 

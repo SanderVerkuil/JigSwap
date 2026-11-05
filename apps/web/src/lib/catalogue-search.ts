@@ -1,5 +1,10 @@
 // Pure helpers for the add-copy catalogue picker.
 
+// Lowercased with accents stripped, so a search for "cafe" finds "Café" (and the other way round).
+export function foldForSearch(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
 // A barcode-shaped input (UPC-A or EAN-13) with spaces/dashes stripped, or null. EAN-8 is left
 // out: the catalogue doesn't store it, so 8 digits fall through to the text search. The server
 // re-checks this; here it only decides whether to run the barcode lookup.

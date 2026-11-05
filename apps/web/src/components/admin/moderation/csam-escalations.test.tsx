@@ -245,7 +245,7 @@ describe("CsamEscalationsPanel", () => {
       }),
     });
     expect(container.textContent).toContain(
-      "Hash check timed out: 2 photos waited over 7 days and need an admin decision in Unchecked photos.",
+      "Hash check timed out: 2 photos waited over 7 days and need an admin decision in Unchecked.",
     );
   });
 });

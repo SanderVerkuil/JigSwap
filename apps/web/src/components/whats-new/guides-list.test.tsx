@@ -152,6 +152,17 @@ describe("GuidesList", () => {
     expect(textOf(fresh)).toContain("4 steps");
   });
 
+  it("centres a guide's step count with its link, which grows to 44px on touch", () => {
+    const els = parse(render());
+    const steps = els.find(
+      (el) =>
+        el.tagName === "p" &&
+        (attr(el, "class") ?? "").includes("flex-wrap") &&
+        textOf(el).includes("steps"),
+    );
+    expect(attr(steps!, "class")).toContain("items-center");
+  });
+
   it("links a guide back to the update that introduced it", () => {
     const els = parse(render());
     const link = elementsOf(guide(els, "households")).find(

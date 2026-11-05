@@ -17,6 +17,8 @@ import { usePresenceOf } from "@/components/presence/use-presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
+import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -90,6 +92,7 @@ import {
   type ScrollSnapshot,
 } from "./thread-scroll";
 import { TypingLine } from "./typing-line";
+import { useAttachCard } from "./use-attach-card";
 
 type ThreadMessage = PaginatedQueryItem<
   typeof gateway.conversation.listThreadMessages
@@ -119,9 +122,12 @@ export function ThreadView({
   // Task 11 (trades panel) embeds the view without the subject header/back
   // affordance; the standalone /messages route keeps the default.
   hideHeader = false,
+  attachCopyId,
 }: {
   threadId: string;
   hideHeader?: boolean;
+  // The puzzle to stage on the composer (the route's ?attach, a copy's "Message").
+  attachCopyId?: string;
 }) {
   const t = useTranslations("messages");
   const tPresence = useTranslations("presence");
@@ -192,6 +198,11 @@ export function ThreadView({
   const title = thread
     ? threadSubjectTitle(thread.subject, t, displayName)
     : undefined;
+  // Several open threads can be told apart. An embedded thread leaves its page's title alone.
+  const tTitles = useTranslations("titles");
+  useDocumentTitle(
+    title && !hideHeader ? tTitles("threadOf", { name: title }) : undefined,
+  );
   // Who wrote the other side's messages, for screen readers: the DM or trading
   // partner's display name, the anonymous label when they're anonymised, and a
   // generic label until the inbox row has loaded. Circle threads name each
@@ -494,12 +505,30 @@ export function ThreadView({
   // page head's title from md and its sr-only phone heading below md.
   const focusedThreadRef = useRef<string | null>(null);
   const headerReady = headerRow !== undefined;
+  // A thread opened to write about a puzzle: once the read has staged its card, from md up the
+  // composer takes focus instead, as it does in a first conversation about a copy. Only the thread
+  // opened first, and only if it has an open composer. A ?attach that stages nothing (hand-typed or
+  // stale) follows the usual rule, or focus would stay nowhere. Phones wait for a tap, so the
+  // keyboard stays down.
+  const isMobile = useIsMobile();
+  const { card: attachCard, pending: attachPending } = useAttachCard(
+    attachCopyId,
+    threadId,
+  );
+  const composerClosed =
+    thread?.blocked === "byMe" || thread?.readOnly === true;
+  const composerTakesFocus =
+    !isMobile && attachCard !== undefined && !composerClosed;
+  const awaitingAttach = !isMobile && attachPending;
   useEffect(() => {
     if (hideHeader || !headerReady) return;
     if (focusedThreadRef.current === threadId) return;
+    const openedFirst = focusedThreadRef.current === null;
+    if (openedFirst && awaitingAttach) return;
     focusedThreadRef.current = threadId;
+    if (openedFirst && composerTakesFocus) return;
     headingRef.current?.focus({ preventScroll: true });
-  }, [hideHeader, headerReady, threadId]);
+  }, [hideHeader, headerReady, threadId, awaitingAttach, composerTakesFocus]);
 
   // Polite announcement for messages arriving from the other side — not on
   // first load, not for our own sends, not for system messages.
@@ -744,7 +773,7 @@ export function ThreadView({
       />
 
       {/* A blocked (byMe) or read-only thread stays readable; only the composer closes. */}
-      {thread && (thread.blocked === "byMe" || thread.readOnly) ? (
+      {thread && composerClosed ? (
         <ComposerClosed
           reason={thread.blocked === "byMe" ? "blockedByMe" : "cantReply"}
           partner={pairThread ? threadPartner(pairThread) : null}
@@ -760,6 +789,7 @@ export function ThreadView({
           )}
           <MessageComposer
             threadId={threadId}
+            attachCopyId={attachCopyId}
             // A circle is never addressed like a person: it gets its own label.
             recipientName={circleThread ? undefined : title}
             theirsLabel={theirsLabel}

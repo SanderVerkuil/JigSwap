@@ -512,6 +512,12 @@ describe("searchableText (derived projection)", () => {
     expect(def.searchableText()).toBe("Title Artist tag");
   });
 
+  it("folds accents, so searching 'cafe' finds 'Café'", () => {
+    expect(submit({ title: "Café", tags: ["été"] }).searchableText()).toBe(
+      "Cafe ete",
+    );
+  });
+
   it("reflects updates and is never part of persisted state", () => {
     const def = submit({ title: "A", tags: [] });
     expect(def.searchableText()).toBe("A");

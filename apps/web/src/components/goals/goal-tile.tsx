@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDateOnly } from "@/lib/date-input";
-import type { GoalStatus } from "@/lib/goal-form";
+import { goalPercent, type GoalStatus } from "@/lib/goal-form";
 import { cn } from "@/lib/utils";
 import {
   Archive,
@@ -79,13 +79,7 @@ export function GoalTile({
 
   // Progress is derived from the server-maintained counts; never recomputed beyond a
   // clamped percentage for the bar width.
-  const pct =
-    goal.targetCompletions > 0
-      ? Math.min(
-          100,
-          Math.round((goal.currentCompletions / goal.targetCompletions) * 100),
-        )
-      : 0;
+  const pct = goalPercent(goal);
 
   // The period the goal counts solves in. Without a start date it counts from the (UTC) day it
   // was created, like the server does; dates are calendar dates, shown in UTC.

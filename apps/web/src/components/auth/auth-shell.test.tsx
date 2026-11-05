@@ -1,5 +1,11 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -26,6 +32,9 @@ vi.mock("@/lib/i18n", () => ({
   clearIntlCache: vi.fn(),
   setLocale: vi.fn(),
 }));
+
+const consent = vi.hoisted(() => ({ openCookieSettings: vi.fn() }));
+vi.mock("@/lib/analytics-consent", () => consent);
 
 const renderShell = (locale: "en" | "nl" = "en") =>
   render(
@@ -81,6 +90,16 @@ describe("AuthShell", () => {
     expect(href("Privacy policy")).toBe("/privacy");
     expect(href("Terms of service")).toBe("/terms");
     expect(href("Browse puzzles")).toBe("/catalog");
+  });
+
+  it("offers Cookie settings in its footer, which reopens the cookie banner", () => {
+    renderShell();
+    fireEvent.click(
+      within(screen.getByRole("contentinfo")).getByRole("button", {
+        name: "Cookie settings",
+      }),
+    );
+    expect(consent.openCookieSettings).toHaveBeenCalledTimes(1);
   });
 
   it("speaks the visitor's language", () => {

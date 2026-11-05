@@ -57,12 +57,14 @@ vi.mock("@/compat/link", () => ({
   Link: ({
     href,
     children,
+    activeOptions,
     ...rest
   }: {
     href: string;
     children?: ReactNode;
+    activeOptions?: { exact?: boolean };
   }) => (
-    <a href={href} {...rest}>
+    <a href={href} data-exact-active={activeOptions?.exact} {...rest}>
       {children}
     </a>
   ),
@@ -126,12 +128,41 @@ describe("MobileTopBar Messages entry", () => {
     ).toBe("page");
   });
 
+  it("shows the current page in the icon's colour too, not only to assistive tech", () => {
+    renderBar("/messages");
+    expect(
+      screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
+    ).toContain("aria-[current=page]:text-primary-text");
+  });
+
   it("names the count in Dutch", () => {
     mocks.unreadMessages = 1;
     renderBar("/dashboard", "nl");
     expect(
       screen.getByRole("link", { name: "Berichten, 1 ongelezen bericht" }),
     ).toBeTruthy();
+  });
+});
+
+describe("MobileTopBar notifications bell", () => {
+  const bell = () => screen.getByRole("link", { name: en.notifications.bell });
+
+  it("is the current page on the notifications page, in name and colour", () => {
+    renderBar("/notifications");
+    expect(bell().getAttribute("aria-current")).toBe("page");
+    expect(bell().getAttribute("class")).toContain(
+      "aria-[current=page]:text-primary-text",
+    );
+  });
+
+  it("isn't the current page elsewhere, nor below it on preferences", () => {
+    renderBar("/dashboard");
+    expect(bell().getAttribute("aria-current")).toBeNull();
+    cleanup();
+    renderBar("/notifications/preferences");
+    expect(bell().getAttribute("aria-current")).toBeNull();
+    // The router would mark it current on a child route otherwise.
+    expect(bell().getAttribute("data-exact-active")).toBe("true");
   });
 });
 
@@ -181,6 +212,32 @@ describe("MobileTopBar back chevron", () => {
     expect(click.defaultPrevented).toBe(false);
     expect(mocks.back).not.toHaveBeenCalled();
   });
+
+  // Notification preferences sits in no nav group, and in an installed app on iOS there is no
+  // browser back button.
+  it("goes up to the parent page on a route outside the nav groups", () => {
+    renderBar("/notifications/preferences");
+    const link = screen.getByRole("link", { name: "Back to Notifications" });
+    expect(link.getAttribute("href")).toBe("/notifications");
+    // The router would mark a link to the parent as current on its child otherwise.
+    expect(link.getAttribute("data-exact-active")).toBe("true");
+  });
+
+  it("goes back through history there too", () => {
+    mocks.canGoBack = true;
+    renderBar("/notifications/preferences");
+    fireEvent.click(screen.getByRole("link", { name: "Back" }));
+    expect(mocks.back).toHaveBeenCalledOnce();
+  });
+
+  it.each(["/notifications", "/profile", "/whats-new"])(
+    "shows no back chevron on the top-level page %s",
+    (pathname) => {
+      mocks.canGoBack = true;
+      renderBar(pathname);
+      expect(backLink()).toBeNull();
+    },
+  );
 
   it("names the generic Back in Dutch", () => {
     mocks.canGoBack = true;
@@ -257,6 +314,17 @@ describe("MobileTopBar published title", () => {
 
     expect(screen.queryByRole("heading")).toBeNull();
     expect(screen.getByText("Café")).toBeTruthy();
+  });
+
+  it("prints what the page asks for when its hero shows the title right below", () => {
+    renderPublished({
+      title: "Café",
+      ownsHeading: "phone",
+      mobileTitle: "My Puzzles",
+    });
+
+    expect(screen.getByText("My Puzzles")).toBeTruthy();
+    expect(screen.queryByText("Café")).toBeNull();
   });
 
   it("shows the title as plain text when the page renders it as its own heading", () => {

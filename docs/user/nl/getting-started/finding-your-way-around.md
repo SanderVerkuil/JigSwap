@@ -1,17 +1,17 @@
 ---
-title: Je Weg Vinden
+title: Je weg vinden
 order: 2
 summary: "Leer de indeling van het dashboard en de navigatie op desktop en mobiel, installeer de app en blijf op de hoogte van wat er nieuw is."
 ---
 
-# Je Weg Vinden
+# Je weg vinden
 
 Zodra je bent ingelogd, toont JigSwap een **dashboard** met een paar vaste navigatie-onderdelen:
 
 - **Op desktop:** een bovenbalk (met een zoekpil) en een gegroepeerde zijbalk aan de linkerkant met links naar al je onderdelen (Bibliotheek, Community, enz.). Je inhoud verschijnt in een kaart in het midden.
 - **Op mobiel (telefoons/kleine schermen):** een smalle bovenbalk plus een **tabbalk onderaan**. Een **snelle-actieknop** in het midden opent een paneel met veelgebruikte acties.
 
-De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel Toevoegen_) en eventuele relevante aantallen in de paginakop.
+De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel toevoegen_) en eventuele relevante aantallen in de paginakop.
 
 ## Je accountmenu
 
@@ -22,7 +22,7 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 - **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
   **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
-  [Je Dashboard](/docs/getting-started/dashboard#snel-instellen).
+  [Je dashboard](/docs/getting-started/dashboard#snel-instellen).
 
 ## Wat is er nieuw
 
@@ -69,7 +69,7 @@ te stoppen.
   **Rondleiding hervatten**, en die uit Snel instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
 - Op **Mensen**, **Uitwisselingen**, **Kringen**, **Voltooiingen** en
-  **Puzzel Toevoegen**, en op het **Dashboard** op een computer of tablet,
+  **Puzzel toevoegen**, en op het **Dashboard** op een computer of tablet,
   start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van
   die pagina, bij de stap op die pagina: **Je weg vinden** op het Dashboard,
   **Ledenprofielen** op Mensen. Op **Huishouden** start hij de rondleiding

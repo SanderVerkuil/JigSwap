@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useMemberToday } from "@/hooks/use-member-today";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { currentGoals } from "@/lib/goal-form";
+import { currentGoals, goalPercent } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -129,7 +129,16 @@ export function Headline({
           </HeadlineLink>
         ),
         shelfLink: (chunks) => (
-          <HeadlineLink href="/my-puzzles">{chunks}</HeadlineLink>
+          // The offered ones when the words say how many are up for swap, not the whole shelf.
+          <HeadlineLink
+            href={
+              variant === "shelfOffered"
+                ? "/my-puzzles?status=forTrade"
+                : "/my-puzzles"
+            }
+          >
+            {chunks}
+          </HeadlineLink>
         ),
         browseLink: (chunks) => (
           <HeadlineLink href="/browse">{chunks}</HeadlineLink>
@@ -220,7 +229,7 @@ function QuickActions() {
         <Link
           key={href}
           href={href}
-          className="bg-background hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors"
+          className="bg-background hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors pointer-coarse:min-h-11"
         >
           <Icon className="text-jigsaw-primary size-[15px]" />
           {label}
@@ -283,13 +292,7 @@ export function BriefingHero() {
   const goal =
     activeGoal && activeGoal.targetCompletions > 0
       ? {
-          pct: Math.min(
-            100,
-            Math.round(
-              (activeGoal.currentCompletions / activeGoal.targetCompletions) *
-                100,
-            ),
-          ),
+          pct: goalPercent(activeGoal),
           target: activeGoal.targetCompletions,
         }
       : null;

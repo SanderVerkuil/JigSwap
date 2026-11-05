@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   compareToBudget,
@@ -7,6 +8,7 @@ import {
   measureRoutes,
   nextBudget,
   oversizedDocuments,
+  UNCONFIGURED_BUILD_MARKER,
 } from "./bundle-budget-core.mjs";
 
 // The shape of TanStack Start's build manifest: each route lists the JS it
@@ -148,6 +150,14 @@ describe("findForbiddenInitial", () => {
         label: "three.js",
       },
     ]);
+  });
+});
+
+describe("UNCONFIGURED_BUILD_MARKER", () => {
+  // Rewording that throw must not quietly turn the check off.
+  it("is the message router.tsx throws on a missing Convex URL", () => {
+    const router = readFileSync(`${__dirname}/../src/router.tsx`, "utf8");
+    expect(router).toContain(`throw new Error("${UNCONFIGURED_BUILD_MARKER}")`);
   });
 });
 

@@ -214,13 +214,13 @@ afterEach(() => {
 });
 
 describe("moderation console: the tab bar", () => {
-  it("keeps Hash matches and Reports ahead of the tabs that may scroll out of view", async () => {
+  it("keeps Hash matches and Reports, which carry deadlines, ahead of the other queues", async () => {
     await openConsole();
     const t = en.admin.moderation.tabs;
     expect(
       // Without the count pill.
       screen
-        .getAllByRole("tab")
+        .getAllByRole("tab", { hidden: true })
         .map((tab) => tab.textContent?.replace(/\d+$/, "")),
     ).toEqual([
       t.submissions,

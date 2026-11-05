@@ -44,7 +44,7 @@ from mutual followers.
 3. Click **Save**.
 
 The copy now shows a **Private** badge. To show it again, choose
-**Visible to the community**. New copies are visible.
+**Visible**. New copies are visible.
 
 A private copy is still visible to:
 

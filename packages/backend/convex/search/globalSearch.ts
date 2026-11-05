@@ -1,4 +1,5 @@
 import type { GlobalSearchResults } from "@jigswap/contracts";
+import { puzzleSearchTerm } from "@jigswap/domain";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
@@ -74,7 +75,9 @@ export const global = query({
     const puzzleRows = await ctx.db
       .query("puzzles")
       .withSearchIndex("by_searchable_text", (q) =>
-        q.search("searchableText", term).eq("status", "approved"),
+        q
+          .search("searchableText", puzzleSearchTerm(term))
+          .eq("status", "approved"),
       )
       .take(limit);
     const puzzles = await Promise.all(

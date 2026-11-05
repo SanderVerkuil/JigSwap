@@ -25,7 +25,7 @@ import type { OptimisticUpdate } from "convex/browser";
 import { insertAtTop } from "convex/react";
 import type { FunctionArgs } from "convex/server";
 import { Send } from "lucide-react";
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { AttachMenu } from "./attach-menu";
@@ -39,6 +39,7 @@ import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { StagedPhotoChips } from "./staged-photo-chips";
+import { useAttachCard } from "./use-attach-card";
 import { usePhotosAvailable, usePhotoStaging } from "./use-photo-staging";
 import { useTypingIndicator } from "./use-typing-indicator";
 
@@ -72,6 +73,7 @@ const optimisticAppend =
 
 export function MessageComposer({
   threadId,
+  attachCopyId,
   recipientName,
   label,
   theirsLabel,
@@ -80,6 +82,8 @@ export function MessageComposer({
   locationGroup,
 }: {
   threadId: string;
+  // A puzzle to stage when the thread opens (a copy's "Message" into an existing DM).
+  attachCopyId?: string;
   // Names the textarea ("Message Esther"); falls back to the generic label.
   recipientName?: string;
   // The textarea's accessible name in place of "Message {recipientName}" (a circle thread).
@@ -99,7 +103,15 @@ export function MessageComposer({
 
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [staged, setStaged] = useState<MessageCopy | null>(null);
+  // Kept per thread, like closedThreadId: a puzzle staged for one conversation doesn't travel to
+  // the next one the member opens.
+  const [stagedFor, setStagedFor] = useState<{
+    threadId: string;
+    copy: MessageCopy;
+  } | null>(null);
+  const staged = stagedFor?.threadId === threadId ? stagedFor.copy : null;
+  const setStaged = (copy: MessageCopy | null) =>
+    setStagedFor(copy && { threadId, copy });
   const [pickerOpen, setPickerOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const attachButtonRef = useRef<HTMLButtonElement>(null);
@@ -136,6 +148,20 @@ export function MessageComposer({
     setLocationHiddenIn(threadId);
     setLocationOpen(false);
   }, [threadId]);
+
+  // The puzzle a copy's "Message" brought along. Staged once, while rendering (the sanctioned
+  // "adjust state when a value changes" pattern), so removing the chip sticks when the read updates.
+  const { card: attachCard } = useAttachCard(attachCopyId, threadId);
+  const [attachedCopyId, setAttachedCopyId] = useState<string | null>(null);
+  if (attachCard && attachedCopyId !== attachCard.copyId) {
+    setAttachedCopyId(attachCard.copyId);
+    setStaged(attachCard);
+  }
+  // Ready to type about it from md up; phones wait for a tap, so the keyboard stays down (the
+  // first-conversation composer's rule, new-copy-conversation.tsx).
+  useEffect(() => {
+    if (attachedCopyId && !isMobile) textareaRef.current?.focus();
+  }, [attachedCopyId, isMobile]);
 
   const postMessage = useMutation({
     mutationFn: useConvexMutation(
@@ -218,7 +244,9 @@ export function MessageComposer({
         toast.error(t("copyNotFound"));
         return;
       }
-      if (copy) setStaged((current) => current ?? copy);
+      if (copy) {
+        setStagedFor((current) => current ?? { threadId, copy });
+      }
       setError(code === "MessageTooLong" ? t("tooLong") : t("sendError"));
     }
   };

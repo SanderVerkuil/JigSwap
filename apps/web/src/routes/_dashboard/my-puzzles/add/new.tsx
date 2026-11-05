@@ -6,6 +6,7 @@ import {
   availabilityToSharing,
   CATALOG_TEXT_LIMITS,
   contributeError,
+  CopyPreviewCard,
   CopyStepError,
   CoverColourField,
   coverStep,
@@ -13,7 +14,6 @@ import {
   DIFFICULTY_OPTIONS,
   hasAnyAvailability,
   ImportZone,
-  LivePreviewCard,
   MatchConfirm,
   PieceCountField,
   ReadinessChecklist,
@@ -26,6 +26,7 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { useConditionOptions } from "@/components/library/condition";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
+import { LeaveGuard } from "@/components/quick-start/leave-guard";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -58,9 +59,9 @@ import {
 } from "@convex-dev/react-query";
 import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
@@ -154,6 +155,14 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// The fields as comparable text, a chosen file by its name. Every key keeps DEFAULT_FORM's order,
+// since the form is only ever changed by spreading it.
+const formFingerprint = ({ coverFile, ...fields }: FormState) =>
+  JSON.stringify({ ...fields, coverFile: coverFile?.name });
+
+const copyFieldsOf = ({ condition, availability, notes }: FormState) =>
+  JSON.stringify({ condition, availability, notes });
+
 function AddPuzzlePage() {
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
@@ -172,6 +181,9 @@ function AddPuzzlePage() {
     ean: searchParams.get("ean") ?? "",
     upc: searchParams.get("upc") ?? "",
   }));
+  // What the form holds without the member having typed anything: what the link prefilled, and
+  // empty again after Save & Add Another. Anything else is work a nav tap would lose.
+  const [baseline, setBaseline] = useState(form);
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<
     string | null
   >(null);
@@ -197,6 +209,17 @@ function AddPuzzlePage() {
       puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
     ),
   );
+
+  // Copy mode: whether the member already owns this puzzle, so a second copy is never an accident.
+  const { data: ownedDefinitionIds } = useQuery(
+    convexQuery(
+      gateway.library.myOwnedDefinitionIds,
+      puzzleIdFromUrl ? {} : "skip",
+    ),
+  );
+  const alreadyOwned =
+    !!specificPuzzle?.aggregateId &&
+    (ownedDefinitionIds ?? []).includes(specificPuzzle.aggregateId);
 
   // Maker-field autocomplete suggestion pools
   const { data: publisherSuggestions } = useQuery(
@@ -308,6 +331,7 @@ function AddPuzzlePage() {
 
   const resetForm = () => {
     setForm(DEFAULT_FORM);
+    setBaseline(DEFAULT_FORM);
     setSelectedDefinitionId(null);
     setPendingMatch(null);
   };
@@ -418,7 +442,7 @@ function AddPuzzlePage() {
         resetForm();
       } else if (returnTo) {
         if (!notOffered) toast.success(t("puzzleAdded"));
-        void navigate({ href: returnTo });
+        void navigate({ href: returnTo, ignoreBlocker: true });
       } else {
         if (!notOffered) {
           toast.success(t("puzzleAdded"), {
@@ -429,9 +453,13 @@ function AddPuzzlePage() {
           });
         }
         if (copyPageId) {
-          void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
+          void navigate({
+            to: "/my-puzzles/$id",
+            params: { id: copyPageId },
+            ignoreBlocker: true,
+          });
         } else {
-          void navigate({ to: "/my-puzzles" });
+          void navigate({ to: "/my-puzzles", ignoreBlocker: true });
         }
       }
     },
@@ -470,6 +498,14 @@ function AddPuzzlePage() {
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
   const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
+
+  // Unsaved work, in both modes: copy mode's title and piece count come from the catalogue, so only
+  // the member's own fields count there. Not while a submit is on its way: that work isn't lost.
+  const unsaved =
+    !submitPuzzle.isPending &&
+    (isCopyMode
+      ? copyFieldsOf(form) !== copyFieldsOf(baseline)
+      : formFingerprint(form) !== formFingerprint(baseline));
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
@@ -632,6 +668,19 @@ function AddPuzzlePage() {
           <div className="h-24 animate-pulse rounded-xl bg-muted" />
         ) : (
           chosenDefinition
+        )}
+        {alreadyOwned && specificPuzzle && (
+          <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-sm">
+            <Check aria-hidden className="size-4 shrink-0" />
+            {t("chooser.alreadyOwned")}
+            <Link
+              to="/my-puzzles"
+              search={{ q: specificPuzzle.title }}
+              className="text-primary-text font-semibold underline-offset-4 hover:underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+            >
+              {t("chooser.viewOwned")}
+            </Link>
+          </p>
         )}
       </div>
       <SectionDivider label={t("chooser.copyDetails")} />
@@ -900,7 +949,7 @@ function AddPuzzlePage() {
           <CollapsibleTrigger asChild>
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-accent"
+              className="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-sm font-medium hover:bg-accent pointer-coarse:min-h-11"
             >
               {t("advancedDetails")}
               <ChevronDown
@@ -1076,7 +1125,7 @@ function AddPuzzlePage() {
       <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
         {t("livePreview")}
       </div>
-      <LivePreviewCard
+      <CopyPreviewCard
         title={specificPuzzle?.title ?? form.title}
         brand={
           (specificPuzzle?.brand || specificPuzzle?.publisher) ??
@@ -1084,6 +1133,9 @@ function AddPuzzlePage() {
         }
         pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
         difficulty={specificPuzzle?.difficulty ?? form.difficulty}
+        tags={isCopyMode ? specificPuzzle?.tags : form.tags}
+        condition={form.condition}
+        availability={form.availability}
         // Only what the submit saves: the catalogue puzzle's own picture in copy mode, the selected
         // box photo when the form creates a new catalogue puzzle, nothing for an import match.
         coverPhotoUrl={
@@ -1093,7 +1145,6 @@ function AddPuzzlePage() {
               ? undefined
               : previewPhotoUrl
         }
-        available={hasAnyAvailability(form.availability)}
       />
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t("livePreviewCaption")}
@@ -1115,6 +1166,7 @@ function AddPuzzlePage() {
         form={isCopyMode ? copyColumn : formColumn}
         preview={previewColumn}
       />
+      <LeaveGuard work={unsaved ? { kind: "addForm", count: 1 } : null} />
     </div>
   );
 }

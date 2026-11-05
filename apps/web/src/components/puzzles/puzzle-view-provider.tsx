@@ -46,7 +46,7 @@ export function PuzzleViewProvider({
               // A phone column (~358px) fits only one 212px card, so below sm
               // the grid is two fixed columns of compact cards instead.
               "grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(212px,1fr))] sm:gap-[18px]"
-            : "space-y-4")
+            : "space-y-2")
         }
       >
         {children}

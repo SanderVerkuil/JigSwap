@@ -123,6 +123,10 @@ export function CircleShareSection({
       : [],
   );
 
+  // The owner-only rule, said out loud: an organiser who came to share the household's puzzles would
+  // otherwise just see some of them missing.
+  const holdsHousemates = (copies.data ?? []).some((copy) => copy.viewerAccess);
+
   let body: ReactNode;
   if (copies.isError || shareState.isError) {
     body = (
@@ -131,7 +135,8 @@ export function CircleShareSection({
   } else if (copies.data === undefined || shareState.data === undefined) {
     body = <Skeleton className="h-24 w-full" />;
   } else if (shareable.length === 0) {
-    body = (
+    // The library isn't empty when it holds housemates' puzzles: their note below says enough.
+    body = holdsHousemates ? null : (
       <p className="text-muted-foreground text-sm">{t("share.noCopies")}</p>
     );
   } else {
@@ -230,6 +235,11 @@ export function CircleShareSection({
       <p className="text-xs text-muted-foreground">
         {t("manage.shareDescription")}
       </p>
+      {holdsHousemates && (
+        <p className="text-xs text-muted-foreground">
+          {t("share.housematesNote")}
+        </p>
+      )}
       {body}
       {(adds.length > 0 || removes.length > 0) && (
         <div className="flex flex-wrap items-center justify-end gap-2">

@@ -1,9 +1,9 @@
 import { Link } from "@/compat/link";
+import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import coverVillageStreet from "@/components/marketing/assets/cover-village-street.webp";
 import { Container } from "@/components/marketing/container";
-import { FitToWidth } from "@/components/marketing/fit-to-width";
 import { PageHero } from "@/components/marketing/page-hero";
-import { JigPlank } from "@/components/marketing/plank";
+import { FittedPlank } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow, Section, SectionHead } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ function AboutPage() {
   const timeline = [1, 2, 3] as const;
 
   return (
-    <main>
+    <main id={MAIN_CONTENT_ID}>
       <PageHero
         eyebrow={t("heroEyebrow")}
         title={t("heroTitle")}
@@ -46,34 +46,32 @@ function AboutPage() {
             </Reveal>
             <Reveal delay={120} className="flex justify-center">
               <div className="w-full [filter:drop-shadow(0_24px_36px_rgb(40_30_80_/_.16))]">
-                <FitToWidth>
-                  <JigPlank
-                    depth={16}
-                    boxes={[
-                      {
-                        series: "Familie",
-                        title: "Keukentafel",
-                        pieceCount: 500,
-                        c1: "var(--mk-violet-400)",
-                        c2: "var(--mk-violet-600)",
-                        width: 100,
-                      },
-                      {
-                        cover: coverVillageStreet,
-                        title: "Dorpsstraat",
-                        width: 132,
-                      },
-                      {
-                        series: "Samen",
-                        title: "Eerste ruil",
-                        pieceCount: 1000,
-                        c1: "var(--mk-green-400)",
-                        c2: "var(--mk-green-600)",
-                        width: 104,
-                      },
-                    ]}
-                  />
-                </FitToWidth>
+                <FittedPlank
+                  depth={16}
+                  boxes={[
+                    {
+                      series: "Familie",
+                      title: "Keukentafel",
+                      pieceCount: 500,
+                      c1: "var(--mk-violet-400)",
+                      c2: "var(--mk-violet-600)",
+                      width: 100,
+                    },
+                    {
+                      cover: coverVillageStreet,
+                      title: "Dorpsstraat",
+                      width: 132,
+                    },
+                    {
+                      series: "Samen",
+                      title: "Eerste ruil",
+                      pieceCount: 1000,
+                      c1: "var(--mk-green-400)",
+                      c2: "var(--mk-green-600)",
+                      width: 104,
+                    },
+                  ]}
+                />
               </div>
             </Reveal>
           </div>

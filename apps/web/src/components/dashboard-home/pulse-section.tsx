@@ -15,7 +15,7 @@ import { gateway, Id } from "@/gateway";
 import { useMemberToday } from "@/hooks/use-member-today";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { currentGoals } from "@/lib/goal-form";
+import { currentGoals, goalPercent } from "@/lib/goal-form";
 import {
   useMemberDisplayName,
   usePartyDisplayName,
@@ -242,7 +242,11 @@ function GoalRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
         <span className="font-heading text-3xl leading-none font-bold">
-          {Math.round(p * 100)}%
+          {goalPercent({
+            currentCompletions: current,
+            targetCompletions: target,
+          })}
+          %
         </span>
         <span className="text-muted-foreground font-mono text-xs">
           {t("done", { current, target })}
@@ -253,13 +257,7 @@ function GoalRing({
 }
 
 function GoalBar({ goal }: { goal: GoalRow }) {
-  const pct =
-    goal.targetCompletions > 0
-      ? Math.min(
-          100,
-          Math.round((goal.currentCompletions / goal.targetCompletions) * 100),
-        )
-      : 0;
+  const pct = goalPercent(goal);
   return (
     <Link href="/goals" className="block">
       <div className="mb-1.5 flex items-baseline justify-between gap-2.5">

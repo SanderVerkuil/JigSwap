@@ -126,6 +126,16 @@ describe("CookieConsent (mini)", () => {
     expect(link.getAttribute("href")).toBe("/privacy#p-cookies");
   });
 
+  // No layout here, so the fit was measured in a browser (Dutch at 320px). This guards what makes
+  // it hold: the second button drops to its own line rather than running off the screen.
+  it("lets its buttons wrap on a narrow phone", () => {
+    render(banner("nl"));
+    const actions = screen.getByRole("button", {
+      name: "Analyse toestaan",
+    }).parentElement;
+    expect(actions?.className.split(/\s+/)).toContain("flex-wrap");
+  });
+
   it("speaks Dutch to Dutch visitors", () => {
     render(banner("nl"));
 

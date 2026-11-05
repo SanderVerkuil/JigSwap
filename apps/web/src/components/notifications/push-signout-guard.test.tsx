@@ -6,10 +6,9 @@ import { PushSignOutGuard } from "./push-signout-guard";
 type ClerkState = { isLoaded: boolean; isSignedIn: boolean | undefined };
 
 // What Clerk's useAuth and useUser report. They agree once clerk-js has loaded.
-// Before that, on a prerendered page (/docs is served as static HTML with the
-// build's SSR state, userId null) or when the SSR state disagrees with the
-// browser, useAuth already says "loaded, signed out" while useUser, which never
-// reads a user from SSR state, still says "not loaded".
+// Before that, when the SSR state disagrees with the browser, useAuth already
+// says "loaded, signed out" while useUser, which never reads a user from SSR
+// state, still says "not loaded".
 const mocks = vi.hoisted(() => ({
   auth: { isLoaded: false, isSignedIn: undefined } as ClerkState,
   user: { isLoaded: false, isSignedIn: undefined } as ClerkState,
@@ -81,8 +80,8 @@ describe("PushSignOutGuard (SEC-54)", () => {
   });
 
   it("ignores the signed-out state SSR reports before clerk-js has loaded", async () => {
-    // A signed-in member opening a prerendered /docs page: the HTML's SSR
-    // state says signed out, clerk-js has not loaded yet.
+    // A signed-in member whose token SSR refused: the HTML's SSR state says
+    // signed out, clerk-js has not loaded yet.
     mocks.auth = { isLoaded: true, isSignedIn: false };
     mocks.user = { isLoaded: false, isSignedIn: undefined };
     render(<PushSignOutGuard />);
