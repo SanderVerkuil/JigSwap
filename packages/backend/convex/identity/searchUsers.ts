@@ -2,6 +2,7 @@ import { normalizeMemberName, type MemberView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { clampLimit } from "../lib/pageSize";
 import { blockedEitherWaySet } from "../social/blocks";
 import {
   countKnownFollowersOf,
@@ -20,6 +21,8 @@ import { toMemberView } from "./toMemberView";
 // We over-fetch candidates from the search index (since some get dropped by the gate) and stop once
 // `limit` visible matches are collected, so dropped private rows are refilled toward `limit`.
 const CANDIDATE_LIMIT = 50;
+// `limit` is clamped to [1, CANDIDATE_LIMIT]; absent or non-finite means the default.
+const DEFAULT_LIMIT = 20;
 
 // Ranking (from UX research): name-match quality is PRIMARY (bucketed), known-follower count is
 // only a WITHIN-BUCKET tiebreaker — a better bucket ALWAYS outranks a worse one, so a brand-new
@@ -47,7 +50,10 @@ export const searchUsers = query({
   },
   handler: async (ctx, args): Promise<MemberView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
-    const limit = args.limit ?? 20;
+    const limit = clampLimit(args.limit, {
+      fallback: DEFAULT_LIMIT,
+      max: CANDIDATE_LIMIT,
+    });
     // Server-enforced minimum (mirrors the Find-people UI): sub-2-character probes return
     // nothing and never touch the search index — the cheap guard against enumeration scans.
     const searchTerm = args.searchTerm.trim().toLowerCase();

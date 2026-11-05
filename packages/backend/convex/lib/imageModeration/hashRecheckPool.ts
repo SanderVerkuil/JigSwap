@@ -139,7 +139,8 @@ type RecheckState = {
   pendingSince?: number;
 };
 
-const recheckStateOf = (row: {
+/** A row's re-check bookkeeping; queueDepthStore counts the `waiting` rows too. */
+export const recheckStateOf = (row: {
   pendingHashes?: unknown;
   hashCheckedAt?: number;
   moderationStatus?: string;

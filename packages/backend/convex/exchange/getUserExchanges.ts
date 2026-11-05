@@ -3,7 +3,11 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { enrichExchangeSummary } from "./readViews";
+import {
+  boundedExchangeWindow,
+  enrichExchangeSummary,
+  readMemberExchanges,
+} from "./readViews";
 
 type Roled = Doc<"exchanges"> & { userRole: "requester" | "owner" };
 
@@ -32,36 +36,35 @@ export const getUserExchanges = query({
     const me = await optionalActingMember(ctx);
     if (!me) return [];
 
-    let exchanges: Roled[] = [];
+    const rows: Roled[] = [];
 
     if (args.asRequester !== false) {
-      const requesterExchanges = await ctx.db
-        .query("exchanges")
-        .withIndex("by_initiator", (q) => q.eq("initiatorId", me))
-        .collect();
-      exchanges.push(
-        ...requesterExchanges.map((tr) => ({
-          ...tr,
-          userRole: "requester" as const,
-        })),
+      const asRequester = await readMemberExchanges(
+        ctx,
+        me,
+        "initiator",
+        args.status,
+      );
+      rows.push(
+        ...asRequester.map((tr) => ({ ...tr, userRole: "requester" as const })),
       );
     }
 
     if (args.asOwner !== false) {
-      const ownerExchanges = await ctx.db
-        .query("exchanges")
-        .withIndex("by_recipient", (q) => q.eq("recipientId", me))
-        .collect();
-      exchanges.push(
-        ...ownerExchanges.map((tr) => ({ ...tr, userRole: "owner" as const })),
+      const asOwner = await readMemberExchanges(
+        ctx,
+        me,
+        "recipient",
+        args.status,
+      );
+      rows.push(
+        ...asOwner.map((tr) => ({ ...tr, userRole: "owner" as const })),
       );
     }
 
-    if (args.status) {
-      exchanges = exchanges.filter((tr) => tr.status === args.status);
-    }
-
-    exchanges.sort((a, b) => b.createdAt - a.createdAt);
+    // Across both roles: newest first, the newest EXCHANGE_LIST_CAP plus the newest
+    // EXCHANGE_LIST_CAP live ones (a status filter was already applied by the index read).
+    const exchanges = boundedExchangeWindow(rows);
 
     return Promise.all(
       exchanges.map((tr) => enrichExchangeSummary(ctx, tr, me, tr.userRole)),

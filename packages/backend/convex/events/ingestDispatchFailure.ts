@@ -6,7 +6,8 @@ import { ingestToAxiom } from "../lib/axiom";
 
 // Forwards an `events.dispatch` error wide event to Axiom. The dispatcher is a mutation, which
 // cannot use the Node-only Axiom SDK, so it logs the line to the deployment log itself and
-// schedules this action with the same line. Best-effort, never throws (see lib/axiom).
+// schedules this action with the same line. The notification retention sweep forwards its
+// per-run event the same way. Best-effort, never throws (see lib/axiom).
 export const ingest = internalAction({
   args: { line: v.any() },
   handler: async (_ctx, { line }) => {

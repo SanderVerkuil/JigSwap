@@ -40,12 +40,12 @@ export const getPlankPuzzles = query({
       Math.min(LIMIT_MAX, Math.trunc(args.limit)),
     );
 
-    // Bounded pool: most-recent approved catalog definitions (no auth required — status filter
-    // ensures pending/rejected submissions never surface on the public page).
+    // Bounded pool: most-recent approved catalog definitions (no auth required — reading through
+    // the by_status index ensures pending/rejected submissions never surface on the public page).
     const pool = await ctx.db
       .query("puzzles")
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .order("desc")
-      .filter((q) => q.eq(q.field("status"), "approved"))
       .take(CANDIDATE_SCAN_LIMIT);
 
     // Partial shuffle in-place; pool is a fresh array from .take() so mutation is safe.

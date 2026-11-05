@@ -4,8 +4,14 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { clampPaginationOpts } from "../lib/pageSize";
 import schema from "../schema";
 import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
+
+// Admin-only, but the page size is still the client's request: each report joins both members'
+// labels, a target summary and the reported member's open-report count, so a page holds at most
+// this many (the queue asks for 25).
+const MAX_PAGE_SIZE = 50;
 
 // The admin report queue (spec 2.5): reports in one status, newest first, each with the
 // reporter's and reported member's labels, the reason, a target summary and how many OPEN
@@ -23,7 +29,7 @@ export const listReports = query({
       .query("reports")
       .withIndex("by_status_created", (q) => q.eq("status", args.status))
       .order("desc")
-      .paginate(args.paginationOpts);
+      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
 
     const openCounts = new Map<Id<"users">, Promise<number>>();
     const openCountOf = (userId: Id<"users">) => {

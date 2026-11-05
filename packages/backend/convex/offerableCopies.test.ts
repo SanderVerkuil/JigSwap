@@ -158,6 +158,30 @@ describe("getOfferableCopies", () => {
     expect(await offerable(t, "bob", w.danHidden)).toEqual([]);
   });
 
+  test("a household 'view' default drops a mate's copies without an explicit value; an explicit 'manage' keeps them", async () => {
+    await as(t, "ann").mutation(
+      api.household.setDefaultCopyPermission.setDefaultCopyPermission,
+      { permission: "view" },
+    );
+    expect(idsOf(await offerable(t, "bob", w.catOpen))).toEqual([w.bobOwn]);
+    await expect(
+      as(t, "bob").mutation(api.exchange.propose.propose, {
+        recipientId: w.cat,
+        type: "trade",
+        requestedPuzzleId: w.catOpen,
+        offeredPuzzleId: w.annManage,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
+
+    await as(t, "ann").mutation(
+      api.library.setCopyHouseholdPermission.setCopyHouseholdPermission,
+      { copyId: w.annOpen, permission: "manage" },
+    );
+    expect(idsOf(await offerable(t, "bob", w.catOpen))).toEqual(
+      [w.annOpen, w.bobOwn].sort(),
+    );
+  });
+
   test("every listed copy is accepted by propose as the offered copy", async () => {
     const rows = await offerable(t, "bob", w.catOpen);
     for (const row of rows) {

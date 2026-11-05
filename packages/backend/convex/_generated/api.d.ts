@@ -209,7 +209,6 @@ import type * as exchange_errors from "../exchange/errors.js";
 import type * as exchange_getExchangeById from "../exchange/getExchangeById.js";
 import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOwner.js";
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
-import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
 import type * as exchange_getReplyDisclosure from "../exchange/getReplyDisclosure.js";
 import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
@@ -302,10 +301,13 @@ import type * as lib_imageModeration_clearSettledHashPending from "../lib/imageM
 import type * as lib_imageModeration_hashRecheckPool from "../lib/imageModeration/hashRecheckPool.js";
 import type * as lib_imageModeration_moderationPool from "../lib/imageModeration/moderationPool.js";
 import type * as lib_imageModeration_quarantine from "../lib/imageModeration/quarantine.js";
+import type * as lib_imageModeration_queueDepth from "../lib/imageModeration/queueDepth.js";
+import type * as lib_imageModeration_queueDepthStore from "../lib/imageModeration/queueDepthStore.js";
 import type * as lib_imageModeration_recheckWaivedHashes from "../lib/imageModeration/recheckWaivedHashes.js";
 import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/rescreenStore.js";
 import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
+import type * as lib_pageSize from "../lib/pageSize.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
 import type * as lib_storage_blobLifecycle from "../lib/storage/blobLifecycle.js";
 import type * as lib_storage_storageSweep from "../lib/storage/storageSweep.js";
@@ -350,6 +352,7 @@ import type * as library_getCollectionsForOwnedPuzzle from "../library/getCollec
 import type * as library_getCopyInstanceView from "../library/getCopyInstanceView.js";
 import type * as library_getCopyLoanHistory from "../library/getCopyLoanHistory.js";
 import type * as library_getLentOutLoans from "../library/getLentOutLoans.js";
+import type * as library_getMyShelf from "../library/getMyShelf.js";
 import type * as library_getOwnedPuzzlesByOwner from "../library/getOwnedPuzzlesByOwner.js";
 import type * as library_getOwnedPuzzleWithCollectionStatus from "../library/getOwnedPuzzleWithCollectionStatus.js";
 import type * as library_getPuzzleDefinitionView from "../library/getPuzzleDefinitionView.js";
@@ -405,6 +408,7 @@ import type * as notifications_preferenceValidators from "../notifications/prefe
 import type * as notifications_pushSubscriptions from "../notifications/pushSubscriptions.js";
 import type * as notifications_resolveForDelivery from "../notifications/resolveForDelivery.js";
 import type * as notifications_resolveNotificationView from "../notifications/resolveNotificationView.js";
+import type * as notifications_retention from "../notifications/retention.js";
 import type * as notifications_sendEmail from "../notifications/sendEmail.js";
 import type * as notifications_sendWebPush from "../notifications/sendWebPush.js";
 import type * as notifications_setMessagePreview from "../notifications/setMessagePreview.js";
@@ -791,7 +795,6 @@ declare const fullApi: ApiFromModules<{
   "exchange/decline": typeof exchange_decline;
   "exchange/errors": typeof exchange_errors;
   "exchange/getExchangeById": typeof exchange_getExchangeById;
-  "exchange/getExchangeStats": typeof exchange_getExchangeStats;
   "exchange/getExchangesByOwner": typeof exchange_getExchangesByOwner;
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
@@ -886,10 +889,13 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/hashRecheckPool": typeof lib_imageModeration_hashRecheckPool;
   "lib/imageModeration/moderationPool": typeof lib_imageModeration_moderationPool;
   "lib/imageModeration/quarantine": typeof lib_imageModeration_quarantine;
+  "lib/imageModeration/queueDepth": typeof lib_imageModeration_queueDepth;
+  "lib/imageModeration/queueDepthStore": typeof lib_imageModeration_queueDepthStore;
   "lib/imageModeration/recheckWaivedHashes": typeof lib_imageModeration_recheckWaivedHashes;
   "lib/imageModeration/rescreenStore": typeof lib_imageModeration_rescreenStore;
   "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;
+  "lib/pageSize": typeof lib_pageSize;
   "lib/rateLimits": typeof lib_rateLimits;
   "lib/storage/blobLifecycle": typeof lib_storage_blobLifecycle;
   "lib/storage/storageSweep": typeof lib_storage_storageSweep;
@@ -934,6 +940,7 @@ declare const fullApi: ApiFromModules<{
   "library/getCopyInstanceView": typeof library_getCopyInstanceView;
   "library/getCopyLoanHistory": typeof library_getCopyLoanHistory;
   "library/getLentOutLoans": typeof library_getLentOutLoans;
+  "library/getMyShelf": typeof library_getMyShelf;
   "library/getOwnedPuzzleWithCollectionStatus": typeof library_getOwnedPuzzleWithCollectionStatus;
   "library/getOwnedPuzzlesByOwner": typeof library_getOwnedPuzzlesByOwner;
   "library/getPuzzleDefinitionView": typeof library_getPuzzleDefinitionView;
@@ -989,6 +996,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/pushSubscriptions": typeof notifications_pushSubscriptions;
   "notifications/resolveForDelivery": typeof notifications_resolveForDelivery;
   "notifications/resolveNotificationView": typeof notifications_resolveNotificationView;
+  "notifications/retention": typeof notifications_retention;
   "notifications/sendEmail": typeof notifications_sendEmail;
   "notifications/sendWebPush": typeof notifications_sendWebPush;
   "notifications/setMessagePreview": typeof notifications_setMessagePreview;

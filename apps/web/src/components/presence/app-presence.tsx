@@ -14,8 +14,15 @@ import { usePresenceSettings } from "./use-presence";
 
 export const APP_ONLINE_ROOM = "app:online";
 export const APP_AWAY_ROOM = "app:away";
-/** Heartbeat interval for every presence room (spec G0/4.4; the backend allows 5–60 s). */
-export const PRESENCE_INTERVAL_MS = 30_000;
+/**
+ * Heartbeat interval for the app:online / app:away rooms: the backend's 60 s maximum (it allows
+ * 5–60 s), the cost lever from spec 4.4, where these heartbeats are the largest stream of
+ * function calls. Joining, switching rooms, hiding the tab and unloading all disconnect or
+ * heartbeat at once, so the interval only bounds how long a crashed tab stays listed (2.5
+ * intervals = 150 s). The /messages room keeps its own 30 s interval (messages/route.tsx)
+ * because it gates notification suppression.
+ */
+export const PRESENCE_INTERVAL_MS = 60_000;
 /** No pointer or key input for this long on a visible tab reads as away. */
 export const IDLE_AFTER_MS = 5 * 60_000;
 

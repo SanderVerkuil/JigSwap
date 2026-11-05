@@ -2,6 +2,7 @@ import { computeCollectionBreakdown } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { INSIGHTS_READ_CAP } from "./getPersonalStats";
 
 // Insights read query: distributions over the member's owned copies (piece-count bucket, brand,
 // difficulty, condition) for the collection charts. Brand/piece count come from the copy's cached
@@ -16,7 +17,7 @@ export const getCollectionBreakdown = query({
     const copies = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-      .collect();
+      .take(INSIGHTS_READ_CAP);
 
     // Resolve each distinct puzzle once for brand/pieceCount/difficulty fallback.
     const puzzleIds = [...new Set(copies.map((c) => c.puzzleId))];

@@ -115,6 +115,20 @@ export interface BrowseOwnedCopiesView {
   hasMore: boolean;
 }
 
+/**
+ * The signed-in member's own shelf summary (`library.myShelf`) for the dashboard and profile
+ * shelves: library-wide counts plus only the newest few copies joined, so a shelf never subscribes
+ * to the whole library. Counts cover every owned copy, private ones included, up to a scan cap.
+ */
+export interface MyShelfView {
+  /** How many copies the member owns. */
+  total: number;
+  /** How many of them are marked for trade. */
+  forTrade: number;
+  /** The newest copies by `createdAt`, newest first, with owner-only fields. */
+  recent: OwnedCopyView[];
+}
+
 /** A stored image row for an owned copy, as joined into `library.ownedWithCollectionStatus`. */
 export interface OwnedCopyImageView {
   _id: DocId;

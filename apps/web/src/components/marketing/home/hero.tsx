@@ -185,17 +185,23 @@ const AVATAR_COLORS = [
 
 const noopSubscribe = () => () => {};
 
-// A random seed drawn once per mount that reads as null on the server and
-// during hydration, so seeded queries only start on the client. The
-// isClient flag comes from useSyncExternalStore (server snapshot false), not
-// a setState-in-effect, so there's no extra mount render.
-export function useClientSeed(): number | null {
+const HOUR_MS = 3_600_000;
+
+// The seed for the landing page's sampled queries: the current UTC hour,
+// captured once per mount. Every visitor in the same hour sends the same
+// query args, so Convex serves them all from one cached result instead of
+// re-reading the candidate pools per visit; the pick still changes hourly.
+// Reads as null on the server and during hydration, so seeded queries only
+// start on the client (and SSR never disagrees with the client across an
+// hour boundary). The isClient flag comes from useSyncExternalStore (server
+// snapshot false), not a setState-in-effect, so there's no extra mount render.
+export function useHourlySeed(): number | null {
   const isClient = React.useSyncExternalStore(
     noopSubscribe,
     () => true,
     () => false,
   );
-  const [seed] = React.useState(() => Math.floor(Math.random() * 0xffffffff));
+  const [seed] = React.useState(() => Math.floor(Date.now() / HOUR_MS));
   return isClient ? seed : null;
 }
 
@@ -206,10 +212,10 @@ function TrustRow() {
   // Prefetched in the home route loader, so the count is present on first paint.
   const { data: stats } = useQuery(globalStatsQuery);
 
-  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
-  // the seed is ready; FALLBACK_AVATARS fills the cluster meanwhile as a
-  // decorative placeholder.
-  const seed = useClientSeed();
+  // Hour-bucket seed shared by all visitors, client-only (SSR-safe). The
+  // query is skipped until the seed is ready; the cluster stays hidden
+  // meanwhile.
+  const seed = useHourlySeed();
   const { data } = useQuery(
     convexQuery(
       gateway.insights.communityAvatars,
@@ -295,10 +301,10 @@ function HeroCTAs() {
 export function Hero() {
   const t = useTranslations("marketing.home");
 
-  // Stable per-visit seed, client-only (SSR-safe). The query is skipped until
-  // the seed is ready; PLANK_WIDE fills the plank meanwhile as a loading
-  // fallback.
-  const seed = useClientSeed();
+  // Hour-bucket seed shared by all visitors, client-only (SSR-safe). The
+  // query is skipped until the seed is ready; PLANK_WIDE fills the plank
+  // meanwhile as a loading fallback.
+  const seed = useHourlySeed();
   const { data: livePuzzles } = useQuery(
     convexQuery(
       gateway.insights.plankPuzzles,

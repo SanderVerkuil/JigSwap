@@ -10,6 +10,10 @@ import {
   type NotificationCategoryKey,
   type NotificationType,
 } from "@/components/notifications/notification-meta";
+import {
+  formatUnreadBadge,
+  unreadNotificationsLabel,
+} from "@/components/notifications/unread-count";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
@@ -121,9 +125,9 @@ function NotificationsPage() {
     mutationFn: useConvexMutation(gateway.notifications.markAllRead),
   });
 
-  // The server count covers rows beyond the loaded pages too.
+  // The server count covers rows beyond the loaded pages too (capped: 100 reads "99+").
   const unreadCount = unread ?? 0;
-  const unreadMeta = t("unreadCount", { count: unreadCount });
+  const unreadMeta = unreadNotificationsLabel(t, unreadCount);
 
   const handleMarkRead = async (view: NotificationView) => {
     try {
@@ -225,7 +229,9 @@ function NotificationsPage() {
         <aside className="flex flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-2 xl:self-start">
           {/* Unread stat: a glanceable extra, not a control — xl only */}
           <div className="hidden xl:block">
-            <p className="text-3xl font-bold tabular-nums">{unreadCount}</p>
+            <p className="text-3xl font-bold tabular-nums">
+              {formatUnreadBadge(unreadCount)}
+            </p>
             <p className="text-muted-foreground text-sm">{t("unreadStat")}</p>
           </div>
 

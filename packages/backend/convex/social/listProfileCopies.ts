@@ -7,6 +7,7 @@ import { v } from "convex/values";
 import type { DataModel, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { clampPaginationOpts } from "../lib/pageSize";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -16,6 +17,9 @@ import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { toPublicCopyView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { canSeeProfileContent, seesFullLibrary } from "./privacy";
+
+// A page holds 1 to MAX_PAGE_SIZE copies whatever the client asks for.
+const MAX_PAGE_SIZE = 50;
 
 // Social read: a member's puzzles (owned copies) for their profile page, newest first, paginated.
 // Auth-gated. Two gates, in order:
@@ -83,7 +87,9 @@ export const listProfileCopies = query({
         : seesPrivate
           ? base
           : base.filter(notPrivate);
-    const result = await scoped.paginate(args.paginationOpts);
+    const result = await scoped.paginate(
+      clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE),
+    );
 
     // Sequential: the context's ownerVisibility memo isn't safe to share across a Promise.all.
     let context: CopyViewContext | null = null;

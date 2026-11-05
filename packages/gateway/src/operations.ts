@@ -105,6 +105,10 @@ export const gateway = {
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
+    // The signed-in member's own shelf: library-wide counts plus only the newest few copies joined
+    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where the whole library
+    // is needed (My Puzzles, pickers, arrange-shelf).
+    myShelf: api.library.getMyShelf.getMyShelf,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
     ownedWithCollectionStatus:
@@ -203,7 +207,7 @@ export const gateway = {
   exchange: {
     create: api.exchange.propose.propose,
     // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
-    // (ExchangeView / ExchangeSummaryView / ExchangeStatsView) rather than raw rows;
+    // (ExchangeView / ExchangeSummaryView) rather than raw rows;
     // party-visibility, ordering and the joins are preserved so the UI is unchanged.
     byId: api.exchange.getExchangeById.getExchangeById,
     forUser: api.exchange.getUserExchanges.getUserExchanges,
@@ -214,7 +218,6 @@ export const gateway = {
     complete: api.exchange.confirmCompletion.confirmCompletion,
     cancel: api.exchange.cancel.cancel,
     dispute: api.exchange.raiseDispute.raiseDispute,
-    stats: api.exchange.getExchangeStats.getExchangeStats,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
     // The request-flow notice: whether the caller's own profile is private (the owner always gets

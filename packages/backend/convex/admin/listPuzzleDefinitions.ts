@@ -6,6 +6,12 @@ import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { clampPaginationOpts } from "../lib/pageSize";
+
+// Admin-only, but the page size is still the client's request: each row joins its submitter, its
+// box art and every copy of it (owner count), so a page holds at most this many (the table asks
+// for 25).
+const MAX_PAGE_SIZE = 50;
 
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
 // The public lists filter to approved; this console must also show pending/rejected/disabled.
@@ -25,7 +31,7 @@ export const listPuzzleDefinitions = query({
     const puzzles = await ctx.db
       .query("puzzles")
       .order("desc")
-      .paginate(args.paginationOpts);
+      .paginate(clampPaginationOpts(args.paginationOpts, MAX_PAGE_SIZE));
 
     const page = await Promise.all(
       puzzles.page.map(

@@ -2,7 +2,7 @@ import { CatalogCategory, CatalogCategoryId } from "../../domain";
 import { CatalogCategoryRepository } from "../ports/out/catalog-category.repository";
 
 // In-memory CatalogCategoryRepository for use-case tests. `listActive` returns active nodes in
-// ascending sort order, as a real adapter's `by_sort_order` index query would.
+// ascending sort order, as the Convex adapter's sorted `by_active` read does.
 export class InMemoryCatalogCategoryRepository implements CatalogCategoryRepository {
   private readonly store = new Map<
     CatalogCategoryId,

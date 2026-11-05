@@ -422,6 +422,40 @@ describe("getThreadMessages pagination", () => {
     );
     expect(older.map((m) => m.body)).toEqual(["m1"]);
   });
+
+  // SEC-49: the page size is clamped server-side, whatever the client sends.
+  test("an oversized limit returns at most 100 messages; a non-finite one the default 50", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seed(t);
+    await followMutually(t, alice, bob);
+    const threadId = await openDmWithMessages(t, bob, ["first"]);
+    await t.run(async (ctx) => {
+      const base = Date.now() + 1000;
+      for (let i = 0; i < 120; i++) {
+        await ctx.db.insert("threadMessages", {
+          threadAggregateId: threadId,
+          messageId: `bulk-${i}`,
+          authorId: alice,
+          kind: "text",
+          body: `bulk ${i}`,
+          sentAt: base + i,
+        });
+      }
+    });
+
+    const huge = await asAlice(t).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId, limit: 1e6 },
+    );
+    expect(huge).toHaveLength(100);
+    expect(huge[huge.length - 1].body).toBe("bulk 119");
+
+    const nan = await asAlice(t).query(
+      api.conversation.getThreadMessages.getThreadMessages,
+      { threadId, limit: Number.NaN },
+    );
+    expect(nan).toHaveLength(50);
+  });
 });
 
 describe("getThreadByExchange", () => {

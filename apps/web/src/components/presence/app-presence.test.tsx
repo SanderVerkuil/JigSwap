@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe("AppPresence", () => {
-  it("mounts app:online while the tab is visible and in use, at a 30 s interval", () => {
+  it("mounts app:online while the tab is visible and in use, at a 60 s interval", () => {
     render(<AppPresence />);
     expect([...mocks.mounted]).toEqual([APP_ONLINE_ROOM]);
     expect(mocks.renders.at(-1)).toEqual({
@@ -78,7 +78,21 @@ describe("AppPresence", () => {
       userId: "member_me",
       interval: PRESENCE_INTERVAL_MS,
     });
-    expect(PRESENCE_INTERVAL_MS).toBe(30_000);
+    // The backend's maximum (presence.ts MAX_HEARTBEAT_INTERVAL_MS).
+    expect(PRESENCE_INTERVAL_MS).toBe(60_000);
+  });
+
+  it("heartbeats app:away at the same 60 s interval", () => {
+    render(<AppPresence />);
+    act(() => {
+      vi.advanceTimersByTime(IDLE_AFTER_MS);
+    });
+    expect([...mocks.mounted]).toEqual([APP_AWAY_ROOM]);
+    expect(mocks.renders.at(-1)).toEqual({
+      room: APP_AWAY_ROOM,
+      userId: "member_me",
+      interval: 60_000,
+    });
   });
 
   it("switches to app:away after 5 minutes without input, and back on input", () => {

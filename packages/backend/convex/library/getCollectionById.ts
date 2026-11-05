@@ -4,7 +4,11 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { canSeeProfileContent } from "../social/privacy";
-import { canViewCopy } from "./canViewCopy";
+import {
+  buildCopyViewContext,
+  canViewCopyWithContext,
+  type CopyViewContext,
+} from "./canViewCopy";
 import { toCollectionDetailView, toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
@@ -39,7 +43,7 @@ export const getCollectionById = query({
       )
       .collect();
 
-    const puzzles = await Promise.all(
+    const entries = await Promise.all(
       members.map(async (member) => {
         const copy = member.ownedPuzzleId
           ? await ctx.db.get(member.ownedPuzzleId)
@@ -50,15 +54,30 @@ export const getCollectionById = query({
         // before memberships were withdrawn on CopyOwnershipTransferred — and is dropped, so the
         // previous owner's collection never lists the new owner's copy (no backfill needed).
         if (copy.ownerId !== collection.userId) return null;
-        // Per-copy reachability gate: a non-owner viewing a public collection must NOT see member
-        // copies that fail THE canonical copy-reachability gate (private/closed copies the owner
-        // added), exactly as every sibling copy-read (getOwnedPuzzlesByOwner, getCopyInstanceView,
-        // featuredShelf, listPuzzleComments, ...) does. The copy's owner sees it (canViewCopy
-        // short-circuits on ownership).
+        return { member, copy };
+      }),
+    );
+
+    // Per-copy reachability gate: a non-owner viewing a public collection must NOT see member
+    // copies that fail THE canonical copy-reachability gate (private/closed copies the owner
+    // added), exactly as every sibling copy-read (getOwnedPuzzlesByOwner, getCopyInstanceView,
+    // featuredShelf, listPuzzleComments, ...) does. The copy's owner sees it (short-circuit below).
+    // One context for the whole collection, built only when a non-owned copy needs it; sequential,
+    // because the context's memos aren't safe to share across a Promise.all.
+    let context: CopyViewContext | null = null;
+    const visible = [];
+    for (const entry of entries) {
+      if (!entry) continue;
+      if (entry.copy.ownerId !== actingMember) {
+        context ??= await buildCopyViewContext(ctx, actingMember);
+        if (!(await canViewCopyWithContext(ctx, entry.copy, context))) continue;
+      }
+      visible.push(entry);
+    }
+
+    const puzzles = await Promise.all(
+      visible.map(async ({ member, copy }) => {
         const viewerOwnsCopy = copy.ownerId === actingMember;
-        if (!viewerOwnsCopy && !(await canViewCopy(ctx, actingMember, copy))) {
-          return null;
-        }
         const puzzle = await ctx.db.get(copy.puzzleId);
         return toOwnedCopyView(copy, puzzle, {
           addedAt: member.addedAt,
@@ -70,10 +89,8 @@ export const getCollectionById = query({
       }),
     );
 
-    return toCollectionDetailView(
-      collection,
-      puzzles.filter((p) => p !== null),
-      { includeOwnerOnly: isOwner },
-    );
+    return toCollectionDetailView(collection, puzzles, {
+      includeOwnerOnly: isOwner,
+    });
   },
 });

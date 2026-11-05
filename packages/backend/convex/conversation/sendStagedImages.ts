@@ -72,19 +72,20 @@ export const sendStagedImages = mutation({
     }
 
     // The request instant keys the batch, so it must not collide with an earlier batch of this
-    // sender in this thread (two sends within one millisecond).
-    const used = new Set(
-      (
-        await ctx.db
-          .query("messageAttachments")
-          .withIndex("by_thread_uploader", (q) =>
-            q.eq("threadAggregateId", args.threadId).eq("uploaderId", me),
-          )
-          .collect()
-      ).map((row) => (row.kind === "image" ? row.sendRequestedAt : undefined)),
-    );
+    // sender in this thread (two sends within one millisecond): step past every instant taken,
+    // one point lookup each.
+    const batchTaken = async (instant: number) =>
+      (await ctx.db
+        .query("messageAttachments")
+        .withIndex("by_thread_uploader_batch", (q) =>
+          q
+            .eq("threadAggregateId", args.threadId)
+            .eq("uploaderId", me)
+            .eq("sendRequestedAt", instant),
+        )
+        .first()) !== null;
     let sendRequestedAt = Date.now();
-    while (used.has(sendRequestedAt)) sendRequestedAt += 1;
+    while (await batchTaken(sendRequestedAt)) sendRequestedAt += 1;
 
     for (const [sendIndex, row] of rows.entries()) {
       await ctx.db.patch(row._id, {

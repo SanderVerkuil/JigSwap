@@ -295,3 +295,46 @@ describe("library.browseOwnedPuzzles puzzleId filter", () => {
     expect(view.ownedPuzzles).toEqual([]);
   });
 });
+
+// SEC-49 / PERF-B9: limit and offset are clamped server-side, whatever the client sends.
+describe("library.browseOwnedPuzzles page size", () => {
+  const seedManyOpen = (t: TestConvex<typeof schema>, puzzle: Id<"puzzles">) =>
+    t.run(async (ctx) => {
+      const owner = (await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_public"))
+        .unique())!;
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId: `copy-bulk-${i}`,
+          puzzleId: puzzle,
+          ownerId: owner._id,
+          condition: "good",
+          availability: OPEN,
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+
+  test("an oversized limit returns at most 50 copies", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzle } = await seed(t);
+    await seedManyOpen(t, puzzle);
+    const view = await browse(t, { limit: 1e6 });
+    expect(view.ownedPuzzles).toHaveLength(50);
+    expect(view.hasMore).toBe(true);
+  });
+
+  test("a negative offset reads the first page", async () => {
+    const t = convexTest(schema, modules);
+    const { puzzle } = await seed(t);
+    await seedManyOpen(t, puzzle);
+    const first = await browse(t, { limit: 10 });
+    const negative = await browse(t, { limit: 10, offset: -5 });
+    expect(negative.ownedPuzzles.map((c) => c.aggregateId)).toEqual(
+      first.ownedPuzzles.map((c) => c.aggregateId),
+    );
+    expect(negative.ownedPuzzles).toHaveLength(10);
+  });
+});

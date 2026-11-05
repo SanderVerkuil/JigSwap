@@ -16,6 +16,7 @@ import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { clampLimit } from "../lib/pageSize";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -51,7 +52,9 @@ const FEED_EVENT_NAMES = [
   "ExchangeCompleted",
 ] as const;
 
+// A page holds 1 to MAX_LIMIT entries whatever the client asks for.
 const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 50;
 
 // How many covers a grouped batch entry shows.
 const BATCH_COVER_COUNT = 4;
@@ -213,7 +216,10 @@ export const getActivityFeed = query({
     );
 
     const feed = buildActivityFeed(shown, {
-      limit: args.limit ?? DEFAULT_LIMIT,
+      limit: clampLimit(args.limit, {
+        fallback: DEFAULT_LIMIT,
+        max: MAX_LIMIT,
+      }),
     });
 
     // Resolve each distinct actor's display name once (not per-entry) so a feed with repeat actors

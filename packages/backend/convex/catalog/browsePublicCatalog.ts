@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { clampPaginationOpts } from "../lib/pageSize";
 import {
   publicAvailabilityOf,
   ratingBreakdownOf,
@@ -16,6 +17,11 @@ import {
 //
 // Sort is newest-first ONLY: sorting by rating would require a denormalized per-definition rating
 // (a computed aggregate can't order a paginated index scan) — deliberately deferred.
+
+// An anonymous read with per-row aggregate fan-out (ratings, owned copies): a page holds 1 to
+// MAX_PAGE_SIZE cards whatever the client asks for (the /catalog page asks for 20).
+const MAX_PAGE_SIZE = 40;
+
 export const browsePublicCatalog = query({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -29,13 +35,31 @@ export const browsePublicCatalog = query({
     args,
   ): Promise<PaginationResult<PublicCatalogCardView>> => {
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
+    const paginationOpts = clampPaginationOpts(
+      args.paginationOpts,
+      MAX_PAGE_SIZE,
+    );
 
     // brand/piece narrowing shared by both branches (status is handled per-branch: at the search
-    // index for the search branch, as a filter for the plain branch).
+    // index for the search branch, at the by_status / by_status_brand index for the plain branch).
     const matchesFacets = (p: Doc<"puzzles">): boolean =>
       (args.brand === undefined || p.brand === args.brand) &&
       (args.pieceMin === undefined || p.pieceCount >= args.pieceMin) &&
       (args.pieceMax === undefined || p.pieceCount <= args.pieceMax);
+
+    // Plain browse: only approved rows are read (one brand's when filtered), newest first by the
+    // indexes' implicit _creationTime suffix. The piece range stays a filter so that order holds.
+    const brand = args.brand;
+    const approved =
+      brand === undefined
+        ? ctx.db
+            .query("puzzles")
+            .withIndex("by_status", (q) => q.eq("status", "approved"))
+        : ctx.db
+            .query("puzzles")
+            .withIndex("by_status_brand", (q) =>
+              q.eq("status", "approved").eq("brand", brand),
+            );
 
     const result =
       term.length > 0
@@ -57,16 +81,11 @@ export const browsePublicCatalog = query({
                   : q.lte(q.field("pieceCount"), args.pieceMax),
               ),
             )
-            .paginate(args.paginationOpts)
-        : await ctx.db
-            .query("puzzles")
+            .paginate(paginationOpts)
+        : await approved
             .order("desc") // newest first by _creationTime
             .filter((q) =>
               q.and(
-                q.eq(q.field("status"), "approved"),
-                args.brand === undefined
-                  ? q.eq(q.field("status"), "approved")
-                  : q.eq(q.field("brand"), args.brand),
                 args.pieceMin === undefined
                   ? q.eq(q.field("status"), "approved")
                   : q.gte(q.field("pieceCount"), args.pieceMin),
@@ -75,7 +94,7 @@ export const browsePublicCatalog = query({
                   : q.lte(q.field("pieceCount"), args.pieceMax),
               ),
             )
-            .paginate(args.paginationOpts);
+            .paginate(paginationOpts);
 
     // Belt-and-braces: the branches above already gate status/facets, but the enrichment below is
     // the last line of defence against a future filter regression leaking a pending row.

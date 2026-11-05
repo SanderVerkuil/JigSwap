@@ -1,5 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
+import { drainBatches } from "../test-fixtures/cursorBatches";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
@@ -342,13 +343,25 @@ describe("read flows + queries", () => {
 });
 
 describe("backfill", () => {
-  test("stamps aggregateId + channel on legacy notification rows, idempotently", async () => {
-    const t = convexTest(schema, modules);
-    const { bob } = await seed(t);
-    // Insert a legacy notification with neither aggregateId nor channel.
-    const legacy = await t.run((ctx) =>
+  // The backfill paged to the end, as an operator runs it; the total rows patched.
+  const backfill = async (t: TestConvex<typeof schema>, batchSize?: number) => {
+    const batches = await drainBatches((cursor) =>
+      t.mutation(internal.notifications.backfill.backfillNotificationFields, {
+        cursor,
+        batchSize,
+      }),
+    );
+    return {
+      batches: batches.length,
+      patched: batches.reduce((sum, batch) => sum + batch.patched, 0),
+    };
+  };
+
+  const insertLegacy = (t: TestConvex<typeof schema>, userId: Id<"users">) =>
+    // A legacy notification with neither aggregateId nor channel.
+    t.run((ctx) =>
       ctx.db.insert("notifications", {
-        userId: bob,
+        userId,
         type: "trade_request",
         title: "Legacy",
         message: "Legacy notification",
@@ -357,20 +370,38 @@ describe("backfill", () => {
       }),
     );
 
-    const first = await t.mutation(
-      internal.notifications.backfill.backfillNotificationFields,
-      {},
-    );
+  test("stamps aggregateId + channel on legacy notification rows, idempotently", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const legacy = await insertLegacy(t, bob);
+
+    const first = await backfill(t);
     expect(first.patched).toBe(1);
     const row = await t.run((ctx) => ctx.db.get(legacy));
     expect(row?.aggregateId).toBeDefined();
     expect(row?.channel).toBe("inApp");
 
     // Idempotent: a second run patches nothing.
-    const second = await t.mutation(
-      internal.notifications.backfill.backfillNotificationFields,
-      {},
-    );
+    const second = await backfill(t);
     expect(second.patched).toBe(0);
+  });
+
+  test("small batches take several calls and stamp every row", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    const ids: Id<"notifications">[] = [];
+    for (let i = 0; i < 5; i++) ids.push(await insertLegacy(t, bob));
+
+    const run = await backfill(t, 2);
+    expect(run.batches).toBeGreaterThanOrEqual(3);
+    expect(run.patched).toBe(5);
+    const rows = await t.run((ctx) =>
+      Promise.all(ids.map((id) => ctx.db.get(id))),
+    );
+    expect(
+      rows.every(
+        (row) => row?.aggregateId !== undefined && row?.channel === "inApp",
+      ),
+    ).toBe(true);
   });
 });

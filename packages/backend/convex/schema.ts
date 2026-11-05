@@ -244,12 +244,8 @@ export default defineSchema({
     // the uniqueness rule only the statuses that hold a barcode (a rejected row releases it).
     .index("by_ean_status", ["ean", "status"])
     .index("by_upc_status", ["upc", "status"])
-    .index("by_artist", ["artist"])
     .index("by_series", ["series"])
     // Existing indexes are great!
-    .index("by_piece_count", ["pieceCount"])
-    .index("by_category", ["category"])
-    .index("by_difficulty", ["difficulty"])
     .index("by_brand", ["brand"])
     .index("by_publisher", ["publisher"])
     .index("by_tags", ["tags"])
@@ -258,6 +254,10 @@ export default defineSchema({
     .index("by_aggregate_id", ["aggregateId"])
     // Lets a contributor list their own submissions (e.g. own not-yet-approved puzzles).
     .index("by_submitted_by", ["submittedBy"])
+    // Catalog lists read by status (the approved catalogue, the pending queue) through these
+    // instead of scanning the table; the implicit _creationTime suffix keeps newest-first order.
+    .index("by_status", ["status"])
+    .index("by_status_brand", ["status", "brand"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
       // Lets public suggestions exclude pending/rejected submissions at the index level.
@@ -385,8 +385,6 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
-    // You might want a more complex index for finding available puzzles
-    .index("by_owner_and_availability", ["ownerId", "availability"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // This is a table for storing images of owned puzzles
@@ -507,8 +505,7 @@ export default defineSchema({
     addedAt: v.number(),
   })
     .index("by_collection", ["collectionId"])
-    .index("by_owned_puzzle", ["ownedPuzzleId"])
-    .index("by_collection_owned_puzzle", ["collectionId", "ownedPuzzleId"]),
+    .index("by_owned_puzzle", ["ownedPuzzleId"]),
 
   // Completion records for puzzles (can reference either puzzles or ownedPuzzles)
   completions: defineTable({
@@ -563,7 +560,6 @@ export default defineSchema({
     .index("by_owned_puzzle", ["ownedPuzzleId"])
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
-    .index("by_completion_date", ["endDate"])
     .index("by_aggregate_id", ["aggregateId"])
     .index("by_user_completed", ["userId", "isCompleted"]),
 
@@ -684,7 +680,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["isActive"])
-    .index("by_sort_order", ["sortOrder"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Admin moderation audit trail: one row per decision, stamped directly by the admin
@@ -845,7 +840,6 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_user_active", ["userId", "isActive"])
     .index("by_aggregate_id", ["aggregateId"]),
 
   // Exchanges are the core of the app. They are the way users can trade, buy, and sell puzzles.
@@ -912,6 +906,23 @@ export default defineSchema({
   })
     .index("by_initiator", ["initiatorId", "offeredPuzzleId"])
     .index("by_recipient", ["recipientId", "offeredPuzzleId"])
+    // Newest-first per party for the bounded member list (exchange/getUserExchanges): the two
+    // indexes above order by offeredPuzzleId, so they cannot pick a member's newest exchanges.
+    .index("by_initiator_created", ["initiatorId", "createdAt"])
+    .index("by_recipient_created", ["recipientId", "createdAt"])
+    // Per party and status, newest first: the bounded lists read the live statuses here, so an old
+    // open exchange is never cut off by the newest-history window (exchange/readViews,
+    // readMemberExchanges).
+    .index("by_initiator_status_created", [
+      "initiatorId",
+      "status",
+      "createdAt",
+    ])
+    .index("by_recipient_status_created", [
+      "recipientId",
+      "status",
+      "createdAt",
+    ])
     .index("by_aggregate_id", ["aggregateId"])
     // Back the copy-reservation check: find exchanges referencing a copy as requested/offered
     // without scanning the whole table.
@@ -1182,6 +1193,19 @@ export default defineSchema({
     ),
   )
     .index("by_thread_uploader", ["threadAggregateId", "uploaderId"])
+    // A sender's per-thread reads, bounded to what they need instead of their whole photo
+    // history: the undelivered rows (messageId undefined: the outbox, a block's drop) and one
+    // send batch (its sendRequestedAt: settleSendBatch and Send's batch-instant collision check).
+    .index("by_thread_uploader_message", [
+      "threadAggregateId",
+      "uploaderId",
+      "messageId",
+    ])
+    .index("by_thread_uploader_batch", [
+      "threadAggregateId",
+      "uploaderId",
+      "sendRequestedAt",
+    ])
     .index("by_file", ["fileId"])
     // Whether a blob is a photo's smaller rendition or a location's map preview
     // (lib/imageModeration/blobReferences: a claim refuses it, a delete keeps it).
@@ -1303,7 +1327,6 @@ export default defineSchema({
     .index("by_reviewer", ["reviewerId"])
     .index("by_reviewee", ["revieweeId"])
     .index("by_exchange", ["exchangeId"])
-    .index("by_rating", ["rating"])
     .index("by_aggregate_id", ["aggregateId"])
     // Backs the one-review-per-reviewer-per-exchange uniqueness lookup.
     .index("by_exchange_reviewer", ["exchangeId", "reviewerId"]),
@@ -1433,7 +1456,6 @@ export default defineSchema({
     // purged invite or offer (conversation/purgeMemberMessagingData).
     .index("by_user_type", ["userId", "type"])
     .index("by_type", ["type"])
-    .index("by_read_status", ["isRead"])
     .index("by_created_at", ["createdAt"])
     .index("by_aggregate_id", ["aggregateId"]),
 

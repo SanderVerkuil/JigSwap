@@ -18,6 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { NotificationItem } from "./notification-item";
+import { formatUnreadBadge, unreadNotificationsLabel } from "./unread-count";
 
 // How many recent rows the dropdown shows; the rest live on the full page.
 const PREVIEW_COUNT = 6;
@@ -85,9 +86,9 @@ export function NotificationBell() {
             <Badge
               variant="destructive"
               className="absolute -right-1 -top-1 h-5 min-w-5 justify-center rounded-full px-1 text-[10px] leading-none tabular-nums"
-              aria-label={t("unreadCount", { count: unreadCount })}
+              aria-label={unreadNotificationsLabel(t, unreadCount)}
             >
-              {unreadCount > 99 ? "99+" : unreadCount}
+              {formatUnreadBadge(unreadCount)}
             </Badge>
           )}
         </Button>

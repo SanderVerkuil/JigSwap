@@ -4,6 +4,7 @@ import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { clampLimit } from "../lib/pageSize";
 import { blockedEitherWaySet } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 
@@ -27,6 +28,10 @@ import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 // gate) and stop once `limit` visible matches are collected.
 const PEOPLE_CANDIDATE_LIMIT = 50;
 
+// Each group holds 1 to MAX_LIMIT results whatever the client asks for (default DEFAULT_LIMIT).
+const DEFAULT_LIMIT = 5;
+const MAX_LIMIT = 10;
+
 const EMPTY: GlobalSearchResults = {
   puzzles: [],
   people: [],
@@ -37,7 +42,10 @@ const EMPTY: GlobalSearchResults = {
 export const global = query({
   args: { term: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<GlobalSearchResults> => {
-    const limit = args.limit ?? 5;
+    const limit = clampLimit(args.limit, {
+      fallback: DEFAULT_LIMIT,
+      max: MAX_LIMIT,
+    });
     const term = args.term.toLowerCase().trim();
     // Empty / too-short terms return empty groups fast.
     if (term.length < 2) return EMPTY;

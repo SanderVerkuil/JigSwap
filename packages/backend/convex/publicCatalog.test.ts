@@ -457,8 +457,9 @@ describe("listSitemapEntries", () => {
 
     const entries = await t.query(
       api.catalog.listSitemapEntries.listSitemapEntries,
-      {},
+      { paginationOpts: { numItems: 100, cursor: null } },
     );
-    expect(entries).toEqual([{ id: approved, updatedAt: NOW }]);
+    expect(entries.page).toEqual([{ id: approved, updatedAt: NOW }]);
+    expect(entries.isDone).toBe(true);
   });
 });

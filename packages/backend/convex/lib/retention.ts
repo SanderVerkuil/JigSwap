@@ -4,14 +4,16 @@ import { logEvent } from "./logEvent";
 // privacy policy states and delete or anonymise it. Each sweep is DRY-RUN unless the deployment's
 // RETENTION_ENFORCE environment variable names it ("all", or a comma-separated list of sweep
 // names): a dry run reads and counts what is due and logs it, and changes nothing. Switching a
-// sweep on is the operator's decision, taken after reading the dry-run counts.
+// sweep on is the operator's decision, taken after reading the dry-run counts. The "notifications"
+// sweep also needs its cron to ask for deleting, so "all" alone can't start it before the owner has
+// approved its periods (notifications/retention).
 //
 // Every page of every sweep emits one `retention.sweep` wide event: the sweep, how many rows in
 // the page were due, how many it acted on (always 0 in a dry run) and whether it was a dry run.
 
 /** The sweeps RETENTION_ENFORCE can name. */
 export type RetentionSweep =
-  "reports" | "sentPhotos" | "copyPhotos" | "domainEvents";
+  "reports" | "sentPhotos" | "copyPhotos" | "domainEvents" | "notifications";
 
 /** Rows a sweep reads per run; it re-schedules itself for the next page. */
 export const RETENTION_SWEEP_PAGE = 100;

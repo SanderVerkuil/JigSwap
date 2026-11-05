@@ -3,7 +3,7 @@ import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 
 // A single owned copy as returned by the profile shelf reads (featuredShelf and
-// library.ownedByOwner both return the same OwnedCopyView shape).
+// library.myShelf's `recent` both return the same OwnedCopyView shape).
 export type ShelfCopy = FunctionReturnType<
   typeof gateway.social.featuredShelf
 >[number];

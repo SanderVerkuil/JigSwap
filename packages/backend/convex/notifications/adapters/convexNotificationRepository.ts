@@ -8,6 +8,10 @@ import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { toDomain, toRow } from "./notificationMapper";
 
+// The most unread rows one markAllReadForUser call patches. notifications/markAllRead schedules
+// further batches while unread rows remain, so a huge backlog never exceeds one mutation's limits.
+export const MARK_ALL_READ_BATCH = 500;
+
 // Driven adapter for the NotificationRepository port over `ctx.db` (the `notifications` table).
 // Identity is the aggregateId; saves upsert on it so re-saving a rehydrated notification patches
 // the same row (e.g. markRead) rather than duplicating it.
@@ -59,15 +63,22 @@ export const convexNotificationRepository = (
       userId: MemberId,
       now: Date,
     ): Promise<Notification[]> {
+      // Only unread rows, one bounded batch (by_user_read); the caller continues past it.
       const rows = await ctx.db
         .query("notifications")
-        .withIndex("by_user", (q) =>
-          q.eq("userId", userId as unknown as Id<"users">),
+        .withIndex("by_user_read", (q) =>
+          q.eq("userId", userId as unknown as Id<"users">).eq("isRead", false),
         )
-        .collect();
+        .take(MARK_ALL_READ_BATCH);
       const affected: Notification[] = [];
       for (const row of rows) {
-        if (row.aggregateId === undefined || row.isRead) continue;
+        // A legacy row (no aggregateId) has no aggregate or event, but it still lights the badge:
+        // mark it read directly so "mark all read" clears everything. Every row read here ends up
+        // read, which is what lets the caller's continuation always make progress.
+        if (row.aggregateId === undefined) {
+          await ctx.db.patch(row._id, { isRead: true });
+          continue;
+        }
         const notification = toDomain(row);
         const result = notification.markRead(userId, now);
         // markRead only fails on a wrong owner; the scan is scoped to this user, so it cannot.

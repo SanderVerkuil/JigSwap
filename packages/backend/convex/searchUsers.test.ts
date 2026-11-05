@@ -50,3 +50,38 @@ describe("searchUsers minimum query length", () => {
     expect(result.map((m) => m.name)).toContain("Bo");
   });
 });
+
+// SEC-49: the result size is clamped server-side, whatever `limit` the client sends.
+describe("searchUsers limit", () => {
+  const seedMany = (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      for (let i = 0; i < 25; i++) {
+        await ctx.db.insert("users", {
+          clerkId: `clerk_bo_${i}`,
+          email: `bo${i}@example.com`,
+          name: `Bo ${i}`,
+          searchableName: `bo ${i}`,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+  test("a non-finite limit returns the default 20; a negative one a single match", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedMany(t);
+    const nan = await asAlice(t).query(api.identity.searchUsers.searchUsers, {
+      searchTerm: "bo",
+      limit: Number.NaN,
+    });
+    expect(nan).toHaveLength(20);
+    const negative = await asAlice(t).query(
+      api.identity.searchUsers.searchUsers,
+      { searchTerm: "bo", limit: -3 },
+    );
+    expect(negative).toHaveLength(1);
+  });
+});
