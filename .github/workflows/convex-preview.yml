@@ -78,7 +78,7 @@ jobs:
         if: env.HAS_PREVIEW_KEY != 'true'
         run: echo "::notice::CONVEX_DEPLOY_KEY_PREVIEW secret not configured — skipping preview deployment (see docs/deployment/convex-preview-deployments.md)"
 
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.HAS_PREVIEW_KEY == 'true'
         with:
           # workflow_dispatch runs from main's ref; check out the PR branch instead so
