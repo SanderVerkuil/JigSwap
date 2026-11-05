@@ -129,7 +129,10 @@ it. **Not now** hides the message until there's another update.
 <details>
 <summary>How do I export my data?</summary>
 
-Go to **Insights** and use the **data export** button to download your personal data.
+Use **Export my data** at the bottom of **Insights**, under **Your data** on
+your account's **Privacy & safety** page, or in quick search
+(**Cmd/Ctrl + K**). It downloads a JSON file with your personal data. See
+[Insights & Stats](/docs/your-library/insights-and-stats#export-your-data).
 
 </details>
 

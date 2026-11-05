@@ -1,5 +1,8 @@
 // Distributions over the member's owned copies, shaped for chart components: every distribution is
 // a `{ label, value }[]`. Pure and total — empty input yields empty arrays.
+//
+// Labels are data (a bucket range, a brand, a difficulty enum), never display words: "no value"
+// and "the long tail" are the sentinels below, which the client translates.
 
 export interface CopyBreakdownInput {
   // Piece count of the puzzle (from the copy's catalog snapshot); buckets group these.
@@ -33,11 +36,19 @@ const PIECE_BUCKETS: ReadonlyArray<{ label: string; below: number }> = [
   { label: "2000+", below: Number.POSITIVE_INFINITY },
 ];
 
-const UNKNOWN_LABEL = "Unknown";
-const OTHER_LABEL = "Other";
+// Bucket for copies without a value (no piece count, brand, difficulty or condition). Always listed
+// last, after every real value and after OTHER_BUCKET. Part of the insights wire contract: the web
+// (components/insights/collection-breakdown.tsx) mirrors both strings and translates them.
+export const UNKNOWN_BUCKET = "__unknown";
+// The brands beyond the top N, summed into one entry.
+export const OTHER_BUCKET = "__other";
 
-// Bucket each copy's piece count into the ordered ranges; copies with no piece count fall in
-// "Unknown". Only non-empty buckets are returned, preserving the natural ascending order.
+// The trailing unknown bucket, or nothing when every copy has a value.
+const unknownEntry = (count: number): DistributionEntry[] =>
+  count > 0 ? [{ label: UNKNOWN_BUCKET, value: count }] : [];
+
+// Bucket each copy's piece count into the ordered ranges; copies with no piece count fall in the
+// unknown bucket. Only non-empty buckets are returned, preserving the natural ascending order.
 const pieceCountDistribution = (
   copies: readonly CopyBreakdownInput[],
 ): DistributionEntry[] => {
@@ -46,36 +57,48 @@ const pieceCountDistribution = (
     const n = copy.pieceCount;
     const label =
       typeof n === "number" && Number.isFinite(n)
-        ? (PIECE_BUCKETS.find((b) => n < b.below)?.label ?? UNKNOWN_LABEL)
-        : UNKNOWN_LABEL;
+        ? (PIECE_BUCKETS.find((b) => n < b.below)?.label ?? UNKNOWN_BUCKET)
+        : UNKNOWN_BUCKET;
     counts.set(label, (counts.get(label) ?? 0) + 1);
   }
-  // Emit buckets in their declared order, then a trailing Unknown if present.
+  // Emit buckets in their declared order, then a trailing unknown bucket if present.
   const ordered: DistributionEntry[] = [];
   for (const b of PIECE_BUCKETS) {
     const value = counts.get(b.label);
     if (value) ordered.push({ label: b.label, value });
   }
-  const unknown = counts.get(UNKNOWN_LABEL);
-  if (unknown) ordered.push({ label: UNKNOWN_LABEL, value: unknown });
-  return ordered;
+  return [...ordered, ...unknownEntry(counts.get(UNKNOWN_BUCKET) ?? 0)];
 };
 
-// Count a string-valued facet, mapping missing/blank values to "Unknown". Sorted by value desc,
-// then label asc for stable, deterministic output.
+// Count a string-valued facet. Real values are sorted by value desc, then label asc for stable,
+// deterministic output; missing/blank values are counted apart so callers can list them last.
+const countFacet = (
+  copies: readonly CopyBreakdownInput[],
+  pick: (copy: CopyBreakdownInput) => string | undefined,
+): { known: DistributionEntry[]; unknown: number } => {
+  const counts = new Map<string, number>();
+  let unknown = 0;
+  for (const copy of copies) {
+    const raw = pick(copy);
+    if (raw && raw.trim().length > 0) {
+      counts.set(raw, (counts.get(raw) ?? 0) + 1);
+    } else {
+      unknown += 1;
+    }
+  }
+  const known = sortEntries(
+    [...counts.entries()].map(([label, value]) => ({ label, value })),
+  );
+  return { known, unknown };
+};
+
+// A facet's real values, then the unknown bucket last however large it is.
 const facetDistribution = (
   copies: readonly CopyBreakdownInput[],
   pick: (copy: CopyBreakdownInput) => string | undefined,
 ): DistributionEntry[] => {
-  const counts = new Map<string, number>();
-  for (const copy of copies) {
-    const raw = pick(copy);
-    const label = raw && raw.trim().length > 0 ? raw : UNKNOWN_LABEL;
-    counts.set(label, (counts.get(label) ?? 0) + 1);
-  }
-  return sortEntries(
-    [...counts.entries()].map(([label, value]) => ({ label, value })),
-  );
+  const { known, unknown } = countFacet(copies, pick);
+  return [...known, ...unknownEntry(unknown)];
 };
 
 const sortEntries = (entries: DistributionEntry[]): DistributionEntry[] =>
@@ -83,22 +106,26 @@ const sortEntries = (entries: DistributionEntry[]): DistributionEntry[] =>
     (a, b) => b.value - a.value || a.label.localeCompare(b.label),
   );
 
-// Like a facet distribution but collapse the long tail: keep the top `topN` brands, sum the rest
-// into a single "Other" entry appended last. With <= topN distinct brands no "Other" appears.
+// Like a facet distribution but collapse the long tail: keep the top `topN` real brands and sum the
+// rest into a single OTHER_BUCKET entry, then the unknown bucket last. Copies without a brand never
+// compete for a top-N slot. With <= topN distinct brands no OTHER_BUCKET appears.
 const brandDistribution = (
   copies: readonly CopyBreakdownInput[],
   topN: number,
 ): DistributionEntry[] => {
-  const all = facetDistribution(copies, (c) => c.brand);
-  if (all.length <= topN) return all;
-  const top = all.slice(0, topN);
-  const otherValue = all
+  const { known, unknown } = countFacet(copies, (c) => c.brand);
+  const top = known.slice(0, topN);
+  const otherValue = known
     .slice(topN)
     .reduce((acc, entry) => acc + entry.value, 0);
-  return [...top, { label: OTHER_LABEL, value: otherValue }];
+  const other =
+    otherValue > 0 ? [{ label: OTHER_BUCKET, value: otherValue }] : [];
+  return [...top, ...other, ...unknownEntry(unknown)];
 };
 
-const DEFAULT_BRAND_TOP_N = 8;
+// The "Top brands" chart shows six brands; the rest fold into OTHER_BUCKET here, so the chart can
+// render the series as is instead of re-ranking or cutting it.
+const DEFAULT_BRAND_TOP_N = 6;
 
 // Compute all four distributions for the collection charts. `topN` caps the brand chart's series.
 export const computeCollectionBreakdown = (

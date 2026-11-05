@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
-import { monthLabel, Sparkbars } from "./sparkbars";
+import { Sparkbars } from "./sparkbars";
 
 export interface CompletionTrendPoint {
   month: string;
@@ -17,6 +17,7 @@ type Metric = "count" | "minutes";
 
 // "Completions / month" as a minimal sparkbar chart (design language), with the
 // existing count/minutes metric toggle kept as small pills in the section head.
+// The title, caption and table follow the metric that is showing.
 export function CompletionTrendsChart({
   data,
 }: {
@@ -26,15 +27,19 @@ export function CompletionTrendsChart({
   const [metric, setMetric] = useState<Metric>("count");
 
   const hasData = data.some((d) => d.count > 0);
-  const values = data.map((d) =>
-    metric === "count" ? d.count : d.totalMinutes,
-  );
-  const labels = data.map((d) => monthLabel(d.month));
+  const points = data.map((d) => ({
+    month: d.month,
+    value: metric === "count" ? d.count : d.totalMinutes,
+  }));
 
   return (
     <section className="min-w-0">
       <SectionHead
-        title={t("charts.completionsPerMonth")}
+        title={t(
+          metric === "count"
+            ? "charts.completionsPerMonth"
+            : "charts.minutesPerMonth",
+        )}
         icon={BarChart3}
         action={
           <div className="flex gap-1.5">
@@ -45,7 +50,7 @@ export function CompletionTrendsChart({
                 aria-pressed={metric === option}
                 onClick={() => setMetric(option)}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                  "pointer-coarse:min-h-9 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors",
                   metric === option
                     ? "border-transparent bg-primary text-primary-foreground"
                     : "bg-card hover:bg-accent text-foreground",
@@ -59,8 +64,13 @@ export function CompletionTrendsChart({
       />
       {hasData ? (
         <Sparkbars
-          data={values}
-          labels={labels}
+          points={points}
+          caption={t(
+            metric === "count"
+              ? "trends.description"
+              : "trends.minutesDescription",
+          )}
+          valueLabel={t(`trends.${metric}`)}
           color="var(--jigsaw-primary)"
         />
       ) : (

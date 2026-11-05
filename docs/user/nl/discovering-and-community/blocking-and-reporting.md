@@ -89,3 +89,5 @@ Deze pagina toont:
   Alleen jij kunt deze lijst zien.
 - **Jouw meldingen** — elke melding die je hebt verstuurd, met de status
   (**In behandeling** of **Afgehandeld**).
+- **Je gegevens** — **Mijn gegevens exporteren** downloadt een JSON-kopie van
+  je gegevens, hetzelfde bestand als op **Inzichten**.

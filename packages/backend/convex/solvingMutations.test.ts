@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { withModerationPool } from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -9,7 +9,15 @@ import schema from "./schema";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+// Goals count solves by UTC calendar day from the day they are created, and these tests log
+// solves an hour before "now": pin the clock to midday UTC so that hour never crosses midnight.
+const pinClockToMidday = () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.UTC(2026, 5, 15, 12));
+};
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -574,6 +582,8 @@ describe("solving.attachCompletionPhotos", () => {
 });
 
 describe("solving.createGoal", () => {
+  beforeEach(pinClockToMidday);
+
   test("creates a goal and returns its aggregateId", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { alice } = await seed(t);
@@ -603,6 +613,8 @@ describe("solving.createGoal", () => {
 });
 
 describe("goal progress reacts to completions", () => {
+  beforeEach(pinClockToMidday);
+
   test("recording completions advances the goal and fires achievement once at the target", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { puzzleAggregateId, copyAggregateId } = await seed(t);
@@ -681,6 +693,7 @@ describe("solving.deleteCompletion", () => {
   });
 
   test("deleting a completion recomputes goal progress back to 0", async () => {
+    pinClockToMidday();
     const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
 
@@ -774,6 +787,41 @@ describe("solving read queries", () => {
       {},
     );
     expect(bobs).toHaveLength(0);
+  });
+
+  test("listMyCompletions says until when each solve can be edited", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copyAggregateId } = await seed(t);
+    // A back-dated solve (ended 10 January 2026): editing closed long before it was logged.
+    const backDatedEnd = Date.UTC(2026, 0, 10);
+    const backDated = await recordForAlice(t, copyAggregateId, {
+      startDate: Date.UTC(2026, 0, 8),
+      endDate: backDatedEnd,
+    });
+    const started = (await asAlice(t).mutation(
+      api.solving.startCompletion.startCompletion,
+      { copyId: copyAggregateId, startDate: Date.now() - HOUR },
+    )) as string;
+
+    const mine = await asAlice(t).query(
+      api.solving.listMyCompletions.listMyCompletions,
+      {},
+    );
+    const byId = new Map(mine.map((row) => [row.aggregateId, row]));
+    // The domain's rule (completionEditableUntil): 24 hours after the end date.
+    expect(byId.get(backDated)?.editableUntil).toBe(backDatedEnd + 24 * HOUR);
+    expect(byId.get(backDated)!.editableUntil! < Date.now()).toBe(true);
+    // A solve in progress has no deadline.
+    expect(byId.get(started)?.editableUntil).toBeNull();
+
+    // The reported deadline is the one the server enforces.
+    await expectConvexCode(
+      asAlice(t).mutation(api.solving.editCompletion.editCompletion, {
+        completionId: backDated,
+        notes: "too late",
+      }),
+      "EditWindowClosed",
+    );
   });
 
   test("getCompletionHistory filters by copy", async () => {

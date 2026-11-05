@@ -1,9 +1,4 @@
-import {
-  Completion,
-  CompletionId,
-  countsTowardGoals,
-  MemberId,
-} from "../../domain";
+import { Completion, CompletionId, GoalSolve, MemberId } from "../../domain";
 import { CompletionRepository } from "../ports/out/completion.repository";
 
 // In-memory CompletionRepository for use-case tests. Stores persisted state and rehydrates a
@@ -29,13 +24,12 @@ export class InMemoryCompletionRepository implements CompletionRepository {
       .map((state) => Completion.rehydrate(state));
   }
 
-  async countCompletedByUser(userId: MemberId): Promise<number> {
-    return [...this.store.values()].filter(
-      (state) =>
-        state.userId === userId &&
-        state.isCompleted &&
-        countsTowardGoals(state.datePrecision),
-    ).length;
+  async listGoalSolves(userId: MemberId): Promise<readonly GoalSolve[]> {
+    return [...this.store.values()].flatMap((state) =>
+      state.userId === userId && state.isCompleted && state.endDate
+        ? [{ endDate: state.endDate, datePrecision: state.datePrecision }]
+        : [],
+    );
   }
 
   async delete(id: CompletionId): Promise<void> {

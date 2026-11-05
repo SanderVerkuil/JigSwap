@@ -131,7 +131,11 @@ volgende update.
 <details>
 <summary>Hoe exporteer ik mijn gegevens?</summary>
 
-Ga naar **Inzichten** en gebruik de knop voor **gegevensexport** om je persoonlijke gegevens te downloaden.
+Gebruik **Mijn gegevens exporteren** onderaan **Inzichten**, onder **Je
+gegevens** op de pagina **Privacy en veiligheid** van je account, of in snel
+zoeken (**Cmd/Ctrl + K**). Je downloadt dan een JSON-bestand met je
+persoonlijke gegevens. Zie
+[Inzichten & Statistieken](/docs/your-library/insights-and-stats#je-gegevens-exporteren).
 
 </details>
 

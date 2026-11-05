@@ -52,7 +52,7 @@ describe("toPastCompletionItem", () => {
     ).toEqual({ copyId: "agg", datePrecision: "year", year: 2023 });
   });
 
-  it("sends the picked day as epoch ms, and nothing when no day is picked", () => {
+  it("sends the picked day as UTC midnight, and nothing when no day is picked", () => {
     expect(
       toPastCompletionItem("agg", {
         when: "day",
@@ -62,7 +62,7 @@ describe("toPastCompletionItem", () => {
     ).toEqual({
       copyId: "agg",
       datePrecision: "day",
-      date: new Date("2024-03-14").getTime(),
+      date: Date.UTC(2024, 2, 14),
     });
     expect(
       toPastCompletionItem("agg", { when: "day", year: 2023, date: "" }),

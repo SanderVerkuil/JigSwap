@@ -288,6 +288,11 @@ describe("Completion use cases", () => {
       });
       expect(result.isOk).toBe(true);
       expect(events.names()).toEqual(["CompletionEdited"]);
+      // Carries the owner so the goal reactor can recompute their goals.
+      expect(events.published[0]).toMatchObject({
+        completionId: id,
+        userId: ALICE,
+      });
       const stored = await completions.findById(id);
       expect(stored?.toState().notes).toBe("tweaked"); // the change actually lands
     });

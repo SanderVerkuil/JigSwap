@@ -1,6 +1,8 @@
 // The member's exchange activity, summarised two ways for charts: a count per lifecycle status, and
-// a count per calendar month. Pure and total.
+// a count per calendar month over the same 12-month window as the completion trends. Pure and
+// total; the caller passes "now" so the window is testable without touching the system clock.
 
+import { DEFAULT_WINDOW_MONTHS, lastMonthKeys, monthKey } from "./month-window";
 import type { ExchangeStatStatus } from "./personal-stats";
 
 export interface ExchangeActivityInput {
@@ -37,25 +39,27 @@ const STATUS_ORDER: readonly ExchangeStatStatus[] = [
   "disputed",
 ];
 
-const monthKey = (epochMs: number): string => {
-  const d = new Date(epochMs);
-  return `${d.getUTCFullYear()}-${`${d.getUTCMonth() + 1}`.padStart(2, "0")}`;
-};
-
-// Summarise exchanges by status (all statuses present, zero-filled, fixed order) and by month
-// (only months with activity, sorted oldest→newest).
+// Summarise exchanges by status (all statuses present, zero-filled, fixed order, all time) and by
+// month: the last `windowMonths` months ending at `now`, oldest first, every month present and
+// zero-filled so a quiet month shows as a gap. Exchanges created before the window still count in
+// `total` and `byStatus`.
 export const computeTradeActivity = (
   exchanges: readonly ExchangeActivityInput[],
+  now: number = Date.now(),
+  windowMonths: number = DEFAULT_WINDOW_MONTHS,
 ): TradeActivity => {
   const statusCounts = new Map<ExchangeStatStatus, number>(
     STATUS_ORDER.map((s) => [s, 0]),
   );
-  const monthCounts = new Map<string, number>();
+  const monthCounts = new Map(
+    lastMonthKeys(now, windowMonths).map((key) => [key, 0]),
+  );
 
   for (const ex of exchanges) {
     statusCounts.set(ex.status, (statusCounts.get(ex.status) ?? 0) + 1);
     const key = monthKey(ex.createdAt);
-    monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
+    const count = monthCounts.get(key);
+    if (count !== undefined) monthCounts.set(key, count + 1); // else outside the window
   }
 
   return {
@@ -64,8 +68,9 @@ export const computeTradeActivity = (
       status,
       count: statusCounts.get(status) ?? 0,
     })),
-    byMonth: [...monthCounts.entries()]
-      .map(([month, count]) => ({ month, count }))
-      .sort((a, b) => a.month.localeCompare(b.month)),
+    byMonth: [...monthCounts.entries()].map(([month, count]) => ({
+      month,
+      count,
+    })),
   };
 };

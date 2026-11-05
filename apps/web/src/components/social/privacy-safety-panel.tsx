@@ -3,9 +3,11 @@
 // "Privacy & safety" page inside Clerk's profile modal (shell-user-button): the
 // presence-sharing toggle, then the caller's own "Blocked members" list
 // (social/listMyBlocks, newest first), each row with Unblock behind a confirm,
-// then "Your reports". Self-contained like
-// NotificationPreferencesPanel: no route dependencies.
+// then "Your reports", then "Your data" with the data export (the same one as on
+// Insights). Self-contained like NotificationPreferencesPanel: no route
+// dependencies.
 import { useUser } from "@/compat/clerk";
+import { ExportDataButton } from "@/components/insights/export-button";
 import { MemberInitial } from "@/components/members/member-initial";
 import { PresenceSharingSetting } from "@/components/presence/presence-sharing";
 import { MyReports } from "@/components/safety/my-reports";
@@ -31,6 +33,7 @@ export function PrivacySafetyPanel() {
   const t = useTranslations("safety");
   const tShell = useTranslations("shell.user");
   const tCommon = useTranslations("common");
+  const tExport = useTranslations("insights.export");
   const displayName = useMemberDisplayName();
   const { data: blocks } = useQuery(
     convexQuery(gateway.social.listMyBlocks, user?.id ? {} : "skip"),
@@ -76,6 +79,16 @@ export function PrivacySafetyPanel() {
       </section>
 
       <MyReports />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">{t("yourData")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-muted-foreground min-w-0 flex-1 basis-56 text-sm">
+            {tExport("description")}
+          </p>
+          <ExportDataButton />
+        </div>
+      </section>
 
       {target && (
         <BlockMemberDialog

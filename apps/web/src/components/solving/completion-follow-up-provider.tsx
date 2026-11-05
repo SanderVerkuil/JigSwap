@@ -66,9 +66,9 @@ interface PendingPhoto {
 
 let nextPhotoId = 0;
 
-// Mounted once in the dashboard shell (inside DurationPromptProvider) so the dialog survives
-// any solve dialog unmounting/navigating. Solve dialogs call requestFollowUp(target) after a
-// completed save; the provider owns the single dialog instance.
+// Mounted once in the dashboard shell so the dialog survives any solve dialog unmounting or
+// navigating. Solve dialogs call requestFollowUp(target) after a completed save; the provider owns
+// the single dialog instance.
 export function CompletionFollowUpProvider({
   children,
 }: {

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, type Id } from "@/gateway";
+import { localTodayInput } from "@/lib/date-input";
 import {
   pastSolveCandidates,
   toPastCompletionItem,
@@ -26,13 +27,6 @@ import { solveSaveErrorKey } from "./solving-error";
 // Rows shown at first and added per "Show more"; also the most one submit may log (the
 // recordPastCompletions cap), so a member ticks at most this many at once.
 const PAGE = 25;
-
-// Today as a date input value (local), the latest day a past solve may be picked for.
-const todayInputValue = () => {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-};
 
 // The bulk "I've solved these" step (spec 2026-10-17 §2.4, step 2): the member's own copies with
 // no completion yet, each with an "I finished <title>" checkbox and, once ticked, a "When?" choice
@@ -130,7 +124,8 @@ export function PastSolvesList({
   }
 
   const years = yearOptions(new Date().getFullYear());
-  const maxDate = todayInputValue();
+  // The member's local today: the latest day a past solve may be picked for.
+  const maxDate = localTodayInput();
   const items = [...choices].map(([copyId, choice]) =>
     toPastCompletionItem(copyId, choice),
   );

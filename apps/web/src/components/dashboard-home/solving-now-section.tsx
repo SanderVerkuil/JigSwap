@@ -8,6 +8,7 @@ import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { calendarDaysAgo } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ export function SolvingNowSection() {
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
+    title?: string;
   } | null>(null);
   // Calling Date.now() during render is an impure-render violation; capture it once at mount
   // (matches the codebase's existing `useState(() => Date.now())` idiom).
@@ -46,9 +48,10 @@ export function SolvingNowSection() {
 
   if (!member || solves === undefined) return null;
 
-  // Clamped relative copy: future-dated starts read "starts in N days", never "-N days ago".
+  // Clamped relative copy: future-dated starts read "starts in N days", never "-N days ago". The
+  // start is a calendar date (UTC midnight), so count calendar days to the member's local today.
   const startedLabel = (startDate: number): string => {
-    const days = Math.floor((now - startDate) / 86400000);
+    const days = calendarDaysAgo(startDate, new Date(now));
     if (days < 0) return t("startsInDays", { days: -days });
     if (days === 0) return t("startedToday");
     return t("startedDaysAgo", { days });
@@ -104,6 +107,7 @@ export function SolvingNowSection() {
                   setFinishTarget({
                     completionId: solve.completionId,
                     startDate: solve.startDate,
+                    title: solve.title,
                   })
                 }
               >
@@ -121,6 +125,7 @@ export function SolvingNowSection() {
           onOpenChange={(open) => !open && setFinishTarget(null)}
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
+          puzzleTitle={finishTarget.title}
         />
       )}
     </section>

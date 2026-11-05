@@ -1,3 +1,4 @@
+import { completionEditableUntil } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
@@ -31,7 +32,9 @@ export const COMPLETION_LIST_CAP = 1000;
 // Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
 // resolvePhotoItems, and the ids themselves are not sent (withPhotoItems).
 // Each row is also enriched with a navigation `link` and a `thumbnailUrl`, resolved once per
-// DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only.
+// DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only, and
+// with `editableUntil` (epoch ms, null = no deadline) from the domain's edit-window rule, so the
+// UI only offers Edit while the server would accept it.
 export const listMyCompletions = query({
   args: {},
   handler: async (ctx) => {
@@ -142,6 +145,7 @@ export const listMyCompletions = query({
           ...(await withPhotoItems(ctx, row)),
           thumbnailUrl,
           link,
+          editableUntil: editableUntilOf(row),
         };
       }),
     );
@@ -200,3 +204,14 @@ export const resolvePhotoItems = async (
   );
   return items.filter((item): item is PhotoItem => item !== null);
 };
+
+// The edit deadline the domain enforces in Completion.edit (completionEditableUntil), as epoch
+// ms; null while the solve is in progress (always editable).
+const editableUntilOf = (
+  row: Pick<Doc<"completions">, "isCompleted" | "endDate" | "updatedAt">,
+): number | null =>
+  completionEditableUntil({
+    isCompleted: row.isCompleted,
+    endDate: row.endDate === undefined ? undefined : new Date(row.endDate),
+    updatedAt: new Date(row.updatedAt),
+  })?.getTime() ?? null;

@@ -334,6 +334,11 @@ export const gateway = {
       api.solving.attachCompletionPhotos.attachCompletionPhotos,
     deleteCompletion: api.solving.deleteCompletion.deleteCompletion,
     createGoal: api.solving.createGoal.createGoal,
+    // Owner-only goal management (aggregateId): replace the definition (recounted silently),
+    // archive/restore, delete for good.
+    updateGoal: api.solving.updateGoal.updateGoal,
+    setGoalArchived: api.solving.setGoalArchived.setGoalArchived,
+    deleteGoal: api.solving.deleteGoal.deleteGoal,
     myCompletions: api.solving.listMyCompletions.listMyCompletions,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,

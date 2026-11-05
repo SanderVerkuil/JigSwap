@@ -13,6 +13,7 @@ import {
   formatSolveTime,
   hrefForLink,
 } from "@/lib/completion-format";
+import { formatDateOnly } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
@@ -149,7 +150,7 @@ export function ProfileCompletionsSection({
               t("pieces", { count: completion.pieceCount }),
             completion.datePrecision === "day"
               ? tLog("finished", {
-                  date: new Date(completion.endDate).toLocaleDateString(),
+                  date: formatDateOnly(completion.endDate),
                 })
               : formatCompletionDate(tLog, completion),
             completion.completionTimeMinutes !== undefined &&

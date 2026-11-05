@@ -197,6 +197,32 @@ describe("insights.getPersonalStats", () => {
     expect(stats.averageRatingReceived).toBe(5);
     expect(stats.goalsActive).toBe(1);
     expect(stats.goalsAchieved).toBe(0);
+    expect(stats.goalsTotal).toBe(1);
+  });
+
+  test("counts archived goals in the goal total, so achieved never exceeds it", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // A goal met and then archived: achieved, but no longer active.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("goals", {
+        userId: alice,
+        title: "Solve 1",
+        targetCompletions: 1,
+        currentCompletions: 1,
+        isActive: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const stats = await asAlice(t).query(
+      api.insights.getPersonalStats.getPersonalStats,
+      {},
+    );
+    expect(stats.goalsActive).toBe(1);
+    expect(stats.goalsAchieved).toBe(1);
+    expect(stats.goalsTotal).toBe(2);
   });
 
   test("a catalog-only reviewer (zero completions) still gets an average", async () => {
@@ -268,6 +294,49 @@ describe("insights.getCollectionBreakdown", () => {
       ]),
     );
   });
+
+  test("puts copies without a brand or difficulty in the __unknown bucket, after the real values", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // Two copies of a catalogue puzzle with no brand and no difficulty: more than any real brand,
+    // yet they must not rank as a top brand. The web translates the sentinel.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const plain = await ctx.db.insert("puzzles", {
+        title: "Plain Box",
+        pieceCount: 300,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+      for (const definition of ["def-plain-1", "def-plain-2"]) {
+        await ctx.db.insert("ownedPuzzles", {
+          puzzleId: plain,
+          puzzleDefinitionId: definition,
+          ownerId: alice,
+          condition: "good",
+          availability: { forTrade: false, forSale: false, forLend: false },
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+    const breakdown = await asAlice(t).query(
+      api.insights.getCollectionBreakdown.getCollectionBreakdown,
+      {},
+    );
+    expect(breakdown.byBrand).toEqual([
+      { label: "Clementoni", value: 1 },
+      { label: "Ravensburger", value: 1 },
+      { label: "__unknown", value: 2 },
+    ]);
+    expect(breakdown.byDifficulty).toEqual([
+      { label: "hard", value: 1 },
+      { label: "medium", value: 1 },
+      { label: "__unknown", value: 2 },
+    ]);
+  });
 });
 
 describe("insights.getCompletionTrends / getTradeActivity", () => {
@@ -293,7 +362,9 @@ describe("insights.getCompletionTrends / getTradeActivity", () => {
     expect(activity.byStatus.find((s) => s.status === "completed")?.count).toBe(
       1,
     );
-    expect(activity.byMonth).toHaveLength(1);
+    // The same zero-filled 12-month window as the trends, so quiet months stay in the chart.
+    expect(activity.byMonth).toHaveLength(12);
+    expect(activity.byMonth.reduce((acc, m) => acc + m.count, 0)).toBe(1);
   });
 });
 

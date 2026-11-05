@@ -1,5 +1,6 @@
 "use client";
 
+import { SolveTimeFields } from "@/components/solving/solve-time-fields";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,24 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { dateInputToMs, msToDateInput } from "@/lib/date-input";
+import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
-
-// Epoch ms -> `yyyy-mm-dd` for a date input (empty for undefined).
-function msToDateInput(ms?: number): string {
-  if (ms === undefined) return "";
-  return new Date(ms).toISOString().slice(0, 10);
-}
-
-function dateInputToMs(value: string): number | undefined {
-  if (!value) return undefined;
-  const ms = new Date(value).getTime();
-  return Number.isNaN(ms) ? undefined : ms;
-}
 
 interface EditCompletionDialogProps {
   open: boolean;
@@ -43,6 +34,9 @@ interface EditCompletionDialogProps {
   // Absent = "day". A year-only or undated solve's dates are sentinels, so the date inputs start
   // empty; entering a date upgrades the solve to "day" server-side.
   datePrecision?: "day" | "year" | "unknown";
+  // A solve still in progress has no end date or time to edit: setting an end here would not
+  // finish it (Completion.edit never changes isCompleted), so finishing goes through Finish.
+  inProgress?: boolean;
 }
 
 // Edits a completion's mutable fields. The 24h window is enforced server-side; a closed window
@@ -56,6 +50,7 @@ export function EditCompletionDialog({
   initialTimeMinutes,
   initialNotes,
   datePrecision,
+  inProgress = false,
 }: EditCompletionDialogProps) {
   const dated = (datePrecision ?? "day") === "day";
   const t = useTranslations("solving.logSolve");
@@ -82,7 +77,7 @@ export function EditCompletionDialog({
 
   const handleSubmit = async () => {
     const start = dateInputToMs(startDate);
-    const end = dateInputToMs(endDate);
+    const end = inProgress ? undefined : dateInputToMs(endDate);
     const totalMinutes =
       (Number(hours) || 0) * 60 + (Number(minutes) || 0) || undefined;
 
@@ -109,14 +104,24 @@ export function EditCompletionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* Scrolls on a short screen, so Save stays reachable. */}
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tCompletions("edit")}</DialogTitle>
-          <DialogDescription>{t("endDateHint")}</DialogDescription>
+          <DialogDescription>
+            {inProgress
+              ? tCompletions("editInProgressDescription")
+              : tCompletions("editDescription")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-4",
+              !inProgress && "sm:grid-cols-2",
+            )}
+          >
             <div className="space-y-2">
               <Label htmlFor="edit-start">{t("startDate")}</Label>
               <Input
@@ -126,42 +131,29 @@ export function EditCompletionDialog({
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-end">{t("endDate")}</Label>
-              <Input
-                id="edit-end"
-                type="date"
-                value={endDate}
-                min={startDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
+            {!inProgress && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-end">{t("endDate")}</Label>
+                <Input
+                  id="edit-end"
+                  type="date"
+                  value={endDate}
+                  min={startDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label>{t("timeLabel")}</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="number"
-                min={0}
-                inputMode="numeric"
-                placeholder={t("hours")}
-                aria-label={t("hours")}
-                value={hours}
-                onChange={(e) => setHours(e.target.value)}
-              />
-              <Input
-                type="number"
-                min={0}
-                max={59}
-                inputMode="numeric"
-                placeholder={t("minutes")}
-                aria-label={t("minutes")}
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-              />
-            </div>
-          </div>
+          {!inProgress && (
+            <SolveTimeFields
+              idPrefix="edit-time"
+              hours={hours}
+              minutes={minutes}
+              onHoursChange={setHours}
+              onMinutesChange={setMinutes}
+            />
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-notes">{t("notes")}</Label>

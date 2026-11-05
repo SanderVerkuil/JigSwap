@@ -64,8 +64,16 @@ vi.mock("@/components/solving/start-solve-dialog", () => ({
   ),
 }));
 vi.mock("@/components/solving/finish-solve-dialog", () => ({
-  FinishSolveDialog: ({ completionId }: { completionId: string }) => (
-    <div role="dialog">finish {completionId}</div>
+  FinishSolveDialog: ({
+    completionId,
+    puzzleTitle,
+  }: {
+    completionId: string;
+    puzzleTitle?: string;
+  }) => (
+    <div role="dialog">
+      finish {completionId} of {puzzleTitle}
+    </div>
   ),
 }));
 vi.mock("@/components/solving/log-solve-dialog", () => ({
@@ -211,7 +219,9 @@ describe("LoansTab", () => {
     fireEvent.click(
       within(borrowed).getByRole("button", { name: "Finish solve" }),
     );
-    expect(screen.getByRole("dialog").textContent).toBe("finish completion-1");
+    expect(screen.getByRole("dialog").textContent).toBe(
+      "finish completion-1 of Harbour Lights",
+    );
   });
 
   it("lists the viewer's lent-out copies with the borrower, a link to the copy and a guarded Recall", async () => {

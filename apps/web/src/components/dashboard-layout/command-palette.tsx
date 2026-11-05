@@ -11,6 +11,7 @@
 // navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
+import { useDataExport } from "@/components/insights/export-button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -31,6 +32,7 @@ import {
   Blend,
   BookOpen,
   CircleCheck,
+  Download,
   FolderOpen,
   Plus,
   Puzzle,
@@ -75,6 +77,16 @@ const QUICK_ACTIONS = [
   },
 ] as const;
 
+// The data export is a quick action too, but a direct one (it downloads in place), so no href.
+const EXPORT_DATA_KEYWORDS = [
+  "export",
+  "download",
+  "data",
+  "exporteren",
+  "downloaden",
+  "gegevens",
+] as const;
+
 // Minimum term length before we hit the backend; mirrors the query's own short-circuit.
 const MIN_TERM_LENGTH = 2;
 const DEBOUNCE_MS = 200;
@@ -91,6 +103,8 @@ export function CommandPalette({
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
   const { user } = useUser();
+  // "Export my data" runs here rather than linking to the page that hosts the button.
+  const { exportData, busy: exporting } = useDataExport();
 
   // Raw input value (drives cmdk) and the debounced term we actually search on.
   const [value, setValue] = useState("");
@@ -182,6 +196,10 @@ export function CommandPalette({
     ...action,
     title: t(`actions.${action.key}`),
   }));
+  const exportAction = {
+    title: t("actions.exportData"),
+    keywords: EXPORT_DATA_KEYWORDS,
+  };
 
   // cmdk ranks items inside a group but never reorders the groups, and it highlights the first
   // match. So the static group holding the best match goes first: "add" then Enter adds a puzzle
@@ -196,7 +214,8 @@ export function CommandPalette({
       ),
     );
   const actionsFirst =
-    typed.length > 0 && bestScore(quickActions) > bestScore(goTo);
+    typed.length > 0 &&
+    bestScore([...quickActions, exportAction]) > bestScore(goTo);
 
   const goToGroup = (
     <CommandGroup key="go-to" heading={t("search.goTo")}>
@@ -226,6 +245,18 @@ export function CommandPalette({
           <span>{action.title}</span>
         </CommandItem>
       ))}
+      <CommandItem
+        value={exportAction.title}
+        keywords={[...exportAction.keywords]}
+        disabled={exporting}
+        onSelect={() => {
+          handleOpenChange(false);
+          void exportData();
+        }}
+      >
+        <Download />
+        <span>{exportAction.title}</span>
+      </CommandItem>
     </CommandGroup>
   );
 

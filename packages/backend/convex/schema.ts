@@ -895,7 +895,14 @@ export default defineSchema({
     description: v.optional(v.string()),
     targetCompletions: v.number(),
     currentCompletions: v.number(),
+    // The first calendar day (UTC midnight) the goal counts solves on. Optional: goals without it
+    // (every goal set before periods existed) count from the UTC day of `createdAt`.
+    startDate: v.optional(v.number()),
+    // The last calendar day (UTC midnight) the goal counts solves on, inclusive.
     targetDate: v.optional(v.number()),
+    // When GoalAchieved went out for the current target, so it goes out at most once. Optional: a
+    // goal without it hasn't announced anything the domain knows of.
+    achievementAnnouncedAt: v.optional(v.number()),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1542,7 +1549,8 @@ export default defineSchema({
   }).index("by_member", ["memberId"]),
 
   // Solving-context member preferences (federated settings: each context owns its settings).
-  // Keyed by member; `trackCompletionDuration` undefined = never asked → first-time prompt.
+  // Keyed by member; `trackCompletionDuration` undefined = never chosen: the solve dialogs still
+  // ask for a time (only `false` hides it) and offer to turn it off.
   solvingPreferences: defineTable({
     memberId: v.id("users"),
     trackCompletionDuration: v.optional(v.boolean()),

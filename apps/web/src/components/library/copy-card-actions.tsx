@@ -127,6 +127,7 @@ export function useCopyCardActions({
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
+    puzzleTitle?: string;
   } | null>(null);
   // The copy whose circle shares are being edited; null when the dialog is closed. `opener` is the
   // card's ⋯ trigger: the menu item that opened the dialog is gone by the time it closes.
@@ -207,6 +208,7 @@ export function useCopyCardActions({
       setFinishTarget({
         completionId: state.inProgressCompletionId,
         startDate: state.inProgressStartDate,
+        puzzleTitle: copy.puzzle?.title,
       });
     } else {
       setStartTarget({
@@ -296,6 +298,7 @@ export function useCopyCardActions({
           onOpenChange={(open) => !open && setFinishTarget(null)}
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
+          puzzleTitle={finishTarget.puzzleTitle}
         />
       )}
 

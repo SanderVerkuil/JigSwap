@@ -46,6 +46,7 @@ import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { formatCompletionDate } from "@/lib/completion-format";
+import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
 import { durationParts } from "@/lib/humanize-duration";
 import {
   projectedAuthorOf,
@@ -394,6 +395,14 @@ function CopyInstanceDetail({
       year: "numeric",
       month: "short",
       day: "numeric",
+    });
+  // A solve date is a calendar date stored as UTC midnight (lib/date-input), so it formats in UTC.
+  const formatSolveDay = (timestamp: number) =>
+    format.dateTime(new Date(timestamp), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: DATE_ONLY_TIME_ZONE,
     });
 
   const formatMonth = (timestamp: number) =>
@@ -781,8 +790,8 @@ function CopyInstanceDetail({
                         datePrecision: c.datePrecision,
                       })
                     : c.finishMinutes != null
-                      ? `${formatDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
-                      : formatDay(c.occurredAt)
+                      ? `${formatSolveDay(c.occurredAt)} · ${t("finishedIn", { duration: formatDuration(c.finishMinutes) })}`
+                      : formatSolveDay(c.occurredAt)
                 }
               />
             ))}
@@ -884,6 +893,7 @@ function CopyInstanceDetail({
               onOpenChange={(open) => !open && setFinishTarget(null)}
               completionId={finishTarget.completionId}
               minEndDate={finishTarget.startDate}
+              puzzleTitle={snapshot.title}
             />
           )}
           {copy.viewerCanManage && (

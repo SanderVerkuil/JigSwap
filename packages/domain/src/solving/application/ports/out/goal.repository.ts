@@ -6,4 +6,6 @@ export interface GoalRepository {
   findById(id: GoalId): Promise<Goal | null>;
   save(goal: Goal): Promise<void>;
   listByUser(userId: MemberId): Promise<readonly Goal[]>;
+  // Hard-delete a goal by its domain id. No-op if the goal is already gone.
+  delete(id: GoalId): Promise<void>;
 }

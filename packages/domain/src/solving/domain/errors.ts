@@ -10,6 +10,10 @@ export type SolvingErrorCode =
   | "EditWindowClosed"
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
+  | "InvalidGoalPeriod"
+  | "InvalidGoalTitle"
+  | "InvalidGoalDescription"
+  | "NotGoalOwner"
   | "InvalidRating"
   | "ReviewTextTooLong"
   | "InvalidDuration"
@@ -46,11 +50,11 @@ export class SolvingError extends DomainError {
     );
   }
 
-  // Edits are only allowed within 24h of completion (the documented rule).
+  // Edits are only allowed until completionEditableUntil: 24h after the solve's end date.
   static editWindowClosed(): SolvingError {
     return new SolvingError(
       "EditWindowClosed",
-      "A completion can only be edited within 24 hours of being recorded",
+      "A completion can only be edited within 24 hours of its end date",
     );
   }
 
@@ -67,6 +71,39 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "InvalidGoalTarget",
       "A goal's target completions must be a positive integer",
+    );
+  }
+
+  // A goal's period is empty: its start date (or, without one, the day it was created) falls after
+  // its target date. Also a date that isn't a real calendar date.
+  static invalidGoalPeriod(): SolvingError {
+    return new SolvingError(
+      "InvalidGoalPeriod",
+      "A goal's start date must be on or before its target date",
+    );
+  }
+
+  // A goal's title shows nothing, or is longer than the limit.
+  static invalidGoalTitle(max: number): SolvingError {
+    return new SolvingError(
+      "InvalidGoalTitle",
+      `A goal needs a title of at most ${max} characters`,
+    );
+  }
+
+  // A goal's description is longer than the limit.
+  static invalidGoalDescription(max: number): SolvingError {
+    return new SolvingError(
+      "InvalidGoalDescription",
+      `A goal's description may be at most ${max} characters`,
+    );
+  }
+
+  // The acting member does not own the goal they tried to change.
+  static notGoalOwner(): SolvingError {
+    return new SolvingError(
+      "NotGoalOwner",
+      "Acting member does not own this goal",
     );
   }
 

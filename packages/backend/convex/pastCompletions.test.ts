@@ -429,17 +429,26 @@ describe("the activity feed and past-solves batches", () => {
 });
 
 describe("goals", () => {
-  test("count dated and year-only solves, never undated ones", async () => {
+  test("count dated and year-only solves inside the goal's period, never undated ones", async () => {
     const t = convexTest(schema, modules);
-    const { a1, a2, a3 } = await seed(t);
+    const { alice, a1, a2, a3 } = await seed(t);
+    const a4 = await insertCopy(t, alice, "Forest");
+    const year = new Date().getUTCFullYear();
     const goalId = (await as(t, "alice").mutation(
       api.solving.createGoal.createGoal,
-      { title: "Solve 5", targetCompletions: 5 },
+      {
+        title: "Solve 5 this year",
+        targetCompletions: 5,
+        startDate: Date.UTC(year, 0, 1),
+        targetDate: Date.UTC(year, 11, 31),
+      },
     )) as string;
     await recordPast(t, "alice", [
       { copyId: a1.copyAggregateId, datePrecision: "day", date: Date.now() },
-      { copyId: a2.copyAggregateId, datePrecision: "year", year: 2023 },
-      { copyId: a3.copyAggregateId, datePrecision: "unknown" },
+      { copyId: a2.copyAggregateId, datePrecision: "year", year },
+      // A year-only solve from another year lies outside this year's goal.
+      { copyId: a3.copyAggregateId, datePrecision: "year", year: 2023 },
+      { copyId: a4.copyAggregateId, datePrecision: "unknown" },
     ]);
     const goal = await t.run((ctx) =>
       ctx.db

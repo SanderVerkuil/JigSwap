@@ -54,10 +54,13 @@ export class CompletionRecorded implements DomainEvent {
 }
 
 // Mutable fields (notes/photos/duration/dates) of a completion were edited within the 24h window.
+// The userId is carried so the goal-progress reactor can recompute the member's goals: a changed
+// end date can move a solve into or out of a goal's period.
 export class CompletionEdited implements DomainEvent {
   readonly name = "CompletionEdited";
   constructor(
     readonly completionId: CompletionId,
+    readonly userId: MemberId,
     readonly occurredAt: Date,
   ) {}
 }

@@ -201,6 +201,7 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
+    puzzleTitle: string;
   } | null>(null);
 
   const lenderName = (loan: LoanView) =>
@@ -227,7 +228,12 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setFinishTarget(inProgress)}
+                  onClick={() =>
+                    setFinishTarget({
+                      ...inProgress,
+                      puzzleTitle: loan.puzzleTitle,
+                    })
+                  }
                 >
                   {tStart("finishTrigger")}
                 </Button>
@@ -282,6 +288,7 @@ function BorrowedRows({ loans }: { loans: LoanView[] }) {
           onOpenChange={(open) => !open && setFinishTarget(null)}
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
+          puzzleTitle={finishTarget.puzzleTitle}
         />
       )}
     </>

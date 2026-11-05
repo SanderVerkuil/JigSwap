@@ -28,8 +28,14 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
       description: row.description,
       targetCompletions: row.targetCompletions,
       currentCompletions: row.currentCompletions,
+      startDate:
+        row.startDate === undefined ? undefined : new Date(row.startDate),
       targetDate:
         row.targetDate === undefined ? undefined : new Date(row.targetDate),
+      achievementAnnouncedAt:
+        row.achievementAnnouncedAt === undefined
+          ? undefined
+          : new Date(row.achievementAnnouncedAt),
       isActive: row.isActive,
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
@@ -46,7 +52,9 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
       description: state.description,
       targetCompletions: state.targetCompletions,
       currentCompletions: state.currentCompletions,
+      startDate: state.startDate?.getTime(),
       targetDate: state.targetDate?.getTime(),
+      achievementAnnouncedAt: state.achievementAnnouncedAt?.getTime(),
       isActive: state.isActive,
       createdAt: state.createdAt.getTime(),
       updatedAt: state.updatedAt.getTime(),
@@ -77,6 +85,12 @@ export const convexGoalRepository = (ctx: MutationCtx): GoalRepository => {
       return rows
         .filter((row) => row.aggregateId !== undefined)
         .map((row) => toDomain(row));
+    },
+
+    async delete(id: GoalId): Promise<void> {
+      const row = await rowById(id);
+      // No-op if the row is already gone (idempotent).
+      if (row) await ctx.db.delete(row._id);
     },
   };
 };

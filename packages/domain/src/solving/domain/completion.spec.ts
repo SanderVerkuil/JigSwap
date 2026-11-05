@@ -6,7 +6,11 @@ import {
   toMemberId,
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
-import { Completion, EDIT_WINDOW_MS } from "./completion";
+import {
+  Completion,
+  completionEditableUntil,
+  EDIT_WINDOW_MS,
+} from "./completion";
 import { Photo } from "./photo";
 
 const ID = toCompletionId("completion-1");
@@ -517,6 +521,79 @@ describe("Completion.edit", () => {
       expect(outcome.isErr).toBe(true);
       if (outcome.isErr) expect(outcome.error.code).toBe("InvalidDuration");
     });
+  });
+});
+
+describe("completionEditableUntil", () => {
+  const DAY_MS = 86_400_000; // hardcoded so the EDIT_WINDOW_MS arithmetic is actually pinned
+  const LOGGED = new Date(END.getTime() + 2 * 60 * 60 * 1000); // logged two hours after the end
+
+  it("closes a finished solve's edits exactly 24 hours after its end", () => {
+    expect(
+      completionEditableUntil({
+        isCompleted: true,
+        endDate: END,
+        updatedAt: LOGGED,
+      }),
+    ).toEqual(new Date(END.getTime() + DAY_MS));
+  });
+
+  it("falls back to the last update for a finished row without an end", () => {
+    expect(
+      completionEditableUntil({ isCompleted: true, updatedAt: LOGGED }),
+    ).toEqual(new Date(LOGGED.getTime() + DAY_MS));
+  });
+
+  it("has no deadline while the solve is in progress", () => {
+    expect(
+      completionEditableUntil({
+        isCompleted: false,
+        endDate: END,
+        updatedAt: LOGGED,
+      }),
+    ).toBeUndefined();
+  });
+
+  it("is what the aggregate reports and what edit() enforces", () => {
+    const recorded = recordValid({ now: LOGGED });
+    if (!recorded.isOk) throw new Error("setup failed");
+    const deadline = recorded.value.editableUntil;
+    expect(deadline).toEqual(new Date(END.getTime() + DAY_MS));
+    if (!deadline) throw new Error("expected a deadline");
+    expect(
+      recorded.value.edit(ALICE, { notes: "on time" }, deadline).isOk,
+    ).toBe(true);
+    const late = recorded.value.edit(
+      ALICE,
+      { notes: "late" },
+      new Date(deadline.getTime() + 1),
+    );
+    expect(late.isErr).toBe(true);
+    if (late.isErr) expect(late.error.code).toBe("EditWindowClosed");
+  });
+
+  it("reports no deadline for a solve in progress", () => {
+    const started = Completion.start({
+      id: ID,
+      userId: ALICE,
+      puzzleDefinitionId: PUZZLE,
+      startDate: START,
+      now: NOW,
+    });
+    if (!started.isOk) throw new Error("setup failed");
+    expect(started.value.editableUntil).toBeUndefined();
+  });
+
+  it("follows a back-dated solve's end, so it is closed as soon as it is logged", () => {
+    const backDated = recordValid({
+      startDate: new Date("2026-05-01T00:00:00Z"),
+      endDate: new Date("2026-05-03T00:00:00Z"),
+    });
+    if (!backDated.isOk) throw new Error("setup failed");
+    expect(backDated.value.editableUntil).toEqual(
+      new Date("2026-05-04T00:00:00Z"),
+    );
+    expect(backDated.value.editableUntil!.getTime() < NOW.getTime()).toBe(true);
   });
 });
 

@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { currentGoals } from "@/lib/goal-form";
 import {
   useMemberDisplayName,
   usePartyDisplayName,
@@ -262,13 +263,10 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
   const t = useTranslations("dashboard.pulse.goals");
   const isMobile = useIsMobile();
 
-  // Lead with the goal still being chased; fall back to any active goal,
-  // then the newest one.
-  const primary =
-    goals.find((g) => g.isActive && !g.isAchieved) ??
-    goals.find((g) => g.isActive) ??
-    goals[0];
-  const rest = goals.filter((g) => g !== primary).slice(0, 2);
+  // Lead with the goal still being chased, then an achieved one. Ended and
+  // archived goals belong to the goals page's "Past goals", not the ring.
+  const [primary, ...others] = currentGoals(goals);
+  const rest = others.slice(0, 2);
 
   return (
     <section className="min-w-0">
@@ -283,7 +281,9 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
       />
       {!primary ? (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-muted-foreground text-sm">{t("empty")}</p>
+          <p className="text-muted-foreground text-sm">
+            {goals.length > 0 ? t("noCurrent") : t("empty")}
+          </p>
           <Button variant="outline" size="sm" asChild>
             <Link href="/goals">{t("setGoal")}</Link>
           </Button>

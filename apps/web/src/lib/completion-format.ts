@@ -1,3 +1,4 @@
+import { formatDateOnly } from "@/lib/date-input";
 import type { useTranslations } from "use-intl";
 
 // Shared by the member's own completion log and the profile completions list.
@@ -40,7 +41,8 @@ type DatedCompletion = {
 };
 
 // A finished solve's date: the date itself, "In 2023" for a year-only solve, or "Date unknown".
-// Year-only and undated solves hold sentinel dates, so those are never shown as dates.
+// Year-only and undated solves hold sentinel dates, so those are never shown as dates. A dated
+// solve is a calendar date stored as UTC midnight, so it is formatted in UTC (lib/date-input).
 export function formatCompletionDate(
   t: ReturnType<typeof useTranslations<"solving.completions">>,
   completion: DatedCompletion,
@@ -51,11 +53,76 @@ export function formatCompletionDate(
   if (completion.datePrecision === "year") {
     return t("inYear", { year: String(new Date(at).getUTCFullYear()) });
   }
-  return new Date(at).toLocaleDateString();
+  return formatDateOnly(at);
+}
+
+const MINUTES_PER_DAY = 1440;
+const DAY_MS = 86_400_000;
+
+// What a finished solve's duration can honestly say: a time the member typed, the number of
+// calendar days it spanned, or that it was done in one day.
+export type SolveDurationLabel =
+  | { kind: "time"; minutes: number }
+  | { kind: "days"; days: number }
+  | { kind: "sameDay" };
+
+// The duration to show for a finished dated solve, or null when there is none to show (in
+// progress, year-only, undated).
+//
+// The domain always stores a duration: with no time typed it derives one from the span, or uses
+// one day (1440 minutes) when start equals end. So a stored duration only counts as typed when it
+// differs from that derived value. A typed time that happens to equal it (exactly 24h on one day)
+// reads as the span, which is still true.
+export function solveDuration(
+  completion: DatedCompletion & { completionTimeMinutes?: number },
+): SolveDurationLabel | null {
+  const { startDate, endDate, completionTimeMinutes } = completion;
+  if ((completion.datePrecision ?? "day") !== "day") return null;
+  if (endDate === undefined) return null;
+  const spanMinutes = Math.round((endDate - startDate) / 60_000);
+  const derived = spanMinutes > 0 ? spanMinutes : MINUTES_PER_DAY;
+  if (
+    completionTimeMinutes !== undefined &&
+    completionTimeMinutes !== derived
+  ) {
+    return { kind: "time", minutes: completionTimeMinutes };
+  }
+  // Calendar days the solve spans, both ends included (dates are UTC midnight, lib/date-input).
+  const days =
+    Math.floor(endDate / DAY_MS) - Math.floor(startDate / DAY_MS) + 1;
+  return days >= 2 ? { kind: "days", days } : { kind: "sameDay" };
+}
+
+// The line under a solve in the completion log: "Started {date}" while in progress, otherwise
+// the piece count (or "Completed") and the duration, e.g. "1,000 pieces · 3h 20m".
+export function formatCompletionMeta(
+  t: ReturnType<typeof useTranslations<"solving.completions">>,
+  completion: DatedCompletion & {
+    isCompleted: boolean;
+    completionTimeMinutes?: number;
+  },
+  pieceCount?: number,
+): string {
+  if (!completion.isCompleted) {
+    return t("started", { date: formatDateOnly(completion.startDate) });
+  }
+  const parts = [
+    pieceCount ? t("pieces", { pieces: pieceCount }) : t("completed"),
+  ];
+  const duration = solveDuration(completion);
+  if (duration?.kind === "time") {
+    parts.push(formatSolveTime(t, duration.minutes));
+  } else if (duration?.kind === "days") {
+    parts.push(t("overDays", { days: duration.days }));
+  } else if (duration?.kind === "sameDay") {
+    parts.push(t("sameDay"));
+  }
+  return parts.join(" · ");
 }
 
 // Whether a finished solve counts toward the "This year" stat: dated and year-only solves in the
-// year count; undated ones never do (their sentinel is the day they were logged).
+// year count; undated ones never do (their sentinel is the day they were logged). `yearStart` is
+// 1 January of the member's year at UTC midnight, matching how solve dates are stored.
 export function countsTowardThisYear(
   completion: DatedCompletion,
   yearStart: number,

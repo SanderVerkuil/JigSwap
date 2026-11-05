@@ -1,36 +1,36 @@
 import { useUser } from "@/compat/clerk";
-import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { EmptyState } from "@/components/library/empty-state";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  GoalFormDialog,
+  isEditableGoal,
+  type EditableGoal,
+} from "@/components/goals/goal-form-dialog";
+import type { GoalRow } from "@/components/goals/goal-row";
+import { GOAL_GRID, GoalSections } from "@/components/goals/goal-sections";
+import { EmptyState } from "@/components/library/empty-state";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { useReturnFocus } from "@/hooks/use-return-focus";
+import { goalStatus } from "@/lib/goal-form";
 import { pageTitle } from "@/lib/page-title";
-import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import type { FunctionReturnType } from "convex/server";
-import { Plus, Target, Trophy } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-
-type GoalRow = FunctionReturnType<typeof gateway.solving.myGoals>[number];
-
-const GOAL_GRID = "grid gap-x-10 gap-y-8 md:grid-cols-2 2xl:grid-cols-3";
 
 export const Route = createFileRoute("/_dashboard/goals")({
   head: ({ match }) => ({
@@ -44,11 +44,15 @@ function GoalsPage() {
   const t = useTranslations("solving.goals");
   const tCommon = useTranslations("common");
 
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [target, setTarget] = useState("");
-  const [targetDate, setTargetDate] = useState("");
+  // The create/edit dialog: `formGoal` is the goal being edited (undefined = a new goal). It is
+  // only replaced when the dialog opens, so the closing animation keeps showing the same form.
+  const [formOpen, setFormOpen] = useState(false);
+  const [formGoal, setFormGoal] = useState<EditableGoal | undefined>();
+  // Same for the delete confirm: the target outlives the closing animation.
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<EditableGoal | undefined>();
+  // These dialogs have no Radix trigger, so focus returns to whatever opened them.
+  const dialogOpenerRef = useReturnFocus(formOpen || deleteOpen);
 
   const { data: convexUser } = useQuery(
     convexQuery(
@@ -61,70 +65,88 @@ function GoalsPage() {
     convexQuery(gateway.solving.myGoals, convexUser?._id ? {} : "skip"),
   );
 
-  const createGoal = useMutation({
-    mutationFn: useConvexMutation(gateway.solving.createGoal),
+  const setGoalArchived = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.setGoalArchived),
+  });
+  const deleteGoal = useMutation({
+    mutationFn: useConvexMutation(gateway.solving.deleteGoal),
   });
 
-  const reset = () => {
-    setTitle("");
-    setDescription("");
-    setTarget("");
-    setTargetDate("");
+  const openForm = (opener: HTMLElement | null, goal?: EditableGoal) => {
+    dialogOpenerRef.current = opener;
+    setFormGoal(goal);
+    setFormOpen(true);
   };
 
-  const handleCreate = async () => {
-    const targetCompletions = Number(target);
-    if (
-      !title.trim() ||
-      !Number.isFinite(targetCompletions) ||
-      targetCompletions < 1
-    ) {
-      return;
-    }
-    const dueMs = targetDate ? new Date(targetDate).getTime() : undefined;
-
+  const archive = async (goal: EditableGoal, archived: boolean) => {
     try {
-      await createGoal.mutateAsync({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        targetCompletions,
-        targetDate:
-          dueMs !== undefined && !Number.isNaN(dueMs) ? dueMs : undefined,
+      await setGoalArchived.mutateAsync({
+        goalId: goal.aggregateId,
+        archived,
       });
-      toast.success(t("created"));
-      reset();
-      setOpen(false);
+      toast.success(archived ? t("archiveDone") : t("restoreDone"));
     } catch (error) {
-      console.error("Failed to create goal:", error);
-      toast.error(t("createError"));
+      console.error("Failed to archive goal:", error);
+      toast.error(archived ? t("archiveError") : t("restoreError"));
     }
   };
 
-  // The page title lives in the shell page head; publish the count + primary
-  // action there too so the page body carries no duplicate section header.
-  const activeCount = (goals ?? []).filter((goal) => !goal.isAchieved).length;
+  const remove = async (goal: EditableGoal) => {
+    try {
+      await deleteGoal.mutateAsync({ goalId: goal.aggregateId });
+      toast.success(t("deleteDone"));
+    } catch (error) {
+      console.error("Failed to delete goal:", error);
+      toast.error(t("deleteError"));
+    }
+  };
+
+  const actionsFor = (goal: GoalRow) =>
+    isEditableGoal(goal)
+      ? {
+          onEdit: (opener: HTMLElement | null) => openForm(opener, goal),
+          onArchive: () => void archive(goal, true),
+          onRestore: () => void archive(goal, false),
+          onDelete: (opener: HTMLElement | null) => {
+            dialogOpenerRef.current = opener;
+            setDeleteTarget(goal);
+            setDeleteOpen(true);
+          },
+        }
+      : undefined;
+
+  // The page title lives in the shell page head; publish the count + primary action there too so
+  // the page body carries no duplicate section header. While the empty state shows, its own
+  // button is the only "New goal".
+  const hasGoals = goals !== undefined && goals.length > 0;
+  const activeCount = (goals ?? []).filter(
+    (goal) => goalStatus(goal) === "active",
+  ).length;
   const headerMeta = t("activeCount", { count: activeCount });
   usePageHeader(
-    () => ({
-      meta: headerMeta,
-      actions: (
-        <Button
-          variant="brand"
-          size="sm"
-          onClick={() => setOpen(true)}
-          data-tour="goals-create"
-        >
-          <Plus className="h-4 w-4" />
-          {t("create")}
-        </Button>
-      ),
-    }),
-    [headerMeta],
+    () =>
+      hasGoals
+        ? {
+            meta: headerMeta,
+            actions: (
+              <Button
+                variant="brand"
+                size="sm"
+                onClick={(event) => openForm(event.currentTarget)}
+                data-tour="goals-create"
+              >
+                <Plus className="h-4 w-4" />
+                {t("create")}
+              </Button>
+            ),
+          }
+        : {},
+    [headerMeta, hasGoals],
   );
 
   if (!user || convexUser === undefined || goals === undefined) {
     return (
-      <div className="flex w-full flex-col gap-[26px]">
+      <div className="@container/goals flex w-full flex-col gap-[26px]">
         <Skeleton className="h-10 w-full" />
         <div className={GOAL_GRID}>
           {Array.from({ length: 3 }).map((_, i) => (
@@ -135,191 +157,53 @@ function GoalsPage() {
     );
   }
 
-  const active = goals.filter((goal) => !goal.isAchieved);
-  const achieved = goals.filter((goal) => goal.isAchieved);
-
   return (
     <div className="flex w-full flex-col gap-[26px]">
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("createTitle")}</DialogTitle>
-            <DialogDescription>{t("createDescription")}</DialogDescription>
-          </DialogHeader>
+      <GoalFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        goal={formGoal}
+      />
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="goal-title">{t("goalTitle")}</Label>
-              <Input
-                id="goal-title"
-                value={title}
-                placeholder={t("goalTitlePlaceholder")}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="goal-description">{t("goalDescription")}</Label>
-              <Textarea
-                id="goal-description"
-                value={description}
-                placeholder={t("goalDescriptionPlaceholder")}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="goal-target">{t("targetCompletions")}</Label>
-                <Input
-                  id="goal-target"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="goal-date">{t("targetDate")}</Label>
-                <Input
-                  id="goal-date"
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={createGoal.isPending}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("deleteTitle", { title: deleteTarget?.title ?? "" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("deleteBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (deleteTarget) void remove(deleteTarget);
+              }}
             >
-              {tCommon("cancel")}
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={createGoal.isPending || !title.trim() || !target}
-            >
-              {t("submit")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {goals.length === 0 ? (
         <EmptyState
           title={t("empty")}
           sub={t("emptyHint")}
           action={
-            <Button variant="brand" onClick={() => setOpen(true)}>
+            <Button
+              variant="brand"
+              onClick={(event) => openForm(event.currentTarget)}
+              data-tour="goals-create"
+            >
               <Plus className="h-4 w-4" />
               {t("create")}
             </Button>
           }
         />
       ) : (
-        <div className="flex flex-col gap-[26px]">
-          <section>
-            <SectionHead
-              title={t("active")}
-              icon={Target}
-              meta={t("activeCount", { count: active.length })}
-            />
-            <div className={GOAL_GRID}>
-              {active.map((goal) => (
-                <GoalTile key={goal._id} goal={goal} />
-              ))}
-            </div>
-          </section>
-
-          {achieved.length > 0 && (
-            <section>
-              <SectionHead title={t("achieved")} icon={Trophy} />
-              <div className={GOAL_GRID}>
-                {achieved.map((goal) => (
-                  <GoalTile key={goal._id} goal={goal} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GoalTile({ goal }: { goal: GoalRow }) {
-  const t = useTranslations("solving.goals");
-
-  // Progress is derived from the server-maintained counts; never recomputed beyond a
-  // clamped percentage for the bar width.
-  const pct =
-    goal.targetCompletions > 0
-      ? Math.min(
-          100,
-          Math.round((goal.currentCompletions / goal.targetCompletions) * 100),
-        )
-      : 0;
-  const GoalIcon = goal.isAchieved ? Trophy : Target;
-
-  return (
-    <div>
-      <div className="mb-2.5 flex items-center gap-3">
-        <span
-          className={cn(
-            "inline-flex size-9 shrink-0 items-center justify-center rounded-full",
-            goal.isAchieved
-              ? "bg-jigsaw-secondary/15 text-jigsaw-secondary"
-              : "bg-jigsaw-primary/10 text-jigsaw-primary",
-          )}
-        >
-          <GoalIcon className="size-[17px]" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-semibold">{goal.title}</span>
-            {goal.isAchieved && (
-              <Badge className="shrink-0">
-                <Trophy className="mr-1 h-3 w-3" />
-                {t("achieved")}
-              </Badge>
-            )}
-          </div>
-          <div className="text-muted-foreground mt-px text-xs">
-            {goal.targetDate !== undefined
-              ? t("dueBy", {
-                  date: new Date(goal.targetDate).toLocaleDateString(),
-                })
-              : goal.description}
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="font-heading text-xl leading-none font-bold">
-            {pct}%
-          </div>
-          <div className="text-muted-foreground font-mono text-xs">
-            {t("progressShort", {
-              current: goal.currentCompletions,
-              target: goal.targetCompletions,
-            })}
-          </div>
-        </div>
-      </div>
-      <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all",
-            goal.isAchieved ? "bg-jigsaw-secondary" : "bg-jigsaw-primary",
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {goal.targetDate !== undefined && goal.description && (
-        <p className="text-muted-foreground mt-1.5 text-xs">
-          {goal.description}
-        </p>
+        <GoalSections goals={goals} actionsFor={actionsFor} />
       )}
     </div>
   );

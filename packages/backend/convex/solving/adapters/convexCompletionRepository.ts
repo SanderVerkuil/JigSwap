@@ -1,11 +1,11 @@
 import {
-  countsTowardGoals,
   toCopyId,
   toPuzzleDefinitionId,
   type Completion,
   type CompletionId,
   type CompletionRepository,
   type CopyId,
+  type GoalSolve,
   type MemberId,
   type PuzzleDefinitionId,
 } from "@jigswap/domain";
@@ -123,19 +123,28 @@ export const convexCompletionRepository = (
       return Promise.all(owned.map((row) => hydrate(row)));
     },
 
-    async countCompletedByUser(userId: MemberId): Promise<number> {
+    async listGoalSolves(userId: MemberId): Promise<readonly GoalSolve[]> {
       const rows = await ctx.db
         .query("completions")
-        .withIndex("by_user", (q) =>
-          q.eq("userId", userId as unknown as Id<"users">),
+        .withIndex("by_user_completed", (q) =>
+          q
+            .eq("userId", userId as unknown as Id<"users">)
+            .eq("isCompleted", true),
         )
         .collect();
-      // The authoritative count of FINISHED completions that count toward goals (undated ones
-      // don't, decision 4); drives the derived goal progress.
-      return rows.filter(
-        (row) =>
-          row.isCompleted && countsTowardGoals(row.datePrecision ?? "day"),
-      ).length;
+      // Every FINISHED solve, legacy rows without an aggregateId included (they always counted
+      // toward goals). Each goal then counts the ones inside its own period (countTowardGoal). A
+      // finished row always carries an endDate; one without it could not be placed in a period.
+      return rows.flatMap((row) =>
+        row.endDate === undefined
+          ? []
+          : [
+              {
+                endDate: new Date(row.endDate),
+                datePrecision: row.datePrecision ?? "day",
+              },
+            ],
+      );
     },
 
     async delete(id: CompletionId): Promise<void> {

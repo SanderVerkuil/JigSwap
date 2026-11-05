@@ -15,26 +15,31 @@ import { systemClock } from "./systemClock";
 // subscriber) while KEEPING the one CRITICAL reaction inline.
 //
 // WHY the goal-progress reaction stays SYNC: a Goal's progress is DERIVED from the member's
-// completion count, so recording a completion must immediately recompute their goals in the SAME
-// transaction (no stale progress, no extra round-trip). It reacts ONLY to CompletionRecorded, so
-// the GoalProgressed/GoalAchieved events the recompute itself publishes never re-trigger it (no
-// recursion) — and because those events flow through this same publisher, they are recorded +
-// scheduled too, finally landing the goal-achievement notification.
+// finished solves inside the goal's period, so recording, editing (a changed end date can move a
+// solve into or out of a period) or deleting a completion must immediately recompute their goals
+// in the SAME transaction (no stale progress, no extra round-trip). Each member is recomputed once
+// per published batch. It reacts ONLY to completion events, so the GoalProgressed/GoalAchieved
+// events the recompute itself publishes never re-trigger it (no recursion) — and because those
+// events flow through this same publisher, they are recorded + scheduled too, finally landing the
+// goal-achievement notification.
 export const inProcessEventPublisher = (
   ctx: MutationCtx,
 ): DomainEventPublisher =>
   makeEventPublisher(ctx, "solving", async (events) => {
+    const members = new Set<MemberId>();
     for (const event of events as readonly SolvingDomainEvent[]) {
       if (
         event.name === "CompletionRecorded" ||
+        event.name === "CompletionEdited" ||
         event.name === "CompletionDeleted"
       ) {
-        await recomputeGoals(ctx, event.userId);
+        members.add(event.userId);
       }
     }
+    for (const userId of members) await recomputeGoals(ctx, userId);
   });
 
-// Recompute the member's derived goal progress from their authoritative completion count. Reuses
+// Recompute the member's derived goal progress from their finished solves. Reuses
 // THIS publisher so the recompute's own events (GoalProgressed/GoalAchieved) are durably recorded
 // + scheduled; the sync handler ignores those names, so the recompute can never recurse.
 const recomputeGoals = async (

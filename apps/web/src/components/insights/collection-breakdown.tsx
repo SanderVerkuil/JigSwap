@@ -7,19 +7,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 import { FolderOpen } from "lucide-react";
-import { useMemo } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  LabelList,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { useTranslations } from "use-intl";
+import { Bar, BarChart, LabelList, XAxis, YAxis } from "recharts";
+import { useFormatter, useTranslations } from "use-intl";
 
 interface DistributionEntry {
   label: string;
@@ -33,13 +24,54 @@ export interface CollectionBreakdownData {
   byCondition: DistributionEntry[];
 }
 
-const PALETTE = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
+// The query's sentinel buckets: UNKNOWN_BUCKET (no value) and OTHER_BUCKET (brands beyond the top
+// six) in packages/domain/src/insights/collection-breakdown.ts. The web doesn't depend on the domain
+// package, so the two strings are mirrored here. They are translated, never shown.
+export const UNKNOWN_BUCKET = "__unknown";
+export const OTHER_BUCKET = "__other";
+
+// A bucket's display label: the sentinels translated, anything else (a piece-count range, a brand,
+// or an older backend's English "Unknown") as is.
+export function bucketLabel(
+  label: string,
+  names: { unknown: string; other: string },
+): string {
+  if (label === UNKNOWN_BUCKET) return names.unknown;
+  if (label === OTHER_BUCKET) return names.other;
+  return label;
+}
+
+// The brand bars in the query's order (top brands by count, then Other) without the copies that
+// have no brand: those are counted apart for a note under the chart, so they never rank as a brand.
+export function brandSeries(data: DistributionEntry[]): {
+  bars: DistributionEntry[];
+  withoutBrand: number;
+} {
+  return {
+    bars: data.filter((e) => e.value > 0 && e.label !== UNKNOWN_BUCKET),
+    withoutBrand: data.find((e) => e.label === UNKNOWN_BUCKET)?.value ?? 0,
+  };
+}
+
+// Difficulty is ordered, so its colours are one violet ramp: in light mode from light (easy) to dark
+// (expert), in dark mode from near the page (easy) to bright (expert), plus a grey for a difficulty
+// the puzzle doesn't have. The colour belongs to the difficulty, never to its rank, so it stays put
+// as counts change. Checked as an ordinal ramp against the page background (light #fdfdff, dark
+// #1d1c34): one hue, lightness monotone with steps of at least 0.06 OKLCH L, the faintest step at
+// least 2:1. Colour is never the only cue: the legend names every difficulty.
+const DIFFICULTY_LEVELS = ["easy", "medium", "hard", "expert"] as const;
+type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
+
+const DIFFICULTY_SWATCH: Record<DifficultyLevel | "unknown", string> = {
+  easy: "bg-[#a3a9f6] dark:bg-[#4c4a95]",
+  medium: "bg-[#7e80ee] dark:bg-[#6b67d2]",
+  hard: "bg-[#5e56de] dark:bg-[#8e8fef]",
+  expert: "bg-[#4338ae] dark:bg-[#babdfe]",
+  unknown: "bg-[#a4a4ac] dark:bg-[#686774]",
+};
+
+const isDifficultyLevel = (label: string): label is DifficultyLevel =>
+  (DIFFICULTY_LEVELS as readonly string[]).includes(label);
 
 function hasValues(entries: DistributionEntry[]): boolean {
   return entries.some((e) => e.value > 0);
@@ -50,10 +82,15 @@ function PieceCountChart({ data }: { data: DistributionEntry[] }) {
   const config = {
     value: { label: t("count"), color: "var(--chart-1)" },
   } satisfies ChartConfig;
+  const names = { unknown: t("unknown"), other: t("other") };
+  const buckets = data.map((e) => ({
+    ...e,
+    label: bucketLabel(e.label, names),
+  }));
 
   return (
     <ChartContainer config={config} className="h-[220px] w-full">
-      <BarChart data={data} margin={{ left: 4, right: 8 }}>
+      <BarChart data={buckets} margin={{ left: 4, right: 8 }}>
         <XAxis
           dataKey="label"
           tickLine={false}
@@ -74,66 +111,147 @@ function PieceCountChart({ data }: { data: DistributionEntry[] }) {
   );
 }
 
+// Height of one brand row: a bar of at most BRAND_BAR_SIZE plus the gap to the next one.
+const BRAND_BAR_SIZE = 28;
+const BRAND_ROW_HEIGHT = 40;
+
+// Top brands as horizontal bars, in the query's order: the six biggest brands, then Other. Copies
+// without a brand are not a brand; a note under the bars counts them. The chart grows with its rows,
+// so one or two brands get thin bars instead of bars stretched to fill a fixed height.
 function BrandChart({ data }: { data: DistributionEntry[] }) {
   const t = useTranslations("insights.breakdown");
-  // Top 6 brands, longest bar first, so a long tail of one-offs doesn't crowd the chart.
-  const top = useMemo(
-    () => [...data].sort((a, b) => b.value - a.value).slice(0, 6),
-    [data],
-  );
+  const names = { unknown: t("unknown"), other: t("other") };
+  const { bars, withoutBrand } = brandSeries(data);
+  const rows = bars.map((e) => ({ ...e, label: bucketLabel(e.label, names) }));
   const config = {
     value: { label: t("count"), color: "var(--chart-2)" },
   } satisfies ChartConfig;
 
   return (
-    <ChartContainer config={config} className="h-[220px] w-full">
-      <BarChart data={top} layout="vertical" margin={{ left: 8, right: 24 }}>
-        <YAxis
-          dataKey="label"
-          type="category"
-          tickLine={false}
-          axisLine={false}
-          width={96}
-          tickMargin={4}
-        />
-        <XAxis type="number" hide allowDecimals={false} />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" fill="var(--color-value)" radius={4}>
-          <LabelList
-            dataKey="value"
-            position="right"
-            className="fill-foreground text-xs"
-          />
-        </Bar>
-      </BarChart>
-    </ChartContainer>
+    <div className="space-y-2">
+      {rows.length > 0 && (
+        <ChartContainer
+          config={config}
+          className="w-full"
+          style={{ height: rows.length * BRAND_ROW_HEIGHT }}
+        >
+          <BarChart
+            data={rows}
+            layout="vertical"
+            margin={{ left: 8, right: 24 }}
+          >
+            <YAxis
+              dataKey="label"
+              type="category"
+              tickLine={false}
+              axisLine={false}
+              width={96}
+              tickMargin={4}
+            />
+            <XAxis type="number" hide allowDecimals={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar
+              dataKey="value"
+              fill="var(--color-value)"
+              radius={4}
+              maxBarSize={BRAND_BAR_SIZE}
+            >
+              <LabelList
+                dataKey="value"
+                position="right"
+                className="fill-foreground text-xs"
+              />
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+      )}
+      {withoutBrand > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {t("withoutBrand", { count: withoutBrand })}
+        </p>
+      )}
+    </div>
   );
 }
 
+interface DifficultySlice {
+  // The difficulty level, or "unknown" for UNKNOWN_BUCKET and any other label; picks the colour.
+  key: DifficultyLevel | "unknown";
+  label: string;
+  value: number;
+}
+
+// The known difficulties from easy to expert, whatever their counts, then the copies without one
+// (UNKNOWN_BUCKET, translated); a label the client doesn't know (an older backend's English
+// "Unknown") is shown as is.
+function difficultySlices(
+  data: DistributionEntry[],
+  difficultyLabel: (level: DifficultyLevel | "unknown") => string,
+): DifficultySlice[] {
+  const known = DIFFICULTY_LEVELS.flatMap((level) => {
+    const value = data.find((d) => d.label === level)?.value ?? 0;
+    return value > 0
+      ? [{ key: level, label: difficultyLabel(level), value }]
+      : [];
+  });
+  const rest = data
+    .filter((d) => d.value > 0 && !isDifficultyLevel(d.label))
+    .map((d) => ({
+      key: "unknown" as const,
+      label: d.label === UNKNOWN_BUCKET ? difficultyLabel("unknown") : d.label,
+      value: d.value,
+    }));
+  return [...known, ...rest];
+}
+
+// "By difficulty" as a stacked bar over a legend list. The bar is drawn for sighted readers only;
+// the legend names each difficulty in the app's language with its count and share, so nothing
+// depends on hovering or on telling colours apart.
 function DifficultyChart({ data }: { data: DistributionEntry[] }) {
   const t = useTranslations("insights.breakdown");
-  const config = useMemo(() => {
-    const c: ChartConfig = { value: { label: t("count") } };
-    data.forEach((d, i) => {
-      c[d.label] = { label: d.label, color: PALETTE[i % PALETTE.length] };
-    });
-    return c;
-  }, [data, t]);
+  const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
+  const format = useFormatter();
+  const slices = difficultySlices(data, (level) => tDifficulty(level));
+  const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   return (
-    <ChartContainer
-      config={config}
-      className="mx-auto aspect-square max-h-[220px]"
-    >
-      <PieChart>
-        <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
-        <Pie data={data} dataKey="value" nameKey="label" innerRadius={50}>
-          {data.map((entry, i) => (
-            <Cell key={entry.label} fill={PALETTE[i % PALETTE.length]} />
-          ))}
-        </Pie>
-      </PieChart>
-    </ChartContainer>
+    <div className="space-y-4">
+      <p className="text-sm">{t("difficultyTotal", { count: total })}</p>
+      <div
+        aria-hidden="true"
+        data-difficulty-bar
+        className="flex h-3 w-full gap-0.5 overflow-hidden rounded-full"
+      >
+        {slices.map((slice) => (
+          <div
+            key={slice.label}
+            data-difficulty={slice.key}
+            className={cn("h-full min-w-1", DIFFICULTY_SWATCH[slice.key])}
+            style={{ flex: `${slice.value} 1 0%` }}
+          />
+        ))}
+      </div>
+      <ul aria-label={t("difficulty")} className="space-y-2 text-sm">
+        {slices.map((slice) => (
+          <li key={slice.label} className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "size-2.5 shrink-0 rounded-full",
+                DIFFICULTY_SWATCH[slice.key],
+              )}
+            />
+            <span className="min-w-0 flex-1 truncate">{slice.label}</span>
+            <span className="font-medium tabular-nums">
+              {format.number(slice.value)}
+            </span>
+            <span className="text-muted-foreground w-12 text-right tabular-nums">
+              {format.number(slice.value / total, { style: "percent" })}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

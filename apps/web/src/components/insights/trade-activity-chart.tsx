@@ -3,7 +3,7 @@
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { ArrowLeftRight } from "lucide-react";
 import { useTranslations } from "use-intl";
-import { monthLabel, Sparkbars } from "./sparkbars";
+import { Sparkbars } from "./sparkbars";
 
 interface StatusCount {
   status: string;
@@ -21,8 +21,7 @@ export interface TradeActivityData {
 export function TradeActivityChart({ data }: { data: TradeActivityData }) {
   const t = useTranslations("insights");
 
-  const values = data.byMonth.map((m) => m.count);
-  const labels = data.byMonth.map((m) => monthLabel(m.month));
+  const points = data.byMonth.map((m) => ({ month: m.month, value: m.count }));
 
   // Localized "2 Completed · 1 Proposed" summary of the non-empty statuses,
   // preserving the server-defined order.
@@ -37,8 +36,9 @@ export function TradeActivityChart({ data }: { data: TradeActivityData }) {
       {data.total > 0 ? (
         <>
           <Sparkbars
-            data={values}
-            labels={labels}
+            points={points}
+            caption={t("trades.caption")}
+            valueLabel={t("trades.count")}
             color="var(--jigsaw-secondary)"
           />
           {statusSummary && (
