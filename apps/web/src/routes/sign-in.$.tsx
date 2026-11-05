@@ -1,5 +1,6 @@
 import { SignIn } from "@/compat/clerk";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { authAppearance } from "@/components/marketing/auth-field";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -21,7 +22,7 @@ function SignInPage() {
           without it Clerk links to the instance's hosted Account Portal,
           which has no way back to JigSwap. */}
       <SignIn
-        appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
+        appearance={authAppearance}
         fallbackRedirectUrl="/dashboard"
         signUpUrl="/sign-up"
       />

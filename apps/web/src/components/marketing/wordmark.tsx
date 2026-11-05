@@ -5,7 +5,7 @@ import { Image } from "@/compat/image";
 import logoIcon from "@/components/marketing/assets/icon-96.webp";
 import { cn } from "@/lib/utils";
 
-// Logo mark + two-tone wordmark: violet "Jig", green "Swap" (Fraunces 700).
+// Logo mark + two-tone wordmark. The logo keeps its own colours whatever the theme's primary does.
 // `textClassName` lets a tight layout hide the name and keep the mark.
 // `priority` for the header copy, which is above the fold.
 export function Wordmark({
@@ -28,14 +28,11 @@ export function Wordmark({
         className="block rounded-[7px]"
       />
       <span
-        className={cn(
-          "font-mk-heading font-bold leading-none tracking-[-0.01em]",
-          textClassName,
-        )}
+        className={cn("font-logo leading-none font-bold", textClassName)}
         style={{ fontSize: size }}
       >
-        <span className="text-mk-violet-600">Jig</span>
-        <span className="text-mk-green-600">Swap</span>
+        <span className="text-logo-jig">Jig</span>
+        <span className="text-logo-swap">Swap</span>
       </span>
     </span>
   );

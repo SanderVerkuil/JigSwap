@@ -4,7 +4,7 @@ import { Link } from "@/compat/link";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
 import { Puzzle, Star } from "lucide-react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 import type { PuzzleCardShellProps } from "./puzzle-card-shell";
 
 // One box in the public catalogue, derived from the paginated public-browse read it is fed by. It stands
@@ -30,6 +30,7 @@ export function DefinitionCard({
   priority?: boolean;
 }) {
   const t = useTranslations("publicCatalog");
+  const format = useFormatter();
   const Title = `h${headingLevel ?? 3}` as const;
   const tPuzzles = useTranslations("puzzles");
   // Difficulty labels live under the nested `puzzles.puzzles.*` namespace.
@@ -80,8 +81,10 @@ export function DefinitionCard({
           </p>
         )}
         <p className="text-[16px] leading-snug">
-          {card.pieceCount ?? 0} {tPuzzles("pieces")}
-          {difficulty && `, ${difficulty.toLowerCase()}`}
+          {card.pieceCount != null &&
+            `${format.number(card.pieceCount)} ${tPuzzles("pieces", { count: card.pieceCount })}`}
+          {difficulty &&
+            `${card.pieceCount != null ? ", " : ""}${difficulty.toLowerCase()}`}
         </p>
         {card.rating.count > 0 && (
           <p className="text-mk-text-muted mt-1 flex items-center gap-1 text-[16px]">

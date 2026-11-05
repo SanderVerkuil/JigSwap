@@ -1,5 +1,5 @@
 ---
-title: Your Library
+title: Your library
 order: 2
 summary: "Add puzzles, organize collections, log completions, and track your goals."
 ---

@@ -6,9 +6,10 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useTranslations } from "use-intl";
 
 // Pathless layout for the (public) marketing pages (about/contact/privacy/terms/
-// how-it-works/features). Marketing chrome (sticky header + footer) on the
-// brand-tinted ground; children keep their top-level URLs (/about, /contact, ...)
-// and lay out their own full-width sections.
+// how-it-works/features). Marketing chrome (sticky header + curtain footer);
+// children keep their top-level URLs (/about, /contact, ...) and lay out their
+// own full-width sections. The content is opaque and stacked above the footer,
+// so it slides up to uncover it.
 export const Route = createFileRoute("/_public")({
   pendingComponent: PublicPending,
   // 404 under a marketing route renders within this marketing shell (its Outlet).
@@ -23,12 +24,12 @@ function PublicPending() {
 
 function PublicLayout() {
   return (
-    <div className="mk-root font-mk-sans min-h-screen flex flex-col overflow-x-clip">
+    <div className="mk-root font-mk-sans min-h-svh flex flex-col overflow-x-clip">
       <MarketingHeader />
-      <div className="flex-1">
+      <div className="relative z-10 min-h-svh flex-1 bg-mk-bg">
         <Outlet />
       </div>
-      <MarketingFooter />
+      <MarketingFooter curtain />
     </div>
   );
 }

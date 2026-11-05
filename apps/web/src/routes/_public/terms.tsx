@@ -120,11 +120,7 @@ function TermsOfServicePage() {
 
   return (
     <main id={MAIN_CONTENT_ID}>
-      <PageHero
-        eyebrow={tm("eyebrow")}
-        title={t("title")}
-        lead={tm("termsLead")}
-      />
+      <PageHero title={t("title")} lead={tm("termsLead")} />
       <LegalDoc
         updated={`${t("lastUpdated")}: ${t("effectiveDate")}`}
         intro={t("introduction")}
@@ -133,14 +129,14 @@ function TermsOfServicePage() {
         {t("contact.description")}{" "}
         <a
           href={`mailto:${t("contact.emailAddress")}`}
-          className="text-mk-violet-600 font-medium hover:underline"
+          className="text-mk-text-strong font-semibold underline underline-offset-3"
         >
           {t("contact.emailAddress")}
         </a>
         . {t("contact.formNote")}{" "}
         <Link
           href="/contact"
-          className="text-mk-violet-600 font-medium hover:underline"
+          className="text-mk-text-strong font-semibold underline underline-offset-3"
         >
           {t("contact.linkLabel")}
         </Link>

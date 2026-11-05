@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
-// Marketing layout shell: 1200px max width, 24px gutters (design --container-max).
-// `narrow` is the 760px reading column used by legal docs and step lists.
+// Marketing layout shell: the home page's measure, full width with 40px margins and 16px on a phone, so
+// the header's logo and a page's text share one edge. `narrow` is a 760px reading column on that edge.
 export function Container({
   narrow = false,
   className,
@@ -15,8 +15,8 @@ export function Container({
   return (
     <div
       className={cn(
-        "w-full mx-auto px-6",
-        narrow ? "max-w-[760px]" : "max-w-[1200px]",
+        "w-full px-4 min-[760px]:px-10",
+        narrow && "max-w-[840px]",
         className,
       )}
     >

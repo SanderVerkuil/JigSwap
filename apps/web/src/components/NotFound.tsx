@@ -3,16 +3,7 @@ import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { Container } from "@/components/marketing/container";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
-import { Eyebrow } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
@@ -23,38 +14,34 @@ export function NotFoundContent({ actions }: { actions?: ReactNode }) {
   const t = useTranslations("notFound");
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-4 py-10">
-      <Card className="w-full max-w-md text-center">
-        <CardHeader className="space-y-4">
-          <div className="bg-muted mx-auto flex h-24 w-24 items-center justify-center rounded-full">
-            <TriangleAlert className="text-muted-foreground h-12 w-12" />
-          </div>
-          <CardTitle className="text-3xl font-bold">{t("title")}</CardTitle>
-          <CardDescription className="text-lg">
-            {t("description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">{t("message")}</p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            {actions ?? (
-              <>
-                <Button asChild>
-                  <Link href="/">{t("backToHome")}</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/browse">{t("browsePuzzles")}</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-[1200px] flex-col justify-center px-6 py-16">
+      <h1 className="font-heading text-foreground max-w-[20ch] text-[clamp(33px,4.6vw,68px)] leading-[1.06] font-normal tracking-[-0.015em] text-balance">
+        {t("title")}
+      </h1>
+      <p className="text-foreground mt-5 max-w-[52ch] text-[clamp(18px,1.5vw,21px)] leading-normal text-pretty">
+        {t("description")}
+      </p>
+      <div className="mt-7 flex flex-wrap items-center gap-3">
+        {actions ?? (
+          <>
+            <Button variant="brand" className="h-11 px-6 text-[16px]" asChild>
+              <Link href="/">{t("backToHome")}</Link>
+            </Button>
+            <Button
+              variant="link"
+              className="h-11 px-2 text-[16px] underline underline-offset-3"
+              asChild
+            >
+              <Link href="/browse">{t("browsePuzzles")}</Link>
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-const inlineLink = "text-mk-violet-600 font-medium hover:underline";
+const inlineLink = "font-medium underline underline-offset-4";
 
 // The public 404 in the marketing look: a 404 kicker, an h1, one line of explanation and ways
 // back into the public site (home, catalogue, docs, contact) — never members-only pages, which
@@ -73,8 +60,8 @@ export function MarketingNotFoundContent({
   const t = useTranslations("notFound");
   return (
     <Container className="py-[clamp(56px,9vw,112px)] text-center">
-      {kicker && <Eyebrow center>{kicker}</Eyebrow>}
-      <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(32px,5vw,48px)] leading-[1.1] mt-4 text-balance">
+      {kicker && <p className="text-[17px] text-mk-text-muted">{kicker}</p>}
+      <h1 className="font-mk-heading font-normal text-mk-text-strong text-[clamp(32px,5vw,48px)] leading-[1.1] mt-4 text-balance">
         {title ?? t("title")}
       </h1>
       <p className="mt-4 mx-auto max-w-[540px] text-[17px] leading-relaxed text-mk-text-muted text-pretty">
@@ -142,10 +129,14 @@ export function AppNotFound() {
     <NotFoundContent
       actions={
         <>
-          <Button asChild>
+          <Button className="h-11 px-6 text-[16px]" asChild>
             <Link href="/dashboard">{t("backToDashboard")}</Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button
+            variant="link"
+            className="h-11 px-2 text-[16px] underline underline-offset-3"
+            asChild
+          >
             <Link href="/browse">{t("browsePuzzles")}</Link>
           </Button>
         </>

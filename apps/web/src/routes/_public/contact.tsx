@@ -1,4 +1,8 @@
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
+import { Art } from "@/components/marketing/art";
+import canalBoat from "@/components/marketing/assets/art/crops/canal-boat.webp";
+import floorLiving from "@/components/marketing/assets/art/floor-living.webp";
+import streetTall from "@/components/marketing/assets/art/street-tall.webp";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
@@ -12,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useLocale, useTranslations } from "use-intl";
@@ -22,74 +25,100 @@ export const Route = createFileRoute("/_public/contact")({
   component: ContactPage,
 });
 
-const CHANNELS = [
-  { icon: Mail, key: "email" },
-  { icon: LifeBuoy, key: "support" },
-  { icon: Shield, key: "privacy" },
-] as const;
+const CHANNELS = ["email", "support", "privacy"] as const;
 
-// Contact: the form + channel list. Submissions persist via the public
-// gateway.contact.submit mutation (admin triage), not a fake success state.
+// Contact: the form on a white drawer beside the street, then the addresses. Submissions persist via
+// the public gateway.contact.submit mutation (admin triage), not a fake success state.
 function ContactPage() {
   const t = useTranslations("marketing.contactPage");
   return (
     <main id={MAIN_CONTENT_ID}>
       <PageHero
-        eyebrow={t("heroEyebrow")}
         title={t("heroTitle")}
         lead={t("heroLead")}
+        below={
+          <>
+            <Container>
+              {/* The form comes first in the DOM, so on phones (one column) it starts right under
+                  the lead and is reached first. From lg the grid puts the street back on its left. */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8">
+                <Reveal className="lg:col-start-2 lg:row-start-1">
+                  <ContactForm />
+                </Reveal>
+                <Reveal delay={100} className="lg:col-start-1 lg:row-start-1">
+                  <Art
+                    src={streetTall}
+                    width={650}
+                    height={864}
+                    alt={t("artAlt")}
+                    className="rounded-t-md object-cover object-top max-lg:aspect-[4/3] lg:h-full"
+                  />
+                </Reveal>
+              </div>
+            </Container>
+            <div className="bg-mk-plank h-3" />
+          </>
+        }
       />
 
       <Section>
         <Container>
-          {/* The form comes first in the DOM, so on phones (one column) it
-              starts right under the hero and is reached first. From 861px the
-              grid puts the channel list back in the left column. */}
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] max-[860px]:grid-cols-1 gap-[clamp(32px,5vw,64px)] items-start">
-            <Reveal
-              delay={120}
-              className="min-[861px]:col-start-2 min-[861px]:row-start-1"
-            >
-              <ContactForm />
-            </Reveal>
-            <Reveal className="min-[861px]:col-start-1 min-[861px]:row-start-1">
-              <div className="flex flex-col gap-2">
-                {CHANNELS.map(({ icon: Icon, key }, i) => (
-                  <div
-                    key={key}
-                    className={cn(
-                      "py-[18px]",
-                      i < CHANNELS.length - 1 && "border-b border-mk-border",
-                    )}
-                  >
-                    <div className="flex items-center gap-[9px]">
-                      <Icon size={17} className="text-mk-violet-600" />
-                      <span className="font-mk-heading font-semibold text-base text-mk-text-strong whitespace-nowrap">
+          {/* The form above comes first in the DOM, so phones reach it first. From 861px the
+              addresses stand back in the left column, the pictures on the right. */}
+          <div className="grid grid-cols-1 gap-x-[clamp(24px,5vw,72px)] gap-y-9 min-[861px]:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            <div>
+              <Reveal>
+                <h2 className="font-mk-heading text-mk-text-strong text-[clamp(28px,3.6vw,44px)] leading-[1.1] font-normal tracking-[-0.01em] text-balance">
+                  {t("channelsTitle")}
+                </h2>
+                <p className="text-mk-text-body mt-4 max-w-[44ch] text-[17px] leading-relaxed text-pretty">
+                  <strong className="text-mk-text-strong font-semibold">
+                    {t("basedTitle")}.
+                  </strong>{" "}
+                  {t("basedBody")}
+                </p>
+              </Reveal>
+              <ul className="mt-8 flex flex-col gap-7">
+                {CHANNELS.map((key, i) => (
+                  <li key={key}>
+                    <Reveal delay={i * 70}>
+                      <h3 className="font-mk-heading text-mk-text-strong text-[22px] leading-[1.25] font-normal">
                         {t(`${key}Title`)}
-                      </span>
-                    </div>
-                    <a
-                      href={`mailto:${t(`${key}Value`)}`}
-                      className="block text-[15.5px] text-mk-violet-600 mt-1.5 font-medium hover:underline"
-                    >
-                      {t(`${key}Value`)}
-                    </a>
-                    <div className="text-sm text-mk-text-muted mt-1">
-                      {t(`${key}Sub`)}
-                    </div>
-                  </div>
+                      </h3>
+                      <a
+                        href={`mailto:${t(`${key}Value`)}`}
+                        className="text-mk-text-strong mt-1 inline-block text-[17px] font-semibold underline underline-offset-3"
+                      >
+                        {t(`${key}Value`)}
+                      </a>
+                      <p className="text-mk-text-body mt-1 text-[17px] leading-normal">
+                        {t(`${key}Sub`)}
+                      </p>
+                    </Reveal>
+                  </li>
                 ))}
-                <div className="mt-4 px-[22px] py-5 rounded-[20px] bg-mk-muted border border-mk-border">
-                  <div className="flex items-center gap-2.5 font-semibold text-mk-text-strong text-[15px]">
-                    <MapPin size={18} className="text-mk-violet-600" />
-                    {t("basedTitle")}
-                  </div>
-                  <p className="text-sm text-mk-text-muted mt-2 leading-relaxed">
-                    {t("basedBody")}
-                  </p>
-                </div>
-              </div>
-            </Reveal>
+              </ul>
+            </div>
+            <div>
+              <Reveal delay={70}>
+                <Art
+                  src={canalBoat}
+                  width={480}
+                  height={360}
+                  alt={t("channelsArtAlt")}
+                  className="max-w-[480px] rounded-md"
+                />
+              </Reveal>
+              <Reveal className="mt-[clamp(32px,4vw,56px)]">
+                <Art
+                  src={floorLiving}
+                  width={1129}
+                  height={292}
+                  alt={t("livingArtAlt")}
+                  className="min-h-[170px] max-w-[1129px] rounded-md object-cover"
+                />
+              </Reveal>
+            </div>
           </div>
         </Container>
       </Section>
@@ -198,29 +227,28 @@ function ContactForm() {
     }
   };
 
+  const drawerCls =
+    "bg-mk-card rounded-t-md p-[clamp(20px,3vw,40px)] max-lg:rounded-md lg:h-full";
   const labelCls =
-    "block text-[13.5px] font-semibold text-mk-text-strong mb-[7px]";
-  const errCls = "text-[12.5px] text-mk-danger mt-1.5";
+    "block text-[16px] font-semibold text-mk-text-strong mb-[7px]";
+  const errCls = "text-[16px] text-mk-danger mt-1.5";
 
   if (sent) {
     return (
-      <div className="px-9 py-11 rounded-[20px] bg-mk-card border border-mk-border text-center shadow-mk-sm">
-        <div aria-hidden="true" className="text-[44px]">
-          🧩
-        </div>
+      <div className={drawerCls}>
         <h2
           ref={sentHeadingRef}
           tabIndex={-1}
-          className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3 outline-none"
+          className="font-mk-heading text-mk-text-strong text-[clamp(28px,3.6vw,44px)] leading-[1.1] font-normal tracking-[-0.01em] outline-none"
         >
           {t("sentTitle")}
         </h2>
-        <p className="text-[15.5px] text-mk-text-muted mt-2.5 leading-relaxed">
+        <p className="text-mk-text-body mt-3 max-w-[52ch] text-[17px] leading-relaxed">
           {t("sentBody")}
         </p>
         <Button
           variant="outline"
-          className="mt-[22px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
+          className="bg-mk-card border-mk-input-border text-mk-text-strong hover:bg-mk-muted mt-6"
           onClick={() => {
             flushSync(() => {
               setSent(false);
@@ -236,12 +264,11 @@ function ContactForm() {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      noValidate
-      className="px-8 pt-8 pb-[34px] rounded-[20px] bg-mk-card border border-mk-border shadow-mk-sm"
-    >
-      <div className="grid grid-cols-2 max-[860px]:grid-cols-1 gap-[18px]">
+    <form onSubmit={submit} noValidate className={drawerCls}>
+      <h2 className="font-mk-heading text-mk-text-strong mb-6 text-[clamp(28px,3.6vw,44px)] leading-[1.1] font-normal tracking-[-0.01em] text-balance">
+        {t("formTitle")}
+      </h2>
+      <div className="grid grid-cols-2 gap-[18px] max-[860px]:grid-cols-1">
         <div>
           <label htmlFor="contact-name" className={labelCls}>
             {t("formName")}
@@ -255,7 +282,7 @@ function ContactForm() {
             onChange={set("name")}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "contact-name-error" : undefined}
-            className={errors.name ? "border-mk-danger" : ""}
+            className={cn("text-[16px]", errors.name && "border-mk-danger")}
           />
           {errors.name && (
             <div id="contact-name-error" className={errCls}>
@@ -277,7 +304,7 @@ function ContactForm() {
             onChange={set("email")}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "contact-email-error" : undefined}
-            className={errors.email ? "border-mk-danger" : ""}
+            className={cn("text-[16px]", errors.email && "border-mk-danger")}
           />
           {errors.email && (
             <div id="contact-email-error" className={errCls}>
@@ -294,12 +321,13 @@ function ContactForm() {
           {SUBJECTS.map((k) => (
             <label
               key={k}
+
               className={cn(
-                "relative cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
-                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-mk-ring",
+                "relative cursor-pointer rounded-md border px-3.5 py-2 text-[16px] font-medium transition-[background-color,color,transform] duration-150 ease-mk-out motion-safe:active:scale-[0.97]",
+                "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-mk-ring",
                 form.subject === k
-                  ? "border-mk-violet-400 bg-mk-violet-50 text-mk-violet-600"
-                  : "border-mk-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
+                  ? "border-mk-canal bg-mk-canal text-mk-on-canal"
+                  : "border-mk-input-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
               )}
             >
               <input
@@ -322,7 +350,7 @@ function ContactForm() {
         <textarea
           ref={messageRef}
           id="contact-message"
-          rows={5}
+          rows={6}
           value={form.message}
           onChange={set("message")}
           placeholder={t("formMessagePlaceholder")}
@@ -331,8 +359,8 @@ function ContactForm() {
             errors.message ? "contact-message-error" : undefined
           }
           className={cn(
-            "w-full resize-y text-base md:not-pointer-coarse:text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
-            "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
+            "bg-mk-card text-mk-text-body placeholder:text-mk-text-muted w-full resize-y rounded-md border px-[13px] py-[11px] text-[16px] outline-none",
+            "focus-visible:border-mk-ring focus-visible:ring-mk-ring/40 focus-visible:ring-[3px]",
             errors.message ? "border-mk-danger" : "border-mk-input-border",
           )}
         />
@@ -351,16 +379,16 @@ function ContactForm() {
         type="submit"
         variant="brand"
         disabled={submitMessage.isPending}
-        className="mt-[22px] w-full h-11 text-[15px]"
+        className="mt-[22px] h-11 w-full text-[16px]"
       >
         {t("submit")}
       </Button>
-      <p className="text-[12.5px] text-mk-text-muted mt-3.5 text-center leading-normal">
+      <p className="text-mk-text-muted mt-3.5 text-[16px] leading-normal">
         {t.rich("privacyNote", {
           link: (chunks) => (
             <Link
               to="/privacy"
-              className="font-medium text-mk-violet-600 underline underline-offset-2 hover:no-underline"
+              className="text-mk-text-strong font-medium underline underline-offset-3 hover:no-underline"
             >
               {chunks}
             </Link>

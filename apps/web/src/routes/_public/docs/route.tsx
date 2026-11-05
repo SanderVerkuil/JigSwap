@@ -65,7 +65,7 @@ function DocsLayout() {
         <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[861px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
           <aside
             aria-label={t("navSheetTitle")}
-            className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[861px]:hidden"
+            className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-2 py-8 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin] max-[861px]:hidden"
           >
             <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
           </aside>

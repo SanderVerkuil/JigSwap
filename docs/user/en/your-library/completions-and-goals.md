@@ -1,5 +1,5 @@
 ---
-title: Completions & Goals
+title: Completions & goals
 order: 4
 summary: "Log solves, finish in-progress puzzles, review them, and track goals."
 ---

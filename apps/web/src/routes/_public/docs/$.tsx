@@ -72,9 +72,9 @@ function DocPageView() {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_220px] max-[1280px]:grid-cols-1 gap-x-[clamp(24px,3vw,56px)] items-start">
-      <article className="max-w-[720px] min-w-0">
+      <article className="max-w-[72ch] min-w-0">
         <DocBreadcrumb trail={trail} />
-        <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(30px,4vw,40px)] leading-[1.12] mb-4">
+        <h1 className="font-mk-heading font-normal tracking-[-0.01em] text-mk-text-strong text-[clamp(30px,4vw,44px)] leading-[1.1] mb-5 text-balance">
           {page.frontmatter.title}
         </h1>
         <DocContent html={html} />

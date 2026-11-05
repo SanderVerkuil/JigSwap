@@ -1,5 +1,5 @@
 ---
-title: Quick Search
+title: Quick search
 order: 4
 summary: "Use the command palette to jump anywhere and find puzzles, people, and more."
 ---

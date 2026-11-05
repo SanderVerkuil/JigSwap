@@ -1,5 +1,5 @@
 ---
-title: Your Dashboard
+title: Your dashboard
 order: 3
 summary: "Read your personal briefing of exchanges, goals, stats, and fresh puzzles, and set up your shelf with Quick setup."
 ---

@@ -76,7 +76,7 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     shelfColor: "#c98f4d",
     spotIntensity: 0.9,
     spotColor: "#fff1d8",
-    fogColor: "#efedf7", // near the light page background
+    fogColor: "#eef5f9", // near the light page background
   },
   dark: {
     keyIntensity: 0.65,
@@ -84,11 +84,11 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     ambientIntensity: 0.3,
     ambientColor: "#cdd2f2",
     hemiIntensity: 0.18,
-    rimIntensity: 0.9, // violet rim so silhouettes read on dark bg
+    rimIntensity: 0.9, // rim light so silhouettes read on dark bg
     shadowOpacity: 0.28, // strong shadows read as holes on dark pages
     shelfColor: "#8a5f33",
     spotIntensity: 2.6,
     spotColor: "#ffe3b3",
-    fogColor: "#16142a", // near the dark page background
+    fogColor: "#15343d", // near the dark page background
   },
 };

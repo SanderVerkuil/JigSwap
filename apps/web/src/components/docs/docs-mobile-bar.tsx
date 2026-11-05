@@ -12,7 +12,7 @@ export function DocsMobileBar({
   // Shown where the docs layout hides its sidebar. The marketing header's nav
   // has folded into its burger by then, so this is never a second nav bar.
   return (
-    <div className="hidden max-[861px]:flex sticky top-[70px] z-30 items-center gap-3 h-12 px-5 bg-[color-mix(in_oklab,var(--mk-card)_88%,transparent)] backdrop-blur-md border-b border-mk-border">
+    <div className="hidden max-[861px]:flex sticky top-16 z-30 items-center gap-3 h-12 px-5 bg-mk-sky-soft">
       {/* The name comes from the content, so it starts with the visible label
           (WCAG 2.5.3); the sr-only tail says what the button does. */}
       <button

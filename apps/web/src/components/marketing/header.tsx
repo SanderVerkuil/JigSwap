@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { SkipLink } from "@/components/a11y/skip-link";
+import { FOCUS, PRESS } from "@/components/marketing/home/classes";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,25 +31,49 @@ const NAV = [
   { href: "/contact", key: "contact" },
 ] as const;
 
-// Brand CTA in the bar at every width: compact (40px tall) below the desktop
-// breakpoint, the regular button size above it.
-const BAR_CTA = "h-10 px-3.5 min-[1200px]:h-9 min-[1200px]:px-4";
+const BAR_CONTROL = cn(
+  PRESS,
+  FOCUS,
+  "inline-flex h-11 cursor-pointer items-center justify-center rounded-[10px] text-[15px] font-semibold hover:bg-mk-sky-soft",
+);
 
-// Sticky marketing header: transparent over the hero, frosted card once
-// scrolled. Nav + language pill + mode toggle + auth actions. The full nav only
-// shows from 1200px, where the longest bar (Dutch, signed out: about 1,185px) fits
-// on one line; the page clips overflow, so whatever does not fit is out of reach.
-// If that bar gets longer the breakpoint must rise, and every min-[1200px] class
-// moves with it. Below it the nav folds into the burger, and below 861px the login
-// link follows. The bar keeps the brand CTA next to the menu toggle at every width;
-// on phones (<640px) the language and theme switches move into the menu to make
-// room for it. Below 375px the bar tightens so the wordmark still fits beside the
-// longest CTA (Dutch: 360px is just enough), and only below 360px, under the
-// width of common Android phones, does it shrink to its logo mark.
-export function MarketingHeader() {
+const ICON_BUTTON = cn(BAR_CONTROL, "w-10 min-[760px]:w-11");
+
+// The action in the bar at every width, a little narrower below the desktop breakpoint.
+const BAR_CTA =
+  "h-11 max-w-60 overflow-hidden rounded-[10px] px-3.5 text-[16px] font-bold min-[1200px]:px-4";
+
+// Sticky marketing header: a plain 64px bar on the sky, solid, with no border or shadow. Nav, language,
+// mode, and one action. Its height is what the home page's stacking sheets offset from. The full nav
+// only shows from 1200px, where the longest bar (Dutch, signed out) fits on one line; the page clips
+// overflow, so whatever does not fit is out of reach. If that bar gets longer the breakpoint must rise,
+// and every min-[1200px] class moves with it. Below it the nav folds into the burger, and below 861px
+// the login link follows. The bar keeps its action next to the menu toggle at every width; on phones
+// (<640px) the language and theme switches move into the menu to make room for it. Below 375px the bar
+// tightens so the wordmark still fits beside the longest action, and only below 360px, under the width
+// of common Android phones, does it shrink to its logo mark.
+export function MarketingHeader({
+  hideActionNearHero = false,
+}: {
+  // The home hero has the same action in marigold; the header's stays away until that one has gone.
+  hideActionNearHero?: boolean;
+}) {
   const t = useTranslations("marketing.nav");
+  const [heroActionInView, setHeroActionInView] =
+    React.useState(hideActionNearHero);
+
+  React.useEffect(() => {
+    if (!hideActionNearHero) return;
+    const action = document.querySelector("[data-hero-action]");
+    if (!action) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setHeroActionInView(entry.isIntersecting),
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
+    observer.observe(action);
+    return () => observer.disconnect();
+  }, [hideActionNearHero]);
   const { pathname } = useLocation();
-  const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const headerRef = React.useRef<HTMLElement>(null);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
@@ -86,24 +111,22 @@ export function MarketingHeader() {
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const navLink = (item: (typeof NAV)[number], mobile = false) => (
     <Link
       key={item.href}
       href={item.href}
       onClick={() => setOpen(false)}
+      aria-current={pathname === item.href ? "page" : undefined}
       className={cn(
+        FOCUS,
         mobile
-          ? "text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
-          : "text-[15px] font-medium py-1.5 whitespace-nowrap hover:text-mk-violet-600 transition-colors",
-        !mobile &&
-          (pathname === item.href ? "text-mk-violet-600" : "text-mk-text-body"),
+          ? "flex min-h-12 items-center text-[17px] font-semibold"
+          : cn(
+              PRESS,
+              "inline-flex min-h-11 items-center text-[16px] whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px]",
+              pathname === item.href &&
+                "underline decoration-2 underline-offset-[5px]",
+            ),
       )}
     >
       {t(item.key)}
@@ -113,42 +136,53 @@ export function MarketingHeader() {
   return (
     <header
       ref={headerRef}
-      className={cn(
-        "sticky top-0 z-50 transition-[background-color,border-color] duration-250",
-        "border-b",
-        scrolled
-          ? "bg-[color-mix(in_oklab,var(--mk-card)_86%,transparent)] backdrop-blur-md backdrop-saturate-150 border-mk-border"
-          : "bg-transparent border-transparent",
-      )}
+      className="sticky top-0 z-50 bg-mk-sky text-mk-text-strong"
     >
       {/* First Tab stop on every marketing page: jumps to the page's <main>. */}
       <SkipLink />
-      <div className="w-full max-w-[1200px] mx-auto px-6 max-[375px]:px-4 flex items-center gap-3 max-[375px]:gap-2 sm:gap-5 h-[70px]">
-        <Link href="/" aria-label="JigSwap">
-          <Wordmark priority textClassName="max-[360px]:hidden" />
+      <div className="flex h-16 w-full items-center gap-2 px-4 max-[375px]:gap-1.5 min-[760px]:gap-5 min-[760px]:px-10">
+        <Link
+          href="/"
+          aria-label="JigSwap"
+          className={cn(PRESS, FOCUS, "min-[1200px]:mr-2")}
+        >
+          <Wordmark size={24} priority textClassName="max-[360px]:hidden" />
         </Link>
         <nav
           aria-label={t("primaryNav")}
-          className="hidden min-[1200px]:flex items-center gap-4 ml-2"
+          className="ml-auto hidden items-center gap-[clamp(14px,1.6vw,26px)] min-[1200px]:flex"
         >
           {NAV.map((item) => navLink(item))}
         </nav>
-        <div className="ml-auto flex items-center gap-2.5 max-[375px]:gap-2">
+        <div className="ml-auto flex items-center gap-1 min-[1200px]:ml-0">
           <LangToggle className="hidden sm:inline-flex" />
           <ModeToggle className="hidden sm:inline-flex" />
           <Unauthenticated>
             <Link
               href="/sign-in"
-              className="hidden min-[861px]:inline-flex text-[15px] font-semibold whitespace-nowrap text-mk-text-body py-1.5 px-1 hover:text-mk-violet-600 transition-colors"
+              className={cn(
+                PRESS,
+                FOCUS,
+                "mx-1 hidden min-h-11 items-center text-[16px] font-bold whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px] min-[861px]:inline-flex min-[1200px]:mx-1.5",
+              )}
             >
               {t("login")}
             </Link>
-            <Button variant="brand" className={BAR_CTA} asChild>
-              <Link href="/sign-up">{t("startTrading")}</Link>
+            <Button
+              className={cn(
+                BAR_CTA,
+                "transition-[max-width,padding,opacity,scale] duration-200 ease-mk-out",
+                // Under a finger the button keeps a 44px minimum width, which would hold the room open.
+                heroActionInView &&
+                  "invisible max-w-0 px-0 opacity-0 pointer-coarse:min-w-0 min-[1200px]:px-0",
+              )}
+              asChild
+            >
+              <Link href="/sign-up">{t("startShelf")}</Link>
             </Button>
           </Unauthenticated>
           <Authenticated>
-            <Button variant="brand" className={BAR_CTA} asChild>
+            <Button className={BAR_CTA} asChild>
               <Link href="/dashboard">{t("dashboard")}</Link>
             </Button>
           </Authenticated>
@@ -159,9 +193,9 @@ export function MarketingHeader() {
             aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             aria-controls="mk-mobile-nav"
-            className="min-[1200px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
+            className={cn(ICON_BUTTON, "min-[1200px]:hidden")}
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>
@@ -174,33 +208,36 @@ export function MarketingHeader() {
           // finger and the click land on something else. Scrolls by itself: the sticky
           // header doesn't move with the page, so what doesn't fit below the bar could not
           // be reached otherwise.
-          className="absolute inset-x-0 top-full min-[1200px]:hidden max-h-[calc(100dvh-71px)] overflow-y-auto overscroll-contain border-y border-mk-border bg-mk-card shadow-mk-md"
+          className="absolute inset-x-0 top-full max-h-[calc(100dvh-64px)] overflow-y-auto overscroll-contain border-b border-mk-border bg-mk-card min-[1200px]:hidden"
         >
-          <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
+          <div className="flex w-full flex-col px-4 pt-2 pb-4 min-[760px]:px-10">
             {NAV.map((item) => navLink(item, true))}
             {/* From 861px these sit in the bar itself. */}
             <Unauthenticated>
               <Link
                 href="/sign-in"
                 onClick={() => setOpen(false)}
-                className="min-[861px]:hidden text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
+                className={cn(
+                  FOCUS,
+                  "flex min-h-12 items-center text-[17px] font-semibold min-[861px]:hidden",
+                )}
               >
                 {t("login")}
               </Link>
               <Button
                 variant="brand"
-                className="min-[861px]:hidden mt-3 w-full h-11"
+                className="mt-3 h-[50px] w-full rounded-[10px] text-[18px] font-bold min-[861px]:hidden"
                 asChild
               >
                 <Link href="/sign-up" onClick={() => setOpen(false)}>
-                  {t("startTrading")}
+                  {t("startShelf")}
                 </Link>
               </Button>
             </Unauthenticated>
             <Authenticated>
               <Button
                 variant="brand"
-                className="min-[861px]:hidden mt-3 w-full h-11"
+                className="mt-3 h-[50px] w-full rounded-[10px] text-[18px] font-bold min-[861px]:hidden"
                 asChild
               >
                 <Link href="/dashboard" onClick={() => setOpen(false)}>
@@ -208,7 +245,7 @@ export function MarketingHeader() {
                 </Link>
               </Button>
             </Authenticated>
-            <div className="sm:hidden flex items-center gap-2.5 pt-4">
+            <div className="flex items-center gap-1 pt-3 sm:hidden">
               <LangToggle />
               <ModeToggle />
             </div>
@@ -219,10 +256,9 @@ export function MarketingHeader() {
   );
 }
 
-// Flag + code pill and a dropdown of the language radios (shared with the app's
-// top bar) — switches the use-intl catalog via the locale cookie. With no
-// cookie set the trigger shows the system language (Accept-Language
-// negotiation in detectLocale).
+// Flag + code and a dropdown of the language radios (shared with the app's top bar) — switches the
+// use-intl catalog via the locale cookie. With no cookie set the trigger shows the system language
+// (Accept-Language negotiation in detectLocale).
 export function LangToggle({ className }: { className?: string }) {
   const t = useTranslations("marketing.nav");
   const current = currentLanguage(useLocale());
@@ -234,10 +270,7 @@ export function LangToggle({ className }: { className?: string }) {
           type="button"
           // Names the visible code too, so voice control can target what it sees (WCAG 2.5.3).
           aria-label={`${t("switchLanguage")}: ${current.name}, ${code}`}
-          className={cn(
-            "inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body",
-            className,
-          )}
+          className={cn(BAR_CONTROL, "gap-1.5 px-2.5", className)}
         >
           <Flag locale={current.code} />
           {code}
@@ -250,7 +283,7 @@ export function LangToggle({ className }: { className?: string }) {
   );
 }
 
-// Single round light/dark toggle (the marketing chrome skips the "system"
+// Single light/dark toggle (the marketing chrome skips the "system"
 // dropdown; next-themes still persists the choice app-wide).
 export function ModeToggle({ className }: { className?: string }) {
   const t = useTranslations("marketing.nav");
@@ -260,13 +293,10 @@ export function ModeToggle({ className }: { className?: string }) {
       type="button"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
       aria-label={t("toggleTheme")}
-      className={cn(
-        "inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-mk-text-body",
-        className,
-      )}
+      className={cn(ICON_BUTTON, className)}
     >
-      <Sun size={18} className="hidden dark:block" />
-      <Moon size={18} className="dark:hidden" />
+      <Sun size={20} className="hidden dark:block" />
+      <Moon size={20} className="dark:hidden" />
     </button>
   );
 }
