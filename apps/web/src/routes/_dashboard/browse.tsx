@@ -188,14 +188,7 @@ function BrowsePage() {
           sub={tBrowse("tryDifferentFilters")}
         />
       ) : (
-        <PuzzleViewProvider
-          viewMode={viewMode}
-          className={
-            viewMode === "grid"
-              ? "grid gap-[18px] [grid-template-columns:repeat(auto-fill,minmax(212px,1fr))]"
-              : undefined
-          }
-        >
+        <PuzzleViewProvider viewMode={viewMode}>
           {shownPuzzles.map((puzzle) => {
             // The owner is privacy-projected: `ownerId` is present only when the owner is revealed.
             // An anonymised owner can still receive a trade request (propose derives the recipient

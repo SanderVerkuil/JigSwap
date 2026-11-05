@@ -67,7 +67,7 @@ export function UserFooter() {
         onPointerDown={rememberMenuState}
         onClick={openUserMenu}
         aria-haspopup="menu"
-        className="grid min-w-0 flex-1 rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden"
+        className="grid min-w-0 flex-1 content-center rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden pointer-coarse:min-h-11"
       >
         <span className="truncate font-medium">
           {/* No email fallback: the email line below honours hideEmail. */}

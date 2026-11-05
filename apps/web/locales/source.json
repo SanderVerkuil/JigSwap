@@ -496,8 +496,7 @@
       "completed": "Completed"
     },
     "resultCount": "{count} of {total} puzzles",
-    "searchHint": "Press ⌘K to search puzzles, people and more",
-    "countMeta": "{count, plural, one {# puzzle} other {# puzzles}}",
+    "searchHint": "Press {shortcut} to search puzzles, people and more",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",
@@ -712,7 +711,7 @@
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending...",
-    "success": "Trade request sent",
+    "success": "Request sent",
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
       "notFound": "This puzzle is no longer available.",
@@ -3740,6 +3739,9 @@
         "blurb": "Moderate and manage JigSwap."
       }
     },
+    "landing": {
+      "pendingRequests": "{count, plural, one {# request waiting for your reply} other {# requests waiting for your reply}}"
+    },
     "pages": {
       "dashboard": {
         "title": "Dashboard",
@@ -3938,16 +3940,18 @@
         "community": "Community"
       },
       "back": "Back to {section}",
+      "backGeneric": "Back",
       "openQuickActions": "Quick Actions",
       "quick": {
         "addPuzzleSub": "Put a new box on your shelf",
         "logCompletionSub": "Finished one? Record it",
-        "proposeSwap": "Propose a Swap",
-        "proposeSwapSub": "Trade with a fellow puzzler",
-        "browseCommunitySub": "Discover puzzles near you",
+        "findSwap": "Find a swap",
+        "findSwapSub": "See what other puzzlers offer",
         "whatsNewSub": "Latest features and fixes"
       },
-      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}"
+      "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}",
+      "withUnreadMessages": "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}",
+      "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
     "crumbs": {
@@ -5238,7 +5242,8 @@
     }
   },
   "installApp": {
-    "title": "Add JigSwap to your home screen",
+    "collapsedTitle": "Install JigSwap",
+    "how": "How?",
     "promptBody": "Open it like an app: full screen, one tap away.",
     "install": "Install app",
     "notNow": "Not now",

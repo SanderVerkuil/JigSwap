@@ -16,9 +16,16 @@ import { InstallAppTip } from "@/components/install-app/install-app-tip";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WhatsNewAnnouncer } from "@/components/whats-new/announcer";
 import { APP_SCROLL_REGION_ID } from "@/lib/scroll-restoration";
+import {
+  resolveSidebarOpen,
+  SIDEBAR_WIDE_COOKIE_NAME,
+  SIDEBAR_WIDE_QUERY,
+  writeSidebarCookie,
+  type SidebarCookies,
+} from "@/lib/sidebar-state";
 import { cn } from "@/lib/utils";
 import { useLocation } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPalette } from "./command-palette";
 import { contentWidthClass } from "./content-width";
@@ -34,8 +41,43 @@ import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
 import { SyncPreferredLanguage } from "./sync-preferred-language";
 import { TopBar } from "./top-bar";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(SIDEBAR_WIDE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+const getWideSnapshot = () => window.matchMedia(SIDEBAR_WIDE_QUERY).matches;
+
+// The desktop sidebar's open state (UX-05, see lib/sidebar-state.ts): the member's remembered
+// toggle wins; without one it is docked open from 1024px and the icon rail below, following the
+// window live. The server and hydration render use last visit's width hint, so SSR paints the
+// same sidebar the browser settles on.
+function useSidebarOpen(cookies: SidebarCookies) {
+  const [explicit, setExplicit] = useState(cookies.open);
+  const wide = useSyncExternalStore(
+    subscribeWide,
+    getWideSnapshot,
+    () => cookies.wide ?? true,
+  );
+  useEffect(() => {
+    writeSidebarCookie(SIDEBAR_WIDE_COOKIE_NAME, wide);
+  }, [wide]);
+  return [resolveSidebarOpen(explicit, wide), setExplicit] as const;
+}
+
+const NO_SIDEBAR_COOKIES: SidebarCookies = { open: undefined, wide: undefined };
+
+export function DashboardShell({
+  children,
+  sidebar = NO_SIDEBAR_COOKIES,
+}: {
+  children: React.ReactNode;
+  /** The sidebar cookies, read by the route's beforeLoad (SSR-safe). */
+  sidebar?: SidebarCookies;
+}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useSidebarOpen(sidebar);
   const pathname = useLocation({ select: (location) => location.pathname });
   // Full-bleed pages (/messages) fill the card from md: no content padding and
   // no page scroll, so only the page's own panes scroll.
@@ -52,7 +94,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             while the page scrolls under them. Desktop keeps the inset-card model:
             a fixed `svh` column that clips its own overflow and scrolls inside
             the card. */}
-        <SidebarProvider className="flex-col md:h-svh md:overflow-hidden">
+        {/* Controlled: the provider still writes the sidebar_state cookie on every toggle. */}
+        <SidebarProvider
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          className="flex-col md:h-svh md:overflow-hidden"
+        >
           <TopBar onOpenPalette={() => setPaletteOpen(true)} />
           <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
           <div className="flex flex-1 md:min-h-0">
@@ -95,16 +142,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
 // Mobile-only row carrying the page's registered header actions; the desktop
 // page head is hidden below md, so without this the primary action (New Goal,
-// Create Circle…) would be unreachable on phones.
-function MobilePageActions() {
+// Create Circle…) would be unreachable on phones. The row wraps: overflow in a
+// right-aligned row would run off the left edge, where it can't be scrolled to.
+// The page's meta line stays in the desktop head only.
+export function MobilePageActions() {
   const { actions } = usePageHeaderContent();
   const pathname = useLocation({ select: (location) => location.pathname });
   // An immersive route (an open thread) owns the whole phone screen.
   if (!actions || isImmersiveMobileRoute(pathname)) return null;
   return (
     <div
+      data-slot="mobile-page-actions"
       className={cn(
-        "flex items-center justify-end gap-2 md:hidden",
+        "flex flex-wrap items-center justify-end gap-2 md:hidden",
         // The inbox list pads its own rows, so on /messages New sits tight above it.
         isFullBleedRoute(pathname) ? "-mt-2" : "mb-4",
       )}

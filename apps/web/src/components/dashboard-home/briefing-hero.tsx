@@ -175,7 +175,7 @@ function QuickActions() {
   const actions = [
     { icon: Plus, label: t("addPuzzle"), href: "/my-puzzles/add" },
     { icon: Search, label: t("browse"), href: "/browse" },
-    { icon: CircleCheck, label: t("logCompletion"), href: "/completions" },
+    { icon: CircleCheck, label: t("logCompletion"), href: "/completions/new" },
   ];
   return (
     <div className="flex flex-wrap gap-2">

@@ -4,7 +4,7 @@ import {
   EditCollectionDialog,
   type EditableCollection,
 } from "@/components/collections/edit-collection-dialog";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
@@ -164,12 +164,10 @@ function CollectionsPage() {
     shelves: loadedCollections.length,
     puzzles: totalPuzzles,
   });
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
+  usePageHeader(
+    () => ({
+      meta: headerMeta,
+      actions: (
         <Button
           variant="brand"
           size="sm"
@@ -178,8 +176,8 @@ function CollectionsPage() {
           <Plus className="h-4 w-4" />
           {t("newCollection")}
         </Button>
-      </>
-    ),
+      ),
+    }),
     [headerMeta],
   );
 

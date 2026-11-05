@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isFullBleedRoute, isImmersiveMobileRoute } from "./route-meta";
+import {
+  getNavGroup,
+  isFullBleedRoute,
+  isImmersiveMobileRoute,
+  isMobileTabRoot,
+  MOBILE_TABS,
+} from "./route-meta";
 
 describe("isImmersiveMobileRoute", () => {
   it.each(["/messages/seed-thread-esther", "/messages/new", "/messages/abc/"])(
@@ -33,4 +39,43 @@ describe("isFullBleedRoute", () => {
       expect(isFullBleedRoute(pathname)).toBe(false);
     },
   );
+});
+
+// UX-59: the phone tabs open these pages, so the top bar shows no back chevron there.
+describe("isMobileTabRoot", () => {
+  it.each(["/dashboard", "/library", "/trades", "/community", "/trades/"])(
+    "is a tab root on %s",
+    (pathname) => {
+      expect(isMobileTabRoot(pathname)).toBe(true);
+    },
+  );
+
+  it("treats every tab's destination as a tab root", () => {
+    expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
+      "/dashboard",
+      "/library",
+      "/trades",
+      "/community",
+    ]);
+    for (const tab of MOBILE_TABS) {
+      expect(isMobileTabRoot(tab.href)).toBe(true);
+    }
+  });
+
+  it.each(["/my-puzzles", "/messages", "/circles", "/trades/abc", "/browse"])(
+    "is not a tab root on %s",
+    (pathname) => {
+      expect(isMobileTabRoot(pathname)).toBe(false);
+    },
+  );
+});
+
+// UX-06: the Community tab and hub use the group icon, so Circles needs a glyph of its own.
+describe("nav icons", () => {
+  it("gives Circles an icon distinct from the Community group's", () => {
+    const community = getNavGroup("community");
+    const circles = community.items.find((item) => item.key === "circles");
+    expect(circles?.icon).toBeDefined();
+    expect(circles?.icon).not.toBe(community.icon);
+  });
 });

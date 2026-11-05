@@ -12,8 +12,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { InstallAppTip, InstallAppTipView } from "./install-app-tip";
+import { clearInstallTipRequest, requestInstallTip } from "./use-install-app";
 
-vi.mock("@/compat/navigation", () => ({ usePathname: () => "/dashboard" }));
+const mocks = vi.hoisted(() => ({ pathname: "/dashboard" }));
+vi.mock("@/compat/navigation", () => ({ usePathname: () => mocks.pathname }));
 
 const IPHONE_SAFARI =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
@@ -36,23 +38,75 @@ const noop = () => {};
 
 afterEach(() => {
   cleanup();
+  mocks.pathname = "/dashboard";
+  act(() => clearInstallTipRequest());
 });
 
 describe("InstallAppTipView", () => {
+  it("starts as one collapsed row: title, How? and a ✕ that snoozes", () => {
+    const onSnooze = vi.fn();
+    const onNever = vi.fn();
+    render(
+      wrap(
+        <InstallAppTipView
+          method="ios"
+          onInstall={noop}
+          onSnooze={onSnooze}
+          onNever={onNever}
+        />,
+      ),
+    );
+    expect(
+      screen.getByRole("region", { name: "Install JigSwap" }),
+    ).toBeTruthy();
+    const how = screen.getByRole("button", { name: "How?" });
+    expect(how.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+    expect(
+      screen.queryByRole("button", { name: "Don't show again" }),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(onSnooze).toHaveBeenCalledOnce();
+    expect(onNever).not.toHaveBeenCalled();
+  });
+
+  it("How? expands the steps and offers an explicit Don't show again", () => {
+    const onSnooze = vi.fn();
+    const onNever = vi.fn();
+    render(
+      wrap(
+        <InstallAppTipView
+          method="ios"
+          onInstall={noop}
+          onSnooze={onSnooze}
+          onNever={onNever}
+        />,
+      ),
+    );
+    const how = screen.getByRole("button", { name: "How?" });
+    fireEvent.click(how);
+    expect(how.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Don't show again" }));
+    expect(onNever).toHaveBeenCalledOnce();
+    expect(onSnooze).not.toHaveBeenCalled();
+    fireEvent.click(how);
+    expect(how.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryAllByRole("listitem")).toHaveLength(0);
+  });
+
   it("iOS: shows the Share → Add to Home Screen steps and the push note, no install button", () => {
     render(
       wrap(
         <InstallAppTipView
           method="ios"
+          defaultExpanded
           onInstall={noop}
           onSnooze={noop}
           onNever={noop}
         />,
       ),
     );
-    expect(
-      screen.getByRole("region", { name: "Add JigSwap to your home screen" }),
-    ).toBeTruthy();
     const steps = screen.getAllByRole("listitem").map((li) => li.textContent);
     expect(steps[0]).toContain("Share");
     expect(steps[1]).toContain("Add to Home Screen");
@@ -68,6 +122,7 @@ describe("InstallAppTipView", () => {
       wrap(
         <InstallAppTipView
           method="prompt"
+          defaultExpanded
           onInstall={onInstall}
           onSnooze={onSnooze}
           onNever={onNever}
@@ -75,6 +130,7 @@ describe("InstallAppTipView", () => {
       ),
     );
     expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.getByText(/Open it like an app/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Install app" }));
     fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     fireEvent.click(screen.getByRole("button", { name: "Don't show again" }));
@@ -88,6 +144,7 @@ describe("InstallAppTipView", () => {
       wrap(
         <InstallAppTipView
           method="android-menu"
+          defaultExpanded
           onInstall={noop}
           onSnooze={noop}
           onNever={noop}
@@ -107,6 +164,7 @@ describe("InstallAppTipView", () => {
       wrap(
         <InstallAppTipView
           method="firefox-menu"
+          defaultExpanded
           onInstall={noop}
           onSnooze={noop}
           onNever={noop}
@@ -117,7 +175,7 @@ describe("InstallAppTipView", () => {
     expect(steps[0]).toContain("Firefox");
     expect(steps[1]).toContain("Add app to Home screen");
     expect(screen.queryByText(/notifications on iPhone/)).toBeNull();
-    expect(screen.queryByRole("button", { name: /Install/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Install app/ })).toBeNull();
   });
 
   it("Firefox on iOS: shows Firefox's Share step, then Add to Home Screen", () => {
@@ -125,6 +183,7 @@ describe("InstallAppTipView", () => {
       wrap(
         <InstallAppTipView
           method="ios-firefox"
+          defaultExpanded
           onInstall={noop}
           onSnooze={noop}
           onNever={noop}
@@ -134,7 +193,7 @@ describe("InstallAppTipView", () => {
     const steps = screen.getAllByRole("listitem").map((li) => li.textContent);
     expect(steps[0]).toContain("Firefox's menu");
     expect(steps[1]).toContain("Add to Home Screen");
-    expect(screen.queryByRole("button", { name: /Install/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Install app/ })).toBeNull();
   });
 
   it("renders Dutch copy", () => {
@@ -150,10 +209,14 @@ describe("InstallAppTipView", () => {
       ),
     );
     expect(
-      screen.getByRole("region", { name: "Zet JigSwap op je beginscherm" }),
+      screen.getByRole("region", { name: "JigSwap installeren" }),
     ).toBeTruthy();
-    expect(screen.getByText("Zet op beginscherm")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Niet nu" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Hoe?" }));
+    expect(screen.getByText("Zet op beginscherm")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Niet meer tonen" }),
+    ).toBeTruthy();
   });
 });
 
@@ -201,7 +264,14 @@ describe("InstallAppTip", () => {
     ).toBe(1);
   });
 
-  it("iOS: shows on a later visit and 'Not now' snoozes it", () => {
+  const storedState = () =>
+    JSON.parse(localStorage.getItem("jigswap.installTip") ?? "{}") as {
+      visits?: number;
+      snoozedUntil?: number | null;
+      never?: boolean;
+    };
+
+  it("iOS: shows collapsed on a later visit and ✕ snoozes it", () => {
     setUserAgent(IPHONE_SAFARI);
     seenBefore();
     render(wrap(<InstallAppTip />));
@@ -209,10 +279,96 @@ describe("InstallAppTip", () => {
       vi.advanceTimersByTime(3000);
     });
     expect(screen.getByRole("region")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: "How?" })
+        .getAttribute("aria-expanded"),
+    ).toBe("false");
     fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.queryByRole("region")).toBeNull();
-    const state = JSON.parse(localStorage.getItem("jigswap.installTip") ?? "");
-    expect(state.snoozedUntil).toBeGreaterThan(Date.now());
+    expect(storedState().snoozedUntil).toBeGreaterThan(Date.now());
+    expect(storedState().never).toBe(false);
+  });
+
+  it("'Don't show again' turns the automatic tip off for good", () => {
+    setUserAgent(IPHONE_SAFARI);
+    seenBefore();
+    render(wrap(<InstallAppTip />));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "How?" }));
+    fireEvent.click(screen.getByRole("button", { name: "Don't show again" }));
+    expect(screen.queryByRole("region")).toBeNull();
+    expect(storedState().never).toBe(true);
+  });
+
+  it.each(["/messages/abc", "/welcome", "/my-puzzles/add/new"])(
+    "never shows itself on %s, and leaves the tip for a later page",
+    (pathname) => {
+      setUserAgent(IPHONE_SAFARI);
+      seenBefore();
+      mocks.pathname = pathname;
+      const { rerender } = render(wrap(<InstallAppTip />));
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(screen.queryByRole("region")).toBeNull();
+      // Not dismissed, not used up for this session.
+      expect(storedState()).toEqual({
+        visits: 2,
+        snoozedUntil: null,
+        never: false,
+      });
+      expect(sessionStorage.getItem("jigswap.installTip.shown")).toBeNull();
+
+      mocks.pathname = "/dashboard";
+      rerender(wrap(<InstallAppTip />));
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      expect(screen.getByRole("region")).toBeTruthy();
+    },
+  );
+
+  it("steps aside on an open thread and comes back after it", () => {
+    setUserAgent(IPHONE_SAFARI);
+    seenBefore();
+    const { rerender } = render(wrap(<InstallAppTip />));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByRole("region")).toBeTruthy();
+
+    mocks.pathname = "/messages/abc";
+    rerender(wrap(<InstallAppTip />));
+    expect(screen.queryByRole("region")).toBeNull();
+    expect(storedState().snoozedUntil).toBeNull();
+
+    mocks.pathname = "/messages";
+    rerender(wrap(<InstallAppTip />));
+    expect(screen.getByRole("region")).toBeTruthy();
+  });
+
+  it("opens expanded when asked for from the quick sheet, even on a form page", () => {
+    setUserAgent(IPHONE_SAFARI);
+    mocks.pathname = "/my-puzzles/add/new";
+    render(wrap(<InstallAppTip />));
+    act(() => requestInstallTip());
+    expect(
+      screen
+        .getByRole("button", { name: "How?" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("stays out of an open thread even when asked for", () => {
+    setUserAgent(IPHONE_SAFARI);
+    mocks.pathname = "/messages/abc";
+    render(wrap(<InstallAppTip />));
+    act(() => requestInstallTip());
+    expect(screen.queryByRole("region")).toBeNull();
   });
 
   it("Firefox on Android: shows its menu steps without an install button", () => {
@@ -225,6 +381,7 @@ describe("InstallAppTip", () => {
       vi.advanceTimersByTime(3000);
     });
     expect(screen.getByRole("region")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "How?" }));
     expect(screen.getAllByRole("listitem")[0].textContent).toContain("Firefox");
     expect(screen.queryByRole("button", { name: "Install app" })).toBeNull();
   });
@@ -250,6 +407,7 @@ describe("InstallAppTip", () => {
     act(() => {
       vi.advanceTimersByTime(3000);
     });
+    fireEvent.click(screen.getByRole("button", { name: "How?" }));
     fireEvent.click(screen.getByRole("button", { name: "Install app" }));
     expect(prompt).toHaveBeenCalledOnce();
     await act(async () => {
@@ -271,6 +429,7 @@ describe("InstallAppTip", () => {
       vi.advanceTimersByTime(3000);
     });
     expect(screen.getByRole("region")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "How?" }));
     expect(screen.getAllByRole("listitem")[1].textContent).toContain(
       "Add to home screen",
     );

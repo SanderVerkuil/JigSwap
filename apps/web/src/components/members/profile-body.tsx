@@ -116,12 +116,12 @@ function ProfileBodyContent({
 
   return (
     // Inside the dashboard shell the content area already applies the user's
-    // width preference; the logged-out page has no preferences, so it uses the
-    // regular (non-full-width) column.
+    // width preference and the page padding; the logged-out page has neither,
+    // so it pads itself and uses the regular (non-full-width) column.
     <div
       className={cn(
-        "flex w-full flex-col gap-10 px-4 py-10",
-        viewer === "public" && contentWidthClass(false),
+        "flex w-full flex-col gap-10",
+        viewer === "public" && ["px-4 py-10", contentWidthClass(false)],
       )}
     >
       {invitedName && <InvitedBanner name={invitedName} kind={invitedKind} />}

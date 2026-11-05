@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearIntlCache, setLocale, type Locale } from "@/lib/i18n";
+import { Flag } from "@/components/ui/flag";
+import {
+  currentLanguage,
+  LanguageRadioItems,
+} from "@/components/ui/language-switcher";
 import { cn } from "@/lib/utils";
-import { useLocation, useRouter } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 // sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Menu, Moon, Sun, X } from "lucide-react";
@@ -27,7 +30,10 @@ const NAV = [
 ] as const;
 
 // Sticky marketing header: transparent over the hero, frosted card once
-// scrolled. Nav + language pill + mode toggle + auth actions.
+// scrolled. Nav + language pill + mode toggle + auth actions. The full bar needs
+// about 1,185px in Dutch (the page clips overflow, so whatever does not fit is
+// out of reach): below 1200px the nav folds into the burger, and below 861px the
+// auth actions follow it.
 export function MarketingHeader() {
   const t = useTranslations("marketing.nav");
   const { pathname } = useLocation();
@@ -72,7 +78,7 @@ export function MarketingHeader() {
         <Link href="/" aria-label="JigSwap">
           <Wordmark />
         </Link>
-        <nav className="hidden min-[861px]:flex items-center gap-[26px] ml-3.5">
+        <nav className="hidden min-[1200px]:flex items-center gap-4 ml-2">
           {NAV.map((item) => navLink(item))}
         </nav>
         <div className="ml-auto flex items-center gap-2.5">
@@ -106,32 +112,41 @@ export function MarketingHeader() {
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? t("closeMenu") : t("openMenu")}
-            className="min-[861px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
+            className="min-[1200px]:hidden inline-flex items-center justify-center w-10 h-10 rounded-[10px] border border-mk-border bg-mk-card text-mk-text-body"
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
       {open && (
-        <div className="min-[861px]:hidden border-t border-mk-border bg-mk-card">
+        <div className="min-[1200px]:hidden border-t border-mk-border bg-mk-card">
           <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-1 px-6 pt-3 pb-[18px]">
             {NAV.map((item) => navLink(item, true))}
+            {/* From 861px these sit in the bar itself. */}
             <Unauthenticated>
               <Link
                 href="/sign-in"
                 onClick={() => setOpen(false)}
-                className="text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
+                className="min-[861px]:hidden text-[17px] font-semibold text-mk-text-strong py-3 px-1 border-b border-mk-border"
               >
                 {t("login")}
               </Link>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="min-[861px]:hidden mt-3 w-full"
+                asChild
+              >
                 <Link href="/sign-up" onClick={() => setOpen(false)}>
                   {t("startTrading")}
                 </Link>
               </Button>
             </Unauthenticated>
             <Authenticated>
-              <Button variant="brand" className="mt-3 w-full" asChild>
+              <Button
+                variant="brand"
+                className="min-[861px]:hidden mt-3 w-full"
+                asChild
+              >
                 <Link href="/dashboard" onClick={() => setOpen(false)}>
                   {t("dashboard")}
                 </Link>
@@ -144,50 +159,29 @@ export function MarketingHeader() {
   );
 }
 
-const LANGUAGES = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "nl", name: "Nederlands", flag: "🇳🇱" },
-] as const satisfies readonly { code: Locale; name: string; flag: string }[];
-
-// Flag + dropdown — switches the use-intl catalog via the locale cookie. With
-// no cookie set the trigger shows the system language (Accept-Language
+// Flag + code pill and a dropdown of the language radios (shared with the app's
+// top bar) — switches the use-intl catalog via the locale cookie. With no
+// cookie set the trigger shows the system language (Accept-Language
 // negotiation in detectLocale).
 function LangToggle() {
   const t = useTranslations("marketing.nav");
-  const locale = useLocale();
-  const router = useRouter();
-  const change = async (next: Locale) => {
-    if (next === locale) return;
-    await setLocale({ data: next });
-    // Drop the client-side catalog cache so the invalidated root beforeLoad
-    // fetches the newly selected locale.
-    clearIntlCache();
-    await router.invalidate();
-  };
-  const current =
-    LANGUAGES.find((lang) => lang.code === locale) ?? LANGUAGES[0];
+  const current = currentLanguage(useLocale());
+  const code = current.code.toUpperCase();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label={t("switchLanguage")}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-mk-border bg-mk-card text-[18px] leading-none"
+          // Names the visible code too, so voice control can target what it sees (WCAG 2.5.3).
+          aria-label={`${t("switchLanguage")}: ${current.name}, ${code}`}
+          className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-full border border-mk-border bg-mk-card text-[13px] font-semibold leading-none text-mk-text-body"
         >
-          {current.flag}
+          <Flag locale={current.code} />
+          {code}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {LANGUAGES.map((language) => (
-          <DropdownMenuItem
-            key={language.code}
-            onClick={() => change(language.code)}
-            className={cn(locale === language.code && "bg-accent")}
-          >
-            <span className="mr-2">{language.flag}</span>
-            {language.name}
-          </DropdownMenuItem>
-        ))}
+        <LanguageRadioItems />
       </DropdownMenuContent>
     </DropdownMenu>
   );

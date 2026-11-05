@@ -38,6 +38,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import {
+  LanguageRadios,
+  moveRadioWithArrows,
+  ThemeRadios,
+} from "./display-preferences";
 import { useShellPreferences } from "./preferences";
 
 const STATUS_OPTIONS = [
@@ -111,6 +116,9 @@ export function ShellUserButton({
                 }
               : {
                   userButtonAvatarBox: "!w-8 !h-8",
+                  // The desktop sidebar on a touch screen (tablets): a 44px target.
+                  userButtonTrigger:
+                    "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
                 }),
           },
         }}
@@ -250,10 +258,13 @@ export function ShellUserButton({
   );
 }
 
-// Content of the Clerk custom profile page: the content-width choice and the
-// hide-email toggle (useShellPreferences, Clerk metadata) plus the solve-duration
-// tracking and share-in-progress toggles (useUserSettings, the Solving-context
-// Convex preferences). Uses the shell.user.* and solving.settings.* translations.
+// Content of the Clerk custom profile page: the theme and language choices (the
+// only way to reach them on a phone besides the quick sheet; the desktop top
+// bar has menus for them), the content-width choice and the hide-email toggle
+// (useShellPreferences, Clerk metadata) plus the solve-duration tracking and
+// share-in-progress toggles (useUserSettings, the Solving-context Convex
+// preferences). Uses the shell.theme/language/user.* and solving.settings.*
+// translations.
 function PreferencesPage() {
   const { fullWidth, hideEmail, setPreference } = useShellPreferences();
   const {
@@ -264,6 +275,8 @@ function PreferencesPage() {
   } = useUserSettings();
   const t = useTranslations("shell.user");
   const ts = useTranslations("solving.settings");
+  const tTheme = useTranslations("shell.theme");
+  const tLanguage = useTranslations("shell.language");
 
   return (
     <div className="flex flex-col gap-6">
@@ -272,10 +285,21 @@ function PreferencesPage() {
       </header>
 
       <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">{tTheme("label")}</h2>
+        <ThemeRadios />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">{tLanguage("label")}</h2>
+        <LanguageRadios />
+      </section>
+
+      <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium">{t("contentWidth")}</h2>
         <div
           role="radiogroup"
           aria-label={t("contentWidth")}
+          onKeyDown={moveRadioWithArrows}
           className="flex gap-2"
         >
           <ContentWidthOption
@@ -355,6 +379,7 @@ function ContentWidthOption({
       type="button"
       role="radio"
       aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
       onClick={onSelect}
       className={cn(
         "flex-1 rounded-md border px-3 py-2 text-sm transition-colors",

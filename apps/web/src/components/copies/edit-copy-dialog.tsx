@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { Check, ImageOff } from "lucide-react";
+import { Check, ImageOff, ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -49,10 +49,14 @@ export function EditCopyDialog({
   open,
   onOpenChange,
   copy,
+  onAddPhotos,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   copy: CopyInstanceView;
+  // Starts the page's photo upload. Offered when the copy has no photos to pick a cover from;
+  // the dialog closes as it hands over.
+  onAddPhotos?: () => void;
 }) {
   const t = useTranslations("copyInstance");
   const tPuzzles = useTranslations("puzzles");
@@ -165,7 +169,7 @@ export function EditCopyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("editCopy.title")}</DialogTitle>
           <DialogDescription>{snapshot.title}</DialogDescription>
@@ -287,9 +291,26 @@ export function EditCopyDialog({
               })}
             </div>
             {gallery.length === 0 && (
-              <p className="text-muted-foreground text-xs">
-                {t("editCopy.noPhotosForCover")}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <p className="text-muted-foreground text-xs">
+                  {t("editCopy.noPhotosForCover")}
+                </p>
+                {onAddPhotos && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={saving}
+                    onClick={() => {
+                      onAddPhotos();
+                      onOpenChange(false);
+                    }}
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    {t("addPhoto")}
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -229,3 +229,47 @@ describe("EditCopyDialog cover picker", () => {
     expect(src("Photo b")).toBe("https://files.example/b-original");
   });
 });
+
+// UX-60: with no photos the cover picker explains that photos unlock a custom cover; it now also
+// offers the way to add one, which hands over to the page's photo picker and closes the editor.
+describe("EditCopyDialog cover picker without photos", () => {
+  it("offers Add photo, which starts the page's photo upload and closes the dialog", () => {
+    const onOpenChange = vi.fn();
+    const onAddPhotos = vi.fn();
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <EditCopyDialog
+          open
+          onOpenChange={onOpenChange}
+          copy={copyOf(CLOSED, "visible")}
+          onAddPhotos={onAddPhotos}
+        />
+      </IntlProvider>,
+    );
+    expect(
+      screen.getByText("Add photos to this copy to choose a custom cover."),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add photo" }));
+    expect(onAddPhotos).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(calls.byMutation).toEqual({});
+  });
+
+  it("offers no Add photo once the copy has photos to choose from", () => {
+    const withPhoto = {
+      ...(copyOf(CLOSED, "visible") as object),
+      gallery: [{ id: "img1", url: "https://example.test/1.jpg" }],
+    } as never;
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <EditCopyDialog
+          open
+          onOpenChange={() => {}}
+          copy={withPhoto}
+          onAddPhotos={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(screen.queryByRole("button", { name: "Add photo" })).toBeNull();
+  });
+});

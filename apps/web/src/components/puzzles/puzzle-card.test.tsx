@@ -3,6 +3,7 @@ import { PuzzleCard as CopyCard } from "@/components/ui/puzzle-card";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -12,7 +13,7 @@ import {
   PuzzleViewProvider,
 } from "./puzzle-view-provider";
 
-// The cards' data hooks and the router are out of scope: the tests assert the cover's DOM.
+// The cards' data hooks and the router are out of scope: the tests assert the card's DOM.
 vi.mock("@/gateway", () => ({ gateway: {} }));
 vi.mock("@/hooks/use-favorites", () => ({
   useFavorites: () => ({
@@ -28,8 +29,18 @@ vi.mock("@/components/ui/collection-dropdown", () => ({
   CollectionMenuItems: () => null,
 }));
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    children,
+    href,
+    className,
+  }: {
+    children?: ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
   ),
 }));
 
@@ -146,5 +157,39 @@ describe("owned-copy PuzzleCard cover", () => {
     expect(cover().getAttribute("src")).toBe("https://cdn.test/photo");
     expect(cover().hasAttribute("srcset")).toBe(false);
     expect(cover().hasAttribute("sizes")).toBe(false);
+  });
+});
+
+describe("catalogue PuzzleCard on phones", () => {
+  it("sizes the cover for the two-column phone grid, not the full viewport", () => {
+    render(<CatalogCard puzzle={summary({ imageSrcSet: SRC_SET })} />);
+    expect(container.querySelector(".grid-cols-2")).toBeTruthy();
+    expect(cover().getAttribute("sizes")).toContain("(max-width: 639px) 50vw");
+  });
+
+  it("offers no View Details button in the compact card; the title link opens the puzzle", () => {
+    const host = document.createElement("div");
+    host.innerHTML = renderToStaticMarkup(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PuzzleViewProvider viewMode="grid">
+          <CatalogCard puzzle={summary({ title: "Lam Gelegd" })} />
+        </PuzzleViewProvider>
+      </IntlProvider>,
+    );
+    const links = [...host.querySelectorAll("a")];
+    expect(
+      links.some(
+        (a) =>
+          a.getAttribute("href") === "/puzzles/p1" &&
+          a.textContent === "Lam Gelegd",
+      ),
+    ).toBe(true);
+    // Hidden below sm (or gone altogether): two ~170px columns leave it "V…".
+    const details = links.filter((a) =>
+      a.textContent?.includes("View Details"),
+    );
+    expect(details.every((a) => a.classList.contains("max-sm:hidden"))).toBe(
+      true,
+    );
   });
 });

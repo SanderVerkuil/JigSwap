@@ -2,11 +2,11 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ComponentType, ReactNode } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import { Route } from "./index";
 
@@ -34,13 +34,18 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
   useConvexMutation: () => vi.fn(),
 }));
 
-// The route module only needs its options back and an empty search.
+const mocks = vi.hoisted(() => ({
+  search: {} as { invite?: string; create?: true },
+  navigate: vi.fn(),
+}));
+
+// The route module only needs its options back and the current search.
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
-    useSearch: () => ({}),
+    useSearch: () => mocks.search,
   }),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mocks.navigate,
 }));
 
 const circle = (aggregateId: string | undefined, name: string) => ({
@@ -82,6 +87,11 @@ const renderList = (circles: ReturnType<typeof circle>[]) => {
   );
 };
 
+beforeEach(() => {
+  mocks.search = {};
+  mocks.navigate.mockReset();
+});
+
 afterEach(cleanup);
 
 describe("circles list rows", () => {
@@ -99,5 +109,40 @@ describe("circles list rows", () => {
   it("renders a legacy circle without an id as plain text", () => {
     renderList([circle(undefined, "Old Club")]);
     expect(screen.getByText("Old Club").closest("a")).toBeNull();
+  });
+});
+
+// UX-58: the ⌘K "Create a Circle" quick action lands on /circles?create=1 with the dialog open.
+describe("create dialog deep link", () => {
+  it("opens the create dialog for ?create=1", () => {
+    mocks.search = { create: true };
+    renderList([]);
+    expect(screen.getByRole("dialog", { name: "Create Circle" })).toBeTruthy();
+  });
+
+  it("stays closed without it", () => {
+    renderList([]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("drops create from the URL when the dialog closes, keeping the invite", () => {
+    mocks.search = { create: true, invite: "inv_1" };
+    renderList([]);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/circles",
+      search: { invite: "inv_1" },
+      replace: true,
+    });
+  });
+
+  it("does not navigate when a dialog opened from the page closes", () => {
+    renderList([]);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Create Circle" })[0]!,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mocks.navigate).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

@@ -496,8 +496,7 @@
       "completed": "Voltooid"
     },
     "resultCount": "{count} van {total} puzzels",
-    "searchHint": "Druk op ⌘K om puzzels, mensen en meer te zoeken",
-    "countMeta": "{count, plural, one {# puzzel} other {# puzzels}}",
+    "searchHint": "Druk op {shortcut} om puzzels, mensen en meer te zoeken",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
@@ -712,7 +711,7 @@
     "cancel": "Annuleren",
     "submit": "Aanvraag versturen",
     "submitting": "Versturen...",
-    "success": "Ruilaanvraag verstuurd",
+    "success": "Aanvraag verstuurd",
     "errors": {
       "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
       "notFound": "Deze puzzel is niet meer beschikbaar.",
@@ -3740,6 +3739,9 @@
         "blurb": "Modereer en beheer JigSwap."
       }
     },
+    "landing": {
+      "pendingRequests": "{count, plural, one {# verzoek wacht op je antwoord} other {# verzoeken wachten op je antwoord}}"
+    },
     "pages": {
       "dashboard": {
         "title": "Dashboard",
@@ -3925,7 +3927,7 @@
       "system": "Systeem"
     },
     "language": {
-      "switch": "Taal wisselen",
+      "switch": "Taal wijzigen",
       "label": "Taal",
       "changed": "Taal succesvol gewijzigd"
     },
@@ -3938,16 +3940,18 @@
         "community": "Community"
       },
       "back": "Terug naar {section}",
+      "backGeneric": "Terug",
       "openQuickActions": "Snelle Acties",
       "quick": {
         "addPuzzleSub": "Zet een nieuwe doos op je plank",
         "logCompletionSub": "Eentje af? Leg het vast",
-        "proposeSwap": "Een Ruil Voorstellen",
-        "proposeSwapSub": "Ruil met een mede-puzzelaar",
-        "browseCommunitySub": "Ontdek puzzels bij jou in de buurt",
+        "findSwap": "Zoek een ruil",
+        "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
         "whatsNewSub": "De nieuwste functies en oplossingen"
       },
-      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}"
+      "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}",
+      "withUnreadMessages": "{count, plural, one {{name}, # ongelezen bericht} other {{name}, # ongelezen berichten}}",
+      "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
     "crumbs": {
@@ -5238,7 +5242,8 @@
     }
   },
   "installApp": {
-    "title": "Zet JigSwap op je beginscherm",
+    "collapsedTitle": "JigSwap installeren",
+    "how": "Hoe?",
     "promptBody": "Open het als een app: schermvullend, met één tik.",
     "install": "App installeren",
     "notNow": "Niet nu",

@@ -97,8 +97,9 @@ Het item **App installeren** in het paneel met snelle acties toont deze stappen
 ook.
 
 > **Tip:** Vanaf je tweede bezoek op een telefoon toont JigSwap boven de
-> tabbalk de tip **Zet JigSwap op je beginscherm** (in Chrome op Android met
-> een eigen knop **App installeren**). Tik op **Niet nu** om de tip 30 dagen te
-> verbergen, of sluit hem om hem niet meer te zien. Je kunt altijd nog
-> installeren via het paneel met snelle acties. De tip verschijnt niet meer
-> zodra JigSwap is geïnstalleerd.
+> tabbalk een smalle rij **JigSwap installeren**. Tik op **Hoe?** om de stappen
+> te openen (in Chrome op Android staat daar ook de knop **App installeren**).
+> Tik op **✕** om de rij 30 dagen te verbergen, of kies onder **Hoe?** voor
+> **Niet meer tonen** om hem niet meer te zien. Je kunt altijd nog installeren
+> via het paneel met snelle acties. De rij blijft uit beeld in gesprekken en
+> formulieren en verschijnt niet meer zodra JigSwap is geïnstalleerd.

@@ -63,8 +63,10 @@ export function FreshSection() {
         {fresh.map((copy) => (
           // PuzzleCard reads its grid/list mode from context; each cell gets
           // its own single-card provider so the scroller owns the layout. The
-          // cover's width is the rail's fixed 214px column (auto-cols-[214px]).
-          <PuzzleViewProvider key={copy._id} viewMode="grid">
+          // one-track grid keeps the card at the cell's full width and height
+          // (the provider's default grid is two columns on phones). The cover's
+          // width is the rail's fixed 214px column (auto-cols-[214px]).
+          <PuzzleViewProvider key={copy._id} viewMode="grid" className="grid">
             <PuzzleCard puzzle={copy} showActions={false} imageSizes="214px" />
           </PuzzleViewProvider>
         ))}

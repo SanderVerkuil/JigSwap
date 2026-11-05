@@ -96,6 +96,7 @@ const submit = (name = "Send request") =>
   screen.getByRole("button", { name }) as HTMLButtonElement;
 
 beforeEach(() => {
+  vi.mocked(toast.success).mockReset();
   mocks.mutation.mockReset();
   mocks.mutation.mockResolvedValue("exchange_1");
 });
@@ -195,6 +196,22 @@ describe("RequestTradeDialog propose", () => {
       renderDialog(copy(), { locale, disclosure: { profilePrivate: false } });
       fireEvent.click(submit(submitLabel));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith(message));
+    },
+  );
+});
+
+describe("RequestTradeDialog success toast", () => {
+  // The same toast follows a swap, a purchase and a borrow, so it must not name one kind.
+  it.each([
+    ["en", "Send request", "Request sent"],
+    ["nl", "Aanvraag versturen", "Aanvraag verstuurd"],
+  ] as const)(
+    "confirms a borrow without calling it a trade (%s)",
+    async (locale, button, message) => {
+      renderDialog(copy(), { locale, disclosure: { profilePrivate: false } });
+      fireEvent.click(submit(button));
+      await waitFor(() => expect(toast.success).toHaveBeenCalledOnce());
+      expect(toast.success).toHaveBeenCalledWith(message);
     },
   );
 });

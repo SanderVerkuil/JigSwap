@@ -73,6 +73,7 @@ export function ImageDiffDialog({
         )}
 
         {mode === "side" || !bothExist ? (
+          // Stacked on phones: 32dvh per image keeps both in view with the title and the toggle.
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <figure className="space-y-1">
               <figcaption className="text-muted-foreground text-xs">
@@ -82,7 +83,7 @@ export function ImageDiffDialog({
                 <img
                   src={currentUrl}
                   alt=""
-                  className="bg-muted max-h-[60vh] w-full rounded-lg border object-contain"
+                  className="bg-muted max-h-[32dvh] w-full rounded-lg border object-contain sm:max-h-[60vh]"
                 />
               ) : (
                 <div className="bg-muted aspect-[4/3] w-full rounded-lg border" />
@@ -96,7 +97,7 @@ export function ImageDiffDialog({
                 <img
                   src={proposedUrl}
                   alt=""
-                  className="bg-muted max-h-[60vh] w-full rounded-lg border object-contain"
+                  className="bg-muted max-h-[32dvh] w-full rounded-lg border object-contain sm:max-h-[60vh]"
                 />
               ) : (
                 <div className="bg-muted aspect-[4/3] w-full rounded-lg border" />

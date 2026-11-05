@@ -1,9 +1,10 @@
 "use client";
 
 // Quick-action bottom sheet opened by the tab bar's raised center "+": the
-// four most-used actions as 56px rows — violet round icon chip, title with a
+// most-used actions as 56px rows — violet round icon chip, title with a
 // one-line sub, chevron — sliding up over the dimmed backdrop, with a drag
-// handle and safe-area bottom padding.
+// handle and safe-area bottom padding. Below the actions, the theme and
+// language choices: phones have no top-bar menus for them.
 import { useRouter } from "@/compat/navigation";
 import {
   requestInstallTip,
@@ -17,16 +18,19 @@ import {
   ChevronRight,
   CircleCheck,
   Download,
+  MessageSquare,
   Plus,
-  Search,
   Sparkles,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslations } from "use-intl";
+import { LanguageRadios, ThemeRadios } from "./display-preferences";
 
 // Titles reuse the command palette's quick-action strings where they exist;
-// the subs (and Propose a Swap) live under shell.mobile.quick.
+// the subs (and Find a swap) live under shell.mobile.quick. Every row opens what
+// it promises: the log flow rather than the completions list, and Browse (where
+// a swap starts) rather than the exchanges list.
 const ACTIONS: Array<{
   titleKey: string;
   subKey: string;
@@ -42,20 +46,21 @@ const ACTIONS: Array<{
   {
     titleKey: "actions.logCompletion",
     subKey: "mobile.quick.logCompletionSub",
-    href: "/completions",
+    href: "/completions/new",
     icon: CircleCheck,
   },
   {
-    titleKey: "mobile.quick.proposeSwap",
-    subKey: "mobile.quick.proposeSwapSub",
-    href: "/trades",
+    titleKey: "mobile.quick.findSwap",
+    subKey: "mobile.quick.findSwapSub",
+    href: "/browse",
     icon: ArrowLeftRight,
   },
+  // Messages has no tab of its own: this row (and the top-bar icon) carries the unread count.
   {
-    titleKey: "actions.browseCommunity",
-    subKey: "mobile.quick.browseCommunitySub",
-    href: "/browse",
-    icon: Search,
+    titleKey: "pages.messages.title",
+    subKey: "pages.messages.description",
+    href: "/messages",
+    icon: MessageSquare,
   },
   // A clear, labelled route to the member's own profile (the top-bar avatar
   // also links here, but it's an unlabelled icon). Reuses the existing
@@ -79,17 +84,30 @@ export function MobileQuickSheet({
   open,
   onOpenChange,
   whatsNewCount,
+  unreadMessages,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   whatsNewCount: number;
+  unreadMessages: number;
 }) {
   const t = useTranslations("shell");
   const tWhatsNew = useTranslations("whatsNew");
+  const tMessages = useTranslations("messages");
   const tInstall = useTranslations("installApp");
+  const tTheme = useTranslations("shell.theme");
+  const tLanguage = useTranslations("shell.language");
   const router = useRouter();
   const countFor = (href: string) =>
-    href === "/whats-new" ? whatsNewCount : 0;
+    href === "/whats-new"
+      ? whatsNewCount
+      : href === "/messages"
+        ? unreadMessages
+        : 0;
+  const countLabel = (href: string, count: number) =>
+    href === "/messages"
+      ? tMessages("unreadCount", { count })
+      : tWhatsNew("unreadCount", { count });
 
   const go = (href: string) => {
     onOpenChange(false);
@@ -112,8 +130,10 @@ export function MobileQuickSheet({
         side="bottom"
         aria-describedby={undefined}
         // The drag handle replaces the default X close affordance (the only
-        // direct child <button> of the content is that close button).
-        className="gap-0 rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
+        // direct child <button> of the content is that close button). On short
+        // phones the sheet scrolls rather than running off the top, keeping a
+        // strip of the dimmed page in view.
+        className="max-h-[calc(100dvh-3rem)] gap-0 overflow-y-auto overscroll-contain rounded-t-[20px] border-t-0 bg-card p-0 [&>button]:hidden"
       >
         <SheetTitle className="sr-only">{t("search.quickActions")}</SheetTitle>
         <div className="px-3.5 pt-2.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
@@ -138,9 +158,7 @@ export function MobileQuickSheet({
                   </span>
                   {countFor(action.href) > 0 && (
                     <span className="sr-only">
-                      {tWhatsNew("unreadCount", {
-                        count: countFor(action.href),
-                      })}
+                      {countLabel(action.href, countFor(action.href))}
                     </span>
                   )}
                 </span>
@@ -168,6 +186,12 @@ export function MobileQuickSheet({
                 <ChevronRight className="text-muted-foreground size-4 shrink-0" />
               </button>
             )}
+          </div>
+          <div className="mx-2.5 mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 border-t pt-3">
+            <span className="text-sm font-medium">{tTheme("label")}</span>
+            <ThemeRadios />
+            <span className="text-sm font-medium">{tLanguage("label")}</span>
+            <LanguageRadios />
           </div>
         </div>
       </SheetContent>

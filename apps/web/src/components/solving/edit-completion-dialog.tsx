@@ -60,6 +60,7 @@ export function EditCompletionDialog({
   const dated = (datePrecision ?? "day") === "day";
   const t = useTranslations("solving.logSolve");
   const tCompletions = useTranslations("solving.completions");
+  const tCommon = useTranslations("common");
   const editCompletion = useMutation({
     mutationFn: useConvexMutation(gateway.solving.editCompletion),
   });
@@ -174,6 +175,13 @@ export function EditCompletionDialog({
         </div>
 
         <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
+            {tCommon("cancel")}
+          </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {t("submit")}
           </Button>

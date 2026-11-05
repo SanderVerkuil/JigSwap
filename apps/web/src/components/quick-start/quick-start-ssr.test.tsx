@@ -353,10 +353,12 @@ describe("QuickStartFlowView", () => {
     expect(flat.indexOf("body")).toBeLessThan(flat.lastIndexOf("Skip"));
   });
 
-  it("docks the footer above the mobile tab bar", () => {
+  it("docks the footer above the mobile tab bar, at its measured height", () => {
     const html = renderFlow("puzzles");
     const footer = all(html).find((el) =>
-      attr(el, "class")?.includes("sticky bottom-14"),
+      attr(el, "class")?.includes(
+        "sticky bottom-[var(--mobile-tab-bar-height,3.5rem)]",
+      ),
     );
     expect(footer).toBeDefined();
     expect(attr(footer!, "class")).toContain("md:bottom-0");

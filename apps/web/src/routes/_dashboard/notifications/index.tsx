@@ -1,7 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import {
   ADMIN_NOTIFICATION_TYPES,
@@ -157,24 +157,35 @@ function NotificationsPage() {
 
   // The page title/subtitle come from ROUTE_META's shell.pages.notifications; only
   // the meta text + actions are published here so the body carries no duplicate header.
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {unreadMeta}
-        </span>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/notifications/preferences">
-            <Settings2 className="h-4 w-4" />
-            {t("preferences")}
-          </Link>
-        </Button>
-        <Button size="sm" onClick={handleMarkAll} disabled={unreadCount === 0}>
-          <CheckCheck className="h-4 w-4" />
-          {t("markAllRead")}
-        </Button>
-      </>
-    ),
+  usePageHeader(
+    () => ({
+      meta: unreadMeta,
+      actions: (
+        <>
+          {/* Icon-only 44px target on phones so both actions fit one row; the label stays
+              as the link's accessible name. */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="max-sm:size-11"
+            asChild
+          >
+            <Link href="/notifications/preferences">
+              <Settings2 aria-hidden className="h-4 w-4" />
+              <span className="max-sm:sr-only">{t("preferences")}</span>
+            </Link>
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleMarkAll}
+            disabled={unreadCount === 0}
+          >
+            <CheckCheck className="h-4 w-4" />
+            {t("markAllRead")}
+          </Button>
+        </>
+      ),
+    }),
     [unreadMeta],
   );
 

@@ -1,7 +1,7 @@
 import { Presence } from "@convex-dev/presence";
 import { ConvexError, v } from "convex/values";
 import { components } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import { requireActiveMember } from "./identity/requireActiveMember";
 import { logEvent } from "./lib/logEvent";
 import { enforceRateLimit } from "./lib/rateLimits";
@@ -32,6 +32,25 @@ export const HEARTBEAT_LOG_SAMPLE_RATE = 10;
 // The usePresence hook's sessionId is JSON of [uuid, roomId, userId], well under this.
 const MAX_SESSION_ID_LENGTH = 200;
 
+// Counts one heartbeat against the member's presenceHeartbeat limit; false when the window is
+// full. enforceRateLimit writes nothing before it refuses, so catching its refusal is safe.
+const withinHeartbeatLimit = async (
+  ctx: MutationCtx,
+  memberId: string,
+): Promise<boolean> => {
+  try {
+    await enforceRateLimit(ctx, "presenceHeartbeat", memberId);
+    return true;
+  } catch (error) {
+    if (
+      error instanceof ConvexError &&
+      (error.data as { code?: unknown } | null)?.code === "RateLimited"
+    )
+      return false;
+    throw error;
+  }
+};
+
 // Heartbeat from the messages layout and the dashboard shell. The member id comes from auth — the
 // client-supplied userId is only validated against it so the shared usePresence hook keeps
 // working; nobody can heartbeat someone else into invisibility of notifications (or online).
@@ -56,9 +75,15 @@ export const heartbeat = mutation({
       throw new ConvexError("Invalid presence interval");
     if (sessionId.length === 0 || sessionId.length > MAX_SESSION_ID_LENGTH)
       throw new ConvexError("Invalid presence session");
-    // Generic RateLimited refusal; costs one small row read + patch per heartbeat (fixed window,
-    // one rateLimits row per member).
-    await enforceRateLimit(ctx, "presenceHeartbeat", memberId as string);
+    // Costs one small row read + patch per heartbeat (fixed window, one rateLimits row per member).
+    // Past the limit the heartbeat is skipped quietly instead of thrown: the stock usePresence
+    // hook fires heartbeats with no catch, so a throw becomes an uncaught page error (UX-156).
+    // Empty tokens read as "no session" to the hook (no disconnect beacon, no roster query); a
+    // live session simply runs to its deadline unless the next heartbeat, in a fresh window,
+    // brings its token back. A refusal writes nothing and is still logged as rateLimit.refused.
+    // Only RateLimited is swallowed; every other error still throws.
+    if (!(await withinHeartbeatLimit(ctx, memberId as string)))
+      return { roomToken: "", sessionToken: "" };
     const { sessionToken } = await presence.heartbeat(
       ctx,
       roomId,

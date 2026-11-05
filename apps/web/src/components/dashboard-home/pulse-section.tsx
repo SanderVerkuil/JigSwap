@@ -442,7 +442,7 @@ function LatestColumn({
 
 function PulseSkeleton() {
   return (
-    <div className="grid gap-6 lg:gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
+    <div className="grid gap-6 @2xl/dashboard:grid-cols-[1.15fr_0.85fr_1.1fr] @2xl/dashboard:gap-10">
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="space-y-4">
           <Skeleton className="h-8 w-2/3" />
@@ -480,7 +480,7 @@ export function PulseSection() {
   if (!member) return null;
 
   return (
-    <div className="grid gap-6 lg:gap-10 lg:grid-cols-[1.15fr_0.85fr_1.1fr]">
+    <div className="grid gap-6 @2xl/dashboard:grid-cols-[1.15fr_0.85fr_1.1fr] @2xl/dashboard:gap-10">
       <InMotionColumn exchanges={exchanges ?? []} />
       <GoalsColumn goals={goals ?? []} />
       <LatestColumn entries={feed ?? []} me={member} />

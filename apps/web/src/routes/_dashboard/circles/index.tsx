@@ -42,10 +42,11 @@ import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway } from "@/gateway";
+import { validateCirclesSearch } from "@/lib/circles-search";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plus, Settings, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "use-intl";
@@ -64,10 +65,8 @@ interface CircleSummaryView {
 }
 
 export const Route = createFileRoute("/_dashboard/circles/")({
-  // `invite` is the circle_invite_received deep link: highlight that invitation.
-  validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
-    invite: typeof search.invite === "string" ? search.invite : undefined,
-  }),
+  // `invite` highlights an invitation; `create` opens the create dialog (see circles-search.ts).
+  validateSearch: validateCirclesSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "circles") }],
   }),
@@ -83,8 +82,23 @@ function CirclesPending() {
 function CirclesPage() {
   const { user } = useUser();
   const t = useTranslations("circles");
-  const { invite: highlightInviteId } = Route.useSearch();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { invite: highlightInviteId, create: createRequested } =
+    Route.useSearch();
+  const navigate = useNavigate();
+  const [createOpenedHere, setCreateOpenedHere] = useState(false);
+  // Open when opened from this page, or when arriving via ?create=1 (the ⌘K quick action). The
+  // flag lives in the URL, so closing drops it (replace: Back must not reopen the dialog).
+  const isCreateOpen = createOpenedHere || createRequested === true;
+  const setIsCreateOpen = (open: boolean) => {
+    setCreateOpenedHere(open);
+    if (!open && createRequested) {
+      void navigate({
+        to: "/circles",
+        search: { invite: highlightInviteId },
+        replace: true,
+      });
+    }
+  };
   const [name, setName] = useState("");
   const [nameInvalid, setNameInvalid] = useState(false);
   const [manageCircleId, setManageCircleId] = useState<string | null>(null);

@@ -99,6 +99,10 @@ export function PuzzleCardShell({
   // Difficulty labels live under the nested `puzzles.puzzles.*` namespace.
   const tCat = useTranslations("puzzles.puzzles");
   const { viewMode } = usePuzzleView();
+  // Grid cards drop to a compact density below sm, where a phone grid leaves
+  // each card little room: a 4:3 cover (most box art is landscape), tighter
+  // padding, and no description or tags. List rows keep one layout throughout.
+  const compactOnPhones = viewMode === "grid";
 
   const difficultyLabel = (difficulty?: string | null) => {
     switch (difficulty) {
@@ -120,7 +124,15 @@ export function PuzzleCardShell({
     // rather than a broken <img> pointing at a non-existent placeholder file.
     // This is THE unified no-image fallback both contexts share.
     const inner = (
-      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-t-lg",
+          compactOnPhones ? "aspect-[4/3] sm:aspect-square" : "aspect-square",
+          // A contained cover sits on a muted frame, so its letterbox bands read
+          // as part of the cover instead of empty card space.
+          puzzle.imageUrl && imageFit === "contain" && "bg-muted",
+        )}
+      >
         {puzzle.imageUrl ? (
           <Image
             src={puzzle.imageUrl}
@@ -155,7 +167,12 @@ export function PuzzleCardShell({
   };
 
   const renderContent = () => (
-    <div className="flex flex-1 flex-col p-4">
+    <div
+      className={cn(
+        "flex flex-1 flex-col",
+        compactOnPhones ? "p-3 sm:p-4" : "p-4",
+      )}
+    >
       <div className="mb-2">
         <h3 className="font-semibold text-sm line-clamp-2 mb-1">
           {imageHref ? (
@@ -193,13 +210,23 @@ export function PuzzleCardShell({
       {badges}
 
       {puzzle.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+        <p
+          className={cn(
+            "text-xs text-muted-foreground line-clamp-2 mb-2",
+            compactOnPhones && "max-sm:hidden",
+          )}
+        >
           {puzzle.description}
         </p>
       )}
 
       {puzzle.tags && puzzle.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-2">
+        <div
+          className={cn(
+            "flex flex-wrap gap-1 mb-2",
+            compactOnPhones && "max-sm:hidden",
+          )}
+        >
           {puzzle.tags.slice(0, 3).map((tag, index) => (
             <Badge key={index} variant="outline" className="text-xs">
               {tag}

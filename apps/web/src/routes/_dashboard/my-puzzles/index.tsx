@@ -1,6 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useShortcutHint } from "@/components/dashboard-layout/shortcut-hint";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import {
   useCopyCardActions,
@@ -124,6 +125,7 @@ function PuzzlesPage() {
   const t = useTranslations("puzzles");
   const displayName = useMemberDisplayName();
   const tLending = useTranslations("lending");
+  const shortcut = useShortcutHint();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   // Whose copies to show when the viewer is in a household: everything, only their own, or only
@@ -229,34 +231,31 @@ function PuzzlesPage() {
     return solveState?.completed ?? false;
   });
 
-  // The page title lives in the shell page head; publish the owned count + the
-  // Add Puzzle action there so the page body carries no duplicate header.
-  const ownedCount = allCopies.length;
-  const headerMeta = t("countMeta", { count: ownedCount });
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
-        <Button variant="outline" size="sm" asChild>
-          <Link
-            href="/my-puzzles/suggestions"
-            data-tour="my-puzzles-suggestions"
-          >
-            <Lightbulb className="h-4 w-4" />
-            {t("mySuggestions")}
-          </Link>
-        </Button>
-        <Button variant="brand" size="sm" asChild>
-          <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
-            <Plus className="h-4 w-4" />
-            {t("addPuzzle")}
-          </Link>
-        </Button>
-      </>
-    ),
-    [headerMeta],
+  // The page title lives in the shell page head; publish the actions there so the
+  // page body carries no duplicate header. The count lives beside the filters.
+  usePageHeader(
+    () => ({
+      actions: (
+        <>
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href="/my-puzzles/suggestions"
+              data-tour="my-puzzles-suggestions"
+            >
+              <Lightbulb className="h-4 w-4" />
+              {t("mySuggestions")}
+            </Link>
+          </Button>
+          <Button variant="brand" size="sm" asChild>
+            <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
+              <Plus className="h-4 w-4" />
+              {t("addPuzzle")}
+            </Link>
+          </Button>
+        </>
+      ),
+    }),
+    [t],
   );
 
   if (
@@ -274,7 +273,7 @@ function PuzzlesPage() {
       <ActionsCoachmark />
 
       {/* Toolbar: a muted search hint on the left, view toggle on the right. Free-text search moved
-          to the global ⌘K palette; the count + Add Puzzle action live in the shell page head. */}
+          to the global ⌘K palette; the Add Puzzle action lives in the shell page head. */}
       <div className="flex flex-wrap items-center gap-3">
         {myHousehold ? (
           <Link
@@ -289,11 +288,11 @@ function PuzzlesPage() {
             </span>
             <ArrowRight className="size-3.5 shrink-0" aria-hidden />
           </Link>
-        ) : (
-          <p className="text-muted-foreground hidden text-sm sm:block">
-            {t("searchHint")}
+        ) : shortcut ? (
+          <p className="text-muted-foreground hidden text-sm sm:block pointer-coarse:hidden">
+            {t("searchHint", { shortcut })}
           </p>
-        )}
+        ) : null}
         <div className="ml-auto flex items-center gap-2">
           {myHousehold && (
             <Select

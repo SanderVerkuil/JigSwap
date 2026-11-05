@@ -1,4 +1,4 @@
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -107,14 +107,7 @@ function BorrowedPage() {
   // page body carries no duplicate header.
   const borrowedCount = (borrowed ?? []).length;
   const headerMeta = t("borrowedCount", { count: borrowedCount });
-  usePageHeaderActions(
-    () => (
-      <span className="text-muted-foreground hidden text-sm sm:inline">
-        {headerMeta}
-      </span>
-    ),
-    [headerMeta],
-  );
+  usePageHeader(() => ({ meta: headerMeta }), [headerMeta]);
 
   if (isPending || borrowed === undefined) {
     return <PageLoading message={tCommon("loading")} />;

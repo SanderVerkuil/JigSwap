@@ -1,7 +1,7 @@
 import { useUser } from "@/compat/clerk";
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
@@ -137,21 +137,21 @@ function CompletionsPage() {
   // The page title lives in the shell page head; publish the log meta + the Log
   // Completion action there so the body carries no duplicate section header.
   const { startTour } = useTourLauncher();
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {t("mostRecent")}
-        </span>
-        <GuideHelpButton tourId="track-your-solves" startTour={startTour} />
-        <Button variant="brand" size="sm" asChild>
-          <Link href="/completions/new" data-tour="completions-log">
-            <Plus className="h-4 w-4" />
-            {t("logAction")}
-          </Link>
-        </Button>
-      </>
-    ),
+  usePageHeader(
+    () => ({
+      meta: t("mostRecent"),
+      actions: (
+        <>
+          <GuideHelpButton tourId="track-your-solves" startTour={startTour} />
+          <Button variant="brand" size="sm" asChild>
+            <Link href="/completions/new" data-tour="completions-log">
+              <Plus className="h-4 w-4" />
+              {t("logAction")}
+            </Link>
+          </Button>
+        </>
+      ),
+    }),
     [t, startTour],
   );
 

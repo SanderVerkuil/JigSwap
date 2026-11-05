@@ -2,6 +2,8 @@
 // whether the site already runs installed, and when the tip may show itself. Framework-free so the
 // rules are unit-tested without a DOM; the hook in ./use-install-app.ts feeds them browser values.
 
+import { isImmersiveMobileRoute } from "@/components/dashboard-layout/route-meta";
+
 /**
  * How this browser can install the site, or null when it can't (or we can't explain how).
  * - "prompt": Chromium fired `beforeinstallprompt`, so an "Install app" button can call prompt().
@@ -178,6 +180,29 @@ export function snooze(state: TipState, now: number): TipState {
 
 export function neverShow(state: TipState): TipState {
   return { ...state, never: true };
+}
+
+// Pages where the tip would sit on what the member is doing: the quick start's sticky Skip /
+// Continue footer, and the forms (the keyboard, the submit button at the end of a long form).
+const BLOCKED_ROUTES = [
+  /^\/welcome(\/|$)/,
+  /^\/my-puzzles\/add\/(new|quick)\/?$/,
+  /^\/puzzles\/add\/?$/,
+  /^\/puzzles\/[^/]+\/suggest-edit\/?$/,
+  /^\/completions\/new\/?$/,
+  /^\/admin\/puzzles\/[^/]+\/edit\/?$/,
+];
+
+/**
+ * Pages the tip never shows itself on, and where a tip that is already up steps aside (without
+ * being dismissed) until the member moves on: those above, and the open thread, where the
+ * composer owns the bottom of the screen.
+ */
+export function installTipBlockedOn(pathname: string): boolean {
+  return (
+    isImmersiveMobileRoute(pathname) ||
+    BLOCKED_ROUTES.some((route) => route.test(pathname))
+  );
 }
 
 /**

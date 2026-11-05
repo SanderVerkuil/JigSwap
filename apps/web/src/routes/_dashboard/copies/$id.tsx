@@ -64,7 +64,13 @@ import {
   Tag,
   UserRound,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -246,6 +252,8 @@ function CopyInstanceDetail({
   // copy editor (also reachable from the page-head Edit button registered below).
   const [logOpen, setLogOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  // The photo strip's file input, so the copy editor's "Add photo" can open the same picker.
+  const addPhotoInputRef = useRef<HTMLInputElement>(null);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -443,10 +451,11 @@ function CopyInstanceDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
+          {/* From md the shell page head already shows the title (published above). */}
+          <h1 className="font-heading text-3xl font-bold tracking-tight md:hidden">
             {snapshot.title}
           </h1>
-          <p className="text-muted-foreground mt-1 text-base">
+          <p className="text-muted-foreground mt-1 text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
             <span className="font-mono">
               {snapshot.pieceCount.toLocaleString()}
@@ -732,6 +741,7 @@ function CopyInstanceDetail({
           canAdd={copy.viewerCanManage}
           copyId={copyId}
           coverImageId={snapshot.coverImageId}
+          inputRef={addPhotoInputRef}
         />
       </section>
 
@@ -887,6 +897,7 @@ function CopyInstanceDetail({
               open={editOpen}
               onOpenChange={setEditOpen}
               copy={copy}
+              onAddPhotos={() => addPhotoInputRef.current?.click()}
             />
           )}
         </>
@@ -961,6 +972,7 @@ function PhotoStrip({
   canAdd,
   copyId,
   coverImageId,
+  inputRef,
 }: {
   gallery: CopyInstanceView["gallery"];
   pendingPhotos: CopyInstanceView["pendingPhotos"];
@@ -968,11 +980,11 @@ function PhotoStrip({
   canAdd: boolean;
   copyId: string;
   coverImageId: string | null;
+  inputRef: RefObject<HTMLInputElement | null>;
 }) {
   const t = useTranslations("copyInstance");
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [editing, setEditing] = useState<{

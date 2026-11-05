@@ -1,6 +1,6 @@
 import { useUser } from "@/compat/clerk";
 import { SectionHead } from "@/components/dashboard-home/section-head";
-import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ export const Route = createFileRoute("/_dashboard/goals")({
 function GoalsPage() {
   const { user } = useUser();
   const t = useTranslations("solving.goals");
+  const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -103,12 +104,10 @@ function GoalsPage() {
   // action there too so the page body carries no duplicate section header.
   const activeCount = (goals ?? []).filter((goal) => !goal.isAchieved).length;
   const headerMeta = t("activeCount", { count: activeCount });
-  usePageHeaderActions(
-    () => (
-      <>
-        <span className="text-muted-foreground hidden text-sm sm:inline">
-          {headerMeta}
-        </span>
+  usePageHeader(
+    () => ({
+      meta: headerMeta,
+      actions: (
         <Button
           variant="brand"
           size="sm"
@@ -118,8 +117,8 @@ function GoalsPage() {
           <Plus className="h-4 w-4" />
           {t("create")}
         </Button>
-      </>
-    ),
+      ),
+    }),
     [headerMeta],
   );
 
@@ -192,6 +191,13 @@ function GoalsPage() {
           </div>
 
           <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={createGoal.isPending}
+            >
+              {tCommon("cancel")}
+            </Button>
             <Button
               onClick={handleCreate}
               disabled={createGoal.isPending || !title.trim() || !target}
