@@ -33,6 +33,11 @@ import { useTranslations } from "use-intl";
 type BrowseResult = FunctionReturnType<typeof gateway.catalog.publicBrowse>;
 
 const PAGE_SIZE = 20;
+// The grid's first row at its widest (lg:grid-cols-4), which holds the page's
+// likely LCP image: these covers are server-rendered eager and high priority,
+// so the browser fetches them before the scripts run. On narrower grids this
+// also covers (part of) the second row; covers further down stay lazy.
+const ABOVE_THE_FOLD_CARDS = 4;
 // The first page for the URL's filters. The loader prefetches EXACTLY these args so a
 // filtered link renders its results on the server (same pattern as the home page's
 // globalStatsQuery).
@@ -291,12 +296,13 @@ function CatalogListPage() {
               viewMode="grid"
               className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4"
             >
-              {cards.map((card) => (
+              {cards.map((card, index) => (
                 <DefinitionCard
                   key={card._id}
                   card={card}
                   imageSizes={CARD_IMAGE_SIZES}
                   headingLevel={2}
+                  priority={index < ABOVE_THE_FOLD_CARDS}
                 />
               ))}
             </PuzzleViewProvider>

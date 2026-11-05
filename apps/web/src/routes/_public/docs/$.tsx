@@ -16,30 +16,37 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
+import { pageLoaders } from "virtual:docs/content";
 
 export const Route = createFileRoute("/_public/docs/$")({
-  // Resolving the page in the loader makes an unknown slug a real 404 (status included) rather than
-  // a 200 rendering a not-found message, and hands head() the page's own title and summary. The
-  // docs bundle is imported lazily so it stays out of the route's eagerly loaded code; the
-  // component chunk imports it anyway. Every slug the prerender crawl reaches exists, so the crawl
-  // never meets this 404.
+  // The loader rides in the component's lazy chunk: TanStack leaves loaders in
+  // the route tree (the entry chunk) by default, which would put the docs
+  // metadata on every page of the app. That is also why its docs imports may be
+  // static: head() and the rest of the route's eager code never touch them.
+  codeSplitGroupings: [["loader", "component"]],
+  // Resolving the page in the loader makes an unknown slug a real 404 (status
+  // included) rather than a 200 rendering a not-found message, and hands head()
+  // the page's own title and summary. Every slug the prerender crawl reaches
+  // exists, so the crawl never meets this 404.
+  // Only this page's body is fetched (its own chunk); the nav comes from the
+  // shared page metadata. SSR and the prerendered HTML carry the body in the
+  // dehydrated loader data, so hydration fetches nothing extra.
   loader: async ({ params, context }) => {
-    const docs = await import("virtual:docs");
+    // Group index pages are pages too; a locale without the page shows English.
     const page = findDocPage(
-      pagesForLocale(docs.pages, context.intl.locale),
+      pagesForLocale(pages, context.intl.locale),
       params._splat,
     );
-    if (!page) throw notFound();
-    return {
-      title: page.frontmatter.title,
-      summary: page.frontmatter.summary,
-    };
+    const load = page && pageLoaders[page.id];
+    if (!page || !load) throw notFound();
+    const { html, headings } = await load();
+    return { page, html, headings };
   },
   head: ({ loaderData, match }) =>
     loaderData
       ? seoHead(match, "docs", {
-          title: `${loaderData.title} — JigSwap`,
-          description: loaderData.summary,
+          title: `${loaderData.page.frontmatter.title} — JigSwap`,
+          description: loaderData.page.frontmatter.summary,
         })
       : { meta: [{ title: pageTitle(match.context, "notFound") }] },
   // Inside the docs layout, which already provides <main>.
@@ -51,9 +58,7 @@ function DocPageView() {
   const t = useTranslations("marketing.docs");
   const locale = useLocale();
   const localePages = useMemo(() => pagesForLocale(pages, locale), [locale]);
-  const { _splat } = Route.useParams();
-  const page = findDocPage(localePages, _splat);
-  if (!page) throw notFound(); // the loader already 404s; this narrows the type
+  const { page, html, headings } = Route.useLoaderData();
   const slug = page.slug;
 
   const tree = buildNavTree(localePages);
@@ -73,12 +78,12 @@ function DocPageView() {
         <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(30px,4vw,40px)] leading-[1.12] mb-4">
           {page.frontmatter.title}
         </h1>
-        <DocContent html={page.html} />
+        <DocContent html={html} />
         <DocPager pager={pager} />
         <DocHelpful slug={slug} />
       </article>
       <OnPageToc
-        headings={page.headings}
+        headings={headings}
         className="max-[1280px]:hidden sticky top-[96px]"
       />
     </div>

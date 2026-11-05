@@ -166,7 +166,12 @@ function PublicPuzzleDetail({
       <section className="grid items-start gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
         <div className="bg-muted relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm md:aspect-square lg:max-w-[300px]">
           {definition.image ? (
-            <ImageZoom src={definition.image} alt={definition.title} fill />
+            <ImageZoom
+              src={definition.image}
+              alt={definition.title}
+              fill
+              priority
+            />
           ) : (
             <PuzzleCoverFallback />
           )}

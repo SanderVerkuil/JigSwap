@@ -102,7 +102,7 @@ export function MarketingHeader() {
       <SkipLink />
       <div className="w-full max-w-[1200px] mx-auto px-6 flex items-center gap-3 sm:gap-5 h-[70px]">
         <Link href="/" aria-label="JigSwap">
-          <Wordmark textClassName="max-[375px]:hidden" />
+          <Wordmark priority textClassName="max-[375px]:hidden" />
         </Link>
         <nav
           aria-label={t("primaryNav")}

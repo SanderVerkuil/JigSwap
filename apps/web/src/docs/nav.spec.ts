@@ -6,7 +6,7 @@ import {
   flattenOrder,
   pagesForLocale,
 } from "./nav";
-import type { DocPage } from "./types";
+import type { DocMeta } from "./types";
 
 function page(
   slug: string,
@@ -15,20 +15,18 @@ function page(
   title: string,
   order = 0,
   locale = "en",
-): DocPage {
+): DocMeta {
   return {
+    id: `${locale}/${isIndex ? (slug ? `${slug}/index` : "index") : slug}`,
     locale,
     slug,
     group,
     isIndex,
     frontmatter: { title, order },
-    html: "",
-    headings: [],
-    text: "",
   };
 }
 
-const PAGES: DocPage[] = [
+const PAGES: DocMeta[] = [
   page("", "", true, "User Guide", 0),
   page("getting-started", "getting-started", true, "Getting Started", 1),
   page(
@@ -50,7 +48,7 @@ const PAGES: DocPage[] = [
 ];
 
 describe("pagesForLocale", () => {
-  const MIXED: DocPage[] = [
+  const MIXED: DocMeta[] = [
     page(
       "getting-started",
       "getting-started",

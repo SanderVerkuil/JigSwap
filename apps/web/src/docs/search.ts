@@ -18,7 +18,9 @@ export interface SearchHit {
 }
 
 // Leaf pages only — index and root pages are navigation hubs, not search targets.
-export function buildSearchDocs(pages: DocPage[]): SearchDoc[] {
+// Runs at build time (vite-plugin-docs.ts): each locale's search corpus is a
+// module of its own that the search dialog loads when it first opens.
+export function buildSearchDocs(pages: readonly DocPage[]): SearchDoc[] {
   return pages
     .filter((p) => !p.isIndex && p.slug !== "")
     .map((p) => ({
@@ -31,7 +33,9 @@ export function buildSearchDocs(pages: DocPage[]): SearchDoc[] {
     }));
 }
 
-export function createDocsIndex(docs: SearchDoc[]) {
+export type DocsIndex = ReturnType<typeof createDocsIndex>;
+
+export function createDocsIndex(docs: readonly SearchDoc[]) {
   const mini = new MiniSearch<SearchDoc>({
     fields: ["title", "summary", "text"],
     storeFields: ["slug", "title", "group", "text"],

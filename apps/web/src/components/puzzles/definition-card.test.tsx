@@ -2,6 +2,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -44,6 +45,8 @@ const card = (extra: Partial<Card> = {}): Card => ({
 });
 
 const SIZES = "(min-width: 1024px) 25vw, 50vw";
+const SRC_SET =
+  "https://cdn.test/480 480w, https://cdn.test/960 960w, https://cdn.test/original 1600w";
 
 // Inside the grid provider, as on the /catalog page.
 const render = (c: Card) =>
@@ -59,12 +62,10 @@ const render = (c: Card) =>
 
 describe("DefinitionCard cover", () => {
   it("lets the browser pick a box-art rendition for the catalogue grid", () => {
-    const srcSet =
-      "https://cdn.test/480 480w, https://cdn.test/960 960w, https://cdn.test/original 1600w";
-    render(card({ imageSrcSet: srcSet }));
+    render(card({ imageSrcSet: SRC_SET }));
     const img = container.querySelector("img");
     expect(img?.getAttribute("src")).toBe("https://cdn.test/original");
-    expect(img?.getAttribute("srcset")).toBe(srcSet);
+    expect(img?.getAttribute("srcset")).toBe(SRC_SET);
     expect(img?.getAttribute("sizes")).toBe(SIZES);
   });
 
@@ -74,5 +75,40 @@ describe("DefinitionCard cover", () => {
     expect(img?.getAttribute("src")).toBe("https://cdn.test/original");
     expect(img?.hasAttribute("srcset")).toBe(false);
     expect(img?.hasAttribute("sizes")).toBe(false);
+  });
+});
+
+// The /catalog grid is server-rendered: what the HTML says decides whether the
+// browser's preload scanner fetches the cover before the scripts run.
+const ssrCover = (c: Card, priority?: boolean) => {
+  const html = renderToStaticMarkup(
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <PuzzleViewProvider viewMode="grid">
+        <DefinitionCard card={c} imageSizes={SIZES} priority={priority} />
+      </PuzzleViewProvider>
+    </IntlProvider>,
+  );
+  return html.match(/<img[^>]*>/)?.[0] ?? "";
+};
+
+describe("DefinitionCard cover priority", () => {
+  it("loads lazily by default (cards below the fold)", () => {
+    const img = ssrCover(card());
+    expect(img).toContain('loading="lazy"');
+    expect(img).not.toMatch(/fetchpriority/i);
+  });
+
+  it("loads eagerly at high priority for a first-row card", () => {
+    const img = ssrCover(card(), true);
+    expect(img).toContain('loading="eager"');
+    // HTML attribute names are case-insensitive; React writes fetchPriority.
+    expect(img).toMatch(/fetchpriority="high"/i);
+  });
+
+  it("keeps the rendition choice on a first-row card: srcset decides what, priority when", () => {
+    const img = ssrCover(card({ imageSrcSet: SRC_SET }), true);
+    expect(img).toMatch(/srcset="[^"]*480w/i);
+    expect(img).toContain(`sizes="${SIZES}"`);
+    expect(img).toMatch(/fetchpriority="high"/i);
   });
 });

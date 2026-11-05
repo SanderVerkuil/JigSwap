@@ -2,7 +2,8 @@ import * as React from "react";
 
 // next/image compat: approximates next/image props with a styled <img>. No
 // optimization pipeline — `fill` absolutely positions the image to fill its
-// (positioned) parent, `priority` maps to eager loading. Like real next/image,
+// (positioned) parent, `priority` maps to eager, high fetch-priority loading
+// (for images above the fold: logos, detail heroes). Like real next/image,
 // object-fit is the caller's job: pass `className="object-cover"` /
 // `object-contain`. Ported `next/image` files just swap the import.
 type ImgProps = Omit<
@@ -72,6 +73,7 @@ export function Image({
       height={fill ? undefined : height}
       sizes={sizes}
       loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : undefined}
       decoding="async"
       style={{ ...fillStyle, ...style }}
       {...rest}

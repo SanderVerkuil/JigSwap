@@ -7,10 +7,11 @@
     "dev": "vite dev",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
+    "bundle:check": "node scripts/bundle-budget.mjs",
     "type-check": "node generate-route-tree.mjs && tsc --noEmit",
     "test": "vitest run",
     "whats-new:manifest": "vitest run src/whats-new/manifest.spec.ts -u",
-    "lint": "oxlint --type-aware src"
+    "lint": "oxlint --type-aware src scripts"
   },
   "dependencies": {
     "@clerk/localizations": "^4.23.0",

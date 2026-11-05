@@ -127,6 +127,44 @@ describe("AppPresence", () => {
     expect([...mocks.mounted]).toEqual([APP_AWAY_ROOM]);
   });
 
+  it("handles a burst of pointer moves without rescheduling the idle timer or re-rendering", () => {
+    render(<AppPresence />);
+    const renders = mocks.renders.length;
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+    const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
+    act(() => {
+      for (let i = 0; i < 200; i++) {
+        vi.advanceTimersByTime(16);
+        window.dispatchEvent(new Event("pointermove"));
+      }
+    });
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+    expect(mocks.renders.length).toBe(renders);
+    expect([...mocks.mounted]).toEqual([APP_ONLINE_ROOM]);
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
+  });
+
+  it("goes away exactly 5 minutes after the last of many inputs", () => {
+    render(<AppPresence />);
+    act(() => {
+      // Input every second for 3 minutes, starting a minute in.
+      vi.advanceTimersByTime(60_000);
+      for (let i = 0; i < 180; i++) {
+        window.dispatchEvent(new Event("pointermove"));
+        vi.advanceTimersByTime(1_000);
+      }
+      // The last input was 1 s ago.
+      vi.advanceTimersByTime(IDLE_AFTER_MS - 1_000 - 1);
+    });
+    expect([...mocks.mounted]).toEqual([APP_ONLINE_ROOM]);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect([...mocks.mounted]).toEqual([APP_AWAY_ROOM]);
+  });
+
   it("doesn't go away while the tab is hidden, and is active again when it shows", () => {
     render(<AppPresence />);
     setHidden(true);

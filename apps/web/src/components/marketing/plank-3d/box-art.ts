@@ -237,12 +237,15 @@ export function drawBoxArt(
  * Build a CanvasTexture for a box front. Draws synchronously (gradient
  * version), then upgrades to the cover image when it loads. Cover load
  * failure keeps the gradient fallback — mirrors the CSS plank's onError.
+ * `onRedraw` fires after each later redraw (cover loaded, fonts ready): a
+ * demand-rendered canvas needs a frame to show it.
  */
 export function createBoxArtTexture(
   spec: BoxArtSpec,
   fonts: ArtFonts,
   onCoverAspect?: (aspect: number) => void,
   onCoverEdges?: (edges: CoverEdges) => void,
+  onRedraw?: () => void,
 ): CanvasTexture {
   const canvas = document.createElement("canvas");
   drawBoxArt(spec, canvas, fonts);
@@ -283,6 +286,7 @@ export function createBoxArtTexture(
         reallocating = false;
       }
       texture.needsUpdate = true;
+      onRedraw?.();
       onCoverAspect?.(aspect);
       // extractCoverEdges calls getImageData which throws a SecurityError when
       // the canvas is tainted (e.g. CORS headers missing on the server). Degrade
@@ -304,6 +308,7 @@ export function createBoxArtTexture(
       if (disposed) return;
       drawBoxArt(spec, canvas, fonts);
       texture.needsUpdate = true;
+      onRedraw?.();
     });
   }
 

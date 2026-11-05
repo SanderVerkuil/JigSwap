@@ -5,11 +5,16 @@ import {
   type PuzzlePlankBox,
 } from "@/components/common/puzzle-plank";
 import {
+  supportsWebGL,
+  useCanLoad3D,
+  useDeviceAllows3D,
+} from "@/components/common/three-gate";
+import {
   resolveCssColor,
   resolveHeadingFont,
 } from "@/components/marketing/plank-3d/palette";
 import { Button } from "@/components/ui/button";
-import { RotateCcw } from "lucide-react";
+import { Hand, Loader2, RotateCcw } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 import { useTranslations } from "use-intl";
@@ -18,30 +23,6 @@ import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
 const PlankScenePhysics = React.lazy(() => import("./scene-physics"));
-
-// Probed once per page load: useSyncExternalStore calls the snapshot on every
-// render, and each probe would otherwise allocate a canvas + GL context.
-let webGLSupport: boolean | undefined;
-function supportsWebGL(): boolean {
-  if (webGLSupport !== undefined) return webGLSupport;
-  try {
-    const canvas = document.createElement("canvas");
-    webGLSupport = !!(
-      canvas.getContext("webgl2") || canvas.getContext("webgl")
-    );
-  } catch {
-    webGLSupport = false;
-  }
-  return webGLSupport;
-}
-
-const noopSubscribe = () => () => {};
-
-// False on the server and during hydration (CSS fallback only), the real
-// WebGL support on the client.
-function useSupportsWebGL(): boolean {
-  return React.useSyncExternalStore(noopSubscribe, supportsWebGL, () => false);
-}
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -82,10 +63,11 @@ export function PuzzlePlank3D({
 }: {
   boxes: PuzzlePlankBox[];
   /**
-   * When true, loads the rapier physics scene (grab/drag/throw) instead of
-   * the static scene. Only activates when WebGL is available and
-   * prefers-reduced-motion is not set. Defaults to false so all existing
-   * callers (dashboard, marketing hero) are unchanged.
+   * When true, offers the rapier physics scene (grab/drag/throw) behind a Play
+   * button, or a first mouse press on the shelf; until then the static scene
+   * (or the CSS plank) shows. Not offered on Save-Data or low-memory devices
+   * or with prefers-reduced-motion, and dropped if WebGL turns out to be
+   * missing. Defaults to false (dashboard shelf).
    */
   interactive?: boolean;
 }) {
@@ -101,12 +83,42 @@ export function PuzzlePlank3D({
   const [headingFont, setHeadingFont] = React.useState("system-ui, sans-serif");
   // Bumped by the Reset button to snap the physics boxes back to their layout.
   const [resetNonce, setResetNonce] = React.useState(0);
+  // The physics chunk (rapier + WASM, ~845 KB gz) loads only when asked for.
+  const [physicsRequested, setPhysicsRequested] = React.useState(false);
+  const [physicsReady, setPhysicsReady] = React.useState(false);
+  const [physicsFailed, setPhysicsFailed] = React.useState(false);
+  // Set once the static scene has faded out under the live physics scene.
+  const [staticRetired, setStaticRetired] = React.useState(false);
   const t = useTranslations("shell");
-  // `mounted` = client-side with WebGL available; gates every 3D path.
-  const mounted = useSupportsWebGL();
+  // Idle client on a capable device (see three-gate); gates the static scene.
+  // Otherwise the CSS plank stays.
+  const canLoad3D = useCanLoad3D();
+  const deviceAllows3D = useDeviceAllows3D();
   const reducedMotion = usePrefersReducedMotion();
   const { resolvedTheme } = useTheme();
   const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
+
+  // Physics is offered on any device the 3D gate's device budget allows
+  // (Save-Data and low memory never get it), phones included, where only an
+  // explicit Play loads it; never with reduced motion. WebGL is probed only
+  // once physics is asked for, so a phone that never asks allocates no GL
+  // context; without WebGL the request falls back to the CSS plank.
+  const canPlay =
+    interactive && deviceAllows3D && !reducedMotion && !physicsFailed;
+  const physicsOn = canPlay && physicsRequested;
+  const requestPhysics = () => {
+    if (supportsWebGL()) setPhysicsRequested(true);
+    else setPhysicsFailed(true);
+  };
+  // The static scene stays until physics has painted and faded in over it; if
+  // it never painted itself there is nothing to crossfade from.
+  const showStatic =
+    canLoad3D && !(physicsOn && physicsReady && (staticRetired || !sceneReady));
+  const mounted = showStatic || physicsOn;
+  // A scene that unmounts (gate closed, physics failed) must not leave the
+  // CSS plank faded out.
+  if (sceneReady && !showStatic) setSceneReady(false);
+  if (physicsReady && !physicsOn) setPhysicsReady(false);
 
   // Resolve CSS-var colors + font from the live DOM; re-resolve when the
   // theme flips so box colors match the page's current palette.
@@ -151,10 +163,7 @@ export function PuzzlePlank3D({
   // Empty boxes → nothing to render.
   if (!hasBoxes) return null;
 
-  const showScene = mounted && resolved !== null;
-  // Use physics scene only when explicitly opted in, WebGL is available, and
-  // reduced-motion is not active. `mounted` already gates on WebGL.
-  const usePhysics = interactive && mounted && !reducedMotion;
+  const physicsLoading = physicsOn && !physicsReady;
 
   const sceneProps: PlankSceneProps = {
     boxes,
@@ -172,11 +181,17 @@ export function PuzzlePlank3D({
     <div
       ref={container}
       style={{ position: "relative", width: "100%", height: "100%" }}
+      // A mouse press on the shelf asks for physics too. Touch never does, so
+      // scrolling past the shelf on a phone or tablet loads nothing.
+      onPointerDown={(e) => {
+        if (canPlay && !physicsRequested && e.pointerType === "mouse")
+          requestPhysics();
+      }}
     >
-      {/* CSS plank: fallback shown until the scene's first frame, or permanently
-          when WebGL is unavailable or the scene boundary catches an error.
-          Clipped and scaled to its container so it never overflows the page,
-          even once faded out. Decorative — hidden from assistive tech. */}
+      {/* CSS plank: fallback shown until a scene's first frame, or permanently
+          when 3D is gated off, WebGL is unavailable or a scene boundary catches
+          an error. Clipped and scaled to its container so it never overflows the
+          page, even once faded out. Decorative — hidden from assistive tech. */}
       <div
         ref={fallbackLayer}
         aria-hidden="true"
@@ -188,8 +203,8 @@ export function PuzzlePlank3D({
           alignItems: "center",
           justifyContent: "center",
           transition: "opacity .45s ease",
-          opacity: sceneReady ? 0 : 1,
-          pointerEvents: sceneReady ? "none" : undefined,
+          opacity: sceneReady || physicsReady ? 0 : 1,
+          pointerEvents: sceneReady || physicsReady ? "none" : undefined,
         }}
       >
         <div
@@ -200,7 +215,7 @@ export function PuzzlePlank3D({
         </div>
       </div>
 
-      {showScene && (
+      {showStatic && resolved !== null && (
         <SceneBoundary onError={() => setSceneReady(false)}>
           <React.Suspense fallback={null}>
             <div
@@ -208,37 +223,81 @@ export function PuzzlePlank3D({
               style={{
                 position: "absolute",
                 inset: 0,
-                // Physics scene needs pointer events for drag; static scene
-                // uses "none" so the surrounding page still scrolls freely.
-                pointerEvents: usePhysics ? "auto" : "none",
+                // "none" so the surrounding page still scrolls freely.
+                pointerEvents: "none",
                 transition: "opacity .45s ease",
-                opacity: sceneReady ? 1 : 0,
+                opacity: sceneReady && !physicsReady ? 1 : 0,
+              }}
+              onTransitionEnd={(e) => {
+                if (physicsReady && e.target === e.currentTarget)
+                  setStaticRetired(true);
               }}
             >
-              {usePhysics ? (
-                <PlankScenePhysics {...sceneProps} />
-              ) : (
-                <PlankScene {...sceneProps} />
-              )}
+              <PlankScene
+                {...sceneProps}
+                // Frozen while it fades out under the physics scene.
+                visible={visible && !physicsReady}
+                // Same board width as the physics scene, so the swap is seamless.
+                wideShelf={interactive}
+              />
             </div>
           </React.Suspense>
         </SceneBoundary>
       )}
 
-      {/* Reset control: only in the interactive physics scene, once it's live.
-          stopPropagation on pointer-down so the press isn't picked up by r3f as a
-          box grab (the canvas listens on this container as its event source). */}
-      {usePhysics && sceneReady && (
+      {/* Own boundary: while rapier's WASM loads, the physics canvas suspends,
+          and that must not hide the static scene underneath. */}
+      {physicsOn && resolved !== null && (
+        <SceneBoundary onError={() => setPhysicsFailed(true)}>
+          <React.Suspense fallback={null}>
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                // The physics scene needs pointer events for drag.
+                pointerEvents: "auto",
+                transition: "opacity .45s ease",
+                opacity: physicsReady ? 1 : 0,
+              }}
+            >
+              <PlankScenePhysics
+                {...sceneProps}
+                onFirstFrame={() => setPhysicsReady(true)}
+              />
+            </div>
+          </React.Suspense>
+        </SceneBoundary>
+      )}
+
+      {/* Play, then Reset once physics is live: one button, so keyboard focus
+          stays put when it switches. Its accessible name says what it acts on,
+          since the shelf itself is hidden from assistive tech (and keeps the
+          visible word, for voice control). stopPropagation on pointer-down so
+          the press isn't picked up by r3f as a box grab (the canvas listens on
+          this container as its event source). */}
+      {canPlay && (
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          aria-label={physicsReady ? t("plankResetLabel") : t("plankPlayLabel")}
+          aria-disabled={physicsLoading || undefined}
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => setResetNonce((n) => n + 1)}
+          onClick={() => {
+            if (physicsReady) setResetNonce((n) => n + 1);
+            else requestPhysics();
+          }}
           className="absolute right-2 bottom-2 z-10 gap-1.5 shadow-sm"
         >
-          <RotateCcw className="size-3.5" />
-          {t("plankReset")}
+          {physicsReady ? (
+            <RotateCcw className="size-3.5" />
+          ) : physicsLoading ? (
+            <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" />
+          ) : (
+            <Hand className="size-3.5" />
+          )}
+          {physicsReady ? t("plankReset") : t("plankPlay")}
         </Button>
       )}
     </div>

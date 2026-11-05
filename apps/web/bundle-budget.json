@@ -1,0 +1,48 @@
+{
+  "tolerance": 0.05,
+  "forbiddenInInitial": {
+    "three.js": "isWebGLRenderer",
+    "the rapier physics engine": "RigidBodyDesc"
+  },
+  "documents": {
+    "maxInlineScriptKB": 64
+  },
+  "routes": {
+    "__root__": {
+      "jsGzKB": 287,
+      "cssGzKB": 34
+    },
+    "/": {
+      "jsGzKB": 298,
+      "cssGzKB": 34
+    },
+    "/_dashboard/dashboard": {
+      "jsGzKB": 444,
+      "cssGzKB": 34
+    },
+    "/_dashboard/profile": {
+      "jsGzKB": 439,
+      "cssGzKB": 34
+    },
+    "/members/$handle": {
+      "jsGzKB": 442,
+      "cssGzKB": 34
+    },
+    "/_public/catalog/": {
+      "jsGzKB": 304,
+      "cssGzKB": 34
+    },
+    "/_public/docs/$": {
+      "jsGzKB": 313,
+      "cssGzKB": 34
+    },
+    "/_dashboard/copies/$id": {
+      "jsGzKB": 499,
+      "cssGzKB": 36
+    },
+    "/_dashboard/messages": {
+      "jsGzKB": 420,
+      "cssGzKB": 34
+    }
+  }
+}

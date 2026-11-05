@@ -1,27 +1,68 @@
-import { nlNL } from "@clerk/localizations";
+import { useCallback, useSyncExternalStore } from "react";
+import type { Locale } from "./i18n";
 
-// Clerk's stock nl-NL with the strings it gets wrong corrected. The
-// restricted sign-up card (shown when sign-ups are closed or waitlist-only)
-// ships garbled ("We wachten op je toegang tot de wachtlijst") and relabels its
-// sign-in link as a support link ("Hulp nodig? Neem contact op met de
-// ondersteuning") although it still goes to sign-in. Wording follows the app's
-// own Dutch: "Registreren" for sign-up, "Inloggen" for sign-in, informal "je".
-// The "join the waitlist" button leaves the app for Clerk's hosted Account
-// Portal, which is localised in the Clerk dashboard, not here.
-export const nlNLLocalization: typeof nlNL = {
-  ...nlNL,
-  signUp: {
-    ...nlNL.signUp,
-    restrictedAccess: {
-      ...nlNL.signUp?.restrictedAccess,
-      title: "Registratie gesloten",
-      subtitle:
-        "Je kunt op dit moment geen account aanmaken. Denk je dat je wel toegang zou moeten hebben? Neem dan contact met ons op.",
-      subtitleWaitlist:
-        "Je kunt op dit moment geen account aanmaken. Zet je op de wachtlijst, dan hoor je het als eerste zodra het kan.",
-      actionText: "Heb je al een account?",
-      actionLink: "Inloggen",
-      blockButton__emailSupport: "Stuur ons een e-mail",
-    },
-  },
+type ClerkLocalization =
+  (typeof import("./clerk-localization-nl"))["nlNLLocalization"];
+
+// Clerk's own UI strings are English, so only the other app locales need a resource. Each is a
+// separate chunk, fetched the first time that locale renders, so no locale's strings sit in the
+// entry bundle.
+const loaders: Partial<Record<Locale, () => Promise<ClerkLocalization>>> = {
+  nl: () =>
+    import("./clerk-localization-nl").then((module) => module.nlNLLocalization),
 };
+
+const loaded = new Map<Locale, ClerkLocalization>();
+const pending = new Map<Locale, Promise<ClerkLocalization | undefined>>();
+const listeners = new Set<() => void>();
+
+/** Fetches (once) Clerk's resource for `locale`; undefined for English or when it fails to load. */
+export function loadClerkLocalization(
+  locale: Locale,
+): Promise<ClerkLocalization | undefined> {
+  const loader = loaders[locale];
+  if (!loader) return Promise.resolve(undefined);
+  let promise = pending.get(locale);
+  if (!promise) {
+    promise = loader().then(
+      (resource) => {
+        loaded.set(locale, resource);
+        for (const listener of listeners) listener();
+        return resource;
+      },
+      (error: unknown) => {
+        // Clerk stays English; the next render of this locale retries.
+        pending.delete(locale);
+        console.error(`Failed to load Clerk strings for ${locale}:`, error);
+        return undefined;
+      },
+    );
+    pending.set(locale, promise);
+  }
+  return promise;
+}
+
+/**
+ * Clerk's `localization` for the active app locale: undefined (Clerk's built-in English) until
+ * the locale's resource has loaded, and always on the server. Clerk renders no localized markup
+ * during SSR, so switching after hydration causes no mismatch.
+ */
+export function useClerkLocalization(
+  locale: Locale,
+): ClerkLocalization | undefined {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      listeners.add(onChange);
+      void loadClerkLocalization(locale);
+      return () => {
+        listeners.delete(onChange);
+      };
+    },
+    [locale],
+  );
+  return useSyncExternalStore(
+    subscribe,
+    () => loaded.get(locale),
+    () => undefined,
+  );
+}

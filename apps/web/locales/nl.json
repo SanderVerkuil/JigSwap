@@ -4091,6 +4091,7 @@
       "searchTrigger": "Documentatie zoeken…",
       "searchPlaceholder": "Zoek in de documentatie…",
       "searchEmpty": "Geen resultaten. Probeer een andere term.",
+      "searchFailed": "Zoeken in de documentatie lukt nu niet. Typ verder om het opnieuw te proberen.",
       "searchPagesHeading": "Pagina's",
       "searchTitle": "Documentatie zoeken",
       "searchDescription": "Vind een pagina in de JigSwap-handleiding",
@@ -4440,12 +4441,15 @@
       "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
+    "plankPlay": "Spelen",
     "primaryNav": "Hoofdnavigatie",
     "toggleSidebar": "Zijbalk in- of uitklappen",
     "sidebarTitle": "Menu",
     "sidebarDescription": "Hoofdnavigatie",
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
-    "plankReset": "Herstellen"
+    "plankReset": "Herstellen",
+    "plankPlayLabel": "Spelen met de plank",
+    "plankResetLabel": "Plank herstellen"
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",

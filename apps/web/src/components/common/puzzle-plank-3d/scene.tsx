@@ -5,6 +5,10 @@ import {
   PuzzleBox,
 } from "@/components/marketing/plank-3d/box";
 import {
+  DemandFrames,
+  frameDelta,
+} from "@/components/marketing/plank-3d/demand";
+import {
   LIGHTING,
   type LightingPreset,
 } from "@/components/marketing/plank-3d/palette";
@@ -53,7 +57,7 @@ function Lights({
   const hemi = React.useRef<THREE.HemisphereLight>(null);
   const rim = React.useRef<THREE.DirectionalLight>(null);
 
-  useFrame((_, delta) => {
+  useFrame((state, rawDelta) => {
     if (!key.current || !ambient.current || !hemi.current || !rim.current)
       return;
     if (reducedMotion) {
@@ -65,18 +69,23 @@ function Lights({
       rim.current.intensity = preset.rimIntensity;
       return;
     }
-    easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta);
-    easing.dampC(key.current.color, preset.keyColor, 0.3, delta);
-    easing.damp(
-      ambient.current,
-      "intensity",
-      preset.ambientIntensity,
-      0.3,
-      delta,
-    );
-    easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta);
-    easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta);
-    easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta);
+    const delta = frameDelta(rawDelta);
+    // Demand frameloop: keep asking for frames until every light has settled.
+    const moving = [
+      easing.damp(key.current, "intensity", preset.keyIntensity, 0.3, delta),
+      easing.dampC(key.current.color, preset.keyColor, 0.3, delta),
+      easing.damp(
+        ambient.current,
+        "intensity",
+        preset.ambientIntensity,
+        0.3,
+        delta,
+      ),
+      easing.dampC(ambient.current.color, preset.ambientColor, 0.3, delta),
+      easing.damp(hemi.current, "intensity", preset.hemiIntensity, 0.3, delta),
+      easing.damp(rim.current, "intensity", preset.rimIntensity, 0.3, delta),
+    ].includes(true);
+    if (moving) state.invalidate();
   });
 
   return (
@@ -132,12 +141,13 @@ function Parallax({
           0,
         ]
       : [0, 0, 0];
-    easing.dampE(
+    const moving = easing.dampE(
       group.current.rotation,
       target as [number, number, number],
       0.4,
-      delta,
+      frameDelta(delta),
     );
+    if (moving) state.invalidate();
   });
   return <group ref={group}>{children}</group>;
 }
@@ -165,21 +175,20 @@ function Arrangement({
   resolved,
   headingFont,
   lightingPreset,
-  reducedMotion,
+  parallax,
   onFirstFrame,
+  wideShelf,
 }: {
   boxes: PuzzlePlankBox[];
   resolved: Array<{ c1: string; c2: string }>;
   headingFont: string;
   lightingPreset: LightingPreset;
-  reducedMotion: boolean;
+  parallax: boolean;
   onFirstFrame: () => void;
+  wideShelf: boolean;
 }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
-  // Parallax follows a hovering pointer; a finger never hovers, so on touch
-  // screens it would only sway the row now and then after a tap.
-  const coarsePointer = useCoarsePointer();
 
   // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
   const woodTexture = useWoodTexture(lightingPreset.shelfColor);
@@ -227,12 +236,16 @@ function Arrangement({
   }, [camera, size, dist, cameraY, lookAtY]);
 
   // Shelf board width: row + margin so no bare board-ends are visible close up.
-  const shelfW = rowWidth + 0.4;
+  // wideShelf runs it across ~95% of the frame instead, like scene-physics.tsx
+  // (face-on, so the visible width at the shelf plane is contentH * aspect).
+  const shelfW = wideShelf
+    ? Math.max(contentH * aspect * 0.95, rowWidth + 0.4)
+    : rowWidth + 0.4;
 
   return (
     <>
       <FirstFrame onFirstFrame={onFirstFrame} />
-      <Parallax enabled={!reducedMotion && !coarsePointer}>
+      <Parallax enabled={parallax}>
         {/* Fixed yaw so boxes read as 3D without pointer-driven rotation */}
         <group rotation={[0, FIXED_YAW, 0]}>
           {/* Shelf board sits just below y=0 (box bases are at y=0) */}
@@ -299,14 +312,21 @@ export interface PlankSceneProps {
   /** Bumped to snap the physics boxes back to their resting layout (ignored by
    *  the static scene). */
   resetNonce?: number;
+  /** Static scene: run the board across the frame like the physics scene, so
+   *  an interactive shelf keeps its look when physics takes over. */
+  wideShelf?: boolean;
 }
 
 export default function PlankScene(props: PlankSceneProps) {
   const lightingPreset = LIGHTING[props.theme];
+  const coarse = useCoarsePointer();
+  // Parallax follows a hovering pointer; a finger never hovers, so on touch
+  // screens it would only sway the row now and then after a tap.
+  const parallax = !props.reducedMotion && !coarse;
   return (
     <Canvas
-      dpr={[1, 2]}
-      frameloop={props.visible ? "always" : "never"}
+      dpr={[1, coarse ? 1.5 : 2]}
+      frameloop={props.visible ? "demand" : "never"}
       gl={{ alpha: true, antialias: true }}
       style={{ pointerEvents: "none", background: "transparent" }}
       camera={{ fov: FOV }}
@@ -314,14 +334,21 @@ export default function PlankScene(props: PlankSceneProps) {
       events={transformSafeEvents}
       resize={{ offsetSize: true }}
     >
+      <DemandFrames
+        eventSource={props.eventSource}
+        pointer={parallax}
+        visible={props.visible}
+        theme={props.theme}
+      />
       <Lights preset={lightingPreset} reducedMotion={props.reducedMotion} />
       <Arrangement
         boxes={props.boxes}
         resolved={props.resolved}
         headingFont={props.headingFont}
         lightingPreset={lightingPreset}
-        reducedMotion={props.reducedMotion}
+        parallax={parallax}
         onFirstFrame={props.onFirstFrame}
+        wideShelf={props.wideShelf ?? false}
       />
     </Canvas>
   );

@@ -26,6 +26,10 @@
         "$TURBO_ROOT$/packages/contracts/src/whats-new/manifest.generated.ts"
       ]
     },
+    "@jigswap/web#bundle:check": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
     "lint": {
       "inputs": [
         "$TURBO_DEFAULT$",

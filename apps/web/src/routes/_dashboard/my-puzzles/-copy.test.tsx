@@ -17,7 +17,7 @@ vi.mock("@tanstack/react-router", () => ({
     useSearch: () => mocks.search,
   }),
 }));
-vi.mock("@/routes/_dashboard/copies/$id", () => ({
+vi.mock("@/components/copies/copy-instance-screen", () => ({
   CopyInstanceScreen: (props: object) => (
     <output data-testid="screen">{JSON.stringify(props)}</output>
   ),

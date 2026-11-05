@@ -4091,6 +4091,7 @@
       "searchTrigger": "Search docs…",
       "searchPlaceholder": "Search the docs…",
       "searchEmpty": "No results. Try a different term.",
+      "searchFailed": "Docs search isn't available right now. Keep typing to try again.",
       "searchPagesHeading": "Pages",
       "searchTitle": "Search documentation",
       "searchDescription": "Find a page in the JigSwap user guide",
@@ -4440,12 +4441,15 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
+    "plankPlay": "Play",
     "primaryNav": "Primary",
     "toggleSidebar": "Toggle sidebar",
     "sidebarTitle": "Menu",
     "sidebarDescription": "Main navigation",
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
-    "plankReset": "Reset"
+    "plankReset": "Reset",
+    "plankPlayLabel": "Play with the shelf",
+    "plankResetLabel": "Reset the shelf"
   },
   "copyInstance": {
     "notFound": "Copy not found",

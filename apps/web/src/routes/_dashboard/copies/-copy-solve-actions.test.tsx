@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { CopyInstanceScreen } from "@/components/copies/copy-instance-screen";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -9,7 +10,6 @@ import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
-import { CopyInstanceScreen } from "./$id";
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: unknown) => ({ options }),

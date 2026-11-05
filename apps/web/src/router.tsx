@@ -9,6 +9,12 @@ import {
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { NotFoundContent } from "./components/NotFound";
 import { RouteError } from "./components/route-error";
+import { loadClerkLocalization } from "./lib/clerk-localization";
+import {
+  dehydrateIntl,
+  hydrateIntl,
+  type DehydratedIntl,
+} from "./lib/i18n-catalog";
 import { appScrollRestoration } from "./lib/scroll-restoration";
 import { routeTree } from "./routeTree.gen";
 
@@ -74,6 +80,20 @@ export function getRouter() {
     defaultNotFoundComponent: () => <NotFoundContent />,
     context: { queryClient, convexClient: convex, convexQueryClient },
     ssr: { nonce: getCspNonce() },
+    // The server hands the browser just the locale, never the catalog (a
+    // cached asset, see lib/i18n-catalog.ts). The router awaits hydrate()
+    // before it hydrates the matches, so the locale's catalog (preloaded by the
+    // root head) is in messagesFor() for the first client render; hydrateIntl
+    // never rejects, so a catalog that cannot load leaves a usable page rather
+    // than a dead one. Clerk's strings for the locale start loading too, but
+    // hydration does not wait for them (Clerk renders nothing localized during
+    // SSR). setupRouterSsrQueryIntegration below chains onto both hooks.
+    dehydrate: (): DehydratedIntl =>
+      dehydrateIntl(router.state.matches[0]?.context),
+    hydrate: async (state: DehydratedIntl) => {
+      if (state.locale) void loadClerkLocalization(state.locale);
+      await hydrateIntl(state);
+    },
     ...appScrollRestoration,
     Wrap: ({ children }) => (
       <ConvexProvider client={convexQueryClient.convexClient}>

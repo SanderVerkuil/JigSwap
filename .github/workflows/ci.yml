@@ -49,5 +49,6 @@ jobs:
 
       # Convex _generated/* is committed, so no deployment or secrets are needed here.
       # arch:check enforces the DDD/hexagonal boundaries via dependency-cruiser.
-      - name: Verify (lint, type-check, test, build, arch:check)
-        run: pnpm exec turbo run lint type-check test build arch:check --concurrency=4
+      # bundle:check fails when a route's first-load JS/CSS grows past apps/web/bundle-budget.json.
+      - name: Verify (lint, type-check, test, build, bundle:check, arch:check)
+        run: pnpm exec turbo run lint type-check test build bundle:check arch:check --concurrency=4

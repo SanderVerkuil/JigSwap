@@ -1,11 +1,14 @@
-import type { DocPage, NavGroup, NavTree, Pager } from "./types";
+import type { DocMeta, NavGroup, NavTree, Pager } from "./types";
 
 // Pages for a locale, falling back to the English page for any slug missing in
 // that locale. One entry per unique slug. Contract: English is the complete set
 // of slugs (every translated locale is a subset) — a page that exists ONLY in a
 // non-en locale won't surface, since en seeds the slug list.
-export function pagesForLocale(pages: DocPage[], locale: string): DocPage[] {
-  const bySlug = new Map<string, DocPage>();
+export function pagesForLocale<P extends Pick<DocMeta, "locale" | "slug">>(
+  pages: readonly P[],
+  locale: string,
+): P[] {
+  const bySlug = new Map<string, P>();
   for (const p of pages) if (p.locale === "en") bySlug.set(p.slug, p);
   if (locale !== "en")
     for (const p of pages) if (p.locale === locale) bySlug.set(p.slug, p);
@@ -14,10 +17,10 @@ export function pagesForLocale(pages: DocPage[], locale: string): DocPage[] {
 
 // The page a /docs/<splat> URL shows: a leaf page first, else a group index page with that slug.
 // A trailing slash is ignored; undefined means the URL names no page (a real 404).
-export function findDocPage(
-  pages: DocPage[],
+export function findDocPage<P extends Pick<DocMeta, "slug" | "isIndex">>(
+  pages: readonly P[],
   splat: string | undefined,
-): DocPage | undefined {
+): P | undefined {
   const slug = (splat ?? "").replace(/\/$/, "");
   return (
     pages.find((p) => p.slug === slug && !p.isIndex) ??
@@ -27,9 +30,9 @@ export function findDocPage(
 
 // Group leaf pages by their group dir. The group's title/order come from the
 // group's index page; leaves are sorted by frontmatter.order then title.
-export function buildNavTree(pages: DocPage[]): NavTree {
-  const groupIndex = new Map<string, DocPage>();
-  const leaves = new Map<string, DocPage[]>();
+export function buildNavTree(pages: readonly DocMeta[]): NavTree {
+  const groupIndex = new Map<string, DocMeta>();
+  const leaves = new Map<string, DocMeta[]>();
 
   for (const p of pages) {
     if (p.group === "") continue; // root index is not a nav group
@@ -87,7 +90,7 @@ export function buildPager(tree: NavTree, slug: string): Pager {
   return { prev, next };
 }
 
-function byOrderThenTitle(a: DocPage, b: DocPage): number {
+function byOrderThenTitle(a: DocMeta, b: DocMeta): number {
   return (
     (a.frontmatter.order ?? 0) - (b.frontmatter.order ?? 0) ||
     a.frontmatter.title.localeCompare(b.frontmatter.title)

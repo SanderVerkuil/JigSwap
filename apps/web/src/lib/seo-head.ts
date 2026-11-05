@@ -1,9 +1,10 @@
 // Search and share metadata for public route head() functions: a localized <title> and
 // description plus the Open Graph / Twitter tags that link previews (WhatsApp, iMessage, social
-// sites) read. Like pageTitle, the strings come from the intl payload the root beforeLoad puts in
-// the head context's `match.context`.
+// sites) read. Like pageTitle, the strings come from the catalog of the locale the root beforeLoad
+// puts in the head context's `match.context`.
 
 import type { IntlPayload } from "@/lib/i18n";
+import { messagesFor } from "@/lib/i18n-catalog";
 import { pageTitle } from "@/lib/page-title";
 import { createTranslator } from "use-intl/core";
 
@@ -36,18 +37,19 @@ function siteOrigin(): string | undefined {
 }
 
 // A message from the visitor's catalog, ICU-formatted; undefined when the key is missing (or the
-// context carries no intl payload) so the caller can fall back.
+// context carries no intl payload, or its catalog isn't loaded) so the caller can fall back.
 export function headMessage(
   context: unknown,
   key: string,
   values?: MessageValues,
 ): string | undefined {
   const intl = intlOf(context);
-  if (!intl) return undefined;
+  const messages = intl ? messagesFor(intl.locale) : undefined;
+  if (!intl || !messages) return undefined;
   const t = createTranslator({
     locale: intl.locale,
     // The catalog is only known at runtime; widen it so any dotted key type-checks.
-    messages: intl.messages as Record<string, string>,
+    messages: messages as Record<string, string>,
     timeZone: intl.timeZone,
   });
   return t.has(key) ? t(key, values) : undefined;

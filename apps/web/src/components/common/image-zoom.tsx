@@ -48,6 +48,7 @@ export function ImageZoom({
   fill = false,
   disabled = false,
   pinchZoom = true,
+  priority = false,
   className,
   wrapperClassName,
 }: {
@@ -67,6 +68,8 @@ export function ImageZoom({
   disabled?: boolean;
   /** Touch pinch-zoom/pan inside the wrapper. Off when a parent already handles it (PhotoZoom). */
   pinchZoom?: boolean;
+  /** The page's main image (a detail hero above the fold): fetch it ahead of other images. */
+  priority?: boolean;
   /** Extra classes on the <img>. */
   className?: string;
   /** Extra classes on the wrapper. */
@@ -203,6 +206,7 @@ export function ImageZoom({
         src={src}
         alt={alt}
         decoding="async"
+        fetchPriority={priority ? "high" : undefined}
         className={cn(
           fill && "h-full w-full object-contain",
           hoverZoom && cursorClass,
