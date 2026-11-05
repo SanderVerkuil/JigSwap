@@ -91,3 +91,25 @@ export type InvitableMemberView = Extract<
   ProjectedMember,
   { anonymous: false }
 >;
+
+// One of the viewer's circles as the "Share with circles" dialog of their own copy sees it
+// (`sharing.copyCircleShares`): whether the copy is shared there, and whether the viewer's seat may
+// share into it (Exchange or Admin). The owner may always take a share back, whatever their seat.
+export interface CopyCircleShareView {
+  // The domain CircleId (the share mutations take this).
+  circleId: string;
+  name: string;
+  memberCount: number;
+  viewerPermission: CirclePermissionLevel;
+  // The circle's icon (approved by the image check), when it has one.
+  iconUrl?: string;
+  shared: boolean;
+  canShare: boolean;
+}
+
+// What one `sharing.shareCopiesToCircle` call did: copies newly shared, and copies that already
+// were (left as they are).
+export interface ShareCopiesResultView {
+  shared: number;
+  alreadyShared: number;
+}

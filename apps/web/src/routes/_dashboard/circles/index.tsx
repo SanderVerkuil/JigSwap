@@ -7,6 +7,7 @@ import {
   isInvalidCircleName,
   MAX_CIRCLE_NAME_LENGTH,
 } from "@/components/circles/circle-name";
+import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
   type CircleMemberView,
@@ -14,18 +15,13 @@ import {
 } from "@/components/circles/circle-seat";
 import { LeaveCircleAction } from "@/components/circles/leave-circle-action";
 import { ManageCircleDialog } from "@/components/circles/manage-circle-dialog";
-import {
-  CoverChip,
-  EmptyState,
-  MiniStat,
-} from "@/components/community/primitives";
+import { CoverChip, EmptyState } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
 import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar";
 import { circleHref } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -36,6 +32,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageLoading } from "@/components/ui/loading";
@@ -47,8 +49,15 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Settings, Users } from "lucide-react";
-import { useState } from "react";
+import {
+  ChevronRight,
+  LogOut,
+  MoreHorizontal,
+  Plus,
+  Settings,
+  Users,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 // Mirrors the Sharing contract DTOs; declared locally so the web app (type:app) reaches Convex only
@@ -241,11 +250,14 @@ function CirclesPage() {
 }
 
 // One circle as a full-width row tile. The identity half (the circle's icon,
-// else a gradient icon chip,
-// heading-font name with the viewer's role badge, a one-line blurb) links to
-// the circle's page; the member avatar stack, the members stat and the actions
-// sit beside it from xl up and wrap onto their own line below that, so the
-// name always keeps the room it needs.
+// else a gradient icon chip, the heading-font name over the viewer's seat
+// badge — Owner or their permission) links to the circle's page, with a
+// chevron so touch users (no hover) can tell. The name has its line to itself,
+// so a long name keeps its room on a phone. The member avatar
+// stack and the actions sit beside it from xl up and wrap onto their own
+// left-aligned line below that, so the name always keeps the room it needs.
+// Leave is destructive and rare, so it sits behind a ⋯ menu rather than
+// beside the group chat button.
 function CircleRow({
   circle,
   gradientIndex,
@@ -267,52 +279,49 @@ function CircleRow({
       ) : (
         <CoverChip icon={Users} size={52} gradientIndex={gradientIndex} />
       )}
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="font-heading min-w-0 truncate text-lg font-bold">
-            {circle.name}
-          </span>
-          <Badge variant="secondary" className="shrink-0">
-            {circle.isOwnedByViewer ? t("roleOwner") : t("roleMember")}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-0.5 truncate text-sm">
-          {circle.isOwnedByViewer ? t("ownedByYou") : t("sharedWithYou")}
-        </p>
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+        <span className="font-heading max-w-full truncate text-lg font-bold">
+          {circle.name}
+        </span>
+        <CircleRoleBadge
+          isOwner={circle.isOwnedByViewer}
+          permission={circle.viewerPermission}
+        />
       </div>
     </>
   );
 
+  // A legacy circle without an id has no page, chat or actions.
+  if (!circle.aggregateId) {
+    return (
+      <Card className="flex items-center gap-4 p-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4">{identity}</div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="flex flex-col gap-3 p-4 xl:flex-row xl:items-center xl:gap-4">
-      {circle.aggregateId ? (
-        <Link
-          href={circleHref(circle.aggregateId)}
-          className="hover:bg-accent/50 focus-visible:ring-ring -m-2 flex min-w-0 flex-1 items-center gap-4 rounded-lg p-2 transition-colors outline-none focus-visible:ring-2 motion-reduce:transition-none"
-        >
-          {identity}
-        </Link>
-      ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-4">{identity}</div>
-      )}
+      <Link
+        href={circleHref(circle.aggregateId)}
+        className="hover:bg-accent/50 focus-visible:ring-ring -m-2 flex min-w-0 flex-1 items-center gap-4 rounded-lg p-2 transition-colors outline-none focus-visible:ring-2 motion-reduce:transition-none"
+      >
+        {identity}
+        <ChevronRight
+          aria-hidden
+          className="text-muted-foreground size-5 shrink-0"
+        />
+      </Link>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        {circle.aggregateId && (
-          <CircleMembersStack
+        <CircleMembersStack
+          circleId={circle.aggregateId}
+          circleName={circle.name}
+        />
+        <div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
+          <OpenCircleChatButton
             circleId={circle.aggregateId}
             circleName={circle.name}
           />
-        )}
-        <MiniStat
-          value={circle.memberCount}
-          label={t("membersLabel", { count: circle.memberCount })}
-        />
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          {circle.aggregateId && (
-            <OpenCircleChatButton
-              circleId={circle.aggregateId}
-              circleName={circle.name}
-            />
-          )}
           {onManage && (
             <Button
               variant="ghost"
@@ -324,8 +333,8 @@ function CircleRow({
               <Settings className="h-4 w-4" />
             </Button>
           )}
-          {!circle.isOwnedByViewer && circle.aggregateId && (
-            <LeaveCircleAction
+          {!circle.isOwnedByViewer && (
+            <CircleRowMenu
               circleId={circle.aggregateId}
               circleName={circle.name}
             />
@@ -333,6 +342,54 @@ function CircleRow({
         </div>
       </div>
     </Card>
+  );
+}
+
+// A member's ⋯ menu on a circle row: Leave circle, behind its confirm. Focus
+// returns to the ⋯ trigger when the confirm is cancelled.
+function CircleRowMenu({
+  circleId,
+  circleName,
+}: {
+  circleId: string;
+  circleName: string;
+}) {
+  const t = useTranslations("circles");
+  const [leaving, setLeaving] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            ref={triggerRef}
+            variant="ghost"
+            size="icon"
+            className="size-11 md:size-8"
+            aria-label={t("rowMenuLabel", { circle: circleName })}
+          >
+            <MoreHorizontal aria-hidden className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            variant="destructive"
+            className="min-h-11 md:min-h-0"
+            onSelect={() => setLeaving(true)}
+          >
+            <LogOut aria-hidden />
+            {t("leave")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <LeaveCircleAction
+        circleId={circleId}
+        circleName={circleName}
+        open={leaving}
+        onOpenChange={setLeaving}
+        returnFocusRef={triggerRef}
+      />
+    </>
   );
 }
 

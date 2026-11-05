@@ -56,7 +56,9 @@ Some updates also come with a short tour of the feature. Click
 - **Replay the tour** runs a finished tour again.
 - On **Exchanges**, **Circles**, **Completions** and **Add Puzzle**, the
   **?** button in the page header (**Show me how**) starts that page's guide
-  at its step on that page.
+  at its step on that page. On **Household** it starts the **Who sees what**
+  guide. On a phone, the **?** on **Exchanges** ends the row of filters, and
+  the one on **Household** ends the note above the tabs.
 
 ## Install JigSwap on your phone
 

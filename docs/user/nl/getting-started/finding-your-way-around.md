@@ -62,7 +62,10 @@ te stoppen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
 - Op **Uitwisselingen**, **Kringen**, **Voltooiingen** en **Puzzel Toevoegen**
   start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van
-  die pagina, bij de stap op die pagina.
+  die pagina, bij de stap op die pagina. Op **Huishouden** start hij de
+  rondleiding **Wie ziet wat**. Op een telefoon staat de **?** op
+  **Uitwisselingen** aan het eind van de rij filters, en op **Huishouden** aan
+  het eind van de tekst boven de tabbladen.
 
 ## JigSwap op je telefoon installeren
 

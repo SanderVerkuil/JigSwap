@@ -2,7 +2,13 @@
 import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { ComponentType, ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -48,7 +54,14 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
 }));
 
-const circle = (aggregateId: string | undefined, name: string) => ({
+const circle = (
+  aggregateId: string | undefined,
+  name: string,
+  fields: {
+    isOwnedByViewer?: boolean;
+    viewerPermission?: "ViewOnly" | "Exchange" | "Admin";
+  } = {},
+) => ({
   _id: `row_${name}`,
   aggregateId,
   name,
@@ -56,6 +69,7 @@ const circle = (aggregateId: string | undefined, name: string) => ({
   isOwnedByViewer: false,
   viewerPermission: "ViewOnly" as const,
   createdAt: 0,
+  ...fields,
 });
 
 const renderList = (circles: ReturnType<typeof circle>[]) => {
@@ -104,6 +118,94 @@ describe("circles list rows", () => {
       name: "Open group chat: Puzzle Club",
     });
     expect(link?.contains(chat)).toBe(false);
+  });
+
+  it("shows the viewer's own permission on each row, not just 'Member'", () => {
+    renderList([
+      circle("c1", "Puzzle Club"),
+      circle("c2", "Family", { viewerPermission: "Exchange" }),
+      circle("c3", "Mine", {
+        isOwnedByViewer: true,
+        viewerPermission: "Admin",
+      }),
+    ]);
+    const rowOf = (name: string) => screen.getByText(name).closest("a");
+    expect(rowOf("Puzzle Club")?.textContent).toContain("View only");
+    expect(rowOf("Family")?.textContent).toContain("Can exchange");
+    expect(rowOf("Mine")?.textContent).toContain("Owner");
+    expect(screen.queryByText("Member")).toBeNull();
+    // Inside the row's link the badge is text, never a nested control.
+    expect(rowOf("Family")?.querySelector("button")).toBeNull();
+  });
+
+  it("shows that the circle's name opens its page", () => {
+    renderList([circle("c1", "Puzzle Club")]);
+    const link = screen.getByText("Puzzle Club").closest("a");
+    // Touch has no hover: a chevron inside the link says it goes somewhere.
+    expect(link?.querySelector("svg.lucide-chevron-right")).toBeTruthy();
+  });
+
+  it("doesn't repeat what the badge and avatars already say", () => {
+    renderList([
+      circle("c1", "Puzzle Club"),
+      circle("c2", "Mine", {
+        isOwnedByViewer: true,
+        viewerPermission: "Admin",
+      }),
+    ]);
+    // No member-count stat beside the avatar stack…
+    expect(screen.queryByText("members")).toBeNull();
+    // …and no "Owned by you" / "Shared with you" under a badge that already
+    // names the seat.
+    expect(screen.queryByText("Owned by you")).toBeNull();
+    expect(screen.queryByText("Shared with you")).toBeNull();
+    const link = screen.getByText("Puzzle Club").closest("a");
+    expect(link?.textContent).toBe("Puzzle ClubView only");
+  });
+
+  it("keeps Leave behind the row's ⋯ menu, next to the chat button", async () => {
+    renderList([circle("c1", "Puzzle Club")]);
+    expect(screen.queryByRole("button", { name: "Leave circle" })).toBeNull();
+    const more = screen.getByRole("button", {
+      name: "More actions for Puzzle Club",
+    });
+    expect(screen.getByText("Puzzle Club").closest("a")?.contains(more)).toBe(
+      false,
+    );
+
+    fireEvent.keyDown(more, { key: "Enter" });
+    const leave = await screen.findByRole("menuitem", { name: "Leave circle" });
+    fireEvent.click(leave);
+    expect(
+      await screen.findByRole("alertdialog", { name: "Leave Puzzle Club?" }),
+    ).toBeTruthy();
+
+    // Cancelling puts focus back on the ⋯ trigger, not on the page.
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(more));
+  });
+
+  it("offers the owner no ⋯ menu: an owner can't leave", () => {
+    renderList([
+      circle("c1", "Mine", {
+        isOwnedByViewer: true,
+        viewerPermission: "Admin",
+      }),
+    ]);
+    expect(
+      screen.queryByRole("button", { name: "More actions for Mine" }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "Manage Mine" })).toBeTruthy();
+  });
+
+  it("says who can be invited before a circle is created", async () => {
+    renderList([]);
+    fireEvent.click(screen.getByRole("button", { name: "Create Circle" }));
+    const dialog = await screen.findByRole("dialog", { name: "Create Circle" });
+    expect(dialog.textContent).toContain(
+      "You can invite people you follow each other with.",
+    );
   });
 
   it("renders a legacy circle without an id as plain text", () => {

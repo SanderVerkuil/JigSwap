@@ -1,3 +1,4 @@
+import type { PageHeaderContent } from "@/components/dashboard-layout/page-header-slot";
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
@@ -11,6 +12,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import {
   HouseholdDetails,
   NoHousehold,
@@ -22,13 +24,30 @@ import {
 const viewport = vi.hoisted(() => ({ mobile: false }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => viewport.mobile }));
 
+// The shell's page head renders what the page publishes; capture it so tests can render it too.
+const pageHead = vi.hoisted(() => ({
+  content: undefined as PageHeaderContent | undefined,
+}));
+vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
+  usePageHeader: (factory: () => PageHeaderContent) => {
+    pageHead.content = factory();
+  },
+}));
+
+// The real button reads the router's location; the page only decides which guide and where.
+vi.mock("@/components/tour/guide-help-button", () => ({
+  GuideHelpButton: ({ tourId }: { tourId: string }) => (
+    <button type="button" aria-label="Show me how" data-guide={tourId} />
+  ),
+}));
+
 const useSignedOut = () => ({
   isLoading: false,
   isAuthenticated: false,
   fetchAccessToken: async () => null,
 });
 
-const renderHtml = (node: ReactNode) => {
+const renderHtml = (node: ReactNode, locale: "en" | "nl" = "en") => {
   const convex = new ConvexReactClient("https://example.convex.cloud");
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient = new QueryClient({
@@ -37,7 +56,11 @@ const renderHtml = (node: ReactNode) => {
   return renderToStaticMarkup(
     <ConvexProviderWithAuth client={convex} useAuth={useSignedOut}>
       <QueryClientProvider client={queryClient}>
-        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <IntlProvider
+          locale={locale}
+          messages={locale === "en" ? en : nl}
+          timeZone="Europe/Amsterdam"
+        >
           {node}
         </IntlProvider>
       </QueryClientProvider>
@@ -113,6 +136,7 @@ const details = (
   viewerRole: "admin" | "member",
   activeTab: HouseholdTab,
   invites: ComponentProps<typeof HouseholdDetails>["invites"] = [],
+  locale: "en" | "nl" = "en",
 ) =>
   renderHtml(
     <HouseholdDetails
@@ -122,11 +146,19 @@ const details = (
       onTabChange={() => {}}
       onError={() => {}}
     />,
+    locale,
   );
+
+const EXPLAINER =
+  "Everyone in your household sees each other's puzzles in My puzzles. Puzzles stay owned by whoever added them; owners choose per puzzle whether the household can manage it (edit, lend, swap) or only view it. Solves stay personal.";
+
+const guideButtons = (html: string) =>
+  elementsOf(html).filter((e) => attr(e, "aria-label") === "Show me how");
 
 describe("HouseholdDetails", () => {
   afterEach(() => {
     viewport.mobile = false;
+    pageHead.content = undefined;
   });
 
   it("shows four tabs, Puzzles first, with no identity strip above them", () => {
@@ -135,13 +167,13 @@ describe("HouseholdDetails", () => {
     expect(tabs.map(textOf)).toEqual([
       "Puzzles",
       "Members2",
-      "Sharing",
+      "Access",
       "Settings",
     ]);
     expect(attr(tabs[0], "aria-selected")).toBe("true");
     // The member count lives on the Members tab; no avatar row or "2 members" line.
     expect(texts(html)).not.toContain("2 members");
-    // The tour steps target always-mounted elements: the tab bar and the Sharing trigger.
+    // The tour steps target always-mounted elements: the tab bar and the Access trigger.
     expect(attr(tabs[2], "data-tour")).toBe("household-my-copies");
     const main = elementsOf(html).filter(
       (e) => attr(e, "data-tour") === "household-main",
@@ -213,7 +245,79 @@ describe("HouseholdDetails", () => {
     expect(texts(html)).not.toContain("Waiting for a response");
   });
 
-  it("puts the default line on the Sharing tab", () => {
+  it("explains who sees what above the tabs, whichever tab is open", () => {
+    for (const tab of ["puzzles", "members", "sharing", "settings"] as const) {
+      const els = elementsOf(details("member", tab));
+      const explainer = els.findIndex(
+        (e) => e.tagName === "p" && textOf(e) === EXPLAINER,
+      );
+      const tablist = els.findIndex((e) => attr(e, "role") === "tablist");
+      expect(explainer, tab).toBeGreaterThanOrEqual(0);
+      expect(explainer, tab).toBeLessThan(tablist);
+      expect(
+        els.filter((e) => textOf(e) === EXPLAINER),
+        tab,
+      ).toHaveLength(1);
+    }
+  });
+
+  it("puts the who-sees-what guide in the page head from md, before the admin's Invite", () => {
+    const html = details("admin", "puzzles");
+    // Not in the page body: one guide button at a time.
+    expect(guideButtons(html)).toHaveLength(0);
+    const head = elementsOf(renderHtml(<>{pageHead.content?.actions}</>));
+    const buttons = head.filter((e) => e.tagName === "button");
+    expect(buttons.map((b) => attr(b, "data-guide") ?? textOf(b))).toEqual([
+      "who-sees-what",
+      "Invite",
+    ]);
+  });
+
+  it("gives a member the guide alone in the page head from md", () => {
+    details("member", "members");
+    const head = elementsOf(renderHtml(<>{pageHead.content?.actions}</>));
+    expect(
+      head
+        .filter((e) => e.tagName === "button")
+        .map((b) => attr(b, "data-guide")),
+    ).toEqual(["who-sees-what"]);
+  });
+
+  it("on phones ends the explainer with the guide and publishes no page-head actions", () => {
+    viewport.mobile = true;
+    for (const role of ["admin", "member"] as const) {
+      const html = details(role, "settings");
+      // Nothing for the shell to put on a row of its own above the page.
+      expect(pageHead.content?.actions, role).toBeUndefined();
+      const [guide] = guideButtons(html);
+      expect(attr(guide, "data-guide"), role).toBe("who-sees-what");
+      expect(guideButtons(html), role).toHaveLength(1);
+      // Inside the explainer itself, after its text: it never takes a row of its own.
+      const explainer = elementsOf(html).find(
+        (e) => e.tagName === "p" && textOf(e) === EXPLAINER,
+      );
+      expect(explainer, role).toBeDefined();
+      expect(
+        elementsOf(serializeOuter(explainer!)).map((e) =>
+          attr(e, "data-guide"),
+        ),
+      ).toContain("who-sees-what");
+    }
+  });
+
+  it("names the tab after the access it sets, not the circles' Share", () => {
+    // Circles "share" a puzzle (who sees it); this tab sets what housemates may do with it, in
+    // the "access" words its own controls use. It keeps its ?tab=sharing value, so links and the
+    // tour's anchor still work.
+    const nlTabs = elementsOf(details("member", "sharing", [], "nl")).filter(
+      (e) => attr(e, "role") === "tab",
+    );
+    expect(textOf(nlTabs[2])).toBe("Toegang");
+    expect(attr(nlTabs[2], "aria-selected")).toBe("true");
+    expect(attr(nlTabs[2], "data-tour")).toBe("household-my-copies");
+  });
+
+  it("puts the default line on the Access tab", () => {
     const html = details("member", "sharing");
     expect(texts(html)).toContain("Household default: View only");
   });

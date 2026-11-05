@@ -5,7 +5,7 @@ import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
@@ -21,6 +21,28 @@ import {
   PendingInviteList,
   type PendingCircleInvite,
 } from "./circle-pending-invites";
+
+// The empty invite list links to Find people; render the link as a plain anchor.
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    to,
+    search,
+    children,
+    className,
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children?: ReactNode;
+    className?: string;
+  }) => (
+    <a
+      href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}`}
+      className={className}
+    >
+      {children}
+    </a>
+  ),
+}));
 
 const NOW = new Date("2026-10-18T10:00:00Z");
 const DAY = 24 * 60 * 60 * 1000;
@@ -221,14 +243,18 @@ describe("PendingInviteList", () => {
 });
 
 describe("InvitableMemberList", () => {
-  it("explains who can be invited when there is no one to offer (en)", () => {
+  it("explains who can be invited and how to bring friends in when there is no one to offer (en)", () => {
     const markup = render(
       <InvitableMemberList candidates={[]} onInvite={noop} />,
     );
     expect(byTag(markup, "button")).toHaveLength(0);
-    expect(textOf(byTag(markup, "p")[0])).toBe(
-      "You can invite people you follow mutually.",
-    );
+    expect(byTag(markup, "p").map(textOf)).toEqual([
+      "You can invite people you follow each other with.",
+      en.circles.invite.emptyNext,
+    ]);
+    const [link] = byTag(markup, "a");
+    expect(textOf(link)).toBe("Invite friends to JigSwap");
+    expect(attr(link, "href")).toBe("/people?tab=find");
   });
 
   it("explains who can be invited (nl)", () => {
@@ -237,7 +263,20 @@ describe("InvitableMemberList", () => {
       "nl",
     );
     expect(textOf(byTag(markup, "p")[0])).toBe(
-      "Je kunt mensen uitnodigen die je wederzijds volgt.",
+      "Je kunt mensen uitnodigen met wie je elkaar volgt.",
+    );
+    expect(textOf(byTag(markup, "a")[0])).toBe(
+      "Vrienden uitnodigen voor JigSwap",
+    );
+  });
+
+  it("says nobody matches a search, without the invite-friends nudge", () => {
+    const markup = render(
+      <InvitableMemberList candidates={[]} search="zoë" onInvite={noop} />,
+    );
+    expect(byTag(markup, "a")).toHaveLength(0);
+    expect(textOf(byTag(markup, "p")[0])).toBe(
+      "No one you can invite matches “zoë”.",
     );
   });
 

@@ -1,5 +1,6 @@
 import type {
   ExchangeFields,
+  ExchangeLoanState,
   ExchangeOwnedPuzzleView,
   ExchangePartyState,
   ExchangePuzzleView,
@@ -9,8 +10,11 @@ import type {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
+import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { canViewCopy } from "../library/canViewCopy";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
 import { toCopySnapshotView } from "../library/mappers";
+import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import {
   projectTradeParty,
   tradePartyMemberView,
@@ -310,10 +314,63 @@ export const toPuzzleViewFor = (
   };
 };
 
+/**
+ * The loan a COMPLETED lend opened. Loans carry no exchange id, so the match is by time: settling
+ * the lend schedules the loan's opening (library/openLoanOnSettlement), which makes it the FIRST
+ * loan of the requested copy opened at or after the exchange settled (`updatedAt`, which no later
+ * write touches while the exchange stays completed). It must also be the initiator's (the
+ * borrower). Anything else is null — no loan yet, a lend settled before loans existed, or a first
+ * later loan that went to someone else — so a later lend of the same copy never relabels an older
+ * exchange. Both parties of the lend are the loan's parties, so it discloses nothing new.
+ */
+const settledLoanOf = async (
+  ctx: QueryCtx,
+  e: Doc<"exchanges">,
+  requested: Doc<"ownedPuzzles"> | null,
+): Promise<ExchangeLoanState | null> => {
+  const copyId = requested?.aggregateId;
+  if (!copyId) return null;
+  const loan = await ctx.db
+    .query("loans")
+    .withIndex("by_copy", (q) =>
+      q.eq("copyId", copyId).gte("openedAt", e.updatedAt),
+    )
+    .order("asc")
+    .first();
+  if (!loan || loan.borrowerId !== e.initiatorId) return null;
+  return {
+    status: loan.status,
+    openedAt: loan.openedAt,
+    expectedReturn: loan.expectedReturn,
+    closedAt: loan.closedAt,
+  };
+};
+
+/**
+ * SECURITY: an exchange row outlives what it shows. A party of a rejected or cancelled swap, or one
+ * the owner has since blocked, keeps the row and its catalogue data but may no longer open the copy.
+ * A member's own cover photo is personal, so the row carries it only for a viewer the copy page
+ * would show it to (`canViewCopy`, rule P and the block veto included); anyone else gets the
+ * catalogue box art, or null without any. A copy with no cover photo has nothing personal to hide,
+ * so it skips the check.
+ */
+const coverUrlForViewer = async (
+  ctx: QueryCtx,
+  viewerId: Id<"users">,
+  copy: Doc<"ownedPuzzles"> | null,
+  puzzle: Doc<"puzzles"> | null,
+): Promise<string | null> => {
+  if (!copy) return null;
+  if (copy.coverImageId && !(await canViewCopy(ctx, viewerId, copy))) {
+    return boxArtUrl(ctx, puzzle?.image);
+  }
+  return resolveCopyCoverUrl(ctx, copy, puzzle);
+};
+
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
-// requested/offered owned copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors
-// the legacy two-step join in getUserExchanges/getExchangesByOwner/getExchangesByRequester.
-// `userRole` is set by the caller.
+// requested/offered owned copies, their catalog definitions (copy.puzzleId -> puzzles), their card
+// covers and, for a completed lend, the loan it opened. Mirrors the legacy two-step join in
+// getUserExchanges/getExchangesByOwner/getExchangesByRequester. `userRole` is set by the caller.
 export const enrichExchangeSummary = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,
@@ -332,6 +389,13 @@ export const enrichExchangeSummary = async (
     requestedOwnedPuzzle ? ctx.db.get(requestedOwnedPuzzle.puzzleId) : null,
     offeredOwnedPuzzle ? ctx.db.get(offeredOwnedPuzzle.puzzleId) : null,
   ]);
+  // Each side's card cover, as a URL, gated per copy and per viewer (coverUrlForViewer).
+  const [requestedCoverUrl, offeredCoverUrl] = await Promise.all([
+    coverUrlForViewer(ctx, viewerId, requestedOwnedPuzzle, requestedPuzzle),
+    coverUrlForViewer(ctx, viewerId, offeredOwnedPuzzle, offeredPuzzle),
+  ]);
+  // A settled lend reads "completed" while the puzzle is still out: carry the loan it opened.
+  const settledLend = e.type === "loan" && e.status === "completed";
 
   return {
     ...toExchangeFields(e, parties.hidden),
@@ -357,5 +421,10 @@ export const enrichExchangeSummary = async (
       parties.visible,
     ),
     offeredPuzzle: toPuzzleViewFor(offeredPuzzle, offeredOwnedPuzzle, viewerId),
+    requestedCoverUrl,
+    offeredCoverUrl,
+    ...(settledLend
+      ? { loan: await settledLoanOf(ctx, e, requestedOwnedPuzzle) }
+      : {}),
   };
 };

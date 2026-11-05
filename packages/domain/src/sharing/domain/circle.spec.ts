@@ -13,7 +13,12 @@ import {
   type CreateCircleProps,
 } from "./circle";
 import { CircleInvite } from "./circle-invite";
-import { CircleDeleted, MemberJoinedCircle, MemberLeftCircle } from "./events";
+import {
+  CircleDeleted,
+  CopySharedToCircle,
+  MemberJoinedCircle,
+  MemberLeftCircle,
+} from "./events";
 import { CircleId, MembershipId } from "./ids";
 
 const owner = toMemberId("owner");
@@ -715,6 +720,37 @@ describe("Circle", () => {
       const result = circle.shareCopy(stranger, copyId, NOW);
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
+    });
+  });
+
+  describe("shareCopies", () => {
+    const copies = [toCopyId("copy-1"), toCopyId("copy-2")];
+
+    it("records one CopySharedToCircle per copy for a member who may share", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Exchange", NOW);
+      circle.pullEvents();
+
+      const result = circle.shareCopies(alice, copies, NOW);
+      expect(result.isOk).toBe(true);
+      const events = circle.pullEvents() as CopySharedToCircle[];
+      expect(events.map((e) => [e.name, e.copyId])).toEqual([
+        ["CopySharedToCircle", "copy-1"],
+        ["CopySharedToCircle", "copy-2"],
+      ]);
+    });
+
+    it("shares none for a ViewOnly member, even with nothing to share", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
+      circle.pullEvents();
+
+      for (const batch of [copies, []]) {
+        const result = circle.shareCopies(alice, batch, NOW);
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
+      }
+      expect(circle.pullEvents()).toHaveLength(0);
     });
   });
 

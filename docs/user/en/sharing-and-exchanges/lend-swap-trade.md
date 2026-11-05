@@ -33,14 +33,20 @@ can see it. If the owner's profile is hidden from you, it shows
 
 ## Request a copy
 
-1. Open the copy's page and click **Request swap**. You can also use the
-   request button on a copy's card in **Browse**.
+1. Open the copy's page and click its request button. The button says what
+   the owner offers: **Ask to borrow**, **Request swap** or **Ask to buy**, or
+   **Request…** when they offer more than one. You can also use the request
+   button on a copy's card in **Browse**.
 2. In the **Request this puzzle** dialog, choose an **Exchange type**. Only the
    types the owner offers are listed:
    - **Swap** — choose the **Puzzle you offer** from your library. If you're in
      a household, puzzles you can manage there are listed too.
-   - **Buy** — enter **Your offer (EUR)**.
-   - **Borrow** — no extra details.
+   - **Buy** — enter **Your offer (EUR)**. The owner sees your offer on the
+     request before accepting or declining it.
+   - **Borrow** — optionally choose when you'll bring it back under
+     **Return by**: **No fixed date** (the default), **In 2 weeks**, **In 3
+     weeks**, **In 1 month**, or **Pick a date…** from tomorrow on. The owner
+     sees the date on the request before accepting or declining it.
 3. Click **Send request**.
 
 The owner receives the request, and you land on **Exchanges**. The dialog
@@ -73,13 +79,29 @@ The **Exchanges** page organizes everything into tabs:
 - **All**
 - **Incoming** — requests sent to you.
 - **Outgoing** — requests you sent.
-- **Completed**
-- **Borrowed** — open loans where you're currently holding someone else's
-  puzzle. When you have none, it explains how borrowing works and links to
-  **Browse Puzzles**.
+- **Loans** — every open loan you're part of, in two sections:
+  - **Borrowed by you** — puzzles you're currently holding. Start or finish a
+    solve, or log one, right from the row or from the puzzle's own page. When
+    you have none, it links to **Browse Puzzles**.
+  - **Lent out** — your puzzles (and household puzzles you may manage) that
+    are out on loan, and who has them. In **My Puzzles**, the **Lent Out**
+    filter shows the same puzzles among the rest of your collection.
 
-Click **View** on any exchange to expand its details: both puzzles, the
-trade-partner card and the actions for the exchange's current step.
+A loan with a return date shows when it's due back, such as **Due in 5 days**.
+Once it's due, it shows **Due today** or, after that, how many days it's
+overdue.
+
+On the other tabs, use the status filter to show only exchanges with one
+status, such as **Pending** or **Completed**. The tab and the filter are part
+of the page's address, so you can bookmark or share a view, and it stays the
+same when you come back to the page.
+
+Exchanges that wait on you (a request to answer, or a handover to confirm) are
+listed first, under **Needs you**.
+
+Click or tap an exchange to expand its details: both puzzles, the trade-partner
+card and the actions for the exchange's current step. Click it again to fold
+the details away.
 
 When you open a notification about an exchange, the **Exchanges** page opens
 with that exchange expanded and highlighted.
@@ -91,12 +113,23 @@ An exchange moves through clear steps:
 1. **Pending** — the request has been sent.
 2. **Accepted / Declined** — the recipient responds. (As the recipient of an
    incoming request, use **Accept** or **Decline**. As the sender of an
-   outgoing request, you can **Cancel**.)
+   outgoing request, you can **Cancel**.) **Decline** and **Cancel** ask you to
+   confirm first, because they can't be undone; the other member gets a
+   notification either way.
 3. **Completion** — once accepted, **both parties must confirm** completion.
-   Use **Mark Complete**. Until then, either of you can still **Cancel** the
-   exchange, for example if plans change or the other member stops responding.
+   Use **Mark Complete** once the puzzle has actually changed hands. A dialog
+   first tells you what completing does: for a swap or sale the puzzle moves to
+   the other member's library and that can't be undone; for a loan, the loan
+   starts. After you confirm, the exchange shows **You confirmed … · Waiting
+   for …** until your partner confirms too. If your partner confirmed first,
+   the exchange shows **Your turn**, and your confirmation completes it. Until
+   then, either of you can still **Cancel** the exchange, for example if plans
+   change or the other member stops responding.
 4. **Completed** — when both confirm, ownership (swap/sale) or possession
-   (loan) transfers, and you can **Leave a review** of your partner.
+   (loan) transfers, and you can **Leave a review** of your partner. For a
+   completed loan, the status shows where the puzzle is: **On loan** while the
+   borrower has it, then **Returned** or **Recalled** with the date it came
+   back.
 
 ### One puzzle, one deal
 
@@ -115,9 +148,15 @@ request, or cancel it if it was accepted.
 
 ## Returning a borrowed puzzle
 
-If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return**
-action to give it back. If you're the lender, you can **Recall** a lent-out copy
-from your library.
+If you've borrowed a puzzle (it's under **Loans › Borrowed by you**), use the
+**Return** action to give it back. You're asked to confirm first: only return
+it once the lender has the puzzle back, because the loan then closes for good.
+
+If you're the lender, use **Recall** under **Loans › Lent out**, or on the
+puzzle's card in **My Puzzles**, once you have the puzzle back. The loan then
+closes for good, and the borrower doesn't get a notification. Under **Loans**
+you're asked to confirm first, and **Message** next to it lets you arrange
+getting the puzzle back, if you're connected with the borrower.
 
 A puzzle can be on loan to one member at a time. While it's out on loan, it
 isn't available: nobody can request it, you can't offer it again or offer it in

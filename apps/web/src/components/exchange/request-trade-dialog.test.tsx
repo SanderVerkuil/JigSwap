@@ -47,6 +47,11 @@ const copy = (over: Partial<RequestableCopy> = {}): RequestableCopy => ({
   ...over,
 });
 
+// The dialog's "today" (IntlProvider `now`), built from local parts: 30 Oct 2026, afternoon.
+const NOW = new Date(2026, 9, 30, 15, 30);
+const midday = (year: number, month: number, day: number) =>
+  new Date(year, month, day, 12).getTime();
+
 const renderDialog = (
   requestable: RequestableCopy,
   {
@@ -85,6 +90,7 @@ const renderDialog = (
         locale={locale}
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
+        now={NOW}
       >
         <RequestTradeDialog copy={requestable} onOpenChange={() => {}} />
       </IntlProvider>
@@ -201,12 +207,12 @@ describe("RequestTradeDialog propose", () => {
 });
 
 describe("RequestTradeDialog success toast", () => {
-  // The same toast follows a swap, a purchase and a borrow, so it must not name one kind.
+  // The toast names the kind that was sent, so a borrow is never called a trade.
   it.each([
-    ["en", "Send request", "Request sent"],
-    ["nl", "Aanvraag versturen", "Aanvraag verstuurd"],
+    ["en", "Send request", "Borrow request sent"],
+    ["nl", "Aanvraag versturen", "Leenaanvraag verstuurd"],
   ] as const)(
-    "confirms a borrow without calling it a trade (%s)",
+    "names a borrow as a borrow, not a trade (%s)",
     async (locale, button, message) => {
       renderDialog(copy(), { locale, disclosure: { profilePrivate: false } });
       fireEvent.click(submit(button));
@@ -214,4 +220,75 @@ describe("RequestTradeDialog success toast", () => {
       expect(toast.success).toHaveBeenCalledWith(message);
     },
   );
+});
+
+describe("RequestTradeDialog return-by date", () => {
+  // Radix Select opens from the keyboard; the picked option is chosen by its label.
+  const choose = async (label: string, option: string) => {
+    fireEvent.keyDown(screen.getByRole("combobox", { name: label }), {
+      key: "Enter",
+    });
+    fireEvent.click(await screen.findByRole("option", { name: option }));
+  };
+
+  it("offers a return-by date only when borrowing", () => {
+    renderDialog(
+      copy({ availability: { forTrade: true, forSale: true, forLend: false } }),
+      { disclosure: null },
+    );
+    expect(screen.queryByRole("combobox", { name: "Return by" })).toBeNull();
+  });
+
+  it("defaults to no fixed date and sends none", async () => {
+    renderDialog(copy(), { disclosure: null });
+    expect(
+      screen.getByRole("combobox", { name: "Return by" }).textContent,
+    ).toBe("No fixed date");
+    fireEvent.click(submit());
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation.mock.calls[0]?.[1]).not.toHaveProperty(
+      "loanReturnDate",
+    );
+  });
+
+  it("sends a preset as a calendar day and says which day it is", async () => {
+    renderDialog(copy(), { disclosure: null });
+    await choose("Return by", "In 2 weeks");
+    expect(screen.getByText("Return by Fri, Nov 13, 2026")).toBeTruthy();
+    fireEvent.click(submit());
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(PROPOSE, {
+      recipientId: "user_owner",
+      type: "loan",
+      requestedPuzzleId: "copy_1",
+      loanReturnDate: midday(2026, 10, 13),
+    });
+  });
+
+  it("takes a picked date from tomorrow on, holding submit until it's valid", async () => {
+    renderDialog(copy(), { disclosure: null });
+    await choose("Return by", "Pick a date…");
+    const date = screen.getByLabelText("Return date") as HTMLInputElement;
+    expect(date.min).toBe("2026-10-31");
+    expect(submit().disabled).toBe(true);
+
+    fireEvent.change(date, { target: { value: "2026-10-30" } });
+    expect(screen.getByText("Pick a date from tomorrow on.")).toBeTruthy();
+    expect(submit().disabled).toBe(true);
+
+    fireEvent.change(date, { target: { value: "2026-11-02" } });
+    expect(submit().disabled).toBe(false);
+    fireEvent.click(submit());
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation.mock.calls[0]?.[1]).toMatchObject({
+      type: "loan",
+      loanReturnDate: midday(2026, 10, 2),
+    });
+  });
+
+  it("is translated (nl)", async () => {
+    renderDialog(copy(), { locale: "nl", disclosure: null });
+    await choose("Uiterlijk terug", "Over 3 weken");
+    expect(screen.getByText("Uiterlijk terug op vr 20 nov 2026")).toBeTruthy();
+  });
 });

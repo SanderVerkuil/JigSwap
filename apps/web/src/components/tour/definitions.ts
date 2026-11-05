@@ -90,7 +90,8 @@ const tours: readonly TourDefinition[] = [
       { id: "request", route: "/browse" },
       { id: "trades", route: "/trades", target: "trades-tabs" },
       { id: "complete", route: "/trades" },
-      { id: "borrowed", route: "/borrowed" },
+      // Borrowed and lent-out loans live on the Exchanges page's Loans tab.
+      { id: "borrowed", route: "/trades", target: "trades-loans" },
     ],
   },
   {
@@ -148,7 +149,7 @@ const tours: readonly TourDefinition[] = [
     steps: [
       { id: "start", route: "/household", target: "household-main" },
       { id: "invite", route: "/household", target: "household-invite" },
-      // Per-copy access, set in bulk from the household page's Sharing tab.
+      // Per-copy access, set in bulk from the household page's Access tab.
       { id: "copy-access", route: "/household", target: "household-my-copies" },
     ],
   },

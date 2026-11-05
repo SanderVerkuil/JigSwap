@@ -3,6 +3,7 @@ import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -193,12 +194,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("CirclePage", () => {
-  it("shows a member the circle's name, members and the leave action", () => {
+  it("shows a member their seat, the members and the leave action", () => {
     renderPage({ circle: detail() });
+    // The page head (h1) already names the circle: the card doesn't repeat it,
+    // and the sections sit directly under that h1.
+    expect(screen.queryByRole("heading", { name: "Puzzle Club" })).toBeNull();
     expect(
-      screen.getByRole("heading", { name: "Puzzle Club", level: 2 }),
-    ).toBeTruthy();
-    expect(screen.getByText("3 members")).toBeTruthy();
+      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent),
+    ).toEqual([en.circles.page.chatTitle, en.circles.page.sharedTitle]);
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+    // One meta line: the viewer's seat · the member count.
+    const meta = screen.getByText("3 members").parentElement;
+    expect(meta?.textContent).toBe("View only·3 members");
     const stack = screen.getByRole("group", { name: "Members of Puzzle Club" });
     expect(within(stack).getByRole("button", { name: "Bas" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Leave circle" })).toBeTruthy();
@@ -219,6 +226,38 @@ describe("CirclePage", () => {
       screen.getByRole("button", { name: "Manage Puzzle Club" }),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Leave circle" })).toBeNull();
+  });
+
+  it("shows a member their own permission, with what it allows", () => {
+    renderPage({ circle: detail({ viewerPermission: "Exchange" }) });
+    const badge = screen.getByRole("button", { name: "Can exchange" });
+    act(() => badge.focus());
+    expect(screen.getAllByRole("tooltip")[0].textContent).toBe(
+      en.circles.roleHints.Exchange,
+    );
+    expect(screen.queryByText("Member")).toBeNull();
+  });
+
+  it("tells a view-only member why they can't share, instead of a share control", () => {
+    renderPage({ circle: detail({ viewerPermission: "ViewOnly" }) });
+    expect(screen.getByRole("button", { name: "View only" })).toBeTruthy();
+    expect(screen.getByText(en.circles.page.viewOnlyHint)).toBeTruthy();
+    expect(screen.queryByText(en.circles.manage.shareCopy)).toBeNull();
+  });
+
+  it("gives a member who may share the share control and no view-only note", () => {
+    renderPage({ circle: detail({ viewerPermission: "Exchange" }) });
+    expect(screen.getByText(en.circles.manage.shareCopy)).toBeTruthy();
+    expect(screen.queryByText(en.circles.page.viewOnlyHint)).toBeNull();
+  });
+
+  it("names the owner's seat Owner (nl)", () => {
+    renderPage({
+      circle: detail({ isOwnedByViewer: true, viewerPermission: "Admin" }),
+      locale: "nl",
+    });
+    expect(screen.getByRole("button", { name: "Eigenaar" })).toBeTruthy();
+    expect(screen.queryByText(nl.circles.page.viewOnlyHint)).toBeNull();
   });
 
   it("renders the generic not-found page for a non-member or an unknown circle", () => {

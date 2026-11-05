@@ -29,13 +29,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useNow, useTranslations } from "use-intl";
+import { RETURN_DATE_FORMAT } from "./exchange-pills";
 import {
   allowedProposeTypes,
   parsePriceCents,
   proposeErrorKey,
+  RETURN_BY_PRESETS,
+  returnByDate,
+  tomorrowInputValue,
   type Availability,
   type ProposeType,
+  type ReturnByPreset,
 } from "./request-trade";
 
 // The copy being requested, normalized by each surface (browse card, copy page). `ownerId` is
@@ -56,8 +61,9 @@ interface RequestTradeDialogProps {
 }
 
 // Starts an exchange proposal for another member's copy: pick a type the copy is offered for, the
-// type's terms (an offered copy for a swap, a price for a purchase), then submit via propose. All
-// eligibility is re-checked server-side; this only keeps the obvious failures out of reach.
+// type's terms (an offered copy for a swap, a price for a purchase, an optional return-by date for
+// a loan), then submit via propose. All eligibility is re-checked server-side; this only keeps the
+// obvious failures out of reach.
 export function RequestTradeDialog({
   copy,
   onOpenChange,
@@ -85,6 +91,8 @@ function RequestTradeForm({
   onDone: () => void;
 }) {
   const t = useTranslations("tradeRequest");
+  const format = useFormatter();
+  const now = useNow();
   const displayName = useMemberDisplayName();
   const navigate = useNavigate();
   const propose = useMutation({
@@ -95,6 +103,8 @@ function RequestTradeForm({
   const [type, setType] = useState<ProposeType | undefined>(types[0]);
   const [offeredId, setOfferedId] = useState<string>("");
   const [price, setPrice] = useState("");
+  const [returnBy, setReturnBy] = useState<ReturnByPreset>("none");
+  const [pickedDate, setPickedDate] = useState("");
 
   const { data: offerable } = useQuery(
     convexQuery(
@@ -117,10 +127,15 @@ function RequestTradeForm({
 
   const ownerName = displayName(copy.owner);
   const priceCents = parsePriceCents(price);
+  // A loan's optional return-by date; a picked date must be valid before the request can go out.
+  const loanReturnDate = returnByDate(returnBy, now, pickedDate);
+  const pickedDateInvalid =
+    returnBy === "custom" && pickedDate !== "" && loanReturnDate === undefined;
   const ready =
     (type === "trade" && offeredId !== "") ||
     (type === "sale" && priceCents !== undefined) ||
-    type === "loan";
+    (type === "loan" &&
+      (returnBy !== "custom" || loanReturnDate !== undefined));
 
   const handleSubmit = async () => {
     if (!type || !ready || !disclosureLoaded) return;
@@ -133,8 +148,12 @@ function RequestTradeForm({
           ? { offeredPuzzleId: offeredId as Id<"ownedPuzzles"> }
           : {}),
         ...(type === "sale" ? { salePrice: priceCents } : {}),
+        ...(type === "loan" && loanReturnDate !== undefined
+          ? { loanReturnDate }
+          : {}),
       });
-      toast.success(t("success"));
+      // Name what was asked for ("Borrow request sent"), not a generic trade request.
+      toast.success(t(`success.${type}`));
       onDone();
       void navigate({ to: "/trades" });
     } catch (error) {
@@ -247,6 +266,50 @@ function RequestTradeForm({
             {price !== "" && priceCents === undefined && (
               <p className="text-destructive text-sm">{t("priceInvalid")}</p>
             )}
+          </div>
+        )}
+
+        {type === "loan" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="trade-request-return-by">
+              {t("returnBy.label")}
+            </Label>
+            <Select
+              value={returnBy}
+              onValueChange={(value) => setReturnBy(value as ReturnByPreset)}
+            >
+              <SelectTrigger id="trade-request-return-by">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RETURN_BY_PRESETS.map((preset) => (
+                  <SelectItem key={preset} value={preset}>
+                    {t(`returnBy.presets.${preset}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {returnBy === "custom" && (
+              <Input
+                type="date"
+                aria-label={t("returnBy.dateLabel")}
+                min={tomorrowInputValue(now)}
+                value={pickedDate}
+                onChange={(e) => setPickedDate(e.target.value)}
+                aria-invalid={pickedDateInvalid}
+              />
+            )}
+            {pickedDateInvalid ? (
+              <p className="text-destructive text-sm">
+                {t("returnBy.invalid")}
+              </p>
+            ) : loanReturnDate !== undefined ? (
+              <p className="text-muted-foreground text-sm">
+                {t("returnBy.summary", {
+                  date: format.dateTime(loanReturnDate, RETURN_DATE_FORMAT),
+                })}
+              </p>
+            ) : null}
           </div>
         )}
 

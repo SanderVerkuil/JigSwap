@@ -230,6 +230,7 @@ function PuzzlesPage() {
     { value: "available", label: t("filters.available") },
     { value: "forTrade", label: t("filters.forTrade") },
     { value: "forLend", label: t("filters.forLend") },
+    { value: "lentOut", label: t("filters.lentOut") },
     { value: "inProgress", label: t("filters.inProgress") },
     { value: "completed", label: t("filters.completed") },
   ];
@@ -237,6 +238,7 @@ function PuzzlesPage() {
   const filteredownedPuzzles = filterAndSortCopies(allCopies, filters, {
     viaHousehold: (copyId) => householdAccessById.has(copyId),
     solveState: (copyId) => solveStateByCopyId.get(copyId),
+    lentOut: (copyId) => loanByCopyDocId.has(copyId),
     locale,
   });
 

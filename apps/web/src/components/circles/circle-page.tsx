@@ -1,8 +1,10 @@
 "use client";
 
-// A circle's own page (/circles/$circleId, G6b): the name with the member
-// avatar stack and the existing manage / leave actions, the latest few group
-// chat messages with "Open group chat", and the copies shared in the circle.
+// A circle's own page (/circles/$circleId, G6b): the viewer's seat and the
+// member count with the member avatar stack and the existing manage / leave
+// actions, the latest few group chat messages with "Open group chat", and the
+// copies shared in the circle. The page head (h1) carries the circle's name,
+// so the card doesn't repeat it and the sections are h2s under it.
 // Everything is read through member-gated queries: a non-member, an ex-member
 // and an unknown id all get the same in-shell 404 (getCircle returns null), so
 // the page never tells whether a circle exists.
@@ -12,6 +14,7 @@ import {
   canShareInCircle,
 } from "@/components/circles/circle-admin-sections";
 import { CircleAvatarStack } from "@/components/circles/circle-avatar-stack";
+import { CircleRoleBadge } from "@/components/circles/circle-role-badge";
 import {
   useCircleSeatName,
   type CircleMemberView,
@@ -33,7 +36,6 @@ import {
 } from "@/components/messaging/format";
 import { OpenCircleChatButton } from "@/components/messaging/open-circle-chat";
 import { AppNotFound } from "@/components/NotFound";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageLoading } from "@/components/ui/loading";
@@ -84,17 +86,19 @@ export function CirclePage({ circleId }: { circleId: string }) {
             <CoverChip icon={Users} size={52} gradientIndex={0} />
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h2 className="font-heading min-w-0 text-xl font-bold break-words">
-                {detail.name}
-              </h2>
-              <Badge variant="secondary">
-                {detail.isOwnedByViewer ? t("roleOwner") : t("roleMember")}
-              </Badge>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              <CircleRoleBadge
+                isOwner={detail.isOwnedByViewer}
+                permission={detail.viewerPermission}
+                interactive
+              />
+              <span aria-hidden className="text-muted-foreground">
+                ·
+              </span>
+              <span className="text-muted-foreground">
+                {t("page.memberCount", { count: detail.memberCount })}
+              </span>
             </div>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              {t("page.memberCount", { count: detail.memberCount })}
-            </p>
             {/* To its uploader and the Admins only (getCircle). */}
             {detail.iconStatus === "checking" && (
               <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
@@ -144,6 +148,7 @@ export function CirclePage({ circleId }: { circleId: string }) {
         <ChatPreview circleId={circleId} circleName={detail.name} />
         <SharedPuzzles
           circleId={circleId}
+          circleName={detail.name}
           canShare={canShareInCircle(detail.viewerPermission)}
         />
       </div>
@@ -171,7 +176,7 @@ function Section({
 }) {
   return (
     <Card className="flex min-w-0 flex-col gap-3 p-4 sm:p-6">
-      <h3 className="font-heading text-lg font-semibold">{title}</h3>
+      <h2 className="font-heading text-lg font-semibold">{title}</h2>
       {children}
       {footer}
     </Card>
@@ -289,12 +294,15 @@ function ChatPreview({
 }
 
 // The circle's shared copies (members only, canViewCopy per copy, private
-// copies left out), each linking to its copy page.
+// copies left out), each linking to its copy page. A member who may share gets
+// the share control; a View only member is told why there is none.
 function SharedPuzzles({
   circleId,
+  circleName,
   canShare,
 }: {
   circleId: string;
+  circleName: string;
   // Exchange and Admin may share their own copies here (read live from viewerPermission).
   canShare: boolean;
 }) {
@@ -333,11 +341,19 @@ function SharedPuzzles({
     <Section
       title={t("page.sharedTitle")}
       footer={
-        canShare && (
-          <div className="mt-1 border-t pt-4">
-            <CircleShareSection circleId={circleId} memberId={member?._id} />
-          </div>
-        )
+        <div className="mt-1 border-t pt-4">
+          {canShare ? (
+            <CircleShareSection
+              circleId={circleId}
+              circleName={circleName}
+              memberId={member?._id}
+            />
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              {t("page.viewOnlyHint")}
+            </p>
+          )}
+        </div>
       }
     >
       {body}

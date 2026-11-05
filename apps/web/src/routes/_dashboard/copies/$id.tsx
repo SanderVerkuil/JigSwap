@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { ShareWithCirclesDialog } from "@/components/circles/share-with-circles-dialog";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
@@ -13,7 +14,11 @@ import {
   type NavContext,
 } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import {
+  convexErrorCode,
+  REQUEST_ACTION_ICONS,
+  requestActionKey,
+} from "@/components/exchange/request-trade";
 import {
   RequestTradeDialog,
   type RequestableCopy,
@@ -69,6 +74,7 @@ import {
   Star,
   Tag,
   UserRound,
+  Users,
 } from "lucide-react";
 import {
   useEffect,
@@ -225,6 +231,8 @@ function CopyInstanceDetail({
   const tShell = useTranslations("shell");
   const tOwner = useTranslations("copyOwner");
   const tConversation = useTranslations("copyConversation");
+  const tRequest = useTranslations("tradeRequest.cta");
+  const tCircles = useTranslations("circles");
   const tPuzzles = useTranslations("puzzles");
   const tLogSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
@@ -241,6 +249,9 @@ function CopyInstanceDetail({
   const availability = snapshot.availability;
   const isAvailable =
     availability.forTrade || availability.forSale || availability.forLend;
+  // The request button names what the owner offers ("Ask to borrow" on a lend-only copy).
+  const requestAction = requestActionKey(availability);
+  const RequestIcon = REQUEST_ACTION_ICONS[requestAction];
 
   // Owner action dialogs. `logOpen` drives the completion logger; `editOpen` drives the inline
   // copy editor (also reachable from the page-head Edit button registered below).
@@ -254,6 +265,8 @@ function CopyInstanceDetail({
     setEditFocus(focus);
     setEditOpen(true);
   };
+  // The owner's "Share with circles" dialog.
+  const [shareOpen, setShareOpen] = useState(false);
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -264,9 +277,16 @@ function CopyInstanceDetail({
     startDate: number;
   } | null>(null);
 
-  // Who may log their own solves here: the owner and any household member (view or manage) —
-  // completions stay personal. Management (sharing toggles, edit, photos) needs viewerCanManage.
-  const canSolve = copy.viewerIsOwner || copy.household !== null;
+  // The copy is in the viewer's library: they own it, or a household member does.
+  const inLibrary = copy.viewerIsOwner || copy.household !== null;
+  // Who may log their own solves here: the owner, any household member (view or manage) and the
+  // borrower who has it right now (the solve mutations allow the holder) — completions stay
+  // personal. Management (sharing toggles, edit, photos) needs viewerCanManage. A backend without
+  // `viewerHoldsCopy` leaves the borrower out, as before.
+  const canSolve = inLibrary || copy.viewerHoldsCopy === true;
+  // The borrower has this copy in hand: lending it out doesn't clear its offer flags, but asking
+  // for it makes no sense to them. They keep Message.
+  const canRequest = isAvailable && copy.viewerHoldsCopy !== true;
 
   // The caller's solve history on this copy (caller-scoped server-side), powering the
   // Start puzzle ↔ Finish solve swap below. Only for viewers who may solve here, so other
@@ -353,14 +373,14 @@ function CopyInstanceDetail({
       // arriving from one via the resolved nav context).
       activeNavKey: navCollection
         ? "collections"
-        : canSolve
+        : inLibrary
           ? "myPuzzles"
           : "browse",
     }),
     [
       snapshot.title,
       owned,
-      canSolve,
+      inLibrary,
       copy.viewerCanManage,
       t,
       tShell,
@@ -494,8 +514,15 @@ function CopyInstanceDetail({
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
-            {canSolve ? (
+            {canSolve && (
               <>
+                {/* Circle shares are the owner's alone (sharing/shareCopiesToCircle). */}
+                {copy.viewerIsOwner && copy.aggregateId != null && (
+                  <Button variant="outline" onClick={() => setShareOpen(true)}>
+                    <Users className="h-4 w-4" />
+                    {tCircles("shareDialog.trigger")}
+                  </Button>
+                )}
                 {!myInProgress && (
                   <Button
                     variant="outline"
@@ -529,10 +556,12 @@ function CopyInstanceDetail({
                   </Button>
                 )}
               </>
-            ) : (
+            )}
+            {/* Someone else's copy (a borrower included): request it and/or message the owner. */}
+            {!inLibrary && (
               <>
                 {/* An anonymous (privacy-projected) owner goes unnamed: propose derives the recipient. */}
-                {isAvailable && (
+                {canRequest && (
                   <Button
                     variant="brand"
                     disabled={!copy.viewerMayRequest}
@@ -553,11 +582,11 @@ function CopyInstanceDetail({
                       });
                     }}
                   >
-                    <ArrowLeftRight className="h-4 w-4" />
-                    {t("actions.requestSwap")}
+                    <RequestIcon className="h-4 w-4" />
+                    {tRequest(requestAction)}
                   </Button>
                 )}
-                {isAvailable && !copy.viewerMayRequest && (
+                {canRequest && !copy.viewerMayRequest && (
                   // The server refuses a request through a view-only circle seat (propose); say why.
                   <p
                     id="request-view-only"
@@ -832,8 +861,8 @@ function CopyInstanceDetail({
         </div>
       </div>
 
-      {/* Solve dialogs (owner + household members; keyed by aggregateId) + the inline copy editor
-          (managers only). */}
+      {/* Solve dialogs (owner, household members and the borrower; keyed by aggregateId) + the
+          inline copy editor (managers only). */}
       {canSolve && (
         <>
           <LogSolveDialog
@@ -864,6 +893,18 @@ function CopyInstanceDetail({
               copy={copy}
               onAddPhotos={() => addPhotoInputRef.current?.click()}
               focus={editFocus}
+            />
+          )}
+          {copy.viewerIsOwner && copy.aggregateId != null && (
+            <ShareWithCirclesDialog
+              open={shareOpen}
+              onOpenChange={setShareOpen}
+              copy={{
+                copyId: copy.aggregateId,
+                title: snapshot.title,
+                availability,
+                visibility: snapshot.visibility,
+              }}
             />
           )}
         </>

@@ -1,6 +1,8 @@
 // "Invite" in the manage-circle dialog: search the people this Admin may invite
 // (listInvitableMembers: the backend's contact rule, never a global search), choose the seat's
-// permission, and send the invite. A member joins only once they accept.
+// permission, and send the invite. A member joins only once they accept. With nobody to offer,
+// the list explains the rule (people you follow each other with) and links to Find people, where
+// the invite link and QR code bring friends who aren't on JigSwap yet.
 import { circleInviteErrorKey } from "@/components/circles/circle-invite-error";
 import { PersonRow } from "@/components/household/person-row";
 import { Button } from "@/components/ui/button";
@@ -15,8 +17,9 @@ import {
 import { gateway, Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { Send } from "lucide-react";
+import { Send, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -89,6 +92,7 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
       {candidates !== undefined && (
         <InvitableMemberList
           candidates={candidates}
+          search={term}
           busy={invite.isPending}
           onInvite={(member) =>
             invite.mutate({
@@ -105,19 +109,36 @@ export function CircleInvitePicker({ circleId }: { circleId: string }) {
 
 export function InvitableMemberList({
   candidates,
+  search = "",
   busy = false,
   onInvite,
 }: {
   candidates: InvitableMember[];
+  // The trimmed search term the candidates were narrowed by ("" for none).
+  search?: string;
   busy?: boolean;
   onInvite: (member: InvitableMember) => void;
 }) {
   const t = useTranslations("circles");
-  if (candidates.length === 0) {
+  if (candidates.length === 0 && search) {
     return (
       <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm">
-        {t("invite.empty")}
+        {t("invite.noMatches", { search })}
       </p>
+    );
+  }
+  if (candidates.length === 0) {
+    return (
+      <div className="flex flex-col items-start gap-2 rounded-lg border border-dashed px-4 py-3 text-sm">
+        <p className="font-medium">{t("invite.empty")}</p>
+        <p className="text-muted-foreground">{t("invite.emptyNext")}</p>
+        <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
+          <Link to="/people" search={{ tab: "find" }}>
+            <UserPlus aria-hidden className="h-4 w-4" />
+            {t("invite.inviteFriends")}
+          </Link>
+        </Button>
+      </div>
     );
   }
   return (

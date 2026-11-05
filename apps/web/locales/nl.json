@@ -520,6 +520,7 @@
       "available": "Beschikbaar",
       "forTrade": "Te Ruilen",
       "forLend": "Te Leen",
+      "lentOut": "Uitgeleend",
       "inProgress": "Bezig",
       "completed": "Voltooid"
     },
@@ -696,14 +697,49 @@
     "pending": "In Afwachting",
     "accepted": "Geaccepteerd",
     "declined": "Afgewezen",
-    "completed": "Voltooid",
     "cancelled": "Geannuleerd",
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
-    "acceptNotPermitted": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
     "errors": {
+      "IllegalTransition": "Deze uitwisseling is intussen veranderd. Bekijk de huidige status.",
+      "WrongParty": "Dat kun je bij deze uitwisseling niet doen.",
+      "ExchangeNotFound": "Deze uitwisseling bestaat niet meer.",
+      "NotPermittedInCircle": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
+      "NotConnected": "Je kunt dit niet doen met dit lid.",
+      "CopyNotAvailable": "Deze puzzel is niet meer beschikbaar voor deze uitwisseling.",
+      "generic": "Er ging iets mis. Probeer het opnieuw.",
       "copyReserved": "Een van de puzzels in deze uitwisseling is al gereserveerd voor een andere uitwisseling of is uitgeleend. Je kunt doorgaan zodra die uitwisseling is afgerond of geannuleerd, of zodra de puzzel terug is. Beide deelnemers aan die uitwisseling kunnen hem annuleren.",
       "copyChangedHands": "Deze uitwisseling kan niet meer doorgaan: een van de puzzels is van eigenaar gewisseld of niet meer beschikbaar."
+    },
+    "completeConfirm": {
+      "title": "Overdracht bevestigen?",
+      "leadFirst": "Bevestig pas als de puzzel echt is overgedragen. De uitwisseling is afgerond zodra {name} ook bevestigt.",
+      "leadSettles": "{name} heeft al bevestigd, dus met jouw bevestiging is de uitwisseling afgerond.",
+      "effect": {
+        "trade": "Bij afronding gaat “{give}” naar de bibliotheek van {name} en “{get}” naar die van jou.",
+        "saleGive": "Bij afronding gaat “{title}” naar de bibliotheek van {name}.",
+        "saleGet": "Bij afronding gaat “{title}” naar jouw bibliotheek.",
+        "loanLend": "Bij afronding gaat de lening in: {name} houdt “{title}” tot die wordt teruggegeven, en de puzzel blijft in je bibliotheek.",
+        "loanBorrow": "Bij afronding gaat de lening in: jij houdt “{title}” tot je hem teruggeeft aan {name}."
+      },
+      "irreversible": "Dit kun je niet ongedaan maken.",
+      "confirm": "Overdracht bevestigen",
+      "untitled": "deze puzzel"
+    },
+    "confirmation": {
+      "waiting": "Je hebt {when} bevestigd · Wachten op {name}",
+      "partnerConfirmed": "{name} heeft {when} bevestigd",
+      "yourTurn": "Jouw beurt",
+      "youConfirmed": "Je hebt bevestigd"
+    },
+    "offer": {
+      "chip": "Bod: {price}",
+      "incoming": "{name} biedt {price}",
+      "outgoing": "Jij biedt {price}"
+    },
+    "returnBy": {
+      "date": "Uiterlijk terug op {date}",
+      "none": "Geen vaste terugbrengdatum"
     },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
@@ -716,9 +752,8 @@
     },
     "incoming": "Inkomend",
     "outgoing": "Uitgaand",
-    "allStatuses": "Alle Statussen",
-    "noExchanges": "Nog geen uitwisselingen",
-    "noExchangesDescription": "Begin met het bladeren door puzzels om je eerste ruilverzoek te maken",
+    "allStatuses": "Alle statussen",
+    "statusFilter": "Filteren op status",
     "tradeRequest": "Uitwisselingsverzoek",
     "yourRequest": "Jouw Verzoek",
     "theyWant": "Zij Willen",
@@ -735,6 +770,42 @@
     "all": "Alle",
     "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
     "rowMeta": "{direction} · met {who} · {when}",
+    "groups": {
+      "needsYou": "Wacht op jou",
+      "others": "Overige uitwisselingen"
+    },
+    "empty": {
+      "all": {
+        "title": "Nog geen uitwisselingen",
+        "sub": "Vraag je om een puzzel, of vraagt iemand om een van de jouwe, dan verschijnt het verzoek hier."
+      },
+      "incoming": {
+        "title": "Nog geen verzoeken voor je puzzels",
+        "sub": "Leden kunnen vragen om de puzzels die je aanbiedt te ruilen, lenen of kopen. Kies op Mijn Puzzels wat je aanbiedt.",
+        "action": "Naar Mijn Puzzels"
+      },
+      "outgoing": {
+        "title": "Nog geen verzoeken verstuurd",
+        "sub": "Zoek een puzzel via Puzzels Ontdekken en vraag de eigenaar of je hem mag ruilen, lenen of kopen."
+      },
+      "browse": "Puzzels ontdekken",
+      "filtered": {
+        "title": "Geen uitwisselingen met status “{status}”",
+        "sub": "Kies een andere status of toon ze allemaal.",
+        "action": "Alle statussen tonen"
+      }
+    },
+    "loans": {
+      "tab": "Leningen",
+      "count": "{count, plural, one {# lopende lening} other {# lopende leningen}}",
+      "borrowedTitle": "Door jou geleend",
+      "lentTitle": "Uitgeleend",
+      "lentEmpty": {
+        "title": "Niets uitgeleend",
+        "sub": "Leen je een puzzel uit, dan staat hij hier tot je hem terug hebt. Op Mijn Puzzels kies je welke puzzels anderen mogen lenen.",
+        "action": "Naar Mijn Puzzels"
+      }
+    },
     "kind": {
       "trade": "Ruil",
       "sale": "Verkoop",
@@ -752,12 +823,42 @@
       "cancelled": "Geannuleerd",
       "disputed": "In geschil"
     },
+    "loanState": {
+      "open": "In bruikleen",
+      "returned": "Teruggegeven op {date}",
+      "recalled": "Teruggevraagd op {date}"
+    },
     "partner": {
       "hiddenNote": "Hun gegevens verschijnen zodra ze accepteren of reageren.",
       "reviewsHeading": "Ontvangen reviews",
       "shareEmail": "Deel mijn e-mailadres met {name}",
       "shareEmailHint": "Alleen voor deze ruil. Je kunt dit altijd weer uitzetten.",
       "shareEmailError": "Kon het delen van je e-mailadres niet aanpassen. Probeer het opnieuw."
+    },
+    "pendingLabel": {
+      "accept": "Accepteren…",
+      "decline": "Afwijzen…",
+      "cancel": "Annuleren…",
+      "complete": "Bevestigen…"
+    },
+    "declineConfirm": {
+      "title": "Dit verzoek afwijzen?",
+      "body": "{name} krijgt een melding dat je het verzoek hebt afgewezen. Dit kun je niet ongedaan maken, maar een nieuw verzoek sturen kan wel."
+    },
+    "cancelConfirm": {
+      "title": "Je verzoek annuleren?",
+      "body": "{name} krijgt een melding dat je het verzoek hebt geannuleerd. Dit kun je niet ongedaan maken, maar je kunt wel een nieuw verzoek sturen.",
+      "keep": "Verzoek houden",
+      "confirm": "Verzoek annuleren"
+    },
+    "toast": {
+      "accepted": "Verzoek geaccepteerd. Spreek de overdracht af met {name}.",
+      "declined": "Verzoek afgewezen",
+      "cancelled": "Verzoek geannuleerd",
+      "confirmedWaiting": "Bevestigd. Wachten op {name}.",
+      "completed": "Uitwisseling afgerond",
+      "loanStarted": "Lening gestart",
+      "cancelledAccepted": "Uitwisseling geannuleerd"
     }
   },
   "tradeRequest": {
@@ -786,7 +887,11 @@
     "cancel": "Annuleren",
     "submit": "Aanvraag versturen",
     "submitting": "Versturen…",
-    "success": "Aanvraag verstuurd",
+    "success": {
+      "trade": "Ruilaanvraag verstuurd",
+      "sale": "Koopaanvraag verstuurd",
+      "loan": "Leenaanvraag verstuurd"
+    },
     "errors": {
       "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
       "notFound": "Deze puzzel is niet meer beschikbaar.",
@@ -798,6 +903,25 @@
       "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
       "rateLimited": "Je hebt de laatste tijd veel aanvragen verstuurd. Probeer het later opnieuw.",
       "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
+    },
+    "cta": {
+      "borrow": "Vragen om te lenen",
+      "swap": "Ruil aanvragen",
+      "buy": "Vragen om te kopen",
+      "mixed": "Aanvragen…"
+    },
+    "returnBy": {
+      "label": "Uiterlijk terug",
+      "presets": {
+        "none": "Geen vaste datum",
+        "2w": "Over 2 weken",
+        "3w": "Over 3 weken",
+        "1m": "Over 1 maand",
+        "custom": "Kies een datum…"
+      },
+      "dateLabel": "Terugbrengdatum",
+      "summary": "Uiterlijk terug op {date}",
+      "invalid": "Kies een datum vanaf morgen."
     }
   },
   "reputation": {
@@ -2105,7 +2229,7 @@
       "memberManage": "Puzzel van je huishouden — jij mag hem beheren",
       "memberView": "Puzzel van je huishouden — alleen bekijken",
       "saveFailed": "Toegang voor het huishouden kon niet worden bijgewerkt",
-      "useDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})"
+      "useDefault": "Standaard huishouden ({permission, select, view {Alleen bekijken} other {Mag beheren}})"
     },
     "errors": {
       "generic": "Er ging iets mis. Probeer het opnieuw.",
@@ -2136,10 +2260,9 @@
       "filterLabel": "Filteren op toegang voor het huishouden",
       "filterAll": "Alle puzzels",
       "selectAll": "Alles selecteren",
-      "selectNone": "Niets selecteren",
+      "clearSelection": "Selectie wissen",
       "selectedCount": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
-      "setManage": "Instellen op Mag beheren",
-      "setView": "Instellen op Alleen bekijken",
+      "setAccess": "Toegang kiezen",
       "selectLabel": "{title} selecteren",
       "noMatches": "Geen van je puzzels past bij dit filter.",
       "untitled": "Puzzel zonder titel",
@@ -2148,7 +2271,6 @@
       "confirmView": "Je huishouden kan {count, plural, one {deze puzzel} other {deze puzzels}} dan alleen bekijken.",
       "confirm": "Toegang wijzigen",
       "changed": "{count, plural, =0 {Er hoefde niets te veranderen} one {# puzzel bijgewerkt} other {# puzzels bijgewerkt}}",
-      "setDefault": "Standaard van het huishouden gebruiken (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}})",
       "confirmDefault": "{count, plural, one {Deze puzzel volgt} other {Deze puzzels volgen}} dan de standaard van het huishouden (nu: {permission, select, view {Alleen bekijken} other {Mag beheren}}) en veranderen mee.",
       "sourceDefault": "Standaard van het huishouden",
       "sourceExplicit": "Ingesteld voor deze puzzel"
@@ -2173,7 +2295,7 @@
     "tabs": {
       "puzzles": "Puzzels",
       "members": "Leden",
-      "sharing": "Delen",
+      "sharing": "Toegang",
       "settings": "Instellingen"
     },
     "puzzles": {
@@ -2242,9 +2364,12 @@
     "yourCircles": "Jouw Kringen",
     "createCircle": "Kring Aanmaken",
     "roleOwner": "Eigenaar",
-    "roleMember": "Lid",
-    "ownedByYou": "Van jou",
-    "sharedWithYou": "Met jou gedeeld",
+    "roleHints": {
+      "Owner": "Deze kring is van jou: je kunt alles wat een beheerder kan, en de kring verwijderen.",
+      "ViewOnly": "Je ziet de puzzels die hier gedeeld zijn, maar kunt ze niet aanvragen en geen eigen puzzels delen.",
+      "Exchange": "Je kunt de puzzels aanvragen die hier gedeeld zijn en je eigen puzzels delen.",
+      "Admin": "Je kunt puzzels aanvragen en delen, mensen uitnodigen en leden beheren."
+    },
     "membersLabel": "{count, plural, one {lid} other {leden}}",
     "avatarStackLabel": "Leden van {circle}",
     "avatarStackMore": "{count, plural, one {nog # lid} other {nog # leden}}",
@@ -2252,6 +2377,7 @@
     "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
     "loading": "Kringen laden…",
     "leave": "Kring verlaten",
+    "rowMenuLabel": "Meer acties voor {circle}",
     "leaveConfirmTitle": "{circle} verlaten?",
     "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
     "leaveError": "Kon de kring niet verlaten. Probeer het opnieuw.",
@@ -2287,7 +2413,10 @@
       "permissionLabel": "Rechten",
       "send": "Uitnodiging versturen",
       "sent": "Uitnodiging verstuurd",
-      "empty": "Je kunt mensen uitnodigen die je wederzijds volgt.",
+      "empty": "Je kunt mensen uitnodigen met wie je elkaar volgt.",
+      "emptyNext": "Zitten je vrienden nog niet op JigSwap? Deel je uitnodigingslink of QR-code. Als ze zich aanmelden, vragen we of jullie elkaar willen volgen. Daarna kun je ze hier uitnodigen.",
+      "inviteFriends": "Vrienden uitnodigen voor JigSwap",
+      "noMatches": "Geen resultaten voor “{search}” bij de mensen die je kunt uitnodigen.",
       "pendingTitle": "Openstaande uitnodigingen",
       "pendingMeta": "Uitgenodigd {when} · verloopt {date}",
       "revoke": "Intrekken",
@@ -2303,6 +2432,14 @@
       "CircleNotFound": "Deze kring is niet langer beschikbaar.",
       "RateLimited": "Je hebt vandaag veel uitnodigingen verstuurd. Probeer het morgen opnieuw.",
       "generic": "Er ging iets mis. Probeer het opnieuw."
+    },
+    "inviteToCircle": {
+      "trigger": "Uitnodigen voor een kring…",
+      "title": "{name} uitnodigen voor een kring",
+      "description": "Diegene wordt lid na het accepteren van de uitnodiging. Je kunt mensen uitnodigen met wie je elkaar volgt.",
+      "circleLabel": "Kring",
+      "sending": "Versturen…",
+      "sent": "Uitnodiging voor {circle} verstuurd naar {name}"
     },
     "icon": {
       "title": "Pictogram",
@@ -2326,7 +2463,7 @@
     },
     "manage": {
       "createTitle": "Kring Aanmaken",
-      "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder.",
+      "createDescription": "Een kring is besloten. Je wordt het eerste lid en de beheerder. Je kunt mensen uitnodigen met wie je elkaar volgt.",
       "nameLabel": "Naam",
       "namePlaceholder": "bijv. Zaterdagpuzzelaars",
       "nameCounter": "{count}/{max}",
@@ -2340,12 +2477,48 @@
       "unavailable": "Deze kring is niet langer beschikbaar.",
       "members": "Leden",
       "owner": "Eigenaar",
-      "shareCopy": "Een exemplaar delen",
-      "shareDescription": "Gedeelde exemplaren worden zichtbaar voor leden van deze kring. Een exemplaar dat je op privé hebt gezet, blijft privé.",
-      "chooseCopy": "Kies een van je exemplaren…",
+      "shareCopy": "Deel je puzzels",
+      "shareDescription": "Leden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen. Een privépuzzel blijft verborgen. Vink puzzels aan om ze te delen, vink ze uit om te stoppen met delen.",
       "copyFallback": "Exemplaar",
-      "share": "Delen",
       "close": "Sluiten"
+    },
+    "share": {
+      "searchPlaceholder": "Zoek in je puzzels…",
+      "noMatches": "Geen puzzels gevonden.",
+      "noCopies": "Je bibliotheek is nog leeg. Voeg puzzels toe om ze hier te delen.",
+      "loadError": "Je puzzels konden niet worden geladen.",
+      "shared": "Gedeeld",
+      "willShare": "Wordt gedeeld",
+      "willUnshare": "Wordt niet meer gedeeld",
+      "notOffered": "Niet aangeboden: leden zien hem niet",
+      "private": "Privé: leden zien hem niet",
+      "shareCount": "{count, plural, one {# puzzel delen} other {# puzzels delen}}",
+      "unshareCount": "{count, plural, one {# puzzel niet meer delen} other {# puzzels niet meer delen}}",
+      "saveChanges": "Wijzigingen opslaan",
+      "saving": "Opslaan…",
+      "clear": "Wissen",
+      "sharedToast": "{count, plural, one {# puzzel gedeeld met {circle}} other {# puzzels gedeeld met {circle}}}",
+      "unsharedToast": "{count, plural, one {# puzzel niet meer gedeeld met {circle}} other {# puzzels niet meer gedeeld met {circle}}}"
+    },
+    "shareDialog": {
+      "trigger": "Delen met kringen…",
+      "title": "“{title}” delen met kringen",
+      "description": "Kringleden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen.",
+      "notOffered": "Je biedt deze puzzel niet aan om te ruilen, uit te lenen of te verkopen, dus kringleden zien hem pas als je dat wel doet.",
+      "private": "Deze puzzel is privé, dus kringleden zien hem niet, ook niet als je hem deelt.",
+      "empty": "Je zit nog niet in een kring.",
+      "goToCircles": "Naar Kringen",
+      "viewOnly": "Alleen bekijken: je kunt hier niet delen",
+      "loadError": "Je kringen konden niet worden geladen.",
+      "save": "Opslaan",
+      "savedToast": "{count, plural, =0 {“{title}” is met geen enkele kring gedeeld} one {“{title}” is gedeeld met # kring} other {“{title}” is gedeeld met # kringen}}"
+    },
+    "shareErrors": {
+      "CopyNotFound": "Een van deze puzzels staat niet meer in je bibliotheek.",
+      "CircleNotFound": "Deze kring is niet langer beschikbaar.",
+      "CannotShareCopy": "Je kunt in deze kring alleen bekijken, dus je kunt hier geen puzzels delen.",
+      "BatchTooLarge": "Je kunt maximaal 100 puzzels tegelijk delen.",
+      "generic": "Er ging iets mis. Probeer het opnieuw."
     },
     "page": {
       "memberCount": "{count, plural, one {# lid} other {# leden}}",
@@ -2356,7 +2529,8 @@
       "chatError": "De nieuwste berichten konden niet worden geladen.",
       "sharedTitle": "Gedeelde puzzels",
       "sharedEmpty": "Er zijn nog geen puzzels gedeeld in deze kring.",
-      "sharedError": "De gedeelde puzzels konden niet worden geladen."
+      "sharedError": "De gedeelde puzzels konden niet worden geladen.",
+      "viewOnlyHint": "Je kunt in deze kring alleen bekijken. Vraag een beheerder om “Mag ruilen” als je hier je eigen puzzels wilt delen en die van anderen wilt aanvragen."
     }
   },
   "people": {
@@ -3508,10 +3682,8 @@
     "loading": "Eigendomsketen laden…"
   },
   "lending": {
-    "borrowedTitle": "Geleend",
     "borrowedSubtitle": "Exemplaren die je momenteel in bruikleen hebt.",
     "borrowedFrom": "Geleend van {name}",
-    "openedRelative": "Geleend {when}",
     "returnAction": "Teruggeven",
     "returning": "Teruggeven…",
     "noBorrowed": "Niets geleend",
@@ -3535,8 +3707,30 @@
     "borrowedBy": "Geleend door {name}",
     "deletedMember": "Verwijderd lid",
     "anonymousMember": "Anonieme gebruiker",
-    "borrowedCount": "{count, plural, one {# geleende puzzel} other {# geleende puzzels}}",
-    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}"
+    "pieceCount": "{count, plural, one {# stuk} other {# stukken}}",
+    "returnConfirm": {
+      "title": "{title} teruggeven?",
+      "body": "Doe dit pas als {name} de puzzel terug heeft. De lening wordt afgesloten en dat kun je niet ongedaan maken."
+    },
+    "recallDialog": {
+      "title": "{title} terugvragen?",
+      "body": "Doe dit pas als je de puzzel terug hebt van {name}. De lening wordt afgesloten en dat kun je niet ongedaan maken."
+    },
+    "toast": {
+      "returned": "{title} teruggegeven aan {name}",
+      "recalled": "{title} teruggevraagd van {name}"
+    },
+    "errors": {
+      "LoanNotFound": "Deze lening bestaat niet meer.",
+      "LoanNotOpen": "Deze lening is al afgesloten.",
+      "NotBorrower": "Alleen wie de puzzel leent, kan hem teruggeven.",
+      "NotLender": "Alleen de eigenaar kan deze puzzel terugvragen.",
+      "generic": "Er ging iets mis. Probeer het opnieuw."
+    },
+    "due": {
+      "upcoming": "{days, plural, =0 {Moet vandaag terug} =1 {Moet morgen terug} other {Moet over # dagen terug}}",
+      "overdue": "{days, plural, one {# dag te laat} other {# dagen te laat}}"
+    }
   },
   "marketing": {
     "nav": {
@@ -3854,7 +4048,6 @@
     "completionNew": "Voltooiing vastleggen — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Kringen — JigSwap",
-    "borrowed": "Geleend — JigSwap",
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
     "adminUsers": "Gebruikers — JigSwap",
@@ -4016,10 +4209,6 @@
         "subtitle": "Alle puzzels in JigSwap.",
         "description": "Alle puzzels in JigSwap, aangeboden of niet"
       },
-      "borrowed": {
-        "title": "Geleend",
-        "subtitle": "Puzzels die je van anderen hebt geleend."
-      },
       "notifications": {
         "title": "Meldingen",
         "subtitle": "Alles wat je aandacht vraagt."
@@ -4167,7 +4356,6 @@
       "edit": "Bewerken",
       "logSolve": "Voltooiing vastleggen",
       "delete": "Verwijderen",
-      "requestSwap": "Ruil aanvragen",
       "requestViewOnly": "Je mag in deze kring alleen bekijken",
       "message": "Bericht",
       "proposeSwap": "Ruil voorstellen",
@@ -5125,7 +5313,7 @@
         },
         "copy-access": {
           "title": "Jij kiest per puzzel",
-          "body": "Je puzzels blijven van jou. Op het tabblad Delen kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
+          "body": "Je puzzels blijven van jou. Op het tabblad Toegang kies je per puzzel wat het huishouden ermee mag: met Mag beheren kunnen huisgenoten hem bewerken, uitlenen en ruilen; met Alleen bekijken zien ze hem alleen. Selecteer er meerdere om ze in één keer aan te passen."
         }
       },
       "guide": {
@@ -5229,19 +5417,19 @@
         },
         "request": {
           "title": "Vraag het de eigenaar",
-          "body": "Open een puzzel en druk op Ruil aanvragen. Kies Ruilen, Lenen of Kopen, wat de eigenaar aanbiedt, en verstuur het verzoek. Je kunt de eigenaar ook een bericht sturen."
+          "body": "Open een puzzel en druk op de aanvraagknop, zoals Vragen om te lenen of Ruil aanvragen: die noemt wat de eigenaar aanbiedt. Biedt de eigenaar meer dan één ding aan, kies dan Ruilen, Lenen of Kopen en verstuur het verzoek. Je kunt de eigenaar ook een bericht sturen."
         },
         "trades": {
           "title": "Je ruilen",
-          "body": "Verzoeken die je stuurde staan onder Uitgaand, verzoeken voor jouw puzzels onder Inkomend. Druk bij een ruil op Bekijken om hem te accepteren, af te wijzen of te annuleren, of om het andere lid een bericht te sturen."
+          "body": "Verzoeken die je stuurde staan onder Uitgaand, verzoeken voor jouw puzzels onder Inkomend. Open er één om hem te accepteren, af te wijzen of te annuleren, of om het andere lid een bericht te sturen."
         },
         "complete": {
           "title": "Jullie bevestigen allebei",
           "body": "Heeft de puzzel van hand gewisseld, dan drukken jullie allebei op Markeren als Voltooid. De ruil is voltooid zodra jullie dat allebei gedaan hebben."
         },
         "borrowed": {
-          "title": "Wat je geleend hebt",
-          "body": "Puzzels die je geleend hebt staan hier tot je ze teruggeeft. Begin hier aan een puzzel, en druk op Teruggeven zodra hij weer bij de eigenaar is."
+          "title": "Je leningen",
+          "body": "Onder Leningen staan de puzzels die je geleend hebt en die je hebt uitgeleend. Begin aan een geleende puzzel, en druk op Teruggeven zodra hij weer bij de eigenaar is."
         }
       }
     },
@@ -5253,7 +5441,7 @@
       "steps": {
         "household": {
           "title": "Je huishouden",
-          "body": "Mensen in je huishouden zien al je puzzels. Op het tabblad Delen van het huishouden kies je per puzzel of ze hem mogen beheren of alleen bekijken."
+          "body": "Mensen in je huishouden zien al je puzzels. Op het tabblad Toegang van het huishouden kies je per puzzel of ze hem mogen beheren of alleen bekijken."
         },
         "circles": {
           "title": "Je kringen",

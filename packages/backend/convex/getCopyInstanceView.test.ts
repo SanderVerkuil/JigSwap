@@ -580,6 +580,48 @@ describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
   });
 });
 
+describe("getCopyInstanceView viewerHoldsCopy", () => {
+  // Who physically has the copy: the borrower while it is lent out (heldBy), otherwise the owner.
+  // The copy page uses it to let a borrower log solves; it must not say yes to anyone else.
+  test("only the borrower holds a lent-out copy; the owner holds it again once it is back", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, solver, copy } = await seedCopy(t);
+    // The owner (viewer) is public and the copy is open, so a stranger (clerk_prev) may view it.
+    await setVisibility(t, viewer, "public");
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copy, {
+        heldBy: solver,
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+    });
+
+    const holds = async (clerkId: string) => {
+      const view = await t
+        .withIdentity({ subject: clerkId })
+        .query(api.library.getCopyInstanceView.getCopyInstanceView, {
+          copyId: copy,
+        });
+      expect(view).not.toBeNull();
+      return view?.viewerHoldsCopy;
+    };
+
+    // Lent out to the solver.
+    expect(await holds("clerk_solver")).toBe(true);
+    expect(await holds("clerk_viewer")).toBe(false);
+    expect(await holds("clerk_prev")).toBe(false);
+
+    // Returned: possession is back with the owner.
+    await t.run(async (ctx) => ctx.db.patch(copy, { heldBy: viewer }));
+    expect(await holds("clerk_viewer")).toBe(true);
+    expect(await holds("clerk_solver")).toBe(false);
+
+    // A copy that was never lent (no heldBy) is held by its owner.
+    await t.run(async (ctx) => ctx.db.patch(copy, { heldBy: undefined }));
+    expect(await holds("clerk_viewer")).toBe(true);
+    expect(await holds("clerk_prev")).toBe(false);
+  });
+});
+
 const DAY = 86_400_000;
 
 describe("getCopyInstanceView rich detail", () => {

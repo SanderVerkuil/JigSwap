@@ -8,6 +8,8 @@
 // report dialog drops "Also block". The trigger is a 44px
 // target below md and is named by `label`; destructive items carry text, not
 // colour alone. Focus returns to the trigger when the confirm dialog closes.
+// A host whose own items open a dialog passes `triggerRef` to send focus back
+// to the same trigger.
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import {
 import type { Id } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { Ban, Flag, type LucideIcon } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { useTranslations } from "use-intl";
 
 export function MemberActionsMenu({
@@ -32,6 +34,7 @@ export function MemberActionsMenu({
   blocked = false,
   className,
   children,
+  triggerRef: hostTriggerRef,
 }: {
   memberId: Id<"users">;
   /** The member's resolved display name. */
@@ -44,11 +47,14 @@ export function MemberActionsMenu({
   blocked?: boolean;
   className?: string;
   children?: ReactNode;
+  /** The trigger's ref, for a host whose `children` open their own dialog. */
+  triggerRef?: RefObject<HTMLButtonElement | null>;
 }) {
   const t = useTranslations("safety");
   const [confirming, setConfirming] = useState(false);
   const [reporting, setReporting] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const ownTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = hostTriggerRef ?? ownTriggerRef;
 
   return (
     <>

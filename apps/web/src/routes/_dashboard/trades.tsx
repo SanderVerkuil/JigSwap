@@ -1,69 +1,52 @@
 import { useUser } from "@/compat/clerk";
-import {
-  CoverChip,
-  EmptyState,
-  FilterBar,
-} from "@/components/community/primitives";
+import { FilterBar } from "@/components/community/primitives";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
-import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
-import { exchangeErrorKey } from "@/components/exchange/exchange-error";
+import { ExchangeActions } from "@/components/exchange/exchange-actions";
+import { CoverTile } from "@/components/exchange/exchange-cover";
+import {
+  splitNeedsYou,
+  visibleExchanges,
+  type ListedExchange,
+} from "@/components/exchange/exchange-list";
+import { ExchangeListRow } from "@/components/exchange/exchange-list-row";
+import { ReturnBy, SaleOffer } from "@/components/exchange/exchange-pills";
+import type { Direction } from "@/components/exchange/exchange-state";
+import { ExchangesEmptyState } from "@/components/exchange/exchanges-empty-state";
+import { LoansTab } from "@/components/exchange/loans-tab";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
-import { useRelativeTime } from "@/hooks/use-relative-time";
-import {
-  useMemberDisplayName,
-  usePartyDisplayName,
-} from "@/lib/member-display-name";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { validateTradesSearch } from "@/lib/trades-search";
-import { cn } from "@/lib/utils";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import type { FunctionReturnType } from "convex/server";
 import {
-  ArrowLeftRight,
-  CheckCircle,
-  MessageCircle,
-  Package,
-  Tag,
-  XCircle,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+  EXCHANGE_STATUSES,
+  validateTradesSearch,
+  type ExchangeStatus,
+  type TradesSearch,
+  type TradesTab,
+} from "@/lib/trades-search";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import type { FunctionReturnType } from "convex/server";
+import { MessageCircle } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
-type ExchangeStatus =
-  "proposed" | "accepted" | "rejected" | "completed" | "cancelled" | "disputed";
-
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.incoming>[number];
-type BorrowedLoan = FunctionReturnType<typeof gateway.lending.borrowed>[number];
 
-// The pill tabs: All / Incoming / Outgoing / Completed map onto the real
-// owner/requester reads and the completed status; Borrowed folds the old
-// /borrowed page in as a tab (open loans where the viewer is the borrower).
-type ExchangeTab = "all" | "incoming" | "outgoing" | "completed" | "borrowed";
-
-type Direction = "incoming" | "outgoing";
+// The pill tabs pick one kind of filter, the direction: All / Incoming / Outgoing map onto the
+// owner/requester reads; Loans is the one home for open loans, borrowed and lent out (the old
+// /borrowed page redirects there). The status is a separate select. Both live in the URL
+// (trades-search).
 
 export const Route = createFileRoute("/_dashboard/trades")({
   validateSearch: validateTradesSearch,
@@ -79,52 +62,39 @@ function TradesPending() {
   return <PageLoading message={tCommon("loading")} />;
 }
 
-// Soft status pill tones (same mapping as the dashboard pulse): Pending and
-// Disputed amber, Accepted violet, Completed green, the rest muted.
-const PILL_TONES: Record<string, string> = {
-  proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-jigsaw-primary",
-  disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  completed: "bg-green-500/15 text-green-700 dark:text-green-400",
-};
-
-function StatusPill({ status }: { status: ExchangeStatus }) {
-  const t = useTranslations("trades.status");
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap",
-        PILL_TONES[status] ?? "bg-muted text-muted-foreground",
-      )}
-    >
-      {t(status)}
-    </span>
-  );
-}
-
-const KIND_ICONS = {
-  trade: ArrowLeftRight,
-  sale: Tag,
-  loan: Package,
-} as const;
-
 function ExchangesPage() {
   const { user } = useUser();
   const t = useTranslations("trades");
   const tCommon = useTranslations("common");
-  const tLending = useTranslations("lending");
-  const { exchange: focusedExchange } = Route.useSearch();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const focusedExchange = search.exchange;
+  const tab: TradesTab = search.tab ?? "all";
+  const statusFilter = search.status;
 
-  const [tab, setTab] = useState<ExchangeTab>("all");
+  // Tab and status are URL state: a change replaces the entry (Back leaves the page, it doesn't
+  // step through filters) and drops the ?exchange= highlight, which only a deep link sets.
+  const showView = (next: { tab: TradesTab; status?: ExchangeStatus }) =>
+    void navigate({
+      search: {
+        tab: next.tab === "all" ? undefined : next.tab,
+        status: next.tab === "loans" ? undefined : next.status,
+      } satisfies TradesSearch,
+      replace: true,
+      resetScroll: false,
+    });
 
-  // The page head's "?" starts the exchanges guide at its step on this page.
+  // The "?" starts the exchanges guide at its step on this page. From md it sits in the shell's
+  // page head. On phones the shell would give it a row of its own above the page (the top bar
+  // already carries the title), so there it ends the filter bar's controls row instead.
   const { startTour } = useTourLauncher();
+  const isMobile = useIsMobile();
   usePageHeaderActions(
-    () => <GuideHelpButton tourId="exchanges" startTour={startTour} />,
-    [startTour],
-  );
-  const [statusFilter, setStatusFilter] = useState<ExchangeStatus | "all">(
-    "all",
+    () =>
+      isMobile ? null : (
+        <GuideHelpButton tourId="exchanges" startTour={startTour} />
+      ),
+    [startTour, isMobile],
   );
 
   const { data: convexUser } = useQuery(
@@ -141,9 +111,12 @@ function ExchangesPage() {
   const { data: outgoingExchanges } = useQuery(
     convexQuery(gateway.exchange.outgoing, {}),
   );
-  // Open loans the viewer is holding, only fetched once the tab is opened.
+  // Open loans the viewer holds and the ones they lent out, only fetched on the Loans tab.
   const { data: borrowed } = useQuery(
-    convexQuery(gateway.lending.borrowed, tab === "borrowed" ? {} : "skip"),
+    convexQuery(gateway.lending.borrowed, tab === "loans" ? {} : "skip"),
+  );
+  const { data: lentOut } = useQuery(
+    convexQuery(gateway.lending.lentOut, tab === "loans" ? {} : "skip"),
   );
 
   if (
@@ -155,8 +128,8 @@ function ExchangesPage() {
     return <PageLoading message={tCommon("loading")} />;
   }
 
-  // Tag every exchange with its direction once, then filter per tab.
-  const tagged: Array<{ exchange: ExchangeRow; direction: Direction }> = [
+  // Tag every exchange with its direction once, then filter per tab and status.
+  const tagged: Array<ListedExchange<ExchangeRow>> = [
     ...incomingExchanges.map((exchange) => ({
       exchange,
       direction: "incoming" as const,
@@ -167,27 +140,89 @@ function ExchangesPage() {
     })),
   ].sort((a, b) => b.exchange.updatedAt - a.exchange.updatedAt);
 
-  const rows = tagged.filter(({ exchange, direction }) => {
-    if (tab === "completed") return exchange.status === "completed";
-    if (tab === "incoming" && direction !== "incoming") return false;
-    if (tab === "outgoing" && direction !== "outgoing") return false;
-    return statusFilter === "all" || exchange.status === statusFilter;
-  });
+  const rows =
+    tab === "loans" ? [] : visibleExchanges(tagged, tab, statusFilter);
+  // What waits on the viewer (answer a request, confirm a handover) is listed first.
+  const { needsYou, others } = splitNeedsYou(rows);
 
-  const tabs: Array<{ value: ExchangeTab; label: string }> = [
-    { value: "all", label: t("all") },
-    { value: "incoming", label: t("incoming") },
-    { value: "outgoing", label: t("outgoing") },
-    { value: "completed", label: t("completed") },
-    { value: "borrowed", label: tLending("borrowedTitle") },
-  ];
+  const tabs: Array<{ value: TradesTab; label: string; "data-tour"?: string }> =
+    [
+      { value: "all", label: t("all") },
+      { value: "incoming", label: t("incoming") },
+      { value: "outgoing", label: t("outgoing") },
+      // The exchanges guide's loans step points at this pill.
+      { value: "loans", label: t("loans.tab"), "data-tour": "trades-loans" },
+    ];
 
   const count =
-    tab === "borrowed"
-      ? borrowed === undefined
+    tab === "loans"
+      ? borrowed === undefined || lentOut === undefined
         ? undefined
-        : tLending("borrowedCount", { count: borrowed.length })
+        : t("loans.count", { count: borrowed.length + lentOut.length })
       : t("exchangesCount", { count: rows.length });
+
+  const renderRow = (
+    { exchange, direction }: (typeof rows)[number],
+    position: { index: number; isLast: boolean },
+  ) => {
+    const focused =
+      focusedExchange !== undefined &&
+      (exchange.aggregateId === focusedExchange ||
+        exchange._id === focusedExchange);
+    return (
+      <ExchangeListRow
+        key={`${exchange._id}-${direction}`}
+        focused={focused}
+        exchange={exchange}
+        direction={direction}
+        gradientIndex={position.index}
+        isLast={position.isLast}
+      >
+        {(who) => (
+          <ExchangeDetail
+            exchange={exchange}
+            direction={direction}
+            who={who}
+            viewerId={convexUser?._id}
+          />
+        )}
+      </ExchangeListRow>
+    );
+  };
+
+  // Rows and group headings are siblings in ONE flat keyed array, on purpose. A live update can move
+  // a row to the other group, or make the groups appear around it, and a row owns state that has to
+  // survive that: what's open, its chat, the composer's draft, the member's focus. A wrapper per
+  // group, or a nested array, would remount it.
+  const list: ReactNode[] = [
+    ...(needsYou.length > 0
+      ? [
+          <ExchangeGroupHeading
+            key="group-needs-you"
+            title={t("groups.needsYou")}
+            count={needsYou.length}
+          />,
+        ]
+      : []),
+    ...needsYou.map((row, index) =>
+      renderRow(row, { index, isLast: index === needsYou.length - 1 }),
+    ),
+    ...(needsYou.length > 0 && others.length > 0
+      ? [
+          <ExchangeGroupHeading
+            key="group-others"
+            title={t("groups.others")}
+            count={others.length}
+          />,
+        ]
+      : []),
+    ...others.map((row, index) =>
+      renderRow(row, {
+        index: needsYou.length + index,
+        isLast: index === others.length - 1,
+      }),
+    ),
+  ];
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -195,222 +230,99 @@ function ExchangesPage() {
         data-tour="trades-tabs"
         filters={tabs}
         value={tab}
-        onChange={setTab}
-        count={count}
+        onChange={(next) => showView({ tab: next, status: statusFilter })}
+        // On phones the count moves into `extra` so the "?" can follow it.
+        count={isMobile ? undefined : count}
         extra={
-          tab !== "completed" &&
-          tab !== "borrowed" && (
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as ExchangeStatus | "all")
-              }
-              className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
-              aria-label={t("allStatuses")}
-            >
-              <option value="all">{t("allStatuses")}</option>
-              {(
-                [
-                  "proposed",
-                  "accepted",
-                  "rejected",
-                  "cancelled",
-                  "disputed",
-                ] as const
-              ).map((status) => (
-                <option key={status} value={status}>
-                  {t(`status.${status}`)}
-                </option>
-              ))}
-            </select>
-          )
+          <>
+            {tab !== "loans" && (
+              <select
+                value={statusFilter ?? "all"}
+                onChange={(e) =>
+                  showView({
+                    tab,
+                    status: EXCHANGE_STATUSES.find(
+                      (status) => status === e.target.value,
+                    ),
+                  })
+                }
+                className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-sm focus:ring-2 focus:outline-none"
+                aria-label={t("statusFilter")}
+              >
+                <option value="all">{t("allStatuses")}</option>
+                {EXCHANGE_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {t(`status.${status}`)}
+                  </option>
+                ))}
+              </select>
+            )}
+            {isMobile && (
+              <>
+                {count != null && (
+                  <span className="text-muted-foreground text-sm">{count}</span>
+                )}
+                <GuideHelpButton tourId="exchanges" startTour={startTour} />
+              </>
+            )}
+          </>
         }
       />
 
-      {tab === "borrowed" ? (
-        <BorrowedList borrowed={borrowed} />
+      {tab === "loans" ? (
+        <LoansTab borrowed={borrowed} lentOut={lentOut} />
       ) : rows.length === 0 ? (
-        <EmptyState
-          title={t("noExchanges")}
-          sub={t("noExchangesDescription")}
+        <ExchangesEmptyState
+          tab={tab}
+          status={statusFilter}
+          onShowAllStatuses={() => showView({ tab })}
         />
       ) : (
-        <div className="flex flex-col">
-          {rows.map(({ exchange, direction }, index) => {
-            const focused =
-              focusedExchange !== undefined &&
-              (exchange.aggregateId === focusedExchange ||
-                exchange._id === focusedExchange);
-            return (
-              <ExchangeListRow
-                // Re-mount when the deep-linked exchange changes so it opens.
-                key={`${exchange._id}-${direction}-${focused}`}
-                focused={focused}
-                exchange={exchange}
-                direction={direction}
-                gradientIndex={index}
-                viewerId={convexUser?._id}
-                isLast={index === rows.length - 1}
-              />
-            );
-          })}
-        </div>
+        <div className="flex flex-col">{list}</div>
       )}
     </div>
   );
 }
 
-/* -------------------------------------------------------------- Exchange row */
-
-// One exchange as an open divided row: gradient kind chip, "Kind · Mine ↔
-// Theirs" headline, "direction · with who · when" meta, status pill, and an
-// outline View toggle that expands the full detail (puzzles, partner trust,
-// and every lifecycle action the old card offered).
-function ExchangeListRow({
-  exchange,
-  direction,
-  gradientIndex,
-  viewerId,
-  isLast,
-  focused = false,
+// The heading above a run of exchange rows ("Needs you", "Other exchanges"), only used when something
+// waits on the viewer; otherwise the list renders without headings.
+function ExchangeGroupHeading({
+  title,
+  count,
 }: {
-  focused?: boolean;
-  exchange: ExchangeRow;
-  direction: Direction;
-  gradientIndex: number;
-  viewerId?: string;
-  isLast: boolean;
+  title: string;
+  count: number;
 }) {
-  const t = useTranslations("trades");
-  const partyName = usePartyDisplayName();
-  const tCommon = useTranslations("common");
-  const relativeTime = useRelativeTime();
-  const [open, setOpen] = useState(focused);
-  const rowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (focused) rowRef.current?.scrollIntoView({ block: "center" });
-  }, [focused]);
-
-  const incoming = direction === "incoming";
-  // On an exchange the REQUESTED puzzle belongs to the owner, the OFFERED one
-  // to the requester — so "mine" depends on which side the viewer is on.
-  const mineTitle = incoming
-    ? exchange.requestedPuzzle?.title
-    : exchange.offeredPuzzle?.title;
-  const theirsTitle = incoming
-    ? exchange.offeredPuzzle?.title
-    : exchange.requestedPuzzle?.title;
-  const primary = mineTitle ?? theirsTitle;
-  const secondary = mineTitle ? theirsTitle : undefined;
-  const counterparty = incoming ? exchange.requester : exchange.owner;
-  const who = partyName(
-    counterparty,
-    incoming ? exchange.requesterState : exchange.ownerState,
-  );
-
-  const KindIcon = KIND_ICONS[exchange.type] ?? ArrowLeftRight;
-
   return (
-    <div
-      ref={rowRef}
-      data-focused={focused || undefined}
-      className={cn(
-        "py-3",
-        !isLast && "border-b",
-        focused &&
-          "bg-jigsaw-primary/5 ring-jigsaw-primary/40 -mx-3 rounded-lg px-3 ring-2",
-      )}
-    >
-      <div className="flex items-center gap-3.5">
-        <CoverChip icon={KindIcon} size={44} gradientIndex={gradientIndex} />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-semibold">
-            {t(`kind.${exchange.type}`)} · {primary}
-            {secondary && (
-              <span className="text-muted-foreground font-medium">
-                {" "}
-                ↔ {secondary}
-              </span>
-            )}
-          </div>
-          <div className="text-muted-foreground mt-0.5 truncate text-xs">
-            {t("rowMeta", {
-              direction: t(`direction.${direction}`),
-              who,
-              when: relativeTime(exchange.createdAt),
-            })}
-          </div>
-        </div>
-        <StatusPill status={exchange.status} />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen((value) => !value)}
-        >
-          {tCommon("view")}
-        </Button>
-      </div>
-
-      {open && (
-        <ExchangeDetail
-          exchange={exchange}
-          incoming={incoming}
-          viewerId={viewerId}
-        />
-      )}
-    </div>
+    <h2 className="font-heading flex items-baseline gap-2 text-lg font-bold not-first:mt-[18px]">
+      {title}
+      <span className="text-muted-foreground text-sm font-medium">{count}</span>
+    </h2>
   );
 }
 
 /* ----------------------------------------------------------- Exchange detail */
 
-// The expanded detail under a row — the full content of the old exchange card:
-// requested/offered puzzles, the partner with their trust badge, and the
-// status-appropriate lifecycle actions (accept/decline, cancel, complete,
-// review, message).
+// The expanded detail under a row (ExchangeListRow places and indents it) — the
+// full content of the old exchange card: requested/offered puzzles, the partner
+// with their trust badge, and the status-appropriate lifecycle actions
+// (accept/decline, cancel, complete, review, message).
 function ExchangeDetail({
   exchange,
-  incoming,
+  direction,
+  who,
   viewerId,
 }: {
   exchange: ExchangeRow;
-  incoming: boolean;
+  direction: Direction;
+  // The counterparty's name exactly as the row shows it ("Deleted member" when gone).
+  who: string;
   viewerId?: string;
 }) {
   const t = useTranslations("trades");
   const displayName = useMemberDisplayName();
   const [chatOpen, setChatOpen] = useState(false);
-
-  const acceptExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.accept),
-  });
-  const declineExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.decline),
-  });
-  const completeExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.complete),
-  });
-  const cancelExchange = useMutation({
-    mutationFn: useConvexMutation(gateway.exchange.cancel),
-  });
-
-  // The lifecycle mutations key off the domain aggregateId, not the Convex
-  // _id; guard against legacy rows lacking one so we never send undefined.
-  const run =
-    (mutate: (args: { exchangeId: string }) => Promise<unknown>) =>
-    async () => {
-      if (!exchange.aggregateId) return;
-      try {
-        await mutate({ exchangeId: exchange.aggregateId });
-      } catch (error) {
-        console.error("Exchange action failed:", error);
-        // Say why a refusal the member can make sense of happened: accept re-checks the requester's
-        // circle permission, and accept and complete refuse while a puzzle is set aside elsewhere or
-        // on loan, or once one changed hands (exchange-error).
-        const key = exchangeErrorKey(error);
-        if (key) toast.error(t(key));
-      }
-    };
+  const incoming = direction === "incoming";
 
   // The other party relative to the viewer (trust badge + review target).
   const partnerId = (
@@ -423,18 +335,20 @@ function ExchangeDetail({
   const partnerName = partner ? displayName(partner) : undefined;
 
   return (
-    <div className="mt-3 ml-[60px] flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <PuzzleSummary
           label={incoming ? t("theyWant") : t("youWant")}
           title={exchange.requestedPuzzle?.title}
           pieceCount={exchange.requestedPuzzle?.pieceCount}
+          coverUrl={exchange.requestedCoverUrl}
         />
         {exchange.offeredPuzzle && (
           <PuzzleSummary
             label={incoming ? t("theyOffer") : t("youOffer")}
             title={exchange.offeredPuzzle?.title}
             pieceCount={exchange.offeredPuzzle?.pieceCount}
+            coverUrl={exchange.offeredCoverUrl}
           />
         )}
       </div>
@@ -445,90 +359,26 @@ function ExchangeDetail({
         viewerIsRequester={!incoming}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {exchange.status === "proposed" && incoming && (
-          <>
-            <Button
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => acceptExchange.mutateAsync(args))}
-            >
-              <CheckCircle className="h-4 w-4" />
-              {t("accept")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => declineExchange.mutateAsync(args))}
-            >
-              <XCircle className="h-4 w-4" />
-              {t("decline")}
-            </Button>
-          </>
-        )}
+      {exchange.type === "sale" && exchange.salePrice && (
+        <SaleOffer
+          price={exchange.salePrice}
+          direction={direction}
+          partnerName={who}
+        />
+      )}
 
-        {exchange.status === "proposed" && !incoming && (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!exchange.aggregateId}
-            onClick={run((args) => cancelExchange.mutateAsync(args))}
-          >
-            <XCircle className="h-4 w-4" />
-            {t("cancel")}
-          </Button>
-        )}
+      {/* A loan's agreed return date (or that there is none), before it is accepted and after. */}
+      {exchange.type === "loan" && (
+        <ReturnBy loanReturnDate={exchange.loanReturnDate} />
+      )}
 
-        {exchange.status === "accepted" && (
-          <>
-            <Button
-              size="sm"
-              disabled={!exchange.aggregateId}
-              onClick={run((args) => completeExchange.mutateAsync(args))}
-            >
-              <CheckCircle className="h-4 w-4" />
-              {t("markComplete")}
-            </Button>
-            {/* Accepting sets the puzzle aside for this one exchange, so either side can call it
-                off (a pending request is only the requester's to cancel). Calling off an agreed
-                deal is final, so it asks first and says what follows. */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!exchange.aggregateId}
-                >
-                  <XCircle className="h-4 w-4" />
-                  {t("cancel")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {t("cancelAccepted.title")}
-                  </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t("cancelAccepted.body")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
-                    {t("cancelAccepted.keep")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    className={buttonVariants({ variant: "destructive" })}
-                    onClick={run((args) => cancelExchange.mutateAsync(args))}
-                  >
-                    {t("cancelAccepted.confirm")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        )}
-
+      <ExchangeActions
+        exchange={exchange}
+        direction={direction}
+        partnerName={who}
+        requestedTitle={exchange.requestedPuzzle?.title}
+        offeredTitle={exchange.offeredPuzzle?.title}
+      >
         {/* Review the partner once completed; the dialog hides itself when the
             viewer has already reviewed this exchange. */}
         {exchange.status === "completed" && (
@@ -556,7 +406,7 @@ function ExchangeDetail({
             partnerName={displayName(partner)}
           />
         )}
-      </div>
+      </ExchangeActions>
 
       {chatOpen && (
         <ExchangeChat exchangeId={exchange.aggregateId ?? exchange._id} />
@@ -594,22 +444,25 @@ function ExchangeChat({ exchangeId }: { exchangeId: string }) {
   );
 }
 
+// One side of the exchange in the detail: its cover (a puzzle glyph without one), title and size.
 function PuzzleSummary({
   label,
   title,
   pieceCount,
+  coverUrl,
 }: {
   label: string;
   title?: string;
   pieceCount?: number;
+  coverUrl?: string | null;
 }) {
   const tLending = useTranslations("lending");
   return (
     <div>
       <h4 className="text-muted-foreground text-sm font-medium">{label}</h4>
       <div className="bg-muted/50 mt-1.5 flex items-center gap-3 rounded-lg p-3">
-        <Package className="text-muted-foreground h-7 w-7" />
-        <div>
+        <CoverTile url={coverUrl} />
+        <div className="min-w-0">
           <p className="text-sm font-medium">{title}</p>
           {pieceCount != null && (
             <p className="text-muted-foreground text-xs">
@@ -618,85 +471,6 @@ function PuzzleSummary({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------- Borrowed tab */
-
-// The old /borrowed page folded in as a tab: open loans the viewer holds, as
-// divided rows with a Return action. Same lending reads and mutation as the
-// standalone page.
-function BorrowedList({ borrowed }: { borrowed: BorrowedLoan[] | undefined }) {
-  const t = useTranslations("lending");
-  const displayName = useMemberDisplayName();
-  const relativeTime = useRelativeTime();
-  const returnLoan = useMutation({
-    mutationFn: useConvexMutation(gateway.lending.returnLoan),
-  });
-  // Scope the pending state to the loan being returned so only that row's
-  // button disables, exactly as the old per-id busy flag did.
-  const returningId = returnLoan.isPending
-    ? (returnLoan.variables?.loanId ?? null)
-    : null;
-
-  const handleReturn = async (loanId: string) => {
-    try {
-      await returnLoan.mutateAsync({ loanId });
-    } catch (error) {
-      console.error("Failed to return loan:", error);
-    }
-  };
-
-  if (borrowed === undefined) {
-    return <PageLoading message={t("loading")} />;
-  }
-
-  if (borrowed.length === 0) {
-    return <BorrowedEmptyState />;
-  }
-
-  return (
-    <div className="flex flex-col">
-      {borrowed.map((loan, index) => (
-        <div
-          key={loan.loanId}
-          className={cn(
-            "flex items-center gap-3.5 py-3",
-            index < borrowed.length - 1 && "border-b",
-          )}
-        >
-          <CoverChip icon={Package} size={44} gradientIndex={index} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-base font-semibold">
-              {loan.puzzleTitle}
-              <span className="text-muted-foreground font-medium">
-                {" "}
-                · {t("pieceCount", { count: loan.pieceCount })}
-              </span>
-            </div>
-            <div className="text-muted-foreground mt-0.5 truncate text-xs">
-              {t("borrowedFrom", {
-                name: loan.lender
-                  ? displayName(loan.lender)
-                  : t("deletedMember"),
-              })}{" "}
-              ·{" "}
-              {t("openedRelative", {
-                when: relativeTime(loan.openedAt),
-              })}
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={returningId === loan.loanId}
-            onClick={() => handleReturn(loan.loanId)}
-          >
-            {returningId === loan.loanId ? t("returning") : t("returnAction")}
-          </Button>
-        </div>
-      ))}
     </div>
   );
 }

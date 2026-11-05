@@ -54,9 +54,10 @@ import {
   Tag,
   Trash2,
   User,
+  Users,
   type LucideIcon,
 } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useRef, type RefObject } from "react";
 import { useTranslations } from "use-intl";
 
 export { PuzzleViewProvider, usePuzzleView };
@@ -103,6 +104,12 @@ interface PuzzleCardProps {
   // this copy (`solveInProgress`) and handles the action (start vs finish) itself.
   onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
+  // The owner's "Share with circles…" (the page owns the dialog). `opener` is the ⋯ trigger, for
+  // the dialog to hand focus back to.
+  onShareWithCircles?: (
+    puzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   isSelected?: boolean;
   /** The owner's already-resolved label (e.g. "Deleted member" for a departed owner); shown when set. */
   ownerLabel?: string;
@@ -151,6 +158,10 @@ interface PuzzleOverflowMenuProps {
   onStartSolve?: (id: Id<"ownedPuzzles">) => void;
   solveInProgress?: boolean;
   onEdit?: (id: Id<"ownedPuzzles">) => void;
+  onShareWithCircles?: (
+    id: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   onDelete?: (id: Id<"ownedPuzzles">) => void;
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
   showCollection?: boolean;
@@ -165,6 +176,7 @@ function PuzzleOverflowMenu({
   onStartSolve,
   solveInProgress = false,
   onEdit,
+  onShareWithCircles,
   onDelete,
   showCollection = false,
   copyAggregateId,
@@ -173,12 +185,15 @@ function PuzzleOverflowMenu({
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
+  const tCircles = useTranslations("circles");
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Don't mount the chip at all when nothing is wired.
   if (
     !onLogSolve &&
     !onStartSolve &&
     !onEdit &&
+    !onShareWithCircles &&
     !onDelete &&
     !showCollection &&
     !onRemoveFromCollection
@@ -192,6 +207,7 @@ function PuzzleOverflowMenu({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
+            ref={triggerRef}
             type="button"
             aria-label={t("overflowMenu.ariaLabel")}
             onClick={(e) => e.stopPropagation()}
@@ -239,6 +255,17 @@ function PuzzleOverflowMenu({
             >
               <Edit className="h-4 w-4 mr-2 shrink-0" />
               {t("overflowMenu.edit")}
+            </DropdownMenuItem>
+          )}
+          {onShareWithCircles && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onShareWithCircles(ownedId, triggerRef);
+              }}
+            >
+              <Users className="h-4 w-4 mr-2 shrink-0" />
+              {tCircles("shareDialog.trigger")}
             </DropdownMenuItem>
           )}
           {showCollection && (
@@ -306,6 +333,7 @@ export function PuzzleCard({
   onLogSolve,
   onStartSolve,
   solveInProgress = false,
+  onShareWithCircles,
   isSelected = false,
   ownerLabel,
   showActions = true,
@@ -438,6 +466,7 @@ export function PuzzleCard({
       onLogSolve ||
       onStartSolve ||
       onEdit ||
+      onShareWithCircles ||
       onDelete ||
       showCollectionDropdown ||
       onRemoveFromCollection
@@ -465,6 +494,7 @@ export function PuzzleCard({
           onStartSolve={onStartSolve}
           solveInProgress={solveInProgress}
           onEdit={onEdit}
+          onShareWithCircles={onShareWithCircles}
           onDelete={onDelete}
           showCollection={showCollectionDropdown}
           copyAggregateId={puzzle.aggregateId}

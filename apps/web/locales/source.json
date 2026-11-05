@@ -520,6 +520,7 @@
       "available": "Available",
       "forTrade": "For Trade",
       "forLend": "For Loan",
+      "lentOut": "Lent Out",
       "inProgress": "In Progress",
       "completed": "Completed"
     },
@@ -696,14 +697,49 @@
     "pending": "Pending",
     "accepted": "Accepted",
     "declined": "Declined",
-    "completed": "Completed",
     "cancelled": "Cancelled",
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
-    "acceptNotPermitted": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
     "errors": {
+      "IllegalTransition": "This exchange has changed in the meantime. Check its current status.",
+      "WrongParty": "You can't do that on this exchange.",
+      "ExchangeNotFound": "This exchange no longer exists.",
+      "NotPermittedInCircle": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
+      "NotConnected": "You can't do this with this member.",
+      "CopyNotAvailable": "This puzzle is no longer available for this exchange.",
+      "generic": "Something went wrong. Please try again.",
       "copyReserved": "One of the puzzles in this exchange is already set aside for another exchange or is out on loan. You can go ahead once that exchange is completed or cancelled, or once the puzzle is back. Either member of that exchange can cancel it.",
       "copyChangedHands": "This exchange can't go ahead any more: one of its puzzles has changed hands or is no longer available."
+    },
+    "completeConfirm": {
+      "title": "Confirm the handover?",
+      "leadFirst": "Only confirm once the puzzle has changed hands. The exchange completes as soon as {name} confirms too.",
+      "leadSettles": "{name} has already confirmed, so your confirmation completes the exchange.",
+      "effect": {
+        "trade": "Completion moves “{give}” to {name}'s library and “{get}” to yours.",
+        "saleGive": "Completion moves “{title}” to {name}'s library.",
+        "saleGet": "Completion moves “{title}” to your library.",
+        "loanLend": "Completion starts the loan: {name} holds “{title}” until they return it, and it stays in your library.",
+        "loanBorrow": "Completion starts the loan: you hold “{title}” until you return it to {name}."
+      },
+      "irreversible": "This can't be undone.",
+      "confirm": "Confirm handover",
+      "untitled": "this puzzle"
+    },
+    "confirmation": {
+      "waiting": "You confirmed {when} · Waiting for {name}",
+      "partnerConfirmed": "{name} confirmed {when}",
+      "yourTurn": "Your turn",
+      "youConfirmed": "You confirmed"
+    },
+    "offer": {
+      "chip": "Offer: {price}",
+      "incoming": "{name} offers {price}",
+      "outgoing": "You offer {price}"
+    },
+    "returnBy": {
+      "date": "Return by {date}",
+      "none": "No fixed return date"
     },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
@@ -716,9 +752,8 @@
     },
     "incoming": "Incoming",
     "outgoing": "Outgoing",
-    "allStatuses": "All Statuses",
-    "noExchanges": "No trades yet",
-    "noExchangesDescription": "Start browsing puzzles to make your first trade request",
+    "allStatuses": "All statuses",
+    "statusFilter": "Filter by status",
     "tradeRequest": "Exchange Request",
     "yourRequest": "Your Request",
     "theyWant": "They Want",
@@ -735,6 +770,42 @@
     "all": "All",
     "exchangesCount": "{count, plural, one {# exchange} other {# exchanges}}",
     "rowMeta": "{direction} · with {who} · {when}",
+    "groups": {
+      "needsYou": "Needs you",
+      "others": "Other exchanges"
+    },
+    "empty": {
+      "all": {
+        "title": "No exchanges yet",
+        "sub": "When you ask for a puzzle, or someone asks for one of yours, the request shows up here."
+      },
+      "incoming": {
+        "title": "No requests for your puzzles",
+        "sub": "Members can ask to swap, borrow or buy the puzzles you offer. Choose what you offer on My Puzzles.",
+        "action": "Go to My Puzzles"
+      },
+      "outgoing": {
+        "title": "No requests sent yet",
+        "sub": "Find a puzzle on Browse Puzzles and ask its owner to swap, lend or sell it to you."
+      },
+      "browse": "Browse puzzles",
+      "filtered": {
+        "title": "No exchanges with status “{status}”",
+        "sub": "Pick another status, or show them all.",
+        "action": "Show all statuses"
+      }
+    },
+    "loans": {
+      "tab": "Loans",
+      "count": "{count, plural, one {# open loan} other {# open loans}}",
+      "borrowedTitle": "Borrowed by you",
+      "lentTitle": "Lent out",
+      "lentEmpty": {
+        "title": "Nothing lent out",
+        "sub": "When you lend a puzzle, it shows up here until you have it back. Choose which puzzles others may borrow on My Puzzles.",
+        "action": "Go to My Puzzles"
+      }
+    },
     "kind": {
       "trade": "Trade",
       "sale": "Sale",
@@ -752,12 +823,42 @@
       "cancelled": "Cancelled",
       "disputed": "Disputed"
     },
+    "loanState": {
+      "open": "On loan",
+      "returned": "Returned {date}",
+      "recalled": "Recalled {date}"
+    },
     "partner": {
       "hiddenNote": "Their details appear once they accept or reply.",
       "reviewsHeading": "Reviews received",
       "shareEmail": "Share my email with {name}",
       "shareEmailHint": "Only for this trade. You can turn this off at any time.",
       "shareEmailError": "Couldn't change your email sharing. Please try again."
+    },
+    "pendingLabel": {
+      "accept": "Accepting…",
+      "decline": "Declining…",
+      "cancel": "Cancelling…",
+      "complete": "Confirming…"
+    },
+    "declineConfirm": {
+      "title": "Decline this request?",
+      "body": "{name} gets a notification that you declined. You can't undo this, but they can send a new request."
+    },
+    "cancelConfirm": {
+      "title": "Cancel your request?",
+      "body": "{name} gets a notification that you cancelled it. You can't undo this, but you can send a new request.",
+      "keep": "Keep request",
+      "confirm": "Cancel request"
+    },
+    "toast": {
+      "accepted": "Request accepted. Arrange the handover with {name}.",
+      "declined": "Request declined",
+      "cancelled": "Request cancelled",
+      "confirmedWaiting": "Confirmed. Waiting for {name}.",
+      "completed": "Exchange completed",
+      "loanStarted": "Loan started",
+      "cancelledAccepted": "Exchange cancelled"
     }
   },
   "tradeRequest": {
@@ -786,7 +887,11 @@
     "cancel": "Cancel",
     "submit": "Send request",
     "submitting": "Sending…",
-    "success": "Request sent",
+    "success": {
+      "trade": "Swap request sent",
+      "sale": "Purchase request sent",
+      "loan": "Borrow request sent"
+    },
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
       "notFound": "This puzzle is no longer available.",
@@ -798,6 +903,25 @@
       "missingTerms": "Some details are missing. Check the form and try again.",
       "rateLimited": "You've sent a lot of requests lately. Try again later.",
       "generic": "Couldn't send the request. Please try again."
+    },
+    "cta": {
+      "borrow": "Ask to borrow",
+      "swap": "Request swap",
+      "buy": "Ask to buy",
+      "mixed": "Request…"
+    },
+    "returnBy": {
+      "label": "Return by",
+      "presets": {
+        "none": "No fixed date",
+        "2w": "In 2 weeks",
+        "3w": "In 3 weeks",
+        "1m": "In 1 month",
+        "custom": "Pick a date…"
+      },
+      "dateLabel": "Return date",
+      "summary": "Return by {date}",
+      "invalid": "Pick a date from tomorrow on."
     }
   },
   "reputation": {
@@ -2105,7 +2229,7 @@
       "memberManage": "Household copy — you can manage it",
       "memberView": "Household copy — view only",
       "saveFailed": "Couldn't update household access",
-      "useDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})"
+      "useDefault": "Household default ({permission, select, view {View only} other {Can manage}})"
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
@@ -2136,10 +2260,9 @@
       "filterLabel": "Filter by household access",
       "filterAll": "All puzzles",
       "selectAll": "Select all",
-      "selectNone": "Select none",
+      "clearSelection": "Clear selection",
       "selectedCount": "{count, plural, one {# selected} other {# selected}}",
-      "setManage": "Set to Can manage",
-      "setView": "Set to View only",
+      "setAccess": "Set access",
       "selectLabel": "Select {title}",
       "noMatches": "None of your puzzles match this filter.",
       "untitled": "Untitled puzzle",
@@ -2148,7 +2271,6 @@
       "confirmView": "Your household will only be able to view {count, plural, one {this puzzle} other {these puzzles}}.",
       "confirm": "Change access",
       "changed": "{count, plural, =0 {No puzzles needed changing} one {# puzzle updated} other {# puzzles updated}}",
-      "setDefault": "Use household default (currently: {permission, select, view {View only} other {Can manage}})",
       "confirmDefault": "{count, plural, one {This puzzle} other {These puzzles}} will follow the household default (currently: {permission, select, view {View only} other {Can manage}}), and change with it.",
       "sourceDefault": "Household default",
       "sourceExplicit": "Set for this puzzle"
@@ -2173,7 +2295,7 @@
     "tabs": {
       "puzzles": "Puzzles",
       "members": "Members",
-      "sharing": "Sharing",
+      "sharing": "Access",
       "settings": "Settings"
     },
     "puzzles": {
@@ -2242,9 +2364,12 @@
     "yourCircles": "Your Circles",
     "createCircle": "Create Circle",
     "roleOwner": "Owner",
-    "roleMember": "Member",
-    "ownedByYou": "Owned by you",
-    "sharedWithYou": "Shared with you",
+    "roleHints": {
+      "Owner": "You own this circle: you can do everything an admin can, and delete it.",
+      "ViewOnly": "You see the puzzles shared here, but can't request them or share your own.",
+      "Exchange": "You can request the puzzles shared here and share your own.",
+      "Admin": "You can request and share puzzles, invite people and manage members."
+    },
     "membersLabel": "{count, plural, one {member} other {members}}",
     "avatarStackLabel": "Members of {circle}",
     "avatarStackMore": "{count, plural, one {# more member} other {# more members}}",
@@ -2252,6 +2377,7 @@
     "emptySub": "Create a circle to swap puzzles with friends and family.",
     "loading": "Loading circles…",
     "leave": "Leave circle",
+    "rowMenuLabel": "More actions for {circle}",
     "leaveConfirmTitle": "Leave {circle}?",
     "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
     "leaveError": "Couldn't leave the circle. Please try again.",
@@ -2287,7 +2413,10 @@
       "permissionLabel": "Permission",
       "send": "Send invite",
       "sent": "Invite sent",
-      "empty": "You can invite people you follow mutually.",
+      "empty": "You can invite people you follow each other with.",
+      "emptyNext": "Friends not on JigSwap yet? Share your invite link or QR code. When they sign up, we ask whether you want to follow each other. Then you can invite them here.",
+      "inviteFriends": "Invite friends to JigSwap",
+      "noMatches": "No one you can invite matches “{search}”.",
       "pendingTitle": "Pending invites",
       "pendingMeta": "Invited {when} · expires {date}",
       "revoke": "Revoke",
@@ -2303,6 +2432,14 @@
       "CircleNotFound": "This circle is no longer available.",
       "RateLimited": "You've sent a lot of invites today. Please try again tomorrow.",
       "generic": "Something went wrong. Please try again."
+    },
+    "inviteToCircle": {
+      "trigger": "Invite to a circle…",
+      "title": "Invite {name} to a circle",
+      "description": "They join once they accept. You can invite people you follow each other with.",
+      "circleLabel": "Circle",
+      "sending": "Sending…",
+      "sent": "Invite to {circle} sent to {name}"
     },
     "icon": {
       "title": "Icon",
@@ -2326,7 +2463,7 @@
     },
     "manage": {
       "createTitle": "Create Circle",
-      "createDescription": "A circle is private. You become its first member and admin.",
+      "createDescription": "A circle is private. You become its first member and admin. You can invite people you follow each other with.",
       "nameLabel": "Name",
       "namePlaceholder": "e.g. Saturday Puzzlers",
       "nameCounter": "{count}/{max}",
@@ -2340,12 +2477,48 @@
       "unavailable": "This circle is no longer available.",
       "members": "Members",
       "owner": "Owner",
-      "shareCopy": "Share a copy",
-      "shareDescription": "Shared copies become visible to members of this circle. A copy you've marked private stays private.",
-      "chooseCopy": "Choose one of your copies…",
+      "shareCopy": "Share your puzzles",
+      "shareDescription": "Members see a shared puzzle while you offer it for swap, loan or sale. A private puzzle stays hidden. Tick puzzles to share them, untick to stop sharing.",
       "copyFallback": "Copy",
-      "share": "Share",
       "close": "Close"
+    },
+    "share": {
+      "searchPlaceholder": "Search your puzzles…",
+      "noMatches": "No puzzles match your search.",
+      "noCopies": "Your library is empty. Add puzzles to share them here.",
+      "loadError": "Couldn't load your puzzles.",
+      "shared": "Shared",
+      "willShare": "Will be shared",
+      "willUnshare": "Will stop being shared",
+      "notOffered": "Not offered: members won't see it",
+      "private": "Private: members won't see it",
+      "shareCount": "{count, plural, one {Share # puzzle} other {Share # puzzles}}",
+      "unshareCount": "{count, plural, one {Stop sharing # puzzle} other {Stop sharing # puzzles}}",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "clear": "Clear",
+      "sharedToast": "{count, plural, one {Shared # puzzle with {circle}} other {Shared # puzzles with {circle}}}",
+      "unsharedToast": "{count, plural, one {Stopped sharing # puzzle with {circle}} other {Stopped sharing # puzzles with {circle}}}"
+    },
+    "shareDialog": {
+      "trigger": "Share with circles…",
+      "title": "Share “{title}” with circles",
+      "description": "Circle members see a shared puzzle while you offer it for swap, loan or sale.",
+      "notOffered": "You don't offer this puzzle for swap, loan or sale, so circle members won't see it until you do.",
+      "private": "This puzzle is private, so circle members won't see it, even when it's shared.",
+      "empty": "You're not in any circle yet.",
+      "goToCircles": "Go to Circles",
+      "viewOnly": "View only: you can't share here",
+      "loadError": "Couldn't load your circles.",
+      "save": "Save",
+      "savedToast": "{count, plural, =0 {“{title}” isn't shared with any circle} one {“{title}” is shared with # circle} other {“{title}” is shared with # circles}}"
+    },
+    "shareErrors": {
+      "CopyNotFound": "One of these puzzles is no longer in your library.",
+      "CircleNotFound": "This circle is no longer available.",
+      "CannotShareCopy": "You have view-only access in this circle, so you can't share puzzles here.",
+      "BatchTooLarge": "You can share at most 100 puzzles at once.",
+      "generic": "Something went wrong. Please try again."
     },
     "page": {
       "memberCount": "{count, plural, one {# member} other {# members}}",
@@ -2356,7 +2529,8 @@
       "chatError": "Couldn't load the latest messages.",
       "sharedTitle": "Shared puzzles",
       "sharedEmpty": "No puzzles have been shared in this circle yet.",
-      "sharedError": "Couldn't load the shared puzzles."
+      "sharedError": "Couldn't load the shared puzzles.",
+      "viewOnlyHint": "You have view-only access in this circle. Ask an admin for “Can exchange” to share your puzzles here and request theirs."
     }
   },
   "people": {
@@ -3508,10 +3682,8 @@
     "loading": "Loading custody timeline…"
   },
   "lending": {
-    "borrowedTitle": "Borrowed",
     "borrowedSubtitle": "Copies you are currently holding on loan.",
     "borrowedFrom": "Borrowed from {name}",
-    "openedRelative": "Borrowed {when}",
     "returnAction": "Return",
     "returning": "Returning…",
     "noBorrowed": "Nothing borrowed",
@@ -3535,8 +3707,30 @@
     "borrowedBy": "Borrowed by {name}",
     "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
-    "borrowedCount": "{count, plural, one {# borrowed puzzle} other {# borrowed puzzles}}",
-    "pieceCount": "{count, plural, one {# piece} other {# pieces}}"
+    "pieceCount": "{count, plural, one {# piece} other {# pieces}}",
+    "returnConfirm": {
+      "title": "Return {title}?",
+      "body": "Only do this once {name} has the puzzle back. The loan closes, and you can't undo this."
+    },
+    "recallDialog": {
+      "title": "Recall {title}?",
+      "body": "Only do this once you have the puzzle back from {name}. The loan closes, and you can't undo this."
+    },
+    "toast": {
+      "returned": "{title} returned to {name}",
+      "recalled": "{title} recalled from {name}"
+    },
+    "errors": {
+      "LoanNotFound": "This loan no longer exists.",
+      "LoanNotOpen": "This loan has already been closed.",
+      "NotBorrower": "Only the borrower can return this puzzle.",
+      "NotLender": "Only the owner can recall this puzzle.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "due": {
+      "upcoming": "{days, plural, =0 {Due today} =1 {Due tomorrow} other {Due in # days}}",
+      "overdue": "{days, plural, one {# day overdue} other {# days overdue}}"
+    }
   },
   "marketing": {
     "nav": {
@@ -3854,7 +4048,6 @@
     "completionNew": "Log a completion — JigSwap",
     "community": "Community — JigSwap",
     "circles": "Circles — JigSwap",
-    "borrowed": "Borrowed — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
     "adminUsers": "Users — JigSwap",
@@ -4016,10 +4209,6 @@
         "subtitle": "Every puzzle in JigSwap.",
         "description": "Every puzzle in JigSwap, offered or not"
       },
-      "borrowed": {
-        "title": "Borrowed",
-        "subtitle": "Puzzles you've borrowed from others."
-      },
       "notifications": {
         "title": "Notifications",
         "subtitle": "Everything that needs your attention."
@@ -4167,7 +4356,6 @@
       "edit": "Edit",
       "logSolve": "Log solve",
       "delete": "Delete",
-      "requestSwap": "Request swap",
       "requestViewOnly": "You have view-only access in this circle",
       "message": "Message",
       "proposeSwap": "Propose a Swap",
@@ -5125,7 +5313,7 @@
         },
         "copy-access": {
           "title": "You decide per puzzle",
-          "body": "Your puzzles stay yours. On the Sharing tab you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
+          "body": "Your puzzles stay yours. On the Access tab you choose what the household may do with each one: Can manage lets housemates edit, lend and swap it; View only lets them see it. Select several to change them at once."
         }
       },
       "guide": {
@@ -5229,19 +5417,19 @@
         },
         "request": {
           "title": "Ask the owner",
-          "body": "Open a puzzle and press Request swap. Choose Swap, Borrow or Buy, whichever the owner offers, and send the request. You can message the owner too."
+          "body": "Open a puzzle and press its request button, such as Ask to borrow or Request swap: it names what the owner offers. If they offer more than one, choose Swap, Borrow or Buy, then send the request. You can message the owner too."
         },
         "trades": {
           "title": "Your exchanges",
-          "body": "Requests you sent are under Outgoing, requests for your puzzles under Incoming. Press View on one to accept, decline or cancel it, or to message the other member."
+          "body": "Requests you sent are under Outgoing, requests for your puzzles under Incoming. Open one to accept, decline or cancel it, or to message the other member."
         },
         "complete": {
           "title": "Both of you confirm",
           "body": "Once the puzzle has changed hands, you both press Mark Complete. The exchange is completed when both of you have."
         },
         "borrowed": {
-          "title": "What you've borrowed",
-          "body": "Puzzles lent to you are listed here until you give them back. Start a solve from here, and press Return once it's back with its owner."
+          "title": "Your loans",
+          "body": "Loans lists the puzzles you've borrowed and the ones you've lent out. Start a solve on a borrowed puzzle, and press Return once it's back with its owner."
         }
       }
     },
@@ -5253,7 +5441,7 @@
       "steps": {
         "household": {
           "title": "Your household",
-          "body": "People in your household see all your puzzles. On the household's Sharing tab you choose per puzzle whether they can manage it or only view it."
+          "body": "People in your household see all your puzzles. On the household's Access tab you choose per puzzle whether they can manage it or only view it."
         },
         "circles": {
           "title": "Your circles",

@@ -20,15 +20,20 @@ ja te zeggen: leden worden uitgenodigd en doen pas mee als ze accepteren.
 3. Klik op **Aanmaken**.
 
 Je bent de **Eigenaar** van de kring en de eerste beheerder. Elke kring op de
-pagina toont je rol (**Eigenaar** of **Lid**), het aantal leden en hun avatars.
-Beheerders krijgen ook een instellingenknop die het beheervenster opent.
+pagina toont jouw plek erin: **Eigenaar**, of je recht (**Alleen bekijken**,
+**Mag ruilen** of **Beheerder**). Wijs het aan om te zien wat je ermee kunt.
+Elke kring toont ook de avatars van de leden. Beheerders krijgen ook een
+instellingenknop die het beheervenster opent, en leden die niet de eigenaar
+zijn een **⋯**-menu met **Kring verlaten**.
 
 ## De pagina van een kring
 
-Klik op **Kringen** op een kring om de eigen pagina ervan te openen. Daarop
-staan:
+Klik op **Kringen** op de naam van een kring om de eigen pagina ervan te
+openen. Daarop staan:
 
-- de naam van de kring, je rol en de avatars van de leden, met **Beheren** voor
+- de naam van de kring als paginatitel, en daaronder jouw plek erin
+  (**Eigenaar** of je recht; tik erop of wijs het aan om te zien wat je ermee
+  kunt), het aantal leden en de avatars van de leden, met **Beheren** voor
   beheerders en **Kring verlaten** voor leden;
 - **Groepschat**: de nieuwste berichten, en **Groepschat openen** om mee te
   praten;
@@ -74,6 +79,16 @@ verloopt. Een uitnodiging verloopt na 14 dagen.
 
 Wil je een uitnodiging annuleren, klik dan op **Intrekken** en bevestig. Je
 kunt diegene later opnieuw uitnodigen.
+
+Je kunt iemand ook vanaf diens profiel uitnodigen: open het **⋯**-menu, kies
+**Uitnodigen voor een kring…**, kies de kring en de rechten, en klik op
+**Uitnodiging versturen**. Die optie staat er als jullie elkaar volgen en jij
+**Beheerder** bent van minstens één kring.
+
+Is er nog niemand om uit te nodigen, dan staat dat in de lijst, met de knop
+**Vrienden uitnodigen voor JigSwap**. Die opent **Mensen vinden**, met je
+uitnodigingslink en QR-code. Meldt een vriend zich daarmee aan, dan vragen we
+of jullie elkaar willen volgen. Doen jullie dat, dan kun je diegene uitnodigen.
 
 > **Let op:** Een kring heeft maximaal 50 leden, en openstaande uitnodigingen
 > tellen mee voor dat maximum.
@@ -132,7 +147,8 @@ verwijdert het.
 ## Wat elk rechtenniveau toestaat
 
 De uitnodigingskiezer en het beheervenster tonen onder elk niveau een korte
-samenvatting van één regel.
+samenvatting van één regel. Je eigen recht staat bij elke kring op **Kringen**
+en op de pagina van de kring.
 
 | Recht               | Wat het lid kan                                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -140,8 +156,8 @@ samenvatting van één regel.
 | **Mag ruilen**      | Alles wat Alleen bekijken mag, een ruil-, leen- of koopaanvraag sturen voor puzzels die in de kring gedeeld zijn, en eigen exemplaren erin delen. |
 | **Beheerder**       | Alles wat Mag ruilen mag, en mensen uitnodigen, rechten wijzigen en leden verwijderen.                                                            |
 
-Heb je **Alleen bekijken**, dan is de knop **Ruil aanvragen** op een gedeelde
-puzzel grijs, met "Je mag in deze kring alleen bekijken", en toont
+Heb je **Alleen bekijken**, dan is de aanvraagknop op een gedeelde puzzel
+(zoals **Ruil aanvragen**) grijs, met "Je mag in deze kring alleen bekijken", en toont
 **Bladeren** de puzzel zonder aanvraagknop.
 
 Je recht telt alleen voor puzzels die je via die kring bereikt. Je kunt een
@@ -160,20 +176,38 @@ privé maakt.
 ## Een exemplaar delen met een kring
 
 Leden met **Mag ruilen** of **Beheerder** kunnen hun eigen exemplaren delen.
-Met **Alleen bekijken** kun je niet delen. Je kunt alleen exemplaren delen die
-van jou zijn.
+Met **Alleen bekijken** kun je niet delen: dat staat op de pagina van de kring
+onder **Gedeelde puzzels**, en een beheerder kan je **Mag ruilen** geven. Je
+kunt alleen exemplaren delen die van jou zijn.
 
 1. Open de pagina van de kring. Beheerders kunnen ook het beheervenster
    gebruiken.
-2. Kies onder **Gedeelde puzzels**, bij **Een exemplaar delen**, een van je
-   exemplaren.
-3. Klik op **Delen**.
+2. Vink onder **Gedeelde puzzels**, bij **Deel je puzzels**, de puzzels aan
+   die je wilt delen. Zoek om er snel een te vinden. Puzzels die je daar al
+   deelt, zijn aangevinkt en gemarkeerd als **Gedeeld**.
+3. Klik op **Delen** (bijvoorbeeld **3 puzzels delen**). Een melding bevestigt
+   het.
+
+Wil je een puzzel niet meer delen, vink hem dan uit en klik op **Niet meer
+delen**. Vink je tegelijk puzzels aan en uit, dan heet de knop **Wijzigingen
+opslaan**. Met **Wissen** gooi je de vinkjes weg die je nog niet hebt
+opgeslagen.
+
+Je kunt ook bij de puzzel zelf beginnen: kies op de pagina van de puzzel, of in
+het **⋯**-menu op de kaart in **Mijn Puzzels**, voor **Delen met kringen…**.
+Vink de kringen aan waarmee je hem wilt delen, vink de kringen uit waarmee je
+hem niet meer wilt delen, en klik op **Opslaan**. Kringen waarin je **Alleen
+bekijken** hebt, kun je niet aanvinken.
 
 Kringleden kunnen een gedeeld exemplaar zien zolang je het aanbiedt om te
-ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring.
+ruilen, uit te lenen of te verkopen, en je nog lid bent van de kring. De lijst
+markeert de puzzels die ze niet zien: **Niet aangeboden** (bied hem eerst aan
+om te ruilen, uit te lenen of te verkopen) en **Privé** (een privépuzzel blijft
+verborgen, ook als je hem deelt).
 
 Daalt je recht later naar **Alleen bekijken**, dan blijven de exemplaren die je
-al deelde gedeeld. Je kunt alleen geen nieuwe meer delen.
+al deelde gedeeld. Je kunt alleen geen nieuwe meer delen. Wil je er een niet
+meer delen, gebruik dan **Delen met kringen…** bij de puzzel.
 
 Delen stopt automatisch:
 
@@ -195,7 +229,8 @@ in de chat van de kring wanneer iemand daar typt.
 
 ## Een kring verlaten
 
-1. Klik op de pagina **Kringen** bij de kring op **Kring verlaten**.
+1. Open op de pagina **Kringen** het **⋯**-menu van de kring en kies **Kring
+   verlaten**. Op de eigen pagina van de kring klik je op **Kring verlaten**.
 2. Bevestig.
 
 Je verliest de toegang tot de kring, de groepschat en de puzzels die erin

@@ -156,9 +156,12 @@ describe("tour definitions", () => {
     for (const tour of TOURS.values()) {
       for (const step of tour.steps) {
         if (step.target === undefined) continue;
-        expect(code, `${tour.id}/${step.id}`).toContain(
-          `data-tour="${step.target}"`,
-        );
+        // A JSX attribute, or a `"data-tour"` field handed to a component that renders it (a
+        // FilterBar pill).
+        const anchored =
+          code.includes(`data-tour="${step.target}"`) ||
+          code.includes(`"data-tour": "${step.target}"`);
+        expect(anchored, `${tour.id}/${step.id}`).toBe(true);
       }
     }
   });

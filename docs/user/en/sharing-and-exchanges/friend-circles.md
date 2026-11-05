@@ -20,15 +20,20 @@ yes: members are invited and join only when they accept.
 3. Click **Create**.
 
 You are the circle's **Owner** and its first admin. Each circle on the page
-shows your role (**Owner** or **Member**), the member count and avatars. Admins
-also get a settings button that opens the manage dialog.
+shows your place in it: **Owner**, or your permission (**View only**, **Can
+exchange** or **Admin**). Point at it to see what it lets you do. Each circle
+also shows its members' avatars. Admins also get a settings button that opens
+the manage dialog, and members who don't own the circle get a **⋯** menu with
+**Leave circle**.
 
 ## The circle page
 
-Click a circle on **Circles** to open its own page. It shows:
+Click a circle's name on **Circles** to open its own page. It shows:
 
-- the circle's name, your role and the members' avatars, with **Manage** for
-  admins and **Leave circle** for members;
+- the circle's name as the page title, then your place in it (**Owner** or
+  your permission; tap or point at it to see what it lets you do), the member
+  count and the members' avatars, with **Manage** for admins and **Leave
+  circle** for members;
 - **Group chat**: the latest messages, and **Open group chat** to join the
   conversation;
 - **Shared puzzles**: the most recent puzzles shared in the circle. Click one
@@ -69,6 +74,16 @@ with when you sent it and when it expires. An invite expires after 14 days.
 
 To cancel an invite, click **Revoke** and confirm. You can invite them again
 later.
+
+You can also invite someone from their profile: open the **⋯** menu, choose
+**Invite to a circle…**, pick the circle and the permission, and click **Send
+invite**. The option is there when you follow each other and you're an
+**Admin** of at least one circle.
+
+If there's nobody to invite yet, the list says so and offers **Invite friends
+to JigSwap**. It opens **Find people**, with your invite link and QR code.
+When a friend signs up through them, we ask whether you want to follow each
+other. Once you do, you can invite them.
 
 > **Note:** A circle can have at most 50 members, and pending invites count
 > toward that limit.
@@ -123,7 +138,8 @@ doesn't change its icon; deleting the circle deletes it.
 ## What each permission allows
 
 The invite picker and the manage dialog show a one-line summary under each
-level.
+level. Your own permission shows on each circle on **Circles** and on the
+circle's page.
 
 | Permission       | What the member can do                                                                                                             |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
@@ -131,8 +147,8 @@ level.
 | **Can exchange** | Everything View only allows, send swap, lend or buy requests for puzzles shared in the circle, and share their own copies into it. |
 | **Admin**        | Everything Can exchange allows, and invite people, change permissions and remove members.                                          |
 
-For a View only member, the **Request swap** button on a shared puzzle is
-greyed out with "You have view-only access in this circle", and **Browse**
+For a View only member, the request button on a shared puzzle (such as
+**Request swap**) is greyed out with "You have view-only access in this circle", and **Browse**
 shows the puzzle without a request button.
 
 Your permission only counts for puzzles you reach through that circle. You can
@@ -149,17 +165,33 @@ open to accept, even if the owner later makes their profile private.
 ## Share a copy with a circle
 
 Members with **Can exchange** or **Admin** can share their own copies. With
-**View only** you can't share. You can only share copies you own.
+**View only** you can't share: the circle's page says so under **Shared
+puzzles**, and an admin can give you **Can exchange**. You can only share
+copies you own.
 
 1. Open the circle's page. Admins can also use the manage dialog.
-2. Under **Shared puzzles**, in **Share a copy**, choose one of your copies.
-3. Click **Share**.
+2. Under **Shared puzzles**, in **Share your puzzles**, tick the puzzles you
+   want to share. Search to find one quickly. Puzzles you already share there
+   are ticked and marked **Shared**.
+3. Click **Share** (for example **Share 3 puzzles**). A message confirms it.
+
+To stop sharing a puzzle, untick it and click **Stop sharing**. When you tick
+some puzzles and untick others, the button says **Save changes**. **Clear**
+drops the ticks you haven't saved yet.
+
+You can also start from the puzzle: on its page, or in the **⋯** menu on its
+card in **My Puzzles**, choose **Share with circles…**. Tick the circles to
+share it with, untick the ones to stop sharing it with, and click **Save**.
+Circles where you have **View only** can't be ticked.
 
 Circle members can see a shared copy while you offer it for swap, lend or
-sale and you're still a member of the circle.
+sale and you're still a member of the circle. The list marks the puzzles they
+won't see: **Not offered** (offer it for swap, lend or sale first) and
+**Private** (a private puzzle stays hidden, even when shared).
 
 If your permission later drops to **View only**, the copies you already
-shared stay shared. You just can't share new ones.
+shared stay shared. You just can't share new ones. To stop sharing one, use
+**Share with circles…** on the puzzle.
 
 Shares end automatically:
 
@@ -180,7 +212,8 @@ the circle's chat does see when someone is typing there.
 
 ## Leave a circle
 
-1. On **Circles**, click **Leave circle** on the circle.
+1. On **Circles**, open the circle's **⋯** menu and choose **Leave circle**.
+   On the circle's own page, click **Leave circle**.
 2. Confirm.
 
 You lose access to the circle, its group chat and the puzzles shared in it.

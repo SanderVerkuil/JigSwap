@@ -19,6 +19,11 @@ export interface LoanView {
   /** Cached puzzle title + piece count of the copy. */
   puzzleTitle: string;
   pieceCount: number;
+  /**
+   * The copy's card cover (approved cover photo, else the puzzle's box art): a URL, never a storage
+   * id. Null when there is none; absent from backends that predate it.
+   */
+  coverUrl?: string | null;
   status: "open" | "returned" | "recalled";
   /** Epoch millis the loan opened. */
   openedAt: number;

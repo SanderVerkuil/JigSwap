@@ -209,6 +209,7 @@ export function ManageCircleDialog({
             {canShareInCircle(detail.viewerPermission) && (
               <CircleShareSection
                 circleId={circleId}
+                circleName={detail.name}
                 memberId={convexUser?._id}
               />
             )}

@@ -81,6 +81,32 @@ export interface ExchangeSummaryView extends ExchangeFields {
   requestedPuzzle: ExchangePuzzleView | null;
   offeredOwnedPuzzle: ExchangeOwnedPuzzleView | null;
   offeredPuzzle: ExchangePuzzleView | null;
+  /**
+   * Card cover of the requested copy: the copy's approved cover photo for a viewer who may view
+   * the copy, else the puzzle's box art. A URL, never a storage id. Null when there is none; absent
+   * from backends that predate it.
+   */
+  requestedCoverUrl?: string | null;
+  /** Card cover of the offered copy (swaps only), resolved like `requestedCoverUrl`. */
+  offeredCoverUrl?: string | null;
+  /**
+   * Only on a COMPLETED lend: the loan its settlement opened, or null when none can be matched
+   * (e.g. a lend settled before loans existed). A lend settles to "completed" while the puzzle is
+   * still with the borrower, so this is what tells "on loan" from "returned". Absent on every other
+   * exchange, and from backends that predate it.
+   */
+  loan?: ExchangeLoanState | null;
+}
+
+/** The loan a settled lend opened, as both parties of that lend see it on the exchange row. */
+export interface ExchangeLoanState {
+  status: "open" | "returned" | "recalled";
+  /** Epoch millis the loan opened. */
+  openedAt: number;
+  /** Advisory expected-return epoch millis, if one was agreed. */
+  expectedReturn?: number;
+  /** Epoch millis the loan closed (returned or recalled), if it has. */
+  closedAt?: number;
 }
 
 /** One review the trade partner RECEIVED, as shown on the trade card. */

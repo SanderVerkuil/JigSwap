@@ -2,8 +2,8 @@
 
 // Shared design-language primitives for the Community screens (Browse,
 // Circles, Exchanges, Messages, People), per the JigSwap design handoff:
-// rounded-full filter pills with a muted result count, warm 🧩 empty states,
-// gradient icon cover chips, and big-number-over-muted-label mini stats.
+// rounded-full filter pills with a muted result count, warm 🧩 empty states
+// and gradient icon cover chips.
 // Open, card-free building blocks — cards stay reserved for genuinely
 // self-contained tiles.
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 
 // A row of rounded-full filter pills (active pill in the brand color) with an
 // optional muted count on the right and an extra slot for secondary controls.
+// A pill may carry its own tour anchor (`data-tour`) for a guide step about it.
 export function FilterBar<T extends string>({
   filters,
   value,
@@ -24,7 +25,7 @@ export function FilterBar<T extends string>({
   className,
   "data-tour": dataTour,
 }: {
-  filters: ReadonlyArray<{ value: T; label: string }>;
+  filters: ReadonlyArray<{ value: T; label: string; "data-tour"?: string }>;
   value: T;
   onChange: (value: T) => void;
   count?: ReactNode;
@@ -51,6 +52,7 @@ export function FilterBar<T extends string>({
               size="sm"
               variant={active ? "default" : "outline"}
               aria-pressed={active}
+              data-tour={filter["data-tour"]}
               onClick={() => onChange(filter.value)}
               className={cn(
                 "rounded-full",
@@ -144,28 +146,5 @@ export function CoverChip({
     >
       <Icon style={{ width: size * 0.42, height: size * 0.42 }} />
     </span>
-  );
-}
-
-/* -------------------------------------------------------------- MiniStat */
-
-// A big heading-font number over a muted label, for compact stat clusters on
-// row tiles (e.g. members / shared on a circle row).
-export function MiniStat({
-  value,
-  label,
-  className,
-}: {
-  value: ReactNode;
-  label: string;
-  className?: string;
-}) {
-  return (
-    <div className={cn("min-w-14 text-center", className)}>
-      <div className="font-heading text-foreground text-xl leading-none font-bold">
-        {value}
-      </div>
-      <div className="text-muted-foreground mt-1 text-xs">{label}</div>
-    </div>
   );
 }
