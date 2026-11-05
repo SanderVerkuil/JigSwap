@@ -9,6 +9,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { completionIdGenerator } from "./adapters/idGenerators";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -44,6 +45,8 @@ export const recordCompletion = mutation({
   handler: async (ctx, args) => {
     const userId = await requireMember(ctx);
     const me = userId as unknown as string;
+    // One solve against the member's daily solve budget (SEC-30).
+    await enforceRateLimit(ctx, "solveLog", me);
 
     // Resolve + authorize the copy once (owner, current holder or household); reused for the
     // snapshot.

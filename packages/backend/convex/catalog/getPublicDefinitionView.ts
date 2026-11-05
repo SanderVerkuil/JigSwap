@@ -4,11 +4,11 @@ import { query } from "../_generated/server";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import {
   categoryNameOf,
-  communityOwnersOf,
-  completionStatsOf,
-  publicAvailabilityOf,
-  ratingBreakdownOf,
+  completionStatsFromTotals,
+  publicAvailabilityFromByType,
+  ratingBreakdownFromTotals,
 } from "../library/definitionAggregates";
+import { definitionTotalsOrLive } from "../library/definitionStats";
 
 // UNAUTHENTICATED catalog detail for the public /catalog/$id page. Approved-only (the standard
 // catalog leak gate) and strictly member-free: catalog facts, the community rating breakdown,
@@ -16,6 +16,8 @@ import {
 // prices, or locations. The availability number intentionally differs from the member-facing
 // getPuzzleDefinitionView (no circle reachability, no viewer-own exclusion); see
 // publicAvailabilityOf. Members never see this page — the web route redirects them to /puzzles/$id.
+// The aggregates come from the definition's definitionStats row (library/definitionStats), so the
+// page reads a fixed handful of documents however many reviews, copies and solves it has.
 export const getPublicDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PublicDefinitionDetailView | null> => {
@@ -29,20 +31,13 @@ export const getPublicDefinitionView = query({
       ? await ctx.db.get(puzzle.category)
       : null;
 
-    const rating = await ratingBreakdownOf(ctx, args.puzzleId);
-
-    const owned = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_puzzle", (q) => q.eq("puzzleId", args.puzzleId))
-      .collect();
-    // No viewer: private copies never count.
-    const communityOwners = communityOwnersOf(owned);
-    const availability = await publicAvailabilityOf(ctx, owned);
-    const { totalCompletions, avgCompletionDays } = await completionStatsOf(
-      ctx,
-      args.puzzleId,
-      owned,
-    );
+    // No viewer: private copies never count (they never do in the stored totals).
+    const totals = await definitionTotalsOrLive(ctx, args.puzzleId);
+    const rating = ratingBreakdownFromTotals(totals);
+    const communityOwners = totals.communityOwners;
+    const availability = publicAvailabilityFromByType(totals.publicAvailable);
+    const { totalCompletions, avgCompletionDays } =
+      completionStatsFromTotals(totals);
 
     return {
       definition: {

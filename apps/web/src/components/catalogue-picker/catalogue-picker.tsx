@@ -7,6 +7,7 @@ import { usePaginatedQuery } from "convex/react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { addErrorKey } from "./add-error";
 import { CataloguePickerView } from "./catalogue-picker-view";
 import {
   buildPickerRows,
@@ -103,7 +104,7 @@ export function CataloguePicker({
     },
     onError: (error) => {
       console.error("Batch add failed:", error);
-      toast.error(t("addFailed"));
+      toast.error(t(addErrorKey(error)));
     },
   });
 

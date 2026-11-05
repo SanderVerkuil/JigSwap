@@ -6,6 +6,7 @@ import {
   CATALOG_TEXT_LIMITS,
   CONDITION_OPTIONS,
   contributeError,
+  CopyStepError,
   COVER_SWATCHES,
   CoverColourField,
   coverStep,
@@ -350,6 +351,8 @@ function AddPuzzlePage() {
         puzzleDefinitionId: definitionId,
         condition: form.condition,
         notes: form.notes || undefined,
+      }).catch((error: unknown) => {
+        throw new CopyStepError(error);
       })) as string;
 
       // 3. Apply availability if any chip is on.
@@ -369,8 +372,8 @@ function AddPuzzlePage() {
     onError: (error) => {
       console.error("Add to library failed:", error);
       // A box-art upload URL refused by the member's upload limit says to wait (SEC-20); the
-      // filing's and the cover check's own refusals (their limits, a text bound) name their
-      // reason (SEC-26).
+      // filing's, the cover check's and the copy's own refusals (their limits, a text bound) name
+      // their reason (SEC-26; the daily copy budget, SEC-29).
       if (isUploadRateLimited(error)) {
         toast.error(tCommon("photoUploadRateLimited"));
         return;

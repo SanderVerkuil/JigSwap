@@ -249,7 +249,10 @@ export const gateway = {
     setTyping: api.conversation.setTyping.setTyping,
     clearTyping: api.conversation.clearTyping.clearTyping,
     getTyping: api.conversation.getTyping.getTyping,
+    // The inbox, newest activity first: `limit` threads (default 30, at most 100).
     getMyInbox: api.conversation.getMyInbox.getMyInbox,
+    // One thread's inbox row (the open thread's header), wherever it sits; null when not listed.
+    getInboxThread: api.conversation.getInboxThread.getInboxThread,
     getThreadMessages: api.conversation.getThreadMessages.getThreadMessages,
     listThreadMessages: api.conversation.listThreadMessages.listThreadMessages,
     listAttachableCopies:

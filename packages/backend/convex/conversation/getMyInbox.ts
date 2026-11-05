@@ -4,6 +4,7 @@ import type {
   InboxThreadView,
   ProjectedMember,
 } from "@jigswap/contracts";
+import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import {
@@ -388,59 +389,137 @@ const toInboxThreadView = async (
   };
 };
 
-// The caller's inbox: every thread they participate in, enriched for the list row and sorted
-// newest-activity first. A read model over the projection tables — the Thread aggregate is
-// never hydrated here.
+/**
+ * One thread's inbox row for `me`, built exactly as getMyInbox builds it: null when the thread
+ * would not be listed (a circle thread they may not read or that has nothing for them yet, an
+ * exchange whose subject no longer resolves). `membership` is their own participant row.
+ */
+export const inboxRowOf = async (
+  ctx: QueryCtx,
+  thread: Doc<"threads">,
+  membership: Doc<"threadParticipants">,
+  me: Id<"users">,
+  resolveCopy: ContextCopyResolver = viewableContextCopies(ctx, me),
+  budget: ProbeBudget = { remaining: CONTEXT_COPY_PROBES },
+): Promise<InboxThreadView | null> => {
+  if (
+    thread.subjectKind === "circle" &&
+    !(await inboxListable(ctx, thread, me))
+  ) {
+    return null;
+  }
+  const view = await toInboxThreadView(
+    ctx,
+    thread,
+    membership,
+    me,
+    resolveCopy,
+    budget,
+  );
+  if (!view && thread.subjectKind !== "circle") {
+    console.warn(
+      `getMyInbox: dropping thread ${thread.aggregateId} — exchange subject no longer resolves`,
+    );
+  }
+  return view;
+};
+
+// Threads per inbox read when the caller names no `limit`; "Show older conversations" asks for
+// more, up to INBOX_MAX_LIMIT. A row costs about 15-20 queries (subject, partner projection,
+// context-copy probes), so 100 rows stay near half of Convex's 4,096 queries per function; 200 came
+// close to the limit (inboxPaging.test.ts). Threads past the cap stay reachable by link: the trade,
+// member and circle pages open them, and getInboxThread serves their header.
+export const INBOX_DEFAULT_LIMIT = 30;
+export const INBOX_MAX_LIMIT = 100;
+
+// Participant rows a read may pass over without listing them (a circle thread with nothing for the
+// member yet, an exchange whose row is gone) on top of `limit`; past it the page comes back short.
+const INBOX_SKIP_BUDGET = 100;
+
+interface InboxCandidate {
+  membership: Doc<"threadParticipants">;
+  thread: Doc<"threads"> | null;
+}
+
+// The member's participant rows with their threads, newest activity first. Rows carrying
+// `lastActivityAt` (every row the thread repository writes) come from by_member_activity, read
+// lazily so a page reads only what it lists. Rows written before that field existed have no place
+// in the index order: they are read up front (at most INBOX_MAX_LIMIT of them), ordered by their
+// thread's activity and merged in. That range is empty once conversation/backfillParticipantState
+// has run.
+async function* inboxCandidates(
+  ctx: QueryCtx,
+  me: Id<"users">,
+): AsyncGenerator<InboxCandidate> {
+  const activityOf = (thread: Doc<"threads"> | null) =>
+    thread ? (thread.lastMessageAt ?? thread.createdAt) : 0;
+  const legacy: InboxCandidate[] = [];
+  for (const membership of await ctx.db
+    .query("threadParticipants")
+    .withIndex("by_member_activity", (q) =>
+      q.eq("memberId", me).eq("lastActivityAt", undefined),
+    )
+    .take(INBOX_MAX_LIMIT)) {
+    legacy.push({
+      membership,
+      thread: await threadRowByAggregateId(ctx, membership.threadAggregateId),
+    });
+  }
+  legacy.sort((a, b) => activityOf(b.thread) - activityOf(a.thread));
+
+  let next = 0;
+  for await (const membership of ctx.db
+    .query("threadParticipants")
+    .withIndex("by_member_activity", (q) => q.eq("memberId", me))
+    .order("desc")) {
+    // Absent sorts below every number, so the legacy rows close the descending range.
+    if (membership.lastActivityAt === undefined) break;
+    while (
+      next < legacy.length &&
+      activityOf(legacy[next].thread) > membership.lastActivityAt
+    ) {
+      yield legacy[next++];
+    }
+    yield {
+      membership,
+      thread: await threadRowByAggregateId(ctx, membership.threadAggregateId),
+    };
+  }
+  yield* legacy.slice(next);
+}
+
+// The caller's inbox: their `limit` (default 30, clamped to 1..100) most recently active threads,
+// enriched for the list row and sorted newest-activity first. A read model over the projection
+// tables — the Thread aggregate is never hydrated here.
+//
+// Paged (PERF-B6m, SEC-24): it walks the caller's participant rows newest-activity first and stops
+// once `limit` rows are built, so its cost follows the page, never the number of threads the member
+// holds. Older threads come with a larger `limit` ("Show older conversations"), and any one thread
+// through getInboxThread (the open thread's header).
 export const getMyInbox = query({
-  args: {},
-  handler: async (ctx): Promise<InboxThreadView[]> => {
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<InboxThreadView[]> => {
     const me = (await requireMember(ctx)) as unknown as Id<"users">;
-    const memberships = await ctx.db
-      .query("threadParticipants")
-      .withIndex("by_member", (q) => q.eq("memberId", me))
-      .collect();
+    const limit =
+      args.limit === undefined || Number.isNaN(args.limit)
+        ? INBOX_DEFAULT_LIMIT
+        : Math.max(1, Math.min(INBOX_MAX_LIMIT, Math.floor(args.limit)));
 
     // Per-thread point reads; the last message and unread count are denormalized (the thread's
     // lastMessage, the membership's unreadCount), so no per-row message scans once backfilled.
-    const threads: Doc<"threads">[] = [];
-    const membershipOf = new Map<string, Doc<"threadParticipants">>();
-    for (const membership of memberships) {
-      const thread = await threadRowByAggregateId(
-        ctx,
-        membership.threadAggregateId,
-      );
-      if (
-        thread &&
-        (thread.subjectKind !== "circle" ||
-          (await inboxListable(ctx, thread, me)))
-      ) {
-        threads.push(thread);
-        membershipOf.set(thread.aggregateId, membership);
-      }
-    }
     // Newest activity first, so the context-copy probe budget is spent on the top of the inbox.
-    const activityOf = (thread: Doc<"threads">) =>
-      thread.lastMessageAt ?? thread.createdAt;
-    threads.sort((a, b) => activityOf(b) - activityOf(a));
-
     const views: InboxThreadView[] = [];
     const resolveCopy = viewableContextCopies(ctx, me);
     const budget: ProbeBudget = { remaining: CONTEXT_PROBE_BUDGET };
-    for (const thread of threads) {
-      const view = await toInboxThreadView(
-        ctx,
-        thread,
-        membershipOf.get(thread.aggregateId)!,
-        me,
-        resolveCopy,
-        budget,
-      );
-      if (view) {
-        views.push(view);
-      } else if (thread.subjectKind !== "circle") {
-        console.warn(
-          `getMyInbox: dropping thread ${thread.aggregateId} — exchange subject no longer resolves`,
-        );
+    let scanned = 0;
+    for await (const { membership, thread } of inboxCandidates(ctx, me)) {
+      scanned += 1;
+      const view = thread
+        ? await inboxRowOf(ctx, thread, membership, me, resolveCopy, budget)
+        : null;
+      if (view) views.push(view);
+      if (views.length >= limit || scanned >= limit + INBOX_SKIP_BUDGET) {
+        break;
       }
     }
     return views.sort((a, b) => b.updatedAt - a.updatedAt);

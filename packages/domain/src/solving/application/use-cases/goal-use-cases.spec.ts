@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toGoalId, toMemberId } from "../../../shared-kernel";
+import {
+  toGoalId,
+  toMemberId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
 import { Goal } from "../../domain";
 import type { CompletionRepository } from "../ports/out/completion.repository";
 import {
@@ -15,6 +19,7 @@ import { makeRecomputeGoalProgress } from "./recompute-goal-progress";
 import { makeRecordCompletion } from "./record-completion";
 
 const ALICE = toMemberId("alice");
+const PUZZLE = toPuzzleDefinitionId("puzzle-1");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T12:00:00Z");
@@ -93,7 +98,12 @@ describe("Goal use cases", () => {
         events,
         clock,
       });
-      const r = await record({ userId: ALICE, startDate: START, endDate: END });
+      const r = await record({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+        endDate: END,
+      });
       if (!r.isOk) throw new Error("setup failed");
     };
 
@@ -226,8 +236,17 @@ describe("Goal use cases", () => {
         clock,
       });
       await recordCompletion();
-      await record({ userId: ALICE, datePrecision: "year", year: 2023 });
-      await record({ userId: ALICE, datePrecision: "unknown" });
+      await record({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        datePrecision: "year",
+        year: 2023,
+      });
+      await record({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        datePrecision: "unknown",
+      });
 
       const recompute = makeRecomputeGoalProgress({
         goals,

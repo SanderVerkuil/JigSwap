@@ -11,3 +11,12 @@ export function solvingErrorCode(error: unknown): string | undefined {
   }
   return undefined;
 }
+
+// The key, in each solve form's own namespace, for a failed log or start. `RateLimited` is the
+// daily solve budget (backend lib/rateLimits.ts solveLog): nothing was saved and retrying today
+// won't help, so it gets its own message. Everything else is the form's generic save error.
+export function solveSaveErrorKey(error: unknown): "rateLimited" | "saveError" {
+  return solvingErrorCode(error) === "RateLimited"
+    ? "rateLimited"
+    : "saveError";
+}

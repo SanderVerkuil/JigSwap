@@ -352,6 +352,7 @@
     "puzzleCreated": "Puzzel succesvol aangemaakt",
     "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
+    "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
     "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of kies een omslagkleur.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
@@ -827,6 +828,9 @@
     "inboxError": "Je gesprekken konden niet worden geladen.",
     "loadEarlier": "Eerdere berichten laden",
     "loadingEarlier": "Eerdere berichten laden…",
+    "loadingOlderConversations": "Oudere gesprekken laden…",
+    "showOlderConversations": "Oudere gesprekken tonen",
+    "olderConversationsElsewhere": "Dit zijn je {count} meest recente gesprekken. Oudere open je vanaf de pagina van de uitwisseling, het lid of de kring.",
     "messageButton": "Bericht",
     "messageName": "Bericht sturen aan {name}",
     "moreCount": "nog {count}",
@@ -1828,7 +1832,8 @@
     "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
-    "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw."
+    "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw.",
+    "rateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw."
   },
   "collections": {
     "myCollections": "Mijn Collecties",
@@ -2911,6 +2916,7 @@
       "savedInProgress": "Voltooiing gestart",
       "finished": "Voltooiing afgerond",
       "saveError": "Kon de voltooiing niet opslaan. Probeer het opnieuw.",
+      "rateLimited": "Je hebt vandaag al veel voltooiingen vastgelegd. Probeer het morgen opnieuw.",
       "endBeforeStartError": "De einddatum kan niet vóór de startdatum liggen.",
       "allPiecesPresent": "Alle stukjes waren aanwezig",
       "updateCopyPiecesTitle": "Dit exemplaar bijwerken?",
@@ -2928,7 +2934,8 @@
       "submit": "Starten",
       "started": "Puzzel gestart",
       "finishTrigger": "Puzzel afronden",
-      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw."
+      "saveError": "Kon de sessie niet opslaan. Probeer het opnieuw.",
+      "rateLimited": "Je hebt vandaag al veel puzzels gestart of vastgelegd. Probeer het morgen opnieuw."
     },
     "durationPrompt": {
       "title": "Bijhouden hoelang puzzels duren?",
@@ -5131,7 +5138,8 @@
       "empty": "Voeg eerst een puzzel toe en kom dan terug om hem vast te leggen.",
       "submit": "{count, plural, one {# puzzel vastleggen} other {# puzzels vastleggen}}",
       "saved": "{count, plural, one {# puzzel vastgelegd} other {# puzzels vastgelegd}}",
-      "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen."
+      "saveError": "Deze puzzels konden niet worden vastgelegd. Er is niets opgeslagen, dus je kunt het opnieuw proberen.",
+      "rateLimited": "Je hebt vandaag al veel puzzels vastgelegd. Er is niets opgeslagen, dus probeer het morgen opnieuw."
     },
     "welcome": {
       "title": "Welkom bij JigSwap!",

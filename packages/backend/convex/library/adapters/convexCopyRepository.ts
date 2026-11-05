@@ -2,6 +2,9 @@ import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
+import { profileVisibilityOf } from "../../social/privacy";
+import { markCopyStatsChange } from "../definitionStats";
+import { listingStateOf } from "../openListing";
 import { toDomain, toRow } from "./copyMapper";
 
 // Driven adapter for the CopyRepository port over `ctx.db`. The only place `ownedPuzzles` (and
@@ -49,11 +52,24 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
     async save(copy: Copy): Promise<void> {
       const mapped = toRow(copy);
       const puzzleId = await resolvePuzzleId(mapped.puzzleDefinitionId!);
-      const row = { ...mapped, puzzleId };
       const existing = await rowById(copy.id);
+      // Browse's listing fields follow the copy's availability and its (possibly new) owner's
+      // profile visibility on every save (library/openListing.listingStateOf).
+      const row = {
+        ...mapped,
+        puzzleId,
+        ...listingStateOf(
+          mapped,
+          existing,
+          (await profileVisibilityOf(ctx, mapped.ownerId)) === "private",
+          Date.now(),
+        ),
+      };
       const ownedPuzzleId = existing
         ? (await ctx.db.patch(existing._id, row), existing._id)
         : await ctx.db.insert("ownedPuzzles", row);
+      // The definition's catalog aggregates (owners, public listings) follow the copy.
+      await markCopyStatsChange(ctx, existing, row);
 
       // Images belong to the Copy, but the domain path never adds one: photos are written only by
       // library/addCopyPhoto, which records the acting member as uploader, claims a fresh upload
@@ -100,6 +116,7 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
       }
 
       await ctx.db.delete(row._id);
+      await markCopyStatsChange(ctx, row, null);
     },
 
     async listByOwner(ownerId: OwnerId): Promise<readonly Copy[]> {

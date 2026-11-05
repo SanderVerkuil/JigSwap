@@ -166,7 +166,8 @@ patterns:
   recomputing goal progress), then (2) appends each event to the `domainEvents` table and schedules
   `events/dispatch.ts` via `ctx.scheduler.runAfter(0)`. The dispatcher fans events to async
   subscribers (trade reveal, Notifications, Conversation, Custody + Library transfer as one unit,
-  Library loan) that react to the event name, each in its own sub-transaction, and stamps `processedAt` once all succeed. Convex does **not**
+  Library loan, the activity feed's per-actor projection `social/activityEntries`) that react to
+  the event name, each in its own sub-transaction, and stamps `processedAt` once all succeed. Convex does **not**
   retry a scheduled mutation on an application error, so a throwing subscriber is caught: its
   writes roll back, the others commit, and it is logged as an `events.dispatch` error wide event
   (forwarded to Axiom). Idempotent subscribers (`retry: true`) are re-dispatched with backoff up to
@@ -186,7 +187,9 @@ patterns:
   1. Check the current state still warrants the effect: `ownershipTransfer` (custody + library
      transfer) only if the copy is still owned by the previous owner; `openLoan` only if the copy
      is not already lent; `notifications` / `conversation` will land late (with today's
-     timestamp), so skip them when that would confuse members.
+     timestamp), so skip them when that would confuse members. `activityFeed` is idempotent and
+     keeps the event's own time: always safe to re-run (re-running
+     `social/backfillActivityEntries` repairs every event of the last 90 days at once).
   2. In the Convex dashboard, patch the `domainEvents` row: unset `failedAt`, `attempts` and
      `lastError`; remove the handlers you want re-run from `failedHandlers`, and MOVE any handler
      you deliberately skip from `failedHandlers` into `completedHandlers` (a handler left in

@@ -330,6 +330,25 @@ export default defineSchema({
       forSale: v.boolean(),
       forLend: v.boolean(),
     }),
+    // Denormalized listing flag: true iff at least one availability flag above is set
+    // (library/openListing.isOpenAvailability). Every availability write keeps it in step: the copy
+    // repository's mapper on every save, and exchange's markCopyUnavailable. It lets Browse read open
+    // copies from `by_listing` / `by_puzzle_listing` without scanning closed ones. Absent on rows written
+    // before it existed until library/backfillCopyOpenFlag has run, so a reader must decide a row
+    // without it from `availability`.
+    isOpen: v.optional(v.boolean()),
+    // Denormalized listing state for Browse's candidate index (`by_listing` / `by_puzzle_listing`),
+    // written by the copy repository on every save, by markCopyUnavailable, by the owner's profile
+    // visibility sync (library/ownerListingVisibility) and by library/backfillCopyOpenFlag:
+    //   ownerPrivate  true while the owner's profile is private; absent means public, as on
+    //                 `profiles`. Browse shows a private owner's copy only through a circle, which it
+    //                 reads separately, so those rows stay out of its public range and can't use up
+    //                 its candidate window or read budget.
+    //   listedAt      when the copy was last offered (became open); absent while it is closed. Browse
+    //                 lists the newest offers first, so an old copy offered today sorts as new.
+    // A reader still re-checks the owner's visibility: a lagging flag can cost a slot, never leak.
+    ownerPrivate: v.optional(v.literal(true)),
+    listedAt: v.optional(v.number()),
     // The SharingSetting's visibility axis (who can SEE the copy), orthogonal to the
     // availability flags (what it can be USED for). Optional; legacy rows are unset. Convex has no
     // column defaults: the "visible" default lives in the create paths (domain SharingSetting.newCopy)
@@ -385,7 +404,18 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_puzzle", ["puzzleId"])
-    .index("by_aggregate_id", ["aggregateId"]),
+    .index("by_aggregate_id", ["aggregateId"])
+    // The candidate sources of Browse and the definition view (library/openListing): open copies,
+    // by owner visibility, newest offer first, platform-wide or for one definition.
+    .index("by_listing", ["isOpen", "ownerPrivate", "listedAt"])
+    .index("by_puzzle_listing", [
+      "puzzleId",
+      "isOpen",
+      "ownerPrivate",
+      "listedAt",
+    ])
+    // One member's copies of one definition (the definition view's household owner count).
+    .index("by_owner_puzzle", ["ownerId", "puzzleId"]),
 
   // This is a table for storing images of owned puzzles
   ownedPuzzleImages: defineTable({
@@ -1286,7 +1316,10 @@ export default defineSchema({
     .index("by_member", ["memberId"])
     .index("by_thread", ["threadAggregateId"])
     .index("by_thread_member", ["threadAggregateId", "memberId"])
-    .index("by_member_activity", ["memberId", "lastActivityAt"]),
+    .index("by_member_activity", ["memberId", "lastActivityAt"])
+    // The unread badge (getUnreadTotal): a member's unmuted rows (`muted` absent; setThreadMuted
+    // never stores false) with unread messages, biggest count first.
+    .index("by_member_unread", ["memberId", "muted", "unreadCount"]),
 
   // "Is typing" in a thread (conversation/setTyping, spec 4.3): at most one row per (thread,
   // member), patched in place and throttled server-side on `writtenAt`. clearTyping only unsets
@@ -2004,6 +2037,97 @@ export default defineSchema({
     newOwner: v.string(), // the member the Copy moved to (a users _id)
     occurredAt: v.number(),
   }).index("by_copy", ["copyId", "occurredAt"]),
+
+  // The activity feed's per-actor read model (SEC-30, PERF-B3m): one row per piece of activity a
+  // member did, written by the event dispatcher (social/activityEntries.projectActivityEvent) from
+  // the feed's four events. The feed reads each audience member's own range of by_actor_time, so
+  // one member's events never crowd out another's and a new row only touches the feeds of the
+  // actor's followers. Only viewer-independent facts are stored; the viewer gates (started opt-in
+  // and mutual follow, profile unlock, canViewCopy, blocks) still run at read time.
+  //   kind/ref    the feed entry: "completion"/"started" -> completionId, "acquisition" -> copyId,
+  //               "acquisitionBatch" -> batchId, "exchange" -> exchangeId. One row per
+  //               (actorId, kind, ref): by_actor_kind_ref keeps the projection idempotent.
+  //   occurredAt  the event time (a batch: its newest event)
+  //   copyIds     acquisitionBatch only: the batch's copies (ownedPuzzles.aggregateId)
+  //   startDate   started only: the solve's start; the feed hides it until then
+  //   partyIds    exchange only: [initiator, recipient]; a party gets its own row
+  activityEntries: defineTable({
+    actorId: v.id("users"),
+    kind: v.union(
+      v.literal("completion"),
+      v.literal("started"),
+      v.literal("acquisition"),
+      v.literal("acquisitionBatch"),
+      v.literal("exchange"),
+    ),
+    ref: v.string(),
+    occurredAt: v.number(),
+    copyIds: v.optional(v.array(v.string())),
+    startDate: v.optional(v.number()),
+    partyIds: v.optional(v.array(v.id("users"))),
+  })
+    .index("by_actor_time", ["actorId", "occurredAt"])
+    .index("by_actor_kind_ref", ["actorId", "kind", "ref"]),
+
+  // One row per read model whose one-shot backfill has finished on this deployment. A read that
+  // depends on a backfilled model keeps its legacy path until the row exists. Written only by the
+  // backfill's last batch ("activityEntries": social/backfillActivityEntries).
+  readModelStatus: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
+
+  // The public landing page's counters (PERF-B2m), so insights/getGlobalStats reads one row instead
+  // of every users, puzzles and ownedPuzzles row. One row, key "global", rewritten by
+  // insights/platformStats.recount (a 6-hourly cron that recounts the three tables), so the numbers
+  // may be up to one interval old. Same meaning as the legacy count: every row of each table.
+  platformStats: defineTable({
+    key: v.string(),
+    users: v.number(),
+    puzzles: v.number(),
+    ownedPuzzles: v.number(),
+    countedAt: v.number(),
+  }).index("by_key", ["key"]),
+
+  // Per-definition aggregates the catalog and definition pages show (PERF-B4m, SEC-29), so a page
+  // reads one row instead of every review, copy and completion of the definition. Only the
+  // viewer-independent parts; what depends on the viewer (their household's private copies, the
+  // copies they can reach) is still read per request. Written only by
+  // library/definitionStats.recompute, which recomputes a definition from source when a write has
+  // marked it, and nightly for every definition (the reconcile, which is also the backfill).
+  //   totals      the sums the pages derive their numbers from (library/definitionAggregates);
+  //               absent until the first recompute, and reads compute live meanwhile
+  //     breakdown        rated reviews per star, [5★, 4★, 3★, 2★, 1★]
+  //     communityOwners  distinct owners of a copy that is not private
+  //     publicAvailable  open copies of public-profile owners, by priority swap type
+  //   stale       a write changed the definition's sources and a recompute is scheduled; the
+  //               totals are still served until it lands
+  //   staleSince  when it was marked stale (or its recompute last re-scheduled). A mark, or the
+  //               nightly reconcile, that finds it stale for longer than a few minutes takes it
+  //               that the recompute failed: it logs that and schedules another
+  //   computedAt  when the totals were last written
+  definitionStats: defineTable({
+    puzzleId: v.id("puzzles"),
+    totals: v.optional(
+      v.object({
+        ratingCount: v.number(),
+        ratingSum: v.number(),
+        breakdown: v.array(v.number()),
+        completedCount: v.number(),
+        finishDaysSum: v.number(),
+        finishDaysCount: v.number(),
+        communityOwners: v.number(),
+        publicAvailable: v.object({
+          swap: v.number(),
+          lend: v.number(),
+          sale: v.number(),
+        }),
+      }),
+    ),
+    stale: v.optional(v.boolean()),
+    staleSince: v.optional(v.number()),
+    computedAt: v.optional(v.number()),
+  }).index("by_puzzle", ["puzzleId"]),
 
   // Open-ended loans: possession of a Copy held by a borrower while ownership stays with the
   // lender. Closed when the borrower returns it or the owner recalls it. aggregateId = LoanId;

@@ -11,6 +11,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { householdDeps } from "../household/adapters/deps";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
+import {
+  markCompletionStatsChange,
+  markCopyStatsChange,
+} from "../library/definitionStats";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { convexCircleRepository } from "../sharing/adapters/convexCircleRepository";
 import { inProcessEventPublisher as sharingEventPublisher } from "../sharing/adapters/inProcessEventPublisher";
@@ -220,6 +224,7 @@ const deleteCompletion = async (
 ): Promise<void> => {
   await deleteCompletionPhotos(ctx, completion);
   await ctx.db.delete(completion._id);
+  await markCompletionStatsChange(ctx, completion, null);
 };
 
 /**
@@ -276,6 +281,7 @@ const deleteOwnCopy = async (
   for (const row of completions) await deleteCompletion(ctx, row);
 
   await ctx.db.delete(copy._id);
+  await markCopyStatsChange(ctx, copy, null);
 };
 
 /**

@@ -22,6 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { solveSaveErrorKey } from "./solving-error";
 
 // Today as a `yyyy-mm-dd` string for the native date inputs (the dialog defaults the start date
 // to today so the common "I just finished" case is one fewer field).
@@ -158,7 +159,7 @@ export function LogSolveDialog({
       else offerOrFollowUp();
     } catch (error) {
       console.error("Failed to log solve:", error);
-      toast.error(t("saveError"));
+      toast.error(t(solveSaveErrorKey(error)));
     }
   };
 

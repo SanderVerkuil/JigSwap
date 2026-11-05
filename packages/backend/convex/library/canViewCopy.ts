@@ -6,13 +6,12 @@ import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { isCircleSharedWithViewer } from "./circleSharedCopies";
 import { isCopyPrivate } from "./copyVisibility";
+import { isOpenAvailability } from "./openListing";
 
-// A copy is "open" iff at least one exchange-availability flag is set (identical to
-// browseOwnedPuzzles/getPuzzleDefinitionView).
+// A copy is "open" iff at least one exchange-availability flag is set (library/openListing, the one
+// definition Browse's `isOpen` index flag is written from).
 export const isOpen = (copy: Doc<"ownedPuzzles">): boolean =>
-  copy.availability.forTrade ||
-  copy.availability.forSale ||
-  copy.availability.forLend;
+  isOpenAvailability(copy.availability);
 
 // Which exchange statuses let the other party see a PRIVATE copy involved in it (rule P below). Every
 // status is mapped explicitly (`satisfies Record<…>` makes a new status a type error here):

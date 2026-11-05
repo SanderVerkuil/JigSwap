@@ -386,7 +386,10 @@ and unread counts on `threadParticipants`, `threads.lastMessage`) is deployed th
 reads work without it (rows without the fields fall back to the old receipt lookup and
 message scans), so there is no deploy ordering pressure: it removes those per-row scans
 from the inbox and the unread badge. It must have run before the follow-up PR that drops
-`threads.readReceipts`.
+`threads.readReceipts`. The paged inbox and the bounded unread badge (PERF-B6m) read rows
+without `lastActivityAt` or `unreadCount` from their own index range on every call (the
+inbox up to 100 of them, each with its thread): confirm the backfill has run, or run it,
+so those ranges are empty.
 
 **Legacy `conversation/backfill:run` (exchange chat → threads):** neither this runbook nor
 the code records whether that older one-shot has completed in production (the legacy
@@ -809,3 +812,216 @@ totals; the line with `"done":true` carries the whole run's totals.
 
 **Verify:** the real run's final `cleared` equals the dry run's `settled`, and a second dry run
 reports `"settled":0`.
+
+---
+
+## `library/backfillCopyOpenFlag` — the listing fields Browse reads by index
+
+**When:** once per deployment, after the `ownedPuzzles` listing fields (`isOpen`,
+`listedAt`, `ownerPrivate`) and their `by_listing` / `by_puzzle_listing` indexes (PERF-B1m,
+SEC-29) are deployed there. There is no ordering pressure: every copy save, every settled
+exchange and every profile visibility change already writes the fields, and until a row has
+them, Browse still finds it through a fallback that reads the rows without a flag and checks
+their availability and owner. That fallback reads legacy closed copies and private members'
+copies too, and they count against Browse's read budget (3,000 rows per call), so on a
+deployment with more copies than that Browse can miss older listings until the backfill has
+run. Run it soon after the deploy; once it has run, the fallback range is empty and Browse
+reads only public members' open copies.
+
+**What it does:** pages through `ownedPuzzles` (200 rows per batch; `batchSize` overrides
+it, rounded down and clamped to 1..1000; each batch its own transaction, rescheduling itself
+until the table is exhausted) and writes, on every row whose fields are absent (`set`) or
+disagree with its availability or owner (`repaired`): `isOpen` = "at least one of
+`forTrade`, `forSale`, `forLend` is set"; `listedAt` = when it was offered, kept if present
+and otherwise its `createdAt` (so Browse's order is today's), absent while closed;
+`ownerPrivate` = `true` while the owner's profile is private, absent otherwise. Rows already
+in step are left alone. It writes only those fields (not `updatedAt`: this is not an owner
+edit).
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
+doubles as a repair: if a future write path changes `availability` or the owner without the
+fields, a re-run corrects those rows (`repaired` > 0 points at that bug).
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing), then the real run
+npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{"dryRun":true}'
+npx convex run library/backfillCopyOpenFlag:backfillCopyOpenFlag '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod library/backfillCopyOpenFlag:backfillCopyOpenFlag '{"dryRun":true}'
+npx convex run --prod library/backfillCopyOpenFlag:backfillCopyOpenFlag '{}'
+```
+
+The command returns the FIRST batch's `{ scanned, set, repaired, inStep }`; the remaining
+batches run as scheduled functions. Each batch logs one JSON line with
+`"event":"library.backfillCopyOpenFlag"`, `dry_run`, the batch counts and the running
+`totals`; the line with `"is_done":true` carries the whole run's totals.
+
+**Verify:**
+
+1. The real run's final `totals.set + totals.repaired` matches the dry run's (give or take
+   copies saved in between, which already carry the flag).
+2. Run the dry run again: its final totals show `"set":0` and `"repaired":0`.
+3. In the dashboard data view, every `ownedPuzzles` row has `isOpen`, and it is `true`
+   exactly when one of its availability flags is; open rows have `listedAt`, and rows of
+   members with a private profile have `ownerPrivate: true`.
+4. Browse lists the newest offers first, including copies added after the oldest 500.
+
+---
+
+## `social/backfillActivityEntries` — the activity feed's per-actor read model
+
+**When:** once per deployment, after the `activityEntries` and `readModelStatus` tables and
+the dispatcher's `activityFeed` handler (SEC-30, PERF-B3m) are deployed there. There is no
+ordering pressure: every feed event dispatched after the deploy is projected by the
+dispatcher, and until this backfill has finished the feed keeps reading `domainEvents` the
+old way (a global newest-500-per-event-name window, at the old cost and with the old
+crowding-out problem). The last batch of a real run writes the `readModelStatus` row
+`activityEntries`, which switches the feed to the read model; run it soon after the deploy.
+
+**What it does:** walks `domainEvents` through `by_name` for the feed's four events
+(`CompletionRecorded`, `CompletionStarted`, `CopyAcquired`, `ExchangeCompleted`) in turn,
+limited to the feed's 90-day window (fixed when the run starts; older events never reach a
+feed). 200 events per batch (`batchSize` overrides it, rounded down and clamped to 1..1000;
+each batch its own transaction, rescheduling itself until the last name is exhausted). Each
+event goes through the dispatcher's own projection: one `activityEntries` row per (actor,
+kind, ref), a batch add folded into one row, nothing for undated, year-only or bulk solves,
+and nothing for a deleted member.
+
+**Safe to re-run:** yes. Rows that already exist are left alone (a batch row only gains
+copies it does not list yet), so a second run reports `"inserted":0` and `"updated":0`. It
+also repairs rows the dispatcher missed, for example an event whose `activityFeed` handler
+gave up after its retries (it shows up in `failedHandlers`).
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only, writes nothing, does not switch the feed), then the real run
+npx convex run social/backfillActivityEntries:backfillActivityEntries '{"dryRun":true}'
+npx convex run social/backfillActivityEntries:backfillActivityEntries '{}'
+
+# prod: same, after dev looks right
+npx convex run --prod social/backfillActivityEntries:backfillActivityEntries '{"dryRun":true}'
+npx convex run --prod social/backfillActivityEntries:backfillActivityEntries '{}'
+```
+
+The command returns the FIRST batch's `{ events, inserted, updated }`; the remaining batches
+run as scheduled functions. Each batch logs one JSON line with
+`"event":"social.backfillActivityEntries"`, `dry_run`, `event_name`, the batch counts and the
+running `totals`; the line with `"is_done":true` carries the whole run's totals. A dry run
+cannot see rows it did not write, so it counts the later copies of a batch add as `inserted`
+where the real run counts them as `updated`; `inserted + updated` matches.
+
+**Verify:**
+
+1. The real run's final `totals.events` matches the dry run's (give or take events recorded
+   in between, which the dispatcher already projected).
+2. Run the dry run again: its final totals show `"inserted":0` and `"updated":0`.
+3. In the dashboard data view, `readModelStatus` has a row with `name` `activityEntries`.
+4. The dashboard pulse and /people feed show the same entries as before the run.
+
+---
+
+## `insights/platformStats:recount` — the landing page's counters
+
+**When:** once per deployment, right after the `platformStats` table and the
+`recount platform stats` cron (PERF-B2m) are deployed there. Optional: the cron runs the
+same recount every 6 hours. There is no ordering pressure: until the first recount has
+written the row, `insights/getGlobalStats` counts the `users`, `puzzles` and
+`ownedPuzzles` tables itself, at the old full-table cost on every home page load, so run it
+soon after the deploy rather than waiting for the cron.
+
+**What it does:** pages through `users`, then `puzzles`, then `ownedPuzzles` (1000 rows per
+batch; `batchSize` overrides it, rounded down and clamped to 1..4000; a batch also stops
+after reading 4 MiB; each batch its own transaction, rescheduling itself until the last
+table is exhausted) and counts every row, with the meaning the landing page always had
+(deactivated members and definitions in any status included). The last batch writes the
+single `platformStats` row (`key` `global`) with the three counts and `countedAt`. It reads
+nothing else and writes only that row.
+
+**Safe to re-run:** yes. Each run rewrites the same row with fresh counts. Two runs at once
+(a manual run during the cron) each write a complete count; the later one stays.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev, then prod
+npx convex run insights/platformStats:recount '{}'
+npx convex run --prod insights/platformStats:recount '{}'
+```
+
+The remaining batches run as scheduled functions. The last batch logs one JSON line with
+`"event":"insights.platformStats.recount"`, the `counts` and `counted_at`.
+
+**Verify:**
+
+1. In the dashboard data view, `platformStats` has one row with `key` `global`.
+2. Its counts match the row counts the dashboard shows for `users`, `puzzles` and
+   `ownedPuzzles` (give or take rows written while it ran).
+3. The home page shows the same numbers as before the run.
+
+---
+
+## `library/definitionStats:reconcile` — the catalog and definition pages' aggregates
+
+**When:** once per deployment, right after the `definitionStats` table, the marks on the
+write paths and the `reconcile definition stats` cron (PERF-B4m, SEC-29) are deployed there.
+Optional: the cron runs the same reconcile every night. There is no ordering pressure:
+every write that changes a definition's aggregates already gives it a row, and until a
+definition has one the catalog and definition pages compute its aggregates themselves, at
+the old cost (every review, copy and completion of the definition on each view), so run it
+soon after the deploy rather than waiting for the cron.
+
+**What it does:** pages through `puzzles` (100 definitions per batch; `batchSize` overrides
+it, rounded down and clamped to 1..500; each batch its own transaction, rescheduling itself
+until the table is exhausted) and schedules one `library/definitionStats:recompute` per
+definition. Each recompute is its own transaction: it reads the definition's reviews, copies
+and completions (and the profile visibility of the copies' owners), computes the totals the
+pages show with the same helpers they used to run live, and writes the definition's
+`definitionStats` row only when its totals changed. It never writes any other table.
+
+**Safe to re-run:** yes. A second run finds every row in step and writes nothing. It also
+doubles as a repair: a row whose totals differ from its sources without having been marked
+stale is rewritten and logged as `"event":"library.definitionStats.drift"` with its
+`puzzle_id`. A drift line points at a write path that changes reviews, copies, completions
+or profile visibility without marking the definition (see library/definitionStats).
+
+**Watch:** an error line `"event":"library.definitionStats.recomputeOverdue"` with a
+`puzzle_id` means that definition's row stayed stale for more than five minutes: its
+recompute threw (Convex read limits on a very large definition, or write conflicts until
+the retries ran out). The next mark, and the nightly reconcile, log it and schedule another
+recompute; the page keeps serving the last totals meanwhile. If the same `puzzle_id` keeps
+coming back, its recompute does not fit in one transaction: the per-copy completions read
+in `computeDefinitionTotals` (one query per copy, for solves logged on a copy only) is the
+likely cause.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev, then prod
+npx convex run library/definitionStats:reconcile '{}'
+npx convex run --prod library/definitionStats:reconcile '{}'
+```
+
+The remaining batches and the per-definition recomputes run as scheduled functions. The
+last batch logs one JSON line with `"event":"library.definitionStats.reconcile"` and the
+number of `definitions` it scheduled.
+
+**Verify:**
+
+1. In the dashboard data view, `definitionStats` has one row per `puzzles` row, each with
+   `totals` and without `stale` or `staleSince`.
+2. Run it again: no `library.definitionStats.drift` lines, and no row's `computedAt`
+   changes (give or take definitions written to in between).
+3. The public catalog, a catalog detail page and a `/puzzles/<id>` page show the same
+   ratings, owner, completion and availability numbers as before the run.

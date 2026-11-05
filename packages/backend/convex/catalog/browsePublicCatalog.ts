@@ -1,26 +1,30 @@
 import type { PublicCatalogCardView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { clampPaginationOpts } from "../lib/pageSize";
 import {
+  publicAvailabilityFromByType,
   publicAvailabilityOf,
+  ratingBreakdownFromTotals,
   ratingBreakdownOf,
 } from "../library/definitionAggregates";
+import { definitionTotalsOf } from "../library/definitionStats";
+
+// The most definitions one page returns, whatever the client asks for (the web asks for 20).
+export const PUBLIC_CATALOG_MAX_PAGE = 40;
 
 // UNAUTHENTICATED paginated catalog list for the public /catalog page: approved definitions only
 // (the standard leak gate), newest first, optionally narrowed by a search term (search index,
 // status-filtered at the index), brand, and a piece-count range. Each page row is enriched with
-// the card aggregates (rating summary + public availability count).
+// the card aggregates (rating summary + public availability count), read from the definition's
+// definitionStats row (library/definitionStats): one document per card, however many reviews and
+// copies the definition has. A page holds 1..PUBLIC_CATALOG_MAX_PAGE definitions.
 //
 // Sort is newest-first ONLY: sorting by rating would require a denormalized per-definition rating
 // (a computed aggregate can't order a paginated index scan) — deliberately deferred.
-
-// An anonymous read with per-row aggregate fan-out (ratings, owned copies): a page holds 1 to
-// MAX_PAGE_SIZE cards whatever the client asks for (the /catalog page asks for 20).
-const MAX_PAGE_SIZE = 40;
 
 export const browsePublicCatalog = query({
   args: {
@@ -37,7 +41,7 @@ export const browsePublicCatalog = query({
     const term = args.searchTerm?.toLowerCase().trim() ?? "";
     const paginationOpts = clampPaginationOpts(
       args.paginationOpts,
-      MAX_PAGE_SIZE,
+      PUBLIC_CATALOG_MAX_PAGE,
     );
 
     // brand/piece narrowing shared by both branches (status is handled per-branch: at the search
@@ -102,20 +106,29 @@ export const browsePublicCatalog = query({
       (p) => p.status === "approved" && matchesFacets(p),
     );
 
-    // Shared owner-visibility cache so each distinct owner across the page resolves once.
+    // Until a definition's first recompute the card computes its two aggregates live, as before;
+    // a shared owner-visibility cache resolves each distinct owner across the page once.
     const visibilityCache = new Map<string, "public" | "private">();
+    const cardAggregatesOf = async (puzzleId: Id<"puzzles">) => {
+      const totals = await definitionTotalsOf(ctx, puzzleId);
+      if (totals) {
+        return {
+          rating: ratingBreakdownFromTotals(totals),
+          availability: publicAvailabilityFromByType(totals.publicAvailable),
+        };
+      }
+      const owned = await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzleId))
+        .collect();
+      return {
+        rating: await ratingBreakdownOf(ctx, puzzleId),
+        availability: await publicAvailabilityOf(ctx, owned, visibilityCache),
+      };
+    };
     const page: PublicCatalogCardView[] = await Promise.all(
       rows.map(async (puzzle) => {
-        const rating = await ratingBreakdownOf(ctx, puzzle._id);
-        const owned = await ctx.db
-          .query("ownedPuzzles")
-          .withIndex("by_puzzle", (q) => q.eq("puzzleId", puzzle._id))
-          .collect();
-        const availability = await publicAvailabilityOf(
-          ctx,
-          owned,
-          visibilityCache,
-        );
+        const { rating, availability } = await cardAggregatesOf(puzzle._id);
         return {
           _id: puzzle._id,
           title: puzzle.title,

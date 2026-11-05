@@ -113,6 +113,9 @@ export interface BrowseOwnedCopiesView {
   ownedPuzzles: BrowseOwnedCopyView[];
   total: number;
   hasMore: boolean;
+  /** True when Browse's candidate window (the newest open copies) was cut short, so `total` counts
+   * only the matches inside it and more may exist. Optional for older servers. */
+  totalIsLowerBound?: boolean;
 }
 
 /**

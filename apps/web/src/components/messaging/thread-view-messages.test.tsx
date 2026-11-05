@@ -141,6 +141,9 @@ const renderThread = (
   locale: "en" | "nl" = "en",
   // exchange.replyDisclosure for an exchange thread; unseeded = still loading.
   replyDisclosure?: { revealsYou: boolean } | null,
+  // The thread's own inbox row (getInboxThread); null when the inbox wouldn't list it;
+  // "unsupported" for a backend without getInboxThread, whose inbox first page holds the thread.
+  header: InboxThread | null | "unsupported" = thread,
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -156,10 +159,21 @@ const renderThread = (
     },
   });
   mocks.messages = MESSAGES;
-  queryClient.setQueryData(
-    convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
-    [thread],
-  );
+  const headerKey = convexQuery(gateway.conversation.getInboxThread, {
+    threadId: thread.threadId,
+  }).queryKey;
+  if (header === "unsupported") {
+    queryClient.setQueryDefaults(headerKey, {
+      queryFn: () =>
+        Promise.reject(new Error("Could not find public function")),
+    });
+    queryClient.setQueryData(
+      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
+      [thread],
+    );
+  } else {
+    queryClient.setQueryData(headerKey, header);
+  }
   if (replyDisclosure !== undefined && thread.subject.kind === "exchange") {
     queryClient.setQueryData(
       convexQuery(gateway.exchange.replyDisclosure, {
@@ -185,6 +199,31 @@ beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
 });
 afterEach(cleanup);
+
+describe("ThreadView header", () => {
+  // The inbox list holds only its newest page; the header reads the thread's
+  // own row, so a thread opened from a link far down the inbox keeps its title.
+  it("titles the thread from its own inbox row, without the inbox list", () => {
+    renderThread(exchangeThread());
+    expect(
+      screen.getByRole("heading", { name: "Trade: Night Harbour" }),
+    ).toBeTruthy();
+  });
+
+  it("falls back to a generic title when the inbox wouldn't list the thread", () => {
+    renderThread(dmThread(), "en", undefined, null);
+    expect(screen.getByRole("heading", { name: "Conversation" })).toBeTruthy();
+    expect(screen.getByText("Mara's message")).toBeTruthy();
+  });
+
+  // The web can deploy before the backend that serves getInboxThread.
+  it("finds its row in the inbox when the backend has no getInboxThread", async () => {
+    renderThread(exchangeThread(), "en", undefined, "unsupported");
+    expect(
+      await screen.findByRole("heading", { name: "Trade: Night Harbour" }),
+    ).toBeTruthy();
+  });
+});
 
 describe("ThreadView message actions", () => {
   it("keeps the conversation out of PostHog capture", () => {
@@ -321,8 +360,10 @@ describe("ThreadView photos", () => {
       },
     });
     queryClient.setQueryData(
-      convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
-      [dmThread()],
+      convexQuery(gateway.conversation.getInboxThread, {
+        threadId: "thread_1",
+      }).queryKey,
+      dmThread(),
     );
     queryClient.setQueryData(
       convexQuery(gateway.conversation.listMyPendingAttachments, {

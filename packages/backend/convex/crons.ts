@@ -101,4 +101,22 @@ crons.weekly(
   { mode: "dry-run" },
 );
 
+// The public landing page's counters: users, puzzles and ownedPuzzles recounted into the
+// platformStats row that insights/getGlobalStats reads (insights/platformStats).
+crons.interval(
+  "recount platform stats",
+  { hours: 6 },
+  internal.insights.platformStats.recount,
+  {},
+);
+
+// The catalog and definition pages' aggregates: every definition's definitionStats row recomputed
+// from source, repairing any a write path forgot to mark (library/definitionStats.reconcile).
+crons.daily(
+  "reconcile definition stats",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.library.definitionStats.reconcile,
+  {},
+);
+
 export default crons;

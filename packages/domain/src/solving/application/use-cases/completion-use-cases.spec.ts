@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toCompletionId, toFileId, toMemberId } from "../../../shared-kernel";
+import {
+  toCompletionId,
+  toFileId,
+  toMemberId,
+  toPuzzleDefinitionId,
+} from "../../../shared-kernel";
 import { EDIT_WINDOW_MS } from "../../domain/completion";
 import {
   FixedClock,
@@ -16,6 +21,7 @@ import { makeStartCompletion } from "./start-completion";
 
 const ALICE = toMemberId("alice");
 const BOB = toMemberId("bob");
+const PUZZLE = toPuzzleDefinitionId("puzzle-1");
 const START = new Date("2026-06-01T10:00:00Z");
 const END = new Date("2026-06-01T11:30:00Z");
 const NOW = new Date("2026-06-01T11:30:00Z");
@@ -36,7 +42,11 @@ describe("Completion use cases", () => {
   describe("startCompletion", () => {
     it("persists an in-progress completion and publishes CompletionStarted", async () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
-      const result = await start({ userId: ALICE, startDate: START });
+      const result = await start({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+      });
       expect(result.isOk).toBe(true);
       expect(completions.size()).toBe(1);
       expect(events.names()).toEqual(["CompletionStarted"]);
@@ -46,6 +56,7 @@ describe("Completion use cases", () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
       const result = await start({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         photoFileIds: Array.from({ length: 6 }, (_, i) => toFileId(`f-${i}`)),
       });
@@ -58,6 +69,7 @@ describe("Completion use cases", () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
       const result = await start({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         photoFileIds: [toFileId("p-1"), toFileId("p-2")],
       });
@@ -71,11 +83,39 @@ describe("Completion use cases", () => {
     });
   });
 
+  describe("a solve must name a puzzle or a copy (SEC-30)", () => {
+    it("start refuses without either, persisting and publishing nothing", async () => {
+      const start = makeStartCompletion({ completions, ids, events, clock });
+      const result = await start({ userId: ALICE, startDate: START });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("CompletionTargetRequired");
+      }
+      expect(completions.size()).toBe(0);
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("record refuses without either, persisting and publishing nothing", async () => {
+      const record = makeRecordCompletion({ completions, ids, events, clock });
+      const result = await record({
+        userId: ALICE,
+        datePrecision: "unknown",
+      });
+      expect(result.isErr).toBe(true);
+      if (result.isErr) {
+        expect(result.error.code).toBe("CompletionTargetRequired");
+      }
+      expect(completions.size()).toBe(0);
+      expect(events.published).toHaveLength(0);
+    });
+  });
+
   describe("recordCompletion", () => {
     it("persists a finished completion and publishes CompletionRecorded", async () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
       });
@@ -87,6 +127,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: END,
         endDate: START,
       });
@@ -98,6 +139,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
         photoFileIds: [toFileId("p-1")],
@@ -112,6 +154,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
       });
@@ -124,6 +167,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         datePrecision: "year",
         year: 2023,
         bulk: true,
@@ -140,6 +184,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const result = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         datePrecision: "unknown",
         completionTimeMinutes: 10,
       });
@@ -151,7 +196,11 @@ describe("Completion use cases", () => {
   describe("finishCompletion", () => {
     it("finishes an in-progress completion owned by the member", async () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
-      const started = await start({ userId: ALICE, startDate: START });
+      const started = await start({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+      });
       if (!started.isOk) throw new Error("setup failed");
 
       const finish = makeFinishCompletion({ completions, events, clock });
@@ -177,7 +226,11 @@ describe("Completion use cases", () => {
 
     it("rejects a non-owner with NotCompletionOwner", async () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
-      const started = await start({ userId: ALICE, startDate: START });
+      const started = await start({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+      });
       if (!started.isOk) throw new Error("setup failed");
 
       const finish = makeFinishCompletion({ completions, events, clock });
@@ -192,7 +245,11 @@ describe("Completion use cases", () => {
 
     it("propagates an invalid-time-range error from finish", async () => {
       const start = makeStartCompletion({ completions, ids, events, clock });
-      const started = await start({ userId: ALICE, startDate: START });
+      const started = await start({
+        userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
+        startDate: START,
+      });
       if (!started.isOk) throw new Error("setup failed");
 
       const finish = makeFinishCompletion({ completions, events, clock });
@@ -211,6 +268,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const recorded = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
       });
@@ -293,6 +351,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const recorded = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
       });
@@ -335,6 +394,7 @@ describe("Completion use cases", () => {
       const record = makeRecordCompletion({ completions, ids, events, clock });
       const recorded = await record({
         userId: ALICE,
+        puzzleDefinitionId: PUZZLE,
         startDate: START,
         endDate: END,
       });

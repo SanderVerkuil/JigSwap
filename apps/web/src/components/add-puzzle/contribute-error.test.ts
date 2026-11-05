@@ -4,7 +4,12 @@ import { describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import source from "../../../locales/source.json";
-import { contributeError, coverStep, CoverStepError } from "./contribute-error";
+import {
+  contributeError,
+  CopyStepError,
+  coverStep,
+  CoverStepError,
+} from "./contribute-error";
 
 const NOW = 1_000_000;
 const limited = () =>
@@ -25,6 +30,18 @@ describe("contributeError", () => {
     });
   });
 
+  it("names the daily copy budget when the copy step was refused", () => {
+    expect(contributeError(new CopyStepError(limited()), NOW)).toEqual({
+      key: "addRateLimited",
+    });
+    expect(
+      contributeError(
+        new CopyStepError(new ConvexError({ code: "RateLimited" })),
+        NOW,
+      ),
+    ).toEqual({ key: "addRateLimited" });
+  });
+
   it("says a field is too long for a TextTooLong refusal", () => {
     expect(
       contributeError(
@@ -40,6 +57,7 @@ describe("contributeError", () => {
   it.each([
     ["a failed upload", new Error("Image upload failed")],
     ["a failed cover step", new CoverStepError(new Error("upload failed"))],
+    ["a failed copy step", new CopyStepError(new Error("network down"))],
     ["a message-only refusal", new ConvexError("Unauthenticated")],
     ["another code", new ConvexError({ code: "DuplicateBarcode" })],
     [
@@ -56,6 +74,7 @@ describe("contributeError", () => {
     for (const key of [
       "rateLimited",
       "coverRateLimited",
+      "addRateLimited",
       "textTooLong",
       "puzzleCreationFailed",
     ] as const) {

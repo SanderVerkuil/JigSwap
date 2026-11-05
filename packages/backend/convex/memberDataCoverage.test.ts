@@ -655,6 +655,26 @@ const MANIFEST: Record<string, Disposition> = {
     phases: ["domainEvents"],
     export: { excluded: "an internal index of the event log" },
   },
+  "activityEntries.actorId": {
+    erasure: {
+      deleted:
+        "their rows in the activity feed's read model (social/activityEntries)",
+    },
+    phases: ["activityEntries"],
+    export: {
+      excluded:
+        "a read model derived from their solves, copies and exchanges, which the export carries itself",
+    },
+  },
+  "activityEntries.partyIds[]": {
+    erasure: {
+      kept: "the other party's row of an exchange lists both parties by id, like the exchanges row it mirrors; it reads as a deleted member once their account is gone",
+    },
+    export: {
+      excluded:
+        "a read model derived from their exchanges, which the export carries itself",
+    },
+  },
 
   "loans.lenderId": {
     erasure: {

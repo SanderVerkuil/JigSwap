@@ -109,6 +109,14 @@ export const RATE_LIMITS = {
   // Puzzle reviews written or edited, all puzzles together: social/postPuzzleReview and the
   // puzzle part of solving/submitReviews (a copy-only star rating is not counted).
   reviewPost: { windowMs: HOUR, max: 20 },
+  // Copies added to the member's own library (library/acquireCopy and acquireCopies), counted per
+  // copy: a full quick-start batch is 25. Bounds how fast one account can flood Browse and the
+  // activity feed (SEC-29); a heavy cataloguing day stays well inside it.
+  copyAdd: { windowMs: DAY, max: 500 },
+  // Solves logged or started (solving/recordCompletion, startCompletion and recordPastCompletions),
+  // counted per solve: the quick start's past-solves batch is up to 25. Bounds how fast one account
+  // can flood the activity feed's solve events (SEC-30).
+  solveLog: { windowMs: DAY, max: 300 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -126,13 +134,14 @@ export type PairMembers = {
   readonly pairTargetId: Id<"users">;
 };
 
-// Count one action against `name` for `subject` in its current fixed window. A full window writes
-// nothing, so refused attempts don't extend the lockout.
+// Count `amount` actions (default one) against `name` for `subject` in its current fixed window.
+// When they don't all fit, nothing is written, so refused attempts don't extend the lockout.
 const chargeWindow = async (
   ctx: MutationCtx,
   name: RateLimitName,
   subject: string,
   pair?: PairMembers,
+  amount = 1,
 ): Promise<WindowCharge> => {
   const { windowMs, max } = RATE_LIMITS[name];
   const key = `${name}:${subject}`;
@@ -141,25 +150,29 @@ const chargeWindow = async (
     .query("rateLimits")
     .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
+  const fresh = row === null || now - row.windowStart >= windowMs;
+  const count = (fresh ? 0 : row.count) + amount;
 
+  if (count > max) {
+    return {
+      allowed: false,
+      retryAfterMs: fresh ? windowMs : row.windowStart + windowMs - now,
+    };
+  }
   if (row === null) {
     await ctx.db.insert("rateLimits", {
       key,
       windowStart: now,
-      count: 1,
+      count,
       ...pair,
     });
-    return { allowed: true };
+  } else {
+    await ctx.db.patch(row._id, {
+      ...(fresh && { windowStart: now }),
+      count,
+    });
   }
-  if (now - row.windowStart >= windowMs) {
-    await ctx.db.patch(row._id, { windowStart: now, count: 1 });
-    return { allowed: true };
-  }
-  if (row.count < max) {
-    await ctx.db.patch(row._id, { count: row.count + 1 });
-    return { allowed: true };
-  }
-  return { allowed: false, retryAfterMs: row.windowStart + windowMs - now };
+  return { allowed: true };
 };
 
 const logRefusal = (
@@ -179,17 +192,18 @@ const logRefusal = (
   });
 };
 
-// Count one action against the member's `name` limit, or throw
-// ConvexError({ code: "RateLimited", retryAfterMs }) when the current window is full. A refusal
-// writes nothing (the throw rolls the mutation back), so refused attempts don't extend the
-// lockout. Call it before the action's own writes.
+// Count `amount` actions (default one) against the member's `name` limit, or throw
+// ConvexError({ code: "RateLimited", retryAfterMs }) when they don't all fit in the current
+// window. A refusal writes nothing (the throw rolls the mutation back), so refused attempts don't
+// extend the lockout. Call it before the action's own writes.
 export const enforceRateLimit = async (
   ctx: MutationCtx,
   name: RateLimitName,
   memberId: string,
   pair?: PairMembers,
+  amount = 1,
 ): Promise<void> => {
-  const charge = await chargeWindow(ctx, name, memberId, pair);
+  const charge = await chargeWindow(ctx, name, memberId, pair, amount);
   if (charge.allowed) return;
   logRefusal(name, charge.retryAfterMs, { member_id: memberId });
   throw new ConvexError({

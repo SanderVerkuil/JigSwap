@@ -121,6 +121,11 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //   household    they leave it through the leave use case: an admin's household promotes its
 //                longest-standing member, a sole member's is dissolved. Co-members already
 //                deleted leave first, so the promotion only lands on an active member.
+//   activityEntries  their rows in the activity feed's read model (social/activityEntries), so
+//                no feed shows their activity any more. An exchange row of the other party still
+//                lists them among its partyIds, like the exchange row it mirrors (History stays).
+//                The projection writes nothing for a departed member, so an event dispatched after
+//                this phase does not bring a row back.
 //   domainEvents (last; conversation/purgeMemberEvents) every finished event whose payload names
 //                them: their own activity-feed events (solves started and recorded, copies
 //                acquired) are deleted; in every other one their id becomes "deleted-member" and
@@ -133,7 +138,7 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                (CopyDetailsUpdated with the owner's notes, recorded before
 //                events/recordAndSchedule left notes out) loses those personal fields once its
 //                copy is gone, theirs (deleted by the copies phase) or anyone's.
-//                Starts EVENT_SCRUB_DELAY_MS after the household phase, once the events the
+//                Starts EVENT_SCRUB_DELAY_MS after the phase before it, once the events the
 //                purge itself emitted have been dispatched.
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
 //                A moderation audit row names a member by users id only (targetMemberId,
@@ -203,6 +208,7 @@ export const PHASES = [
   "categories",
   "circlesOwned",
   "household",
+  "activityEntries",
   "domainEvents",
 ] as const;
 type Phase = (typeof PHASES)[number];
@@ -256,6 +262,7 @@ const phaseValidator = v.union(
   v.literal("categories"),
   v.literal("circlesOwned"),
   v.literal("household"),
+  v.literal("activityEntries"),
   v.literal("domainEvents"),
 );
 
@@ -860,6 +867,14 @@ const runPhase = async (
       return handOverOwnedCircles(ctx, memberId, opts);
     case "household":
       return leaveHousehold(ctx, memberId);
+    case "activityEntries": {
+      const page = await ctx.db
+        .query("activityEntries")
+        .withIndex("by_actor_time", (q) => q.eq("actorId", memberId))
+        .paginate(opts);
+      for (const row of page.page) await ctx.db.delete(row._id);
+      return page;
+    }
     case "domainEvents":
       return scrubMemberEvents(ctx, memberId, opts);
   }

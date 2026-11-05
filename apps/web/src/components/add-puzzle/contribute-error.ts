@@ -21,17 +21,30 @@ export async function coverStep<T>(step: () => Promise<T>): Promise<T> {
   }
 }
 
-// The puzzles.* message for a failed contribute flow (cover step, then createPuzzle): the
-// member's limit on submissions (rateLimited) or on cover photos (coverRateLimited), each with
-// when they can try again; a field the catalogue refuses as too long (textTooLong); else the
+// A failed copy step of the add form (the acquire after the filing), kept apart the same way: its
+// RateLimited is the daily copy budget (backend lib/rateLimits.ts copyAdd), not the submission limit.
+export class CopyStepError extends Error {
+  constructor(readonly original: unknown) {
+    super("The copy step failed");
+  }
+}
+
+// The puzzles.* message for a failed contribute flow (cover step, then createPuzzle, then the add
+// form's copy step): the member's limit on submissions (rateLimited) or on cover photos
+// (coverRateLimited), each with when they can try again; the daily copy budget (addRateLimited,
+// which says when by itself); a field the catalogue refuses as too long (textTooLong); else the
 // generic failure.
 export type ContributeError =
   | { key: "rateLimited" | "coverRateLimited"; retryAt: number }
-  | { key: "textTooLong" | "puzzleCreationFailed" };
+  | { key: "addRateLimited" | "textTooLong" | "puzzleCreationFailed" };
 
 export function contributeError(error: unknown, now: number): ContributeError {
   const fromCover = error instanceof CoverStepError;
-  const cause = fromCover ? error.original : error;
+  const fromCopy = error instanceof CopyStepError;
+  const cause = fromCover || fromCopy ? error.original : error;
+  if (fromCopy && convexErrorCode(cause) === "RateLimited") {
+    return { key: "addRateLimited" };
+  }
   const retryAt = rateLimitedRetryAt(cause, now);
   if (retryAt !== undefined) {
     return { key: fromCover ? "coverRateLimited" : "rateLimited", retryAt };

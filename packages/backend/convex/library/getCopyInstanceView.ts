@@ -29,7 +29,7 @@ import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { areMutualFollowers, projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { effectiveCopyVisibility } from "./copyVisibility";
-import { ratingBreakdownOf } from "./definitionAggregates";
+import { definitionRatingOf } from "./definitionStats";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 
 // Solve duration in whole MINUTES: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's
@@ -331,9 +331,9 @@ export const getCopyInstanceView = query({
         })),
     );
 
-    // --- Community rating: the DEFINITION-level puzzleReviews breakdown (shared helper — same
-    // numbers as the catalog detail page). ------------------------------------------------------
-    const community = await ratingBreakdownOf(ctx, copy.puzzleId);
+    // --- Community rating: the DEFINITION-level puzzleReviews breakdown, from its definitionStats
+    // row (shared helper — same numbers as the catalog detail page). ----------------------------
+    const community = await definitionRatingOf(ctx, copy.puzzleId);
 
     // --- Gallery: per-copy uploaded images, resolved to URLs, newest first. --------------------
     const imageRows = await ctx.db
