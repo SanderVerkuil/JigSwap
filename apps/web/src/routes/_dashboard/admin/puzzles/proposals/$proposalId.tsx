@@ -118,7 +118,10 @@ function ProposalReview({
     [proposal.definitionTitle, t, tShell],
   );
 
-  const [confirmingApprove, setConfirmingApprove] = useState(false);
+  // The proposal version (its updatedAt) on screen when the admin clicked Approve, sent with the
+  // approval so an edit the proposer makes after that moment is refused instead of applied
+  // unseen. null while the confirm dialog is closed.
+  const [approvingVersion, setApprovingVersion] = useState<number | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [compareOpen, setCompareOpen] = useState(false);
@@ -265,7 +268,7 @@ function ProposalReview({
           <Button
             variant="brand"
             disabled={busy}
-            onClick={() => setConfirmingApprove(true)}
+            onClick={() => setApprovingVersion(proposal.updatedAt)}
           >
             {t("approve")}
           </Button>
@@ -393,7 +396,12 @@ function ProposalReview({
         </div>
       </aside>
 
-      <AlertDialog open={confirmingApprove} onOpenChange={setConfirmingApprove}>
+      <AlertDialog
+        open={approvingVersion !== null}
+        onOpenChange={(open) => {
+          if (!open) setApprovingVersion(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("approveConfirmTitle")}</AlertDialogTitle>
@@ -407,8 +415,12 @@ function ProposalReview({
             <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                setConfirmingApprove(false);
-                approve.mutate({ changeProposalId: proposal.aggregateId });
+                if (approvingVersion === null) return;
+                setApprovingVersion(null);
+                approve.mutate({
+                  changeProposalId: proposal.aggregateId,
+                  expectedUpdatedAt: approvingVersion,
+                });
               }}
             >
               {t("approve")}

@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
@@ -12,7 +13,8 @@ import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 
 // The navigation target for a completion row, most-specific-first: the viewer's own copy page,
 // a copy page they can reach (currently holding, or visible per the copy gate), else the durable
-// puzzle definition — and no link at all when even that anchor is gone. Ids are Convex doc _ids
+// puzzle definition when they may open it — and no link at all when even that anchor is gone or
+// hidden from them (a definition no longer approved). Ids are Convex doc _ids
 // (what the routes parse); NEVER copySnapshot.copyId (the aggregate string).
 type CompletionLink = {
   kind: "myCopy" | "copy" | "definition";
@@ -90,11 +92,18 @@ export const listMyCompletions = query({
       }),
     );
     const puzzleThumbs = new Map<string, string | null>();
+    // Whether the member may open each definition's page (canViewDefinition, that page's gate):
+    // a definition that is no longer approved gets no link unless they submitted it or are an admin.
+    const puzzleOpenable = new Map<string, boolean>();
     await Promise.all(
       [...puzzles.entries()].map(async ([id, puzzle]) => {
         puzzleThumbs.set(
           id,
           puzzle?.image ? await boxArtUrl(ctx, puzzle.image) : null,
+        );
+        puzzleOpenable.set(
+          id,
+          puzzle !== null && (await canViewDefinition(ctx, puzzle, me)),
         );
       }),
     );
@@ -114,7 +123,7 @@ export const listMyCompletions = query({
           link = { kind: "myCopy", id: copy._id as string };
         } else if (copy && copyReachable) {
           link = { kind: "copy", id: copy._id as string };
-        } else if (puzzle) {
+        } else if (puzzle && puzzleOpenable.get(puzzleKey as string)) {
           link = { kind: "definition", id: puzzle._id as string };
         }
 

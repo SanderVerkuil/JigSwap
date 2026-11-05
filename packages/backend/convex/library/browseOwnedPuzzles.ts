@@ -7,7 +7,7 @@ import { blockedEitherWaySet } from "../social/blocks";
 import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { collectCircleSharedCopies } from "./circleSharedCopies";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
-import { toOwnedCopyView } from "./mappers";
+import { toCopyPuzzleView, toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 
 // A copy is "open" iff at least one exchange-availability flag is set. Rule 1 of Browse
@@ -149,11 +149,14 @@ export const browseOwnedPuzzles = query({
       ownedPuzzles = ownedPuzzles.filter((i) => i.condition === args.condition);
     }
 
+    // The puzzle-based filters match only the catalogue facts the card shows (`shown`, the same
+    // projection toOwnedCopyView joins): for a copy of a definition that is not approved that is
+    // its snapshot title, brand and pieces, so a search can't probe hidden description or tags.
     const withPuzzles = await Promise.all(
-      ownedPuzzles.map(async (copy) => ({
-        copy,
-        puzzle: await ctx.db.get(copy.puzzleId),
-      })),
+      ownedPuzzles.map(async (copy) => {
+        const puzzle = await ctx.db.get(copy.puzzleId);
+        return { copy, puzzle, shown: toCopyPuzzleView(copy, puzzle) };
+      }),
     );
 
     let filtered = withPuzzles;
@@ -161,37 +164,37 @@ export const browseOwnedPuzzles = query({
     if (args.category) {
       filtered = filtered.filter(
         (i) =>
-          i.puzzle?.category === args.category &&
-          i.puzzle?.category !== undefined,
+          i.shown?.category === args.category &&
+          i.shown?.category !== undefined,
       );
     }
     if (args.minPieceCount !== undefined) {
       filtered = filtered.filter(
-        (i) => i.puzzle && i.puzzle.pieceCount >= args.minPieceCount!,
+        (i) => i.shown && i.shown.pieceCount >= args.minPieceCount!,
       );
     }
     if (args.maxPieceCount !== undefined) {
       filtered = filtered.filter(
-        (i) => i.puzzle && i.puzzle.pieceCount <= args.maxPieceCount!,
+        (i) => i.shown && i.shown.pieceCount <= args.maxPieceCount!,
       );
     }
     if (args.difficulty) {
       filtered = filtered.filter(
-        (i) => i.puzzle?.difficulty === args.difficulty,
+        (i) => i.shown?.difficulty === args.difficulty,
       );
     }
     if (args.searchTerm) {
       const searchTerm = args.searchTerm.toLowerCase();
       filtered = filtered.filter(
         (i) =>
-          i.puzzle &&
-          (i.puzzle.title.toLowerCase().includes(searchTerm) ||
-            (i.puzzle.description &&
-              i.puzzle.description.toLowerCase().includes(searchTerm)) ||
-            (i.puzzle.brand &&
-              i.puzzle.brand.toLowerCase().includes(searchTerm)) ||
-            (i.puzzle.tags &&
-              i.puzzle.tags.some((tag) =>
+          i.shown &&
+          (i.shown.title.toLowerCase().includes(searchTerm) ||
+            (i.shown.description &&
+              i.shown.description.toLowerCase().includes(searchTerm)) ||
+            (i.shown.brand &&
+              i.shown.brand.toLowerCase().includes(searchTerm)) ||
+            (i.shown.tags &&
+              i.shown.tags.some((tag) =>
                 tag.toLowerCase().includes(searchTerm),
               ))),
       );

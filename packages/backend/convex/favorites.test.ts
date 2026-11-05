@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -231,5 +232,93 @@ describe("catalog favorites", () => {
       {},
     );
     expect(afterDelete.map((p) => p._id)).toEqual([mountain]);
+  });
+});
+
+// SEC-34: favorites follow the definition read gate (catalog/definitionVisibility). A member can
+// neither favorite nor list a definition they could not open by id, and the refusal is the same
+// "Puzzle not found" as for a missing id. Removing a favorite always works.
+describe("catalog favorites of non-approved definitions", () => {
+  const setStatus = (
+    t: TestConvex<typeof schema>,
+    puzzleId: Id<"puzzles">,
+    status: "pending" | "approved" | "rejected" | "disabled",
+  ) => t.run((ctx) => ctx.db.patch(puzzleId, { status }));
+
+  test.each(["pending", "rejected", "disabled"] as const)(
+    "favoriting someone else's %s definition is refused like a missing one",
+    async (status) => {
+      const t = convexTest(schema, modules);
+      const { bob, mountain } = await seed(t);
+      await setStatus(t, mountain, status);
+
+      await expect(
+        t
+          .withIdentity({ subject: "clerk_bob" })
+          .mutation(api.catalog.toggleFavorite.toggleFavorite, {
+            puzzleId: mountain,
+          }),
+      ).rejects.toThrow(/Puzzle not found/);
+
+      const rows = await t.run((ctx) =>
+        ctx.db
+          .query("favorites")
+          .withIndex("by_user", (q) => q.eq("userId", bob))
+          .collect(),
+      );
+      expect(rows).toHaveLength(0);
+    },
+  );
+
+  test("a favorite made while approved leaves the list once disabled, and can still be removed", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, mountain, ocean } = await seed(t);
+    const asBob = t.withIdentity({ subject: "clerk_bob" });
+
+    await asBob.mutation(api.catalog.toggleFavorite.toggleFavorite, {
+      puzzleId: mountain,
+    });
+    await asBob.mutation(api.catalog.toggleFavorite.toggleFavorite, {
+      puzzleId: ocean,
+    });
+    await setStatus(t, mountain, "disabled");
+
+    const list = await asBob.query(
+      api.catalog.listMyFavorites.listMyFavorites,
+      {},
+    );
+    expect(list.map((p) => p._id)).toEqual([ocean]);
+
+    const removed = await asBob.mutation(
+      api.catalog.toggleFavorite.toggleFavorite,
+      { puzzleId: mountain },
+    );
+    expect(removed).toEqual({ favorited: false });
+    const rows = await t.run((ctx) =>
+      ctx.db
+        .query("favorites")
+        .withIndex("by_user", (q) => q.eq("userId", bob))
+        .collect(),
+    );
+    expect(rows.map((r) => r.puzzleId)).toEqual([ocean]);
+  });
+
+  test("the submitter can favorite and list their own pending definition", async () => {
+    const t = convexTest(schema, modules);
+    const { mountain } = await seed(t);
+    await setStatus(t, mountain, "pending");
+    const asAlice = t.withIdentity({ subject: "clerk_alice" });
+
+    const result = await asAlice.mutation(
+      api.catalog.toggleFavorite.toggleFavorite,
+      { puzzleId: mountain },
+    );
+    expect(result).toEqual({ favorited: true });
+
+    const list = await asAlice.query(
+      api.catalog.listMyFavorites.listMyFavorites,
+      {},
+    );
+    expect(list.map((p) => p._id)).toEqual([mountain]);
   });
 });

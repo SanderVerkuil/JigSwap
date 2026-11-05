@@ -4616,6 +4616,7 @@
         "errors": {
           "emptyTitle": "The title can't be empty",
           "invalidBarcode": "One of the barcodes is not valid",
+          "duplicateBarcode": "Another puzzle already uses one of these barcodes",
           "invalidPieceCount": "The piece count must be a positive number",
           "textTooLong": "One of the fields is too long. Shorten it and try again."
         },
@@ -4691,6 +4692,8 @@
       "notFoundSub": "This suggestion does not exist or the link is wrong.",
       "rejectionReason": "Reason",
       "actionFailed": "Couldn't complete the action",
+      "duplicateBarcode": "Another puzzle already uses one of the proposed barcodes. Decline this suggestion or fix the other puzzle first.",
+      "changedSinceReview": "The proposer edited this suggestion while you were reviewing it. Check the changes and approve again.",
       "approveTextTooLong": "This suggestion has text longer than the catalogue allows, so it can't be applied. Decline it instead.",
       "backToQueue": "Back to suggestions"
     },

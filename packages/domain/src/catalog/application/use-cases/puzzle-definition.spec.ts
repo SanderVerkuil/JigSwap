@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toPuzzleDefinitionId, toSubmitterId } from "../../../shared-kernel";
+import { BARCODE_HOLDING_STATUSES } from "../../domain";
 import {
   FixedClock,
   InMemoryPuzzleDefinitionRepository,
@@ -108,8 +109,54 @@ describe("Catalog PuzzleDefinition use cases", () => {
     });
     expect(r.isOk).toBe(true);
     expect(lookup).toHaveBeenCalledTimes(1);
-    expect(lookup).toHaveBeenCalledWith("4006381333931");
+    expect(lookup).toHaveBeenCalledWith("4006381333931", {
+      statuses: BARCODE_HOLDING_STATUSES,
+    });
   });
+
+  // A rejected definition releases its barcodes: rejection is terminal, so the row can never
+  // be listed again, and keeping the EAN would let junk submissions squat real products.
+  it("lets a new submission reuse a barcode held only by a rejected definition", async () => {
+    const rejectedId = await submitOk({ ean: "4006381333931" });
+    await makeRejectPuzzleDefinition(deps)({ puzzleDefinitionId: rejectedId });
+
+    const r = await makeSubmitPuzzleDefinition(deps)({
+      title: "Corrected resubmission",
+      pieceCount: 1000,
+      submittedBy: submitter,
+      barcodes: { ean: "4006381333931" },
+    });
+    expect(r.isOk).toBe(true);
+    expect(repo.size()).toBe(2);
+  });
+
+  it.each([
+    ["pending", [] as const],
+    ["approved", ["approve"] as const],
+    ["disabled", ["approve", "disable"] as const],
+  ])(
+    "a %s definition still holds its barcode against a new submission",
+    async (_status, moves) => {
+      const holderId = await submitOk({ ean: "4006381333931" });
+      for (const move of moves) {
+        const run =
+          move === "approve"
+            ? makeApprovePuzzleDefinition(deps)
+            : makeDisablePuzzleDefinition(deps);
+        await run({ puzzleDefinitionId: holderId });
+      }
+
+      const r = await makeSubmitPuzzleDefinition(deps)({
+        title: "Squatter",
+        pieceCount: 500,
+        submittedBy: submitter,
+        barcodes: { ean: "4006381333931" },
+      });
+      expect(r.isErr).toBe(true);
+      if (r.isErr) expect(r.error.code).toBe("DuplicateBarcode");
+      expect(repo.size()).toBe(1);
+    },
+  );
 
   it("checks every distinct supplied barcode for a duplicate (UPC clash too)", async () => {
     await submitOk({ ean: "4006381333931" });
@@ -231,5 +278,52 @@ describe("Catalog PuzzleDefinition use cases", () => {
     expect(events.names()).toEqual(["PuzzleDefinitionUpdated"]);
     const stored = await repo.findById(id);
     expect(stored?.toState().brand).toBe("Ravensburger");
+  });
+
+  // The barcode-uniqueness rule applies to edits too, not only to submissions.
+  it("refuses an update that takes a barcode another definition holds, writing nothing", async () => {
+    await submitOk({ ean: "4006381333931" });
+    const id = await submitOk({ ean: "9780201379624" });
+    events.published.length = 0;
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { title: "Hijack", barcodes: { ean: "4006381333931" } },
+    });
+
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("DuplicateBarcode");
+    const stored = (await repo.findById(id))!.toState();
+    expect(stored.ean).toBe("9780201379624");
+    expect(stored.title).toBe("Starry Night");
+    expect(events.published).toEqual([]);
+  });
+
+  it("lets an update restate the definition's own barcodes", async () => {
+    const id = await submitOk({ ean: "4006381333931" });
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { barcodes: { ean: "4006381333931", upc: "036000291452" } },
+    });
+
+    expect(r.isOk).toBe(true);
+    const stored = (await repo.findById(id))!.toState();
+    expect(stored.ean).toBe("4006381333931");
+    expect(stored.upc).toBe("036000291452");
+  });
+
+  it("lets an update take a barcode held only by a rejected definition", async () => {
+    const rejectedId = await submitOk({ ean: "4006381333931" });
+    await makeRejectPuzzleDefinition(deps)({ puzzleDefinitionId: rejectedId });
+    const id = await submitOk();
+
+    const r = await makeUpdatePuzzleDefinition(deps)({
+      puzzleDefinitionId: id,
+      changes: { barcodes: { ean: "4006381333931" } },
+    });
+
+    expect(r.isOk).toBe(true);
+    expect((await repo.findById(id))!.toState().ean).toBe("4006381333931");
   });
 });

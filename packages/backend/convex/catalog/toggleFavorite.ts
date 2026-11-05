@@ -2,11 +2,17 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { canViewDefinition } from "./definitionVisibility";
 
 // Catalog write: flip the acting member's favorite on a puzzle DEFINITION. The member is derived
 // from auth, never the client. Favoriting when already favorited never duplicates (all existing
 // rows for the pair are removed on unfavorite, so a stray duplicate self-heals). Returns the new
 // state so the client can reconcile its optimistic toggle.
+//
+// Adding a favorite needs the same access as opening the definition by id (canViewDefinition:
+// approved, or the member submitted it, or an admin), and a hidden definition is refused with the
+// same "Puzzle not found" as a missing one. Removing an existing favorite always works, so a
+// favorite made while the definition was approved can still be cleared after it is disabled.
 export const toggleFavorite = mutation({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<{ favorited: boolean }> => {
@@ -25,6 +31,10 @@ export const toggleFavorite = mutation({
     if (existing.length > 0) {
       await Promise.all(existing.map((row) => ctx.db.delete(row._id)));
       return { favorited: false };
+    }
+
+    if (!(await canViewDefinition(ctx, puzzle, memberId))) {
+      throw new ConvexError("Puzzle not found");
     }
 
     await ctx.db.insert("favorites", {

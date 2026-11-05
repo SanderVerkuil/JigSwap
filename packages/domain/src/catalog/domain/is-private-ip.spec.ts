@@ -2,274 +2,270 @@
 import { describe, expect, it } from "vitest";
 import { isPrivateIp } from "./is-private-ip";
 
-describe("isPrivateIp", () => {
-  it("flags loopback, RFC-1918, link-local, and unspecified IPv4", () => {
+// isPrivateIp is an allowlist: only a globally routable unicast address is "not private". Each
+// non-public range is checked at both bounds, and its neighbours just outside are checked to stay
+// public (a neighbour is left out where it falls in another non-public range).
+
+describe("isPrivateIp: IPv4 special-purpose ranges", () => {
+  const ranges: ReadonlyArray<{
+    range: string;
+    bounds: readonly [string, string];
+    neighbours: readonly string[];
+  }> = [
+    {
+      range: "0.0.0.0/8 this network",
+      bounds: ["0.0.0.0", "0.255.255.255"],
+      neighbours: ["1.0.0.0"],
+    },
+    {
+      range: "10.0.0.0/8 private",
+      bounds: ["10.0.0.0", "10.255.255.255"],
+      neighbours: ["9.255.255.255", "11.0.0.0"],
+    },
+    {
+      range: "100.64.0.0/10 shared address space (CGNAT)",
+      bounds: ["100.64.0.0", "100.127.255.255"],
+      neighbours: ["100.63.255.255", "100.128.0.0"],
+    },
+    {
+      range: "127.0.0.0/8 loopback",
+      bounds: ["127.0.0.0", "127.255.255.255"],
+      neighbours: ["126.255.255.255", "128.0.0.0"],
+    },
+    {
+      range: "169.254.0.0/16 link-local (cloud metadata)",
+      bounds: ["169.254.0.0", "169.254.255.255"],
+      neighbours: ["169.253.255.255", "169.255.0.0"],
+    },
+    {
+      range: "172.16.0.0/12 private",
+      bounds: ["172.16.0.0", "172.31.255.255"],
+      neighbours: ["172.15.255.255", "172.32.0.0"],
+    },
+    {
+      range: "192.0.0.0/24 IETF protocol assignments",
+      bounds: ["192.0.0.0", "192.0.0.255"],
+      neighbours: ["191.255.255.255", "192.0.1.0"],
+    },
+    {
+      range: "192.0.2.0/24 TEST-NET-1",
+      bounds: ["192.0.2.0", "192.0.2.255"],
+      neighbours: ["192.0.1.255", "192.0.3.0"],
+    },
+    {
+      range: "192.31.196.0/24 AS112-v4",
+      bounds: ["192.31.196.0", "192.31.196.255"],
+      neighbours: ["192.31.195.255", "192.31.197.0"],
+    },
+    {
+      range: "192.52.193.0/24 AMT",
+      bounds: ["192.52.193.0", "192.52.193.255"],
+      neighbours: ["192.52.192.255", "192.52.194.0"],
+    },
+    {
+      range: "192.88.99.0/24 6to4 relay anycast",
+      bounds: ["192.88.99.0", "192.88.99.255"],
+      neighbours: ["192.88.98.255", "192.88.100.0"],
+    },
+    {
+      range: "192.168.0.0/16 private",
+      bounds: ["192.168.0.0", "192.168.255.255"],
+      neighbours: ["192.167.255.255", "192.169.0.0"],
+    },
+    {
+      range: "192.175.48.0/24 AS112 direct delegation",
+      bounds: ["192.175.48.0", "192.175.48.255"],
+      neighbours: ["192.175.47.255", "192.175.49.0"],
+    },
+    {
+      range: "198.18.0.0/15 benchmarking",
+      bounds: ["198.18.0.0", "198.19.255.255"],
+      neighbours: ["198.17.255.255", "198.20.0.0"],
+    },
+    {
+      range: "198.51.100.0/24 TEST-NET-2",
+      bounds: ["198.51.100.0", "198.51.100.255"],
+      neighbours: ["198.51.99.255", "198.51.101.0"],
+    },
+    {
+      range: "203.0.113.0/24 TEST-NET-3",
+      bounds: ["203.0.113.0", "203.0.113.255"],
+      neighbours: ["203.0.112.255", "203.0.114.0"],
+    },
+    {
+      // The upper neighbour, 240.0.0.0, is itself reserved (next row).
+      range: "224.0.0.0/4 multicast",
+      bounds: ["224.0.0.0", "239.255.255.255"],
+      neighbours: ["223.255.255.255"],
+    },
+    {
+      // The lower neighbour is multicast (previous row); there is no upper neighbour.
+      range: "240.0.0.0/4 reserved, including broadcast",
+      bounds: ["240.0.0.0", "255.255.255.255"],
+      neighbours: [],
+    },
+  ];
+
+  for (const { range, bounds, neighbours } of ranges) {
+    it(`flags ${range} at both bounds and leaves its neighbours public`, () => {
+      for (const ip of bounds) expect(isPrivateIp(ip), ip).toBe(true);
+      for (const ip of neighbours) expect(isPrivateIp(ip), ip).toBe(false);
+    });
+  }
+
+  it("treats ordinary public IPv4 as public", () => {
+    for (const ip of ["1.1.1.1", "8.8.8.8", "93.184.216.34", "151.101.1.69"]) {
+      expect(isPrivateIp(ip), ip).toBe(false);
+    }
+  });
+});
+
+describe("isPrivateIp: IPv6", () => {
+  it("treats global unicast (2000::/3) as public at both bounds", () => {
     for (const ip of [
-      "127.0.0.1",
-      "10.0.0.5",
-      "172.16.0.1",
-      "172.31.255.255",
-      "192.168.1.1",
-      "169.254.10.10",
-      "0.0.0.0",
+      "2000::",
+      "2606:4700:4700::1111",
+      "2a00:1450:4001:80b::200e",
+      "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+    ]) {
+      expect(isPrivateIp(ip), ip).toBe(false);
+    }
+  });
+
+  it("flags the addresses just outside 2000::/3", () => {
+    expect(isPrivateIp("1fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")).toBe(true);
+    expect(isPrivateIp("4000::")).toBe(true);
+  });
+
+  const excluded: ReadonlyArray<{
+    range: string;
+    bounds: readonly [string, string];
+    neighbours: readonly [string, string];
+  }> = [
+    {
+      range: "2001::/23 IETF protocol assignments (Teredo, benchmarking)",
+      bounds: ["2001::", "2001:1ff:ffff:ffff:ffff:ffff:ffff:ffff"],
+      neighbours: ["2000:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "2001:200::"],
+    },
+    {
+      range: "2001:db8::/32 documentation",
+      bounds: ["2001:db8::", "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff"],
+      neighbours: ["2001:db7:ffff:ffff:ffff:ffff:ffff:ffff", "2001:db9::"],
+    },
+    {
+      range: "2002::/16 6to4",
+      bounds: ["2002::", "2002:ffff:ffff:ffff:ffff:ffff:ffff:ffff"],
+      neighbours: ["2001:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "2003::"],
+    },
+    {
+      range: "3fff::/20 documentation",
+      bounds: ["3fff::", "3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff"],
+      neighbours: ["3ffe:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "3fff:1000::"],
+    },
+  ];
+
+  for (const { range, bounds, neighbours } of excluded) {
+    it(`flags ${range} at both bounds and leaves its neighbours public`, () => {
+      for (const ip of bounds) expect(isPrivateIp(ip), ip).toBe(true);
+      for (const ip of neighbours) expect(isPrivateIp(ip), ip).toBe(false);
+    });
+  }
+
+  it("flags the special-purpose space outside 2000::/3", () => {
+    for (const ip of [
+      "::", // unspecified
+      "::1", // loopback
+      "::8.8.8.8", // IPv4-compatible (::/96), even with a public IPv4 inside
+      "::ffff:0:8.8.8.8", // SIIT (::ffff:0:0:0/96)
+      "64:ff9b::8.8.8.8", // NAT64 well-known prefix (64:ff9b::/96)
+      "64:ff9b:1::808:808", // NAT64 local-use (64:ff9b:1::/48)
+      "100::1", // discard-only (100::/64)
+      "fc00::", // unique local (fc00::/7), both ends
+      "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+      "fe80::1", // link-local (fe80::/10), both ends
+      "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+      "fec0::1", // site-local (fec0::/10, deprecated)
+      "ff02::1", // multicast (ff00::/8)
+      "ff0e::101",
     ]) {
       expect(isPrivateIp(ip), ip).toBe(true);
     }
   });
 
-  it("allows public IPv4", () => {
-    for (const ip of ["8.8.8.8", "1.1.1.1", "172.32.0.1", "93.184.216.34"]) {
-      expect(isPrivateIp(ip), ip).toBe(false);
-    }
-  });
-
-  // --- 100.64.0.0/10 carrier-grade NAT (RFC 6598) ---
-  it("flags the 100.64/10 CGNAT range and allows its neighbors", () => {
-    expect(isPrivateIp("100.64.0.0")).toBe(true); // lower bound
-    expect(isPrivateIp("100.100.0.1")).toBe(true); // inside
-    expect(isPrivateIp("100.127.255.255")).toBe(true); // upper bound
-    expect(isPrivateIp("100.63.0.1")).toBe(false); // one below the block
-    expect(isPrivateIp("100.128.0.1")).toBe(false); // one above the block
-  });
-
-  // --- 192.0.0.0/24 IETF protocol assignments ---
-  it("flags the 192.0.0.0/24 block and allows the public 192.0.2-derived space", () => {
-    expect(isPrivateIp("192.0.0.0")).toBe(true);
-    expect(isPrivateIp("192.0.0.171")).toBe(true); // NAT64 well-known
-    expect(isPrivateIp("192.0.1.1")).toBe(false); // outside the /24
-    expect(isPrivateIp("192.1.0.1")).toBe(false);
-  });
-
-  it("flags IPv6 loopback, ULA, and link-local", () => {
-    for (const ip of ["::1", "fc00::1", "fd12::34", "fe80::1", "::"]) {
-      expect(isPrivateIp(ip), ip).toBe(true);
-    }
-  });
-
-  it("flags link-local across the full fe80::/10 range", () => {
-    expect(isPrivateIp("fe80::1")).toBe(true);
-    expect(isPrivateIp("feb0::1")).toBe(true);
-    expect(isPrivateIp("febf::1")).toBe(true);
-  });
-
-  it("flags IPv4-mapped private addresses in hex-colon form", () => {
-    expect(isPrivateIp("::ffff:7f00:1")).toBe(true); // 127.0.0.1
-    expect(isPrivateIp("::ffff:0808:0808")).toBe(false); // 8.8.8.8
-  });
-
-  it("allows public IPv6", () => {
-    expect(isPrivateIp("2606:4700:4700::1111")).toBe(false);
-  });
-
-  // --- IPv4 part-count validation (L8: parts.length !== 4) ---
-  // A malformed-but-private-looking address with too few/too many octets must
-  // NOT be treated as a valid IPv4 and so must return false. If the length
-  // guard is dropped (mutated to false / always passes), "10" alone would be
-  // parsed as a===10 and wrongly flagged private.
-  it("rejects IPv4 with fewer than four octets even when first octet is private", () => {
-    expect(isPrivateIp("10")).toBe(false);
-    expect(isPrivateIp("10.0")).toBe(false);
-    expect(isPrivateIp("10.0.0")).toBe(false);
-  });
-
-  it("rejects IPv4 with more than four octets even when first octet is private", () => {
-    expect(isPrivateIp("10.0.0.0.0")).toBe(false);
-  });
-
-  // --- IPv4 octet validation predicate (L9: parts.some(... range/integer)) ---
-  // The `.some` must short-circuit on ANY invalid octet. If mutated to `.every`,
-  // a single bad octet (here the 4th) would no longer invalidate the address.
-  it("rejects IPv4 when only one octet is non-integer (some, not every)", () => {
-    expect(isPrivateIp("10.0.0.x")).toBe(false);
-  });
-
-  // n > 255 branch: a private-prefixed address with one out-of-range octet
-  // must be rejected. Distinguishes `n > 255` from a dropped/false predicate.
-  it("rejects IPv4 with an octet above 255", () => {
-    expect(isPrivateIp("10.0.0.256")).toBe(false);
-  });
-
-  // n < 0 branch: a negative octet must reject. parseInt("-5") = -5.
-  it("rejects IPv4 with a negative octet", () => {
-    expect(isPrivateIp("10.0.0.-5")).toBe(false);
-  });
-
-  // !Number.isInteger branch: NaN octet (non-numeric) must reject.
-  it("rejects IPv4 with a NaN octet", () => {
-    expect(isPrivateIp("10.0.0.abc")).toBe(false);
-  });
-
-  // Confirms the predicate accepts the legal boundaries 0 and 255 (so the
-  // range check is `< 0`/`> 255`, not `<= 0`/`>= 255`).
-  it("accepts boundary octet values 0 and 255 within a private range", () => {
-    expect(isPrivateIp("10.0.0.255")).toBe(true);
-    expect(isPrivateIp("10.255.255.255")).toBe(true);
-  });
-
-  // --- 172.16.0.0/12 boundaries (L16: a===172 && b>=16 && b<=31) ---
-  it("flags the exact lower and upper bounds of 172.16/12", () => {
-    expect(isPrivateIp("172.16.0.0")).toBe(true); // b === 16 lower bound
-    expect(isPrivateIp("172.31.255.255")).toBe(true); // b === 31 upper bound
-  });
-
-  it("allows 172 addresses just outside the /12 block (b=15 and b=32)", () => {
-    expect(isPrivateIp("172.15.0.1")).toBe(false); // one below lower bound
-    expect(isPrivateIp("172.32.0.1")).toBe(false); // one above upper bound
-  });
-
-  // Distinguishes `a===172 && b>=16` from `a===172 || b>=16`: a public first
-  // octet combined with b in [16,31] must stay public.
-  it("does not flag a public first octet merely because second octet is 16-31", () => {
-    expect(isPrivateIp("8.16.0.1")).toBe(false);
-    expect(isPrivateIp("8.31.0.1")).toBe(false);
-  });
-
-  // --- 192.168.0.0/16 (L17: a===192 && b===168) ---
-  it("flags 192.168 and rejects neighbors that share only one octet", () => {
-    expect(isPrivateIp("192.168.0.0")).toBe(true);
-    expect(isPrivateIp("192.167.0.1")).toBe(false); // b one below
-    expect(isPrivateIp("192.169.0.1")).toBe(false); // b one above
-    expect(isPrivateIp("191.168.0.1")).toBe(false); // a one below
-    expect(isPrivateIp("193.168.0.1")).toBe(false); // a one above
-  });
-
-  // --- 169.254.0.0/16 link-local (L18: a===169 && b===254) ---
-  it("flags 169.254 link-local and rejects neighbors sharing only one octet", () => {
-    expect(isPrivateIp("169.254.0.0")).toBe(true);
-    expect(isPrivateIp("169.253.0.1")).toBe(false); // b one below
-    expect(isPrivateIp("169.255.0.1")).toBe(false); // b one above
-    expect(isPrivateIp("168.254.0.1")).toBe(false); // a one below
-    expect(isPrivateIp("170.254.0.1")).toBe(false); // a one above
-  });
-
-  // --- IPv6 bracket stripping (L23: replace(/^\[|\]$/g, "")) ---
-  // Bracketed forms must be normalized so the inner address is classified.
-  it("strips surrounding brackets from IPv6 literals", () => {
-    expect(isPrivateIp("[::1]")).toBe(true);
-    expect(isPrivateIp("[fe80::1]")).toBe(true);
-    expect(isPrivateIp("[2606:4700:4700::1111]")).toBe(false);
-  });
-
-  // The `^\[` anchor: a stray '[' that is NOT leading must remain, so an
-  // address with an internal bracket is not silently cleaned into "::1".
-  // ":a[:1" contains a colon (routed to IPv6) but is not a private form;
-  // if the leading-anchor were dropped the '[' would be stripped anywhere.
-  it("only strips a leading bracket, not internal brackets", () => {
-    // "::1]" -> with trailing-anchor strip becomes "::1" (private).
-    expect(isPrivateIp("::1]")).toBe(true);
-    // A non-leading '[' must not be removed; "::[1" stays non-loopback.
-    expect(isPrivateIp("::[1")).toBe(false);
-  });
-
-  // The `\]$` anchor: a trailing ']' is stripped, but a non-trailing ']' is not.
-  it("only strips a trailing bracket, not internal ones", () => {
-    expect(isPrivateIp("[::1")).toBe(true); // leading '[' stripped -> "::1"
-    expect(isPrivateIp("::]1")).toBe(false); // internal ']' kept -> not loopback
-  });
-
-  // The replacement string must be "" (empty). If mutated to a non-empty
-  // literal, "[::1]" would become e.g. "Stryker...::1Stryker..." and not match.
-  it("replaces brackets with empty string so the inner literal matches exactly", () => {
-    expect(isPrivateIp("[::]")).toBe(true); // -> "::" unspecified
-  });
-
-  // --- fe80::/10 anchor (L25: /^fe[89ab]/i) ---
-  // The `^` anchor matters: "fe8" must only be flagged when it STARTS the
-  // address. An address that merely contains "fe8" later must not be flagged.
-  it("only flags fe[89ab] when it is the prefix of the IPv6 address", () => {
-    expect(isPrivateIp("fe89::1")).toBe(true); // starts with fe89
-    expect(isPrivateIp("2606:fe80::1")).toBe(false); // contains but not prefix
-  });
-
-  // The character class [89ab]: fe7x and fecx are outside fe80::/10.
-  it("does not flag fe7 or fec prefixes as link-local", () => {
-    expect(isPrivateIp("fe70::1")).toBe(false);
-    expect(isPrivateIp("fec0::1")).toBe(false);
-  });
-
-  // --- fc00::/7 ULA anchor (L26: /^f[cd][0-9a-f]{2}:/) ---
-  // The `^` anchor: only a leading fc/fd block is ULA.
-  it("only flags f[cd]xx: when it is the prefix of the IPv6 address", () => {
-    expect(isPrivateIp("fc12::1")).toBe(true);
-    expect(isPrivateIp("fd34::1")).toBe(true);
-    expect(isPrivateIp("2606:fc12::1")).toBe(false); // contains but not prefix
-  });
-
-  // --- IPv4-mapped dotted-decimal (L27: /^::ffff:(\d+\.\d+\.\d+\.\d+)$/) ---
-  it("flags IPv4-mapped dotted-decimal private addresses", () => {
-    expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
-    expect(isPrivateIp("::ffff:10.0.0.1")).toBe(true);
-  });
-
-  it("allows IPv4-mapped dotted-decimal public addresses", () => {
+  it("unwraps IPv4-mapped addresses (::ffff:0:0/96) to the IPv4 rule", () => {
     expect(isPrivateIp("::ffff:8.8.8.8")).toBe(false);
+    expect(isPrivateIp("::ffff:808:808")).toBe(false);
+    expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
+    expect(isPrivateIp("::ffff:7f00:1")).toBe(true);
+    expect(isPrivateIp("::ffff:169.254.169.254")).toBe(true);
+    expect(isPrivateIp("::ffff:198.18.0.1")).toBe(true);
+    expect(isPrivateIp("0:0:0:0:0:ffff:c0a8:101")).toBe(true); // 192.168.1.1
   });
 
-  // The `^` anchor on the dotted-decimal regex: a prefix before ::ffff: must
-  // prevent a match (otherwise the embedded private v4 would leak through).
-  it("requires the ::ffff: dotted-decimal mapping to start the address", () => {
-    expect(isPrivateIp("1234:ffff:127.0.0.1")).toBe(false);
+  it("accepts the textual forms DNS answers and URLs produce", () => {
+    expect(isPrivateIp("2606:4700:4700:0:0:0:0:1111")).toBe(false); // no ::
+    expect(isPrivateIp("2606:4700:4700:0000:0000:0000:0000:1111")).toBe(false);
+    expect(isPrivateIp("2606:4700:4700::1111".toUpperCase())).toBe(false);
+    expect(isPrivateIp("[2606:4700:4700::1111]")).toBe(false); // URL brackets
+    expect(isPrivateIp("[::1]")).toBe(true);
+    expect(isPrivateIp("fe80::1%eth0")).toBe(true); // zone id
+    expect(isPrivateIp("2606:4700:4700::1111%en0")).toBe(false);
+    expect(isPrivateIp("2001:4860::1.2.3.4")).toBe(false); // dotted tail
+    expect(isPrivateIp("1:2:3:4:5:6:7::")).toBe(true); // outside 2000::/3
+  });
+});
+
+describe("isPrivateIp fails closed", () => {
+  // Anything that is not a well-formed IP literal counts as non-public, so a parser surprise can
+  // never open the SSRF guard.
+  it("treats malformed IPv4 as non-public", () => {
+    for (const ip of [
+      "",
+      "not-an-ip",
+      "8",
+      "8.8",
+      "8.8.8",
+      "8.8.8.8.8",
+      "8.8.8.256",
+      "8.8.8.-1",
+      "8.8.8.x",
+      "08.8.8.8", // leading zero: some parsers read it as octal
+      "8.8.8.010",
+      " 8.8.8.8",
+      "8.8.8.8 ",
+      "0x8.8.8.8",
+      "134744072", // 8.8.8.8 as one number
+    ]) {
+      expect(isPrivateIp(ip), JSON.stringify(ip)).toBe(true);
+    }
   });
 
-  // The `$` anchor on the dotted-decimal regex: trailing junk must prevent a
-  // match. Routed to IPv6 because of the colons; must NOT be flagged private.
-  it("requires the ::ffff: dotted-decimal mapping to end the address", () => {
-    expect(isPrivateIp("::ffff:127.0.0.1:extra")).toBe(false);
-  });
-
-  // The `\d+` (one-or-more) quantifiers: each octet may be multi-digit. A
-  // multi-digit-octet private mapping must still be recognized. If any `\d+`
-  // were narrowed to a single `\d`, "127" / "168" octets would fail to match.
-  it("matches multi-digit octets in each position of the mapped v4 address", () => {
-    expect(isPrivateIp("::ffff:127.16.31.254")).toBe(true); // a=127 loopback range
-    expect(isPrivateIp("::ffff:192.168.100.200")).toBe(true); // all multi-digit, private
-  });
-
-  // The `\d` (digit, not \D) class: a non-digit octet must NOT match the
-  // mapped pattern, so it falls through and the address is not private.
-  it("does not match the dotted-decimal mapping when an octet is non-numeric", () => {
-    expect(isPrivateIp("::ffff:10.x.0.1")).toBe(false);
-  });
-
-  // --- L28: if (mapped) return ipv4Private(...) ---
-  // Confirms the mapped branch is actually taken: a mapped *private* address
-  // returns true (mutating the guard to false would return false here).
-  it("returns the embedded v4 classification when a dotted-decimal mapping matches", () => {
-    expect(isPrivateIp("::ffff:172.16.5.5")).toBe(true);
-  });
-
-  // --- IPv4-mapped hex-colon (L29: /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/) ---
-  it("flags and allows IPv4-mapped hex-colon addresses by embedded v4", () => {
-    expect(isPrivateIp("::ffff:7f00:1")).toBe(true); // 127.0.0.1 private
-    expect(isPrivateIp("::ffff:c0a8:0101")).toBe(true); // 192.168.1.1 private
-    expect(isPrivateIp("::ffff:0808:0808")).toBe(false); // 8.8.8.8 public
-  });
-
-  // The `^` anchor on the hex-colon regex.
-  it("requires the ::ffff: hex-colon mapping to start the address", () => {
-    expect(isPrivateIp("1234:ffff:7f00:1")).toBe(false);
-  });
-
-  // The `$` anchor on the hex-colon regex: trailing group must end the string.
-  it("requires the ::ffff: hex-colon mapping to end the address", () => {
-    expect(isPrivateIp("::ffff:7f00:0001:dead")).toBe(false);
-  });
-
-  // The `{1,4}` quantifier on the final hex group: a full 4-hex-digit group
-  // (e.g. "0001") must still match. If narrowed to a single digit, the 127.0.0.1
-  // form below ("7f00:0001") would fail to match and fall through to false.
-  it("matches up to four hex digits in the final hex-colon group", () => {
-    expect(isPrivateIp("::ffff:7f00:0001")).toBe(true); // 127.0.0.1
-  });
-
-  // --- Leading `^` anchor on the IPv4-mapped IPv6 patterns ---
-  // A "::ffff:" sequence embedded mid-string (not at the start) must NOT be parsed as a mapped
-  // address. Without the `^` anchor a mutant would match the substring and mis-classify it.
-  it("does not treat a mid-string dotted-decimal mapped address as private (`^` anchor)", () => {
-    expect(isPrivateIp("junk::ffff:10.0.0.1")).toBe(false);
-  });
-
-  it("does not treat a mid-string hex-colon mapped address as private (`^` anchor)", () => {
-    expect(isPrivateIp("junk::ffff:0a00:0001")).toBe(false); // 10.0.0.1 only if loosely matched
+  it("treats malformed IPv6 as non-public", () => {
+    for (const ip of [
+      ":",
+      ":::",
+      "2606:4700:4700::1111::",
+      "2606::4700::1111",
+      "1:2:3:4:5:6:7:8:9",
+      "2001:4860:1:2:3:4:5", // seven groups, no ::
+      "2606:4700:4700:0:0:0:0:0:1111", // nine groups
+      "2001:1:2:3:4:5:6:7::", // :: next to eight explicit groups
+      "2606:4700::12345",
+      "2606:4700::g",
+      ":2606:4700::1",
+      "2606:4700::1:",
+      "[2606:4700::1", // unbalanced brackets
+      "2606:4700::1]",
+      "[[2606:4700::1]]",
+      "2606:4700::1%", // empty zone
+      "2001:4860::1.2.3", // short dotted tail
+      "2001:4860::8.8.8.256",
+      "2001:4860::08.8.8.8",
+      "8.8.8.8::", // dotted quad not at the end
+      "2001:4860:8.8.8.8::1",
+      "2001:4860::8.8.8.8:1",
+    ]) {
+      expect(isPrivateIp(ip), JSON.stringify(ip)).toBe(true);
+    }
   });
 });

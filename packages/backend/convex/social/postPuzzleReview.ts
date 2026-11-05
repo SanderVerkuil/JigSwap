@@ -1,6 +1,8 @@
 import { makeUpsertPuzzleReview, toPuzzleDefinitionId } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import {
@@ -19,6 +21,11 @@ import { toConvexError } from "../solving/errors";
 // "approved definition, or your own submission" rule live in the domain use case (fed the
 // definition's facts by reviewedDefinitionOf). The author is derived from auth, never the client.
 // Each save (new or edited) counts against the member's reviewPost limit.
+//
+// The form sits on the definition page, so it needs that page's access (canViewDefinition:
+// approved, or the member submitted it or is an admin); a hidden or missing definition is refused
+// with the same "Puzzle not found". The domain rule still decides the rest: an admin can open a
+// definition that is not approved, but reviews it only if they submitted it.
 export const postPuzzleReview = mutation({
   args: {
     puzzleId: v.id("puzzles"),
@@ -28,6 +35,17 @@ export const postPuzzleReview = mutation({
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
     await enforceRateLimit(ctx, "reviewPost", memberId);
+    const puzzle = await ctx.db.get(args.puzzleId);
+    if (
+      !puzzle ||
+      !(await canViewDefinition(
+        ctx,
+        puzzle,
+        memberId as unknown as Id<"users">,
+      ))
+    ) {
+      throw new ConvexError("Puzzle not found");
+    }
 
     const upsertPuzzleReviewUseCase = makeUpsertPuzzleReview({
       puzzleReviews: convexPuzzleReviewRepository(ctx),

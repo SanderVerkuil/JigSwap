@@ -451,13 +451,21 @@ function CopyInstanceDetail({
               {snapshot.pieceCount.toLocaleString()}
             </span>{" "}
             {tPuzzles("pieces")}
-            {" · "}
-            <Link
-              href={`/puzzles/${copy.puzzleId}`}
-              className="text-jigsaw-primary font-semibold hover:underline"
-            >
-              {t("viewPuzzlePage")}
-            </Link>
+            {/* Only when the definition page would open for this viewer (not for a definition that
+                is no longer approved, unless they submitted it or are an admin). Hidden only on an
+                explicit false: web can deploy before the backend that sends the field, and an
+                absent value must keep the link for approved definitions. */}
+            {copy.viewerMayOpenDefinition !== false && (
+              <>
+                {" · "}
+                <Link
+                  href={`/puzzles/${copy.puzzleId}`}
+                  className="text-jigsaw-primary font-semibold hover:underline"
+                >
+                  {t("viewPuzzlePage")}
+                </Link>
+              </>
+            )}
           </p>
 
           {/* Badges */}

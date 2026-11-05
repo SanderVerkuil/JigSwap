@@ -389,7 +389,9 @@ describe("catalogue text bounds", () => {
       if (row) await ctx.db.patch(row._id, { description: legacyDescription });
     });
 
-    await asMember(t, "clerk_alice").mutation(
+    // Only an admin edits a definition directly; everyone else files a change proposal.
+    await seedMember(t, "clerk_admin", "admin");
+    await asAdmin(t, "clerk_admin").mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       { puzzleDefinitionId: definitionId, pieceCount: 1500 },
     );

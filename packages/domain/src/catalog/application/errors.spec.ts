@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { toCatalogCategoryId, toPuzzleDefinitionId } from "../../shared-kernel";
+import {
+  toCatalogCategoryId,
+  toChangeProposalId,
+  toPuzzleDefinitionId,
+} from "../../shared-kernel";
 import { CatalogApplicationError } from "./errors";
 
 describe("CatalogApplicationError factories", () => {
@@ -17,6 +21,16 @@ describe("CatalogApplicationError factories", () => {
     const e = CatalogApplicationError.puzzleDefinitionNotFound(id);
     expect(e.code).toBe("PuzzleDefinitionNotFound");
     expect(e.message).toBe("Puzzle definition pd1 could not be found");
+  });
+
+  it("changeProposalChanged interpolates the id", () => {
+    const e = CatalogApplicationError.changeProposalChanged(
+      toChangeProposalId("cp1"),
+    );
+    expect(e.code).toBe("ChangeProposalChanged");
+    expect(e.message).toBe(
+      "Change proposal cp1 was edited after the version being decided on",
+    );
   });
 
   it("catalogCategoryNotFound interpolates the id", () => {

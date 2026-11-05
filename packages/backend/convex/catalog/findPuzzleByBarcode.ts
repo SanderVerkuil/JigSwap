@@ -1,31 +1,35 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toPuzzleSummaryView } from "./mappers";
 
+// Ask the index for the APPROVED row directly, so an older pending or rejected row carrying the
+// same code can never hide it (or be returned in its place).
 const findApprovedByBarcode = async (
   ctx: QueryCtx,
   { ean, upc }: { ean?: string; upc?: string },
 ) => {
-  const candidates: Doc<"puzzles">[] = [];
   if (ean) {
     const row = await ctx.db
       .query("puzzles")
-      .withIndex("by_ean", (q) => q.eq("ean", ean))
+      .withIndex("by_ean_status", (q) =>
+        q.eq("ean", ean).eq("status", "approved"),
+      )
       .first();
-    if (row) candidates.push(row);
+    if (row) return row;
   }
   if (upc) {
     const row = await ctx.db
       .query("puzzles")
-      .withIndex("by_upc", (q) => q.eq("upc", upc))
+      .withIndex("by_upc_status", (q) =>
+        q.eq("upc", upc).eq("status", "approved"),
+      )
       .first();
-    if (row) candidates.push(row);
+    if (row) return row;
   }
-  return candidates.find((p) => p.status === "approved") ?? null;
+  return null;
 };
 
 // Surfaces an existing APPROVED catalog puzzle carrying the extracted EAN/UPC, to drive the

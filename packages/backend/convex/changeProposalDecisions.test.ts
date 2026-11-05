@@ -1,6 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
@@ -163,6 +163,98 @@ describe("catalog.approveChangeProposal", () => {
       ),
       "IllegalProposalTransition",
     );
+  });
+
+  test("refuses a proposal that would give the definition another puzzle's barcode, changing nothing", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: "4006381333931" },
+    );
+    const definitionId = await submitApproved(t);
+    const proposalId = (await asBob(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      {
+        puzzleDefinitionId: definitionId,
+        title: "Mountain Vista (Panorama)",
+        ean: "4006381333931",
+      },
+    )) as string;
+
+    await expectConvexCode(
+      asAdmin(t).mutation(
+        api.catalog.approveChangeProposal.approveChangeProposal,
+        { changeProposalId: proposalId },
+      ),
+      "DuplicateBarcode",
+    );
+
+    expect((await proposalRow(t, proposalId))?.status).toBe("pending");
+    const puzzle = await puzzleRow(t, definitionId);
+    expect(puzzle?.title).toBe("Mountain Vista");
+    expect(puzzle?.ean).toBeUndefined();
+    expect(
+      (await allActions(t)).some((a) => a.kind === "proposal_approved"),
+    ).toBe(false);
+  });
+
+  test("refuses to approve a proposal the proposer edited after the admin's review, changing nothing", async () => {
+    vi.useFakeTimers({ now: new Date("2026-10-30T10:00:00Z") });
+    try {
+      const t = convexTest(schema, modules);
+      await seedMembers(t);
+      const { definitionId, proposalId } = await fileAsBob(t);
+      const reviewed = await asAdmin(t).query(
+        api.catalog.getChangeProposal.getChangeProposal,
+        { changeProposalId: proposalId },
+      );
+      if (!reviewed) throw new Error("setup failed");
+
+      // Bob rewrites his pending proposal while the admin has the review page open.
+      vi.setSystemTime(new Date("2026-10-30T10:00:05Z"));
+      await asBob(t).mutation(
+        api.catalog.editChangeProposal.editChangeProposal,
+        { changeProposalId: proposalId, title: "Something never reviewed" },
+      );
+
+      await expectConvexCode(
+        asAdmin(t).mutation(
+          api.catalog.approveChangeProposal.approveChangeProposal,
+          {
+            changeProposalId: proposalId,
+            expectedUpdatedAt: reviewed.updatedAt,
+          },
+        ),
+        "ChangeProposalChanged",
+      );
+
+      const proposal = await proposalRow(t, proposalId);
+      expect(proposal?.status).toBe("pending");
+      expect(proposal?.changes.title).toBe("Something never reviewed");
+      expect((await puzzleRow(t, definitionId))?.title).toBe("Mountain Vista");
+      expect(
+        (await allActions(t)).some((a) => a.kind === "proposal_approved"),
+      ).toBe(false);
+
+      // Approving the version now on screen goes through.
+      const current = await asAdmin(t).query(
+        api.catalog.getChangeProposal.getChangeProposal,
+        { changeProposalId: proposalId },
+      );
+      await asAdmin(t).mutation(
+        api.catalog.approveChangeProposal.approveChangeProposal,
+        {
+          changeProposalId: proposalId,
+          expectedUpdatedAt: current?.updatedAt,
+        },
+      );
+      expect((await puzzleRow(t, definitionId))?.title).toBe(
+        "Something never reviewed",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

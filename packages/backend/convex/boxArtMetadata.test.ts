@@ -22,9 +22,13 @@ import schema from "./schema";
 // that the server checked for the acting member. Fixtures: see stripMetadata.test.ts. The
 // hash check and the classifier are covered in boxArtModeration.test.ts.
 
-vi.mock("node:dns/promises", () => ({
-  lookup: async () => [{ address: "93.184.216.34", family: 4 }],
-}));
+// importPuzzleImage's shop fetch answers through the stubbed global fetch (the transport itself is
+// covered by publicFetch.test.ts).
+vi.mock("./catalog/adapters/publicFetch", async (importOriginal) =>
+  (
+    await import("../test-fixtures/publicFetchViaGlobalFetch")
+  ).publicFetchViaGlobalFetch(importOriginal),
+);
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -388,7 +392,8 @@ describe("catalog mutations take only cleaned box art", () => {
     );
     const raw = await upload(t, fixture("gps.jpg"), "image/jpeg");
 
-    await asAlice(t).mutation(
+    // An approved definition is edited by an admin (its submitter may no longer edit it).
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       { puzzleDefinitionId: definitionId, title: "Legacy 2", image: legacyArt },
     );

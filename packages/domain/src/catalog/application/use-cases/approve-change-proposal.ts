@@ -7,6 +7,7 @@ import {
 } from "../ports/in/decide-change-proposal.port";
 import { ChangeProposalRepository } from "../ports/out/change-proposal.repository";
 import { PuzzleDefinitionRepository } from "../ports/out/puzzle-definition.repository";
+import { firstDuplicateBarcode } from "./barcode-uniqueness";
 
 export interface ApproveChangeProposalDeps {
   readonly proposals: ChangeProposalRepository;
@@ -30,6 +31,16 @@ export const makeApproveChangeProposal =
         CatalogApplicationError.changeProposalNotFound(cmd.changeProposalId),
       );
     }
+    // Approve only the version the admin reviewed: a proposer's edit after that moment (the
+    // review page is live, but the click can race it) must be looked at again, not applied.
+    if (
+      cmd.expectedUpdatedAt !== undefined &&
+      proposal.updatedAt.getTime() !== cmd.expectedUpdatedAt.getTime()
+    ) {
+      return err(
+        CatalogApplicationError.changeProposalChanged(cmd.changeProposalId),
+      );
+    }
 
     const definition = await deps.definitions.findById(
       proposal.puzzleDefinitionId,
@@ -45,6 +56,16 @@ export const makeApproveChangeProposal =
     const now = deps.clock.now();
     const approved = proposal.approve(now);
     if (approved.isErr) return err(approved.error);
+
+    // The barcode-uniqueness rule, as on submit and update: the patch may not give this
+    // definition a barcode another definition holds (its own barcodes are no clash).
+    const duplicate = await firstDuplicateBarcode(
+      deps.definitions,
+      proposal.changes.barcodes,
+      proposal.puzzleDefinitionId,
+    );
+    if (duplicate)
+      return err(CatalogApplicationError.duplicateBarcode(duplicate));
 
     const applied = definition.update(proposal.changes, now);
     if (applied.isErr) return err(applied.error);

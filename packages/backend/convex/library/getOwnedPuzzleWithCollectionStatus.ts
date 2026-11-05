@@ -7,11 +7,11 @@ import { query } from "../_generated/server";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import {
+  toCopyPuzzleView,
   toCopySnapshotView,
   toOwnedCopyCompletionView,
   toOwnedCopyImageView,
   toOwnedCopyOwnerView,
-  toOwnedCopyPuzzleView,
 } from "./mappers";
 
 // Library read: a single owned copy enriched with its image rows, owner, the acting member's
@@ -39,7 +39,13 @@ export const getOwnedPuzzleWithCollectionStatus = query({
     // getCopyInstanceView instead.
     if (ownedPuzzle.ownerId !== user._id) return null;
 
-    const puzzle = await ctx.db.get(ownedPuzzle.puzzleId);
+    // The definition's catalogue facts follow the copy views' rule (toCopyPuzzleView): the owner
+    // gets a pending or rejected definition's text only if they submitted it.
+    const puzzle = toCopyPuzzleView(
+      ownedPuzzle,
+      await ctx.db.get(ownedPuzzle.puzzleId),
+      { includeOwnerOnly: true },
+    );
     if (!puzzle) return null;
 
     const owner = await ctx.db.get(ownedPuzzle.ownerId);
@@ -129,7 +135,7 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       snapshot: toCopySnapshotView(ownedPuzzle.snapshot),
       createdAt: ownedPuzzle.createdAt,
       updatedAt: ownedPuzzle.updatedAt,
-      puzzle: toOwnedCopyPuzzleView(puzzle),
+      puzzle,
       images: imageViews,
       owner: owner ? toOwnedCopyOwnerView(owner) : null,
       collectionStatus,

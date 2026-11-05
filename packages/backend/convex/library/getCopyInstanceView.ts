@@ -16,6 +16,10 @@ import {
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import {
+  canViewDefinition,
+  copyShowsCatalogFacts,
+} from "../catalog/definitionVisibility";
 import { copyAccessOf } from "../household/copyAccess";
 import { personView } from "../household/getMyHousehold";
 import { householdDefaultOf, membershipOf } from "../household/memberships";
@@ -105,6 +109,8 @@ export const getCopyInstanceView = query({
       : null;
 
     const puzzle = await ctx.db.get(copy.puzzleId);
+    const showCatalogFacts =
+      puzzle !== null && copyShowsCatalogFacts(copy, puzzle, viewerCanManage);
     const salt = args.copyId as string;
 
     // Memoise the projection per target member so a hidden member yields one stable anonRef across
@@ -442,6 +448,8 @@ export const getCopyInstanceView = query({
       viewerIsOwner,
       viewerCanManage,
       viewerMayRequest: await viewerMayRequestCopy(ctx, viewerId, copy),
+      viewerMayOpenDefinition:
+        puzzle !== null && (await canViewDefinition(ctx, puzzle, viewerId)),
       household,
       owner,
       snapshot: {
@@ -459,8 +467,12 @@ export const getCopyInstanceView = query({
         visibility: effectiveCopyVisibility(copy),
         acquisitionDate: viewerCanManage ? copy.acquisitionDate : undefined,
         acquisitionSource: viewerCanManage ? copy.acquisitionSource : undefined,
-        difficulty: puzzle?.difficulty,
-        tags: puzzle?.tags ?? [],
+        // The definition's own catalogue facts: for a definition that is not approved, only for
+        // someone who can manage the copy (the owner or a "manage" housemate) and only when it is
+        // disabled or the owner submitted it (copyShowsCatalogFacts, as in the library mappers'
+        // toCopyPuzzleView). Title, brand and pieces above come from the copy's snapshot.
+        difficulty: showCatalogFacts ? puzzle?.difficulty : undefined,
+        tags: showCatalogFacts ? (puzzle?.tags ?? []) : [],
       },
       acquiredByViewerAt: viewerIsOwner ? acquiredByViewerAt : null,
       since,

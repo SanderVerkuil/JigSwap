@@ -77,9 +77,10 @@ export const extractFromUrl = action({
       throw error;
     }
 
-    // SSRF pre-flight: enforce http(s) + a public DNS host on the ENTRY url ONCE, before any tier
-    // fetches. ogie (lexical-only) and firecrawl (forwards the raw url) thus never see a private
-    // host; browserStorePageFetcher still re-validates each redirect hop.
+    // SSRF pre-flight: enforce http(s) + a public DNS host on the ENTRY url ONCE, before the cache
+    // and any tier, so firecrawl (forwards the raw url) never sees a private host. It is an early
+    // refusal only: the ogie and browser tiers fetch through catalog/adapters/publicFetch, which
+    // re-checks the address at connect time on every hop (a DNS rebind after this check is caught).
     const publicCheck = await assertPublicUrl(url);
     if (!publicCheck.ok) {
       event.outcome = "error";

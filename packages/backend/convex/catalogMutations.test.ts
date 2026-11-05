@@ -162,6 +162,37 @@ describe("catalog.submitPuzzleDefinition", () => {
     );
   });
 
+  test("a pending submission holds its barcode until rejected, then the barcode is free again", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const first = (await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "First Try", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+
+    // While the first submission awaits moderation, the EAN is taken.
+    await expectConvexCode(
+      asAlice(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        { title: "Second Try", pieceCount: 1000, ean: VALID_EAN },
+      ),
+      "DuplicateBarcode",
+    );
+
+    await asAdmin(t).mutation(
+      api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition,
+      { puzzleDefinitionId: first },
+    );
+
+    // Rejection releases it: the corrected resubmission goes through.
+    const second = (await asAlice(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Second Try", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+    expect((await puzzleRow(t, second))?.ean).toBe(VALID_EAN);
+    expect((await puzzleRow(t, first))?.status).toBe("rejected");
+  });
+
   test("rejects a malformed barcode (aggregate invariant)", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
@@ -201,9 +232,9 @@ describe("catalog.submitPuzzleDefinition", () => {
     expect(row?.category).toBe(realCategoryId);
     expect(row?.category).not.toBe(categoryId);
 
-    // Round-trip: a domain re-load+save (via update) keeps the same resolved FK — proving the
-    // read path maps the FK back to the aggregateId the aggregate carries.
-    await asAlice(t).mutation(
+    // Round-trip: a domain re-load+save (via an admin update) keeps the same resolved FK — proving
+    // the read path maps the FK back to the aggregateId the aggregate carries.
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       {
         puzzleDefinitionId: id as string,
@@ -314,7 +345,7 @@ describe("catalog.updatePuzzleDefinition", () => {
   test("patches fields and re-materialises searchableText", async () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       {
         puzzleDefinitionId: id,
@@ -332,7 +363,7 @@ describe("catalog.updatePuzzleDefinition", () => {
     const t = convexTest(schema, modules);
     const id = await submitPending(t);
     await expectConvexCode(
-      asAlice(t).mutation(
+      asAdmin(t).mutation(
         api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
         {
           puzzleDefinitionId: id,
@@ -368,15 +399,15 @@ describe("catalog.updatePuzzleDefinition", () => {
     });
   });
 
-  test("a submitter self-edit does NOT stamp definition_edited", async () => {
+  test("an admin editing their own submission does NOT stamp definition_edited", async () => {
     const t = convexTest(schema, modules);
     await seedMembers(t);
-    const id = await asBob(t).mutation(
+    const id = await asAdmin(t).mutation(
       api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
       { title: "Mountain Vista", pieceCount: 1000 },
     );
 
-    await asBob(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       { puzzleDefinitionId: id as string, title: "Renamed By Owner" },
     );
@@ -394,7 +425,7 @@ describe("catalog.updatePuzzleDefinition", () => {
       api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
       { title: "Roadworks", brand: "Jan van Haasteren", pieceCount: 1000 },
     );
-    await asAlice(t).mutation(
+    await asAdmin(t).mutation(
       api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
       { puzzleDefinitionId: id as string, publisher: "Jumbo" },
     );
@@ -402,6 +433,195 @@ describe("catalog.updatePuzzleDefinition", () => {
     expect(row?.publisher).toBe("Jumbo");
     expect(row?.searchableText).toContain("Jumbo");
     expect(row?.brand).toBe("Jan van Haasteren"); // untouched
+  });
+});
+
+// A submitter can never edit a definition directly, before or after moderation: it changes only
+// through a change proposal or an admin edit.
+describe("catalog.updatePuzzleDefinition by its submitter", () => {
+  test("a member gets Forbidden whether or not the id exists, an admin gets Not found", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const edit = { puzzleDefinitionId: crypto.randomUUID(), title: "X" };
+
+    await expect(
+      asBob(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        edit,
+      ),
+    ).rejects.toThrow(/Forbidden/);
+    await expect(
+      asAdmin(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        edit,
+      ),
+    ).rejects.toThrow(/Not found/);
+  });
+
+  test("a submitter cannot edit even their own pending definition, so an approval covers exactly what was submitted", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const id = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000, description: "Original" },
+    )) as string;
+    const before = await puzzleRow(t, id);
+
+    await expect(
+      asBob(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        {
+          puzzleDefinitionId: id,
+          title: "BUY CHEAP PILLS spam.example",
+          description: "SEO spam",
+        },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+    expect(await puzzleRow(t, id)).toEqual(before);
+
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: id },
+    );
+    expect(await puzzleRow(t, id)).toMatchObject({
+      status: "approved",
+      title: "Mountain Vista",
+      description: "Original",
+    });
+  });
+
+  test("a submitter cannot rewrite their approved definition or take another puzzle's barcode", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const decoyId = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Harmless Lighthouse", pieceCount: 1000 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: decoyId },
+    );
+    const legitId = (await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: VALID_EAN },
+    )) as string;
+    const before = await puzzleRow(t, decoyId);
+
+    await expect(
+      asBob(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        {
+          puzzleDefinitionId: decoyId,
+          title: "BUY CHEAP PILLS spam.example",
+          description: "SEO spam",
+          ean: VALID_EAN,
+        },
+      ),
+    ).rejects.toThrow(/Forbidden/);
+
+    // The row is untouched, the anonymous page keeps the moderated title, and a scan of the
+    // barcode still resolves the legitimate puzzle.
+    const after = await puzzleRow(t, decoyId);
+    expect(after).toEqual(before);
+    const publicView = await t.query(
+      api.catalog.getPublicDefinitionView.getPublicDefinitionView,
+      { puzzleId: after!._id },
+    );
+    expect(publicView?.definition.title).toBe("Harmless Lighthouse");
+    const scanned = await asAlice(t).query(
+      api.catalog.findPuzzleByBarcode.lookupPuzzleByBarcode,
+      { code: VALID_EAN },
+    );
+    expect(scanned?._id).toBe((await puzzleRow(t, legitId))?._id);
+    expect(scanned?.title).toBe("Popular Puzzle");
+  });
+
+  test.each([
+    ["rejected", ["reject"]],
+    ["disabled", ["approve", "disable"]],
+  ] as const)(
+    "a submitter cannot edit their own %s definition",
+    async (_status, moves) => {
+      const t = convexTest(schema, modules);
+      await seedMembers(t);
+      const id = (await asBob(t).mutation(
+        api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+        { title: "Mountain Vista", pieceCount: 1000 },
+      )) as string;
+      for (const move of moves) {
+        const fn =
+          move === "reject"
+            ? api.catalog.rejectPuzzleDefinition.rejectPuzzleDefinition
+            : move === "approve"
+              ? api.catalog.approvePuzzleDefinition.approvePuzzleDefinition
+              : api.catalog.disablePuzzleDefinition.disablePuzzleDefinition;
+        await asAdmin(t).mutation(fn, { puzzleDefinitionId: id });
+      }
+
+      await expect(
+        asBob(t).mutation(
+          api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+          { puzzleDefinitionId: id, title: "Renamed After The Fact" },
+        ),
+      ).rejects.toThrow(/Forbidden/);
+      expect((await puzzleRow(t, id))?.title).toBe("Mountain Vista");
+    },
+  );
+
+  test("an admin may still edit an approved definition", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    const id = (await asBob(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId: id },
+    );
+
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, title: "Mountain Vista (2nd edition)" },
+    );
+    expect((await puzzleRow(t, id))?.title).toBe(
+      "Mountain Vista (2nd edition)",
+    );
+  });
+
+  test("even an admin edit cannot give a definition another puzzle's barcode", async () => {
+    const t = convexTest(schema, modules);
+    await seedMembers(t);
+    await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Popular Puzzle", pieceCount: 1000, ean: VALID_EAN },
+    );
+    const id = (await asAdmin(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+
+    await expectConvexCode(
+      asAdmin(t).mutation(
+        api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+        { puzzleDefinitionId: id, title: "Renamed", ean: VALID_EAN },
+      ),
+      "DuplicateBarcode",
+    );
+    const row = await puzzleRow(t, id);
+    expect(row?.ean).toBeUndefined();
+    expect(row?.title).toBe("Mountain Vista");
+
+    // Restating the definition's own barcode alongside another edit is no clash.
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, ean: "9780201379624" },
+    );
+    await asAdmin(t).mutation(
+      api.catalog.updatePuzzleDefinition.updatePuzzleDefinition,
+      { puzzleDefinitionId: id, ean: "9780201379624", upc: "036000291452" },
+    );
+    expect((await puzzleRow(t, id))?.upc).toBe("036000291452");
   });
 });
 

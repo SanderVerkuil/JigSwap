@@ -17,6 +17,7 @@ import {
 } from "../ports/in/submit-puzzle-definition.port";
 import { CatalogIdGenerator } from "../ports/out/catalog-id-generator";
 import { PuzzleDefinitionRepository } from "../ports/out/puzzle-definition.repository";
+import { firstDuplicateBarcode } from "./barcode-uniqueness";
 
 export interface SubmitPuzzleDefinitionDeps {
   readonly definitions: PuzzleDefinitionRepository;
@@ -34,7 +35,10 @@ export const makeSubmitPuzzleDefinition =
   ): Promise<
     Result<PuzzleDefinitionId, CatalogError | CatalogApplicationError>
   > => {
-    const duplicate = await firstDuplicateBarcode(deps.definitions, cmd);
+    const duplicate = await firstDuplicateBarcode(
+      deps.definitions,
+      cmd.barcodes,
+    );
     if (duplicate)
       return err(CatalogApplicationError.duplicateBarcode(duplicate));
 
@@ -74,22 +78,3 @@ export const makeSubmitPuzzleDefinition =
     await deps.events.publish(definition.value.pullEvents());
     return ok(definition.value.id);
   };
-
-// Return the first supplied barcode already taken by another definition, else null. (Format
-// validity is the aggregate's job; here we only check uniqueness of the raw values.)
-const firstDuplicateBarcode = async (
-  definitions: PuzzleDefinitionRepository,
-  cmd: SubmitPuzzleDefinitionCommand,
-): Promise<string | null> => {
-  const candidates = [
-    cmd.barcodes?.ean,
-    cmd.barcodes?.upc,
-    cmd.barcodes?.modelNumber,
-  ].filter((value): value is string => value !== undefined && value.length > 0);
-
-  for (const barcode of candidates) {
-    const existing = await definitions.findByBarcode(barcode);
-    if (existing) return barcode;
-  }
-  return null;
-};

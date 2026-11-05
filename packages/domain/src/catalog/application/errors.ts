@@ -15,6 +15,7 @@ export type CatalogApplicationErrorCode =
   | "PuzzleDefinitionNotFound"
   | "CatalogCategoryNotFound"
   | "ChangeProposalNotFound"
+  | "ChangeProposalChanged"
   | "OpenProposalAlreadyExists"
   | "DefinitionNotProposable";
 
@@ -61,6 +62,14 @@ export class CatalogApplicationError extends DomainError {
     return new CatalogApplicationError(
       "ChangeProposalNotFound",
       `Change proposal ${id} could not be found`,
+    );
+  }
+
+  // The proposal was edited after the version the deciding admin reviewed: they must look again.
+  static changeProposalChanged(id: ChangeProposalId): CatalogApplicationError {
+    return new CatalogApplicationError(
+      "ChangeProposalChanged",
+      `Change proposal ${id} was edited after the version being decided on`,
     );
   }
 

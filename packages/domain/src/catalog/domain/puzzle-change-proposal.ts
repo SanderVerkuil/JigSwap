@@ -110,6 +110,10 @@ export class PuzzleChangeProposal {
     return this.state.changes;
   }
 
+  get updatedAt(): Date {
+    return this.state.updatedAt;
+  }
+
   // File a new proposal. Validates the diff from its own data only; cross-aggregate rules
   // (definition approved, no open duplicate) are the application layer's, like barcode
   // uniqueness on submit.

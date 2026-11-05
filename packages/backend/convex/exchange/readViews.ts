@@ -8,6 +8,7 @@ import type {
 } from "@jigswap/contracts";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { copyShowsCatalogFacts } from "../catalog/definitionVisibility";
 import { toCopySnapshotView } from "../library/mappers";
 import {
   projectTradeParty,
@@ -167,6 +168,40 @@ export const toPuzzleView = (
       }
     : null;
 
+/**
+ * The definition behind `copy` as `viewerId` sees it on an exchange. For a definition that is not
+ * approved, a viewer the copy does not show catalogue facts to (catalog/definitionVisibility's
+ * copyShowsCatalogFacts: anyone but the copy's owner, and the owner too unless the definition is
+ * disabled or their own submission) gets only the copy's snapshot facts (title, brand, pieces; the
+ * row's for a legacy copy without a snapshot) plus toPuzzleView's status and timestamps, as
+ * library/mappers' toCopyPuzzleView does for every other copy view. The definition's unmoderated
+ * text, identifiers and searchable text are left out, and like toPuzzleView it never carries the
+ * raw box-art id (`image`, SEC-01). Approved definitions get toPuzzleView unchanged.
+ */
+export const toPuzzleViewFor = (
+  p: Doc<"puzzles"> | null,
+  copy: Doc<"ownedPuzzles"> | null,
+  viewerId: Id<"users">,
+): ExchangePuzzleView | null => {
+  const full = toPuzzleView(p);
+  if (!p || !full) return full;
+  const showsFacts = copy
+    ? copyShowsCatalogFacts(copy, p, copy.ownerId === viewerId)
+    : p.status === "approved";
+  if (showsFacts) return full;
+  return {
+    _id: full._id,
+    _creationTime: full._creationTime,
+    aggregateId: full.aggregateId,
+    title: copy?.snapshot?.title ?? full.title,
+    brand: copy?.snapshot?.brand ?? full.brand,
+    pieceCount: copy?.snapshot?.pieceCount ?? full.pieceCount,
+    status: full.status,
+    createdAt: full.createdAt,
+    updatedAt: full.updatedAt,
+  };
+};
+
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
 // requested/offered owned copies and their catalog definitions (copy.puzzleId -> puzzles). Mirrors
 // the legacy two-step join in getUserExchanges/getExchangesByOwner/getExchangesByRequester.
@@ -203,12 +238,16 @@ export const enrichExchangeSummary = async (
       viewerId,
       parties.visible,
     ),
-    requestedPuzzle: toPuzzleView(requestedPuzzle),
+    requestedPuzzle: toPuzzleViewFor(
+      requestedPuzzle,
+      requestedOwnedPuzzle,
+      viewerId,
+    ),
     offeredOwnedPuzzle: toOwnedPuzzleView(
       offeredOwnedPuzzle,
       viewerId,
       parties.visible,
     ),
-    offeredPuzzle: toPuzzleView(offeredPuzzle),
+    offeredPuzzle: toPuzzleViewFor(offeredPuzzle, offeredOwnedPuzzle, viewerId),
   };
 };

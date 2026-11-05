@@ -181,6 +181,41 @@ describe("add-flow barcode lookup", () => {
     expect((await lookup(t, "012345678905"))?._id).toBe(asEan);
   });
 
+  // The seed's "Pending Barcode" row is OLDER than this approved one and carries the same EAN;
+  // a rejected row joins it. Neither may hide the approved puzzle from a scan.
+  test("finds the approved puzzle even when older pending and rejected rows carry the same EAN", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const approved = await t.run(async (ctx) => {
+      const base = {
+        pieceCount: 1000,
+        tags: [],
+        ean: "9780201379624",
+        submittedBy: alice,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      await ctx.db.insert("puzzles", {
+        ...base,
+        aggregateId: "rejected-ean",
+        title: "Rejected Barcode",
+        searchableText: "rejected barcode",
+        status: "rejected",
+      });
+      return ctx.db.insert("puzzles", {
+        ...base,
+        aggregateId: "approved-ean",
+        title: "Approved Barcode",
+        searchableText: "approved barcode",
+        status: "approved",
+      });
+    });
+
+    const match = await lookup(t, "9780201379624");
+    expect(match?._id).toBe(approved);
+    expect(match?.title).toBe("Approved Barcode");
+  });
+
   test("returns null when nothing matches, the match is pending, or the code is not barcode-shaped", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

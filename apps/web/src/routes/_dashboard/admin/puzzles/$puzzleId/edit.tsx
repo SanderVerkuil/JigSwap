@@ -51,6 +51,8 @@ const errorKeyFor = (error: unknown): string => {
       return "edit.errors.emptyTitle";
     case "InvalidBarcode":
       return "edit.errors.invalidBarcode";
+    case "DuplicateBarcode":
+      return "edit.errors.duplicateBarcode";
     case "InvalidPieceCount":
       return "edit.errors.invalidPieceCount";
     case "TextTooLong":

@@ -5,6 +5,7 @@ import type {
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { householdMateIds } from "../household/memberships";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
@@ -27,7 +28,9 @@ import {
 // owner profile PUBLIC, OR the copy is shared into a circle the viewer belongs to — mirrors
 // browseOwnedPuzzles, but decides the circle clause per copy (isCircleSharedWithViewer, uncapped in
 // effect) where Browse uses the capped batched collector, so a copy shared long ago into a very busy
-// circle can appear here and not in Browse. Returns null for an unknown puzzle.
+// circle can appear here and not in Browse. Returns null for an unknown puzzle, and for a definition
+// that is not approved unless the viewer submitted it or is an admin (canViewDefinition, the same
+// gate as getPuzzleById), so unmoderated, rejected or disabled catalogue text is not served by id.
 export const getPuzzleDefinitionView = query({
   args: { puzzleId: v.id("puzzles") },
   handler: async (ctx, args): Promise<PuzzleDefinitionDetailView | null> => {
@@ -35,6 +38,7 @@ export const getPuzzleDefinitionView = query({
 
     const puzzle = await ctx.db.get(args.puzzleId);
     if (!puzzle) return null;
+    if (!(await canViewDefinition(ctx, puzzle, viewerId))) return null;
 
     // --- definition (catalog facts) -----------------------------------------------------------
     const image = puzzle.image

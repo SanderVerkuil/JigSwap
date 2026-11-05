@@ -14,8 +14,16 @@ import { toConvexError } from "./errors";
 // Moderation: approve a pending change proposal. The use case orchestrates BOTH aggregates in
 // this one transaction — the proposal is approved AND the patch lands on the definition
 // atomically. Domain events carry no actor, so the composition root stamps the deciding admin.
+//
+// `expectedUpdatedAt` is the proposal's updatedAt as the admin's review page showed it. The
+// proposer can still edit a pending proposal, so with it the approval is refused
+// (ChangeProposalChanged) when the diff changed since the admin looked; optional so a caller that
+// predates it keeps working.
 export const approveChangeProposal = mutation({
-  args: { changeProposalId: v.string() },
+  args: {
+    changeProposalId: v.string(),
+    expectedUpdatedAt: v.optional(v.number()),
+  },
   handler: async (ctx, args) => {
     const memberId = await requireMember(ctx);
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
@@ -28,6 +36,10 @@ export const approveChangeProposal = mutation({
     });
     const result = await approve({
       changeProposalId: toChangeProposalId(args.changeProposalId),
+      expectedUpdatedAt:
+        args.expectedUpdatedAt === undefined
+          ? undefined
+          : new Date(args.expectedUpdatedAt),
     });
     if (result.isErr) throw toConvexError(result.error);
 

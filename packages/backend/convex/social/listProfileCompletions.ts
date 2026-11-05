@@ -2,6 +2,7 @@ import { paginationOptsValidator, type PaginationOptions } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
@@ -27,7 +28,8 @@ type ProfileCompletionLink = {
 // Each row is a narrow public projection — puzzle title/pieces, dates, solve time, approved photos,
 // a thumbnail and a link. The member's private solve `notes`, the legacy rating/review columns and
 // the copy snapshot (owner id, borrow flag) are not carried. The copy-specific thumbnail and link
-// are only used when the viewer may reach that copy (canViewCopy); otherwise the puzzle definition.
+// are only used when the viewer may reach that copy (canViewCopy); otherwise the puzzle definition,
+// linked only when the viewer may open it (canViewDefinition, the definition page's own gate).
 //
 // Each row carries its `datePrecision` (absent = "day") for the "In 2023" / "Date unknown" label.
 // Undated solves sort LAST (spec 2026-10-17 §3.2): the dated rows (day and year) page first,
@@ -72,7 +74,7 @@ export const listProfileCompletions = query({
           kind: copy.ownerId === viewerId ? "myCopy" : "copy",
           id: copy._id as string,
         };
-      } else if (puzzle) {
+      } else if (puzzle && (await canViewDefinition(ctx, puzzle, viewerId))) {
         link = { kind: "definition", id: puzzle._id as string };
       }
 

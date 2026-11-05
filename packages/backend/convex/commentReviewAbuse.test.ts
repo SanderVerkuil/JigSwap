@@ -298,15 +298,15 @@ describe("reviews only on approved definitions or your own submission (SEC-28)",
     const { alice } = await seed(t);
     const pending = await seedPending(t, alice);
 
-    expect(
-      await codeOf(
-        asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
-          puzzleId: pending,
-          rating: 1,
-          text: "on a pending definition",
-        }),
-      ),
-    ).toBe("PuzzleNotReviewable");
+    // The review form sits on the definition page, so it answers a definition Bob may not open
+    // like a missing one (SEC-34). The solve flow reaches the domain rule directly.
+    await expect(
+      asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+        puzzleId: pending,
+        rating: 1,
+        text: "on a pending definition",
+      }),
+    ).rejects.toThrow("Puzzle not found");
     expect(
       await codeOf(
         asBob(t).mutation(api.solving.submitReviews.submitReviews, {
@@ -325,16 +325,42 @@ describe("reviews only on approved definitions or your own submission (SEC-28)",
       const { puzzleId } = await seed(t);
       await t.run((ctx) => ctx.db.patch(puzzleId, { status }));
 
+      await expect(
+        asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+          puzzleId,
+          rating: 3,
+        }),
+      ).rejects.toThrow("Puzzle not found");
       expect(
         await codeOf(
-          asBob(t).mutation(api.social.postPuzzleReview.postPuzzleReview, {
+          asBob(t).mutation(api.solving.submitReviews.submitReviews, {
             puzzleId,
-            rating: 3,
+            puzzle: { rating: 3 },
           }),
         ),
       ).toBe("PuzzleNotReviewable");
+      expect(await countRows(t, "puzzleReviews")).toBe(0);
     },
   );
+
+  test("an admin may open someone else's pending definition but not review it", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const pending = await seedPending(t, alice);
+
+    // Past the definition page's gate, the domain's rule still holds through the review form.
+    expect(
+      await codeOf(
+        t
+          .withIdentity({ subject: "clerk_bob", metadata: { role: "admin" } })
+          .mutation(api.social.postPuzzleReview.postPuzzleReview, {
+            puzzleId: pending,
+            rating: 1,
+          }),
+      ),
+    ).toBe("PuzzleNotReviewable");
+    expect(await countRows(t, "puzzleReviews")).toBe(0);
+  });
 
   test("the submitter may review their own pending definition through either form", async () => {
     const t = convexTest(schema, modules);
