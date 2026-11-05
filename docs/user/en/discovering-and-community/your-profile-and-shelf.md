@@ -15,7 +15,8 @@ Your profile is your public face on JigSwap. It shows:
 - **"{Your Name}'s Shelf"** — a **3D physics-based plank** rendering your recent puzzle copies as objects on a shelf.
 - Four **stat columns**.
 - A **received reputation** section showing reviews others have left you.
+- A **Privacy** section where you choose who can see your profile (public or private) and can reset your invite link. Changes there are saved straight away.
 
-You can also set your profile **visibility** (public or private) and **arrange your shelf** to feature up to six copies.
+You can also **arrange your shelf** to feature up to six copies.
 
 > The same 3D shelf also appears on your **dashboard**, showing your real owned copies.

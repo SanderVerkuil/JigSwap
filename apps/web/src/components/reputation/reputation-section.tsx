@@ -9,11 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "use-intl";
 
-// A member's public reputation on their profile: a summary line (avg stars,
-// count, credibility hint) plus the reviews they have RECEIVED, newest first,
-// each with overall + sub-scores and an optional comment. Open, card-free
-// layout: a SectionHead over plain rows separated by hairline rules. Both
-// reads are auth-gated queries keyed by the member's user id.
+// A member's public reputation on their own /profile: a summary line (avg
+// stars, count, credibility hint) plus the reviews they have RECEIVED, newest
+// first, each with overall + sub-scores and an optional comment. Without any
+// review there is no score to show (not "0.0"): one line says when reviews
+// come instead, addressed to the member. Open, card-free layout: a SectionHead
+// over plain rows separated by hairline rules. Both reads are auth-gated
+// queries keyed by the member's user id.
 interface ReputationSectionProps {
   memberId: Id<"users"> | undefined;
 }
@@ -49,31 +51,48 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
     "timeliness",
   ] as const;
 
+  // The score comes from the reputationProfiles projection (legacy reviews
+  // count once reputation/backfill has run); if it reads empty while reviews
+  // exist, still list them. Only "neither" is the empty state.
+  const hasScore = profile.reviewCount > 0;
+  if (!hasScore && reviews.length === 0) {
+    return (
+      <section>
+        <SectionHead title={t("title")} icon={ShieldCheck} />
+        <p className="text-muted-foreground text-sm">{t("noReviewsYetHint")}</p>
+      </section>
+    );
+  }
+
   return (
     <section>
       <SectionHead
         title={t("title")}
         icon={ShieldCheck}
-        meta={t("reviewCount", { count: profile.reviewCount })}
+        meta={
+          hasScore
+            ? t("reviewCount", { count: profile.reviewCount })
+            : undefined
+        }
       />
 
-      {/* Summary */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span className="font-heading text-3xl leading-none font-bold">
-            {profile.averageRating.toFixed(1)}
-          </span>
-          <StarRating value={Math.round(profile.averageRating)} size="sm" />
-        </div>
-        {profile.reviewCount > 0 && (
+      {/* Summary: never a 0.0 score */}
+      {hasScore && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="font-heading text-3xl leading-none font-bold">
+              {profile.averageRating.toFixed(1)}
+            </span>
+            <StarRating value={Math.round(profile.averageRating)} size="sm" />
+          </div>
           <div className="text-muted-foreground text-sm">
             {t("credibility")}:{" "}
             <span className="text-foreground font-medium">
               {t(`credibilityLevel.${credibilityKey(profile.credibility)}`)}
             </span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Received reviews */}
       {reviews.length === 0 ? (

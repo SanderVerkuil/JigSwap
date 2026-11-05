@@ -17,7 +17,7 @@ export function NotificationThumb({
       loading="lazy"
       className={cn(
         "bg-muted size-10 shrink-0 rounded-md object-cover",
-        unavailable && "grayscale",
+        unavailable && "opacity-70 grayscale",
       )}
     />
   );

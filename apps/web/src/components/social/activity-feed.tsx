@@ -8,21 +8,27 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "use-intl";
+import type { ReactNode } from "react";
+import { useTimeZone, useTranslations } from "use-intl";
 import { ActivityBatchCovers } from "./activity-batch-covers";
+import { groupSameDayAdds } from "./activity-feed-group";
 import { ACTIVITY_META, isKnownActivityKind } from "./activity-feed-meta";
 import { ActivityTargetLink, ActorLink } from "./activity-links";
 
 // The acting member's activity feed: their own activity plus everyone they follow, newest-first.
 // Scoping + the foreign-event mapping happen server-side; here we only render the ActivityEntryView
 // as open, thin-divider rows on the ground (no boxed card). A row with a server-decided target is one
-// stretched link to it; the actor's name is a separate sibling link to their profile.
+// stretched link to it; the actor's name is a separate sibling link to their profile. When the
+// server names the entry's puzzle (`subject`, sent only to viewers who may see it), the sentence and
+// the link say which puzzle, and its cover shows as a decorative thumbnail. One member's single adds
+// on the same day fold into one "added N puzzles" row (groupSameDayAdds).
 
 export function ActivityFeed() {
   const t = useTranslations("activity");
   const tRich = useTranslations("notifications.rich");
   const displayName = useMemberDisplayName();
   const relativeTime = useRelativeTime();
+  const timeZone = useTimeZone();
   const { data: feed } = useQuery(convexQuery(gateway.social.activityFeed, {}));
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
 
@@ -40,9 +46,10 @@ export function ActivityFeed() {
     return <EmptyState title={t("empty")} sub={t("emptyHint")} />;
   }
 
+  const rows = groupSameDayAdds(feed, timeZone);
   return (
     <div className="flex flex-col">
-      {feed.map((entry, index) => {
+      {rows.map((entry, index) => {
         if (!isKnownActivityKind(entry.kind)) return null;
         const meta = ACTIVITY_META[entry.kind];
         const Icon = meta.icon;
@@ -52,13 +59,16 @@ export function ActivityFeed() {
         const name = entry.actorDeparted
           ? tRich("deletedMember")
           : displayName({ name: entry.actorName });
+        // Only kinds with a titled sentence use the subject; any other kind keeps its plain one.
+        const subject = meta.titled ? entry.subject : undefined;
+        const puzzle = (chunks: ReactNode) => <strong>{chunks}</strong>;
         return (
           <div
             key={`${entry.ref}-${entry.memberId}-${entry.occurredAt}`}
             className={cn(
               "relative flex items-start gap-3 py-3.5",
               entry.target && "hover:bg-muted/40 transition-colors",
-              index < feed.length - 1 && "border-b",
+              index < rows.length - 1 && "border-b",
             )}
           >
             <span className="bg-muted mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
@@ -67,27 +77,49 @@ export function ActivityFeed() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">
                 {isYou
-                  ? t(`${entry.kind}.you`, { count })
-                  : t.rich(`${entry.kind}.other`, {
-                      name,
-                      count,
-                      strong: (chunks) =>
-                        entry.actor ? (
-                          <ActorLink actor={entry.actor} className="py-3">
+                  ? subject
+                    ? t.rich(`${entry.kind}.youTitled`, {
+                        title: subject.title,
+                        puzzle,
+                      })
+                    : t(`${entry.kind}.you`, { count })
+                  : t.rich(
+                      `${entry.kind}.${subject ? "otherTitled" : "other"}`,
+                      {
+                        name,
+                        count,
+                        ...(subject ? { title: subject.title, puzzle } : {}),
+                        strong: (chunks) =>
+                          entry.actor ? (
+                            <ActorLink actor={entry.actor} className="py-3">
+                              <strong>{chunks}</strong>
+                            </ActorLink>
+                          ) : (
                             <strong>{chunks}</strong>
-                          </ActorLink>
-                        ) : (
-                          <strong>{chunks}</strong>
-                        ),
-                    })}
+                          ),
+                      },
+                    )}
               </p>
               {entry.batch && <ActivityBatchCovers batch={entry.batch} />}
               <p className="text-muted-foreground text-xs">
                 {relativeTime(new Date(entry.occurredAt))}
               </p>
             </div>
+            {subject?.coverUrl && (
+              <img
+                src={subject.coverUrl}
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                className="bg-muted size-10 shrink-0 rounded-md object-cover"
+              />
+            )}
             {entry.target && (
-              <ActivityTargetLink target={entry.target} count={count} />
+              <ActivityTargetLink
+                target={entry.target}
+                count={count}
+                title={subject?.title}
+              />
             )}
           </div>
         );

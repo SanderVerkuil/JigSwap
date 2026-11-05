@@ -24,11 +24,19 @@ import { safeStorage } from "@/lib/safe-storage";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Mail, Search, Users, X } from "lucide-react";
+import { Activity, Mail, Search, Users, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 import { useTranslations } from "use-intl";
 
 type PeopleTab = "network" | "find" | "activity";
+
+// Below sm the three tabs must fit a 390px phone without scrolling, in Dutch too ("Mensen
+// vinden"), and still fit when Your network carries a pending-request count (up to three
+// digits): the icons go, the triggers and the gaps tighten. Measured at 390 in Dutch with
+// "128" showing: 355px in 358px. Narrower phones fall back to the scrolling list and its fade.
+// Scoped to this page, not the shared classes.
+const PEOPLE_TAB_TRIGGER_CLASS = `${TAB_TRIGGER_CLASS} max-sm:gap-1.5 max-sm:px-1.5`;
+const PEOPLE_TABS_LIST_CLASS = `${UNDERLINE_TABS_LIST_CLASS} max-sm:gap-0`;
 
 export const Route = createFileRoute("/_dashboard/people")({
   // URL-addressable tabs: /people?tab=find deep-links straight into discovery
@@ -92,6 +100,7 @@ function DiscoverabilityNotice() {
         {t("body")}{" "}
         <Link
           to="/profile"
+          hash="privacy"
           className="text-foreground font-medium underline underline-offset-2"
         >
           {t("review")}
@@ -235,22 +244,22 @@ function PeoplePage() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <StickyTabsBar>
-          <TabsList className={UNDERLINE_TABS_LIST_CLASS}>
+          <TabsList className={PEOPLE_TABS_LIST_CLASS}>
             <TabsTrigger
               value="network"
-              className={TAB_TRIGGER_CLASS}
+              className={PEOPLE_TAB_TRIGGER_CLASS}
               data-tour="people-network"
             >
-              <Users aria-hidden />
+              <Users aria-hidden className="max-sm:hidden" />
               {t("tabs.network")}
               <TabCount count={pendingCount > 0 ? pendingCount : undefined} />
             </TabsTrigger>
-            <TabsTrigger value="find" className={TAB_TRIGGER_CLASS}>
-              <Search aria-hidden />
+            <TabsTrigger value="find" className={PEOPLE_TAB_TRIGGER_CLASS}>
+              <Search aria-hidden className="max-sm:hidden" />
               {t("tabs.find")}
             </TabsTrigger>
-            <TabsTrigger value="activity" className={TAB_TRIGGER_CLASS}>
-              <Bell aria-hidden />
+            <TabsTrigger value="activity" className={PEOPLE_TAB_TRIGGER_CLASS}>
+              <Activity aria-hidden className="max-sm:hidden" />
               {t("tabs.activity")}
             </TabsTrigger>
           </TabsList>

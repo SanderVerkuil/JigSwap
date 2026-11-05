@@ -46,23 +46,29 @@ export function ActorLink({
 }
 
 // The entry's primary link, stretched over the whole row (the row must be `relative`) so the row
-// is one large touch target while the actor link stays a sibling, never nested inside it.
+// is one large touch target while the actor link stays a sibling, never nested inside it. A puzzle
+// link is named after the puzzle when the entry names it (`title`), so rows don't all read alike.
 export function ActivityTargetLink({
   target,
   count,
+  title,
 }: {
   target: ActivityTarget;
   count: number;
+  title?: string;
 }) {
   const t = useTranslations("activity");
   const className = cn("absolute inset-0 rounded-md", FOCUS_RING);
+  const puzzleLabel = title
+    ? t("open.puzzleNamed", { title })
+    : t("open.puzzle");
   switch (target.kind) {
     case "myCopy":
       return (
         <Link
           to="/my-puzzles/$id"
           params={{ id: target.id }}
-          aria-label={t("open.puzzle")}
+          aria-label={puzzleLabel}
           className={className}
         />
       );
@@ -71,7 +77,7 @@ export function ActivityTargetLink({
         <Link
           to="/copies/$id"
           params={{ id: target.id }}
-          aria-label={t("open.puzzle")}
+          aria-label={puzzleLabel}
           className={className}
         />
       );
@@ -80,7 +86,7 @@ export function ActivityTargetLink({
         <Link
           to="/puzzles/$id"
           params={{ id: target.id }}
-          aria-label={t("open.puzzle")}
+          aria-label={puzzleLabel}
           className={className}
         />
       );

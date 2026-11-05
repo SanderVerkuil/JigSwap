@@ -246,7 +246,7 @@ describe("NotificationItem rendering", () => {
     expect(screen.queryByRole("button", { name: /follow back/i })).toBeNull();
   });
 
-  it("mutes an unavailable row and says so", () => {
+  it("marks an unavailable row with an icon and text, dimming only the thumbnail", () => {
     const { container } = renderItem(
       base({
         type: "puzzle_approved",
@@ -257,9 +257,19 @@ describe("NotificationItem rendering", () => {
         context: { puzzleTitle: "Gone", thumbnailUrl: "https://x/y.png" },
       }),
     );
-    expect(container.querySelector("li")?.className).toContain("opacity-70");
+    // Fading the whole row took its text below contrast (UX-119): the text stays full strength.
+    expect(container.querySelector("li")?.className).not.toMatch(/opacity-/);
     expect(container.querySelector("img")?.className).toContain("grayscale");
-    expect(screen.getByText("No longer available")).toBeTruthy();
+    const label = screen.getByText("No longer available");
+    expect(label.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it("puts no icon on an available row's context", () => {
+    const { container } = renderItem(
+      base({ context: { exchangeStatus: "proposed" } }),
+    );
+    expect(screen.queryByText("No longer available")).toBeNull();
+    expect(container.querySelector(`#ctx-n1 svg`)).toBeNull();
   });
 
   it("names a departed actor 'Deleted member', a hidden or nameless one 'Puzzler' (en + nl)", () => {
@@ -364,7 +374,14 @@ describe("NotificationItem rendering", () => {
       const sentence = rowLink(container)!.textContent;
       expect(sentence).toContain(text);
       expect(sentence).not.toMatch(/Deleted member|Verwijderd lid/);
-      expect(container.querySelector("li")?.className).toContain("opacity-70");
+      expect(container.querySelector("li")?.className).not.toMatch(/opacity-/);
+      expect(
+        screen.getByText(
+          locale === "en"
+            ? "No longer available"
+            : nl.notifications.rich.unavailable,
+        ),
+      ).toBeTruthy();
     },
   );
 

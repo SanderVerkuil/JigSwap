@@ -65,6 +65,7 @@ const lockedProfile = {
     memberId: "member1",
     displayName: "Hans",
     username: "hans",
+    handle: "hans",
     memberSince: Date.UTC(2024, 0, 1),
     visibility: "private",
     followerCount: 0,
@@ -155,5 +156,48 @@ describe("profile page width", () => {
         (c) => isElement(c) && c.tagName === "article",
       ),
     ).toHaveLength(2);
+  });
+});
+
+// The hero sits beside the dashboard sidebar, so a viewport breakpoint says
+// nothing about the room it actually has (an 820px tablet leaves it ~510px).
+// happy-dom/SSR has no layout, so this pins the class contract; the geometry
+// was checked in a browser at 390, 820 and 1440px.
+describe("profile hero layout", () => {
+  const heroProfile = {
+    ...lockedProfile,
+    hero: { ...lockedProfile.hero, location: "Leusden, Nederland" },
+  } as PublicProfileView;
+  const heroElements = () =>
+    elementsOf(withIntl(<ProfileBody profile={heroProfile} viewer="public" />));
+  const textOf = (el: Element): string =>
+    el.childNodes
+      .map((c) =>
+        isElement(c) ? textOf(c) : "value" in c ? String(c.value) : "",
+      )
+      .join("");
+  const metaItem = (text: string) =>
+    heroElements().find(
+      (el) =>
+        el.tagName === "span" &&
+        classes(el).includes("inline-flex") &&
+        textOf(el).includes(text),
+    );
+
+  it("switches to a row on its own container width, not the viewport", () => {
+    const hero = heroElements().find((el) => el.tagName === "section")!;
+    expect(textOf(hero)).toContain("Hans");
+    expect(classes(hero)).toContain("@2xl/hero:flex-row");
+    expect(classOf(hero)).not.toMatch(/(^|\s)(sm|md|lg):flex-row/);
+    expect(classes(hero.parentNode as Element)).toContain("@container/hero");
+  });
+
+  it("wraps a long name, handle or location inside the identity column", () => {
+    const h1 = heroElements().find((el) => el.tagName === "h1")!;
+    expect(classes(h1)).toContain("[overflow-wrap:anywhere]");
+    expect(classes(metaItem("hans")!)).toContain("[overflow-wrap:anywhere]");
+    expect(classes(metaItem("Leusden, Nederland")!)).toContain(
+      "[overflow-wrap:anywhere]",
+    );
   });
 });

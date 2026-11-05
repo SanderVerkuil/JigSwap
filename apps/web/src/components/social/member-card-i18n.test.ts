@@ -15,6 +15,13 @@ const format = (messages: typeof en, locale: string) => {
     requestToFollowName: t("follow.requestToFollowName", { name: "Mara" }),
     unfollowName: t("follow.unfollowName", { name: "Mara" }),
     requestedName: t("follow.requestedName", { name: "Mara" }),
+    following: t("follow.following"),
+    followingName: t("follow.followingName", { name: "Mara" }),
+    unfollowConfirmTitle: t("follow.unfollowConfirmTitle", { name: "Mara" }),
+    unfollowConfirmBody: t("follow.unfollowConfirmBody", { name: "Mara" }),
+    toastUnfollowed: t("follow.toastUnfollowed", { name: "Mara" }),
+    undo: t("follow.undo"),
+    undoError: t("follow.undoError", { name: "Mara" }),
     messageName: t("messages.messageName", { name: "Mara" }),
     ratingSrOne: t("people.ratingSr", { rating: "4,8", count: 1 }),
     ratingSrMany: t("people.ratingSr", { rating: "4,8", count: 12 }),
@@ -32,6 +39,15 @@ describe("member card locale keys", () => {
         expect(value, key).not.toContain("people.");
       }
       expect(out.unfollowName).toContain("Mara");
+      for (const key of [
+        "followingName",
+        "unfollowConfirmTitle",
+        "unfollowConfirmBody",
+        "toastUnfollowed",
+        "undoError",
+      ] as const) {
+        expect(out[key], key).toContain("Mara");
+      }
       expect(out.messageName).toContain("Mara");
       expect(out.ratingSrOne).toContain("1 review");
       expect(out.ratingSrMany).toContain("12 reviews");
@@ -45,6 +61,8 @@ describe("member card locale keys", () => {
 
   it("nl is translated", () => {
     expect(format(nl, "nl").unfollowName).toBe("Mara ontvolgen");
+    expect(format(nl, "nl").followingName).toBe("Je volgt Mara");
+    expect(format(nl, "nl").toastUnfollowed).toBe("Je volgt Mara niet meer");
     expect(format(nl, "nl").messageName).toBe("Bericht sturen aan Mara");
   });
 });

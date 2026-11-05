@@ -15,7 +15,8 @@ Je profiel is je openbare gezicht op JigSwap. Het toont:
 - **"De Plank van {Jouw Naam}"** — een **3D-plank op basis van fysica** die je recente puzzelkopieën als objecten op een plank toont.
 - Vier **statistiekkolommen**.
 - Een sectie **ontvangen reputatie** met beoordelingen die anderen je hebben gegeven.
+- Een sectie **Privacy** waar je kiest wie je profiel kan zien (openbaar of privé) en je uitnodigingslink kunt resetten. Wijzigingen daar worden meteen opgeslagen.
 
-Je kunt ook de **zichtbaarheid** van je profiel instellen (openbaar of privé) en **je plank indelen** om tot zes kopieën uit te lichten.
+Je kunt ook **je plank indelen** om tot zes kopieën uit te lichten.
 
 > Dezelfde 3D-plank verschijnt ook op je **dashboard** en toont daar je echte eigen kopieën.

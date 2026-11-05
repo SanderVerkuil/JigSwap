@@ -291,11 +291,15 @@
   "activity": {
     "completion": {
       "you": "Je hebt een puzzel afgemaakt",
-      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt"
+      "other": "<strong>{name}</strong> heeft een puzzel afgemaakt",
+      "youTitled": "Je hebt <puzzle>{title}</puzzle> afgemaakt",
+      "otherTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> afgemaakt"
     },
     "acquisition": {
       "you": "Je hebt een puzzel op je plank gezet",
-      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet"
+      "other": "<strong>{name}</strong> heeft een puzzel op de plank gezet",
+      "youTitled": "Je hebt <puzzle>{title}</puzzle> op je plank gezet",
+      "otherTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> op de plank gezet"
     },
     "acquisitionBatch": {
       "you": "Je hebt {count, plural, one {# puzzel} other {# puzzels}} op je plank gezet",
@@ -308,10 +312,13 @@
     },
     "started": {
       "you": "Je bent aan een puzzel begonnen",
-      "other": "<strong>{name}</strong> is aan een puzzel begonnen"
+      "other": "<strong>{name}</strong> is aan een puzzel begonnen",
+      "youTitled": "Je bent aan <puzzle>{title}</puzzle> begonnen",
+      "otherTitled": "<strong>{name}</strong> is aan <puzzle>{title}</puzzle> begonnen"
     },
     "open": {
       "puzzle": "Bekijk de puzzel",
+      "puzzleNamed": "Bekijk {title}",
       "trades": "Bekijk je uitwisselingen"
     },
     "empty": "Nog geen recente activiteit",
@@ -769,6 +776,7 @@
     "averageRating": "Gemiddelde beoordeling",
     "reviewCount": "{count, plural, =0 {Geen reviews} one {# review} other {# reviews}}",
     "noReviewsYet": "Nog geen reviews",
+    "noReviewsYetHint": "Nog geen reviews. Reviews verschijnen na je eerste voltooide uitwisseling.",
     "credibility": "Geloofwaardigheid",
     "credibilityLevel": {
       "low": "In opbouw",
@@ -1071,6 +1079,11 @@
     "locationNotSet": "Locatie niet ingesteld",
     "language": "Taal",
     "memberSince": "Lid sinds",
+    "visibilityBadge": {
+      "public": "Openbaar · vindbaar",
+      "private": "Privé"
+    },
+    "viewPublicProfile": "Openbaar profiel bekijken",
     "interests": "Interesses",
     "recentActivity": "Recente Activiteit",
     "recentActivityDescription": "Je laatste acties op JigSwap",
@@ -1082,16 +1095,13 @@
     "weeksAgo": "weken geleden",
     "stats": "Statistieken",
     "totalPuzzles": "Totaal Puzzels",
-    "availablePuzzles": "Beschikbare Puzzels",
-    "puzzlesOwned": "Puzzels in Bezit",
     "tradesCompleted": "Uitwisselingen Voltooid",
-    "completedExchanges": "Voltooide Uitwisselingen",
-    "averageRating": "Gemiddelde Beoordeling",
     "reviews": "Beoordelingen",
     "trustLevel": "Vertrouwensniveau",
-    "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen en beoordelingen",
+    "trustLevelDescription": "Gebaseerd op voltooide uitwisselingen",
+    "trustLevelDescriptionNext": "Gebaseerd op voltooide uitwisselingen · nog {count} tot {level}",
+    "trustLevelValueText": "{level}, {count, plural, one {# voltooide uitwisseling} other {# voltooide uitwisselingen}}",
     "notFound": "Gebruiker niet gevonden",
-    "trustBadge": "{rating} Vertrouwen",
     "save": "Opslaan",
     "saving": "Opslaan…",
     "saved": "Profiel opgeslagen",
@@ -1112,11 +1122,24 @@
     },
     "displayName": {
       "label": "Weergavenaam",
-      "helper": "Andere leden zien je als \"{name}\". Pas dit aan via je openbare profielkaart."
+      "helper": "De naam die andere leden zien.",
+      "emptyError": "Weergavenaam mag niet leeg zijn"
     },
-    "visibility": {
-      "label": "Privéprofiel",
-      "helper": "Privéprofielen verschijnen als 'Anonieme gebruiker' voor leden met wie je geen connectie hebt."
+    "privacy": {
+      "title": "Privacy",
+      "publicStatus": "Ingelogde leden kunnen je vinden via Mensen vinden en Zoeken, en zien je volledige profiel als ze je link openen. Leden die je hebt geblokkeerd niet.",
+      "privateStatus": "Alleen leden met wie je elkaar volgt, kunnen je vinden via Mensen vinden en Zoeken, en je volledige profiel zien. Anderen zien een afgeschermd profiel en zien je elders als Anonieme gebruiker, tenzij jullie samen in een kring zitten of met elkaar ruilen.",
+      "nowPublic": "Je profiel is nu openbaar",
+      "nowPrivate": "Je profiel is nu privé",
+      "undo": "Ongedaan maken",
+      "saveError": "Het is niet gelukt om te wijzigen wie je profiel kan zien. Probeer het opnieuw.",
+      "inviteLink": "Uitnodigingslink",
+      "inviteLinkHelp": "Wie je QR-code of uitnodigingslink opent, kan met één tik zorgen dat jullie elkaar volgen. Reset de link als je wilt dat links en QR-codes die je al hebt gedeeld niet meer werken.",
+      "resetConfirmTitle": "Je uitnodigingslink resetten?",
+      "resetConfirmBody": "Links en QR-codes die je al hebt gedeeld, werken dan niet meer. Je QR-code krijgt meteen een nieuwe link.",
+      "resetConfirmAction": "Link resetten",
+      "resetDone": "Je uitnodigingslink is gereset",
+      "resetError": "Het is niet gelukt om je uitnodigingslink te resetten. Probeer het opnieuw."
     },
     "shelf": {
       "title": "De Plank van {name}",
@@ -1165,18 +1188,6 @@
       "beginner": "Beginner",
       "intermediate": "Gevorderd",
       "experienced": "Ervaren"
-    },
-    "editor": {
-      "title": "Openbaar profiel",
-      "description": "Je weergavenaam zoals andere leden hem zien.",
-      "edit": "Bewerken",
-      "save": "Opslaan",
-      "cancel": "Annuleren",
-      "displayName": "Weergavenaam",
-      "displayNamePlaceholder": "Je weergavenaam",
-      "emptyNameError": "Weergavenaam mag niet leeg zijn",
-      "saved": "Profiel opgeslagen",
-      "saveError": "Kon profiel niet opslaan"
     }
   },
   "dashboard": {
@@ -2317,9 +2328,9 @@
       "resultsLabel": "Zoekresultaten",
       "recentlyJoined": "Recent lid geworden",
       "recentlyJoinedEmptyTitle": "Nog geen nieuwe leden om te tonen",
-      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat je QR-code zien.",
+      "recentlyJoinedEmptySub": "Ken je een medepuzzelaar? Laat ze je QR-code scannen, dan kunnen jullie elkaar volgen.",
       "noResultsTitle": "Kun je ze niet vinden?",
-      "noResultsSub": "Vraag om hun profiellink — of scan hun QR-code.",
+      "noResultsSub": "Vraag om hun profiellink, of laat ze je QR-code scannen, dan kunnen jullie elkaar volgen.",
       "emailInviteTitle": "Nog niet op JigSwap?"
     },
     "discoverableNotice": {
@@ -2334,15 +2345,20 @@
     "requestToFollow": "Volgverzoek sturen",
     "requested": "Aangevraagd",
     "requestedStale": "Aangevraagd — {name} heeft nog niet gereageerd",
-    "requestedStaleNoName": "Aangevraagd — nog geen reactie",
     "followName": "{name} volgen",
     "requestToFollowName": "Volgverzoek sturen naar {name}",
     "unfollowName": "{name} ontvolgen",
+    "following": "Volgend",
+    "followingName": "Je volgt {name}",
+    "unfollowConfirmTitle": "{name} ontvolgen?",
+    "unfollowConfirmBody": "Het profiel van {name} is privé. Wil je later weer volgen, dan stuur je een nieuw verzoek dat {name} eerst moet goedkeuren.",
+    "undo": "Ongedaan maken",
+    "undoError": "{name} opnieuw volgen is niet gelukt. Probeer het opnieuw.",
     "requestedName": "Volgverzoek aan {name} in afwachting",
     "cancelRequest": "Verzoek annuleren",
     "toastFollowing": "Je volgt nu",
     "toastRequestSent": "Verzoek verstuurd",
-    "toastUnfollowed": "Ontvolgd",
+    "toastUnfollowed": "Je volgt {name} niet meer",
     "toastRequestCancelled": "Verzoek geannuleerd",
     "errorUpdate": "Kon de volgstatus niet bijwerken",
     "errorCancel": "Kon het verzoek niet annuleren",
@@ -2412,15 +2428,19 @@
     "seeAll": "Alle meldingen bekijken",
     "empty": "Nog geen meldingen",
     "emptyHint": "Ruilactiviteit, beoordelingen en doelmijlpalen verschijnen hier.",
-    "unreadStat": "Ongelezen",
     "filterAll": "Alle",
     "unreadOnly": "Alleen ongelezen",
     "pushOnDevice": "Push op dit apparaat: {state}",
     "pushStateOn": "Aan",
     "pushStateOff": "Uit",
     "clearFilters": "Filters wissen",
+    "filterLabel": "Filter op categorie",
+    "nothingMatches": "Geen meldingen die bij deze filters passen",
+    "filteredLoadMoreHint": "Alleen je nieuwste meldingen worden gefilterd. Laad meer om verder terug te kijken.",
     "today": "Vandaag",
     "yesterday": "Gisteren",
+    "thisWeek": "Deze week",
+    "thisMonth": "Deze maand",
     "earlier": "Eerder",
     "newMessageToast": "Nieuw bericht van {name}",
     "newCircleMessageToast": "Nieuw bericht in je kring {circle}",
@@ -2437,6 +2457,7 @@
     "channelPush": "Push",
     "channelsNote": "In-app meldingen worden direct bezorgd. Push wordt naar je browser gestuurd (je wordt om toestemming gevraagd). E-mail is beschikbaar voor geselecteerde meldingstypen.",
     "emailUnavailable": "E-mail is niet beschikbaar voor dit meldingstype",
+    "emailUnavailableShort": "Niet per e-mail beschikbaar",
     "notificationType": "Melding",
     "types": {
       "trade_request": "Ruilverzoeken",
@@ -3147,9 +3168,10 @@
     "scanHint": "Laat een vriend dit scannen om elkaar te volgen",
     "copyLink": "Link kopiëren",
     "copied": "Gekopieerd!",
+    "copyError": "Link kopiëren is niet gelukt. Probeer het opnieuw.",
+    "inviteLinkHint": "De code en deze knoppen delen je persoonlijke uitnodigingslink, niet alleen je profieladres, zodat jullie elkaar kunnen volgen.",
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
-    "resetConfirm": "Oude links en QR-codes werken dan niet meer. Resetten?",
     "needUsernameTitle": "Stel eerst een gebruikersnaam in",
     "needUsernameBody": "Je QR-bijschrift en profiellink gebruiken je gebruikersnaam. Stel er een in bij je accountinstellingen en kom dan terug.",
     "openSettings": "Accountinstellingen openen",
@@ -3886,7 +3908,7 @@
       },
       "people": {
         "title": "Mensen",
-        "subtitle": "Leden en profielen bij jou in de buurt.",
+        "subtitle": "Je netwerk, leden zoeken en mensen uitnodigen.",
         "description": "Leden en profielen"
       },
       "profile": {
@@ -5017,7 +5039,7 @@
         },
         "your-profile": {
           "title": "Wie het jouwe ziet",
-          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit via Profiel Bewerken."
+          "body": "Je puzzels en afgemaakte puzzels staan op je profiel voor ingelogde leden die het mogen zien: iedereen als het openbaar is, wederzijdse volgers als het privé is. Je wijzigt dit onder Privacy op je profiel."
         }
       },
       "guide": {
@@ -5137,7 +5159,7 @@
         },
         "profile": {
           "title": "Openbaar of privé",
-          "body": "Met een openbaar profiel ziet elk lid jou en de puzzels die je aanbiedt. Zet Privéprofiel aan via Profiel Bewerken, dan zien alleen mensen met wie je elkaar volgt je plank; anderen zien Anonieme gebruiker."
+          "body": "Met een openbaar profiel ziet elk lid jou en de puzzels die je aanbiedt. Kies Alleen mensen die je toelaat onder Privacy, dan zien alleen mensen met wie je elkaar volgt je plank; anderen zien Anonieme gebruiker."
         },
         "per-copy": {
           "title": "Eén puzzel tegelijk",

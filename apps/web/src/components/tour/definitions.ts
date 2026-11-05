@@ -99,7 +99,7 @@ const tours: readonly TourDefinition[] = [
     steps: [
       { id: "household", route: "/household", target: "household-my-copies" },
       { id: "circles", route: "/circles", target: "circles-list" },
-      { id: "profile", route: "/profile", target: "profile-edit" },
+      { id: "profile", route: "/profile", target: "profile-privacy" },
       // Per-copy visibility is set on a copy's page (a dynamic route).
       { id: "per-copy", route: "/my-puzzles" },
     ],
@@ -157,7 +157,7 @@ const tours: readonly TourDefinition[] = [
     guide: { area: "people", icon: UserRound },
     steps: [
       { id: "network", route: "/people", target: "people-network" },
-      { id: "your-profile", route: "/profile", target: "profile-edit" },
+      { id: "your-profile", route: "/profile", target: "profile-privacy" },
     ],
   },
   {

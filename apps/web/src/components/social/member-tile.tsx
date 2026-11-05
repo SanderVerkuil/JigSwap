@@ -53,7 +53,9 @@ export function MemberTile({
   hideLocation = false,
 }: {
   memberId: Id<"users">;
-  followsYou: boolean;
+  // Hosts that already know it (the network list) pass it; otherwise (search results,
+  // "Recently joined") the tile reads it from the follow relation.
+  followsYou?: boolean;
   // Discovery surfaces (Find people) omit the location line: stats build trust with
   // strangers, street-level context doesn't. Defaults off so network tiles are unchanged.
   hideLocation?: boolean;
@@ -69,6 +71,10 @@ export function MemberTile({
   const { data: stats } = useQuery(
     convexQuery(gateway.identity.userStats, { userId: memberId }),
   );
+  // The same subscription FollowButton makes below, so react-query shares one read.
+  const { data: relation } = useQuery(
+    convexQuery(gateway.social.followRelation, { memberId }),
+  );
 
   if (member === undefined) {
     return <MemberTileSkeleton />;
@@ -79,7 +85,8 @@ export function MemberTile({
 
   const name = displayName(member);
   const location = hideLocation ? undefined : member.location;
-  const hasMeta = followsYou || !!location;
+  const showFollowsYou = followsYou ?? relation?.followsYou ?? false;
+  const hasMeta = showFollowsYou || !!location;
   const metaId = `${id}-meta`;
   const statsId = `${id}-stats`;
   const describedBy =
@@ -127,7 +134,7 @@ export function MemberTile({
               id={metaId}
               className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
             >
-              {followsYou && (
+              {showFollowsYou && (
                 <Badge variant="secondary">{t("followsYou")}</Badge>
               )}
               {location && (

@@ -40,6 +40,23 @@ describe("ACTIVITY_META", () => {
     }
   });
 
+  it("has activity.<kind>.{youTitled,otherTitled} for every titled kind in every locale", () => {
+    for (const [name, locale] of locales) {
+      for (const kind of ACTIVITY_KINDS) {
+        if (!ACTIVITY_META[kind].titled) continue;
+        const entry = locale.activity[kind] as
+          { youTitled?: string; otherTitled?: string } | undefined;
+        expect(entry?.youTitled, `${name}: activity.${kind}.youTitled`).toMatch(
+          /<puzzle>\{title\}<\/puzzle>/,
+        );
+        expect(
+          entry?.otherTitled,
+          `${name}: activity.${kind}.otherTitled`,
+        ).toMatch(/<puzzle>\{title\}<\/puzzle>/);
+      }
+    }
+  });
+
   it("guards unknown kinds (deploy-order safety: renderers skip, never crash)", () => {
     expect(isKnownActivityKind("started")).toBe(true);
     expect(isKnownActivityKind("some-future-kind")).toBe(false);

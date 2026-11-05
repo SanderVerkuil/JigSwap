@@ -291,11 +291,15 @@
   "activity": {
     "completion": {
       "you": "You finished a puzzle",
-      "other": "<strong>{name}</strong> finished a puzzle"
+      "other": "<strong>{name}</strong> finished a puzzle",
+      "youTitled": "You finished <puzzle>{title}</puzzle>",
+      "otherTitled": "<strong>{name}</strong> finished <puzzle>{title}</puzzle>"
     },
     "acquisition": {
       "you": "You added a puzzle to your shelf",
-      "other": "<strong>{name}</strong> added a puzzle to their shelf"
+      "other": "<strong>{name}</strong> added a puzzle to their shelf",
+      "youTitled": "You added <puzzle>{title}</puzzle> to your shelf",
+      "otherTitled": "<strong>{name}</strong> added <puzzle>{title}</puzzle> to their shelf"
     },
     "acquisitionBatch": {
       "you": "You added {count, plural, one {# puzzle} other {# puzzles}} to your shelf",
@@ -308,10 +312,13 @@
     },
     "started": {
       "you": "You started a puzzle",
-      "other": "<strong>{name}</strong> started a puzzle"
+      "other": "<strong>{name}</strong> started a puzzle",
+      "youTitled": "You started <puzzle>{title}</puzzle>",
+      "otherTitled": "<strong>{name}</strong> started <puzzle>{title}</puzzle>"
     },
     "open": {
       "puzzle": "View the puzzle",
+      "puzzleNamed": "View {title}",
       "trades": "View your exchanges"
     },
     "empty": "No recent activity yet",
@@ -769,6 +776,7 @@
     "averageRating": "Average rating",
     "reviewCount": "{count, plural, =0 {No reviews} one {# review} other {# reviews}}",
     "noReviewsYet": "No reviews yet",
+    "noReviewsYetHint": "No reviews yet. Reviews appear after your first completed exchange.",
     "credibility": "Credibility",
     "credibilityLevel": {
       "low": "Building",
@@ -1071,6 +1079,11 @@
     "locationNotSet": "Location not set",
     "language": "Language",
     "memberSince": "Member since",
+    "visibilityBadge": {
+      "public": "Public · findable",
+      "private": "Private"
+    },
+    "viewPublicProfile": "View public profile",
     "interests": "Interests",
     "recentActivity": "Recent Activity",
     "recentActivityDescription": "Your latest actions on JigSwap",
@@ -1082,16 +1095,13 @@
     "weeksAgo": "weeks ago",
     "stats": "Statistics",
     "totalPuzzles": "Total Puzzles",
-    "availablePuzzles": "Available Puzzles",
-    "puzzlesOwned": "Puzzles Owned",
     "tradesCompleted": "Exchanges Completed",
-    "completedExchanges": "Completed Exchanges",
-    "averageRating": "Average Rating",
     "reviews": "Reviews",
     "trustLevel": "Trust Level",
-    "trustLevelDescription": "Based on completed trades and reviews",
+    "trustLevelDescription": "Based on completed exchanges",
+    "trustLevelDescriptionNext": "Based on completed exchanges · {count} more to {level}",
+    "trustLevelValueText": "{level}, {count, plural, one {# completed exchange} other {# completed exchanges}}",
     "notFound": "User not found",
-    "trustBadge": "{rating} Trust",
     "save": "Save",
     "saving": "Saving…",
     "saved": "Profile saved",
@@ -1112,11 +1122,24 @@
     },
     "displayName": {
       "label": "Display name",
-      "helper": "Shown to other members as \"{name}\". Edit it from your public profile card."
+      "helper": "The name other members see.",
+      "emptyError": "Display name cannot be empty"
     },
-    "visibility": {
-      "label": "Private profile",
-      "helper": "Private profiles appear as 'Anonymous user' to members you're not connected with."
+    "privacy": {
+      "title": "Privacy",
+      "publicStatus": "Signed-in members can find you in Find people and Search, and see your full profile when they open your link. Members you've blocked can't.",
+      "privateStatus": "Only members you follow each other with can find you in Find people and Search, and see your full profile. Everyone else sees a locked profile, and elsewhere sees you as Anonymous user unless you share a circle or a trade.",
+      "nowPublic": "Your profile is now public",
+      "nowPrivate": "Your profile is now private",
+      "undo": "Undo",
+      "saveError": "Couldn't change who can see your profile. Please try again.",
+      "inviteLink": "Invite link",
+      "inviteLinkHelp": "Anyone who opens your QR code or invite link can make you follow each other in one tap. Reset it if you want links and QR codes you've already shared to stop working.",
+      "resetConfirmTitle": "Reset your invite link?",
+      "resetConfirmBody": "Links and QR codes you've already shared will stop working. Your QR code gets a new link straight away.",
+      "resetConfirmAction": "Reset link",
+      "resetDone": "Your invite link was reset",
+      "resetError": "Couldn't reset your invite link. Please try again."
     },
     "shelf": {
       "title": "{name}'s Shelf",
@@ -1165,18 +1188,6 @@
       "beginner": "Beginner",
       "intermediate": "Intermediate",
       "experienced": "Experienced"
-    },
-    "editor": {
-      "title": "Public profile",
-      "description": "Your display name as other members see them.",
-      "edit": "Edit",
-      "save": "Save",
-      "cancel": "Cancel",
-      "displayName": "Display name",
-      "displayNamePlaceholder": "Your display name",
-      "emptyNameError": "Display name cannot be empty",
-      "saved": "Profile saved",
-      "saveError": "Could not save profile"
     }
   },
   "dashboard": {
@@ -2317,9 +2328,9 @@
       "resultsLabel": "Search results",
       "recentlyJoined": "Recently joined",
       "recentlyJoinedEmptyTitle": "No new members to show yet",
-      "recentlyJoinedEmptySub": "Know a fellow puzzler? Show them your QR code.",
+      "recentlyJoinedEmptySub": "Know a fellow puzzler? Let them scan your QR code so you can follow each other.",
       "noResultsTitle": "Can't find them?",
-      "noResultsSub": "Ask for their profile link — or scan their QR.",
+      "noResultsSub": "Ask for their profile link, or let them scan your QR code so you can follow each other.",
       "emailInviteTitle": "Not on JigSwap yet?"
     },
     "discoverableNotice": {
@@ -2334,15 +2345,20 @@
     "requestToFollow": "Request to follow",
     "requested": "Requested",
     "requestedStale": "Requested — {name} hasn't responded yet",
-    "requestedStaleNoName": "Requested — no response yet",
     "followName": "Follow {name}",
     "requestToFollowName": "Request to follow {name}",
     "unfollowName": "Unfollow {name}",
+    "following": "Following",
+    "followingName": "Following {name}",
+    "unfollowConfirmTitle": "Unfollow {name}?",
+    "unfollowConfirmBody": "{name}'s profile is private. To follow them again later, you'll need to send a new request and wait for them to approve it.",
+    "undo": "Undo",
+    "undoError": "Couldn't follow {name} again. Please try again.",
     "requestedName": "Follow request to {name} pending",
     "cancelRequest": "Cancel request",
     "toastFollowing": "Following",
     "toastRequestSent": "Request sent",
-    "toastUnfollowed": "Unfollowed",
+    "toastUnfollowed": "Unfollowed {name}",
     "toastRequestCancelled": "Request cancelled",
     "errorUpdate": "Could not update follow status",
     "errorCancel": "Could not cancel the request",
@@ -2412,15 +2428,19 @@
     "seeAll": "See all notifications",
     "empty": "No notifications yet",
     "emptyHint": "Trade activity, reviews, and goal milestones will show up here.",
-    "unreadStat": "Unread",
     "filterAll": "All",
     "unreadOnly": "Unread only",
     "pushOnDevice": "Push on this device: {state}",
     "pushStateOn": "On",
     "pushStateOff": "Off",
     "clearFilters": "Clear filters",
+    "filterLabel": "Filter by category",
+    "nothingMatches": "Nothing matches these filters",
+    "filteredLoadMoreHint": "Only your latest notifications are filtered. Load more to look further back.",
     "today": "Today",
     "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
     "earlier": "Earlier",
     "newMessageToast": "New message from {name}",
     "newCircleMessageToast": "New message in your circle {circle}",
@@ -2437,6 +2457,7 @@
     "channelPush": "Push",
     "channelsNote": "In-app notifications are delivered instantly. Push is delivered to your browser (you'll be asked for permission). Email is available for selected notification types.",
     "emailUnavailable": "Email is not available for this notification type",
+    "emailUnavailableShort": "Not available by email",
     "notificationType": "Notification",
     "types": {
       "trade_request": "Trade requests",
@@ -3147,9 +3168,10 @@
     "scanHint": "Have a friend scan this to follow each other",
     "copyLink": "Copy link",
     "copied": "Copied!",
+    "copyError": "Couldn't copy the link. Please try again.",
+    "inviteLinkHint": "The code and these buttons share your personal invite link, not just your profile address, so you can follow each other.",
     "share": "Share",
     "resetLink": "Reset invite link",
-    "resetConfirm": "Old links and QR codes will stop working. Reset?",
     "needUsernameTitle": "Set a username first",
     "needUsernameBody": "Your QR caption and profile link use your username. Set one in your account settings, then come back.",
     "openSettings": "Open account settings",
@@ -3886,7 +3908,7 @@
       },
       "people": {
         "title": "People",
-        "subtitle": "Members and profiles near you.",
+        "subtitle": "Your network, member search and invites.",
         "description": "Members and profiles"
       },
       "profile": {
@@ -5017,7 +5039,7 @@
         },
         "your-profile": {
           "title": "Who sees yours",
-          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Edit Profile."
+          "body": "Your puzzles and finished solves show on your profile to signed-in members who can see it: anyone when it's public, mutual followers when it's private. Change it under Privacy on your profile."
         }
       },
       "guide": {
@@ -5137,7 +5159,7 @@
         },
         "profile": {
           "title": "Public or private",
-          "body": "With a public profile, any member can see you and the puzzles you offer. Turn on Private profile under Edit Profile, and only people you follow each other with see your shelf; others see Anonymous user."
+          "body": "With a public profile, any member can see you and the puzzles you offer. Choose Only people you approve under Privacy, and only people you follow each other with see your shelf; others see Anonymous user."
         },
         "per-copy": {
           "title": "One puzzle at a time",

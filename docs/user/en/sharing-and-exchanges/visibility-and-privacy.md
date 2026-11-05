@@ -10,7 +10,7 @@ You decide who sees each puzzle and how much of your profile other members
 see. This page explains who sees what, and how to change it.
 
 **Where:** a copy's page (**Edit** → **Who can see this copy**) and your
-profile (`/profile` → **Edit Profile** → **Private profile**).
+profile (`/profile` → **Privacy**).
 
 ## Who sees a copy
 
@@ -64,8 +64,10 @@ A private copy is still visible to:
 
 ## Set your profile to public or private
 
-1. Open **Profile** and click **Edit Profile**.
-2. Turn **Private profile** on or off.
+1. Open **Profile** and scroll to **Privacy**.
+2. Under **Who can see your profile?**, choose **Everyone** or
+   **Only people you approve**. The change is saved straight away; if you
+   picked the wrong one, click **Undo** in the message that appears.
 
 When your profile is private:
 
