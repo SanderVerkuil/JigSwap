@@ -78,7 +78,7 @@ jobs:
       # commit, or the ref a dispatch ran from). It moves to RUNNER_TEMP before the branch
       # checkout below, which would otherwise wipe it, and stays out of the upload.
       - name: Check out the Vercel CLI project from this workflow's commit
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.HAS_VERCEL == 'true'
         with:
           ref: ${{ github.sha }}
@@ -93,7 +93,7 @@ jobs:
           mv vercel-cli-src/.github/vercel-cli "$RUNNER_TEMP/vercel-cli"
           rm -rf vercel-cli-src
 
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.HAS_VERCEL == 'true'
         with:
           # The PR branch itself, not the pull_request merge ref: the CLI reads Git
