@@ -1,6 +1,11 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { isHashCleared } from "./hashCheckFields";
+import {
+  renditionSources,
+  thumbUrlOf,
+  type ImageSources,
+} from "./imageSources";
 
 // Publication gate for box art (puzzles.image, a proposal's changes.image or baseline.image).
 // Box art goes through the shared moderation pipeline (catalog/boxArtUploads), and its blob is
@@ -10,7 +15,8 @@ import { isHashCleared } from "./hashCheckFields";
 // A blob with no boxArtUploads row, or a row from before box art was moderated (no status, no
 // hash-check fields), predates the gate and is served as before.
 //
-// EVERY read path that turns box art into a URL goes through `boxArtUrl`, never
+// EVERY read path that turns box art into a URL goes through `boxArtUrl` (or `boxArtImage`, which
+// adds the renditions, or `boxArtThumbUrl` for thumbnail-sized fields), never
 // `ctx.storage.getUrl` on the image directly.
 
 /** Whether a listed box-art upload may be served. */
@@ -22,11 +28,14 @@ export const isBoxArtServable = (
 ): boolean =>
   (row.moderationStatus ?? "approved") === "approved" && isHashCleared(row);
 
-/** The URL of a box-art image, or null when there is none or it may not be served (yet). */
-export const boxArtUrl = async (
+/**
+ * The gate itself: the box art's blob when it may be served, or null when there is none or it
+ * may not be served (yet). For building URLs only; never return the id to a client.
+ */
+export const servableBoxArtId = async (
   ctx: QueryCtx,
   image: Id<"_storage"> | string | null | undefined,
-): Promise<string | null> => {
+): Promise<Id<"_storage"> | null> => {
   if (!image) return null;
   const storageId = ctx.db.system.normalizeId("_storage", image);
   if (!storageId) return null;
@@ -35,5 +44,37 @@ export const boxArtUrl = async (
     .withIndex("by_storage", (q) => q.eq("storageId", storageId))
     .first();
   if (row && !isBoxArtServable(row)) return null;
-  return ctx.storage.getUrl(storageId);
+  return storageId;
 };
+
+/** The URL of a box-art image, or null when there is none or it may not be served (yet). */
+export const boxArtUrl = async (
+  ctx: QueryCtx,
+  image: Id<"_storage"> | string | null | undefined,
+): Promise<string | null> => {
+  const storageId = await servableBoxArtId(ctx, image);
+  return storageId ? ctx.storage.getUrl(storageId) : null;
+};
+
+/**
+ * Like boxArtUrl, plus the box art's renditions (`srcSet`, `thumbUrl`) when they exist: behind
+ * the same gate, so withheld box art yields neither its URL nor any rendition's.
+ */
+export const boxArtImage = async (
+  ctx: QueryCtx,
+  image: Id<"_storage"> | string | null | undefined,
+): Promise<ImageSources | null> => {
+  const storageId = await servableBoxArtId(ctx, image);
+  if (!storageId) return null;
+  const url = await ctx.storage.getUrl(storageId);
+  return url ? renditionSources(ctx, storageId, url) : null;
+};
+
+/**
+ * The URL for a thumbnail-sized field (list rows, notifications, search hits): the box art's
+ * 480 px rendition once it exists, else the original. Behind the same gate as boxArtUrl.
+ */
+export const boxArtThumbUrl = async (
+  ctx: QueryCtx,
+  image: Id<"_storage"> | string | null | undefined,
+): Promise<string | null> => thumbUrlOf(await boxArtImage(ctx, image));

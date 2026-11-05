@@ -62,9 +62,10 @@ export function FreshSection() {
       <div className="grid auto-cols-[214px] grid-flow-col gap-4 overflow-x-auto pb-2">
         {fresh.map((copy) => (
           // PuzzleCard reads its grid/list mode from context; each cell gets
-          // its own single-card provider so the scroller owns the layout.
+          // its own single-card provider so the scroller owns the layout. The
+          // cover's width is the rail's fixed 214px column (auto-cols-[214px]).
           <PuzzleViewProvider key={copy._id} viewMode="grid">
-            <PuzzleCard puzzle={copy} showActions={false} />
+            <PuzzleCard puzzle={copy} showActions={false} imageSizes="214px" />
           </PuzzleViewProvider>
         ))}
       </div>

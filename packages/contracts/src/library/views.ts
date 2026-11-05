@@ -85,9 +85,17 @@ export interface OwnedCopyView {
   /**
    * Resolved cover image URL for the card: the copy's chosen-and-approved cover photo when set,
    * else the puzzle's global catalogue box art, else null. Only populated by reads that resolve it
-   * (e.g. `library.ownedByOwner`); undefined elsewhere.
+   * (e.g. `library.ownedByOwner`); undefined elsewhere. Thumbnail-sized: the box art's 480 px
+   * rendition once it exists, else the original; a full-width card cover uses `coverSrcSet`.
    */
   coverUrl?: string | null;
+  /**
+   * `srcset` for the card cover: its 480/640/960 px WebP renditions and its original, as URLs.
+   * Set by the reads a card grid renders (`library.ownedByOwner`, `library.browseOwned`,
+   * `collections.byId`, `household.copies`, `social.profileCopies`), and only once the cover has
+   * renditions; show `coverUrl` alone without it.
+   */
+  coverSrcSet?: string;
 }
 
 /**
@@ -414,8 +422,15 @@ export interface CopyInstanceCommunity {
 export interface CopyPhoto {
   /** The `ownedPuzzleImages` _id as a string. Keys the photo's comment thread in the lightbox. */
   id: string;
-  /** The resolved storage URL. */
+  /** The resolved storage URL of the original (what the lightbox and zoom show). */
   url: string;
+  /**
+   * The 480 px rendition's URL, for thumbnail-sized uses; absent until the approved photo has
+   * renditions (show `url` then).
+   */
+  thumbUrl?: string;
+  /** `<url> <width>w` for each rendition and the original; absent when there are none. */
+  srcSet?: string;
   /** The caption (`title ?? tag`), or null when absent. */
   caption: string | null;
   /** The photo's tag (e.g. `box_front`), or null when absent. */

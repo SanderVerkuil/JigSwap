@@ -2,7 +2,7 @@
 import { cleanup, renderHook } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useHourlySeed } from "./hero";
+import { toPlankBox, useHourlySeed } from "./hero";
 
 function Probe() {
   const seed = useHourlySeed();
@@ -53,5 +53,28 @@ describe("useHourlySeed", () => {
     vi.setSystemTime(new Date("2026-10-30T11:30:00.000Z"));
     rerender();
     expect(result.current).toBe(first);
+  });
+});
+
+describe("toPlankBox", () => {
+  const puzzle = { title: "Harbour", pieceCount: 1000, brand: "Ravensburger" };
+
+  it("textures the box with the small rendition when there is one", () => {
+    const box = toPlankBox(
+      {
+        ...puzzle,
+        image: "https://cdn.test/original",
+        thumbUrl: "https://cdn.test/480",
+      },
+      0,
+    );
+    expect(box.cover).toBe("https://cdn.test/480");
+  });
+
+  it("falls back to the original before renditions exist, and to no cover without box art", () => {
+    expect(
+      toPlankBox({ ...puzzle, image: "https://cdn.test/original" }, 0).cover,
+    ).toBe("https://cdn.test/original");
+    expect(toPlankBox({ ...puzzle, image: null }, 0).cover).toBeUndefined();
   });
 });

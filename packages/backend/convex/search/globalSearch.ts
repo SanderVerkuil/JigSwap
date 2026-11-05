@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { clampLimit } from "../lib/pageSize";
 import { blockedEitherWaySet } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
@@ -65,7 +65,7 @@ export const global = query({
         id: row._id,
         title: row.title,
         brand: row.brand,
-        image: row.image ? await boxArtUrl(ctx, row.image) : null,
+        image: row.image ? await boxArtThumbUrl(ctx, row.image) : null,
         href: `/puzzles/${row._id}`,
       })),
     );

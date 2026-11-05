@@ -1053,9 +1053,13 @@ function PhotoStrip({
           aria-label={photo.caption ?? t("photos")}
           className="bg-muted focus-visible:ring-ring relative aspect-[4/3] w-[210px] shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
+          {/* The tile is 210px wide (object-contain never draws wider), so the browser picks a
+              rendition from srcSet once the photo has them; the lightbox keeps the original. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photo.url}
+            srcSet={photo.srcSet}
+            sizes={photo.srcSet ? "210px" : undefined}
             alt={photo.caption ?? ""}
             className="h-full w-full object-contain"
           />

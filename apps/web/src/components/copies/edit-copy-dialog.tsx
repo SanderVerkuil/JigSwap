@@ -270,9 +270,10 @@ export function EditCopyDialog({
                       active ? "border-jigsaw-primary" : "border-transparent",
                     )}
                   >
+                    {/* An 84px tile: the photo's 480 px rendition once it has one. */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={photo.url}
+                      src={photo.thumbUrl ?? photo.url}
                       alt={photo.caption ?? ""}
                       className="h-full w-full object-cover"
                     />

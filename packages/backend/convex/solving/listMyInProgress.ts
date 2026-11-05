@@ -2,7 +2,7 @@ import type { InProgressSolveView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 
 // The acting member's in-progress solves, newest-started first. Uses the narrow
 // (userId, isCompleted) index so the read set is only the in-progress slice — the dashboard
@@ -35,7 +35,8 @@ export const listMyInProgress = query({
           title ??= puzzle.title;
           pieceCount ??= puzzle.pieceCount;
           if (puzzle.image) {
-            thumbnailUrl = (await boxArtUrl(ctx, puzzle.image)) ?? undefined;
+            thumbnailUrl =
+              (await boxArtThumbUrl(ctx, puzzle.image)) ?? undefined;
           }
         }
         return {

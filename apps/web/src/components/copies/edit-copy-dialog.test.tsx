@@ -191,3 +191,41 @@ describe("EditCopyDialog refusals", () => {
     expect(source.puzzles.deleteReserved).toBe(en.puzzles.deleteReserved);
   });
 });
+
+describe("EditCopyDialog cover picker", () => {
+  it("shows each photo's small rendition when it has one, else the original", () => {
+    const base = copyOf(CLOSED, "visible") as unknown as Record<
+      string,
+      unknown
+    >;
+    const photo = (id: string, extra: Record<string, unknown>) => ({
+      id,
+      url: `https://files.example/${id}-original`,
+      caption: `Photo ${id}`,
+      tag: null,
+      description: null,
+      takenAt: null,
+      createdAt: 1,
+      moderationStatus: "approved",
+      ...extra,
+    });
+    renderDialog({
+      ...base,
+      gallery: [
+        photo("a", {
+          thumbUrl: "https://files.example/a-480",
+          srcSet: "https://files.example/a-480 480w",
+        }),
+        photo("b", {}),
+      ],
+    } as never);
+
+    const src = (name: string) =>
+      screen
+        .getByRole("button", { name })
+        .querySelector("img")
+        ?.getAttribute("src");
+    expect(src("Photo a")).toBe("https://files.example/a-480");
+    expect(src("Photo b")).toBe("https://files.example/b-original");
+  });
+});

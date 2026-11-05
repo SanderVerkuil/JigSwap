@@ -2,7 +2,7 @@ import type { PuzzleSummaryView } from "@jigswap/contracts";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { canViewDefinition } from "./definitionVisibility";
 import { toPuzzleSummaryView } from "./mappers";
 
@@ -30,7 +30,7 @@ export const listMyFavorites = query({
       views.push(
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
+          puzzle.image ? await boxArtImage(ctx, puzzle.image) : null,
         ),
       );
     }

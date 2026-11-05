@@ -155,15 +155,19 @@ type PlankPuzzleView = {
   pieceCount: number;
   brand?: string;
   image: string | null;
+  /** The cover's 480 px rendition, once it exists. */
+  thumbUrl?: string;
 };
 
-function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
+// Covers are small textures on the shelf boxes, so the small rendition is enough; the original
+// is the fallback until renditions exist.
+export function toPlankBox(p: PlankPuzzleView, i: number): PlankBox {
   const [c1, c2] = COLOR_PAIRS[i % COLOR_PAIRS.length];
   return {
     title: p.title,
     pieceCount: p.pieceCount,
     series: p.brand,
-    cover: p.image ?? undefined,
+    cover: p.thumbUrl ?? p.image ?? undefined,
     width: WIDTHS[i % WIDTHS.length],
     // Only set colors when there is no cover; cover mode ignores them but we
     // pass them for the gradient fallback while the image is loading.

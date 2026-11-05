@@ -6,7 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { INSIGHTS_READ_CAP } from "./getPersonalStats";
 
 // Bounded candidate scan: Insights is read-only and must never run an unbounded table scan, so we
@@ -102,7 +102,7 @@ export const getRecommendations = query({
           pieceCount: puzzle?.pieceCount,
           thumbnail:
             puzzle?.image != null
-              ? await boxArtUrl(ctx, puzzle.image)
+              ? await boxArtThumbUrl(ctx, puzzle.image)
               : undefined,
         };
       }),

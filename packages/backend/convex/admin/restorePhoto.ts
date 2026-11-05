@@ -3,10 +3,12 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { stampModerationAction } from "./stampModerationAction";
 
 // Review-queue decision: the auto-rejection was a false positive, so the photo goes back to
-// "approved" (visible in the gallery again). Only a rejected row can be restored. A photo whose
+// "approved" (visible in the gallery again, and its renditions are made in the background, as
+// for any approval). Only a rejected row can be restored. A photo whose
 // hash check timed out is NOT published by this: its hash gate stays closed (no hashCheckedAt), so
 // it goes back to the Unchecked photos queue as "Hash check timed out", where only the explicit
 // "Approve without hash check" (decideUncheckedPhoto, waive_hash_check) publishes it.
@@ -26,6 +28,7 @@ export const restorePhoto = mutation({
       moderationStatus: "approved",
       updatedAt: Date.now(),
     });
+    await scheduleRenditions(ctx, row.fileId);
 
     // Audit trail: the same puzzle-title resolution as the pipeline's photo_auto_rejected stamp.
     const copy = await ctx.db.get(row.ownedPuzzleId);

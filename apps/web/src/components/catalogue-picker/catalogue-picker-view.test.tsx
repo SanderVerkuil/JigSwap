@@ -111,6 +111,29 @@ const byLabel = (els: Element[], label: string) =>
   els.filter((el) => attr(el, "aria-label") === label);
 
 describe("CataloguePickerView", () => {
+  it("lets a thumbnail pick a rendition for its 40px tile, and shows a lone URL as it is", () => {
+    const els = render({
+      term: "puzzle",
+      rows: [
+        row("a", {
+          image: "https://files.example/a",
+          imageSrcSet:
+            "https://files.example/a-480 480w, https://files.example/a 1600w",
+        }),
+        row("b", { image: "https://files.example/b" }),
+      ],
+    });
+    const [withSet, alone] = els.filter((el) => el.tagName === "img");
+    expect(attr(withSet, "src")).toBe("https://files.example/a");
+    expect(attr(withSet, "srcset")).toBe(
+      "https://files.example/a-480 480w, https://files.example/a 1600w",
+    );
+    expect(attr(withSet, "sizes")).toBe("40px");
+    expect(attr(alone, "src")).toBe("https://files.example/b");
+    expect(attr(alone, "srcset")).toBeUndefined();
+    expect(attr(alone, "sizes")).toBeUndefined();
+  });
+
   it("renders each result as an aria-pressed toggle named Add/Remove", () => {
     const els = render({
       term: "puzzle",

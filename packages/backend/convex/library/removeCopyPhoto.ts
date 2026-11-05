@@ -3,6 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
+import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 
 // Removal of an uploaded copy photo by the copy's owner (or household manage member), or by the member who uploaded it:
@@ -44,6 +45,7 @@ export const removeCopyPhoto = mutation({
     if (image.moderationStatus === "quarantined") return;
 
     await ctx.db.delete(imageId);
+    await deleteRenditions(ctx, image.fileId);
     // Drop the stored blob so it doesn't orphan, unless anything else holds it: a CSAM escalation
     // preserves it, or a row written before the claim rule holds the same id, such as catalogue
     // box art (SEC-01).

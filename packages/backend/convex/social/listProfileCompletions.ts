@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { clampPaginationOpts } from "../lib/pageSize";
 import {
@@ -86,7 +86,7 @@ export const listProfileCompletions = query({
         (copy && reachable
           ? await resolveCopyCoverUrl(ctx, copy, puzzle)
           : puzzle?.image
-            ? await boxArtUrl(ctx, puzzle.image)
+            ? await boxArtThumbUrl(ctx, puzzle.image)
             : null) ?? undefined;
 
       page.push({

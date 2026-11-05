@@ -14,7 +14,7 @@ import {
   newestListedFirst,
   openListingWindow,
 } from "./openListing";
-import { resolveCopyCoverUrl } from "./resolveCoverUrl";
+import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
 // Browse's candidate window (library/openListing.openListingWindow) over PUBLIC owners' open copies
 // (a private owner's copy is only reachable through a circle, read separately). It holds at most
@@ -233,7 +233,7 @@ export const browseOwnedPuzzles = query({
           owner: _unjoined,
           ...view
         } = toOwnedCopyView(copy, puzzle, {
-          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+          ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
         });
         const owner = await projectMemberIdentity(
           ctx,

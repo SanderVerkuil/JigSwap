@@ -10,6 +10,7 @@ import {
   isHashCleared,
   isWaivedHashRecheckCandidate,
 } from "../imageModeration/hashCheckFields";
+import { deleteRenditions } from "../imageModeration/renditionsStore";
 import { logEvent } from "../logEvent";
 import { hasMaintenanceMarker } from "../maintenanceMarkers";
 
@@ -38,13 +39,18 @@ import { hasMaintenanceMarker } from "../maintenanceMarkers";
 // before that, a completion photo stored before the sidecars existed looks held by nothing and
 // would be deleted. Without it the sweep stays a dry run and logs `delete_blocked`.
 //
-// Pages `_storage` STORAGE_SWEEP_PAGE blobs per transaction (about a dozen index reads each) and
-// reschedules itself with the cursor; the age cutoffs are fixed when the run starts. One
-// `storage.sweep` wide event per batch, with that batch's candidate ids and the run's running
-// totals; the event with `done: true` carries the whole run.
+// A deleted blob's renditions go with it (renditionsStore.deleteRenditions): they are held by their
+// row, so nothing else would ever remove them. They are not candidates of their own.
+//
+// Pages `_storage` STORAGE_SWEEP_PAGE blobs per transaction (about 15 index reads each, about 60
+// when it also deletes a source and its three renditions, which keeps even a batch of nothing but
+// those under Convex's 4,096 queries per function) and reschedules itself with the cursor; the age
+// cutoffs are fixed when the run starts. One `storage.sweep` wide event per batch, with that
+// batch's candidate ids and the run's running totals; the event with `done: true` carries the
+// whole run.
 
 /** Blobs read per batch. */
-export const STORAGE_SWEEP_PAGE = 100;
+export const STORAGE_SWEEP_PAGE = 50;
 
 /** A blob nothing holds is only a candidate once it is this old. */
 export const ORPHAN_MIN_AGE_MS = 24 * 60 * 60 * 1000;
@@ -190,6 +196,8 @@ export const sweepStorage = internalMutation({
     };
     const candidateIds: Id<"_storage">[] = [];
     for (const blob of page.page) {
+      // Deleted a moment ago, as a rendition of a source earlier in this batch.
+      if (deleting && !(await ctx.db.system.get(blob._id))) continue;
       totals.scanned++;
       totals.scannedBytes += blob.size;
       const verdict = await classify(ctx, blob, startedAt);
@@ -220,6 +228,7 @@ export const sweepStorage = internalMutation({
           await ctx.db.delete(listing._id);
         }
       }
+      await deleteRenditions(ctx, blob._id);
       await ctx.storage.delete(blob._id);
       totals.deleted++;
       totals.deletedBytes += blob.size;

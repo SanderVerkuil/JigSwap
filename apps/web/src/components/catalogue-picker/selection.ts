@@ -12,6 +12,8 @@ export interface PickerRow {
   brand?: string;
   pieceCount?: number;
   image?: string | null;
+  // The box art's renditions as a srcset (absent until they exist), for the row's thumbnail.
+  imageSrcSet?: string;
   // The caller's own not-yet-approved submission ("Pending review").
   pending: boolean;
   // The caller already owns a copy of this definition ("On your shelf").
@@ -73,6 +75,7 @@ interface SourceRow {
   brand?: string;
   pieceCount?: number;
   image?: string | null;
+  imageSrcSet?: string;
 }
 
 const matches = (row: SourceRow, term: string) => {
@@ -105,6 +108,7 @@ export const buildPickerRows = ({
     brand: row.brand,
     pieceCount: row.pieceCount,
     image: row.image,
+    imageSrcSet: row.imageSrcSet,
     pending,
     onShelf: ownedDefinitionIds.has(row.aggregateId!),
   });

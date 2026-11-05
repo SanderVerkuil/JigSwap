@@ -11,7 +11,7 @@ import {
   canonicalHandleOf,
   resolveMemberByHandle,
 } from "../identity/resolveMemberByHandle";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
@@ -221,7 +221,7 @@ export const getPublicProfile = query({
               pieceCount ??= puzzle.pieceCount;
               if (puzzle.image) {
                 thumbnailUrl =
-                  (await boxArtUrl(ctx, puzzle.image)) ?? undefined;
+                  (await boxArtThumbUrl(ctx, puzzle.image)) ?? undefined;
               }
             }
             return { title, pieceCount, startDate: c.startDate, thumbnailUrl };

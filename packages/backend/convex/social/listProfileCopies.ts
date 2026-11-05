@@ -15,7 +15,7 @@ import {
 } from "../library/canViewCopy";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { toPublicCopyView } from "../library/mappers";
-import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { resolveCopyCoverFields } from "../library/resolveCoverUrl";
 import { canSeeProfileContent, seesFullLibrary } from "./privacy";
 
 // A page holds 1 to MAX_PAGE_SIZE copies whatever the client asks for.
@@ -106,7 +106,7 @@ export const listProfileCopies = query({
       visible.map(async (copy) => {
         const puzzle = await ctx.db.get(copy.puzzleId);
         return toPublicCopyView(copy, puzzle, {
-          coverUrl: await resolveCopyCoverUrl(ctx, copy, puzzle),
+          ...(await resolveCopyCoverFields(ctx, copy, puzzle)),
         });
       }),
     );

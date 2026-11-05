@@ -2,7 +2,8 @@ import type { PlankPuzzleView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
+import type { ImageSources } from "../lib/imageModeration/imageSources";
 import { mulberry32, partialShuffle } from "./sampling";
 
 // Bounded candidate scan: same guard as getRecommendations — never an unbounded table scan. The
@@ -13,16 +14,18 @@ const CANDIDATE_SCAN_LIMIT = 200;
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 12;
 
-// Pure mapper: convert a puzzles row + resolved URL to the minimal marketing DTO. No moderation
-// fields, no timestamps — only what the hero plank needs to render a cover card.
+// Pure mapper: convert a puzzles row + resolved image to the minimal marketing DTO. No moderation
+// fields, no timestamps — only what the hero plank needs to render a cover card. The plank draws
+// covers as small textures, so it gets the 480 px rendition (`thumbUrl`) when there is one.
 export const toPlankPuzzleView = (
   row: Doc<"puzzles">,
-  image: string | null,
+  image: ImageSources | null,
 ): PlankPuzzleView => ({
   title: row.title,
   pieceCount: row.pieceCount,
   brand: row.brand,
-  image,
+  image: image?.url ?? null,
+  ...(image?.thumbUrl !== undefined && { thumbUrl: image.thumbUrl }),
 });
 
 // Insights read (public, no auth): seeded-random sample of approved catalog puzzles for the
@@ -55,10 +58,7 @@ export const getPlankPuzzles = query({
     // Resolve storage IDs to public URLs concurrently.
     return Promise.all(
       picked.map(async (puzzle) =>
-        toPlankPuzzleView(
-          puzzle,
-          puzzle.image != null ? await boxArtUrl(ctx, puzzle.image) : null,
-        ),
+        toPlankPuzzleView(puzzle, await boxArtImage(ctx, puzzle.image)),
       ),
     );
   },

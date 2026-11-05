@@ -126,6 +126,26 @@ describe("buildPickerRows", () => {
     expect(rows.map((r) => r.definitionId)).toEqual(["mine"]);
   });
 
+  it("carries the box art's srcSet along with its URL", () => {
+    const rows = buildPickerRows({
+      term: "cove",
+      results: [
+        {
+          ...result("a1", "Mountain Cove"),
+          image: "https://files.example/a1",
+          imageSrcSet: "https://files.example/a1-480 480w",
+        },
+        result("a2", "Cove Lights"),
+      ],
+      mySubmissions: [],
+      ownedDefinitionIds: new Set(),
+    });
+    expect(rows.map((r) => [r.image, r.imageSrcSet])).toEqual([
+      ["https://files.example/a1", "https://files.example/a1-480 480w"],
+      [null, undefined],
+    ]);
+  });
+
   it("shows only the own submissions for a blank term", () => {
     const rows = buildPickerRows({
       term: "  ",

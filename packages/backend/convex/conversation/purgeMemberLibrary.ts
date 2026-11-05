@@ -10,6 +10,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { householdDeps } from "../household/adapters/deps";
+import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import {
   markCompletionStatsChange,
@@ -182,6 +183,7 @@ const deleteCopyPhoto = async (
     .collect();
   for (const comment of comments) await ctx.db.delete(comment._id);
   await ctx.db.delete(image._id);
+  await deleteRenditions(ctx, image.fileId);
   await deleteBlob(ctx, image.fileId);
 };
 

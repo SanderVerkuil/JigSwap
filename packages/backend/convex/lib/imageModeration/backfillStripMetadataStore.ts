@@ -1,9 +1,14 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
-import { internalMutation, internalQuery } from "../../_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "../../_generated/server";
 import { isReferenced } from "./blobReferences";
 import { boxArtHolders, repointBoxArt } from "./boxArtReferences";
+import { deleteRenditions, scheduleRenditions } from "./renditionsStore";
 
 // The database side of the one-shot lib/imageModeration/backfillStripMetadata (a Node action,
 // for the decoder): page through a table, switch everything holding a blob to its clean copy,
@@ -76,9 +81,22 @@ export const listPage = internalQuery({
   },
 });
 
+// The old blob's renditions show the image as it was before the strip (maybe not upright): delete
+// them, and make the clean blob's (lib/imageModeration/renditionsStore; a no-op for a blob that
+// may not have any).
+const replaceRenditions = async (
+  ctx: MutationCtx,
+  from: Id<"_storage">,
+  to: Id<"_storage">,
+) => {
+  await deleteRenditions(ctx, from);
+  await scheduleRenditions(ctx, to);
+};
+
 /**
- * Point everything that holds `from` at `to`, provided the row still holds `from`. Returns
- * whether it did; afterwards the old blob is deleted unless something else still uses it.
+ * Point everything that holds `from` at `to`, provided the row still holds `from`, and move the
+ * renditions over with it (replaceRenditions). Returns whether it did; afterwards the old blob is
+ * deleted unless something else still uses it.
  */
 export const swapBlob = internalMutation({
   args: {
@@ -112,6 +130,7 @@ export const swapBlob = internalMutation({
           });
         }
       }
+      await replaceRenditions(ctx, from, to);
       return true;
     }
 
@@ -125,6 +144,7 @@ export const swapBlob = internalMutation({
       return false;
     }
     await repointBoxArt(ctx, holders, from, to);
+    await replaceRenditions(ctx, from, to);
     return true;
   },
 });

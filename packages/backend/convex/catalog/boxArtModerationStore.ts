@@ -19,6 +19,10 @@ import {
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import {
+  deleteRenditions,
+  scheduleRenditions,
+} from "../lib/imageModeration/renditionsStore";
 import { needsRescreen } from "../library/adapters/photoModeration";
 import { BOX_ART_CLAIM_WINDOW_MS } from "./boxArtUploads";
 
@@ -27,6 +31,11 @@ import { BOX_ART_CLAIM_WINDOW_MS } from "./boxArtUploads";
 // library/moderationStore and solving/completionModerationStore. Box art is also held by the
 // definitions and proposals it was attached to (lib/imageModeration/boxArtReferences), so a file
 // swap re-points them, and a rejection or a quarantine detaches it from them.
+//
+// Renditions (lib/imageModeration/renditionsStore): every approval (setVerdict,
+// applyRescreenVerdict, and an admin's in admin/decideUncheckedPhoto) schedules them in the
+// background, so the uploader's inline check never waits on them; a rejection
+// (detachRejectedBoxArt) and a quarantine delete them with the box art.
 
 /**
  * Claim a fresh upload as box art for the acting member: it exists, is recent, and nothing
@@ -91,9 +100,9 @@ export const setFile = internalMutation({
   },
 });
 
-// Detach rejected box art from whatever holds it and delete its blob (unless an escalation
-// preserves it), like a rejected completion photo. The row survives as the audit record. Also
-// used by an admin's manual rejection (admin/decideUncheckedPhoto).
+// Detach rejected box art from whatever holds it and delete its renditions and its blob (unless
+// an escalation preserves it), like a rejected completion photo. The row survives as the audit
+// record. Also used by an admin's manual rejection (admin/decideUncheckedPhoto).
 export const detachRejectedBoxArt = async (
   ctx: MutationCtx,
   row: Doc<"boxArtUploads">,
@@ -104,6 +113,7 @@ export const detachRejectedBoxArt = async (
     row.storageId,
     undefined,
   );
+  await deleteRenditions(ctx, row.storageId);
   if (!(await isPreservedBlob(ctx, row.storageId))) {
     try {
       await ctx.storage.delete(row.storageId);
@@ -113,8 +123,9 @@ export const detachRejectedBoxArt = async (
   }
 };
 
-// Record the verdict. FIRST VERDICT WINS: only a row still pending takes it. A rejection
-// detaches and deletes the box art and stamps the automated decision on the audit trail.
+// Record the verdict. FIRST VERDICT WINS: only a row still pending takes it. An approval
+// schedules the renditions. A rejection detaches and deletes the box art and stamps the automated
+// decision on the audit trail.
 export const setVerdict = internalMutation({
   args: {
     imageId: v.id("boxArtUploads"),
@@ -132,6 +143,9 @@ export const setVerdict = internalMutation({
     const row = await ctx.db.get(imageId);
     if (!row || row.moderationStatus !== "pending") return;
     await ctx.db.patch(imageId, verdict);
+    if (verdict.moderationStatus === "approved") {
+      await scheduleRenditions(ctx, row.storageId);
+    }
     if (verdict.moderationStatus !== "rejected") return;
     await detachRejectedBoxArt(ctx, row);
     await stampModerationAction(ctx, {
@@ -143,13 +157,15 @@ export const setVerdict = internalMutation({
 });
 
 // A CSAM hash match (lib/imageModeration/quarantine). FORCES the row to "quarantined" whatever its
-// status now, points it at the preserved blob, detaches the box art from every definition and
-// proposal holding it, and ALWAYS raises the escalation, even when the row is gone.
+// status now, deletes the renditions of the blob it held, points it at the preserved blob,
+// detaches the box art from every definition and proposal holding it, and ALWAYS raises the
+// escalation, even when the row is gone.
 export const quarantine = internalMutation({
   args: { imageId: v.id("boxArtUploads"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     const row = await ctx.db.get(imageId);
     if (row) {
+      await deleteRenditions(ctx, row.storageId);
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
         ...(match.fileId ? { storageId: match.fileId } : {}),
@@ -181,9 +197,10 @@ export const setHashCheck = internalMutation({
 
 // Apply a re-screen verdict (library/rescreenPhotos) to box art that was never classified (see
 // needsRescreen: unscored, or approved/legacy without a score, and not decided by an admin). Only
-// a SCORED verdict comes here. A rejection has the live pipeline's side effects: detached from
-// every definition and proposal, blob deleted, photo_auto_rejected stamped. Returns whether the
-// listing was patched.
+// a SCORED verdict comes here. An approval schedules the renditions (a no-op when they exist). A
+// rejection has the live pipeline's side effects: detached from every definition and proposal,
+// renditions and blob deleted, photo_auto_rejected stamped. Returns whether the listing was
+// patched.
 export const applyRescreenVerdict = internalMutation({
   args: {
     imageId: v.id("boxArtUploads"),
@@ -199,6 +216,9 @@ export const applyRescreenVerdict = internalMutation({
       moderationReason: undefined,
       moderationAttempts: (row.moderationAttempts ?? 0) + 1,
     });
+    if (verdict.moderationStatus === "approved") {
+      await scheduleRenditions(ctx, row.storageId);
+    }
     if (verdict.moderationStatus === "rejected") {
       await detachRejectedBoxArt(ctx, row);
       await stampModerationAction(ctx, {

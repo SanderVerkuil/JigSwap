@@ -1,7 +1,7 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
 import { query } from "../_generated/server";
-import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
+import { boxArtImage } from "../lib/imageModeration/boxArtUrl";
 import { clampPaginationOpts } from "../lib/pageSize";
 import { toPuzzleSummaryView } from "./mappers";
 
@@ -24,7 +24,7 @@ export const listAllPuzzles = query({
       puzzles.page.map(async (puzzle) =>
         toPuzzleSummaryView(
           puzzle,
-          puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
+          puzzle.image ? await boxArtImage(ctx, puzzle.image) : null,
         ),
       ),
     );
