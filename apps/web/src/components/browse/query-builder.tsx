@@ -34,40 +34,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AVAILABILITY_FLAGS,
+  CONDITIONS,
+  type AvailabilityFlag,
+  type BrowseFilters,
+  type Condition,
+} from "@/lib/browse-search";
+import { DIFFICULTIES, type Difficulty } from "@/lib/catalogue-filters";
 import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 
 /* ----------------------------------------------------------------- types */
 
-export type Difficulty = "easy" | "medium" | "hard" | "expert";
-export type Condition = "new_sealed" | "like_new" | "good" | "fair" | "poor";
-export type AvailabilityFlag = "forTrade" | "forLend" | "forSale";
-
-export const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "expert"];
-export const CONDITIONS: Condition[] = [
-  "new_sealed",
-  "like_new",
-  "good",
-  "fair",
-  "poor",
-];
-export const AVAILABILITY_FLAGS: AvailabilityFlag[] = [
-  "forTrade",
-  "forLend",
-  "forSale",
-];
-
-// The full, controlled state of the builder. The page owns this object and maps
-// it onto the browse query (server-side where supported, client-side otherwise).
-export interface QueryBuilderState {
+// The full, controlled state of the builder: the free text plus the filters the
+// URL carries (lib/browse-search). The page owns this object and maps it onto
+// the browse query, which applies every condition on the server.
+export interface QueryBuilderState extends BrowseFilters {
   text: string;
-  category: string;
-  condition: Condition | "";
-  difficulty: Difficulty | "";
-  minPieces: string;
-  maxPieces: string;
-  availability: AvailabilityFlag[];
 }
 
 export const EMPTY_QUERY: QueryBuilderState = {

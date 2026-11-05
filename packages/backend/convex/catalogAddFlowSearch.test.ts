@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import type { FunctionArgs } from "convex/server";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
@@ -139,6 +140,174 @@ describe("add-flow catalogue search", () => {
         paginationOpts: { numItems: 10, cursor: null },
       }),
     ).rejects.toThrow(/Unauthenticated/);
+  });
+});
+
+// Facet seed: interleaved "big" (Ravensburger, 2000 pieces, hard, Landscapes, water) and "small"
+// (Jumbo, 500 pieces, easy, Animals, forest) lakes, so a facet has to skip rows inside every page,
+// plus a pending row that matches every "big" facet and must never surface.
+const PAIRS = 12;
+
+const seedFacets = async (t: ReturnType<typeof convexTest>) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const alice = await ctx.db.insert("users", {
+      clerkId: "clerk_alice",
+      email: "alice@example.com",
+      name: "Alice",
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const category = (en: string) =>
+      ctx.db.insert("adminCategories", {
+        name: { en, nl: en },
+        isActive: true,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const landscapes = await category("Landscapes");
+    const animals = await category("Animals");
+    const base = {
+      submittedBy: alice,
+      createdAt: now,
+      updatedAt: now,
+      status: "approved" as const,
+    };
+    for (let i = 0; i < PAIRS; i += 1) {
+      await ctx.db.insert("puzzles", {
+        ...base,
+        aggregateId: `big-${i}`,
+        title: `Big Lake ${i}`,
+        brand: "Ravensburger",
+        pieceCount: 2000,
+        difficulty: "hard",
+        category: landscapes,
+        tags: ["water", "nature"],
+        searchableText: `big lake ${i} ravensburger`,
+      });
+      await ctx.db.insert("puzzles", {
+        ...base,
+        aggregateId: `small-${i}`,
+        title: `Small Lake ${i}`,
+        brand: "Jumbo",
+        pieceCount: 500,
+        difficulty: "easy",
+        category: animals,
+        tags: ["forest"],
+        searchableText: `small lake ${i} jumbo`,
+      });
+    }
+    await ctx.db.insert("puzzles", {
+      ...base,
+      status: "pending",
+      aggregateId: "pending-big",
+      title: "Pending Lake",
+      brand: "Ravensburger",
+      pieceCount: 2000,
+      difficulty: "hard",
+      category: landscapes,
+      tags: ["water"],
+      searchableText: "pending lake ravensburger",
+    });
+    return { landscapes, animals };
+  });
+
+type SearchArgs = FunctionArgs<typeof api.catalog.searchCatalog.searchCatalog>;
+type FacetArgs = Omit<SearchArgs, "paginationOpts">;
+
+// Pages through a search 5 rows at a time, so the matches span several pages, and returns every
+// title it saw, sorted.
+const searchAll = async (
+  t: ReturnType<typeof convexTest>,
+  args: FacetArgs,
+): Promise<string[]> => {
+  const titles: string[] = [];
+  let cursor: string | null = null;
+  for (;;) {
+    const result: {
+      page: { title: string }[];
+      isDone: boolean;
+      continueCursor: string;
+    } = await asAlice(t).query(api.catalog.searchCatalog.searchCatalog, {
+      ...args,
+      paginationOpts: { numItems: 5, cursor },
+    });
+    titles.push(...result.page.map((p) => p.title));
+    if (result.isDone) break;
+    cursor = result.continueCursor;
+  }
+  return titles.sort();
+};
+
+const titlesOf = (prefix: "Big" | "Small") =>
+  Array.from({ length: PAIRS }, (_, i) => `${prefix} Lake ${i}`).sort();
+
+describe("catalogue search facets", () => {
+  test.each([
+    ["the plain browse", undefined],
+    ["a term search", "lake"],
+  ])(
+    "each facet narrows %s, across pages, never to a pending row",
+    async (_label, searchTerm) => {
+      const t = convexTest(schema, modules);
+      const { landscapes, animals } = await seedFacets(t);
+      const big = titlesOf("Big");
+      const small = titlesOf("Small");
+
+      const cases: [FacetArgs, string[]][] = [
+        [{ brand: "Ravensburger" }, big],
+        [{ brand: "Jumbo" }, small],
+        [{ pieceMin: 1000 }, big],
+        [{ pieceMax: 1000 }, small],
+        [{ pieceMin: 500, pieceMax: 500 }, small],
+        [{ difficulty: "hard" }, big],
+        [{ difficulty: "expert" }, []],
+        [{ category: landscapes }, big],
+        [{ category: animals }, small],
+        [{ tags: ["water", "unknown"] }, big],
+        [{ tags: ["water", "forest"] }, [...big, ...small].sort()],
+        [{ brand: "Jumbo", pieceMax: 500, tags: ["forest"] }, small],
+        [{ brand: "Jumbo", difficulty: "hard" }, []],
+      ];
+      for (const [facets, expected] of cases) {
+        expect(
+          await searchAll(t, { ...facets, searchTerm }),
+          JSON.stringify(facets),
+        ).toEqual(expected);
+      }
+    },
+  );
+
+  test("a term and facets combine", async () => {
+    const t = convexTest(schema, modules);
+    await seedFacets(t);
+
+    expect(await searchAll(t, { searchTerm: "big", brand: "Jumbo" })).toEqual(
+      [],
+    );
+    expect(await searchAll(t, { searchTerm: "small", pieceMax: 500 })).toEqual(
+      titlesOf("Small"),
+    );
+  });
+
+  test("a malformed category id gives an empty, finished page", async () => {
+    const t = convexTest(schema, modules);
+    await seedFacets(t);
+
+    for (const searchTerm of [undefined, "lake"]) {
+      const result = await asAlice(t).query(
+        api.catalog.searchCatalog.searchCatalog,
+        {
+          searchTerm,
+          category: "not-a-category",
+          paginationOpts: { numItems: 5, cursor: null },
+        },
+      );
+      expect(result.page).toEqual([]);
+      expect(result.isDone).toBe(true);
+    }
   });
 });
 

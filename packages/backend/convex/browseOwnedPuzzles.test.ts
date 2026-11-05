@@ -338,3 +338,180 @@ describe("library.browseOwnedPuzzles page size", () => {
     expect(negative.ownedPuzzles).toHaveLength(10);
   });
 });
+
+describe("library.browseOwnedPuzzles availability filter", () => {
+  // Next to the seed's trade-only copies (the public owner's and the circle-shared one), the public
+  // owner offers one copy only for lending and one only for sale. Distinct, later createdAt values
+  // keep the newest-first order (and so the pages) deterministic.
+  const seedChannels = async (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) => {
+      const owner = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", "clerk_public"))
+        .unique();
+      const puzzle = await ctx.db.query("puzzles").first();
+      const now = Date.now();
+      for (const [aggregateId, availability, createdAt] of [
+        ["copy-lend", { forTrade: false, forSale: false, forLend: true }, 1],
+        ["copy-sale", { forTrade: false, forSale: true, forLend: false }, 2],
+      ] as const) {
+        await ctx.db.insert("ownedPuzzles", {
+          aggregateId,
+          puzzleId: puzzle!._id,
+          ownerId: owner!._id,
+          condition: "good",
+          availability,
+          createdAt: now + createdAt,
+          updatedAt: now,
+        });
+      }
+    });
+
+  test("one channel returns only copies offered that way, with an exact total", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedChannels(t);
+    const view = await browse(t, { availability: ["forLend"] });
+    expect(ids(view)).toEqual(new Set(["copy-lend"]));
+    expect(view.total).toBe(1);
+    expect(view.hasMore).toBe(false);
+  });
+
+  test("several channels match a copy offered any of those ways", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedChannels(t);
+    const view = await browse(t, { availability: ["forLend", "forSale"] });
+    expect(ids(view)).toEqual(new Set(["copy-lend", "copy-sale"]));
+    expect(view.total).toBe(2);
+  });
+
+  test("the filter applies to circle-shared copies too", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedChannels(t);
+    const trade = await browse(t, { availability: ["forTrade"] });
+    expect(ids(trade)).toEqual(
+      new Set(["copy-public-open", "copy-circle-open"]),
+    );
+    const lend = await browse(t, { availability: ["forLend"] });
+    expect(ids(lend).has("copy-circle-open")).toBe(false);
+  });
+
+  test("an empty list does not narrow", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedChannels(t);
+    const all = await browse(t);
+    const empty = await browse(t, { availability: [] });
+    expect(empty.total).toBe(all.total);
+    expect(ids(empty)).toEqual(ids(all));
+  });
+
+  test("filtered pages reach every match once, and only the last page says no more", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedChannels(t);
+    const availability = ["forTrade", "forSale"];
+    const first = await browse(t, { availability, offset: 0, limit: 2 });
+    const second = await browse(t, { availability, offset: 2, limit: 2 });
+    expect(first.total).toBe(3);
+    expect(second.total).toBe(3);
+    expect(first.ownedPuzzles).toHaveLength(2);
+    expect(first.hasMore).toBe(true);
+    expect(second.ownedPuzzles).toHaveLength(1);
+    expect(second.hasMore).toBe(false);
+    const seen = [...first.ownedPuzzles, ...second.ownedPuzzles].map(
+      (c) => c.aggregateId,
+    );
+    expect(new Set(seen)).toEqual(
+      new Set(["copy-public-open", "copy-circle-open", "copy-sale"]),
+    );
+    expect(seen).toHaveLength(3);
+  });
+});
+
+describe("library.browseOwnedPuzzles category filter", () => {
+  // Files the seeded definition under a category, and adds a second definition under no category
+  // with an open copy from the public owner.
+  const seedCategory = async (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) => {
+      const now = Date.now();
+      const category = await ctx.db.insert("adminCategories", {
+        name: { en: "Landscapes", nl: "Landschappen" },
+        isActive: true,
+        sortOrder: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const copy = await ctx.db
+        .query("ownedPuzzles")
+        .filter((q) => q.eq(q.field("aggregateId"), "copy-public-open"))
+        .first();
+      await ctx.db.patch(copy!.puzzleId, { category });
+      const uncategorised = await ctx.db.insert("puzzles", {
+        aggregateId: "def-no-category",
+        title: "Uncategorised",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: copy!.ownerId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("ownedPuzzles", {
+        aggregateId: "copy-no-category",
+        puzzleId: uncategorised,
+        ownerId: copy!.ownerId,
+        condition: "good",
+        availability: OPEN,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return category as string;
+    });
+
+  test("narrows to copies of puzzles in that category", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const category = await seedCategory(t);
+    const view = await asViewer(t).query(
+      api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+      { category },
+    );
+    expect(view.ownedPuzzles.map((c) => c.aggregateId)).not.toContain(
+      "copy-no-category",
+    );
+    expect(view.ownedPuzzles.map((c) => c.aggregateId)).toContain(
+      "copy-public-open",
+    );
+  });
+
+  // It arrives from a URL search param: a hand-edited link must not fail the whole read.
+  test("a malformed id yields an empty result, not an error", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await seedCategory(t);
+    for (const category of ["notanid", "5"]) {
+      const view = await asViewer(t).query(
+        api.library.browseOwnedPuzzles.browseOwnedPuzzles,
+        { category },
+      );
+      expect(view).toEqual({
+        ownedPuzzles: [],
+        total: 0,
+        hasMore: false,
+        totalIsLowerBound: false,
+      });
+    }
+  });
+
+  test("still requires a signed-in member for a malformed id", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await expect(
+      t.query(api.library.browseOwnedPuzzles.browseOwnedPuzzles, {
+        category: "notanid",
+      }),
+    ).rejects.toThrow();
+  });
+});

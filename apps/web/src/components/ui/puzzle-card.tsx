@@ -32,8 +32,10 @@ import {
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
+import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 import {
+  ArrowLeftRight,
   Check,
   CircleCheck,
   Clock,
@@ -85,7 +87,9 @@ interface PuzzleCardProps {
   onSelect?: (puzzleId: Id<"ownedPuzzles">) => void;
   onRequestExchange?: (puzzleId: Id<"ownedPuzzles">) => void;
   onMessage?: (puzzleId: Id<"ownedPuzzles">) => void;
+  /** Toggles the catalogue favourite of this copy's puzzle; `favorited` is its current state. */
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
+  favorited?: boolean;
   onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
   // Start/Finish solve swap: the page resolves whether the caller has an in-progress solve on
   // this copy (`solveInProgress`) and handles the action (start vs finish) itself.
@@ -288,6 +292,7 @@ export function PuzzleCard({
   onRequestExchange,
   onMessage,
   onFavorite,
+  favorited = false,
   onLogSolve,
   onStartSolve,
   solveInProgress = false,
@@ -302,7 +307,10 @@ export function PuzzleCard({
 }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
   const tCompletions = useTranslations("solving.completions");
+  const tCard = useTranslations("browse.card");
+  const tCatalog = useTranslations("puzzles.puzzles");
   const boxArtInCheck = useBoxArtInCheck();
+  const { viewMode } = usePuzzleView();
 
   // Early return if no puzzle data
   if (!puzzle.puzzle) {
@@ -330,58 +338,74 @@ export function PuzzleCard({
 
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
-  const badges = (
-    <>
-      {owner}
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        <Badge
-          variant={
-            puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
-              ? "default"
-              : "secondary"
-          }
-          className="text-xs"
-        >
-          {t(puzzle.condition)}
+  const conditionRow = (
+    <div className="flex flex-wrap items-center gap-2 mb-2">
+      <Badge
+        variant={
+          puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
+            ? "default"
+            : "secondary"
+        }
+        className="text-xs"
+      >
+        {t(puzzle.condition)}
+      </Badge>
+      {/* Only the owner and their household ever receive a private copy. */}
+      {puzzle.visibility === "private" ? (
+        <Badge variant="outline" className="gap-1 text-xs">
+          <Lock className="size-3" aria-hidden />
+          {t("private")}
         </Badge>
-        {/* Only the owner and their household ever receive a private copy. */}
-        {puzzle.visibility === "private" ? (
-          <Badge variant="outline" className="gap-1 text-xs">
-            <Lock className="size-3" aria-hidden />
-            {t("private")}
-          </Badge>
-        ) : null}
-      </div>
-
-      {showAvailability && (
-        // Wraps: all three offers do not fit one row of a compact phone card.
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          {puzzle.availability.forLend ? (
-            <Badge variant="outline" className="text-xs">
-              {t("lend")}
-            </Badge>
-          ) : null}
-          {puzzle.availability.forTrade ? (
-            <Badge variant="outline" className="text-xs">
-              {t("trade")}
-            </Badge>
-          ) : null}
-          {puzzle.availability.forSale ? (
-            <Badge variant="outline" className="text-xs">
-              {t("sale")}
-            </Badge>
-          ) : null}
-        </div>
-      )}
-
-      {ownerLabel && (
-        <div className="flex items-center gap-2 mb-2">
-          <User className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{ownerLabel}</span>
-        </div>
-      )}
-    </>
+      ) : null}
+    </div>
   );
+
+  const availabilityRow = showAvailability && (
+    // Wraps: all three offers do not fit one row of a compact phone card.
+    <div className="flex flex-wrap items-center gap-2 mb-2">
+      {puzzle.availability.forLend ? (
+        <Badge variant="outline" className="text-xs">
+          {t("lend")}
+        </Badge>
+      ) : null}
+      {puzzle.availability.forTrade ? (
+        <Badge variant="outline" className="text-xs">
+          {t("trade")}
+        </Badge>
+      ) : null}
+      {puzzle.availability.forSale ? (
+        <Badge variant="outline" className="text-xs">
+          {t("sale")}
+        </Badge>
+      ) : null}
+    </div>
+  );
+
+  const ownerRow = ownerLabel && (
+    <div className="flex items-center gap-2 mb-2">
+      <User className="h-3 w-3 text-muted-foreground" />
+      <span className="text-xs text-muted-foreground">{ownerLabel}</span>
+    </div>
+  );
+
+  // On Browse a card is an offer, so whose copy it is and how it is offered (swap, lend, sell)
+  // come first; the condition follows. Elsewhere the copy's own state leads.
+  const badges =
+    variant === "browse" ? (
+      <>
+        {owner}
+        {ownerRow}
+        {availabilityRow}
+        {conditionRow}
+      </>
+    ) : (
+      <>
+        {owner}
+        {conditionRow}
+        {availabilityRow}
+        {ownerRow}
+      </>
+    );
 
   // Whether this variant should show the ⋯ overflow menu (owner-management actions).
   // Suppressed in selection/pick where card-click owns the interaction.
@@ -460,51 +484,88 @@ export function PuzzleCard({
     onFavorite
   );
   const hasBrowseRow = showActions && browseActions;
+  const messageLabel = ownerLabel
+    ? tCard("messageOwnerName", { name: ownerLabel })
+    : tCard("messageOwner");
 
+  // Requesting the copy is what Browse is for, so it is a labelled primary button; Message and the
+  // favourite heart are named icon buttons with a tooltip. The heart keeps one name and reports its
+  // state through aria-pressed. The two icons wrap together under Request on a card too narrow
+  // for all three (two-column tablet grid, longer Dutch label), so Request's label is never cut
+  // off and the icons never split up. 40px targets, 44px on touch screens.
+  const iconActions = (onMessage || onFavorite) && (
+    <div className="ml-auto flex items-center gap-2">
+      {onMessage && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={messageLabel}
+              onClick={() => onMessage(ownedId)}
+              className="size-10 pointer-coarse:size-11"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{messageLabel}</TooltipContent>
+        </Tooltip>
+      )}
+      {onFavorite && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={tCard("favorite")}
+              aria-pressed={favorited}
+              onClick={() => onFavorite(ownedId)}
+              className="size-10 pointer-coarse:size-11"
+            >
+              <Heart
+                className={cn(
+                  "h-4 w-4",
+                  favorited && "fill-red-500 text-red-500",
+                )}
+                aria-hidden
+              />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {favorited
+              ? tCatalog("removeFromFavorites")
+              : tCatalog("addToFavorites")}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
   const actions = hasBrowseRow ? (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        {variant !== "collection" && onRemove && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onRemove(ownedId)}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-        {onRequestExchange && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onRequestExchange(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
-        {onMessage && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onMessage(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <MessageCircle className="h-4 w-4" />
-          </Button>
-        )}
-        {onFavorite && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onFavorite(ownedId)}
-            className="h-8 w-8 p-0"
-          >
-            <Heart className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      {variant !== "collection" && onRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemove(ownedId)}
+          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+      {onRequestExchange && (
+        <Button
+          onClick={() => onRequestExchange(ownedId)}
+          // A list row can be 850px wide: past a phone, Request keeps its natural width there.
+          className={cn(
+            "h-10 flex-1 pointer-coarse:h-11",
+            viewMode === "list" && "sm:flex-none",
+          )}
+        >
+          <ArrowLeftRight className="h-4 w-4" aria-hidden />
+          {tCard("request")}
+        </Button>
+      )}
+      {iconActions}
     </div>
   ) : undefined;
 

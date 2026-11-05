@@ -30,7 +30,8 @@ import type { ProposalFormState } from "./proposal-diff";
 // the caller's ProposalFormState; labels come from the existing forms.puzzle-form namespace
 // (plus suggestEdit.replaceImage for the image control). The difficulty/shape pills are
 // SEEDED with the definition's current value for display, but only onChange writes form
-// state — an untouched pill therefore never produces a diff. The cover-image field lives in
+// state — an untouched pill therefore never produces a diff. A value the definition never
+// had shows no pill selected (never a made-up default). The cover-image field lives in
 // the sibling `CoverImageField` below (both pages render it separately so it can relocate
 // into their sticky context panel at `lg:`).
 export interface PuzzleDefinitionFieldsProps {
@@ -164,7 +165,7 @@ export function PuzzleDefinitionFields({
             ...o,
             label: tf(`difficulty.${o.value}`),
           }))}
-          value={form.difficulty || difficultySeed || "medium"}
+          value={form.difficulty || difficultySeed || undefined}
           onChange={(v) =>
             set("difficulty", v as ProposalFormState["difficulty"])
           }
@@ -179,7 +180,7 @@ export function PuzzleDefinitionFields({
             value,
             label: tf(`shape.${value}`),
           }))}
-          value={form.shape || shapeSeed || "rectangular"}
+          value={form.shape || shapeSeed || undefined}
           onChange={(v) => set("shape", v as ProposalFormState["shape"])}
           ariaLabel={tf("shape.label")}
         />
@@ -192,7 +193,7 @@ export function PuzzleDefinitionFields({
           onValueChange={(v) => set("categoryId", v)}
         >
           <SelectTrigger id={`${idPrefix}-category`}>
-            <SelectValue placeholder={t("keepCategory")} />
+            <SelectValue placeholder={t("noCategoryYet")} />
           </SelectTrigger>
           <SelectContent>
             {categories.map((c) => (
@@ -251,7 +252,7 @@ export function PuzzleDefinitionFields({
         <div className="flex flex-wrap items-center gap-2">
           <Input
             aria-label={tf("dimensions.width.label")}
-            className="w-24"
+            className="w-28"
             type="number"
             value={form.dimensions.width}
             onChange={(e) =>
@@ -262,7 +263,7 @@ export function PuzzleDefinitionFields({
           <span className="text-muted-foreground">×</span>
           <Input
             aria-label={tf("dimensions.height.label")}
-            className="w-24"
+            className="w-28"
             type="number"
             value={form.dimensions.height}
             onChange={(e) =>
@@ -358,11 +359,13 @@ export function CoverImageField({
             )}
           />
         )}
-        <div className="flex flex-col gap-1">
+        {/* min-w-0 + flex-wrap: in long locales ("Afbeelding vervangen" + "Foto bewerken")
+            the button pair wraps beside the thumbnail instead of running off a phone screen. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-muted-foreground text-xs">
             {imageStateLabel}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
               <label className="cursor-pointer">
                 {t("replaceImage")}

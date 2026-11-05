@@ -220,6 +220,42 @@ describe("catalog reads", () => {
     expect(brands).not.toContain("Clementoni");
   });
 
+  test("getAllBrands skips approved puzzles without a brand instead of failing", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    // Brand is optional: a brand-less or whitespace-only approved puzzle must not
+    // put `undefined` (not a Convex value) or a blank option into the list.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("puzzles", {
+        aggregateId: "def-no-brand",
+        title: "Brandless Meadow",
+        pieceCount: 500,
+        tags: [],
+        searchableText: "brandless meadow",
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("puzzles", {
+        aggregateId: "def-blank-brand",
+        title: "Blank Brand Harbour",
+        brand: "  ",
+        pieceCount: 750,
+        tags: [],
+        searchableText: "blank brand harbour",
+        status: "approved",
+        submittedBy: alice,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const brands = await t.query(api.catalog.getAllBrands.getAllBrands, {});
+    expect(brands).toEqual(["Ravensburger"]);
+  });
+
   test("getAllTags returns approved tags only (pending-only tag excluded)", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

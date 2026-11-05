@@ -76,7 +76,7 @@ export function TagInput({
           aria-disabled={full || undefined}
           aria-describedby={full ? hintId : undefined}
           placeholder={value.length ? "" : placeholder}
-          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-sm text-foreground outline-none"
+          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:text-sm"
         />
       </div>
       <p

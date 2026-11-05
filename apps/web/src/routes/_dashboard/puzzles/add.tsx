@@ -3,11 +3,14 @@ import {
   AddPuzzleLayout,
   CATALOG_TEXT_LIMITS,
   contributeError,
+  ContributeSuccess,
   COVER_SWATCHES,
   CoverColourField,
   coverStep,
   CoverStepError,
   DIFFICULTY_OPTIONS,
+  duplicateCandidates,
+  duplicateLookups,
   ImportZone,
   LivePreviewCard,
   MatchConfirm,
@@ -15,8 +18,10 @@ import {
   ReadinessChecklist,
   SectionDivider,
   SegmentedPills,
+  submittedPuzzleId,
   SuggestInput,
   TagInput,
+  type SegmentedOption,
 } from "@/components/add-puzzle";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
@@ -37,6 +42,7 @@ import {
 } from "@/components/ui/select";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { convexErrorCode } from "@/lib/convex-error-code";
@@ -49,6 +55,8 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -56,7 +64,7 @@ import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/puzzles/add")({
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "addPuzzle") }],
+    meta: [{ title: pageTitle(match.context, "contributePuzzle") }],
   }),
   component: ContributePuzzlePage,
 });
@@ -66,7 +74,8 @@ interface FormState {
   brand: string;
   publisher: string;
   pieceCount: number | undefined;
-  difficulty: "easy" | "medium" | "hard" | "expert";
+  // "" is "Not sure": the definition is submitted without a difficulty rather than a guessed one.
+  difficulty: "" | "easy" | "medium" | "hard" | "expert";
   coverColor: string;
   coverMode: "color" | "photo";
   coverFile: File | undefined;
@@ -89,7 +98,7 @@ const DEFAULT_FORM: FormState = {
   brand: "",
   publisher: "",
   pieceCount: undefined,
-  difficulty: "medium",
+  difficulty: "",
   coverColor: COVER_SWATCHES[0],
   coverMode: "color",
   coverFile: undefined,
@@ -106,6 +115,24 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// How long typing in the title or barcode fields pauses before the catalogue is checked.
+const DUPLICATE_CHECK_DEBOUNCE_MS = 300;
+// Title search results fetched per check; only those whose title overlaps are offered.
+const TITLE_SUGGESTION_LIMIT = 8;
+
+type CatalogueMatch = NonNullable<
+  FunctionReturnType<typeof gateway.catalog.lookupBarcode>
+>;
+
+const toImportedMatch = (p: CatalogueMatch): ImportedMatch => ({
+  puzzleId: p._id,
+  aggregateId: p.aggregateId,
+  title: p.title,
+  brand: p.brand,
+  pieceCount: p.pieceCount,
+  imageUrl: p.image ?? undefined,
+});
+
 function ContributePuzzlePage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
@@ -116,8 +143,15 @@ function ContributePuzzlePage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Catalogue puzzles the member said are a different puzzle; never offered again on this form.
+  const [dismissedMatches, setDismissedMatches] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const dismissMatch = (puzzleId: string) =>
+    setDismissedMatches((ids) => new Set(ids).add(puzzleId));
 
   // Convex mutations & actions, called inside the contribute wrapper below.
+  const convex = useConvex();
   const createPuzzle = useConvexMutation(gateway.catalog.createPuzzle);
   const uploadBoxArt = useUploadBoxArt();
   const notifyBoxArtCheck = useBoxArtCheckNotice();
@@ -135,6 +169,53 @@ function ContributePuzzlePage() {
       brand: form.brand.trim() || undefined,
       publisher: form.publisher.trim() || undefined,
     }),
+  );
+
+  // Is this puzzle already in the catalogue? The typed title and EAN/UPC are checked (debounced)
+  // so the member can add a copy of the existing puzzle instead of contributing a duplicate.
+  const lookups = duplicateLookups(form);
+  const titleTerm = useDebouncedValue(
+    lookups.titleTerm,
+    DUPLICATE_CHECK_DEBOUNCE_MS,
+  );
+  const barcode = useDebouncedValue(
+    lookups.barcode,
+    DUPLICATE_CHECK_DEBOUNCE_MS,
+  );
+  const { data: titleMatches } = useQuery(
+    convexQuery(
+      gateway.catalog.puzzleSuggestions,
+      titleTerm
+        ? { searchTerm: titleTerm, limit: TITLE_SUGGESTION_LIMIT }
+        : "skip",
+    ),
+  );
+  const { data: barcodeMatch } = useQuery(
+    convexQuery(
+      gateway.catalog.lookupBarcode,
+      barcode ? { code: barcode } : "skip",
+    ),
+  );
+  const duplicates = duplicateCandidates({
+    titleTerm,
+    titleMatches,
+    barcodeMatch,
+    dismissed: dismissedMatches,
+  });
+  const addCopyOf = (puzzleId: string) =>
+    router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`);
+  const duplicateBanners = (matches: ReadonlyArray<CatalogueMatch>) => (
+    // Always rendered (hidden while empty) so screen readers announce a match as it appears.
+    <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
+      {matches.map((p) => (
+        <MatchConfirm
+          key={p._id}
+          match={toImportedMatch(p)}
+          onUse={() => addCopyOf(p._id)}
+          onIgnore={() => dismissMatch(p._id)}
+        />
+      ))}
+    </div>
   );
 
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
@@ -202,12 +283,12 @@ function ContributePuzzlePage() {
         }
       }
 
-      await createPuzzle({
+      const aggregateId = await createPuzzle({
         title: form.title,
         brand: form.brand || undefined,
         publisher: form.publisher || undefined,
         pieceCount: form.pieceCount!,
-        difficulty: form.difficulty,
+        difficulty: form.difficulty || undefined,
         tags: form.tags,
         ean: form.ean || undefined,
         upc: form.upc || undefined,
@@ -226,10 +307,19 @@ function ContributePuzzlePage() {
         image: imageId,
       });
       await notifyBoxArtCheck(imageId);
-    },
-    onSuccess: () => {
-      toast.success(t("puzzleSubmittedForReview"));
-      router.push("/puzzles");
+      // The submit returns the domain id; the add-a-copy form needs the Convex id, which the
+      // member's own pending submissions carry. Missing for an admin (approved at once) or when
+      // this read fails: the submission itself has succeeded either way.
+      let puzzleId: string | null = null;
+      try {
+        puzzleId = submittedPuzzleId(
+          await convex.query(gateway.catalog.myContributedPuzzles, {}),
+          aggregateId,
+        );
+      } catch {
+        puzzleId = null;
+      }
+      return { title: form.title.trim(), puzzleId };
     },
     onError: (error) => {
       console.error("Contribute puzzle failed:", error);
@@ -254,12 +344,23 @@ function ContributePuzzlePage() {
     contribute.mutate();
   };
 
+  const contributeAnother = () => {
+    contribute.reset();
+    setForm(DEFAULT_FORM);
+    setPendingMatch(null);
+    setAdvancedOpen(false);
+    setDismissedMatches(new Set());
+  };
+
   const isReady = !!form.title.trim() && !!form.pieceCount;
 
-  const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
-    ...o,
-    label: t(`difficulty_${o.value}`),
-  }));
+  const difficultyOptions: SegmentedOption<FormState["difficulty"]>[] = [
+    ...DIFFICULTY_OPTIONS.map((o) => ({
+      ...o,
+      label: t(`difficulty_${o.value}`),
+    })),
+    { value: "", label: t("difficultyNotSure") },
+  ];
 
   const formColumn = (
     <>
@@ -273,11 +374,12 @@ function ContributePuzzlePage() {
           match={pendingMatch}
           onUse={() => {
             setPendingMatch(null);
-            router.push(
-              `/my-puzzles/add/new?puzzleId=${pendingMatch.puzzleId}`,
-            );
+            addCopyOf(pendingMatch.puzzleId);
           }}
-          onIgnore={() => setPendingMatch(null)}
+          onIgnore={() => {
+            dismissMatch(pendingMatch.puzzleId);
+            setPendingMatch(null);
+          }}
         />
       )}
 
@@ -295,6 +397,7 @@ function ContributePuzzlePage() {
             placeholder={t("fieldTitlePlaceholder")}
             maxLength={CATALOG_TEXT_LIMITS.title}
           />
+          {duplicateBanners(duplicates.byTitle)}
         </div>
 
         {/* Publisher + Piece Count */}
@@ -367,12 +470,7 @@ function ContributePuzzlePage() {
           <SegmentedPills
             options={difficultyOptions}
             value={form.difficulty}
-            onChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                difficulty: v as FormState["difficulty"],
-              }))
-            }
+            onChange={(difficulty) => setForm((f) => ({ ...f, difficulty }))}
             ariaLabel={t("fieldDifficulty")}
           />
         </div>
@@ -385,7 +483,7 @@ function ContributePuzzlePage() {
         <div className="flex flex-col gap-1.5">
           <Label>{t("coverColour")}</Label>
           <p className="text-xs text-muted-foreground">
-            {t("coverColourHint")}
+            {t("contributeCoverColourHint")}
           </p>
           <CoverColourField
             color={form.coverColor}
@@ -481,6 +579,9 @@ function ContributePuzzlePage() {
                 />
               </div>
             </div>
+            {duplicateBanners(
+              duplicates.byBarcode ? [duplicates.byBarcode] : [],
+            )}
 
             {/* Model Number */}
             <div className="flex flex-col gap-1.5">
@@ -632,13 +733,13 @@ function ContributePuzzlePage() {
         title={form.title}
         brand={form.brand || form.publisher}
         pieceCount={form.pieceCount}
-        difficulty={form.difficulty}
+        difficulty={form.difficulty || undefined}
         coverColor={form.coverColor}
         coverPhotoUrl={previewPhotoUrl}
         available={false}
       />
       <p className="text-xs leading-relaxed text-muted-foreground">
-        {t("livePreviewCaption")}
+        {t("contributePreviewCaption")}
       </p>
       <ReadinessChecklist
         items={[
@@ -651,7 +752,17 @@ function ContributePuzzlePage() {
 
   return (
     <div className="space-y-6">
-      <AddPuzzleLayout form={formColumn} preview={previewColumn} />
+      {/* A submitted puzzle waits for review and is not in the catalogue yet, so the member
+          stays here and is told what happens next instead of being sent to /puzzles. */}
+      {contribute.data ? (
+        <ContributeSuccess
+          title={contribute.data.title}
+          puzzleId={contribute.data.puzzleId}
+          onContributeAnother={contributeAnother}
+        />
+      ) : (
+        <AddPuzzleLayout form={formColumn} preview={previewColumn} />
+      )}
     </div>
   );
 }

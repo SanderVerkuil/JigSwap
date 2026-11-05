@@ -10,6 +10,11 @@
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
+    "viewToggle": {
+      "label": "Layout",
+      "grid": "Grid view",
+      "list": "List view"
+    },
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
@@ -325,7 +330,7 @@
     "owner": "Owner",
     "available": "Available",
     "unavailable": "Unavailable",
-    "lend": "For Lend",
+    "lend": "For Loan",
     "trade": "For Trade",
     "sale": "For Sale",
     "completed": "Completed",
@@ -350,7 +355,6 @@
     "createNewPuzzle": "Create New Puzzle",
     "createNewPuzzleDescription": "Create a new puzzle that doesn't exist yet",
     "puzzleCreated": "Puzzle created successfully",
-    "puzzleSubmittedForReview": "Puzzle submitted for review",
     "puzzleCreationFailed": "Failed to create puzzle",
     "addRateLimited": "You've added a lot of puzzles today. Try again tomorrow.",
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
@@ -431,14 +435,19 @@
     "puzzles": {
       "title": "Puzzles",
       "subtitle": "Browse and discover puzzles from the community",
-      "addPuzzle": "Add Puzzle",
-      "searchPlaceholder": "Search puzzles by title, brand, or description...",
+      "searchPlaceholder": "Title, brand, artist or tag…",
+      "searchLabel": "Search the catalogue",
       "filtersLabel": "Filters",
       "clearFilters": "Clear Filters",
-      "puzzlesFound": "{count} puzzles found",
+      "puzzlesFound": "{count, plural, one {# puzzle found} other {# puzzles found}}",
+      "puzzlesFoundSoFar": "{count, plural, one {# puzzle found so far} other {# puzzles found so far}}",
       "noPuzzlesFound": "No puzzles found",
       "tryDifferentFilters": "Try adjusting your search criteria or filters",
-      "viewDetails": "View Details",
+      "noFavoritesTitle": "No favorites yet",
+      "noFavoritesHint": "Tap the heart on a puzzle to keep it here.",
+      "showAllPuzzles": "Show all puzzles",
+      "emptyCatalogueTitle": "The catalogue is still empty",
+      "emptyCatalogueHint": "Add the first puzzle, so members can find it and offer their copies.",
       "ownPuzzle": "I Own This",
       "noImage": "No Image",
       "pieceCount": "Piece Count",
@@ -460,6 +469,7 @@
         "brand": "Brand",
         "selectBrand": "Select brand",
         "allBrands": "All brands",
+        "brandsUnavailable": "Couldn't load brands",
         "minPieces": "Min Pieces",
         "selectMinPieces": "Select minimum pieces",
         "noMinimum": "No minimum",
@@ -472,7 +482,10 @@
         "category": "Category",
         "selectCategory": "Select category",
         "allCategories": "All categories",
+        "categoriesUnavailable": "Couldn't load categories",
         "tags": "Tags",
+        "tagsUnavailable": "Couldn't load tags",
+        "removeTag": "Remove tag {tag}",
         "customRange": "Custom Range",
         "min": "Min",
         "max": "Max"
@@ -491,7 +504,7 @@
       "all": "All",
       "available": "Available",
       "forTrade": "For Trade",
-      "forLend": "For Lend",
+      "forLend": "For Loan",
       "inProgress": "In Progress",
       "completed": "Completed"
     },
@@ -525,11 +538,21 @@
     "importImported": "Details imported",
     "coverColour": "Cover colour",
     "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
+    "contributeCoverColourHint": "Pick a colour or upload a photo — this is how the puzzle appears in the catalogue.",
     "addToLibrary": "Add to Library",
     "saveAndAddAnother": "Save & Add Another",
     "addReadyHint": "Fill in title and piece count to continue.",
     "livePreview": "Live preview",
     "livePreviewCaption": "This is how your puzzle card will look to others on your shelf.",
+    "contributePreviewCaption": "This is how it will look in the catalogue once it's approved.",
+    "contributeDone": {
+      "pendingTitle": "“{title}” is waiting for review",
+      "pendingBody": "We check new puzzles before they appear in the catalogue. You don't have to wait to add it to your puzzles.",
+      "submittedTitle": "Thanks for contributing “{title}”",
+      "addToMyPuzzles": "Add it to my puzzles",
+      "contributeAnother": "Contribute another",
+      "backToCatalogue": "Back to the catalogue"
+    },
     "checkTitle": "Title filled in",
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",
@@ -569,16 +592,19 @@
     "difficulty_medium": "Medium",
     "difficulty_hard": "Hard",
     "difficulty_expert": "Expert",
+    "difficultyNotSure": "Not sure",
     "condition_like_new": "Excellent",
     "condition_good": "Good",
     "condition_fair": "Fair",
     "condition_poor": "Poor",
     "availTrade": "For Trade",
-    "availLend": "For Lend",
+    "availLend": "For Loan",
     "availSale": "For Sale",
     "previewAvailable": "Available",
     "previewView": "View",
     "previewAdd": "Add",
+    "previewTitlePlaceholder": "Your puzzle title",
+    "previewBrandPlaceholder": "Brand",
     "uploadPhoto": "Upload photo",
     "coverPhoto": "Your photo",
     "coverBestQuality": "Best quality",
@@ -1257,12 +1283,16 @@
     "minPieces": "Min Pieces",
     "maxPieces": "Max Pieces",
     "clearFilters": "Clear All",
-    "noPuzzlesFound": "No puzzles found",
     "tryDifferentFilters": "Try adjusting your filters.",
     "filterAll": "All",
     "available": "Available",
     "resultsCount": "{count, plural, one {# puzzle found} other {# puzzles found}}",
-    "favoritesComingSoon": "Favorites are coming soon",
+    "showingCount": "Showing {shown} of {total, plural, one {# puzzle} other {# puzzles}}",
+    "loadMore": "Load more",
+    "loadMoreFailed": "Couldn't load more puzzles.",
+    "loadMoreRetry": "Try again",
+    "loadFailed": "Couldn't load puzzles",
+    "loadFailedHint": "Check your connection and reload the page.",
     "searchHint": "Press ⌘K to search by title or brand",
     "addFilter": "Add Filter",
     "addFilterSearch": "Filter by…",
@@ -1271,8 +1301,21 @@
     "fieldText": "Text",
     "fieldAvailability": "Availability",
     "textPlaceholder": "Title, brand or theme…",
-    "gridView": "Grid View",
-    "listView": "List View"
+    "card": {
+      "request": "Request",
+      "messageOwner": "Message the owner",
+      "messageOwnerName": "Message {name}",
+      "favorite": "Favorite"
+    },
+    "empty": {
+      "filteredTitle": "No copies match these filters",
+      "puzzleNotOfferedTitle": "Nobody offers this puzzle yet",
+      "puzzleNotOfferedHint": "Save it to your favorites to find it again quickly.",
+      "noOffersTitle": "No members are offering puzzles yet",
+      "noOffersHint": "Look through the catalogue, or find people to follow.",
+      "openCatalogue": "Open the catalogue",
+      "findPeople": "Find people"
+    }
   },
   "browsePuzzleFilter": {
     "label": "Puzzle",
@@ -3281,11 +3324,11 @@
         "label": "Dimensions",
         "width": {
           "label": "Width",
-          "placeholder": "Enter width"
+          "placeholder": "Width"
         },
         "height": {
           "label": "Height",
-          "placeholder": "Enter height"
+          "placeholder": "Height"
         },
         "unit": {
           "label": "Unit",
@@ -3665,9 +3708,10 @@
     "browse": "Browse puzzles — JigSwap",
     "myPuzzles": "My puzzles — JigSwap",
     "addPuzzle": "Add puzzle — JigSwap",
+    "contributePuzzle": "Contribute a puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
     "quickAddPuzzles": "Add several puzzles — JigSwap",
-    "puzzles": "Puzzles — JigSwap",
+    "puzzles": "Puzzles catalogue — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
     "collections": "Collections — JigSwap",
     "household": "Household — JigSwap",
@@ -3717,7 +3761,7 @@
       "noResultsFor": "No results for “{term}”"
     },
     "actions": {
-      "addPuzzle": "Add Puzzle",
+      "addToMyPuzzles": "Add to my puzzles",
       "addAPuzzle": "Add a Puzzle",
       "logCompletion": "Log a Completion",
       "createCircle": "Create a Circle",
@@ -3793,8 +3837,8 @@
       },
       "browse": {
         "title": "Browse Puzzles",
-        "subtitle": "Discover puzzles from the community.",
-        "description": "Discover from the community"
+        "subtitle": "Copies other members offer to swap, lend or sell.",
+        "description": "Copies other members offer to swap, lend or sell"
       },
       "circles": {
         "title": "Circles",
@@ -3838,12 +3882,12 @@
       },
       "contributePuzzle": {
         "title": "Contribute a Puzzle",
-        "subtitle": "Add a puzzle to the shared catalogue for everyone."
+        "subtitle": "Adds a puzzle to the shared catalogue, not to your own puzzles."
       },
       "puzzles": {
         "title": "Puzzles catalogue",
-        "subtitle": "The shared puzzle catalogue.",
-        "description": "The shared puzzle catalogue"
+        "subtitle": "Every puzzle in JigSwap.",
+        "description": "Every puzzle in JigSwap, offered or not"
       },
       "borrowed": {
         "title": "Borrowed",
@@ -4008,7 +4052,7 @@
     },
     "available": "Available",
     "forTrade": "For Trade",
-    "forLend": "For Lend",
+    "forLend": "For Loan",
     "forSale": "For Sale",
     "acquired": "Acquired",
     "source": "Source",
@@ -4133,31 +4177,38 @@
     "notFound": "Puzzle not found",
     "notFoundSub": "This puzzle may have been removed from the catalog, or the link is wrong.",
     "suggestEdit": "Suggest an edit",
-    "eyebrow": "Catalog · Puzzle Definition",
     "communityOwners": "community owners",
     "totalCompletions": "total completions",
     "avgCompletion": "avg. completion",
     "avgCompletionValue": "{days}d",
+    "noValue": "Not known yet",
     "availableToSwap": "available to swap",
     "youOwnACopy": "You own a copy",
     "conditionSuffix": "{condition} condition.",
-    "viewYourCopy": "View your copy →",
+    "viewYourCopy": "View your copy",
     "findCopyToSwap": "Find a Copy to Swap",
+    "noCopiesOffered": "No copies offered yet",
+    "favorite": "Favorite",
     "writeReview": "Write a Review",
     "communityRating": "Community Rating",
     "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
+    "noRatingsYet": "No ratings yet",
+    "beFirstToRate": "Be the first to rate it",
     "availableToSwapSection": "Available to Swap",
     "copiesCount": "{count, plural, one {# copy} other {# copies}}",
-    "seeAllCopies": "See all {count} available copies →",
+    "seeAllCopies": "{count, plural, one {View the available copy →} other {See all # available copies →}}",
     "noCopies": "No copies are available to swap yet.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Review {title} (optional)…",
-    "rateRequired": "Rate this puzzle",
+    "reviewPlaceholder": "Write a review (optional)…",
+    "yourRating": "Your rating",
+    "chooseRatingToPost": "Choose a rating to post",
     "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
     "reviewNotOpen": "Only approved puzzles can be reviewed.",
     "post": "Post",
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
+    "reviewPosted": "Review posted",
+    "reviewUpdated": "Review updated",
     "reviewTooLong": "That review is too long (2,000 characters max).",
     "reviewRateLimited": "You've saved a lot of reviews lately. Try again later.",
     "noReviews": "No reviews yet. Be the first.",
@@ -4181,7 +4232,7 @@
     "editImage": "Edit photo",
     "changesHeading": "Changes ({count})",
     "noChangesYet": "No changes yet",
-    "keepCategory": "Keep current category",
+    "noCategoryYet": "No category yet — choose one",
     "submit": "Submit suggestion",
     "update": "Update suggestion",
     "submitting": "Submitting…",
@@ -4256,6 +4307,10 @@
       "symbols": "Symbols",
       "flags": "Flags"
     }
+  },
+  "starRating": {
+    "outOf": "{value} out of 5 stars",
+    "star": "{count, plural, one {# star} other {# stars}}"
   },
   "admin": {
     "moderation": {

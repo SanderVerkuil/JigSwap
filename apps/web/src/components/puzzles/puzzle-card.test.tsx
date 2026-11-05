@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { PuzzleCard as CopyCard } from "@/components/ui/puzzle-card";
+import { screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -7,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { PuzzleCard as CatalogCard } from "./puzzle-card";
 import {
   PUZZLE_GRID_COVER_SIZES,
@@ -30,15 +32,14 @@ vi.mock("@/components/ui/collection-dropdown", () => ({
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({
-    children,
     href,
-    className,
+    children,
+    ...rest
   }: {
-    children?: ReactNode;
     href: string;
-    className?: string;
+    children?: ReactNode;
   }) => (
-    <a href={href} className={className}>
+    <a href={href} {...rest}>
       {children}
     </a>
   ),
@@ -63,10 +64,18 @@ afterEach(() => {
 const SRC_SET =
   "https://cdn.test/480 480w, https://cdn.test/960 960w, https://cdn.test/original 1600w";
 
-const render = (node: ReactNode, viewMode: "grid" | "list" = "grid") =>
+const render = (
+  node: ReactNode,
+  viewMode: "grid" | "list" = "grid",
+  locale: "en" | "nl" = "en",
+) =>
   act(() =>
     root.render(
-      <IntlProvider locale="en" timeZone="UTC" messages={en}>
+      <IntlProvider
+        locale={locale}
+        timeZone="UTC"
+        messages={locale === "en" ? en : nl}
+      >
         <PuzzleViewProvider viewMode={viewMode}>{node}</PuzzleViewProvider>
       </IntlProvider>,
     ),
@@ -184,12 +193,39 @@ describe("catalogue PuzzleCard on phones", () => {
           a.textContent === "Lam Gelegd",
       ),
     ).toBe(true);
-    // Hidden below sm (or gone altogether): two ~170px columns leave it "V…".
-    const details = links.filter((a) =>
-      a.textContent?.includes("View Details"),
-    );
-    expect(details.every((a) => a.classList.contains("max-sm:hidden"))).toBe(
-      true,
-    );
+    // Gone at every width: two ~170px columns left it "V…".
+    expect(
+      links.filter((a) => a.textContent?.includes("View Details")),
+    ).toEqual([]);
+  });
+});
+
+describe("catalogue PuzzleCard", () => {
+  it("links to the puzzle once, through its title", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    const detailLinks = container.querySelectorAll('a[href="/puzzles/p1"]');
+    expect(detailLinks).toHaveLength(1);
+    expect(detailLinks[0]?.textContent).toBe("Harbour at dusk");
+  });
+
+  it("keeps the named favourite and add actions", () => {
+    render(<CatalogCard puzzle={summary()} />);
+    expect(
+      screen
+        .getByRole("button", { name: "Add to Favorites" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(
+      screen.getByRole("link", { name: "Add to Library" }).getAttribute("href"),
+    ).toBe("/my-puzzles/add/new?puzzleId=p1");
+  });
+
+  it("says the + adds a copy to the library, in Dutch too", () => {
+    render(<CatalogCard puzzle={summary()} />, "grid", "nl");
+    expect(
+      screen
+        .getByRole("link", { name: "Toevoegen aan bibliotheek" })
+        .getAttribute("href"),
+    ).toBe("/my-puzzles/add/new?puzzleId=p1");
   });
 });

@@ -6,7 +6,8 @@ import schema from "../schema";
 // Catalog read: the distinct brand names for the filter dropdown. Distinct over the by_brand index,
 // restricted to approved puzzles so brand free-text from pending/rejected submissions never leaks
 // into the public filter UI (consistent with every sibling catalog read). Brand is optional in the
-// catalog, so the list may contain `undefined` entries — the UI renders those as an empty option.
+// catalog: brand-less and blank-brand rows are skipped, because `undefined` is not a Convex value
+// (returning it fails the whole query) and a blank name is not a choosable brand.
 export const getAllBrands = query({
   args: {},
   handler: async (ctx): Promise<BrandView[]> => {
@@ -17,6 +18,6 @@ export const getAllBrands = query({
       .filterWith(async (p) => p.status === "approved")
       .distinct(["brand"])
       .collect();
-    return brands.map((brand) => brand.brand);
+    return brands.flatMap(({ brand }) => (brand?.trim() ? [brand] : []));
   },
 });

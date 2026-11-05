@@ -7,7 +7,7 @@ import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Eye, Heart, Plus } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { PuzzleCardShell } from "./puzzle-card-shell";
 import { PUZZLE_GRID_COVER_SIZES } from "./puzzle-view-provider";
@@ -22,7 +22,7 @@ interface PuzzleCardProps {
 
 export function PuzzleCard({ puzzle }: PuzzleCardProps) {
   const t = useTranslations("puzzles");
-  // Catalog-card strings ("view details") live under the nested
+  // Catalog-card strings (the favourite labels) live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
   const tCat = useTranslations("puzzles.puzzles");
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -51,25 +51,9 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
       imageFit="contain"
       imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
       actions={
-        // The grid columns are ~212px wide, so the row must fit two buttons
-        // without overflowing the card (which is `overflow-hidden`). The primary
-        // "view details" takes the remaining width and truncates if needed; the
-        // add action is a compact icon-only button with an accessible label.
-        // Below sm neither the two-column grid nor the list row leaves "view
-        // details" room to read, so it is hidden there: the stretched title link
-        // already opens the puzzle.
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="min-w-0 flex-1 max-sm:hidden"
-          >
-            <Link href={`/puzzles/${puzzle._id}`}>
-              <Eye className="h-4 w-4 shrink-0" />
-              <span className="truncate">{tCat("viewDetails")}</span>
-            </Link>
-          </Button>
+        // The card opens the puzzle through its title's stretched link (one Tab stop per card), so
+        // the row only holds the card's own actions: compact icon buttons with accessible names.
+        <div className="flex items-center justify-end gap-2">
           <Button
             variant="outline"
             size="icon"
@@ -89,8 +73,8 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           <Button
             size="icon"
             asChild
-            aria-label={t("addPuzzle")}
-            title={t("addPuzzle")}
+            aria-label={t("addToLibrary")}
+            title={t("addToLibrary")}
             className="shrink-0"
           >
             <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>

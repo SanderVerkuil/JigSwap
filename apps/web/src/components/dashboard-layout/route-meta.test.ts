@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getNavGroup,
+  hasOwnAddAction,
   isFullBleedRoute,
   isImmersiveMobileRoute,
   isMobileTabRoot,
@@ -77,5 +78,31 @@ describe("nav icons", () => {
     const circles = community.items.find((item) => item.key === "circles");
     expect(circles?.icon).toBeDefined();
     expect(circles?.icon).not.toBe(community.icon);
+  });
+});
+
+describe("hasOwnAddAction", () => {
+  it.each([
+    "/my-puzzles",
+    "/my-puzzles/",
+    "/my-puzzles/add",
+    "/my-puzzles/add/new",
+    "/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr",
+    "/puzzles",
+    "/puzzles/add",
+    "/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz",
+  ])("has its own add action on %s", (pathname) => {
+    expect(hasOwnAddAction(pathname)).toBe(true);
+  });
+
+  it.each([
+    "/dashboard",
+    "/browse",
+    "/household",
+    "/collections/abc/add-puzzles",
+    "/my-puzzlesx",
+    "/puzzlesx",
+  ])("leaves the top bar's add action on %s", (pathname) => {
+    expect(hasOwnAddAction(pathname)).toBe(false);
   });
 });

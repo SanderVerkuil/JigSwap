@@ -29,7 +29,7 @@ import { resolveCopyCoverFields } from "./resolveCoverUrl";
 export const BROWSE_CANDIDATE_CAP = 1000;
 export const BROWSE_PER_OWNER = 50;
 export const BROWSE_READ_BUDGET = 3 * BROWSE_CANDIDATE_CAP;
-// A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 50); the
+// A page holds 1 to BROWSE_MAX_LIMIT copies whatever the client asks for (the web asks for 48); the
 // offset is never negative.
 export const BROWSE_MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
@@ -38,14 +38,18 @@ const DEFAULT_LIMIT = 20;
 // visibility: only OPEN copies are ever shown (library/openListing), including circle-shared ones.
 // Candidates come from the listing indexes through openListingWindow, so closed copies and private
 // owners' copies are never read, and every gate that needs no puzzle (open, own copies, blocks,
-// rule 2, condition) runs while the window fills: a copy the viewer can't see never takes a slot,
-// and no member's pile of listings can push the others out (SEC-29). Results are newest OFFER first
-// (`listedAt`), so a copy offered today leads even if it was added long ago. Auth gating, every
-// puzzle-based filter (category/pieces/difficulty/search), the owner join and offset/limit paging
-// are preserved from legacy puzzles.browseOwnedPuzzles; the result maps to a typed paginated DTO.
+// rule 2, condition, the channel filter `availability`) runs while the window fills: a copy the
+// viewer can't see or didn't ask for never takes a slot, and no member's pile of listings can push
+// the others out (SEC-29). Results are newest OFFER first (`listedAt`), so a copy offered today
+// leads even if it was added long ago. Auth gating, every puzzle-based filter
+// (category/pieces/difficulty/search), the owner join and offset/limit paging are preserved from
+// legacy puzzles.browseOwnedPuzzles; the result maps to a typed paginated DTO. Every filter runs
+// before the slice, so `total` and `hasMore` count only matches (`total` is exact unless
+// `totalIsLowerBound`).
 export const browseOwnedPuzzles = query({
   args: {
-    category: v.optional(v.id("adminCategories")),
+    // A string, not v.id, for the same reason as puzzleId below: it arrives from a URL search param.
+    category: v.optional(v.string()),
     minPieceCount: v.optional(v.number()),
     maxPieceCount: v.optional(v.number()),
     difficulty: v.optional(
@@ -66,6 +70,17 @@ export const browseOwnedPuzzles = query({
       ),
     ),
     searchTerm: v.optional(v.string()),
+    // Narrow to copies offered ANY of these ways (for trade / lend / sale). Applied here, before
+    // paging, so `total` and `hasMore` count only matching copies. Absent or empty: no narrowing.
+    availability: v.optional(
+      v.array(
+        v.union(
+          v.literal("forTrade"),
+          v.literal("forLend"),
+          v.literal("forSale"),
+        ),
+      ),
+    ),
     // Narrow to copies of ONE catalogue definition (the puzzle's Convex _id). Typed as a string,
     // not v.id, because it arrives from a URL search param: a malformed value normalises to null
     // and yields an empty page instead of failing the whole query.
@@ -89,7 +104,11 @@ export const browseOwnedPuzzles = query({
       args.puzzleId === undefined
         ? undefined
         : ctx.db.normalizeId("puzzles", args.puzzleId);
-    if (puzzleId === null) {
+    const category =
+      args.category === undefined
+        ? undefined
+        : ctx.db.normalizeId("adminCategories", args.category);
+    if (puzzleId === null || category === null) {
       return {
         ownedPuzzles: [],
         total: 0,
@@ -132,10 +151,13 @@ export const browseOwnedPuzzles = query({
     // (unless includeOwnPuzzles). Rule 2 (reachability): a copy is shown when its owner is PUBLIC,
     // or the copy is circle-shared with the viewer; a private, non-circle owner's copies are
     // excluded entirely (no row over the wire).
+    const channels = args.availability ?? [];
     const passesGates = (copy: Doc<"ownedPuzzles">) =>
       (args.includeOwnPuzzles || copy.ownerId !== memberId) &&
       !blockedIds.has(copy.ownerId) &&
-      (!args.condition || copy.condition === args.condition);
+      (!args.condition || copy.condition === args.condition) &&
+      (channels.length === 0 ||
+        channels.some((channel) => copy.availability[channel]));
     const window = await openListingWindow(
       ctx,
       { puzzleId, owners: "public" },
@@ -183,12 +205,8 @@ export const browseOwnedPuzzles = query({
 
     let filtered = withPuzzles;
 
-    if (args.category) {
-      filtered = filtered.filter(
-        (i) =>
-          i.shown?.category === args.category &&
-          i.shown?.category !== undefined,
-      );
+    if (category) {
+      filtered = filtered.filter((i) => i.shown?.category === category);
     }
     if (args.minPieceCount !== undefined) {
       filtered = filtered.filter(

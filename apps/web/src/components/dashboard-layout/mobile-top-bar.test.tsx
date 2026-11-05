@@ -12,6 +12,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { MobileTopBar } from "./mobile-top-bar";
+import {
+  PageHeaderSlotProvider,
+  usePageHeader,
+  type PageHeaderContent,
+} from "./page-header-slot";
 
 const mocks = vi.hoisted(() => ({
   pathname: "/dashboard",
@@ -222,5 +227,37 @@ describe("MobileTopBar title", () => {
     expect(
       screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
     ).toContain("size-11");
+  });
+});
+
+function Publish({ content }: { content: PageHeaderContent }) {
+  usePageHeader(() => content, [content]);
+  return null;
+}
+
+const renderPublished = (content: PageHeaderContent) => {
+  mocks.pathname = "/puzzles/puzzle_1";
+  return render(
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <PageHeaderSlotProvider>
+        <Publish content={content} />
+        <MobileTopBar onOpenPalette={() => {}} />
+      </PageHeaderSlotProvider>
+    </IntlProvider>,
+  );
+};
+
+describe("MobileTopBar published title", () => {
+  it("shows a published title as the page heading", () => {
+    renderPublished({ title: "Café" });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Café");
+  });
+
+  it("shows the title as plain text when the page renders it as its own heading", () => {
+    renderPublished({ title: "Café", titleInContent: true });
+
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.getByText("Café")).toBeTruthy();
   });
 });

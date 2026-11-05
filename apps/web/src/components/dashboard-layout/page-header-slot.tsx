@@ -26,6 +26,13 @@ export type PageHeaderContent = {
   /** Overrides the route's static page title (for dynamic routes). */
   title?: ReactNode;
   /**
+   * The page renders `title` as its own visible h1 (e.g. a puzzle's hero). The
+   * desktop head then keeps the title only as the breadcrumb leaf, and the
+   * mobile top bar shows it as plain text, so the page has a single title
+   * heading at every width.
+   */
+  titleInContent?: boolean;
+  /**
    * Explicit breadcrumb parent trail (excluding the current leaf, which is the
    * title). When set, the page head renders these crumbs instead of the
    * auto-derived Group › Page trail — use for deep routes like a collection's

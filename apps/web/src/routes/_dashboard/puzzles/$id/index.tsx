@@ -19,6 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -49,7 +54,7 @@ import {
   Plus,
   Star,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -61,6 +66,10 @@ type AvailableCopy = View["availableCopies"][number];
 type PuzzleReview = FunctionReturnType<
   typeof gateway.social.listPuzzleReviews
 >[number];
+
+// Hero action buttons wrap a long label (e.g. Dutch "Vind een exemplaar om te ruilen") onto a
+// second line instead of overflowing the narrow info column beside the cover on tablets.
+const wrappingAction = "h-auto min-h-9 max-w-full whitespace-normal py-1.5";
 
 export const Route = createFileRoute("/_dashboard/puzzles/$id/")({
   head: ({ match }) => ({
@@ -93,11 +102,10 @@ function PuzzlePage() {
 
 function PuzzleDefinitionSkeleton() {
   return (
-    <div className="w-full space-y-10">
-      <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="@container w-full space-y-10">
+      <div className="grid gap-7 @md:grid-cols-[200px_minmax(0,1fr)] @2xl:grid-cols-[300px_minmax(0,1fr)]">
         <Skeleton className="aspect-square w-full rounded-2xl" />
         <div className="space-y-4">
-          <Skeleton className="h-4 w-44 rounded-lg" />
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
           <Skeleton className="h-8 w-1/2 rounded-lg" />
@@ -148,11 +156,22 @@ function PuzzleDefinitionDetail({
     availableCopies,
     totalAvailable,
   } = view;
+  // The member's own copy, when they have one, is the page's primary destination.
+  const ownCopyHref =
+    ownership.viewerOwns && ownership.copyId
+      ? `/copies/${ownership.copyId}`
+      : null;
+  const noCopiesOffered = totalAvailable === 0;
+  const noCopiesHintId = useId();
 
-  // Publish the puzzle name as the page-head title so the shell shows it (and the
-  // breadcrumb becomes "Community › Puzzles catalogue › <name>" — the route's
-  // pageKey "puzzles" matches the catalogue nav item, which renders the middle crumb).
-  usePageHeader(() => ({ title: definition.title }), [definition.title]);
+  // Publish the puzzle name so the breadcrumb becomes "Community › Puzzles catalogue › <name>"
+  // (the route's pageKey "puzzles" matches the catalogue nav item, which renders the middle
+  // crumb). The hero's h1 below is the page's only title heading, so the shell keeps the name
+  // as the breadcrumb leaf (and mobile bar text) only.
+  usePageHeader(
+    () => ({ title: definition.title, titleInContent: true }),
+    [definition.title],
+  );
 
   // Only an approved definition (or the viewer's own submission) takes reviews; the server
   // refuses the rest, so neither the action nor the composer is offered there. Loading, or a
@@ -164,14 +183,17 @@ function PuzzleDefinitionDetail({
   );
   const canReview = myReviews?.puzzleReviewAllowed !== false;
 
-  // The review composer is focused by the "Write a Review" action.
-  const composerRef = useRef<HTMLInputElement>(null);
+  // "Write a Review" and "Be the first to rate it" take the member to the review composer and
+  // focus its first control, the required star rating (its single tab stop).
+  const composerRef = useRef<HTMLDivElement>(null);
   const focusComposer = () => {
     composerRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-    composerRef.current?.focus();
+    composerRef.current
+      ?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
+      ?.focus();
   };
 
   const difficultyLabel = (difficulty?: string) =>
@@ -197,13 +219,14 @@ function PuzzleDefinitionDetail({
   ];
 
   return (
-    <div className="flex w-full flex-col gap-10">
-      {/* Hero */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — full width on mobile, capped beside the info column at lg. object-contain (via
-            ImageZoom) shows the whole puzzle; hovering opens a side panel that magnifies where the
-            cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+    <div className="@container flex w-full flex-col gap-10">
+      {/* Hero: sized by the content width, not the viewport, so a tablet with the sidebar open
+          gets the cover beside the info instead of a full-width cover above it. */}
+      <section className="grid items-start gap-7 @md:grid-cols-[200px_minmax(0,1fr)] @2xl:grid-cols-[300px_minmax(0,1fr)]">
+        {/* Cover — full width on phones, a 200px then 300px column beside the info once the
+            content is wide enough. object-contain (via ImageZoom) shows the whole puzzle; hovering
+            opens a side panel that magnifies where the cursor points. */}
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm">
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
@@ -213,10 +236,7 @@ function PuzzleDefinitionDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <div className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.18em]">
-            {t("eyebrow")}
-          </div>
-          <h1 className="font-heading mt-2 text-3xl font-bold tracking-tight">
+          <h1 className="font-heading text-3xl font-bold tracking-tight">
             {definition.title}
           </h1>
           <p className="text-muted-foreground mt-1 text-base">
@@ -229,12 +249,20 @@ function PuzzleDefinitionDetail({
 
           {/* Rating + difficulty + topics */}
           <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
-            <span className="flex items-center gap-1.5">
-              <StarRating value={Math.round(rating.rating)} size="sm" />
-              <span className="text-muted-foreground text-sm">
-                {rating.rating} ({rating.count})
+            {/* Unrated: say so rather than five empty stars and "0 (0)". The Write a Review action
+                below already leads to the composer. */}
+            {rating.count > 0 ? (
+              <span className="flex items-center gap-1.5">
+                <StarRating value={Math.round(rating.rating)} size="sm" />
+                <span className="text-muted-foreground text-sm">
+                  {rating.rating} ({rating.count})
+                </span>
               </span>
-            </span>
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {t("noRatingsYet")}
+              </span>
+            )}
             <Badge
               className={cn(
                 "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
@@ -253,9 +281,9 @@ function PuzzleDefinitionDetail({
             ))}
           </div>
 
-          {/* Ownership banner */}
+          {/* Ownership banner (status only: the primary action below opens the copy) */}
           {ownership.viewerOwns && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900/50 dark:bg-green-900/20">
+            <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900/50 dark:bg-green-900/20">
               <span className="text-sm font-medium text-green-800 dark:text-green-200">
                 {t("youOwnACopy")}
                 {ownership.condition
@@ -264,23 +292,23 @@ function PuzzleDefinitionDetail({
                     })}`
                   : ""}
               </span>
-              {ownership.copyId && (
-                <Link
-                  href={`/copies/${ownership.copyId}`}
-                  className="text-sm font-semibold text-green-800 hover:underline dark:text-green-200"
-                >
-                  {t("viewYourCopy")}
-                </Link>
-              )}
             </div>
           )}
 
-          {/* Actions */}
-          <div className="mt-5 flex flex-wrap gap-2.5">
+          {/* Actions in three tiers: one brand primary (the member's own copy when they have
+              one, otherwise adding it), outline secondaries with the favourite icon toggle, then
+              link-style extras. */}
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+            {ownCopyHref && (
+              <Button variant="brand" className={wrappingAction} asChild>
+                <Link href={ownCopyHref}>{t("viewYourCopy")}</Link>
+              </Button>
+            )}
             {/* Opens the copy-mode add form (definition pre-filled; the member
                 fills in condition/availability/cover/notes for their copy). */}
             <Button
-              variant="brand"
+              variant={ownCopyHref ? "outline" : "brand"}
+              className={wrappingAction}
               onClick={() =>
                 router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
               }
@@ -288,8 +316,12 @@ function PuzzleDefinitionDetail({
               <Plus className="h-4 w-4" />
               {tPuzzles("addToLibrary")}
             </Button>
+            {/* Nothing to find while nobody offers a copy: disabled, with the reason below. */}
             <Button
               variant="outline"
+              className={wrappingAction}
+              disabled={noCopiesOffered}
+              aria-describedby={noCopiesOffered ? noCopiesHintId : undefined}
               onClick={() =>
                 navigate({ to: "/browse", search: { puzzle: puzzleId } })
               }
@@ -297,31 +329,57 @@ function PuzzleDefinitionDetail({
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("favorite")}
+                  aria-pressed={favorited}
+                  onClick={() => void toggleFavorite(puzzleId)}
+                >
+                  <Heart
+                    className={cn(
+                      "h-4 w-4",
+                      favorited && "fill-red-500 text-red-500",
+                    )}
+                    aria-hidden
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{favoriteLabel}</TooltipContent>
+            </Tooltip>
+          </div>
+          {noCopiesOffered && (
+            <p
+              id={noCopiesHintId}
+              className="text-muted-foreground mt-2 text-sm"
+            >
+              {t("noCopiesOffered")}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-x-5">
             {canReview && (
-              <Button variant="outline" onClick={focusComposer}>
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 has-[>svg]:px-0"
+                onClick={focusComposer}
+              >
                 <Star className="h-4 w-4" />
                 {t("writeReview")}
               </Button>
             )}
             <Button
-              variant="outline"
-              aria-pressed={favorited}
-              onClick={() => void toggleFavorite(puzzleId)}
+              variant="link"
+              size="sm"
+              className="px-0 has-[>svg]:px-0"
+              asChild
             >
-              <Heart
-                className={cn(
-                  "h-4 w-4",
-                  favorited && "fill-red-500 text-red-500",
-                )}
-              />
-              {favoriteLabel}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/puzzles/${puzzleId}/suggest-edit`)}
-            >
-              <Pencil className="h-4 w-4" />
-              {t("suggestEdit")}
+              <Link href={`/puzzles/${puzzleId}/suggest-edit`}>
+                <Pencil className="h-4 w-4" />
+                {t("suggestEdit")}
+              </Link>
             </Button>
           </div>
         </div>
@@ -336,9 +394,17 @@ function PuzzleDefinitionDetail({
           divided
         />
         <Stat
-          value={t("avgCompletionValue", {
-            days: stats.avgCompletionDays ?? "—",
-          })}
+          value={
+            stats.avgCompletionDays == null ? (
+              // No finished completions yet: a bare dash, never a unit on a missing number.
+              <>
+                <span aria-hidden="true">—</span>
+                <span className="sr-only">{t("noValue")}</span>
+              </>
+            ) : (
+              t("avgCompletionValue", { days: stats.avgCompletionDays })
+            )
+          }
           label={t("avgCompletion")}
           divided
         />
@@ -353,7 +419,10 @@ function PuzzleDefinitionDetail({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         {/* Left: rating + available copies */}
         <div className="space-y-9">
-          <CommunityRating rating={rating} />
+          <CommunityRating
+            rating={rating}
+            onRate={canReview ? focusComposer : undefined}
+          />
           <AvailableToSwap
             copies={availableCopies}
             totalAvailable={totalAvailable}
@@ -374,8 +443,30 @@ function PuzzleDefinitionDetail({
   );
 }
 
-function CommunityRating({ rating }: { rating: View["rating"] }) {
+function CommunityRating({
+  rating,
+  onRate,
+}: {
+  rating: View["rating"];
+  /** Takes the member to the review composer; absent where the puzzle can't be reviewed. */
+  onRate?: () => void;
+}) {
   const t = useTranslations("puzzleDefinition");
+  // Unrated: an invitation instead of a "0" score over five 0% bars.
+  if (rating.count === 0) {
+    return (
+      <section>
+        <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
+        <p className="text-muted-foreground text-sm">{t("noRatingsYet")}</p>
+        {onRate && (
+          <Button variant="outline" size="sm" className="mt-3" onClick={onRate}>
+            <Star className="h-4 w-4" />
+            {t("beFirstToRate")}
+          </Button>
+        )}
+      </section>
+    );
+  }
   return (
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
@@ -426,6 +517,16 @@ function swapTypeClasses(swapType: AvailableCopy["swapType"]) {
   }
 }
 
+// An offering owner's location and partner rating, each only when known (never "★ —").
+function ownerMetaLine(owner: AvailableCopy["owner"]) {
+  return [
+    owner.location,
+    owner.avgRating != null ? `★ ${owner.avgRating}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function AvailableToSwap({
   copies,
   totalAvailable,
@@ -465,11 +566,11 @@ function AvailableToSwap({
                 <div className="text-foreground truncate text-sm font-medium">
                   {displayName({ name: copy.owner.name })}
                 </div>
-                <div className="text-muted-foreground truncate text-xs">
-                  {copy.owner.location ?? ""}
-                  {copy.owner.location ? " · " : ""}★{" "}
-                  {copy.owner.avgRating ?? "—"}
-                </div>
+                {ownerMetaLine(copy.owner) && (
+                  <div className="text-muted-foreground truncate text-xs">
+                    {ownerMetaLine(copy.owner)}
+                  </div>
+                )}
               </div>
               <span
                 className={cn(
@@ -503,22 +604,18 @@ function ReviewsSection({
   canReview,
 }: {
   puzzleId: string;
-  composerRef: React.RefObject<HTMLInputElement | null>;
+  composerRef: React.RefObject<HTMLDivElement | null>;
   canReview: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
+  const ratingHintId = useId();
   const { data: reviews } = useQuery(
     convexQuery(gateway.social.listPuzzleReviews, {
       puzzleId: puzzleId as Id<"puzzles">,
     }),
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
-  const { data: view } = useQuery(
-    convexQuery(gateway.library.getPuzzleDefinitionView, {
-      puzzleId: puzzleId as Id<"puzzles">,
-    }),
-  );
   // The caller's own puzzle review (if any) drives the update-mode affordance:
   // prefill the composer and relabel the submit button.
   const { data: myReviews } = useQuery(
@@ -555,14 +652,16 @@ function ReviewsSection({
   const hasExistingReview = myReviews?.puzzle != null;
 
   const list = reviews ?? [];
-  const title = view?.definition.title ?? "";
+  // Posting needs a rating (only the text is optional); until one is chosen, a hint says so and
+  // describes both the stars and the disabled Post button.
+  const needsRating = rating < 1;
 
   const relative = (timestamp: number) =>
     format.relativeTime(new Date(timestamp), now);
 
   const submit = async () => {
     // isPending guard: the Enter-key path bypasses the disabled button and could double-fire.
-    if (postReview.isPending || rating < 1) return;
+    if (postReview.isPending || needsRating) return;
     const trimmed = text.trim();
     try {
       await postReview.mutateAsync({
@@ -570,6 +669,7 @@ function ReviewsSection({
         rating,
         ...(trimmed ? { text: trimmed } : {}),
       });
+      toast.success(hasExistingReview ? t("reviewUpdated") : t("reviewPosted"));
     } catch (error) {
       // A review stored before the length cap can be longer than the field allows: say why.
       const code = convexErrorCode(error);
@@ -591,19 +691,41 @@ function ReviewsSection({
         meta={String(list.length)}
       />
 
-      {/* Composer */}
+      {/* Composer: the required rating first, then the optional text, then Post. */}
       {!canReview ? (
         <p className="text-muted-foreground mb-4 text-sm">
           {t("reviewNotOpen")}
         </p>
       ) : (
-        <div className="mb-4 flex gap-2.5">
+        <div ref={composerRef} className="mb-4 flex gap-2.5">
           <MemberAvatar source={me} avatar={me?.avatar} />
-          <div className="flex flex-1 flex-col gap-2">
-            <div className="flex gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div>
+              <p className="text-foreground text-sm font-medium">
+                {t("yourRating")}
+                <span aria-hidden="true" className="text-destructive ml-0.5">
+                  *
+                </span>
+              </p>
+              <StarRating
+                value={rating}
+                onChange={setRating}
+                size="lg"
+                label={t("yourRating")}
+                required
+                clearable
+                describedBy={needsRating ? ratingHintId : undefined}
+              />
+              {needsRating && (
+                <p id={ratingHintId} className="text-muted-foreground text-xs">
+                  {t("chooseRatingToPost")}
+                </p>
+              )}
+            </div>
+            {/* Phones stack the text above Post so the placeholder is not cut off. */}
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Input
-                ref={composerRef}
-                placeholder={t("reviewPlaceholder", { title })}
+                placeholder={t("reviewPlaceholder")}
                 value={text}
                 maxLength={REVIEW_TEXT_MAX_LENGTH}
                 onChange={(e) => setText(e.target.value)}
@@ -617,18 +739,14 @@ function ReviewsSection({
               />
               <Button
                 variant="brand"
+                className="self-end sm:self-auto"
                 onClick={() => void submit()}
-                disabled={postReview.isPending || rating < 1}
+                disabled={postReview.isPending || needsRating}
+                aria-describedby={needsRating ? ratingHintId : undefined}
               >
                 {hasExistingReview ? t("updateReview") : t("post")}
               </Button>
             </div>
-            <StarRating
-              value={rating}
-              onChange={setRating}
-              size="sm"
-              label={t("rateRequired")}
-            />
             <p className="text-muted-foreground text-xs">
               {t("reviewPublicNote")}
             </p>

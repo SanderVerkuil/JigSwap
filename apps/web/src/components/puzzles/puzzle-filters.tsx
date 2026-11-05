@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LoadingState } from "@/components/ui/loading";
 import {
   Select,
   SelectContent,
@@ -12,7 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
 import type { Locale } from "@/lib/i18n";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -32,13 +33,111 @@ interface Filters {
 
 interface PuzzleFiltersProps {
   filters: Filters;
-  onFiltersChange: (filters: Filters) => void;
+  /** Receives only what changed, so an edit made later (the range waits for a pause in typing)
+   *  can't write back the other filters as they were when it started. */
+  onFiltersChange: (patch: Partial<Filters>) => void;
   className?: string;
 }
 
 const COMMON_PIECE_COUNTS = [
   100, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000,
 ];
+
+// A typed range bound reaches the URL (and so the server) after this pause in typing.
+const RANGE_DEBOUNCE_MS = 300;
+
+// Radix Select forbids an empty item value, so the "any" choice of every select carries this
+// sentinel and maps back to the filters' empty string.
+const ANY = "__any__";
+
+interface FilterSelectProps {
+  id: string;
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  /** Label of the choice that clears this filter, e.g. "All brands". */
+  anyLabel: string;
+  /** Undefined while the options are still loading. */
+  options: { value: string; label: string }[] | undefined;
+  /** Shown in a disabled control when the options could not be loaded. */
+  unavailableLabel?: string;
+  isError?: boolean;
+}
+
+// One labelled filter select that loads and fails on its own, so a failing read never blocks the
+// rest of the panel.
+function FilterSelect({
+  id,
+  label,
+  value,
+  onValueChange,
+  anyLabel,
+  options,
+  unavailableLabel,
+  isError = false,
+}: FilterSelectProps) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      {isError ? (
+        <Select disabled>
+          <SelectTrigger id={id} className="w-full">
+            <SelectValue placeholder={unavailableLabel} />
+          </SelectTrigger>
+        </Select>
+      ) : options === undefined ? (
+        <Skeleton className="h-9 w-full" />
+      ) : (
+        <Select
+          value={value || ANY}
+          onValueChange={(next) => onValueChange(next === ANY ? "" : next)}
+        >
+          <SelectTrigger id={id} className="w-full">
+            <SelectValue placeholder={anyLabel} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ANY}>{anyLabel}</SelectItem>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+
+// One bound of the custom range. It edits a draft that follows the URL; typing 1000 starts one
+// search, not four, and a value picked in the select next to it replaces the draft.
+function RangeBoundInput({
+  value,
+  onValueChange,
+  label,
+  placeholder,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  label: string;
+  placeholder: string;
+}) {
+  const { draft, change } = useUrlTextDraft(
+    value || undefined,
+    (bound) => onValueChange(bound ?? ""),
+    RANGE_DEBOUNCE_MS,
+  );
+  return (
+    <Input
+      type="number"
+      aria-label={label}
+      placeholder={placeholder}
+      value={draft}
+      onChange={(e) => change(e.target.value)}
+      className="flex-1"
+    />
+  );
+}
 
 export function PuzzleFilters({
   filters,
@@ -48,21 +147,25 @@ export function PuzzleFilters({
   const t = useTranslations("puzzles.puzzles");
   const tPuzzles = useTranslations("puzzles");
 
-  // Extract unique brands and categories from puzzles
-  const { data: brands } = useQuery(convexQuery(gateway.catalog.allBrands, {}));
+  // Each read drives only its own control: a failing or slow one must not hold up the others.
+  const brands = useQuery(convexQuery(gateway.catalog.allBrands, {}));
 
   // The public taxonomy: active categories only, readable by every member (the admin listAll
   // read is admin-only and includes deactivated rows).
-  const { data: categories } = useQuery(
+  const categories = useQuery(
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
   const locale = useLocale() as Locale;
 
-  // Extract all unique tags
-  const { data: allTags } = useQuery(convexQuery(gateway.catalog.allTags, {}));
+  const allTags = useQuery(convexQuery(gateway.catalog.allTags, {}));
+
+  const pieceOptions = COMMON_PIECE_COUNTS.map((count) => ({
+    value: count.toString(),
+    label: `${count} ${tPuzzles("pieces")}`,
+  }));
 
   const updateFilter = (key: keyof Filters, value: string | string[]) => {
-    onFiltersChange({ ...filters, [key]: value });
+    onFiltersChange({ [key]: value });
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -78,131 +181,77 @@ export function PuzzleFilters({
     }
   };
 
-  if (!brands || !categories || !allTags) {
-    return <LoadingState />;
-  }
-
   return (
     <div
       className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}
     >
-      {/* Brand Filter */}
-      <div className="space-y-2">
-        <Label htmlFor="brand-filter">{t("filters.brand")}</Label>
-        <Select
-          value={filters.brand}
-          onValueChange={(value) => updateFilter("brand", value)}
-        >
-          <SelectTrigger id="brand-filter" className="w-full">
-            <SelectValue placeholder={t("filters.allBrands")} />
-          </SelectTrigger>
-          <SelectContent>
-            {brands.map((brand) => (
-              <SelectItem key={brand} value={brand || ""}>
-                {brand}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        id="brand-filter"
+        label={t("filters.brand")}
+        value={filters.brand}
+        onValueChange={(value) => updateFilter("brand", value)}
+        anyLabel={t("filters.allBrands")}
+        options={brands.data?.map((brand) => ({ value: brand, label: brand }))}
+        isError={brands.isError}
+        unavailableLabel={t("filters.brandsUnavailable")}
+      />
 
-      {/* Min Pieces Filter */}
-      <div className="space-y-2">
-        <Label htmlFor="min-pieces">{t("filters.minPieces")}</Label>
-        <Select
-          value={filters.minPieces}
-          onValueChange={(value) => updateFilter("minPieces", value)}
-        >
-          <SelectTrigger id="min-pieces" className="w-full">
-            <SelectValue placeholder={t("filters.noMinimum")} />
-          </SelectTrigger>
-          <SelectContent>
-            {COMMON_PIECE_COUNTS.map((count) => (
-              <SelectItem key={count} value={count.toString()}>
-                {count} {tPuzzles("pieces")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        id="min-pieces"
+        label={t("filters.minPieces")}
+        value={filters.minPieces}
+        onValueChange={(value) => updateFilter("minPieces", value)}
+        anyLabel={t("filters.noMinimum")}
+        options={pieceOptions}
+      />
 
-      {/* Max Pieces Filter */}
-      <div className="space-y-2">
-        <Label htmlFor="max-pieces">{t("filters.maxPieces")}</Label>
-        <Select
-          value={filters.maxPieces}
-          onValueChange={(value) => updateFilter("maxPieces", value)}
-        >
-          <SelectTrigger id="max-pieces" className="w-full">
-            <SelectValue placeholder={t("filters.selectMaxPieces")} />
-          </SelectTrigger>
-          <SelectContent>
-            {COMMON_PIECE_COUNTS.map((count) => (
-              <SelectItem key={count} value={count.toString()}>
-                {count} {tPuzzles("pieces")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        id="max-pieces"
+        label={t("filters.maxPieces")}
+        value={filters.maxPieces}
+        onValueChange={(value) => updateFilter("maxPieces", value)}
+        anyLabel={t("filters.noMaximum")}
+        options={pieceOptions}
+      />
 
-      {/* Difficulty Filter */}
-      <div className="space-y-2">
-        <Label htmlFor="difficulty-filter">{t("filters.difficulty")}</Label>
-        <Select
-          value={filters.difficulty}
-          onValueChange={(value) => updateFilter("difficulty", value)}
-        >
-          <SelectTrigger id="difficulty-filter" className="w-full">
-            <SelectValue placeholder={t("filters.allDifficulties")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="easy">{t("difficulty.easy")}</SelectItem>
-            <SelectItem value="medium">{t("difficulty.medium")}</SelectItem>
-            <SelectItem value="hard">{t("difficulty.hard")}</SelectItem>
-            <SelectItem value="expert">{t("difficulty.expert")}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        id="difficulty-filter"
+        label={t("filters.difficulty")}
+        value={filters.difficulty}
+        onValueChange={(value) => updateFilter("difficulty", value)}
+        anyLabel={t("filters.allDifficulties")}
+        options={(["easy", "medium", "hard", "expert"] as const).map(
+          (level) => ({ value: level, label: t(`difficulty.${level}`) }),
+        )}
+      />
 
-      {/* Category Filter */}
-      <div className="space-y-2">
-        <Label htmlFor="category-filter">{t("filters.category")}</Label>
-        <Select
-          value={filters.category}
-          onValueChange={(value) => updateFilter("category", value)}
-        >
-          <SelectTrigger id="category-filter" className="w-full">
-            <SelectValue placeholder={t("filters.allCategories")} />
-          </SelectTrigger>
-          <SelectContent>
-            {categoryOptions(categories, locale).map(({ value, label }) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FilterSelect
+        id="category-filter"
+        label={t("filters.category")}
+        value={filters.category}
+        onValueChange={(value) => updateFilter("category", value)}
+        anyLabel={t("filters.allCategories")}
+        options={categories.data && categoryOptions(categories.data, locale)}
+        isError={categories.isError}
+        unavailableLabel={t("filters.categoriesUnavailable")}
+      />
 
       {/* Custom Piece Count Range */}
       <div className="space-y-2">
         <Label>{t("filters.customRange")}</Label>
         <div className="flex gap-2">
-          <Input
-            type="number"
+          <RangeBoundInput
+            label={t("filters.minPieces")}
             placeholder={t("filters.min")}
             value={filters.minPieces}
-            onChange={(e) => updateFilter("minPieces", e.target.value)}
-            className="flex-1"
+            onValueChange={(value) => updateFilter("minPieces", value)}
           />
           <span className="flex items-center text-muted-foreground">-</span>
-          <Input
-            type="number"
+          <RangeBoundInput
+            label={t("filters.maxPieces")}
             placeholder={t("filters.max")}
             value={filters.maxPieces}
-            onChange={(e) => updateFilter("maxPieces", e.target.value)}
-            className="flex-1"
+            onValueChange={(value) => updateFilter("maxPieces", value)}
           />
         </div>
       </div>
@@ -220,6 +269,7 @@ export function PuzzleFilters({
                 <Button
                   variant="ghost"
                   size="sm"
+                  aria-label={t("filters.removeTag", { tag })}
                   className="h-auto p-0 has-[>svg]:p-0 hover:text-destructive"
                   onClick={() => removeTag(tag)}
                 >
@@ -231,22 +281,34 @@ export function PuzzleFilters({
         )}
 
         {/* Available Tags */}
-        <div className="flex flex-wrap gap-2">
-          {allTags
-            .filter((tag) => !filters.tags.includes(tag))
-            .slice(0, 10)
-            .map((tag) => (
-              <Button
-                key={tag}
-                variant="outline"
-                size="sm"
-                onClick={() => addTag(tag)}
-                className="text-xs"
-              >
-                + {tag}
-              </Button>
+        {allTags.isError ? (
+          <p className="text-sm text-muted-foreground">
+            {t("filters.tagsUnavailable")}
+          </p>
+        ) : allTags.data === undefined ? (
+          <div className="flex flex-wrap gap-2">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-8 w-20" />
             ))}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {allTags.data
+              .filter((tag) => !filters.tags.includes(tag))
+              .slice(0, 10)
+              .map((tag) => (
+                <Button
+                  key={tag}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addTag(tag)}
+                  className="text-xs"
+                >
+                  + {tag}
+                </Button>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

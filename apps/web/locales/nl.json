@@ -10,6 +10,11 @@
     "delete": "Verwijderen",
     "edit": "Bewerken",
     "view": "Bekijken",
+    "viewToggle": {
+      "label": "Weergave",
+      "grid": "Rasterweergave",
+      "list": "Lijstweergave"
+    },
     "search": "Zoeken",
     "filter": "Filter",
     "sort": "Sorteren",
@@ -350,7 +355,6 @@
     "createNewPuzzle": "Nieuwe Puzzel Maken",
     "createNewPuzzleDescription": "Maak een nieuwe puzzel die nog niet bestaat",
     "puzzleCreated": "Puzzel succesvol aangemaakt",
-    "puzzleSubmittedForReview": "Puzzel ingediend ter beoordeling",
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
     "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
@@ -431,14 +435,19 @@
     "puzzles": {
       "title": "Puzzels",
       "subtitle": "Blader en ontdek puzzels van de community",
-      "addPuzzle": "Puzzel Toevoegen",
-      "searchPlaceholder": "Zoek puzzels op titel, merk of beschrijving...",
+      "searchPlaceholder": "Titel, merk, kunstenaar of tag…",
+      "searchLabel": "Zoek in de catalogus",
       "filtersLabel": "Filters",
       "clearFilters": "Filters Wissen",
-      "puzzlesFound": "{count} puzzels gevonden",
+      "puzzlesFound": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
+      "puzzlesFoundSoFar": "{count, plural, one {Tot nu toe # puzzel gevonden} other {Tot nu toe # puzzels gevonden}}",
       "noPuzzlesFound": "Geen puzzels gevonden",
       "tryDifferentFilters": "Probeer je zoekcriteria of filters aan te passen",
-      "viewDetails": "Details Bekijken",
+      "noFavoritesTitle": "Nog geen favorieten",
+      "noFavoritesHint": "Tik op het hartje bij een puzzel om hem hier te bewaren.",
+      "showAllPuzzles": "Alle puzzels tonen",
+      "emptyCatalogueTitle": "De catalogus is nog leeg",
+      "emptyCatalogueHint": "Voeg de eerste puzzel toe, zodat leden hem kunnen vinden en hun exemplaren kunnen aanbieden.",
       "ownPuzzle": "Ik Bezit Deze",
       "noImage": "Geen Afbeelding",
       "pieceCount": "Aantal Stukken",
@@ -460,6 +469,7 @@
         "brand": "Merk",
         "selectBrand": "Selecteer merk",
         "allBrands": "Alle merken",
+        "brandsUnavailable": "Merken konden niet worden geladen",
         "minPieces": "Min Stukken",
         "selectMinPieces": "Selecteer minimum stukken",
         "noMinimum": "Geen minimum",
@@ -472,7 +482,10 @@
         "category": "Categorie",
         "selectCategory": "Selecteer categorie",
         "allCategories": "Alle categorieën",
+        "categoriesUnavailable": "Categorieën konden niet worden geladen",
         "tags": "Tags",
+        "tagsUnavailable": "Tags konden niet worden geladen",
+        "removeTag": "Tag {tag} verwijderen",
         "customRange": "Aangepast Bereik",
         "min": "Min",
         "max": "Max"
@@ -525,11 +538,21 @@
     "importImported": "Details geïmporteerd",
     "coverColour": "Omslagkleur",
     "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
+    "contributeCoverColourHint": "Kies een kleur of upload een foto — zo verschijnt de puzzel in de catalogus.",
     "addToLibrary": "Toevoegen aan bibliotheek",
     "saveAndAddAnother": "Opslaan & nog een toevoegen",
     "addReadyHint": "Vul titel en aantal stukken in om door te gaan.",
     "livePreview": "Live voorbeeld",
     "livePreviewCaption": "Zo ziet je puzzelkaart eruit voor anderen op je plank.",
+    "contributePreviewCaption": "Zo komt de puzzel in de catalogus te staan zodra hij is goedgekeurd.",
+    "contributeDone": {
+      "pendingTitle": "“{title}” wacht op controle",
+      "pendingBody": "We controleren nieuwe puzzels voordat ze in de catalogus verschijnen. Je kunt hem nu al aan je puzzels toevoegen.",
+      "submittedTitle": "Bedankt voor het bijdragen van “{title}”",
+      "addToMyPuzzles": "Toevoegen aan mijn puzzels",
+      "contributeAnother": "Nog een puzzel bijdragen",
+      "backToCatalogue": "Terug naar de catalogus"
+    },
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",
@@ -569,6 +592,7 @@
     "difficulty_medium": "Gemiddeld",
     "difficulty_hard": "Moeilijk",
     "difficulty_expert": "Expert",
+    "difficultyNotSure": "Weet ik niet",
     "condition_like_new": "Uitstekend",
     "condition_good": "Goed",
     "condition_fair": "Redelijk",
@@ -579,6 +603,8 @@
     "previewAvailable": "Beschikbaar",
     "previewView": "Bekijken",
     "previewAdd": "Toevoegen",
+    "previewTitlePlaceholder": "Titel van je puzzel",
+    "previewBrandPlaceholder": "Merk",
     "uploadPhoto": "Foto uploaden",
     "coverPhoto": "Jouw foto",
     "coverBestQuality": "Beste kwaliteit",
@@ -1257,12 +1283,16 @@
     "minPieces": "Min Stukken",
     "maxPieces": "Max Stukken",
     "clearFilters": "Alles Wissen",
-    "noPuzzlesFound": "Geen puzzels gevonden",
     "tryDifferentFilters": "Pas je filters aan.",
     "filterAll": "Alle",
     "available": "Beschikbaar",
     "resultsCount": "{count, plural, one {# puzzel gevonden} other {# puzzels gevonden}}",
-    "favoritesComingSoon": "Favorieten komen binnenkort",
+    "showingCount": "{shown} van {total, plural, one {# puzzel} other {# puzzels}} getoond",
+    "loadMore": "Meer laden",
+    "loadMoreFailed": "Meer puzzels konden niet worden geladen.",
+    "loadMoreRetry": "Opnieuw proberen",
+    "loadFailed": "Puzzels konden niet worden geladen",
+    "loadFailedHint": "Controleer je verbinding en laad de pagina opnieuw.",
     "searchHint": "Druk op ⌘K om op titel of merk te zoeken",
     "addFilter": "Filter Toevoegen",
     "addFilterSearch": "Filteren op…",
@@ -1271,8 +1301,21 @@
     "fieldText": "Tekst",
     "fieldAvailability": "Beschikbaarheid",
     "textPlaceholder": "Titel, merk of thema…",
-    "gridView": "Rasterweergave",
-    "listView": "Lijstweergave"
+    "card": {
+      "request": "Aanvragen",
+      "messageOwner": "Bericht sturen aan de eigenaar",
+      "messageOwnerName": "Bericht sturen aan {name}",
+      "favorite": "Favoriet"
+    },
+    "empty": {
+      "filteredTitle": "Geen exemplaren gevonden met deze filters",
+      "puzzleNotOfferedTitle": "Nog niemand biedt deze puzzel aan",
+      "puzzleNotOfferedHint": "Bewaar hem bij je favorieten, dan vind je hem snel terug.",
+      "noOffersTitle": "Nog geen leden bieden puzzels aan",
+      "noOffersHint": "Kijk rond in de catalogus, of zoek mensen om te volgen.",
+      "openCatalogue": "Naar de catalogus",
+      "findPeople": "Mensen vinden"
+    }
   },
   "browsePuzzleFilter": {
     "label": "Puzzel",
@@ -3281,11 +3324,11 @@
         "label": "Afmetingen",
         "width": {
           "label": "Breedte",
-          "placeholder": "Voer breedte in"
+          "placeholder": "Breedte"
         },
         "height": {
           "label": "Hoogte",
-          "placeholder": "Voer hoogte in"
+          "placeholder": "Hoogte"
         },
         "unit": {
           "label": "Eenheid",
@@ -3662,12 +3705,13 @@
   },
   "titles": {
     "dashboard": "Dashboard — JigSwap",
-    "browse": "Puzzels bladeren — JigSwap",
+    "browse": "Puzzels ontdekken — JigSwap",
     "myPuzzles": "Mijn puzzels — JigSwap",
     "addPuzzle": "Puzzel toevoegen — JigSwap",
+    "contributePuzzle": "Een puzzel bijdragen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
     "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
-    "puzzles": "Puzzels — JigSwap",
+    "puzzles": "Puzzelcatalogus — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
     "collections": "Collecties — JigSwap",
     "household": "Huishouden — JigSwap",
@@ -3717,7 +3761,7 @@
       "noResultsFor": "Geen resultaten voor “{term}”"
     },
     "actions": {
-      "addPuzzle": "Puzzel Toevoegen",
+      "addToMyPuzzles": "Toevoegen aan mijn puzzels",
       "addAPuzzle": "Een Puzzel Toevoegen",
       "logCompletion": "Een Voltooiing Vastleggen",
       "createCircle": "Een Kring Aanmaken",
@@ -3793,8 +3837,8 @@
       },
       "browse": {
         "title": "Puzzels Ontdekken",
-        "subtitle": "Ontdek puzzels uit de community.",
-        "description": "Ontdek puzzels uit de community"
+        "subtitle": "Exemplaren die leden te ruil, te leen of te koop aanbieden.",
+        "description": "Exemplaren die andere leden te ruil, te leen of te koop aanbieden"
       },
       "circles": {
         "title": "Kringen",
@@ -3838,12 +3882,12 @@
       },
       "contributePuzzle": {
         "title": "Een puzzel bijdragen",
-        "subtitle": "Voeg een puzzel toe aan de gedeelde catalogus voor iedereen."
+        "subtitle": "Voor de gedeelde catalogus, niet voor je eigen puzzels."
       },
       "puzzles": {
         "title": "Puzzelcatalogus",
-        "subtitle": "De gedeelde puzzelcatalogus.",
-        "description": "De gedeelde puzzelcatalogus"
+        "subtitle": "Alle puzzels in JigSwap.",
+        "description": "Alle puzzels in JigSwap, aangeboden of niet"
       },
       "borrowed": {
         "title": "Geleend",
@@ -4133,31 +4177,38 @@
     "notFound": "Puzzel niet gevonden",
     "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd, of de link klopt niet.",
     "suggestEdit": "Wijziging voorstellen",
-    "eyebrow": "Catalogus · Puzzeldefinitie",
     "communityOwners": "eigenaren in community",
     "totalCompletions": "keer voltooid",
     "avgCompletion": "gem. voltooitijd",
     "avgCompletionValue": "{days}d",
+    "noValue": "Nog onbekend",
     "availableToSwap": "beschikbaar om te ruilen",
     "youOwnACopy": "Je hebt een exemplaar",
     "conditionSuffix": "conditie {condition}.",
-    "viewYourCopy": "Bekijk jouw exemplaar →",
+    "viewYourCopy": "Bekijk jouw exemplaar",
     "findCopyToSwap": "Vind een exemplaar om te ruilen",
+    "noCopiesOffered": "Nog geen exemplaren aangeboden",
+    "favorite": "Favoriet",
     "writeReview": "Schrijf een review",
     "communityRating": "Communitybeoordeling",
     "ratingsCount": "{count, plural, one {# beoordeling} other {# beoordelingen}}",
+    "noRatingsYet": "Nog geen beoordelingen",
+    "beFirstToRate": "Geef als eerste een beoordeling",
     "availableToSwapSection": "Beschikbaar om te ruilen",
     "copiesCount": "{count, plural, one {# exemplaar} other {# exemplaren}}",
-    "seeAllCopies": "Bekijk alle {count} beschikbare exemplaren →",
+    "seeAllCopies": "{count, plural, one {Bekijk het beschikbare exemplaar →} other {Bekijk alle # beschikbare exemplaren →}}",
     "noCopies": "Er zijn nog geen exemplaren beschikbaar om te ruilen.",
     "reviews": "Reviews",
-    "reviewPlaceholder": "Beoordeel {title} (optioneel)…",
-    "rateRequired": "Beoordeel deze puzzel",
+    "reviewPlaceholder": "Schrijf een review (optioneel)…",
+    "yourRating": "Jouw beoordeling",
+    "chooseRatingToPost": "Kies eerst een aantal sterren om te plaatsen",
     "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
     "reviewNotOpen": "Je kunt alleen goedgekeurde puzzels beoordelen.",
     "post": "Plaatsen",
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
+    "reviewPosted": "Review geplaatst",
+    "reviewUpdated": "Beoordeling bijgewerkt",
     "reviewTooLong": "Die review is te lang (maximaal 2.000 tekens).",
     "reviewRateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
     "noReviews": "Nog geen reviews. Wees de eerste.",
@@ -4181,7 +4232,7 @@
     "editImage": "Foto bewerken",
     "changesHeading": "Wijzigingen ({count})",
     "noChangesYet": "Nog geen wijzigingen",
-    "keepCategory": "Huidige categorie behouden",
+    "noCategoryYet": "Nog geen categorie — kies er een",
     "submit": "Voorstel indienen",
     "update": "Voorstel bijwerken",
     "submitting": "Indienen…",
@@ -4256,6 +4307,10 @@
       "symbols": "Symbolen",
       "flags": "Vlaggen"
     }
+  },
+  "starRating": {
+    "outOf": "{value} van 5 sterren",
+    "star": "{count, plural, one {# ster} other {# sterren}}"
   },
   "admin": {
     "moderation": {

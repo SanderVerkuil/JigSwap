@@ -92,10 +92,12 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   };
   // A page-published title (dynamic routes) overrides the static route title,
   // same precedence as the desktop page head.
-  const { title: publishedTitle } = usePageHeaderContent();
+  const { title: publishedTitle, titleInContent } = usePageHeaderContent();
   const title =
     publishedTitle ??
     (meta && !isHome ? t(`pages.${meta.pageKey}.title`) : undefined);
+  // The page's own h1 carries the title; the bar keeps it as context text only.
+  const TitleTag = titleInContent ? "p" : "h1";
   // Sticky page content (tab bars) sticks just below this bar.
   const measureRef = useHeightCssVar(MOBILE_TOP_BAR_HEIGHT_VAR);
 
@@ -139,7 +141,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
 
         <div className="min-w-0 flex-1">
           {title && (
-            <h1
+            <TitleTag
               className={cn(
                 // The controls leave a phone about 126px: two smaller lines before an ellipsis.
                 "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
@@ -147,7 +149,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               )}
             >
               {title}
-            </h1>
+            </TitleTag>
           )}
         </div>
 
