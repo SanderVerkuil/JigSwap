@@ -21,4 +21,14 @@ crons.daily(
   {},
 );
 
+// Blobs nothing holds (older than a day) and box art only its listing holds (older than a week):
+// a DRY RUN that only logs `storage.sweep`, unless the deployment env STORAGE_GC_MODE is "delete"
+// (lib/storage/storageSweep; preconditions in docs/deployment/photo-moderation.md).
+crons.daily(
+  "sweep unheld storage blobs",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.lib.storage.storageSweep.sweepStorage,
+  {},
+);
+
 export default crons;

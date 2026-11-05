@@ -159,3 +159,38 @@ describe("PhotoLightbox report", () => {
     expect(reportButton()).toBeUndefined();
   });
 });
+
+// SEC-38: the member who uploaded a photo may remove it without managing the copy (e.g. the
+// previous owner after a transfer). Set cover stays with the copy's managers.
+describe("PhotoLightbox remove", () => {
+  const withRemove = (viewerMayRemove: boolean | undefined) =>
+    gallery.map((p) => ({
+      ...p,
+      moderationStatus: "approved" as const,
+      viewerMayRemove,
+    })) as Photo[];
+  const buttonWithText = (text: string) =>
+    [...document.querySelectorAll("button")].find(
+      (el) => el.textContent === text,
+    );
+
+  it("offers Remove, but neither Set cover nor Report, to the photo's uploader", () => {
+    render({ gallery: withRemove(true), canSetCover: false });
+    expect(buttonWithText("Remove photo")).toBeTruthy();
+    expect(buttonWithText("Set as cover")).toBeUndefined();
+    expect(buttonWithText("Report photo")).toBeUndefined();
+  });
+
+  it("hides Remove from a viewer who neither manages the copy nor uploaded the photo", () => {
+    render({ gallery: withRemove(false), canSetCover: false });
+    expect(buttonWithText("Remove photo")).toBeUndefined();
+    expect(buttonWithText("Report photo")).toBeTruthy();
+  });
+
+  it("keeps Remove and Set cover for the copy's manager, also before the view reports viewerMayRemove", () => {
+    render({ gallery: withRemove(undefined), canSetCover: true });
+    expect(buttonWithText("Remove photo")).toBeTruthy();
+    expect(buttonWithText("Set as cover")).toBeTruthy();
+    expect(buttonWithText("Report photo")).toBeUndefined();
+  });
+});

@@ -35,6 +35,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import {
   convexQuery,
   useConvexAction,
@@ -103,6 +104,7 @@ function ContributePuzzlePage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
+  const tCommon = useTranslations("common");
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
@@ -219,7 +221,12 @@ function ContributePuzzlePage() {
     },
     onError: (error) => {
       console.error("Contribute puzzle failed:", error);
-      toast.error(t("puzzleCreationFailed"));
+      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      toast.error(
+        isUploadRateLimited(error)
+          ? tCommon("photoUploadRateLimited")
+          : t("puzzleCreationFailed"),
+      );
     },
   });
 

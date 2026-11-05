@@ -10,9 +10,9 @@ import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 // Admin read model: EVERY catalog definition regardless of status, newest first, paginated.
 // The public lists filter to approved; this console must also show pending/rejected/disabled.
 // Each row joins the admin metadata the /admin/puzzles table renders: submitter display name,
-// resolved thumbnail URL, and the distinct-owner count (ownedPuzzles.by_puzzle → dedupe
-// ownerId, the getPuzzleDefinitionView pattern). Admin-only, gated exactly like
-// getModerationActivity.
+// resolved thumbnail URL (plus whether its blob is gone), and the distinct-owner count
+// (ownedPuzzles.by_puzzle → dedupe ownerId, the getPuzzleDefinitionView pattern). Admin-only,
+// gated exactly like getModerationActivity.
 export const listPuzzleDefinitions = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (
@@ -48,6 +48,10 @@ export const listPuzzleDefinitions = query({
             createdAt: puzzle.createdAt,
             submitterName: submitter ? adminMemberLabelOf(submitter) : null,
             image: puzzle.image ? await boxArtUrl(ctx, puzzle.image) : null,
+            // SEC-01: the box art was destroyed (its blob is gone) and must be uploaded again.
+            imageMissing:
+              puzzle.image !== undefined &&
+              (await ctx.db.system.get(puzzle.image)) === null,
             ownerCount: distinctOwners.size,
           };
         },

@@ -303,6 +303,15 @@ describe("view-only member cannot mutate; manage member can", () => {
       copyId: w.manageCopy,
       fileId,
     });
+    // SEC-06: the manager who uploaded the photo is its uploader, not the copy's owner, so a
+    // moderation or CSAM escalation names the right person.
+    const added = await t.run((ctx) =>
+      ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_file", (q) => q.eq("fileId", fileId))
+        .unique(),
+    );
+    expect(added?.uploaderId).toBe(w.bob);
 
     const viewImage = await storeImage(t, w.viewCopy, w.ann);
     const manageImage = await storeImage(t, w.manageCopy, w.ann);

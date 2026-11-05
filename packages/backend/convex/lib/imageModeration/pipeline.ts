@@ -93,7 +93,8 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 // ENV: see `library/adapters/photoModeration.ts` (MODERATION_PROVIDER, HF_MODERATION_TOKEN,
 // HF_MODERATION_MODEL, MODERATION_NSFW_THRESHOLD, SIGHTENGINE_*) and `./csamHashCheck.ts`
 // (CSAM_HASHCHECK_PROVIDER, OFFLIMITS_HCS_*). A blob preserved for a CSAM escalation is never
-// deleted, on any path.
+// deleted, on any path. A refused upload or a swapped-out original that another row still holds
+// (lib/imageModeration/blobReferences) is kept too.
 
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
@@ -387,18 +388,16 @@ const runAttempt = async <R extends ModerationRow>(
     });
   };
 
-  // Delete an original blob unless a CSAM escalation preserves it.
-  const deleteUnlessPreserved = async (fileId: Id<"_storage">) => {
-    const preserved = await ctx.runQuery(
-      internal.lib.imageModeration.quarantine.isBlobPreserved,
-      { storageId: fileId },
-    );
-    if (preserved) {
-      event.original_preserved = true;
-      return;
-    }
+  // Delete an original blob unless anything but this row holds it: a CSAM escalation preserves
+  // it, or another row holds the same id (a row written before the claim rule may hold
+  // catalogue box art; SEC-01). Checked and deleted in one transaction (lib/storage/
+  // blobLifecycle); `original_delete` records the outcome: "deleted", "referenced" or "missing".
+  const deleteUnlessReferenced = async (fileId: Id<"_storage">) => {
     try {
-      await ctx.storage.delete(fileId);
+      event.original_delete = await ctx.runMutation(
+        internal.lib.storage.blobLifecycle.deleteUnlessReferenced,
+        { storageId: fileId, except: imageId },
+      );
     } catch (error) {
       event.delete_original_error = errMsg(error);
     }
@@ -457,7 +456,7 @@ const runAttempt = async <R extends ModerationRow>(
     // Refuse an upload that fails an input guard: reject it (first verdict wins), then delete
     // the blob, but only when the row took this verdict and still points at it, so a blob a
     // concurrent attempt already decided on is never touched. A store's own reject side effects
-    // may have deleted it already (completion photos), hence the existence check.
+    // may have deleted it already (completion photos): the delete then reports "missing".
     const refuse = async (reason: ImageGuardFailure) => {
       event.input_guard = reason;
       event.decision = "rejected";
@@ -475,12 +474,7 @@ const runAttempt = async <R extends ModerationRow>(
       ) {
         return;
       }
-      const stillStored = await ctx.runQuery(
-        internal.lib.imageModeration.blobMetadata.getBlobSize,
-        { storageId: row.fileId },
-      );
-      if (stillStored === null) return;
-      await deleteUnlessPreserved(row.fileId);
+      await deleteUnlessReferenced(row.fileId);
     };
 
     // Too large to even read: refused without hashing (it cannot be held in memory). Anything
@@ -670,7 +664,7 @@ const runAttempt = async <R extends ModerationRow>(
         storedFileId = null;
         cleanBytes = replacement.bytes;
         mime = replacement.mime;
-        await deleteUnlessPreserved(row.fileId);
+        await deleteUnlessReferenced(row.fileId);
       } catch (error) {
         event.reencoded = false;
         event.swap_error = errMsg(error);

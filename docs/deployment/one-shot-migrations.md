@@ -637,3 +637,116 @@ run's totals. Every re-check logs its own `<table event>.hashRecheck` line (for 
    later).
 3. Any match shows up as an open escalation under Admin → Moderation → Hash matches, and in the
    Activity Log as `image_quarantined`.
+
+---
+
+## `solving/backfillLegacyCompletionSidecars` — make legacy completion photos visible as blob references (SEC-92)
+
+**When:** once per deployment, any time after this code is deployed there. Run it before
+`catalog/findDanglingBoxArt` (below) and before the storage sweep is ever switched to delete
+mode. Until it has run, a completion photo stored before the `completionImages` sidecars existed
+lives only in its completion's `photos` array, which no index reaches: the claim rule, the
+reference-aware deletes and the storage sweep cannot see that its blob is in use.
+
+**What it does:** pages through `completions` (50 rows per batch, each batch its own
+transaction, rescheduling itself until the table is exhausted). For every photo of a completion
+that has an `aggregateId` and no `completionImages` row for that photo, it inserts the sidecar
+the re-screen would create (`completionId`, `uploaderId` = the completion's member, `fileId`,
+`createdAt`, `updatedAt`; no moderation status and no hash-check fields). Every read model serves
+such a row exactly like the photo without one, so nothing changes for members; the re-screen
+still classifies the photo. Photos that already have a sidecar are left alone. A completion
+without an `aggregateId` cannot have a sidecar: it is counted (`without_aggregate_id`) and so are
+its photos (`photos_without_aggregate_id`).
+
+`dryRun` **defaults to true**: without `"dryRun":false` it only counts.
+
+A real run that starts at the beginning of the table (no `cursor` passed) and ends with
+`photos_without_aggregate_id` 0 records a `legacyCompletionSidecars` row in `maintenanceMarkers`
+(its final event shows `"marker_recorded":true`). A completion without an `aggregateId` and
+without photos holds no blob, so it does not stop the marker. The storage sweep stays a dry run
+until that row exists, even when `STORAGE_GC_MODE` is `delete` (photo-moderation.md, "Storage
+sweep").
+
+**Safe to re-run:** yes. A second real run creates 0 sidecars.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only), then the real run
+npx convex run solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{}'
+npx convex run solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{"dryRun":false}'
+
+# prod: same, after dev looks right
+npx convex run --prod solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{}'
+npx convex run --prod solving/backfillLegacyCompletionSidecars:backfillLegacyCompletionSidecars '{"dryRun":false}'
+```
+
+The command returns the FIRST batch's running totals; the remaining batches run as scheduled
+functions. Every batch logs a `solving.backfillLegacyCompletionSidecars` wide event with
+`dry_run`, `done`, `from_start`, `marker_recorded` and the running totals `completions`,
+`photos`, `created`, `existing`, `without_aggregate_id` and `photos_without_aggregate_id`; the
+event with `"done":true` carries the whole run. Follow it with `npx convex logs` (add `--prod` for prod) or in the dashboard Logs.
+
+**Verify:**
+
+1. The real run's final `created` matches the dry run's (give or take photos attached in
+   between, which get their sidecar at attach time).
+2. Run the dry run again: its final event shows `"created":0`.
+3. Note `without_aggregate_id` and `photos_without_aggregate_id`. `photos_without_aggregate_id`
+   must be 0 before the storage sweep may delete blobs; the real run's final event shows
+   `"marker_recorded":true` exactly when it was. If it is not 0, run
+   `solving/backfill:backfillSolving` (it stamps an `aggregateId` on every completion and goal
+   that lacks one, and skips rows that have one), then this backfill again, dry run and then real:
+
+   ```bash
+   npx convex run solving/backfill:backfillSolving '{}'   # add --prod for prod
+   ```
+
+   `without_aggregate_id` alone (completions without photos) does not block the sweep.
+
+4. Spot-check an old completion with photos: its photos still show on the member's profile and
+   in their completion history.
+
+---
+
+## `catalog/findDanglingBoxArt` — was box art already destroyed? (SEC-01, read-only)
+
+**When:** once per deployment, after the SEC-01 fixes (claim-once photo attach, reference-aware
+deletes, no storage ids in responses) are deployed there. Before those fixes any member could
+read a definition's box-art storage id, attach it as their own copy or completion photo and
+have it deleted. This check tells whether that already happened. For the fullest picture, run
+`solving/backfillLegacyCompletionSidecars` first: completion photos that predate their
+`completionImages` sidecar are only seen once they have one.
+
+**What it does:** pages through `puzzles` (you pass the page size and cursor) and reports, per
+page:
+
+- `missingImage`: definitions whose `image` names a blob that no longer exists. The art was
+  destroyed and has to be uploaded again. Admin → Puzzles marks these rows **Box art missing**;
+  open the row, then edit the definition and upload the art.
+- `heldByMemberRows`: box art that another kind of row also holds (`heldBy`: for example
+  `copyPhoto`, `completionPhoto`, `messagePhoto`, or `definitionBoxArt` when a second definition
+  names the same blob). The art still exists; the holding row was attached before the claim
+  rule existed. Since the reference-aware deletes, removing that photo no longer deletes the
+  box art, so the art is safe; note the member if the pattern looks deliberate.
+
+It writes nothing. **Safe to re-run:** yes.
+
+```bash
+cd packages/backend
+
+# dev, then prod: repeat with the returned continueCursor until "isDone":true
+npx convex run catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":null}}'
+npx convex run catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":"<continueCursor>"}}'
+
+npx convex run --prod catalog/findDanglingBoxArt:findDanglingBoxArt '{"paginationOpts":{"numItems":100,"cursor":null}}'
+```
+
+Each page returns `{ scanned, missingImage, heldByMemberRows, isDone, continueCursor }`.
+
+**Verify:** the pages' `scanned` add up to the number of `puzzles` rows. Both lists empty on
+every page means SEC-01 was never used on that deployment. After restoring art for every
+`missingImage` hit, a second run reports none, and no row in Admin → Puzzles shows **Box art
+missing**.

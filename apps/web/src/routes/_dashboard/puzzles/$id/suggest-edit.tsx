@@ -22,6 +22,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -131,6 +132,7 @@ function SuggestEditForm({
   const router = useRouter();
   const t = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
+  const tCommon = useTranslations("common");
 
   usePageHeader(
     () => ({
@@ -231,7 +233,12 @@ function SuggestEditForm({
       router.push(`/puzzles/${id}`);
     },
     onError: (error) => {
-      toast.error(t(errorKeyFor(error)));
+      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      toast.error(
+        isUploadRateLimited(error)
+          ? tCommon("photoUploadRateLimited")
+          : t(errorKeyFor(error)),
+      );
     },
   });
 

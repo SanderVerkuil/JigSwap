@@ -68,6 +68,7 @@ import type * as catalog_disablePuzzleDefinition from "../catalog/disablePuzzleD
 import type * as catalog_editChangeProposal from "../catalog/editChangeProposal.js";
 import type * as catalog_errors from "../catalog/errors.js";
 import type * as catalog_extractFromUrl from "../catalog/extractFromUrl.js";
+import type * as catalog_findDanglingBoxArt from "../catalog/findDanglingBoxArt.js";
 import type * as catalog_findPuzzleByBarcode from "../catalog/findPuzzleByBarcode.js";
 import type * as catalog_getAllBrands from "../catalog/getAllBrands.js";
 import type * as catalog_getAllPublishers from "../catalog/getAllPublishers.js";
@@ -294,6 +295,8 @@ import type * as lib_imageModeration_rescreenStore from "../lib/imageModeration/
 import type * as lib_imageModeration_stalledSweep from "../lib/imageModeration/stalledSweep.js";
 import type * as lib_logEvent from "../lib/logEvent.js";
 import type * as lib_rateLimits from "../lib/rateLimits.js";
+import type * as lib_storage_blobLifecycle from "../lib/storage/blobLifecycle.js";
+import type * as lib_storage_storageSweep from "../lib/storage/storageSweep.js";
 import type * as library_acquireCopies from "../library/acquireCopies.js";
 import type * as library_acquireCopy from "../library/acquireCopy.js";
 import type * as library_adapters_batchEventPublisher from "../library/adapters/batchEventPublisher.js";
@@ -311,7 +314,6 @@ import type * as library_adapters_loanMapper from "../library/adapters/loanMappe
 import type * as library_adapters_photoModeration from "../library/adapters/photoModeration.js";
 import type * as library_adapters_systemClock from "../library/adapters/systemClock.js";
 import type * as library_adapters_visibilityPolicy from "../library/adapters/visibilityPolicy.js";
-import type * as library_addCopyImage from "../library/addCopyImage.js";
 import type * as library_addCopyPhoto from "../library/addCopyPhoto.js";
 import type * as library_addCopyToCollection from "../library/addCopyToCollection.js";
 import type * as library_backfill from "../library/backfill.js";
@@ -538,6 +540,7 @@ import type * as solving_adapters_systemClock from "../solving/adapters/systemCl
 import type * as solving_attachCompletionPhotos from "../solving/attachCompletionPhotos.js";
 import type * as solving_backfill from "../solving/backfill.js";
 import type * as solving_backfillCompletionPuzzleId from "../solving/backfillCompletionPuzzleId.js";
+import type * as solving_backfillLegacyCompletionSidecars from "../solving/backfillLegacyCompletionSidecars.js";
 import type * as solving_completionModerationStore from "../solving/completionModerationStore.js";
 import type * as solving_copySnapshot from "../solving/copySnapshot.js";
 import type * as solving_createGoal from "../solving/createGoal.js";
@@ -625,6 +628,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/editChangeProposal": typeof catalog_editChangeProposal;
   "catalog/errors": typeof catalog_errors;
   "catalog/extractFromUrl": typeof catalog_extractFromUrl;
+  "catalog/findDanglingBoxArt": typeof catalog_findDanglingBoxArt;
   "catalog/findPuzzleByBarcode": typeof catalog_findPuzzleByBarcode;
   "catalog/getAllBrands": typeof catalog_getAllBrands;
   "catalog/getAllPublishers": typeof catalog_getAllPublishers;
@@ -851,6 +855,8 @@ declare const fullApi: ApiFromModules<{
   "lib/imageModeration/stalledSweep": typeof lib_imageModeration_stalledSweep;
   "lib/logEvent": typeof lib_logEvent;
   "lib/rateLimits": typeof lib_rateLimits;
+  "lib/storage/blobLifecycle": typeof lib_storage_blobLifecycle;
+  "lib/storage/storageSweep": typeof lib_storage_storageSweep;
   "library/acquireCopies": typeof library_acquireCopies;
   "library/acquireCopy": typeof library_acquireCopy;
   "library/adapters/batchEventPublisher": typeof library_adapters_batchEventPublisher;
@@ -868,7 +874,6 @@ declare const fullApi: ApiFromModules<{
   "library/adapters/photoModeration": typeof library_adapters_photoModeration;
   "library/adapters/systemClock": typeof library_adapters_systemClock;
   "library/adapters/visibilityPolicy": typeof library_adapters_visibilityPolicy;
-  "library/addCopyImage": typeof library_addCopyImage;
   "library/addCopyPhoto": typeof library_addCopyPhoto;
   "library/addCopyToCollection": typeof library_addCopyToCollection;
   "library/backfill": typeof library_backfill;
@@ -1095,6 +1100,7 @@ declare const fullApi: ApiFromModules<{
   "solving/attachCompletionPhotos": typeof solving_attachCompletionPhotos;
   "solving/backfill": typeof solving_backfill;
   "solving/backfillCompletionPuzzleId": typeof solving_backfillCompletionPuzzleId;
+  "solving/backfillLegacyCompletionSidecars": typeof solving_backfillLegacyCompletionSidecars;
   "solving/completionModerationStore": typeof solving_completionModerationStore;
   "solving/copySnapshot": typeof solving_copySnapshot;
   "solving/createGoal": typeof solving_createGoal;

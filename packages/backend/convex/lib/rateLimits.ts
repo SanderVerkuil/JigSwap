@@ -17,6 +17,10 @@ export const RATE_LIMITS = {
   imageStageDaily: { windowMs: DAY, max: 100 },
   // Upload URLs for message photos: each staged photo needs one, plus retries of failed uploads.
   imageUploadUrl: { windowMs: HOUR, max: 40 },
+  // The shared upload URL (puzzles.generateUploadUrl) behind copy photos, completion photos and
+  // box art (SEC-20): one per photo plus retries, hourly and daily.
+  uploadUrl: { windowMs: HOUR, max: 60 },
+  uploadUrlDaily: { windowMs: DAY, max: 300 },
   // Taps on "Show" for a blurred message photo (each hands out its URL).
   imageReveal: { windowMs: HOUR, max: 120 },
   locationSend: { windowMs: DAY, max: 20 },

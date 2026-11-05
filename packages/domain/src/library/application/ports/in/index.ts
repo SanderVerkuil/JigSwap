@@ -1,5 +1,4 @@
 export * from "./acquire-copy.port";
-export * from "./add-copy-image.port";
 export * from "./change-copy-condition.port";
 export * from "./close-loan.port";
 export * from "./collection-membership.port";

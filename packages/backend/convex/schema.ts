@@ -1118,6 +1118,10 @@ export default defineSchema({
   )
     .index("by_thread_uploader", ["threadAggregateId", "uploaderId"])
     .index("by_file", ["fileId"])
+    // Whether a blob is a photo's smaller rendition or a location's map preview
+    // (lib/imageModeration/blobReferences: a claim refuses it, a delete keeps it).
+    .index("by_thumb_file", ["thumbFileId"])
+    .index("by_map_file", ["mapFileId"])
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_message", ["messageId"])
     .index("by_review_requested", ["reviewRequestedAt"])
@@ -2078,4 +2082,11 @@ export default defineSchema({
     windowStart: v.number(),
     count: v.number(),
   }).index("by_key", ["key"]),
+
+  // One-shot maintenance steps that other code waits for (lib/maintenanceMarkers). One row per
+  // step name, written by the step itself when its run proves it done.
+  maintenanceMarkers: defineTable({
+    name: v.string(),
+    completedAt: v.number(),
+  }).index("by_name", ["name"]),
 });

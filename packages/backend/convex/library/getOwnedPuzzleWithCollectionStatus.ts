@@ -4,8 +4,10 @@ import type {
 } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import {
+  toCopySnapshotView,
   toOwnedCopyCompletionView,
   toOwnedCopyImageView,
   toOwnedCopyOwnerView,
@@ -86,6 +88,19 @@ export const getOwnedPuzzleWithCollectionStatus = query({
         )
         .collect()
     ).filter((img) => img.moderationStatus !== "quarantined");
+    // Each photo goes out as a URL, never its storage id (SEC-01), and only once it is approved
+    // with its hash check passed (the cover rule in resolveCoverUrl); otherwise `url` is null.
+    const imageViews = await Promise.all(
+      images.map(async (img) =>
+        toOwnedCopyImageView(
+          img,
+          (img.moderationStatus ?? "approved") === "approved" &&
+            isHashCleared(img)
+            ? await ctx.storage.getUrl(img.fileId)
+            : null,
+        ),
+      ),
+    );
 
     const collectionStatus: OwnedCopyCollectionStatusView = collection
       ? {
@@ -111,11 +126,11 @@ export const getOwnedPuzzleWithCollectionStatus = query({
       acquisitionDate: ownedPuzzle.acquisitionDate,
       acquisitionSource: ownedPuzzle.acquisitionSource,
       acquisitionPrice: ownedPuzzle.acquisitionPrice,
-      snapshot: ownedPuzzle.snapshot,
+      snapshot: toCopySnapshotView(ownedPuzzle.snapshot),
       createdAt: ownedPuzzle.createdAt,
       updatedAt: ownedPuzzle.updatedAt,
       puzzle: toOwnedCopyPuzzleView(puzzle),
-      images: images.map(toOwnedCopyImageView),
+      images: imageViews,
       owner: owner ? toOwnedCopyOwnerView(owner) : null,
       collectionStatus,
       completionHistory: completions.map(toOwnedCopyCompletionView),

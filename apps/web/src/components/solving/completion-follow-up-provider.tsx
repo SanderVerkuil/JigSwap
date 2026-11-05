@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { preparePhoto } from "@/lib/prepare-photo";
+import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
@@ -73,6 +74,7 @@ export function CompletionFollowUpProvider({
 }) {
   const t = useTranslations("solving.followUp");
   const tReview = useTranslations("solving.review");
+  const tCommon = useTranslations("common");
 
   const generateUploadUrl = useConvexMutation(
     gateway.library.generateUploadUrl,
@@ -220,7 +222,7 @@ export function CompletionFollowUpProvider({
 
   // One file's grant → POST → storageId pipeline (mirrors the copy PhotoStrip upload).
   const uploadOne = async (photo: PendingPhoto): Promise<string> => {
-    const uploadUrl = await generateUploadUrl({});
+    const uploadUrl = await mintUploadUrl(() => generateUploadUrl({}));
     const res = await fetch(uploadUrl, {
       method: "POST",
       headers: { "Content-Type": photo.file.type },
@@ -275,7 +277,14 @@ export function CompletionFollowUpProvider({
       );
       if (failedIds.size > 0) {
         // Partial failure: keep the dialog open with failed items marked; Save becomes Retry.
-        toast.error(t("saveError"));
+        // An upload URL refused by the member's upload limit says to wait (SEC-20).
+        const rateLimited = settled.some(
+          (result) =>
+            result.status === "rejected" && isUploadRateLimited(result.reason),
+        );
+        toast.error(
+          rateLimited ? tCommon("photoUploadRateLimited") : t("saveError"),
+        );
         return;
       }
 
@@ -314,10 +323,16 @@ export function CompletionFollowUpProvider({
       closeAndReset();
     } catch (error) {
       console.error("Failed to save completion follow-up:", error);
+      const code = solvingErrorCode(error);
+      // The server only takes a fresh upload once (expired after 15 minutes, or refused): drop
+      // the storageIds and mark the photos failed, so Retry uploads them again.
+      if (code === "UploadExpired" || code === "InvalidUpload") {
+        setPhotos((prev) =>
+          prev.map((p) => ({ ...p, storageId: undefined, failed: true })),
+        );
+      }
       toast.error(
-        solvingErrorCode(error) === "TooManyPhotos"
-          ? t("tooManyPhotos")
-          : t("saveError"),
+        code === "TooManyPhotos" ? t("tooManyPhotos") : t("saveError"),
       );
     } finally {
       setSaving(false);

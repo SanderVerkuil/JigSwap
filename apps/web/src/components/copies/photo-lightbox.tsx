@@ -165,6 +165,11 @@ export function PhotoLightbox({
 
   if (!photo) return null;
 
+  // The copy's managers may remove any photo; its uploader may remove their own even without
+  // managing the copy, e.g. the previous owner after a transfer (SEC-38). `=== true` keeps the
+  // manager-only behaviour when the view predates `viewerMayRemove`.
+  const canRemove = canSetCover || photo.viewerMayRemove === true;
+
   const takenAt = photo.takenAt ?? photo.createdAt;
   const takenLabel = format.dateTime(new Date(takenAt), {
     year: "numeric",
@@ -288,9 +293,9 @@ export function PhotoLightbox({
                 </Button>
               ))}
 
-            {/* Owner-only: remove this photo. Two-step inline confirm; on success the lightbox
-                closes and the gallery refetches. */}
-            {canSetCover &&
+            {/* The copy's managers and the photo's uploader: remove this photo. Two-step inline
+                confirm; on success the lightbox closes and the gallery refetches. */}
+            {canRemove &&
               (confirmRemove ? (
                 <div className="flex items-center gap-2">
                   <Button
@@ -325,7 +330,7 @@ export function PhotoLightbox({
 
             {/* Others' approved photos can be reported (the uploader can't
                 report their own; the server refuses that too). */}
-            {!canSetCover && photo.moderationStatus === "approved" && (
+            {!canRemove && photo.moderationStatus === "approved" && (
               <Button
                 ref={reportRef}
                 variant="ghost"

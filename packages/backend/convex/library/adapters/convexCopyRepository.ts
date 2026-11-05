@@ -1,7 +1,7 @@
 import type { Copy, CopyId, CopyRepository, OwnerId } from "@jigswap/domain";
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
-import { enqueueImageModeration } from "../../lib/imageModeration/moderationPool";
+import { deleteBlobUnlessReferenced } from "../../lib/storage/blobLifecycle";
 import { toDomain, toRow } from "./copyMapper";
 
 // Driven adapter for the CopyRepository port over `ctx.db`. The only place `ownedPuzzles` (and
@@ -55,12 +55,10 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         ? (await ctx.db.patch(existing._id, row), existing._id)
         : await ctx.db.insert("ownedPuzzles", row);
 
-      // Images belong to the Copy; sync the persisted rows to the aggregate's image list.
-      // Keyed by fileId, which is unique per uploaded file, so re-saves don't duplicate rows.
+      // Images belong to the Copy, but the domain path never adds one: photos are written only by
+      // library/addCopyPhoto, which records the acting member as uploader, claims a fresh upload
+      // and enqueues moderation (SEC-06). Keyed by fileId, which is unique per uploaded file.
       const persisted = await loadImages(ownedPuzzleId);
-      const persistedFileIds = new Set(
-        persisted.map((img) => img.fileId as unknown as string),
-      );
       const currentFileIds = new Set(
         copy.toState().images.map((img) => img.fileId as unknown as string),
       );
@@ -70,29 +68,6 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
         if (!currentFileIds.has(img.fileId as unknown as string)) {
           await ctx.db.delete(img._id);
         }
-      }
-      const now = Date.now();
-      for (const image of copy.toState().images) {
-        const fileId = image.fileId as unknown as string;
-        if (persistedFileIds.has(fileId)) continue;
-        // A new photo goes through the shared image-moderation pipeline exactly like one added
-        // via addCopyPhoto: "pending", unpublished until the CSAM hash check has passed
-        // (lib/imageModeration/hashCheckFields), and the moderatePhoto job enqueued.
-        const imageId = await ctx.db.insert("ownedPuzzleImages", {
-          ownedPuzzleId,
-          // The uploader is the owner of the copy (the domain has no separate uploader concept).
-          uploaderId: copy.ownerId as unknown as Id<"users">,
-          fileId: image.fileId as unknown as Id<"_storage">,
-          title: image.title,
-          description: image.description,
-          tag: image.tag,
-          takenAt: image.takenAt?.getTime(),
-          moderationStatus: "pending",
-          hashCheckPendingSince: now,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await enqueueImageModeration(ctx, "copy", imageId);
       }
     },
 
@@ -117,6 +92,12 @@ export const convexCopyRepository = (ctx: MutationCtx): CopyRepository => {
 
       const images = await loadImages(row._id);
       for (const image of images) await ctx.db.delete(image._id);
+      // The photos' blobs go with their rows (SEC-81), so their issued URLs stop working, unless
+      // something else still holds one: a CSAM escalation preserves it, or a row written before
+      // the claim rule holds the same id, such as catalogue box art (SEC-01).
+      for (const image of images) {
+        await deleteBlobUnlessReferenced(ctx, image.fileId);
+      }
 
       await ctx.db.delete(row._id);
     },

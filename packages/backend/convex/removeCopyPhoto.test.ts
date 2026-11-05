@@ -154,7 +154,9 @@ describe("library.removeCopyPhoto", () => {
       asBob(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
         imageId: photoId,
       }),
-    ).rejects.toThrow("Only the owner");
+    ).rejects.toThrow(
+      "Only the copy's owner or the photo's uploader can remove this photo",
+    );
   });
 
   test("rejects an unknown photo", async () => {
@@ -169,5 +171,103 @@ describe("library.removeCopyPhoto", () => {
         imageId: photoId,
       }),
     ).rejects.toThrow("Photo not found");
+  });
+});
+
+// SEC-38: the member who uploaded a photo may remove it even when they can no longer manage the
+// copy, e.g. the previous owner after the copy changed hands. Nobody else gains a right.
+describe("library.removeCopyPhoto after a transfer", () => {
+  // Alice's copy, with a photo she took, now owned by Bob (the transfer seeded by patching the
+  // owner), plus a photo Bob took since. Carol is a stranger.
+  const seedTransferred = async (t: TestConvex<typeof schema>) => {
+    const { alice, bob, puzzleAggregateId } = await seed(t);
+    const copyId = await acquireCopy(t, puzzleAggregateId);
+    const alicePhoto = await addPhoto(t, copyId, alice);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copyId, { ownerId: bob, heldBy: bob });
+      const now = Date.now();
+      await ctx.db.insert("users", {
+        clerkId: "clerk_carol",
+        email: "carol@example.com",
+        name: "clerk_carol",
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+    const bobPhoto = await addPhoto(t, copyId, bob);
+    return { copyId, alicePhoto, bobPhoto };
+  };
+
+  test("the previous owner removes a photo they uploaded: row and blob are gone", async () => {
+    const t = convexTest(schema, modules);
+    const { alicePhoto } = await seedTransferred(t);
+
+    await asAlice(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+      imageId: alicePhoto.photoId,
+    });
+
+    expect(await t.run((ctx) => ctx.db.get(alicePhoto.photoId))).toBeNull();
+    expect(
+      await t.run((ctx) => ctx.db.system.get(alicePhoto.fileId)),
+    ).toBeNull();
+  });
+
+  test("the previous owner cannot remove the new owner's photo", async () => {
+    const t = convexTest(schema, modules);
+    const { bobPhoto } = await seedTransferred(t);
+
+    await expect(
+      asAlice(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+        imageId: bobPhoto.photoId,
+      }),
+    ).rejects.toThrow(
+      "Only the copy's owner or the photo's uploader can remove this photo",
+    );
+    expect(await t.run((ctx) => ctx.db.get(bobPhoto.photoId))).not.toBeNull();
+  });
+
+  test("a stranger cannot remove anyone's photo", async () => {
+    const t = convexTest(schema, modules);
+    const { alicePhoto, bobPhoto } = await seedTransferred(t);
+    const asCarol = t.withIdentity({ subject: "clerk_carol" });
+
+    for (const { photoId } of [alicePhoto, bobPhoto]) {
+      await expect(
+        asCarol.mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+          imageId: photoId,
+        }),
+      ).rejects.toThrow(
+        "Only the copy's owner or the photo's uploader can remove this photo",
+      );
+    }
+  });
+
+  test("the new owner may still remove the previous owner's photo", async () => {
+    const t = convexTest(schema, modules);
+    const { alicePhoto } = await seedTransferred(t);
+
+    await asBob(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+      imageId: alicePhoto.photoId,
+    });
+
+    expect(await t.run((ctx) => ctx.db.get(alicePhoto.photoId))).toBeNull();
+  });
+
+  test("when the uploader removes the copy's cover, the cover falls back", async () => {
+    const t = convexTest(schema, modules);
+    const { copyId, alicePhoto } = await seedTransferred(t);
+    await asBob(t).mutation(api.library.setCopyCover.setCopyCover, {
+      copyId,
+      coverImageId: alicePhoto.photoId,
+    });
+
+    await asAlice(t).mutation(api.library.removeCopyPhoto.removeCopyPhoto, {
+      imageId: alicePhoto.photoId,
+    });
+
+    expect(
+      (await t.run((ctx) => ctx.db.get(copyId)))?.coverImageId,
+    ).toBeUndefined();
   });
 });

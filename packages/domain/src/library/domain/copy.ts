@@ -10,7 +10,6 @@ import {
   CopyCoverChanged,
   CopyDeleted,
   CopyDetailsUpdated,
-  CopyImageAdded,
   CopyLentOut,
   CopyMadeAvailable,
   CopyMadeUnavailable,
@@ -249,17 +248,6 @@ export class Copy {
       updatedAt: now,
     };
     this.record(new CopyCoverChanged(this.id, coverImageId, now));
-    return ok(undefined);
-  }
-
-  // Attach a photo. Images belong to the Copy (§1.4).
-  addImage(image: CopyImage, now: Date): Result<void, LibraryError> {
-    this.state = {
-      ...this.state,
-      images: [...this.state.images, image],
-      updatedAt: now,
-    };
-    this.record(new CopyImageAdded(this.id, image.fileId, image.tag, now));
     return ok(undefined);
   }
 

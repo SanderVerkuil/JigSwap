@@ -41,6 +41,7 @@ import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import {
   convexQuery,
   useConvexAction,
@@ -145,6 +146,7 @@ function AddPuzzlePage() {
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
+  const tCommon = useTranslations("common");
 
   const navigate = useNavigate();
   const returnTo = searchParams.get("returnTo") ?? undefined;
@@ -354,7 +356,12 @@ function AddPuzzlePage() {
     },
     onError: (error) => {
       console.error("Add to library failed:", error);
-      toast.error(t("puzzleCreationFailed"));
+      // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
+      toast.error(
+        isUploadRateLimited(error)
+          ? tCommon("photoUploadRateLimited")
+          : t("puzzleCreationFailed"),
+      );
     },
   });
 

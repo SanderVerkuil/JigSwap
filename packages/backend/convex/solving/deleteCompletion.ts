@@ -6,7 +6,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -59,14 +59,10 @@ export const deleteCompletion = mutation({
         await ctx.db.delete(image._id);
       }
       for (const fileId of fileIds) {
-        // A blob preserved for a CSAM escalation is never deleted (the escalation row keeps it
-        // findable for the operator after the sidecar is gone).
-        if (await isPreservedBlob(ctx, fileId)) continue;
-        try {
-          await ctx.storage.delete(fileId);
-        } catch {
-          // Already gone; nothing references it.
-        }
+        // A blob anything else still holds stays: a CSAM escalation preserves it (the escalation
+        // row keeps it findable for the operator after the sidecar is gone), or a row written
+        // before the claim rule holds the same id, such as catalogue box art (SEC-01).
+        await deleteBlobUnlessReferenced(ctx, fileId);
       }
     }
   },

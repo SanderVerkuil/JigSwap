@@ -3,12 +3,13 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { canManageCopy } from "../household/copyAccess";
 import { requireMember } from "../identity/requireMember";
-import { isPreservedBlob } from "../lib/imageModeration/quarantine";
+import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 
-// Owner (or household manage member) removal of an uploaded copy photo: deletes the `ownedPuzzleImages` row AND its storage
-// blob, and clears the copy's cover when this photo was the cover (so it falls back to the
-// catalogue image). Keyed by the image id; the gallery (getCopyInstanceView) reads the same table,
-// so Convex reactivity drops it from the UI. Mirrors addCopyPhoto's direct read-model write.
+// Removal of an uploaded copy photo by the copy's owner (or household manage member), or by the member who uploaded it:
+// deletes the `ownedPuzzleImages` row AND its storage blob (unless another row still holds it), and clears the copy's cover
+// when this photo was the cover (so it falls back to the catalogue image). Keyed by the image id; the gallery
+// (getCopyInstanceView) reads the same table, so Convex reactivity drops it from the UI. Mirrors addCopyPhoto's direct
+// read-model write.
 export const removeCopyPhoto = mutation({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {
@@ -19,9 +20,17 @@ export const removeCopyPhoto = mutation({
 
     const copy = await ctx.db.get(image.ownedPuzzleId);
     if (!copy) throw new ConvexError("Copy not found");
-    // Owner, or a household member the owner left at "manage" (co-owner).
-    if (!(await canManageCopy(ctx, memberId, copy))) {
-      throw new ConvexError("Only the owner can remove a photo from this copy");
+    // Owner, a household member the owner left at "manage" (co-owner), or the photo's uploader:
+    // a member keeps the right to take down a photo they took after they lose the copy, e.g. the
+    // previous owner once it changed hands (SEC-38). getCopyInstanceView's viewerMayRemove mirrors
+    // this rule.
+    if (
+      image.uploaderId !== memberId &&
+      !(await canManageCopy(ctx, memberId, copy))
+    ) {
+      throw new ConvexError(
+        "Only the copy's owner or the photo's uploader can remove this photo",
+      );
     }
 
     // Clear the cover if this photo was it, so getCopyInstanceView falls back to the global image.
@@ -35,13 +44,9 @@ export const removeCopyPhoto = mutation({
     if (image.moderationStatus === "quarantined") return;
 
     await ctx.db.delete(imageId);
-    // Best-effort: drop the stored blob so it doesn't orphan. The row is already gone either way.
-    // A blob preserved for a CSAM escalation (the same file re-uploaded) is never deleted.
-    if (await isPreservedBlob(ctx, image.fileId)) return;
-    try {
-      await ctx.storage.delete(image.fileId);
-    } catch {
-      // A lingering blob is harmless; nothing references it.
-    }
+    // Drop the stored blob so it doesn't orphan, unless anything else holds it: a CSAM escalation
+    // preserves it, or a row written before the claim rule holds the same id, such as catalogue
+    // box art (SEC-01).
+    await deleteBlobUnlessReferenced(ctx, image.fileId);
   },
 });

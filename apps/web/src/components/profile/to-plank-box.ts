@@ -24,8 +24,7 @@ const BOX_HEIGHTS = [148, 130, 156, 126, 142];
 // cover shows it, not placeholder art. Shared by the dashboard shelf section and
 // the public member profile shelf.
 export function toPlankBox(copy: ShelfCopy, index: number): PuzzlePlankBox {
-  const cover =
-    copy.coverUrl ?? copy.puzzle?.images?.[0] ?? copy.snapshot?.thumbnail;
+  const cover = copy.coverUrl ?? copy.puzzle?.images?.[0];
   const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
   return {
     title: copy.puzzle?.title ?? copy.snapshot?.title,

@@ -33,6 +33,22 @@ export const toOwnedCopyPuzzleView = (
   updatedAt: row.updatedAt,
 });
 
+/**
+ * The catalog snapshot a copy caches, as sent to clients: title, brand and piece count only.
+ *
+ * SECURITY: the stored `thumbnail` is the box art's raw `_storage` id, kept as an internal cache.
+ * It is never sent: it is not a URL, and a member holding a box-art id could attach it as their
+ * own photo and then delete it (SEC-01). A copy's image reaches the client as `coverUrl`.
+ */
+export const toCopySnapshotView = (
+  snapshot: Doc<"ownedPuzzles">["snapshot"],
+): OwnedCopyView["snapshot"] =>
+  snapshot && {
+    title: snapshot.title,
+    brand: snapshot.brand,
+    pieceCount: snapshot.pieceCount,
+  };
+
 /** The owner summary joined onto a copy in browse/detail reads. */
 export const toOwnedCopyOwnerView = (
   row: Doc<"users">,
@@ -83,7 +99,7 @@ export const toOwnedCopyView = (
   acquisitionDate: opts?.includeOwnerOnly ? row.acquisitionDate : undefined,
   acquisitionSource: opts?.includeOwnerOnly ? row.acquisitionSource : undefined,
   acquisitionPrice: opts?.includeOwnerOnly ? row.acquisitionPrice : undefined,
-  snapshot: row.snapshot,
+  snapshot: toCopySnapshotView(row.snapshot),
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   addedAt: opts?.addedAt,
@@ -126,15 +142,20 @@ export const toPublicCopyView = (
   return rest;
 };
 
-/** A stored image row for an owned copy. */
+/**
+ * A stored image row for an owned copy, with the URL the caller resolved for it (null when it may
+ * not be served). Never the row's `fileId`: a raw storage id is not a URL and must not reach
+ * clients (SEC-01).
+ */
 export const toOwnedCopyImageView = (
   row: Doc<"ownedPuzzleImages">,
+  url: string | null,
 ): OwnedCopyImageView => ({
   _id: row._id,
   _creationTime: row._creationTime,
   ownedPuzzleId: row.ownedPuzzleId,
   uploaderId: row.uploaderId,
-  fileId: row.fileId,
+  url,
   title: row.title,
   description: row.description,
   tag: row.tag,
@@ -143,7 +164,7 @@ export const toOwnedCopyImageView = (
   updatedAt: row.updatedAt,
 });
 
-/** A completion record joined into the copy-detail view. */
+/** A completion record joined into the copy-detail view, without its photos' storage ids. */
 export const toOwnedCopyCompletionView = (
   row: Doc<"completions">,
 ): OwnedCopyCompletionView => ({
@@ -158,7 +179,6 @@ export const toOwnedCopyCompletionView = (
   completionTimeMinutes: row.completionTimeMinutes,
   datePrecision: row.datePrecision,
   notes: row.notes,
-  photos: row.photos,
   isCompleted: row.isCompleted,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,

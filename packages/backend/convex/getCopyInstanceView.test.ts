@@ -916,6 +916,60 @@ describe("getCopyInstanceView rich detail", () => {
     expect(strangerIds).not.toContain(ids.otherPending as string);
   });
 
+  test("viewerMayRemove: the copy's manager may remove every photo, its uploader only their own (SEC-38)", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, prevOwner, copy } = await seedCopy(t);
+
+    const ids = await t.run(async (ctx) => {
+      await mkUser(ctx, "clerk_stranger3", "Stranger3", now);
+      // Open, so the previous owner and a stranger can reach the copy.
+      await ctx.db.patch(copy, {
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+      const mkPhoto = async (uploaderId: Id<"users">, takenAt: number) =>
+        ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId,
+          fileId: await ctx.storage.store(
+            new Blob([`photo-${takenAt}`], { type: "image/png" }),
+          ),
+          moderationStatus: "approved",
+          takenAt,
+          createdAt: now,
+          updatedAt: now,
+        });
+      return {
+        // Taken by the previous owner before the copy changed hands.
+        byPrevOwner: await mkPhoto(prevOwner, now + 20),
+        byViewer: await mkPhoto(viewer, now + 10),
+      };
+    });
+
+    const mayRemove = async (subject: string) => {
+      const view = await t
+        .withIdentity({ subject })
+        .query(api.library.getCopyInstanceView.getCopyInstanceView, {
+          copyId: copy,
+        });
+      return Object.fromEntries(
+        (view?.gallery ?? []).map((p) => [p.id, p.viewerMayRemove]),
+      );
+    };
+
+    expect(await mayRemove("clerk_viewer")).toEqual({
+      [ids.byPrevOwner]: true,
+      [ids.byViewer]: true,
+    });
+    expect(await mayRemove("clerk_prev")).toEqual({
+      [ids.byPrevOwner]: true,
+      [ids.byViewer]: false,
+    });
+    expect(await mayRemove("clerk_stranger3")).toEqual({
+      [ids.byPrevOwner]: false,
+      [ids.byViewer]: false,
+    });
+  });
+
   test("copy-page cover respects photo moderation status: a rejected cover falls back to box art", async () => {
     const t = convexTest(schema, modules);
     const { viewer, copy } = await seedCopy(t);

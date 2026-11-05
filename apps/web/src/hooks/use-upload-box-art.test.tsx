@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { gateway } from "@/gateway";
+import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { renderHook } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
+import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useUploadBoxArt } from "./use-upload-box-art";
 
@@ -66,6 +68,35 @@ describe("useUploadBoxArt", () => {
     );
     expect(await (init.body as Blob).text()).toBe("jpeg");
     expect(mocks.call).toHaveBeenCalledWith(SANITIZE, { storageId: "raw_1" });
+  });
+
+  it("an upload URL refused by the upload limit rejects as an upload rate-limit error", async () => {
+    mocks.call.mockImplementation(async (name) => {
+      if (name === SANITIZE) return "clean_1";
+      throw new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 });
+    });
+    const { result } = renderHook(() => useUploadBoxArt());
+
+    const error = await result
+      .current(new File(["x"], "box.jpg", { type: "image/jpeg" }))
+      .catch((e: unknown) => e);
+    expect(isUploadRateLimited(error)).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("a RateLimited refusal after the upload is not the upload limit", async () => {
+    const refusal = new ConvexError({ code: "RateLimited" });
+    mocks.call.mockImplementation(async (name) => {
+      if (name === SANITIZE) throw refusal;
+      return "https://upload.test";
+    });
+    const { result } = renderHook(() => useUploadBoxArt());
+
+    const error = await result
+      .current(new File(["x"], "box.jpg", { type: "image/jpeg" }))
+      .catch((e: unknown) => e);
+    expect(error).toBe(refusal);
+    expect(isUploadRateLimited(error)).toBe(false);
   });
 
   it("a failed upload is never sent for cleaning", async () => {
