@@ -10,8 +10,7 @@ export const PRIMARY_LOOK =
   "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white pointer-coarse:min-h-11";
 
 // The eyebrow shared with the tour card and the highlight modal.
-export const EYEBROW =
-  "text-muted-foreground font-mono text-[11px] tracking-[0.09em] uppercase";
+export const EYEBROW = "text-muted-foreground text-xs";
 
 /**
  * The four-segment progress bar (D9), one segment per required step. One element with

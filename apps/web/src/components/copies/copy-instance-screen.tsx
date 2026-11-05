@@ -430,7 +430,7 @@ function CopyInstanceDetail({
       <section className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-start gap-x-4 sm:grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-7">
         {/* Cover. Hovering opens a side panel that magnifies where the cursor points. On a phone it
             is too small to judge the box or to pinch in, so a tap opens it large instead. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm sm:mx-auto sm:mb-7 sm:max-w-[40vh] lg:row-span-2 lg:mx-0 lg:mb-0 lg:max-w-[300px]">
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg sm:mx-auto sm:mb-7 sm:max-w-[40vh] lg:row-span-2 lg:mx-0 lg:mb-0 lg:max-w-[300px]">
           {snapshot.image ? (
             <>
               <ImageZoom
@@ -451,7 +451,7 @@ function CopyInstanceDetail({
               </button>
             </>
           ) : (
-            <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
+            <div className="text-primary-text/50 absolute inset-0 flex items-center justify-center">
               <Puzzle className="h-1/3 w-1/3" />
             </div>
           )}
@@ -465,7 +465,7 @@ function CopyInstanceDetail({
           </h1>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base md:mt-0">
             {snapshot.brand ? `${snapshot.brand} · ` : ""}
-            <span className="font-mono">
+            <span className="tabular-nums">
               {format.number(snapshot.pieceCount)}
             </span>{" "}
             {tPuzzles("pieces", { count: snapshot.pieceCount })}
@@ -609,7 +609,6 @@ function CopyInstanceDetail({
                 {/* An anonymous (privacy-projected) owner goes unnamed: propose derives the recipient. */}
                 {canRequest && (
                   <Button
-                    variant="brand"
                     disabled={!copy.viewerMayRequest}
                     aria-describedby={
                       copy.viewerMayRequest ? undefined : "request-view-only"
@@ -1023,7 +1022,7 @@ function Stat({
 }) {
   return (
     <div className={cn(divided && "border-border sm:border-l sm:pl-5")}>
-      <div className="font-heading text-foreground text-3xl font-bold leading-none">
+      <div className="text-foreground font-sans text-3xl font-semibold leading-none tabular-nums">
         {value}
       </div>
       <div className="text-muted-foreground mt-1.5 text-sm">{label}</div>
@@ -1042,10 +1041,12 @@ function SectionHead({
 }) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
-      <span className="text-jigsaw-primary inline-flex">{icon}</span>
+      <span className="text-primary-text inline-flex">{icon}</span>
       <h2 className="font-heading text-lg font-bold">{title}</h2>
       {meta && (
-        <span className="text-muted-foreground font-mono text-xs">{meta}</span>
+        <span className="text-muted-foreground text-xs tabular-nums">
+          {meta}
+        </span>
       )}
     </div>
   );
@@ -1147,7 +1148,7 @@ function PhotoStrip({
           type="button"
           onClick={() => openLightbox(i)}
           aria-label={photo.caption ?? t("photos")}
-          className="bg-muted focus-visible:ring-ring relative aspect-[4/3] w-[210px] shrink-0 cursor-pointer overflow-hidden rounded-lg shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="bg-muted focus-visible:ring-ring relative aspect-[4/3] w-[210px] shrink-0 cursor-pointer overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           {/* The tile is 210px wide (object-contain never draws wider), so the browser picks a
               rendition from srcSet once the photo has them; the lightbox keeps the original. */}
@@ -1163,13 +1164,13 @@ function PhotoStrip({
               freshly-uploaded photo is being moderated (only the uploader sees their pending ones). */}
           <div className="absolute left-2 top-2 flex flex-wrap gap-1">
             {coverImageId === photo.id && (
-              <span className="bg-jigsaw-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              <span className="bg-jigsaw-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold text-white">
                 <Star className="h-2.5 w-2.5" fill="currentColor" />
                 {t("photoCover")}
               </span>
             )}
             {photo.moderationStatus === "pending" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+              <span className="inline-flex items-center gap-1 rounded-md bg-amber-700 px-2 py-0.5 text-[10px] font-bold text-white">
                 <Clock className="h-2.5 w-2.5" />
                 {t("photoPending")}
               </span>
@@ -1187,7 +1188,7 @@ function PhotoStrip({
         <PendingPhotoPlaceholder
           key={`pending-${pending.createdAt}-${i}`}
           blurhash={pending.blurhash}
-          className="aspect-[4/3] w-[210px] shrink-0 rounded-lg shadow-sm"
+          className="aspect-[4/3] w-[210px] shrink-0 rounded-lg"
         />
       ))}
       {canAdd && full && (
@@ -1349,7 +1350,7 @@ function CommunityRating({
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
       <div className="mb-3.5 flex items-end gap-3.5">
-        <div className="font-heading text-foreground text-4xl font-bold leading-none">
+        <div className="text-foreground font-sans text-4xl font-semibold leading-none tabular-nums">
           {community.rating}
         </div>
         <div className="pb-0.5">
@@ -1373,7 +1374,7 @@ function CommunityRating({
                   style={{ width: `${community.percentages[i]}%` }}
                 />
               </span>
-              <span className="text-muted-foreground w-6 text-right font-mono text-xs">
+              <span className="text-muted-foreground w-6 text-right text-xs tabular-nums">
                 {n}
               </span>
             </div>
@@ -1420,7 +1421,7 @@ function CopyReviewsSection({
       ) : (
         <>
           <div className="mb-1.5 flex items-end gap-2.5">
-            <div className="font-heading text-foreground text-2xl font-bold leading-none">
+            <div className="text-foreground font-sans text-2xl font-semibold leading-none tabular-nums">
               {format.number(average, {
                 minimumFractionDigits: 1,
                 maximumFractionDigits: 1,
@@ -1574,7 +1575,6 @@ function CommentsSection({ copyId }: { copyId: string }) {
             className="flex-1"
           />
           <Button
-            variant="brand"
             onClick={() => void submit()}
             disabled={posting || text.trim().length === 0}
           >

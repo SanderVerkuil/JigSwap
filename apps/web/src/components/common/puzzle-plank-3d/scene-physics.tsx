@@ -124,7 +124,7 @@ function Lights({
       <directionalLight
         ref={rim}
         position={[-3, 3.5, -2]}
-        color="#8b5cf6"
+        color="#b4dcf8"
         intensity={preset.rimIntensity}
       />
     </>
@@ -576,8 +576,8 @@ function PhysicsArrangement({
                 box={box}
                 slot={{
                   x: slot.x,
-                  c1: resolved[i]?.c1 ?? "#6048e8",
-                  c2: resolved[i]?.c2 ?? "#494e92",
+                  c1: resolved[i]?.c1 ?? "#146350",
+                  c2: resolved[i]?.c2 ?? "#0f3b30",
                 }}
                 index={i}
                 headingFont={headingFont}

@@ -46,7 +46,10 @@ function CommandDialog({
   return (
     <Dialog {...props}>
       <DialogContent
-        className={cn("overflow-hidden p-0", className)}
+        className={cn(
+          "overflow-hidden p-0 data-[state=closed]:animate-none data-[state=open]:animate-none",
+          className,
+        )}
         showCloseButton={showCloseButton}
       >
         {/* Inside the content: outside it, the sr-only title stayed in the page as a stray

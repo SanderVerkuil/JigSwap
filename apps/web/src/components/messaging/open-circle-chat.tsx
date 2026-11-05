@@ -43,7 +43,7 @@ export function OpenCircleChatButton({
 }: {
   circleId: string;
   circleName: string;
-  variant?: "outline" | "brand";
+  variant?: "outline" | "default";
   className?: string;
 }) {
   const t = useTranslations("messages");

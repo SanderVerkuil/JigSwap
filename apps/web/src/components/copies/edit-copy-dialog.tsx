@@ -480,7 +480,6 @@ function EditCopyDialogForm({
             {t("editCopy.cancel")}
           </Button>
           <Button
-            variant="brand"
             onClick={() => void save()}
             disabled={saving || acquiredIncomplete}
           >

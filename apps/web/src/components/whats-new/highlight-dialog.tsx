@@ -162,7 +162,7 @@ function HighlightContent({
       className={cn(
         "max-w-[calc(100%-2rem)] gap-0 overflow-x-hidden p-0 [&>*]:min-w-0 motion-reduce:animate-none sm:max-w-md",
         entry.image &&
-          "[&>[data-slot=dialog-close]]:bg-background/80 [&>[data-slot=dialog-close]]:rounded-full [&>[data-slot=dialog-close]]:p-1 [&>[data-slot=dialog-close]]:backdrop-blur-sm",
+          "[&>[data-slot=dialog-close]]:bg-background [&>[data-slot=dialog-close]]:rounded-md [&>[data-slot=dialog-close]]:p-1",
       )}
       onOpenAutoFocus={(event) => {
         // Focus the primary action, not the close X Radix would pick first (Part B §4.3).
@@ -184,19 +184,16 @@ function HighlightContent({
           aria-hidden
           className="bg-jigsaw-primary-tint flex h-28 items-center justify-center"
         >
-          <span className="bg-card text-jigsaw-primary flex size-14 items-center justify-center rounded-2xl shadow-sm">
+          <span className="bg-card text-primary-text flex size-14 items-center justify-center rounded-lg">
             <Sparkles className="size-7" />
           </span>
         </div>
       )}
       <div className="flex flex-col gap-2 p-6 pt-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-muted-foreground font-mono text-[11px] tracking-[0.09em] uppercase">
-            {t("modal.eyebrow")}
-          </span>
           <CategoryChip category={entry.category} />
         </div>
-        <DialogTitle className="font-heading text-left text-2xl leading-tight font-semibold">
+        <DialogTitle className="font-heading text-left text-2xl leading-tight">
           {content.title}
         </DialogTitle>
         <DialogDescription className="text-muted-foreground text-left">

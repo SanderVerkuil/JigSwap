@@ -302,14 +302,14 @@ function CollectionDetailPage() {
           chip and "Updated" sits at the row's end. */}
       <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-1 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-x-5 sm:gap-y-3">
         <CoverChip
-          color={collection.color || "#6048e8"}
+          color={collection.color || "var(--jigsaw-primary)"}
           icon={FolderOpen}
           emoji={collection.icon || undefined}
           size={96}
           className="row-span-2 max-sm:!size-16 sm:row-span-3"
         />
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 self-end sm:self-start">
-          <h1 className="font-heading min-w-0 text-2xl font-bold tracking-tight break-words">
+          <h1 className="font-heading min-w-0 text-2xl font-bold break-words">
             {collection.name}
           </h1>
           <Badge
@@ -335,7 +335,7 @@ function CollectionDetailPage() {
         )}
         <div className="col-span-2 flex flex-wrap items-center gap-2.5 max-sm:mt-3 sm:col-start-2">
           {viewerOwnsCollection && (
-            <Button variant="brand" asChild>
+            <Button asChild>
               <Link href={`/collections/${id}/add-puzzles`}>
                 <Plus className="h-4 w-4" />
                 {t("addPuzzles")}
@@ -387,7 +387,7 @@ function CollectionDetailPage() {
       {/* Section head */}
       <div className="flex items-center justify-between border-b pb-2.5">
         <h2 className="font-heading flex items-center gap-2 text-lg font-bold">
-          <Puzzle aria-hidden className="text-jigsaw-primary h-5 w-5" />
+          <Puzzle aria-hidden className="text-primary-text h-5 w-5" />
           {t("puzzlesInCollection")}
         </h2>
         <span className="text-muted-foreground text-sm">
@@ -404,7 +404,7 @@ function CollectionDetailPage() {
           sub={viewerOwnsCollection ? t("addPuzzlesFirst") : undefined}
           action={
             viewerOwnsCollection ? (
-              <Button variant="brand" asChild>
+              <Button asChild>
                 <Link href={`/collections/${id}/add-puzzles`}>
                   <Plus className="h-4 w-4" />
                   {t("addPuzzles")}

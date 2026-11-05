@@ -229,7 +229,7 @@ export function PuzzlePlank3D({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "opacity .45s ease",
+          transition: "opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
           opacity: sceneReady || physicsReady ? 0 : 1,
           pointerEvents: sceneReady || physicsReady ? "none" : undefined,
         }}
@@ -256,7 +256,7 @@ export function PuzzlePlank3D({
                 inset: 0,
                 // "none" so the surrounding page still scrolls freely.
                 pointerEvents: "none",
-                transition: "opacity .45s ease",
+                transition: "opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
                 opacity: sceneReady && !physicsReady ? 1 : 0,
               }}
               onTransitionEnd={(e) => {
@@ -288,7 +288,7 @@ export function PuzzlePlank3D({
                 inset: 0,
                 // The physics scene needs pointer events for drag.
                 pointerEvents: "auto",
-                transition: "opacity .45s ease",
+                transition: "opacity 200ms cubic-bezier(0.23, 1, 0.32, 1)",
                 opacity: physicsReady ? 1 : 0,
               }}
             >

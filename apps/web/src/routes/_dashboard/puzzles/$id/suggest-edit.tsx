@@ -302,7 +302,6 @@ function SuggestEditForm({
         {t("cancel")}
       </Button>
       <Button
-        variant="brand"
         disabled={!canSubmit || submit.isPending}
         onClick={() => submit.mutate()}
       >

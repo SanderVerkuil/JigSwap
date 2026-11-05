@@ -189,17 +189,17 @@ describe("WhatsNewList", () => {
     const els = parse(render({ unreadIds: [] }));
     const chipOf = (id: string) =>
       elementsOf(article(els, id)).find((el) =>
-        classes(el).includes("rounded-full"),
+        classes(el).includes("rounded-md"),
       )!;
     expect(textOf(chipOf("households"))).toBe("Feature");
-    expect(classes(chipOf("households"))).toContain("dark:text-violet-300");
+    expect(classes(chipOf("households"))).toContain("text-primary-text");
     expect(textOf(chipOf("names"))).toBe("Fix");
     expect(classes(chipOf("names"))).toContain("text-amber-800");
     expect(textOf(chipOf("faster"))).toBe("Improvement");
 
     const nlEls = parse(render({ unreadIds: [] }, "nl"));
     const nlChip = elementsOf(article(nlEls, "names")).find((el) =>
-      classes(el).includes("rounded-full"),
+      classes(el).includes("rounded-md"),
     )!;
     expect(textOf(nlChip)).toBe("Oplossing");
   });

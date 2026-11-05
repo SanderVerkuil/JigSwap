@@ -126,7 +126,7 @@ export function PuzzleCardShell({
   };
 
   const renderImage = () => {
-    // Box art is optional; when missing, show a warm gradient + puzzle glyph
+    // Box art is optional; when missing, show a flat tint + puzzle glyph
     // rather than a broken <img> pointing at a non-existent placeholder file.
     // This is THE unified no-image fallback both contexts share.
     const inner = (
@@ -159,13 +159,12 @@ export function PuzzleCardShell({
             alt={puzzle.title || "Puzzle"}
             fill
             priority={imagePriority}
-            className={cn(
-              "transition-transform group-hover:scale-105",
-              imageFit === "contain" ? "object-contain" : "object-cover",
-            )}
+            className={
+              imageFit === "contain" ? "object-contain" : "object-cover"
+            }
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-jigsaw-primary/15 to-jigsaw-primary-accent/15 text-jigsaw-primary/50">
+          <div className="bg-muted text-primary-text/50 absolute inset-0 flex items-center justify-center">
             <Puzzle className="h-1/3 w-1/3" />
             {/* Too long for a list row's thumbnail. */}
             {imageChecking && compactOnPhones && <BoxArtCheckingLabel />}
@@ -323,14 +322,13 @@ export function PuzzleCardShell({
       </>
     );
 
-  // p-0/gap-0/overflow-hidden so the cover (or its gradient placeholder) sits
+  // p-0/gap-0/overflow-hidden so the cover (or its placeholder) sits
   // flush against the card's top edge instead of inset by the Card's default
   // padding; renderContent supplies its own p-4.
   const card = (
     <Card
       className={cn(
-        // `group` so the cover zooms on hover of the WHOLE card (the stretched-link
-        // overlay covers the image, so image-only :hover no longer fires).
+        // `group` so the corner chips brighten on hover of the WHOLE card.
         "group relative h-full gap-0 overflow-hidden p-0",
         // The stretched title link stands for the whole card, so keyboard focus on it rings the
         // card (its underline alone is too faint a cue). Focus on an action button keeps that

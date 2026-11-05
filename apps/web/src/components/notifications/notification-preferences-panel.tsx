@@ -176,7 +176,7 @@ function JumpToNav({
       aria-label={t("jumpTo")}
       className="min-w-0 @4xl/prefs:sticky @4xl/prefs:top-[calc(var(--app-sticky-top,0px)+0.5rem)]"
     >
-      <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+      <p className="text-muted-foreground mb-2 text-xs font-medium">
         {t("jumpTo")}
       </p>
       <ul

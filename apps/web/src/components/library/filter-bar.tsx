@@ -45,11 +45,6 @@ export function FilterBar<T extends string>({
               variant={active ? "default" : "outline"}
               aria-pressed={active}
               onClick={() => onChange(option.value)}
-              className={cn(
-                "rounded-full",
-                active &&
-                  "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-              )}
             >
               {option.label}
             </Button>

@@ -2,18 +2,19 @@
 
 // Shared design-language primitives for the Community screens (Browse,
 // Circles, Exchanges, Messages, People), per the JigSwap design handoff:
-// rounded-full filter pills with a muted result count, warm 🧩 empty states
-// and gradient icon cover chips.
+// filter buttons with a muted result count, warm puzzle-piece empty states
+// and flat icon cover chips.
 // Open, card-free building blocks — cards stay reserved for genuinely
 // self-contained tiles.
+import { chipColor } from "@/components/library/palette";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import { Puzzle, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 /* ------------------------------------------------------------ FilterBar */
 
-// A row of rounded-full filter pills (active pill in the brand color) with an
+// A row of filter buttons (active one in the primary color) with an
 // optional muted count on the right and an extra slot for secondary controls.
 // A pill may carry its own tour anchor (`data-tour`) for a guide step about it.
 export function FilterBar<T extends string>({
@@ -54,11 +55,6 @@ export function FilterBar<T extends string>({
               aria-pressed={active}
               data-tour={filter["data-tour"]}
               onClick={() => onChange(filter.value)}
-              className={cn(
-                "rounded-full",
-                active &&
-                  "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-              )}
             >
               {filter.label}
             </Button>
@@ -77,7 +73,7 @@ export function FilterBar<T extends string>({
 
 /* ------------------------------------------------------------ EmptyState */
 
-// The warm 🧩 empty state: emoji, heading-font title, muted one-liner.
+// The warm empty state: puzzle piece, heading-font title, muted one-liner.
 export function EmptyState({
   title,
   sub,
@@ -96,12 +92,8 @@ export function EmptyState({
         className,
       )}
     >
-      <div className="mb-2 text-[34px] leading-none" aria-hidden>
-        🧩
-      </div>
-      <div className="font-heading text-foreground text-lg font-bold">
-        {title}
-      </div>
+      <Puzzle aria-hidden className="text-primary-text mb-2 size-8" />
+      <div className="font-heading text-foreground text-lg">{title}</div>
       {sub && <p className="mt-0.5 text-sm">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -110,16 +102,8 @@ export function EmptyState({
 
 /* ------------------------------------------------------------- CoverChip */
 
-// Warm brand gradient pairs (violet / green / pink / amber) reused from the
-// dashboard shelf so chips never read as empty gray boxes.
-export const CHIP_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
-  ["#6048e8", "#494e92"],
-  ["#3fae3c", "#157a13"],
-  ["#ec4899", "#b22d6e"],
-  ["#f5a623", "#cf7911"],
-];
-
-// A gradient icon chip used as the leading "cover" of an open row tile.
+// A flat icon chip used as the leading "cover" of an open row tile, in a world
+// colour so it never reads as an empty gray box.
 export function CoverChip({
   icon: Icon,
   size = 44,
@@ -131,17 +115,16 @@ export function CoverChip({
   gradientIndex?: number;
   className?: string;
 }) {
-  const [c1, c2] = CHIP_GRADIENTS[gradientIndex % CHIP_GRADIENTS.length];
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-lg text-white shadow-[inset_0_0_0_1px_rgb(0_0_0/0.08)]",
+        "inline-flex shrink-0 items-center justify-center rounded-lg text-white",
         className,
       )}
       style={{
         width: size,
         height: size,
-        background: `linear-gradient(150deg, ${c1}, ${c2})`,
+        background: chipColor(gradientIndex),
       }}
     >
       <Icon style={{ width: size * 0.42, height: size * 0.42 }} />

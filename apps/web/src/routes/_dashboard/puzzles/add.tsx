@@ -732,9 +732,7 @@ function ContributePuzzlePage() {
 
   const previewColumn = (
     <>
-      <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
-        {t("livePreview")}
-      </div>
+      <div className="text-xs text-muted-foreground">{t("livePreview")}</div>
       <LivePreviewCard
         title={form.title}
         brand={form.brand || form.publisher}

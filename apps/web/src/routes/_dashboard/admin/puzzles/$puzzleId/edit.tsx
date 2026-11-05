@@ -234,7 +234,6 @@ function AdminEditForm({
         <Link href={`/admin/puzzles/${puzzleId}`}>{t("edit.cancel")}</Link>
       </Button>
       <Button
-        variant="brand"
         disabled={!canSubmit || submit.isPending}
         onClick={() => submit.mutate()}
       >

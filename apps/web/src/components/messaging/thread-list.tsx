@@ -262,7 +262,7 @@ function ThreadListBody({
           action={
             // Straight to finding someone: with no conversations yet, the
             // New menu's member picker would mostly be empty (UX-114).
-            <Button asChild variant="brand">
+            <Button asChild>
               <RouterLink to="/people" search={{ tab: "find" }}>
                 <UserRound className="h-4 w-4" />
                 {t("circle.messageMember")}

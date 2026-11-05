@@ -372,8 +372,7 @@ function PuzzlesPage() {
 
   // The page title lives in the shell page head; publish the actions there so the
   // page body carries no duplicate header. The count lives beside the filters. Secondary
-  // destinations (My suggestions) sit in a ⋯ menu so Add Puzzle is the one header button. On an
-  // empty library the empty state's own Add is the one Add on the page.
+  // destinations (My suggestions) sit in a ⋯ menu. Add Puzzle is the top bar's.
   usePageHeader(
     () => ({
       actions: (
@@ -400,23 +399,10 @@ function PuzzlesPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {!libraryEmpty && (
-            <Button
-              variant="brand"
-              size="sm"
-              asChild
-              className="pointer-coarse:min-h-11"
-            >
-              <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
-                <Plus className="h-4 w-4" />
-                {t("addPuzzle")}
-              </Link>
-            </Button>
-          )}
         </>
       ),
     }),
-    [t, libraryEmpty],
+    [t],
   );
 
   if (!member) {
@@ -597,8 +583,8 @@ function PuzzlesPage() {
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
           action={
-            <Button variant="brand" asChild>
-              <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
+            <Button asChild>
+              <Link href="/my-puzzles/add">
                 <Plus className="h-4 w-4" />
                 {t("addPuzzle")}
               </Link>

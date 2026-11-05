@@ -171,12 +171,6 @@ export function NotificationItem({
         unread && "bg-accent/40 dark:bg-accent/60",
       )}
     >
-      {unread && (
-        <span
-          aria-hidden="true"
-          className="bg-primary absolute inset-y-0 left-0 w-0.5"
-        />
-      )}
       <NotificationActor
         actors={view.actors}
         actorCount={view.actorCount}

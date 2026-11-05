@@ -146,7 +146,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (!visible) return null;
 
     const containerClasses = cn(
-      "fixed z-50 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out motion-reduce:animate-none",
+      "fixed z-50 outline-none animate-in fade-in slide-in-from-bottom-4 duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:animate-none",
       className,
     );
 
@@ -161,7 +161,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
           ? // Inside the app on phones it sits above the bottom tab bar (its
             // published height: 57px, more in the installed app) and its raised
             // "+" (12px overhang), with an 8px gap.
-            "left-0 right-0 sm:left-4 bottom-4 max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)] w-full sm:max-w-3xl"
+            "inset-x-0 bottom-0 max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)]"
           : "bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 w-full sm:max-w-md",
       ),
       ...props,
@@ -170,7 +170,9 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "default") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="m-3 shadow-lg">
+          <Card
+            className="m-3 shadow-lg" // taste-skill-ignore: a real overlay.
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg">{t("title")}</CardTitle>
               <Cookie className="h-5 w-5" />
@@ -209,7 +211,9 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "small") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="m-3 shadow-lg">
+          <Card
+            className="m-3 shadow-lg" // taste-skill-ignore: a real overlay.
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 h-0 px-4">
               <CardTitle className="text-base">{t("title")}</CardTitle>
               <Cookie className="h-4 w-4" />
@@ -244,49 +248,50 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "mini") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="relative mx-3 p-0 py-3 shadow-lg">
-            <CardContent className="sm:flex grid gap-4 p-0 px-3.5">
-              <CardDescription
-                className={cn(
-                  "text-xs sm:text-sm flex-1",
-                  canClose && "max-sm:pr-8",
-                )}
+          <div
+            className="bg-card text-card-foreground relative flex flex-col gap-2 px-4 py-2.5 shadow-lg sm:flex-row sm:items-center sm:gap-6 sm:px-6" // taste-skill-ignore: a real overlay.
+          >
+            <p
+              className={cn(
+                "max-w-[80ch] flex-1 text-base leading-snug",
+                canClose && "max-sm:pr-8",
+              )}
+            >
+              {consentDescription}
+              {canClose && (
+                <span className="mt-1 block font-medium text-foreground">
+                  {t(choice === "granted" ? "currentGranted" : "currentDenied")}
+                </span>
+              )}
+            </p>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+              <Button
+                onClick={handleDecline}
+                variant="secondary"
+                className="max-sm:h-11 max-sm:flex-1"
               >
-                {consentDescription}
-                {canClose && (
-                  <span className="mt-1 block font-medium text-foreground">
-                    {t(
-                      choice === "granted" ? "currentGranted" : "currentDenied",
-                    )}
-                  </span>
-                )}
-              </CardDescription>
-              <div className="flex flex-wrap items-center gap-2 justify-end sm:flex-nowrap sm:gap-3">
+                {t("declineText")}
+              </Button>
+              <Button
+                onClick={handleAccept}
+                className="max-sm:h-11 max-sm:flex-1"
+              >
+                {t("acceptText")}
+              </Button>
+              {canClose && (
+                // In the corner on phones, where the buttons fill the row.
                 <Button
-                  onClick={handleDecline}
-                  variant="secondary"
-                  className="h-10 px-4 text-sm"
+                  onClick={handleClose}
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("closeSettings")}
+                  className="size-10 max-sm:absolute max-sm:top-1 max-sm:right-1"
                 >
-                  {t("declineText")}
+                  <X className="size-4" />
                 </Button>
-                <Button onClick={handleAccept} className="h-10 px-4 text-sm">
-                  {t("acceptText")}
-                </Button>
-                {canClose && (
-                  // In the corner on phones, where the buttons fill the row.
-                  <Button
-                    onClick={handleClose}
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("closeSettings")}
-                    className="size-10 max-sm:absolute max-sm:top-1 max-sm:right-1"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         </div>
       );
     }

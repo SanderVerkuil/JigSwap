@@ -150,7 +150,6 @@ function AddPuzzlesToCollectionPage() {
             {tCommon("cancel")}
           </Button>
           <Button
-            variant="brand"
             size="sm"
             onClick={() => addSelected.mutate()}
             disabled={selectedCount === 0 || addSelected.isPending}

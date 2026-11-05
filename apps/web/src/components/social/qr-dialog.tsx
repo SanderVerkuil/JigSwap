@@ -110,7 +110,7 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
             )}
           </div>
           {displayUrl ? (
-            <span className="text-muted-foreground max-w-full text-center font-mono text-sm break-all">
+            <span className="text-muted-foreground max-w-full text-center text-sm break-all">
               {displayUrl}
             </span>
           ) : null}
@@ -121,7 +121,6 @@ function QrCard(props: QrDialogProps & { onNavigate?: () => void }) {
             <CopyLinkButton url={qrUrl} />
             {canShare ? (
               <Button
-                variant="brand"
                 disabled={!qrUrl}
                 onClick={() => {
                   // A dismissed share sheet rejects; that is fine.

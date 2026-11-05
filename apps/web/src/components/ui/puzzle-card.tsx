@@ -161,12 +161,12 @@ const OFFERS: ReadonlyArray<{
 // Rendered as a cover overlay so it sits above the stretched-link (z-10) and
 // is always mounted for keyboard/SR reachability. Suppressed in selection.
 // ---------------------------------------------------------------------------
-// Top-right "corner chip" styling for the card's ⋯ menu trigger: frosted glass, always mounted,
+// Top-right "corner chip" styling for the card's ⋯ menu trigger: a flat tile, always mounted,
 // dimmed at rest on hover-capable devices, full on card-hover/focus/touch. 44px hit area via
 // negative margin + padding.
 const CORNER_CHIP_CLASS = [
-  "flex h-[40px] w-[40px] items-center justify-center rounded-full pointer-coarse:size-11",
-  "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
+  "flex h-[40px] w-[40px] items-center justify-center rounded-md pointer-coarse:size-11",
+  "bg-background border",
   "-m-[2px] p-[2px]",
   "motion-safe:transition-opacity motion-safe:duration-150",
   "[@media(hover:hover)_and_(pointer:fine)]:opacity-60",

@@ -227,91 +227,89 @@ export function PuzzlesClient({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Filters and Search */}
-      <Card>
-        <CardContent>
-          {/* Wraps by the toolbar's own width, not the viewport (the sidebar narrows the column on
+      <div>
+        {/* Wraps by the toolbar's own width, not the viewport (the sidebar narrows the column on
               a tablet): see ToolbarSearch. */}
-          <div className="flex flex-wrap gap-4">
-            <ToolbarSearch
-              label={t("searchLabel")}
-              placeholder={t("searchPlaceholder")}
-              value={searchDraft}
-              onChange={searchBox.change}
-            />
+        <div className="flex flex-wrap gap-4">
+          <ToolbarSearch
+            label={t("searchLabel")}
+            placeholder={t("searchPlaceholder")}
+            value={searchDraft}
+            onChange={searchBox.change}
+          />
 
-            <div className="flex flex-wrap gap-4">
-              {/* Favorites Toggle */}
+          <div className="flex flex-wrap gap-4">
+            {/* Favorites Toggle */}
+            <Button
+              variant={favoritesOnly ? "default" : "outline"}
+              aria-pressed={favoritesOnly}
+              onClick={() =>
+                onSearchChange((prev) => ({
+                  ...prev,
+                  fav: prev.fav ? undefined : true,
+                }))
+              }
+              className="flex items-center gap-2"
+            >
+              <Heart className="h-4 w-4" />
+              {t("favoritesOnly")}
+            </Button>
+
+            {/* Filter Toggle: looks pressed while open or while facets narrow the results, and
+                  counts them, so a closed panel can't hide what is filtering the list. */}
+            <Button
+              ref={filtersToggleRef}
+              variant="outline"
+              aria-expanded={showFilters}
+              aria-controls={filtersPanelId}
+              data-active={showFilters || facetCount > 0 ? "" : undefined}
+              onClick={() => {
+                filterPanelChoices.set(searchKey, !showFilters);
+                setShowFilters(!showFilters);
+              }}
+              className="data-active:bg-accent data-active:text-accent-foreground dark:data-active:bg-accent flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {facetCount > 0
+                ? t("filtersLabelCount", { count: facetCount })
+                : t("filtersLabel")}
+            </Button>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
               <Button
-                variant={favoritesOnly ? "default" : "outline"}
-                aria-pressed={favoritesOnly}
-                onClick={() =>
-                  onSearchChange((prev) => ({
-                    ...prev,
-                    fav: prev.fav ? undefined : true,
-                  }))
-                }
+                variant="ghost"
+                onClick={clearFilters}
                 className="flex items-center gap-2"
               >
-                <Heart className="h-4 w-4" />
-                {t("favoritesOnly")}
+                <X className="h-4 w-4" />
+                {t("clearFilters")}
               </Button>
-
-              {/* Filter Toggle: looks pressed while open or while facets narrow the results, and
-                  counts them, so a closed panel can't hide what is filtering the list. */}
-              <Button
-                ref={filtersToggleRef}
-                variant="outline"
-                aria-expanded={showFilters}
-                aria-controls={filtersPanelId}
-                data-active={showFilters || facetCount > 0 ? "" : undefined}
-                onClick={() => {
-                  filterPanelChoices.set(searchKey, !showFilters);
-                  setShowFilters(!showFilters);
-                }}
-                className="data-active:bg-accent data-active:text-accent-foreground dark:data-active:bg-accent flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                {facetCount > 0
-                  ? t("filtersLabelCount", { count: facetCount })
-                  : t("filtersLabel")}
-              </Button>
-
-              {/* Clear Filters */}
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  onClick={clearFilters}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  {t("clearFilters")}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Advanced Filters: the wrapper always exists so the toggle's aria-controls resolves */}
-          <div id={filtersPanelId}>
-            {showFilters && (
-              <PuzzleFilters
-                key={filtersPanelKey}
-                filters={filters}
-                onFiltersChange={applyFacets}
-                className="mt-4"
-              />
             )}
           </div>
-          {!showFilters && facetCount > 0 && (
-            <ActiveFacetChips
+        </div>
+
+        {/* Advanced Filters: the wrapper always exists so the toggle's aria-controls resolves */}
+        <div id={filtersPanelId}>
+          {showFilters && (
+            <PuzzleFilters
+              key={filtersPanelKey}
               filters={filters}
-              onRemove={(patch) => {
-                filtersToggleRef.current?.focus();
-                applyFacets(patch);
-              }}
+              onFiltersChange={applyFacets}
+              className="mt-4"
             />
           )}
-        </CardContent>
-      </Card>
+        </div>
+        {!showFilters && facetCount > 0 && (
+          <ActiveFacetChips
+            filters={filters}
+            onRemove={(patch) => {
+              filtersToggleRef.current?.focus();
+              applyFacets(patch);
+            }}
+          />
+        )}
+      </div>
 
       {/* View Mode Toggle */}
       <div className="flex items-center justify-between">

@@ -92,10 +92,7 @@ export function TourCardBody({
   return (
     <>
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
-        <span
-          id={ids.eyebrow}
-          className="text-muted-foreground font-mono text-[11px] tracking-[0.09em] uppercase"
-        >
+        <span id={ids.eyebrow} className="text-muted-foreground text-xs">
           {stepLabel}
         </span>
         <Button

@@ -17,7 +17,7 @@ export const DEFAULT_COLOR_PRESETS = [
   "#14B8A6", // teal
   "#06B6D4", // cyan
   "#3B82F6", // blue
-  "#8B5CF6", // violet (brand hue)
+  "#8B5CF6", // violet taste-skill-ignore: a colour the member can pick, not ours
   "#EC4899", // pink
   "#64748B", // slate
 ];
@@ -102,7 +102,7 @@ export function ColorPicker({
                     onChange?.(preset);
                   }}
                   className={cn(
-                    "size-7 rounded-md border border-border transition-transform hover:scale-110",
+                    "size-7 rounded-md border border-border transition-[scale] duration-160 ease-[cubic-bezier(0.23,1,0.32,1)] motion-safe:active:scale-[0.97]",
                     value.toLowerCase() === preset.toLowerCase() &&
                       "ring-2 ring-ring ring-offset-1 ring-offset-popover",
                   )}

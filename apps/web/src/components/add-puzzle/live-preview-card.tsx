@@ -85,7 +85,7 @@ export function LivePreviewCard(props: LivePreviewProps) {
       }
     : undefined;
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="relative aspect-square w-full bg-muted" style={cover}>
         {!props.coverPhotoUrl && (
           <Puzzle
@@ -94,7 +94,7 @@ export function LivePreviewCard(props: LivePreviewProps) {
           />
         )}
         {props.available && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary-strong px-2.5 py-1 text-xs font-semibold text-white">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-jigsaw-secondary-strong px-2.5 py-1 text-xs font-semibold text-white">
             <span className="size-1.5 rounded-full bg-white" />{" "}
             {t("previewAvailable")}
           </span>

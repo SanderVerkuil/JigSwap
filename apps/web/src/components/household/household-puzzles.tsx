@@ -144,7 +144,7 @@ export function HouseholdPuzzles({
   ];
 
   const addPuzzle = (
-    <Button variant="brand" asChild>
+    <Button asChild>
       <Link href="/my-puzzles/add">
         <Plus className="h-4 w-4" />
         {tPuzzles("addPuzzle")}

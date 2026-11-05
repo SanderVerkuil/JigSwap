@@ -381,7 +381,7 @@ function EditProfileFormLoaded({
         </p>
         <p className="text-muted-foreground text-xs">
           {t("slug.preview")}{" "}
-          <span className="font-mono break-all">
+          <span className="font-medium break-all">
             {origin}/members/{slugPreviewHandle}
           </span>
         </p>
