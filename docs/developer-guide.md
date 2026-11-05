@@ -338,14 +338,35 @@ useMutation(gateway.exchange.propose)(...)
   → any dependent useQuery subscriptions refresh automatically (no manual refetch)
 
 … recipient accepts, both confirm …
-  → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred
+  → accept and every confirmation run the domain's settlementGuard first: refused, nothing saved,
+    once the requested copy no longer belongs to the recipient or a swap's offered copy changed
+    owner or can no longer be offered by the initiator, and (CopyReserved) while either copy is out
+    on loan (`isLentOut`: held by anyone but its owner); propose refuses such copies too, and the
+    Library's reservation port counts an open loan, so a lent copy can't be re-offered or deleted
+  → accept also sets the deal's copies aside: refused (CopyReserved) while either copy is in another
+    accepted deal that could still settle (proposals set nothing aside)
+  → confirmCompletion detects dual confirmation → emits ExchangeCompleted + OwnershipTransferred,
+    which names expectedPreviousOwner (the owner the deal was made with)
     → SYNC handler marks the copy unavailable in the same transaction
     → dispatch order: custody subscriber inserts the provenance row (capturing the PRE-transfer
-      owner) BEFORE library/transferOnSettlement reassigns the owner; then notifications fire
+      owner) BEFORE library/transferOnSettlement reassigns the owner (refused with OwnershipChanged,
+      custody row rolled back, once the copy belongs to anyone else); then notifications fire
 ```
 
 For a `lend` kind, settlement emits `PossessionTransferred`; `library/openLoanOnSettlement.ts`
-opens a `Loan` and moves `heldBy` to the borrower (ownership never moves).
+opens a `Loan` and moves `heldBy` to the borrower (ownership never moves), only while the event's
+`lender` still owns the copy and no other loan on it is open (one loan per copy, `AlreadyLentOut`).
+Returning or recalling a loan gives possession back only while that loan's borrower holds the copy,
+and a transfer (`transferOnSettlement`) ends any loan still open on the copy. A loan a former owner
+left open (rows from before transfers ended loans) is stale: it neither blocks a new loan nor counts
+as a reservation for the current owner.
+
+Stored data from before these rules is checked by the read-only internal queries in
+`exchange/auditExchangeIntegrity.ts`: `settlementsByNonParty` (custody rows whose previous owner was
+not the party the deal was made with), `acceptedDealConflicts` (copies with more than one accepted
+exchange), `loanConflicts` (open loans whose borrower doesn't hold the copy, whose lender no longer
+owns it, or that share a copy) and `possessionWithoutLoan` (copies held by someone with no open loan
+to them). Each pages one table (at most 100 rows a page); run it until `isDone`.
 
 ### 3.4 Image upload (Convex Storage)
 

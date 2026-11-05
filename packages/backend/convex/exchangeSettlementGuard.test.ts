@@ -1,0 +1,692 @@
+import { convexTest, type TestConvex } from "convex-test";
+import { ConvexError, type Value } from "convex/values";
+import { describe, expect, test, vi } from "vitest";
+import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import schema from "./schema";
+
+// SEC-02: ownership was checked only when an exchange was proposed. A copy can change hands while
+// an exchange on it stays open, and a stale exchange then settled anyway, moving the copy (photos
+// and history included) out of the library of an owner who was never a party to it. Accept and
+// confirm-completion now refuse once a copy is no longer where the deal found it. Driven through
+// the real mutations and the async settlement dispatch. Behind that, each settlement event names
+// the owner the deal was made with, and the Library reactions refuse to move or lend a copy that
+// belongs to anyone else. Accepting sets a copy aside for that one deal (a second accept on it is
+// refused), and only a deal that could still settle holds a copy at all.
+
+const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
+
+type T = TestConvex<typeof schema>;
+type Name = "bob" | "sock" | "vic" | "mara" | "hugo" | "rex";
+type Ids = Record<Name, Id<"users">>;
+type Copy = { aggregateId: string; id: Id<"ownedPuzzles"> };
+
+const as = (t: T, name: Name) => t.withIdentity({ subject: `clerk_${name}` });
+
+// The transfer and loan reactions run in scheduled dispatches; yield then drain until they settle.
+const flush = async (t: T) => {
+  for (let i = 0; i < 12; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
+
+// Everyone has a public profile (no profile row) and nobody blocks anyone.
+const seed = (t: T) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    const mkUser = (name: Name) =>
+      ctx.db.insert("users", {
+        clerkId: `clerk_${name}`,
+        email: `${name}@example.com`,
+        name,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    const ids: Ids = {
+      bob: await mkUser("bob"),
+      sock: await mkUser("sock"),
+      vic: await mkUser("vic"),
+      mara: await mkUser("mara"),
+      hugo: await mkUser("hugo"),
+      rex: await mkUser("rex"),
+    };
+    const puzzleAggregateId = crypto.randomUUID();
+    await ctx.db.insert("puzzles", {
+      aggregateId: puzzleAggregateId,
+      title: "Harbour Lights",
+      pieceCount: 1000,
+      status: "approved",
+      submittedBy: ids.bob,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { ids, puzzleAggregateId };
+  });
+
+const acquire = async (
+  t: T,
+  owner: Name,
+  puzzleAggregateId: string,
+): Promise<Copy> => {
+  const aggregateId = (await as(t, owner).mutation(
+    api.library.acquireCopy.acquireCopy,
+    { puzzleDefinitionId: puzzleAggregateId, condition: "good" },
+  )) as string;
+  const row = await t.run((ctx) =>
+    ctx.db
+      .query("ownedPuzzles")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+      .unique(),
+  );
+  if (!row) throw new Error("seed: copy not found");
+  return { aggregateId, id: row._id };
+};
+
+const offer = (
+  t: T,
+  owner: Name,
+  copy: Copy,
+  flags: { forTrade?: boolean; forSale?: boolean; forLend?: boolean },
+) =>
+  as(t, owner).mutation(api.library.updateCopySharing.updateCopySharing, {
+    copyId: copy.aggregateId,
+    visibility: "visible",
+    ...flags,
+  });
+
+const proposeSale = (t: T, buyer: Name, copy: Copy) =>
+  as(t, buyer).mutation(api.exchange.propose.propose, {
+    type: "sale",
+    requestedPuzzleId: copy.id,
+    salePrice: 1000,
+  });
+
+const proposeLend = (t: T, borrower: Name, copy: Copy) =>
+  as(t, borrower).mutation(api.exchange.propose.propose, {
+    type: "loan",
+    requestedPuzzleId: copy.id,
+  });
+
+const proposeSwap = (t: T, initiator: Name, requested: Copy, offered: Copy) =>
+  as(t, initiator).mutation(api.exchange.propose.propose, {
+    type: "trade",
+    requestedPuzzleId: requested.id,
+    offeredPuzzleId: offered.id,
+  });
+
+const accept = (t: T, recipient: Name, exchangeId: string) =>
+  as(t, recipient).mutation(api.exchange.accept.accept, { exchangeId });
+
+const confirm = (t: T, party: Name, exchangeId: string) =>
+  as(t, party).mutation(api.exchange.confirmCompletion.confirmCompletion, {
+    exchangeId,
+  });
+
+// Accept, both confirm, run the settlement reactions.
+const settle = async (
+  t: T,
+  exchangeId: string,
+  initiator: Name,
+  recipient: Name,
+) => {
+  await accept(t, recipient, exchangeId);
+  await confirm(t, initiator, exchangeId);
+  await confirm(t, recipient, exchangeId);
+  await flush(t);
+};
+
+// The theft repros need two accepted deals on one copy, which accept now refuses (CopyReserved).
+// Rows accepted before that rule may still hold such pairs, so the later deal is accepted directly
+// in the store, as it was then, and then settled through the real confirmations.
+const settleAcceptedBeforeOneDealPerCopy = async (
+  t: T,
+  exchangeId: string,
+  initiator: Name,
+  recipient: Name,
+) => {
+  await t.run(async (ctx) => {
+    const row = await ctx.db
+      .query("exchanges")
+      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+      .unique();
+    if (!row) throw new Error("seed: exchange not found");
+    await ctx.db.patch(row._id, { status: "accepted", updatedAt: Date.now() });
+  });
+  await confirm(t, initiator, exchangeId);
+  await confirm(t, recipient, exchangeId);
+  await flush(t);
+};
+
+const copyRow = async (t: T, copy: Copy) => {
+  const row = await t.run((ctx) => ctx.db.get(copy.id));
+  if (!row) throw new Error("copy vanished");
+  return row;
+};
+
+const statusOf = (t: T, exchangeId: string) =>
+  t.run(
+    async (ctx) =>
+      (
+        await ctx.db
+          .query("exchanges")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", exchangeId))
+          .unique()
+      )?.status,
+  );
+
+const custodyOf = (t: T, copy: Copy) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("copyCustodyEntries")
+      .withIndex("by_copy", (q) => q.eq("copyId", copy.id))
+      .collect(),
+  );
+
+const loansOf = (t: T, copy: Copy) =>
+  t.run((ctx) =>
+    ctx.db
+      .query("loans")
+      .withIndex("by_copy", (q) => q.eq("copyId", copy.aggregateId))
+      .collect(),
+  );
+
+const codeOf = async (p: Promise<unknown>): Promise<string | undefined> => {
+  const error = await p.then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(error).toBeInstanceOf(ConvexError);
+  const data = (error as ConvexError<Value>).data;
+  return (
+    typeof data === "string" ? JSON.parse(data) : (data as { code?: string })
+  ).code;
+};
+
+// Mara and Hugo share a household (default permission: manage), so Hugo may offer Mara's copies.
+const formHousehold = async (t: T, ids: Ids) => {
+  await as(t, "mara").mutation(
+    api.household.createHousehold.createHousehold,
+    {},
+  );
+  const inviteId = await as(t, "mara").mutation(
+    api.household.inviteToHousehold.inviteToHousehold,
+    { inviteeId: ids.hugo },
+  );
+  await as(t, "hugo").mutation(
+    api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+    { inviteId },
+  );
+};
+
+const removeHugo = (t: T, ids: Ids) =>
+  as(t, "mara").mutation(
+    api.household.removeHouseholdMember.removeHouseholdMember,
+    { memberId: ids.hugo },
+  );
+
+describe("a stale exchange never settles once a copy changed hands", () => {
+  test("sockpuppet sale: Bob's old deal can't take the copy back out of Vic's library", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+
+    // Bob's sockpuppet gets an accepted sale on Y and confirms it, then leaves it open.
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await confirm(t, "sock", stale);
+
+    // Vic buys Y honestly (accepted alongside the sockpuppet's deal, before one deal per copy).
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+
+    // Bob, no longer the owner, confirms the stale deal: refused, nothing moves.
+    expect(await codeOf(confirm(t, "bob", stale))).toBe("RecipientNotOwner");
+    await flush(t);
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+    expect(await statusOf(t, stale)).toBe("accepted");
+    expect((await custodyOf(t, y)).map((e) => e.newOwner)).toEqual([ids.vic]);
+  });
+
+  test("an exchange proposed to the former owner can no longer be accepted", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+
+    const stale = await proposeSale(t, "sock", y);
+    await settle(t, await proposeSale(t, "vic", y), "vic", "bob");
+
+    expect(await codeOf(accept(t, "bob", stale))).toBe("RecipientNotOwner");
+    expect(await statusOf(t, stale)).toBe("proposed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  test("lend variant: no loan opens in Vic's name and the borrower never holds Vic's copy", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true, forLend: true });
+
+    const stale = await proposeLend(t, "sock", y);
+    await accept(t, "bob", stale);
+    await confirm(t, "sock", stale);
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+
+    expect(await codeOf(confirm(t, "bob", stale))).toBe("RecipientNotOwner");
+    await flush(t);
+    expect(await loansOf(t, y)).toHaveLength(0);
+    const row = await copyRow(t, y);
+    expect(row.ownerId).toBe(ids.vic);
+    expect(row.heldBy ?? row.ownerId).toBe(ids.vic);
+  });
+});
+
+describe("a housemate's swap stops once they leave the household", () => {
+  const setUp = async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+    // Hugo offers Mara's copy X for Rex's R.
+    const swap = await proposeSwap(t, "hugo", r, x);
+    return { t, ids, x, r, swap };
+  };
+
+  test("removed before Rex accepts: the accept is refused and X stays Mara's", async () => {
+    const { t, ids, x, r, swap } = await setUp();
+    await removeHugo(t, ids);
+
+    expect(await codeOf(accept(t, "rex", swap))).toBe("OfferedCopyNotOwned");
+    expect(await statusOf(t, swap)).toBe("proposed");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.mara);
+    expect((await copyRow(t, r)).ownerId).toBe(ids.rex);
+  });
+
+  test("removed after Rex accepted: both confirmations are refused and X stays Mara's", async () => {
+    const { t, ids, x, r, swap } = await setUp();
+    await accept(t, "rex", swap);
+    await removeHugo(t, ids);
+
+    expect(await codeOf(confirm(t, "hugo", swap))).toBe("OfferedCopyNotOwned");
+    expect(await codeOf(confirm(t, "rex", swap))).toBe("OfferedCopyNotOwned");
+    await flush(t);
+    expect(await statusOf(t, swap)).toBe("accepted");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.mara);
+    expect((await copyRow(t, r)).ownerId).toBe(ids.rex);
+    expect(await custodyOf(t, x)).toHaveLength(0);
+  });
+});
+
+describe("deals whose copies are still in place settle as before", () => {
+  test("a sale", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+
+    const sale = await proposeSale(t, "vic", y);
+    await settle(t, sale, "vic", "bob");
+
+    expect(await statusOf(t, sale)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  test("a swap of two members' own copies", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    const s = await acquire(t, "sock", puzzleAggregateId);
+    await offer(t, "bob", y, { forTrade: true });
+
+    const swap = await proposeSwap(t, "sock", y, s);
+    await settle(t, swap, "sock", "bob");
+
+    expect(await statusOf(t, swap)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.sock);
+    expect((await copyRow(t, s)).ownerId).toBe(ids.bob);
+  });
+
+  test("a swap offering a housemate's copy, while still in the household", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+
+    const swap = await proposeSwap(t, "hugo", r, x);
+    await settle(t, swap, "hugo", "rex");
+
+    expect(await statusOf(t, swap)).toBe("completed");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.rex);
+    expect((await copyRow(t, r)).ownerId).toBe(ids.hugo);
+  });
+
+  test("a lend", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forLend: true });
+
+    const lend = await proposeLend(t, "sock", y);
+    await settle(t, lend, "sock", "bob");
+
+    expect(await statusOf(t, lend)).toBe("completed");
+    const row = await copyRow(t, y);
+    expect(row.ownerId).toBe(ids.bob);
+    expect(row.heldBy).toBe(ids.sock);
+    expect(await loansOf(t, y)).toHaveLength(1);
+  });
+});
+
+const deleteCopy = (t: T, owner: Name, copy: Copy) =>
+  as(t, owner).mutation(api.library.deleteCopy.deleteCopy, {
+    copyId: copy.aggregateId,
+  });
+
+// The victim used to be stuck: the stale deal still counted as reserving the copy, so they could
+// neither offer nor delete it. Only a deal that could still settle reserves a copy now.
+describe("a stale exchange never holds a copy against its current owner", () => {
+  test("after the sockpuppet sale, Vic can offer Y again and delete it", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await confirm(t, "sock", stale);
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+
+    await offer(t, "vic", y, { forSale: true });
+    expect((await copyRow(t, y)).availability.forSale).toBe(true);
+    await deleteCopy(t, "vic", y);
+    expect(await t.run((ctx) => ctx.db.get(y.id))).toBeNull();
+  });
+
+  test("once Hugo is removed, Mara can delete X and Rex can offer R again", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+    const swap = await proposeSwap(t, "hugo", r, x);
+    await accept(t, "rex", swap);
+    await removeHugo(t, ids);
+
+    // The swap can no longer settle, so it sets neither copy aside: not even Rex's own.
+    await offer(t, "rex", r, { forTrade: true, forSale: true });
+    expect((await copyRow(t, r)).availability.forSale).toBe(true);
+    await deleteCopy(t, "mara", x);
+    expect(await t.run((ctx) => ctx.db.get(x.id))).toBeNull();
+  });
+
+  test("a deal that can still settle keeps its copies reserved", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    await proposeSale(t, "vic", y);
+
+    expect(await codeOf(deleteCopy(t, "bob", y))).toBe("CopyReserved");
+    expect(
+      await codeOf(offer(t, "bob", y, { forSale: true, forTrade: true })),
+    ).toBe("CopyReserved");
+
+    // A housemate's live swap reserves the owner's offered copy, accepted or not.
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "rex", r, { forTrade: true });
+    const swap = await proposeSwap(t, "hugo", r, x);
+    expect(await codeOf(deleteCopy(t, "mara", x))).toBe("CopyReserved");
+    await accept(t, "rex", swap);
+    expect(await codeOf(deleteCopy(t, "mara", x))).toBe("CopyReserved");
+    expect(
+      await codeOf(offer(t, "rex", r, { forTrade: true, forSale: true })),
+    ).toBe("CopyReserved");
+  });
+});
+
+const cancel = (t: T, party: Name, exchangeId: string) =>
+  as(t, party).mutation(api.exchange.cancel.cancel, { exchangeId });
+
+// One copy, one deal: accepting sets the deal's copies aside for it. Proposals set nothing aside.
+describe("an accepted deal sets its copies aside", () => {
+  test("a second accept on the same copy is refused until the first deal is cancelled", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    // Two members may still ask for the same copy.
+    const first = await proposeSale(t, "sock", y);
+    const second = await proposeSale(t, "vic", y);
+
+    await accept(t, "bob", first);
+    expect(await codeOf(accept(t, "bob", second))).toBe("CopyReserved");
+    expect(await statusOf(t, second)).toBe("proposed");
+
+    await cancel(t, "sock", first);
+    await settle(t, second, "vic", "bob");
+    expect(await statusOf(t, second)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  // Accepting must never trap the owner: a requester who goes quiet can't hold the copy forever.
+  test("the owner can call off an accepted deal the requester went quiet on, and accept another", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const quiet = await proposeSale(t, "sock", y);
+    const second = await proposeSale(t, "vic", y);
+    await accept(t, "bob", quiet);
+    expect(await codeOf(accept(t, "bob", second))).toBe("CopyReserved");
+
+    await cancel(t, "bob", quiet);
+    expect(await statusOf(t, quiet)).toBe("cancelled");
+    await settle(t, second, "vic", "bob");
+    expect(await statusOf(t, second)).toBe("completed");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  test("either party can clear away an accepted deal that can't settle any more", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+    expect(await codeOf(confirm(t, "bob", stale))).toBe("RecipientNotOwner");
+
+    // Bob, the deal's recipient, no longer owns Y but can still call the dead deal off.
+    await cancel(t, "bob", stale);
+    expect(await statusOf(t, stale)).toBe("cancelled");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+  });
+
+  test("a copy offered in an accepted swap can't be promised to anyone else until that swap can't settle", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    await formHousehold(t, ids);
+    const x = await acquire(t, "mara", puzzleAggregateId);
+    const r = await acquire(t, "rex", puzzleAggregateId);
+    await offer(t, "mara", x, { forSale: true });
+    await offer(t, "rex", r, { forTrade: true });
+    const swap = await proposeSwap(t, "hugo", r, x);
+    const sale = await proposeSale(t, "vic", x);
+    await accept(t, "rex", swap);
+
+    expect(await codeOf(accept(t, "mara", sale))).toBe("CopyReserved");
+
+    // Hugo leaves the household: his swap can no longer settle and holds X no longer.
+    await removeHugo(t, ids);
+    await settle(t, sale, "vic", "mara");
+    expect(await statusOf(t, sale)).toBe("completed");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.vic);
+  });
+
+  test("a stale accepted deal doesn't stop the new owner accepting", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    const y = await acquire(t, "bob", puzzleAggregateId);
+    await offer(t, "bob", y, { forSale: true });
+    const stale = await proposeSale(t, "sock", y);
+    await accept(t, "bob", stale);
+    await settleAcceptedBeforeOneDealPerCopy(
+      t,
+      await proposeSale(t, "vic", y),
+      "vic",
+      "bob",
+    );
+
+    // The sockpuppet's deal is still accepted, but was made with Bob: it can't hold Vic's copy.
+    await offer(t, "vic", y, { forSale: true });
+    const resale = await proposeSale(t, "rex", y);
+    await settle(t, resale, "rex", "vic");
+    expect(await statusOf(t, resale)).toBe("completed");
+    expect(await statusOf(t, stale)).toBe("accepted");
+    expect((await copyRow(t, y)).ownerId).toBe(ids.rex);
+  });
+});
+
+// A settlement event recorded directly, as one written before the guard (or in the narrow window
+// in which two old deals both settled before either transfer ran) would reach the dispatcher.
+const recordSettlementEvent = (
+  t: T,
+  name: "OwnershipTransferred" | "PossessionTransferred",
+  payload: Record<string, unknown>,
+) =>
+  t.run((ctx) =>
+    ctx.db.insert("domainEvents", {
+      name,
+      payload: { exchangeId: "x-stale", ...payload },
+      occurredAt: Date.now(),
+      context: "exchange",
+    }),
+  );
+
+const dispatch = async (t: T, eventId: Id<"domainEvents">) => {
+  // The refusal is logged as a dispatch error on purpose; keep the test output clean.
+  const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    await t.mutation(internal.events.dispatch.dispatch, { eventId });
+  } finally {
+    quiet.mockRestore();
+  }
+  return t.run((ctx) => ctx.db.get(eventId));
+};
+
+describe("the settlement reactions move or lend a copy only from the owner the deal was made with", () => {
+  const setUp = async () => {
+    const t = convexTest(schema, modules);
+    const { ids, puzzleAggregateId } = await seed(t);
+    // Y belongs to Vic now; an old deal was made with Bob.
+    const y = await acquire(t, "vic", puzzleAggregateId);
+    return { t, ids, y };
+  };
+
+  test("a transfer expecting a former owner is refused: no move, no custody row, a recorded failure", async () => {
+    const { t, ids, y } = await setUp();
+    const eventId = await recordSettlementEvent(t, "OwnershipTransferred", {
+      copyId: y.id,
+      newOwner: ids.sock,
+      expectedPreviousOwner: ids.bob,
+    });
+
+    const event = await dispatch(t, eventId);
+
+    expect((await copyRow(t, y)).ownerId).toBe(ids.vic);
+    expect(await custodyOf(t, y)).toHaveLength(0);
+    expect(event?.failedHandlers).toEqual(["ownershipTransfer"]);
+    expect(event?.failedAt).toBeDefined();
+    expect(event?.lastError?.handler).toBe("ownershipTransfer");
+    expect(event?.lastError?.message).toContain("OwnershipChanged");
+  });
+
+  test("a transfer expecting the current owner, or recorded before the field existed, still moves the copy", async () => {
+    const { t, ids, y } = await setUp();
+    const named = await dispatch(
+      t,
+      await recordSettlementEvent(t, "OwnershipTransferred", {
+        copyId: y.id,
+        newOwner: ids.sock,
+        expectedPreviousOwner: ids.vic,
+      }),
+    );
+    expect(named?.processedAt).toBeDefined();
+    expect((await copyRow(t, y)).ownerId).toBe(ids.sock);
+
+    const legacy = await dispatch(
+      t,
+      await recordSettlementEvent(t, "OwnershipTransferred", {
+        copyId: y.id,
+        newOwner: ids.rex,
+      }),
+    );
+    expect(legacy?.processedAt).toBeDefined();
+    expect((await copyRow(t, y)).ownerId).toBe(ids.rex);
+    expect((await custodyOf(t, y)).map((e) => e.previousOwner)).toEqual([
+      ids.vic,
+      ids.sock,
+    ]);
+  });
+
+  test("a loan agreed with a former owner is refused: none opens and Vic keeps holding the copy", async () => {
+    const { t, ids, y } = await setUp();
+    const eventId = await recordSettlementEvent(t, "PossessionTransferred", {
+      copyId: y.id,
+      borrower: ids.sock,
+      lender: ids.bob,
+    });
+
+    const event = await dispatch(t, eventId);
+
+    expect(await loansOf(t, y)).toHaveLength(0);
+    const row = await copyRow(t, y);
+    expect(row.heldBy ?? row.ownerId).toBe(ids.vic);
+    expect(event?.failedHandlers).toEqual(["openLoan"]);
+    expect(event?.lastError?.message).toContain("OwnershipChanged");
+  });
+
+  test("a loan recorded before the lender was carried still opens", async () => {
+    const { t, ids, y } = await setUp();
+    const event = await dispatch(
+      t,
+      await recordSettlementEvent(t, "PossessionTransferred", {
+        copyId: y.id,
+        borrower: ids.sock,
+      }),
+    );
+    expect(event?.processedAt).toBeDefined();
+    expect(await loansOf(t, y)).toHaveLength(1);
+    expect((await copyRow(t, y)).heldBy).toBe(ids.sock);
+  });
+});

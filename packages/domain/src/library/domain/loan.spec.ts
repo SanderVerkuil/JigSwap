@@ -133,6 +133,37 @@ describe("Loan.recallByOwner", () => {
   });
 });
 
+describe("Loan.endByTransfer", () => {
+  it("ends an open loan when the copy changes owner -> recalled + LoanClosed(recalled)", () => {
+    const loan = open();
+    loan.pullEvents();
+    const result = loan.endByTransfer(LATER);
+    expect(result.isOk).toBe(true);
+    expect(loan.status).toBe("recalled");
+    expect(loan.toState().closedAt).toBe(LATER);
+    const events = loan.pullEvents();
+    expect(names(events)).toEqual(["LoanClosed"]);
+    expect(events[0]).toMatchObject({
+      loanId,
+      copyId,
+      lenderId: lender,
+      borrowerId: borrower,
+      reason: "recalled",
+      occurredAt: LATER,
+    });
+  });
+
+  it("rejects ending an already-closed loan", () => {
+    const loan = open();
+    loan.returnByBorrower(borrower, NOW);
+    loan.pullEvents();
+    const result = loan.endByTransfer(LATER);
+    expect(result.isErr && result.error.code).toBe("LoanNotOpen");
+    expect(loan.status).toBe("returned");
+    expect(loan.pullEvents()).toHaveLength(0);
+  });
+});
+
 describe("Loan rehydrate / toState round-trip", () => {
   it("rehydrates without re-recording events", () => {
     const original = open();

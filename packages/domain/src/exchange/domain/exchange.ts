@@ -46,6 +46,9 @@ export interface ProposeProps {
   readonly requestedCopyId: CopyId;
   readonly terms: ExchangeTermsInput;
   readonly eligibleVia?: EligibleVia;
+  // Swap only: who owned the offered copy when it was offered (the initiator, or the housemate whose
+  // copy they co-manage). Ignored for any other kind.
+  readonly offeredCopyOwnerId?: MemberId;
   readonly now: Date;
 }
 
@@ -58,6 +61,10 @@ export interface ExchangeState {
   readonly kind: ExchangeKind;
   readonly requestedCopyId: CopyId;
   readonly offeredCopyId?: CopyId; // swap only
+  // Swap only: the offered copy's owner at propose time; accept and confirm refuse once the copy has
+  // another owner (settlement-guard), and its OwnershipTransferred names them as the expected
+  // previous owner. Absent on swaps proposed before it was recorded.
+  readonly offeredCopyOwnerId?: MemberId;
   readonly price?: Money; // sale only
   readonly returnDate?: Date; // lend only
   readonly status: ExchangeStatus;
@@ -134,14 +141,20 @@ export class Exchange {
     );
   }
 
-  // Initiator withdraws a proposed or accepted deal.
+  // Call a deal off. The initiator may withdraw a proposed or an accepted deal. Once accepted, the
+  // recipient may call it off too: accepting sets their copy aside for this one deal (accept-exchange),
+  // so they need a way out when the other side goes quiet or the deal can't settle any more. A
+  // proposal the recipient doesn't want is declined, not cancelled.
   cancel(by: MemberId, now: Date): Result<void, ExchangeError> {
     return this.guarded(
       "cancelled",
-      () => this.requireParty(by, "initiator", "cancel"),
+      () =>
+        this.status === "accepted" && this.partyOf(by)
+          ? ok(undefined)
+          : this.requireParty(by, "initiator", "cancel"),
       now,
       () => {
-        this.record(new ExchangeCancelled(this.id, now));
+        this.record(new ExchangeCancelled(this.id, by, now));
       },
     );
   }
@@ -229,8 +242,11 @@ export class Exchange {
 
   // Settlement: complete, then hand over the requested copy. A swap/sale moves OWNERSHIP; a lend
   // moves only POSSESSION (the borrower holds it open-endedly, the owner keeps ownership). For a
-  // swap the offered copy's ownership also moves to the recipient. (Cross-aggregate "a copy is
-  // reserved by at most one active exchange" is an APPLICATION-layer rule, not enforced here.)
+  // swap the offered copy's ownership also moves to the recipient. Each move names the owner the
+  // deal was made with (the recipient; the recorded owner of the offered copy), so Library never
+  // moves or lends a copy away from anyone else. (Cross-aggregate "a copy is set aside for at most
+  // one accepted exchange that could still settle" is an APPLICATION-layer rule, checked on accept
+  // by accept-exchange, not enforced here.)
   private settle(now: Date): Result<void, ExchangeError> {
     const moved = this.transition("completed", now);
     if (moved.isErr) return moved;
@@ -242,6 +258,7 @@ export class Exchange {
           this.state.requestedCopyId,
           this.state.initiatorId,
           this.state.returnDate,
+          this.state.recipientId,
           now,
         ),
       );
@@ -251,6 +268,7 @@ export class Exchange {
           this.id,
           this.state.requestedCopyId,
           this.state.initiatorId,
+          this.state.recipientId,
           now,
         ),
       );
@@ -261,6 +279,7 @@ export class Exchange {
           this.id,
           this.state.offeredCopyId,
           this.state.recipientId,
+          this.state.offeredCopyOwnerId,
           now,
         ),
       );
@@ -305,7 +324,7 @@ export class Exchange {
   ): ExchangeState {
     const base: Omit<
       ExchangeState,
-      "kind" | "offeredCopyId" | "price" | "returnDate"
+      "kind" | "offeredCopyId" | "offeredCopyOwnerId" | "price" | "returnDate"
     > = {
       id: props.id,
       initiatorId: props.initiator,
@@ -318,7 +337,14 @@ export class Exchange {
     };
     switch (terms.kind) {
       case "swap":
-        return { ...base, kind: "swap", offeredCopyId: terms.offeredCopyId };
+        return {
+          ...base,
+          kind: "swap",
+          offeredCopyId: terms.offeredCopyId,
+          ...(props.offeredCopyOwnerId
+            ? { offeredCopyOwnerId: props.offeredCopyOwnerId }
+            : {}),
+        };
       case "sale":
         return { ...base, kind: "sale", price: terms.price };
       case "lend":

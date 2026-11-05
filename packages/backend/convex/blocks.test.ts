@@ -300,13 +300,15 @@ describe("blocked pair is refused", () => {
         const alicesCopy = await seedSaleCopy(t, ids.alice);
         await block(t, ids);
 
+        // Answered like a copy the member has no route to: a block-specific refusal would tell the
+        // blocked member that a block exists.
         await expectCode(
           proposeSale(t, "alice", ids.bob, bobsCopy),
-          "NotConnected",
+          "CopyNotReachable",
         );
         await expectCode(
           proposeSale(t, "bob", ids.alice, alicesCopy),
-          "NotConnected",
+          "CopyNotReachable",
         );
         // recipientId is optional (derived from the copy's owner): the gate still holds.
         await expectCode(
@@ -315,8 +317,19 @@ describe("blocked pair is refused", () => {
             requestedPuzzleId: bobsCopy,
             salePrice: 10,
           }),
-          "NotConnected",
+          "CopyNotReachable",
         );
+        await expectCode(
+          asBob(t).mutation(api.exchange.propose.propose, {
+            type: "sale",
+            requestedPuzzleId: alicesCopy,
+            salePrice: 10,
+          }),
+          "CopyNotReachable",
+        );
+        expect(
+          await t.run((ctx) => ctx.db.query("exchanges").collect()),
+        ).toHaveLength(0);
       });
     });
   }

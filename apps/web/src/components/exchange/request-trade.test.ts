@@ -69,6 +69,7 @@ describe("proposeErrorKey", () => {
     ["CopyNotReachable", "notReachable"],
     ["NotPermittedInCircle", "viewOnly"],
     ["OfferedCopyNotOwned", "offeredNotOwned"],
+    ["CopyReserved", "offeredNotOwned"],
     ["RecipientNotOwner", "notFound"],
     ["DuplicateProposal", "duplicate"],
     ["SelfExchange", "ownCopy"],

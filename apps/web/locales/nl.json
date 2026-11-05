@@ -501,6 +501,7 @@
     "deleteConfirmTitle": "\"{title}\" verwijderen?",
     "deleteConfirmBody": "Dit verwijdert deze puzzel permanent uit je bibliotheek. Deze actie kan niet ongedaan worden gemaakt.",
     "deleteConfirmAction": "Verwijderen",
+    "deleteReserved": "Je kunt deze puzzel niet verwijderen zolang hij bij een lopende uitwisseling hoort of is uitgeleend. Dat kan wel zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
     "loadingPuzzles": "Puzzels laden...",
     "new_sealed": "Nieuw (Verzegeld)",
     "like_new": "Zo Goed Als Nieuw",
@@ -620,9 +621,19 @@
     "newRequest": "Nieuw Uitwisselingsverzoek",
     "acceptExchange": "Uitwisseling Accepteren",
     "acceptNotPermitted": "Dit verzoek kan niet meer worden geaccepteerd: de aanvrager mag deze puzzel niet meer ruilen.",
+    "errors": {
+      "copyReserved": "Een van de puzzels in deze uitwisseling is al gereserveerd voor een andere uitwisseling of is uitgeleend. Je kunt doorgaan zodra die uitwisseling is afgerond of geannuleerd, of zodra de puzzel terug is. Beide deelnemers aan die uitwisseling kunnen hem annuleren.",
+      "copyChangedHands": "Deze uitwisseling kan niet meer doorgaan: een van de puzzels is van eigenaar gewisseld of niet meer beschikbaar."
+    },
     "declineExchange": "Uitwisseling Afwijzen",
     "completeExchange": "Uitwisseling Voltooien",
     "cancelExchange": "Uitwisseling Annuleren",
+    "cancelAccepted": {
+      "title": "Deze uitwisseling annuleren?",
+      "body": "De uitwisseling stopt dan voor jullie allebei, en dat kun je niet terugdraaien. De puzzel is daarna weer vrij voor andere verzoeken.",
+      "keep": "Niet annuleren",
+      "confirm": "Uitwisseling annuleren"
+    },
     "incoming": "Inkomend",
     "outgoing": "Uitgaand",
     "allStatuses": "Alle Statussen",
@@ -4021,6 +4032,7 @@
       "saved": "Wijzigingen opgeslagen",
       "cancel": "Annuleren",
       "editFailed": "Je wijzigingen konden niet worden opgeslagen. Probeer het opnieuw.",
+      "copyReserved": "Deze puzzel hoort bij een lopende uitwisseling of is uitgeleend, dus je kunt nu niet aanpassen hoe je hem aanbiedt of deelt. Dat kan weer zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
       "cover": "Omslagafbeelding",
       "useCatalogueImage": "Catalogusafbeelding gebruiken",
       "noPhotosForCover": "Voeg fotos toe aan dit exemplaar om een eigen omslag te kiezen.",

@@ -18,7 +18,9 @@ export type LibraryErrorCode =
   | "NotLender"
   | "EmptyAcquireBatch"
   | "AcquireBatchTooLarge"
-  | "CopyMustBeVisibleToOffer";
+  | "CopyMustBeVisibleToOffer"
+  | "OwnershipChanged"
+  | "AlreadyLentOut";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -115,6 +117,23 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "AcquireBatchTooLarge",
       `At most ${max} puzzles can be added at once`,
+    );
+  }
+
+  // A settled exchange tried to move or lend a copy that no longer belongs to the member the
+  // exchange was made with (it changed hands since).
+  static ownershipChanged(): LibraryError {
+    return new LibraryError(
+      "OwnershipChanged",
+      "The copy no longer belongs to the member the exchange was made with",
+    );
+  }
+
+  // A copy is lent to one borrower at a time: it is not lent out again until it is back.
+  static alreadyLentOut(): LibraryError {
+    return new LibraryError(
+      "AlreadyLentOut",
+      "The copy is already out on loan",
     );
   }
 

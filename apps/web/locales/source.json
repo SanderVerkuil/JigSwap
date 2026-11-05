@@ -501,6 +501,7 @@
     "deleteConfirmTitle": "Delete \"{title}\"?",
     "deleteConfirmBody": "This permanently removes this puzzle from your library. This action cannot be undone.",
     "deleteConfirmAction": "Delete",
+    "deleteReserved": "You can't delete this puzzle while it's part of an exchange in progress or out on loan. You can once the exchange is completed, declined or cancelled, or once the puzzle is back.",
     "loadingPuzzles": "Loading puzzles...",
     "new_sealed": "New (Sealed)",
     "like_new": "Like New",
@@ -620,9 +621,19 @@
     "newRequest": "New Exchange Request",
     "acceptExchange": "Accept Exchange",
     "acceptNotPermitted": "This request can't be accepted any more: the requester may no longer exchange this puzzle.",
+    "errors": {
+      "copyReserved": "One of the puzzles in this exchange is already set aside for another exchange or is out on loan. You can go ahead once that exchange is completed or cancelled, or once the puzzle is back. Either member of that exchange can cancel it.",
+      "copyChangedHands": "This exchange can't go ahead any more: one of its puzzles has changed hands or is no longer available."
+    },
     "declineExchange": "Decline Exchange",
     "completeExchange": "Complete Exchange",
     "cancelExchange": "Cancel Exchange",
+    "cancelAccepted": {
+      "title": "Cancel this exchange?",
+      "body": "The exchange ends for both of you and can't be undone. The puzzle is then free for other requests.",
+      "keep": "Keep exchange",
+      "confirm": "Cancel exchange"
+    },
     "incoming": "Incoming",
     "outgoing": "Outgoing",
     "allStatuses": "All Statuses",
@@ -4021,6 +4032,7 @@
       "saved": "Changes saved",
       "cancel": "Cancel",
       "editFailed": "Could not save your changes. Please try again.",
+      "copyReserved": "This puzzle is part of an exchange in progress or is out on loan, so you can't change how it's offered or shared right now. You can again once the exchange is completed, declined or cancelled, or once the puzzle is back.",
       "cover": "Cover image",
       "useCatalogueImage": "Use catalogue image",
       "noPhotosForCover": "Add photos to this copy to choose a custom cover.",

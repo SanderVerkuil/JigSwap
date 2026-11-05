@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   toCopyId,
+  toLoanId,
   toOwnerId,
   toPuzzleDefinitionId,
 } from "../../../shared-kernel";
-import { CatalogSnapshot, Copy, CopyId } from "../../domain";
+import { CatalogSnapshot, Copy, CopyId, Loan } from "../../domain";
 import {
   FakeCatalogSnapshotProvider,
   FakeCopyManagerPolicy,
   FakeCopyReservationPort,
   FixedClock,
   InMemoryCopyRepository,
+  InMemoryLoanRepository,
   RecordingEventPublisher,
   SequentialCopyIdGenerator,
 } from "../testing";
@@ -24,6 +26,7 @@ import { makeUpdateCopySharing } from "./update-copy-sharing";
 
 const alice = toOwnerId("alice");
 const bob = toOwnerId("bob");
+const carol = toOwnerId("carol");
 const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
@@ -469,8 +472,35 @@ describe("copy mutation use cases", () => {
   });
 
   describe("makeTransferCopyOwnership", () => {
+    let loans: InMemoryLoanRepository;
+    beforeEach(() => {
+      loans = new InMemoryLoanRepository();
+    });
     const run = () =>
-      makeTransferCopyOwnership({ copies, events, clock: new FixedClock(NOW) });
+      makeTransferCopyOwnership({
+        copies,
+        loans,
+        events,
+        clock: new FixedClock(NOW),
+      });
+
+    // Alice's copy out on loan to Carol: the open loan and the possession it moved.
+    const lentToCarol = async (id: string) => {
+      const opened = Loan.open({
+        id: toLoanId(id),
+        copyId,
+        lenderId: alice,
+        borrowerId: carol,
+        now: NOW,
+      });
+      if (!opened.isOk) throw new Error("setup");
+      await loans.save(opened.value);
+      const copy = await copies.findById(copyId);
+      if (!copy) throw new Error("setup");
+      copy.lendOut(carol, NOW);
+      await copies.save(copy);
+      return opened.value.id;
+    };
 
     it("reassigns the copy to the new owner and publishes CopyOwnershipTransferred", async () => {
       const result = await run()({ copyId, newOwner: bob });
@@ -487,6 +517,71 @@ describe("copy mutation use cases", () => {
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CopyNotFound");
+      expect(events.published).toHaveLength(0);
+    });
+
+    it("transfers from the expected previous owner", async () => {
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: alice,
+      });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.ownerId).toBe(bob);
+    });
+
+    it("refuses with OwnershipChanged when someone else owns it now, saving nothing", async () => {
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: bob,
+      });
+      expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+      expect((await copies.findById(copyId))?.ownerId).toBe(alice);
+      expect(events.published).toHaveLength(0);
+    });
+
+    // Possession goes to the new owner with the copy, so a loan still open on it ends with it.
+    it("ends a loan still open on the copy as recalled, before the copy moves", async () => {
+      const loanId = await lentToCarol("loan-open");
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: alice,
+      });
+      expect(result.isOk).toBe(true);
+      const loan = await loans.findById(loanId);
+      expect(loan?.status).toBe("recalled");
+      expect(loan?.toState().closedAt).toBe(NOW);
+      expect(await loans.findOpenByCopy(copyId)).toHaveLength(0);
+      expect((await copies.findById(copyId))?.heldBy).toBe(bob);
+      expect(events.names()).toEqual([
+        "LoanClosed",
+        "CopyOwnershipTransferred",
+      ]);
+    });
+
+    it("leaves closed loans as they were", async () => {
+      const loanId = await lentToCarol("loan-returned");
+      const loan = await loans.findById(loanId);
+      loan?.returnByBorrower(carol, NOW);
+      if (loan) await loans.save(loan);
+      const before = (await loans.findById(loanId))?.toState();
+      await run()({ copyId, newOwner: bob });
+      expect((await loans.findById(loanId))?.toState()).toEqual(before);
+      expect(events.names()).toEqual(["CopyOwnershipTransferred"]);
+    });
+
+    it("a refused transfer leaves the loan open", async () => {
+      const loanId = await lentToCarol("loan-kept");
+      const result = await run()({
+        copyId,
+        newOwner: bob,
+        expectedPreviousOwner: bob,
+      });
+      expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+      expect((await loans.findById(loanId))?.status).toBe("open");
+      expect((await copies.findById(copyId))?.heldBy).toBe(carol);
       expect(events.published).toHaveLength(0);
     });
   });

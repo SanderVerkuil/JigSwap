@@ -11,6 +11,7 @@ import {
   Copy,
   CopyId,
   LibraryError,
+  Loan,
   LoanId,
 } from "../../domain";
 import {
@@ -27,6 +28,7 @@ import { makeReturnLoan } from "./return-loan";
 
 const owner = toOwnerId("alice");
 const borrower = toOwnerId("bob");
+const carol = toOwnerId("carol");
 const definitionId = toPuzzleDefinitionId("def1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 const LATER = new Date("2026-06-20T10:00:00Z");
@@ -42,12 +44,14 @@ describe("loan use cases", () => {
   let copies: InMemoryCopyRepository;
   let loans: InMemoryLoanRepository;
   let events: RecordingEventPublisher;
+  let ids: SequentialLoanIdGenerator;
   let copyId: CopyId;
 
   beforeEach(async () => {
     copies = new InMemoryCopyRepository();
     loans = new InMemoryLoanRepository();
     events = new RecordingEventPublisher();
+    ids = new SequentialLoanIdGenerator();
     const acquired = Copy.acquire({
       id: toCopyId("copy-seed"),
       ownerId: owner,
@@ -64,7 +68,7 @@ describe("loan use cases", () => {
     makeOpenLoan({
       copies,
       loans,
-      ids: new SequentialLoanIdGenerator(),
+      ids,
       events,
       clock: new FixedClock(NOW),
     });
@@ -93,6 +97,108 @@ describe("loan use cases", () => {
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CannotLendToSelf");
       expect(events.published).toHaveLength(0);
+    });
+
+    // The settled lend names its lender; the loan opens only while they still own the copy.
+    it("opens the loan when the lender still owns the copy", async () => {
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      if (!result.isOk) throw new Error("expected ok");
+      const loan = await loans.findById(result.value);
+      expect(loan?.toState().lenderId).toBe(owner);
+    });
+
+    it("refuses with OwnershipChanged once someone else owns the copy, opening nothing", async () => {
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: toOwnerId("carol"),
+      });
+      expect(result.isErr && result.error.code).toBe("OwnershipChanged");
+      expect(events.published).toHaveLength(0);
+      expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(loans.size()).toBe(0);
+    });
+
+    // One open loan per copy: a copy already out is not lent again until it comes back.
+    it("refuses with AlreadyLentOut while another loan on the copy is open, opening nothing", async () => {
+      await open()({ copyId, borrowerId: borrower });
+      const published = events.published.length;
+      const result = await open()({ copyId, borrowerId: carol, lender: owner });
+      expect(result.isErr && result.error.code).toBe("AlreadyLentOut");
+      expect(loans.size()).toBe(1);
+      expect((await copies.findById(copyId))?.heldBy).toBe(borrower);
+      expect(events.published).toHaveLength(published);
+    });
+
+    it("refuses with AlreadyLentOut while someone else holds the copy, even without an open loan", async () => {
+      const copy = await copies.findById(copyId);
+      if (!copy) throw new Error("setup");
+      copy.lendOut(borrower, NOW);
+      await copies.save(copy);
+      const result = await open()({ copyId, borrowerId: carol });
+      expect(result.isErr && result.error.code).toBe("AlreadyLentOut");
+      expect(loans.size()).toBe(0);
+      expect((await copies.findById(copyId))?.heldBy).toBe(borrower);
+      expect(events.published).toHaveLength(0);
+    });
+
+    // A loan left open by rows from before these rules: its borrower no longer has the copy.
+    const leftOpenBy = async (lenderId: typeof owner) => {
+      const stale = Loan.open({
+        id: toLoanId("loan-left-open"),
+        copyId,
+        lenderId,
+        borrowerId: carol,
+        now: NOW,
+      });
+      if (!stale.isOk) throw new Error("setup");
+      await loans.save(stale.value);
+    };
+
+    it("refuses with AlreadyLentOut while the owner's own loan on it is open, even with the copy at home", async () => {
+      await leftOpenBy(owner);
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      expect(result.isErr && result.error.code).toBe("AlreadyLentOut");
+      expect(loans.size()).toBe(1);
+      expect((await copies.findById(copyId))?.heldBy).toBe(owner);
+      expect(events.published).toHaveLength(0);
+    });
+
+    // A loan a former owner left open (a transfer before transfers ended loans) is stale: it never
+    // stops the current owner lending their copy.
+    it("lends the copy although a former owner's loan on it is still open", async () => {
+      await leftOpenBy(toOwnerId("dave"));
+      const result = await open()({
+        copyId,
+        borrowerId: borrower,
+        lender: owner,
+      });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.heldBy).toBe(borrower);
+      expect(await loans.findOpenByCopy(copyId)).toHaveLength(2);
+    });
+
+    it("lends the copy again once the earlier loan is closed", async () => {
+      const first = await open()({ copyId, borrowerId: borrower });
+      if (!first.isOk) throw new Error("setup");
+      await makeReturnLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId: first.value, actingMemberId: borrower });
+      const second = await open()({ copyId, borrowerId: carol });
+      expect(second.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.heldBy).toBe(carol);
+      expect(await loans.findOpenByCopy(copyId)).toHaveLength(1);
     });
   });
 
@@ -236,6 +342,46 @@ describe("loan use cases", () => {
       })({ loanId: toLoanId("ghost"), actingMemberId: owner });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("LoanNotFound");
+    });
+
+    // A loan whose borrower no longer holds the copy (an older loan left open beside a newer one)
+    // closes without taking the copy away from whoever holds it now.
+    const nowHeldByCarol = async () => {
+      const copy = await copies.findById(copyId);
+      if (!copy) throw new Error("setup");
+      copy.returnToOwner(NOW);
+      copy.lendOut(carol, NOW);
+      copy.pullEvents();
+      await copies.save(copy);
+      return events.published.length;
+    };
+
+    it("returning a loan whose borrower no longer holds the copy closes it and leaves possession alone", async () => {
+      const published = await nowHeldByCarol();
+      const result = await makeReturnLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: borrower });
+      expect(result.isOk).toBe(true);
+      expect((await loans.findById(loanId))?.status).toBe("returned");
+      expect((await copies.findById(copyId))?.heldBy).toBe(carol);
+      expect(events.names().slice(published)).toEqual(["LoanClosed"]);
+    });
+
+    it("recalling a loan whose borrower no longer holds the copy closes it and leaves possession alone", async () => {
+      const published = await nowHeldByCarol();
+      const result = await makeRecallLoan({
+        loans,
+        copies,
+        events,
+        clock: new FixedClock(LATER),
+      })({ loanId, actingMemberId: owner });
+      expect(result.isOk).toBe(true);
+      expect((await loans.findById(loanId))?.status).toBe("recalled");
+      expect((await copies.findById(copyId))?.heldBy).toBe(carol);
+      expect(events.names().slice(published)).toEqual(["LoanClosed"]);
     });
 
     // returnToOwner returns a Result; both close use cases must propagate a failure rather than

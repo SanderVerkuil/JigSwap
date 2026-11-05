@@ -60,6 +60,9 @@ const CODE_TO_KEY: Record<string, ProposeErrorKey> = {
   // The copy changed hands since the page loaded — to the requester it reads as "gone".
   RecipientNotOwner: "notFound",
   OfferedCopyNotOwned: "offeredNotOwned",
+  // Propose answers this only for the offered copy, when it is out on loan (a lent-out requested
+  // copy is CopyNotAvailable): it can't be offered until it is back.
+  CopyReserved: "offeredNotOwned",
   DuplicateProposal: "duplicate",
   SelfExchange: "ownCopy",
   MissingTerms: "missingTerms",

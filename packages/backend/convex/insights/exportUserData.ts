@@ -13,7 +13,9 @@ const EXPORT_LIMIT = 5000;
 // Exchange rows as the exporting member may see them: a counterparty who is hidden from them in
 // that trade (a private owner who has not accepted or replied to it yet — exchange/tradeParty) has
 // their raw id OMITTED, exactly like the exchange views. Counterparty facts are memoized, so a long
-// history costs a few reads per partner plus one point read per exchange.
+// history costs a few reads per partner plus one point read per exchange. The offered copy's
+// recorded owner is internal (it may be the requester's household mate, who is no party) and is
+// never exported.
 const exportableExchanges = async (
   ctx: QueryCtx,
   userId: Id<"users">,
@@ -22,7 +24,12 @@ const exportableExchanges = async (
   const memo: TradePartyMemo = new Map();
   const out = [];
   for (const row of rows) {
-    const { initiatorId, recipientId, ...rest } = row;
+    const {
+      initiatorId,
+      recipientId,
+      offeredPuzzleOwnerId: _offeredPuzzleOwnerId,
+      ...rest
+    } = row;
     const hidden = async (party: Id<"users">) =>
       (await projectTradeParty(ctx, userId, row, party, memo)).state ===
       "hidden";

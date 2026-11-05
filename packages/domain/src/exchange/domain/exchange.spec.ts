@@ -6,6 +6,7 @@ import {
   toMemberId,
 } from "../../shared-kernel";
 import {
+  ExchangeCancelled,
   ExchangeCompleted,
   ExchangeProposed,
   OwnershipTransferred,
@@ -117,6 +118,23 @@ describe("Exchange.propose", () => {
     expect(lend.kind).toBe("lend");
     expect(lend.returnDate).toBe(LATER);
   });
+
+  it("records who owned the offered copy for a swap, and only for a swap", () => {
+    const carol = toMemberId("carol"); // alice's housemate, owner of the offered copy
+    expect(
+      propose(swapTerms, { offeredCopyOwnerId: carol }).toState()
+        .offeredCopyOwnerId,
+    ).toBe(carol);
+
+    const sale = propose(saleTerms(), { offeredCopyOwnerId: carol }).toState();
+    expect(sale).not.toHaveProperty("offeredCopyOwnerId");
+    const lend = propose(lendTerms, { offeredCopyOwnerId: carol }).toState();
+    expect(lend).not.toHaveProperty("offeredCopyOwnerId");
+    // Not supplied (as on a row proposed before it was recorded): absent, never a guess.
+    expect(propose(swapTerms).toState()).not.toHaveProperty(
+      "offeredCopyOwnerId",
+    );
+  });
 });
 
 describe("accept", () => {
@@ -202,7 +220,27 @@ describe("cancel", () => {
     expect(ex.status).toBe("cancelled");
   });
 
-  it("rejects cancel by the recipient (wrong party)", () => {
+  it("lets the recipient call off an accepted exchange", () => {
+    const ex = accepted();
+    const r = ex.cancel(bob, NOW);
+    expect(r.isOk).toBe(true);
+    expect(ex.status).toBe("cancelled");
+    expect(names(ex.pullEvents())).toEqual(["ExchangeCancelled"]);
+  });
+
+  it.each([
+    ["the initiator", alice],
+    ["the recipient", bob],
+  ])("names %s as the member who cancelled", (_, by) => {
+    const ex = accepted();
+    ex.cancel(by, NOW);
+    const [event] = ex.pullEvents();
+    expect(event).toBeInstanceOf(ExchangeCancelled);
+    expect((event as ExchangeCancelled).cancelledBy).toBe(by);
+    expect(event?.occurredAt).toBe(NOW);
+  });
+
+  it("rejects cancel of a pending request by the recipient (they decline it)", () => {
     const ex = propose(swapTerms);
     const r = ex.cancel(bob, NOW);
     expect(r.isErr).toBe(true);
@@ -210,6 +248,24 @@ describe("cancel", () => {
       expect(r.error.code).toBe("WrongParty");
       expect(r.error.message).toBe("Acting member may not cancel");
     }
+    expect(ex.status).toBe("proposed");
+  });
+
+  it("rejects cancel of an accepted exchange by a non-party", () => {
+    const ex = accepted();
+    const r = ex.cancel(toMemberId("eve"), NOW);
+    expect(r.isErr).toBe(true);
+    if (r.isErr) expect(r.error.code).toBe("WrongParty");
+    expect(ex.status).toBe("accepted");
+  });
+
+  it("the recipient can't cancel a completed exchange", () => {
+    const ex = accepted();
+    ex.confirmCompletion(alice, NOW);
+    ex.confirmCompletion(bob, NOW);
+    const r = ex.cancel(bob, NOW);
+    expect(r.isErr).toBe(true);
+    expect(ex.status).toBe("completed");
   });
 
   it("cannot cancel a completed exchange", () => {
@@ -292,6 +348,29 @@ describe("settlement events", () => {
     expect(transfers[1]).toMatchObject({ copyId: offered, newOwner: bob });
   });
 
+  // Library refuses a transfer whose copy no longer belongs to the expected previous owner, so a
+  // settlement never moves a copy away from someone the deal wasn't made with.
+  it("each transfer names the owner the deal was made with as the expected previous owner", () => {
+    const carol = toMemberId("carol"); // alice's housemate, whose copy alice offered
+    const ex = propose(swapTerms, { offeredCopyOwnerId: carol });
+    ex.accept(bob, NOW);
+    ex.confirmCompletion(alice, NOW);
+    ex.confirmCompletion(bob, LATER);
+    const transfers = ex
+      .pullEvents()
+      .filter(
+        (e): e is OwnershipTransferred => e.name === "OwnershipTransferred",
+      );
+    expect(transfers[0]).toMatchObject({
+      copyId: requested,
+      expectedPreviousOwner: bob,
+    });
+    expect(transfers[1]).toMatchObject({
+      copyId: offered,
+      expectedPreviousOwner: carol,
+    });
+  });
+
   it("a sale transfers ONLY the requested copy to the initiator", () => {
     const ex = accepted(saleTerms());
     ex.confirmCompletion(alice, NOW);
@@ -317,7 +396,11 @@ describe("settlement events", () => {
       (e): e is PossessionTransferred => e.name === "PossessionTransferred",
     );
     expect(possession).toHaveLength(1);
-    expect(possession[0]).toMatchObject({ copyId: requested, borrower: alice });
+    expect(possession[0]).toMatchObject({
+      copyId: requested,
+      borrower: alice,
+      lender: bob, // Library opens the loan only while the recipient still owns the copy
+    });
   });
 
   // The second transfer is guarded by `kind === "swap" && offeredCopyId`. Rehydrating
@@ -357,6 +440,13 @@ describe("settlement events", () => {
     // `if (true)` mutant dies here.
     const ex = acceptedState({ kind: "swap", offeredCopyId: undefined });
     expect(settle(ex)).toHaveLength(1);
+  });
+
+  it("an offered copy whose owner was never recorded names no expected previous owner", () => {
+    // A swap proposed before the owner was recorded: Library then transfers without the check.
+    const transfers = settle(accepted(swapTerms));
+    expect(transfers[1]?.copyId).toBe(offered);
+    expect(transfers[1]?.expectedPreviousOwner).toBeUndefined();
   });
 
   it("records ExchangeCompleted exactly once on settlement", () => {

@@ -93,15 +93,37 @@ An exchange moves through clear steps:
    incoming request, use **Accept** or **Decline**. As the sender of an
    outgoing request, you can **Cancel**.)
 3. **Completion** — once accepted, **both parties must confirm** completion.
-   Use **Mark Complete**.
+   Use **Mark Complete**. Until then, either of you can still **Cancel** the
+   exchange, for example if plans change or the other member stops responding.
 4. **Completed** — when both confirm, ownership (swap/sale) or possession
    (loan) transfers, and you can **Leave a review** of your partner.
+
+### One puzzle, one deal
+
+Accepting a request sets the puzzle aside for that exchange. Until the exchange
+is completed or cancelled, you can't accept another request for the same
+puzzle, whether to swap, buy or borrow it. Other members can still send you
+requests for it, and you can accept one once the puzzle is free again. If the
+exchange stalls, either of you can **Cancel** it, which frees the puzzle.
+
+**Accept** doesn't go through while a puzzle in the exchange is set aside for
+another exchange. **Accept** and **Mark Complete** don't go through while a
+puzzle in the exchange is out on loan, or once a puzzle has changed hands or is
+gone since the request was sent. A message tells you why. An exchange whose
+puzzle changed hands can't be completed any more: decline it if it's still a
+request, or cancel it if it was accepted.
 
 ## Returning a borrowed puzzle
 
 If you've borrowed a puzzle (it's on the **Borrowed** tab), use the **Return**
 action to give it back. If you're the lender, you can **Recall** a lent-out copy
 from your library.
+
+A puzzle can be on loan to one member at a time. While it's out on loan, it
+isn't available: nobody can request it, you can't offer it again or offer it in
+a swap, and you can't delete it. No exchange that would move it can be accepted
+or completed until it's back. Once it's returned or recalled, turn on
+**Offer for Swap** or **Offer to Lend** on its page to offer it again.
 
 You can also **Message** your exchange partner from the exchange to coordinate
 details. To report a problem with a trade, open the **Trade actions** menu and

@@ -33,10 +33,14 @@ export class ExchangeRejected implements DomainEvent {
   ) {}
 }
 
+// `cancelledBy` is the party who called the deal off (the initiator, or either party once it was
+// accepted); the other party is the one to tell. Absent from events stored before it existed, which
+// only an initiator could cause.
 export class ExchangeCancelled implements DomainEvent {
   readonly name = "ExchangeCancelled";
   constructor(
     readonly exchangeId: ExchangeId,
+    readonly cancelledBy: MemberId,
     readonly occurredAt: Date,
   ) {}
 }
@@ -49,20 +53,26 @@ export class ExchangeCompleted implements DomainEvent {
   ) {}
 }
 
-// One per transferred copy (settlement invariant). Library reacts by minting a new Copy
-// for `newOwner` and recording chain-of-custody.
+// One per transferred copy (settlement invariant). Library reacts by handing the copy to
+// `newOwner` and recording chain-of-custody. `expectedPreviousOwner` is the owner the deal was made
+// with (the recipient for the requested copy, the recorded owner for a swap's offered copy): Library
+// refuses the move once the copy belongs to anyone else. Undefined for an offered copy whose owner
+// was never recorded, and absent from events stored before it existed: no check then.
 export class OwnershipTransferred implements DomainEvent {
   readonly name = "OwnershipTransferred";
   constructor(
     readonly exchangeId: ExchangeId,
     readonly copyId: CopyId,
     readonly newOwner: MemberId,
+    readonly expectedPreviousOwner: MemberId | undefined,
     readonly occurredAt: Date,
   ) {}
 }
 
 // Settlement of a LEND: possession (not ownership) of the copy passes to the borrower. The owner
-// is unchanged. Library opens an open-ended Loan in reaction; expectedReturn is advisory.
+// is unchanged. Library opens an open-ended Loan in reaction, only while `lender` (the recipient
+// the deal was made with) still owns the copy; expectedReturn is advisory. Events stored before
+// `lender` existed lack it: no check then.
 export class PossessionTransferred implements DomainEvent {
   readonly name = "PossessionTransferred";
   constructor(
@@ -70,6 +80,7 @@ export class PossessionTransferred implements DomainEvent {
     readonly copyId: CopyId,
     readonly borrower: MemberId,
     readonly expectedReturn: Date | undefined,
+    readonly lender: MemberId,
     readonly occurredAt: Date,
   ) {}
 }

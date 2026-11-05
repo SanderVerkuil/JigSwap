@@ -7,13 +7,24 @@ import {
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { BorrowedEmptyState } from "@/components/exchange/borrowed-empty-state";
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import { exchangeErrorKey } from "@/components/exchange/exchange-error";
 import { TradePartnerCard } from "@/components/exchange/trade-partner-card";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { LeaveReviewDialog } from "@/components/reputation/leave-review-dialog";
 import { ExchangeReportMenu } from "@/components/safety/exchange-report-menu";
 import { GuideHelpButton } from "@/components/tour/guide-help-button";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { gateway, Id } from "@/gateway";
@@ -393,10 +404,11 @@ function ExchangeDetail({
         await mutate({ exchangeId: exchange.aggregateId });
       } catch (error) {
         console.error("Exchange action failed:", error);
-        // Accept re-checks the requester's circle permission; say why it was refused.
-        if (convexErrorCode(error) === "NotPermittedInCircle") {
-          toast.error(t("acceptNotPermitted"));
-        }
+        // Say why a refusal the member can make sense of happened: accept re-checks the requester's
+        // circle permission, and accept and complete refuse while a puzzle is set aside elsewhere or
+        // on loan, or once one changed hands (exchange-error).
+        const key = exchangeErrorKey(error);
+        if (key) toast.error(t(key));
       }
     };
 
@@ -469,14 +481,52 @@ function ExchangeDetail({
         )}
 
         {exchange.status === "accepted" && (
-          <Button
-            size="sm"
-            disabled={!exchange.aggregateId}
-            onClick={run((args) => completeExchange.mutateAsync(args))}
-          >
-            <CheckCircle className="h-4 w-4" />
-            {t("markComplete")}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              disabled={!exchange.aggregateId}
+              onClick={run((args) => completeExchange.mutateAsync(args))}
+            >
+              <CheckCircle className="h-4 w-4" />
+              {t("markComplete")}
+            </Button>
+            {/* Accepting sets the puzzle aside for this one exchange, so either side can call it
+                off (a pending request is only the requester's to cancel). Calling off an agreed
+                deal is final, so it asks first and says what follows. */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!exchange.aggregateId}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {t("cancel")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {t("cancelAccepted.title")}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("cancelAccepted.body")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {t("cancelAccepted.keep")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className={buttonVariants({ variant: "destructive" })}
+                    onClick={run((args) => cancelExchange.mutateAsync(args))}
+                  >
+                    {t("cancelAccepted.confirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
 
         {/* Review the partner once completed; the dialog hides itself when the

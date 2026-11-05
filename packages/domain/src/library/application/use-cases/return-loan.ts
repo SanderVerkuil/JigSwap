@@ -11,7 +11,9 @@ export interface ReturnLoanDeps {
   readonly clock: Clock;
 }
 
-// The borrower hands the copy back: close the loan (only the borrower may) and return possession.
+// The borrower hands the copy back: close the loan (only the borrower may) and return possession,
+// but only while this loan's borrower holds the copy: closing an older loan never takes the copy
+// away from whoever holds it now.
 export const makeReturnLoan =
   (deps: ReturnLoanDeps): ReturnLoan =>
   async (cmd: CloseLoanCommand) => {
@@ -22,7 +24,8 @@ export const makeReturnLoan =
     const closed = loan.returnByBorrower(cmd.actingMemberId, now);
     if (closed.isErr) return err(closed.error);
 
-    const copy = await deps.copies.findById(loan.copyId);
+    const found = await deps.copies.findById(loan.copyId);
+    const copy = found?.heldBy === loan.borrowerId ? found : null;
     if (copy) {
       const returned = copy.returnToOwner(now);
       if (returned.isErr) return err(returned.error);

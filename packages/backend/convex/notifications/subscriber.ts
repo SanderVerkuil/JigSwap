@@ -259,14 +259,21 @@ const translate = async (
     case "ExchangeCancelled": {
       const row = await loadExchange(ctx, p.exchangeId as string);
       if (!row) return [];
+      // Tell the party who did NOT call it off. Either party may cancel an accepted deal; events
+      // stored before `cancelledBy` existed could only come from the initiator.
+      const byRecipient =
+        (p.cancelledBy as string | undefined) === (row.recipientId as string);
+      const [canceller, counterparty] = byRecipient
+        ? [row.recipientId, row.initiatorId]
+        : [row.initiatorId, row.recipientId];
       return [
         cmd(
-          row.recipientId,
+          counterparty,
           "trade_cancelled",
           row._id,
           {},
           {
-            actor: row.initiatorId,
+            actor: canceller,
             subject: exchangeSubject(p),
           },
         ),

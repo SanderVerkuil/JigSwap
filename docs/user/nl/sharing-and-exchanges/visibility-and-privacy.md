@@ -54,9 +54,15 @@ Een privé-exemplaar blijft zichtbaar voor:
 
 - jou en de leden van je huishouden;
 - wie het op dat moment in bezit heeft;
-- het andere lid van een ruil waar het exemplaar bij hoort, zolang de ruil in
-  afwachting of geaccepteerd is, en nadat hij is afgerond. Wordt de ruil
-  afgewezen of geannuleerd, dan is het exemplaar weer privé voor diegene.
+- het andere lid van een ruil tussen jullie tweeën waar het exemplaar bij
+  hoort, zolang de ruil in afwachting of geaccepteerd is, en nadat hij is
+  afgerond. Wordt de ruil afgewezen of geannuleerd, dan is het exemplaar weer
+  privé voor diegene. Ruilen die een eerdere eigenaar van het exemplaar deed,
+  tellen niet mee;
+- het lid aan wie een huisgenoot het in een ruil heeft aangeboden, zolang het
+  exemplaar nog van jou is en je huisgenoot het nog mag beheren. Wijst dat lid
+  de ruil af of wordt hij geannuleerd, dan is het exemplaar weer privé voor
+  diegene.
 
 > **Let op:** Je kunt alleen een zichtbaar exemplaar aanbieden. Zolang een
 > exemplaar wordt aangeboden om te ruilen, uit te lenen of te verkopen, is de

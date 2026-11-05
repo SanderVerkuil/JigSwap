@@ -12,7 +12,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
-import { assertPairNotBlocked } from "../social/blocks";
+import { isBlockedEitherWay } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
 import { convexExchangeEligibility } from "./adapters/convexExchangeEligibility";
 import { convexExchangeRepository } from "./adapters/convexExchangeRepository";
@@ -52,26 +52,40 @@ export const propose = mutation({
       });
     }
     const recipientId = requested.ownerId;
-    // Against the derived owner, never the ignored client `recipientId`.
-    await assertPairNotBlocked(ctx, initiatorId, recipientId);
+    // The terms are checked from the input alone, before the gates below: their refusal says
+    // nothing about the copy or the pair, so it is the same whoever asks, blocked or not.
+    const kind: ExchangeKind = TYPE_TO_KIND[args.type];
+    const terms = buildTerms(kind, args);
+    if (terms instanceof ConvexError) throw terms;
+
     // Reachability: the initiator may only propose on a copy they could see (the same gate every
     // copy read uses). Without it any member who learns a copy id could target an owner they have
     // no route to (private profile, no shared circle, not friends).
-    if (
-      !(await canViewCopy(
-        ctx,
-        initiatorId as unknown as Id<"users">,
-        requested,
-      ))
-    ) {
+    // A block either way (against the derived owner, never the ignored client `recipientId`) must
+    // not be told apart from what the same member would get without it, or the blocked member
+    // learns that a block exists. canViewCopy refuses a blocked pair, so a blocked member gets the
+    // CopyNotReachable a member with no route gets. The one exception is the member holding the
+    // copy: canViewCopy lets them through whatever the block, so propose checks the block itself.
+    // The copy is out on loan to them, so the answer they get without the block is the domain's
+    // refusal of a lent-out copy (CopyNotAvailable; blocking cancelled any request of theirs, so
+    // no DuplicateProposal), and a blocked holder gets exactly that, not a "no route" that only
+    // a block could cause.
+    const initiatorUserId = initiatorId as unknown as Id<"users">;
+    if (!(await canViewCopy(ctx, initiatorUserId, requested))) {
       throw toConvexError(
         ApplicationError.copyNotReachable(toCopyId(args.requestedPuzzleId)),
       );
     }
-
-    const kind: ExchangeKind = TYPE_TO_KIND[args.type];
-    const terms = buildTerms(kind, args);
-    if (terms instanceof ConvexError) throw terms;
+    if (await isBlockedEitherWay(ctx, initiatorId, recipientId)) {
+      throw toConvexError(
+        requested.heldBy === initiatorUserId
+          ? ApplicationError.copyNotAvailable(
+              toCopyId(args.requestedPuzzleId),
+              kind,
+            )
+          : ApplicationError.copyNotReachable(toCopyId(args.requestedPuzzleId)),
+      );
+    }
 
     const proposeExchange = makeProposeExchange({
       exchanges: convexExchangeRepository(ctx),

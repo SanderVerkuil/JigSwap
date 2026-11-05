@@ -159,8 +159,21 @@ export class Copy {
   // back to the new-copy default — visible, not offered — so the new owner decides availability; acquisition becomes a trade; personal
   // notes drop), while the physical record (condition, snapshot, missing pieces, images) carries
   // over. The stable copy id keeps the chain-of-custody coherent across successive owners.
-  transferTo(newOwner: OwnerId, now: Date): Result<void, LibraryError> {
+  // `expectedPreviousOwner` is the owner the settled deal was made with: once the copy belongs to
+  // anyone else it is refused (OwnershipChanged) and nothing changes. Omitted: no check (a settlement
+  // recorded before it was carried).
+  transferTo(
+    newOwner: OwnerId,
+    now: Date,
+    expectedPreviousOwner?: OwnerId,
+  ): Result<void, LibraryError> {
     const previousOwner = this.state.ownerId;
+    if (
+      expectedPreviousOwner !== undefined &&
+      expectedPreviousOwner !== previousOwner
+    ) {
+      return err(LibraryError.ownershipChanged());
+    }
     this.state = {
       ...this.state,
       ownerId: newOwner,
@@ -178,8 +191,12 @@ export class Copy {
 
   // Lend the copy out: possession passes to the borrower (ownership unchanged) and it leaves the
   // market for the loan's duration (offers withdrawn, the owner's visibility choice kept). Driven by
-  // the loan use case; the owner stays this.state.ownerId.
+  // the loan use case; the owner stays this.state.ownerId. One loan at a time: while anyone but the
+  // owner holds the copy it is refused (AlreadyLentOut) and nothing changes.
   lendOut(borrower: OwnerId, now: Date): Result<void, LibraryError> {
+    if (this.state.heldBy !== this.state.ownerId) {
+      return err(LibraryError.alreadyLentOut());
+    }
     this.state = {
       ...this.state,
       heldBy: borrower,

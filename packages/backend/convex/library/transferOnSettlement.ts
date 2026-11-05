@@ -6,6 +6,7 @@ import {
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { convexCopyRepository } from "./adapters/convexCopyRepository";
+import { convexLoanRepository } from "./adapters/convexLoanRepository";
 import { libraryEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
@@ -14,6 +15,9 @@ import { toConvexError } from "./errors";
 // hands — the aggregate reassigns the owner and resets owner-scoped fields, keeping the physical
 // record. A lend emits PossessionTransferred instead (handled by openLoanOnSettlement), so it never
 // reaches here. Runs AFTER the custody subscriber in dispatch so custody records the pre-transfer owner.
+// The move is refused (OwnershipChanged) once the copy no longer belongs to the event's
+// expectedPreviousOwner, the owner the deal was made with; events stored without it transfer as before.
+// Possession moves with ownership, so a loan still open on the copy ends (recalled) with the move.
 export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
@@ -26,6 +30,7 @@ export const handleDomainEvent = async (
 
   const transfer = makeTransferCopyOwnership({
     copies: convexCopyRepository(ctx),
+    loans: convexLoanRepository(ctx),
     events: libraryEventPublisher(ctx),
     clock: systemClock,
   });
@@ -33,11 +38,16 @@ export const handleDomainEvent = async (
   const result = await transfer({
     copyId: toCopyId(copy.aggregateId),
     newOwner: toOwnerId(p.newOwner as string),
+    expectedPreviousOwner:
+      p.expectedPreviousOwner === undefined
+        ? undefined
+        : toOwnerId(p.expectedPreviousOwner as string),
   });
   // The household permission was the PREVIOUS owner's choice for their household; the new owner
   // starts from the default (absent = "manage") for theirs.
-  // A refusal is an integrity anomaly here (the settled copy exists), never an expected outcome:
-  // throw so dispatch logs + records it and the custody row written alongside rolls back.
+  // A refusal is an integrity anomaly here (the settled copy exists, and settlement-guard refused
+  // any deal whose copy changed hands), never an expected outcome: throw so dispatch logs + records
+  // it and the custody row written alongside rolls back.
   if (result.isErr) throw toConvexError(result.error);
   if (copy.householdPermission !== undefined) {
     await ctx.db.patch(copy._id, { householdPermission: undefined });

@@ -9,7 +9,10 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Library's reaction to a settled LEND (Exchange's PossessionTransferred): open an open-ended Loan
-// and move possession of the copy to the borrower. Ownership stays with the lender (the copy owner).
+// and move possession of the copy to the borrower. Ownership stays with the lender (the copy owner),
+// who must still be the event's `lender`, the owner the lend was agreed with (OwnershipChanged
+// otherwise); events stored without it open the loan as before. One loan per copy: a copy already
+// out on loan is not lent again (AlreadyLentOut).
 export const handleDomainEvent = async (
   ctx: MutationCtx,
   event: Doc<"domainEvents">,
@@ -34,8 +37,10 @@ export const handleDomainEvent = async (
       p.expectedReturn === undefined
         ? undefined
         : new Date(p.expectedReturn as number),
+    lender: p.lender === undefined ? undefined : toOwnerId(p.lender as string),
   });
-  // A refusal (copy vanished, lend to self) contradicts a settled lend: throw so dispatch logs and
-  // records it instead of the loan silently never opening.
+  // A refusal (copy vanished, lend to self, copy changed hands, copy already out on loan)
+  // contradicts a settled lend: throw so dispatch logs and records it instead of the loan silently
+  // never opening.
   if (opened.isErr) throw toConvexError(opened.error);
 };
