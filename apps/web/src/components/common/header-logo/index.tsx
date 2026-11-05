@@ -1,18 +1,27 @@
 import { Image } from "@/compat/image";
+// 96px covers the 26px mark at 3x (assets/icon.png is the 256px source).
+import logoMark from "@/components/marketing/assets/icon-96.webp";
 import { cn } from "@/lib/utils";
-// 3x the top bar's 28px logo height (logo-horizontal.png is the full-size source).
-import headerLogo from "./logo-horizontal-84h.webp";
 
-// Above the fold in the desktop top bar, so it loads eagerly and first.
+// The logo: the violet puzzle-piece mark and the live wordmark. Its colours are the logo's own and
+// do not follow the theme's primary.
+// Above the fold in the desktop top bar, so the mark loads eagerly and first.
 export function HeaderLogo({ className }: { className?: string }) {
   return (
-    <Image
-      src={headerLogo}
-      alt="JigSwap Logo"
-      width={108}
-      height={28}
-      priority
-      className={cn("pl-4 h-8 w-auto object-contain", className)}
-    />
+    <span className={cn("inline-flex items-center gap-1.5", className)}>
+      {/* max-w-none: a percentage max-width lets a grid track size past the mark. */}
+      <Image
+        src={logoMark}
+        alt=""
+        width={26}
+        height={26}
+        priority
+        className="block max-w-none"
+      />
+      <span className="font-logo text-[21px] leading-none font-bold">
+        <span className="text-logo-jig">Jig</span>
+        <span className="text-logo-swap">Swap</span>
+      </span>
+    </span>
   );
 }

@@ -128,17 +128,18 @@ export function MobileTabBar() {
         <div className="flex items-center justify-center">
           <button
             type="button"
+            data-tour="my-puzzles-add"
             onClick={() => setSheetOpen(true)}
             aria-label={
               whatsNewCount > 0
                 ? t("openQuickActionsUnread", { count: whatsNewCount })
                 : t("openQuickActions")
             }
-            className="bg-jigsaw-primary ring-card relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-full text-white shadow-[0_8px_22px_-6px_color-mix(in_oklab,var(--jigsaw-primary)_65%,transparent)] ring-4"
+            className="bg-jigsaw-gold text-jigsaw-on-gold hover:bg-mk-gold-press focus-visible:ring-ring/50 relative -mt-[22px] inline-flex size-[52px] items-center justify-center rounded-xl transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] motion-safe:active:scale-[0.97]"
           >
             <Plus className="size-6" />
             {whatsNewCount > 0 && (
-              <UnreadDot className="ring-card top-0.5 right-0.5 size-2.5" />
+              <UnreadDot className="ring-card -top-1 -right-1 size-2.5" />
             )}
           </button>
         </div>
@@ -193,12 +194,15 @@ function TabLink({
       aria-label={count && value > 0 ? count.label : t(`tabs.${tab.key}`)}
       aria-current={on ? "page" : undefined}
       className={cn(
-        "flex min-h-14 flex-col items-center justify-center",
-        on ? "text-jigsaw-primary" : "text-muted-foreground",
+        "focus-visible:ring-ring/50 flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 transition-transform duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-[3px] focus-visible:ring-inset motion-safe:active:scale-[0.97]",
+        on ? "text-foreground" : "text-muted-foreground",
       )}
     >
       <span className="relative">
-        <tab.icon className="size-[21px]" />
+        <tab.icon
+          className={cn("size-[21px]", on && "fill-current")}
+          strokeWidth={on ? 2.25 : 1.75}
+        />
         {value > 0 &&
           (count?.indicator === "dot" ? (
             <UnreadDot className="ring-card -top-0.5 -right-1 size-2.5" />
@@ -210,6 +214,14 @@ function TabLink({
               {formatNavBadge(value)}
             </span>
           ))}
+      </span>
+      <span
+        className={cn(
+          "text-xs leading-none",
+          on ? "font-semibold" : "font-medium",
+        )}
+      >
+        {t(`tabs.${tab.key}`)}
       </span>
     </Link>
   );

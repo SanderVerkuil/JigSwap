@@ -1,13 +1,13 @@
 "use client";
 
-// Grouped navigation sidebar. It sits transparently on the tinted chrome
-// surface below the global top bar — no brand lockup (that lives in the top
-// bar) and no border walls. Group labels are uppercase mono rows that link to
-// their landing pages (/library, /community, /admin — the admin group renders
-// only for backend-confirmed admins), the hubs the phone tabs open; they show
-// a row background and a chevron on hover and focus so they read as links.
-// Messages carries the unread count; Moderation, Puzzles and Contact carry the
-// work waiting in their admin queues.
+// Grouped navigation sidebar: the long arm of the sky L-frame below the global
+// top bar, with no brand lockup (that lives in the top bar) and no border walls.
+// Group names are serif links to their landing pages (/library, /community and
+// /admin; the admin group renders only for backend-confirmed admins), the hubs the
+// phone tabs open; they show a row background and a chevron on hover and focus so they
+// read as links. Messages carries the unread count; Moderation, Puzzles and Contact
+// carry the work waiting in their admin queues. A gable skyline stands at the foot,
+// behind What's new and the account row.
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
@@ -15,6 +15,7 @@ import {
   ADMIN_COUNTED_NAV_KEYS,
   adminNavCount,
 } from "@/components/admin/pending-counts";
+import { StreetSkyline } from "@/components/common/street-skyline";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeaderContent } from "@/components/dashboard-layout/page-header-slot";
 import { formatUnreadCount } from "@/components/messaging/format";
@@ -65,16 +66,17 @@ export function AppSidebar() {
     <Sidebar
       variant="inset"
       collapsible="icon"
-      // Slot the fixed desktop sidebar below the 56px global top bar.
-      className="top-14 h-[calc(100svh-3.5rem)]"
+      // Slot the fixed desktop sidebar below the 48px global top bar.
+      className="top-12 h-[calc(100svh-3rem)]"
     >
+      <SidebarSkyline />
       {/* One navigation landmark for the whole sidebar (groups, What's new, account), so
           screen-reader users can jump to it and no sidebar content sits outside a landmark. */}
       <nav
         aria-label={t("primaryNav")}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <SidebarContent>
+        <SidebarContent className="relative [scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] [scrollbar-width:thin]">
           <SidebarGroup>
             <SidebarMenu>
               <NavLink item={DASHBOARD_ITEM} />
@@ -91,7 +93,11 @@ export function AppSidebar() {
           )}
         </SidebarContent>
 
-        <SidebarFooter>
+        {/* From 720px tall the top padding clears the skyline's windows, so nothing
+          lit sits behind a label and a long nav scrolls above them. The footer rows
+          stand on the skyline's tone, which in the light theme equals the nav's hover
+          tone, so they hover with a tint that shows on it and on the bare frame. */}
+        <SidebarFooter className="relative gap-0.5 px-2 pt-2 pb-0 group-data-[collapsible=icon]:pt-2 [@media(min-height:720px)]:pt-9 [@media(hover:hover)]:[&_[data-slot=sidebar-menu-button]:not([data-active=true]):hover]:bg-sidebar-foreground/8">
           <SidebarMenu>
             <WhatsNewNavItem
               count={whatsNewCount}
@@ -102,6 +108,22 @@ export function AppSidebar() {
         </SidebarFooter>
       </nav>
     </Sidebar>
+  );
+}
+
+// The signature: a tone-on-tone row of gables at the sidebar's foot, drawn 1:1 and cropped by the
+// sidebar's width. It stands on a solid band of its own tone, tall enough to lift every window above
+// the footer rows, so a window lit at night never sits behind text. Hidden in the icon rail and on
+// short windows, where the nav needs the room.
+function SidebarSkyline() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 bottom-0 hidden overflow-hidden text-sidebar-skyline [--skyline-window:var(--sidebar-skyline-window)] group-data-[collapsible=icon]:hidden [@media(min-height:720px)]:block"
+    >
+      <StreetSkyline className="h-[120px] w-[480px] max-w-none" />
+      <div className="h-11 bg-current" />
+    </div>
   );
 }
 
@@ -121,7 +143,7 @@ function NavGroup({ group }: { group: ShellNavGroup }) {
           onClick={() => setOpenMobile(false)}
           // Slot concatenates these after the primitive's classes without merging them, so the
           // active look is an aria-current variant, which wins over the base text colour.
-          className="group/hub gap-2 font-mono tracking-[0.08em] uppercase hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-sidebar-accent-foreground"
+          className="group/hub gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-sidebar-accent-foreground"
         >
           <span className="min-w-0 flex-1 truncate">
             {t(`groups.${group.key}.label`)}

@@ -8,7 +8,8 @@
 // still reaches Goals, Messages or Exchanges. From MIN_TERM_LENGTH characters the live result groups render
 // above them, with a "Searching…" row while the query runs; the empty text shows only when the
 // search is done and nothing at all matches. With an empty input the palette is a pure jump-to
-// navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
+// navigator. Opened from the top-bar search control or Cmd/Ctrl+K. It opens
+// and closes without animation, because it is pressed many times a day; other dialogs keep theirs.
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { useDataExport } from "@/components/insights/export-button";
@@ -327,13 +328,15 @@ export function CommandPalette({
       title={t("search.label")}
       description={t("search.inputPlaceholder")}
       filter={paletteFilter}
+      // The dialog primitive animates on data-state, so match it; the backdrop is the sibling before.
+      className="data-[state=closed]:animate-none! data-[state=open]:animate-none [[data-slot=dialog-overlay]:has(+&)]:animate-none!"
     >
       <CommandInput
         placeholder={t("search.inputPlaceholder")}
         value={value}
         onValueChange={setValue}
       />
-      <CommandList>
+      <CommandList className="[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] [scrollbar-width:thin]">
         {isSearching ? (
           <div
             data-slot="command-searching"

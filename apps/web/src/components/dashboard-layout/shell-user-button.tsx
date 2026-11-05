@@ -10,6 +10,7 @@
 // guides" opens the Guides tab of What's new, so the tours are one tap from any
 // page on desktop and phone (UX-91).
 import { useClerk, UserButton, useUser } from "@/compat/clerk";
+import { MemberInitial } from "@/components/members/member-initial";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { useAppActivity } from "@/components/presence/app-presence";
 import { PresenceDot } from "@/components/presence/presence-dot";
@@ -68,7 +69,7 @@ const STATUS_OPTIONS = [
 export function ShellUserButton({
   // When set, the avatar's trigger fills a 44px touch target (with the avatar
   // itself at 28px) so it matches the other controls in the mobile top bar. The
-  // desktop sidebar footer leaves it compact (a 32px avatar, no extra hit area).
+  // desktop sidebar footer leaves it compact (a 24px avatar in a nav-height row).
   tapTarget = false,
 }: {
   tapTarget?: boolean;
@@ -129,7 +130,7 @@ export function ShellUserButton({
                   ),
                 }
               : {
-                  userButtonAvatarBox: "!w-8 !h-8",
+                  userButtonAvatarBox: "!w-6 !h-6",
                   // The desktop sidebar on a touch screen (tablets): a 44px target.
                   userButtonTrigger: cn(
                     "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
@@ -281,9 +282,29 @@ export function ShellUserButton({
           <PrivacySafetyPanel />
         </UserButton.UserProfilePage>
       </UserButton>
+      {/* Clerk's default picture is a violet gradient, so without a real photo the initial covers
+          it. Clicks fall through to Clerk's trigger. */}
+      {user && !user.hasImage && (
+        <span
+          aria-hidden
+          className={cn(
+            "bg-primary text-primary-foreground pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-semibold",
+            // The phone's presence dot is larger, so the letter steps clear of it.
+            tapTarget ? "size-7 pr-1 pb-1" : "size-6",
+          )}
+        >
+          <MemberInitial
+            source={{ name: user.fullName, username: user.username }}
+          />
+        </span>
+      )}
       <PresenceDot
         status={ownStatus}
-        className={tapTarget ? "right-2 bottom-2" : undefined}
+        className={
+          tapTarget
+            ? "right-2 bottom-2"
+            : "-right-0.5 -bottom-0.5 size-2.5 ring-sidebar-skyline"
+        }
       />
     </span>
   );
