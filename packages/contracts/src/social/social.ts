@@ -88,6 +88,12 @@ export interface ActivityEntryView {
    * = render the untitled sentence.
    */
   subject?: ActivitySubjectView;
+  /**
+   * The puzzle's title on a single "acquisition", "completion" or "started" entry, so the row can
+   * say what was added or solved. Present only together with `target`: it comes from the same
+   * gated copy or definition the link opens, never from a record the viewer may not see.
+   */
+  title?: string;
 }
 
 /**

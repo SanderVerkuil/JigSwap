@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import { GuidesList } from "./guides-list";
 
 // Router-free Link: the test asserts the list's DOM, not routing.
@@ -44,9 +45,16 @@ const households: WhatsNewEntry = {
   },
 };
 
-const render = (tours?: WhatsNewTourProgressView[]) =>
+const render = (
+  tours?: WhatsNewTourProgressView[],
+  locale: "en" | "nl" = "en",
+) =>
   renderToStaticMarkup(
-    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+    <IntlProvider
+      locale={locale}
+      messages={locale === "en" ? en : nl}
+      timeZone="Europe/Amsterdam"
+    >
       <GuidesList entries={[households]} tours={tours} />
     </IntlProvider>,
   );
@@ -75,6 +83,7 @@ const textOf = (el: Element): string =>
       isElement(child) ? textOf(child) : "value" in child ? child.value : "",
     )
     .join("");
+const classes = (el: Element) => (attr(el, "class") ?? "").split(/\s+/);
 const guide = (els: Element[], tourId: string) => {
   const found = els.find(
     (el) => el.tagName === "article" && attr(el, "id") === `guide-${tourId}`,
@@ -155,5 +164,77 @@ describe("GuidesList", () => {
         (el) => el.tagName === "a",
       ),
     ).toBe(false);
+  });
+});
+
+describe("GuidesList button hierarchy (UX-167)", () => {
+  const paused = (tourId: string, updatedAt = 1): WhatsNewTourProgressView => ({
+    tourId,
+    status: "in_progress",
+    step: 1,
+    updatedAt,
+  });
+  // The tour button of each guide card (the last button; "Start over" comes first in the DOM).
+  const tourButton = (els: Element[], tourId: string) =>
+    elementsOf(guide(els, tourId))
+      .filter((el) => el.tagName === "button")
+      .at(-1)!;
+  const primaries = (els: Element[]) =>
+    [...TOURS.keys()].filter((id) =>
+      classes(tourButton(els, id)).includes("bg-jigsaw-primary"),
+    );
+
+  it("makes Getting started the one primary while nothing is started", () => {
+    const els = parse(render([]));
+    expect(primaries(els)).toEqual(["getting-started"]);
+    expect(classes(tourButton(els, "households"))).toContain("border");
+  });
+
+  it("makes the paused guide the one primary, the last one touched when there are several", () => {
+    expect(primaries(parse(render([paused("member-profiles")])))).toEqual([
+      "member-profiles",
+    ]);
+    expect(
+      primaries(
+        parse(render([paused("member-profiles", 5), paused("households", 9)])),
+      ),
+    ).toEqual(["households"]);
+  });
+
+  it("has no primary once Getting started is done and nothing is paused", () => {
+    expect(
+      primaries(
+        parse(
+          render([
+            { tourId: "getting-started", status: "completed", updatedAt: 1 },
+          ]),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("says just Resume next to the step chip, without repeating the step", () => {
+    const els = parse(render([paused("member-profiles")]));
+    const card = guide(els, "member-profiles");
+    expect(textOf(tourButton(els, "member-profiles"))).toBe("Resume");
+    expect(textOf(card)).toContain("Step 2 of 2");
+    expect(textOf(card)).not.toContain("Resume tour");
+
+    const nlEls = parse(render([paused("member-profiles")], "nl"));
+    expect(textOf(tourButton(nlEls, "member-profiles"))).toBe("Hervatten");
+  });
+
+  it("sizes every guide button for touch", () => {
+    const els = parse(render([paused("member-profiles")]));
+    const buttons = elementsOf(guide(els, "member-profiles")).filter(
+      (el) => el.tagName === "button",
+    );
+    expect(buttons.map(textOf)).toEqual(["Start over", "Resume"]);
+    for (const button of buttons) {
+      expect(classes(button)).toContain("pointer-coarse:min-h-11");
+    }
+    expect(classes(tourButton(els, "households"))).toContain(
+      "pointer-coarse:min-h-11",
+    );
   });
 });

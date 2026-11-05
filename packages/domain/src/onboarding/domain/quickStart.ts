@@ -1,7 +1,8 @@
 // Quick start: a first-sign-in checklist. Each step's "done" is derived from the member's real data
 // (facts gathered by the backend); only the member's choices are stored: skipped steps, when the
 // welcome dialog / dashboard card were dismissed, and when the member first opened the flow (a
-// funnel fact for the activation report). Done wins over skipped. Timestamps are epoch ms.
+// funnel fact for the activation report, which also retires the welcome). Done wins over skipped.
+// Timestamps are epoch ms.
 
 export const QUICK_START_STEP_IDS = [
   "puzzles",
@@ -28,6 +29,7 @@ export interface QuickStartFacts {
   follows: number; // members I follow
   pendingFollowRequests: number; // my pending requests to private profiles
   inHousehold: boolean;
+  householdMembers: number; // people in my household, me included; 0 when in none
   pendingHouseholdInvite: boolean;
   hasLocation: boolean;
   visibilitySet: boolean; // profile visibility explicitly chosen
@@ -82,8 +84,11 @@ const stepDetails = (
         count: f.follows,
       };
     case "household":
+      // A household of one is still done (the step is optional); the count lets the UI say
+      // "just you so far" instead of claiming a shared shelf.
       return {
         done: f.inHousehold,
+        count: f.householdMembers,
         pendingInvite: f.pendingHouseholdInvite,
       };
     case "profile":
@@ -112,7 +117,12 @@ export const deriveQuickStart = (input: QuickStartInput): QuickStart => {
     (age < QUICK_START_CARD_WINDOW_MS || facts.copies === 0);
   return {
     eligible,
-    showWelcome: eligible && state.welcomeDismissedAt === undefined,
+    // The welcome offers the flow, so it stops once the member opened /welcome some other way
+    // (an invite link, the card, the account menu): it would only repeat that offer.
+    showWelcome:
+      eligible &&
+      state.welcomeDismissedAt === undefined &&
+      state.startedAt === undefined,
     cardVisible,
     steps,
     requiredDone: required.filter((s) => s.status === "done").length,

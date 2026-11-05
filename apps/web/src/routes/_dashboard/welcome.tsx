@@ -1,28 +1,23 @@
 import { CataloguePicker } from "@/components/catalogue-picker/catalogue-picker";
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
-import {
-  QuickStartDonePanel,
-  QuickStartFlowView,
-} from "@/components/quick-start/flow-view";
+import { QuickStartFlowStep } from "@/components/quick-start/flow-step";
+import { QuickStartDonePanel } from "@/components/quick-start/flow-view";
 import { HouseholdStep } from "@/components/quick-start/household-step";
 import {
-  nextFlowStep,
+  nextOpenStep,
   parseFlowStep,
   resolveFlowStep,
+  withSkippedStep,
   type FlowStep,
 } from "@/components/quick-start/logic";
 import { PeopleStep } from "@/components/quick-start/people-step";
 import { ProfileStep } from "@/components/quick-start/profile-step";
 import { useMarkQuickStartUsed } from "@/components/quick-start/session";
-import { TourHandoffButton } from "@/components/quick-start/tour-handoff";
+import { GettingStartedTourButton } from "@/components/quick-start/tour-handoff";
 import { PastSolvesForm } from "@/components/solving/past-solves-form";
-import { tourButtonState } from "@/components/tour/controller";
-import { TOURS } from "@/components/tour/definitions";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
-import { useTourLauncher } from "@/components/whats-new/tour-launcher";
-import { useWhatsNewState } from "@/components/whats-new/use-whats-new-state";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -34,8 +29,11 @@ import { useTranslations } from "use-intl";
 
 // The quick start flow (spec §2.2): one URL per step, so the browser back button walks back
 // through them. A missing or unknown step resolves to the first open required step. Skip
-// stores the skip; Continue stores nothing (done-ness is derived from data). No dialogs inside
-// the flow, and the What's new highlight never opens here.
+// stores the skip; Continue first saves what the step holds unsaved (picks, ticks, a typed
+// location: UX-16) and otherwise stores nothing (done-ness is derived from data). Both go to the
+// next step that is still to do, so finished steps are never walked through again. The only
+// dialog inside the flow is the member's own "Leave without saving?" when they leave a step with
+// unsaved work; the What's new highlight never opens here.
 export const Route = createFileRoute("/_dashboard/welcome")({
   validateSearch: (search: Record<string, unknown>): { step?: FlowStep } => ({
     step: parseFlowStep(search.step),
@@ -54,6 +52,22 @@ function WelcomePage() {
     convexQuery(gateway.onboarding.quickStart, member ? {} : "skip"),
   );
   const record = useConvexMutation(gateway.onboarding.recordQuickStart);
+  // Skip shows as stored at once, so the next screen (often the done panel) never counts the
+  // skipped step as still open while the write is in flight. A separate handle: `record` must
+  // stay stable for the effect below.
+  const recordSkip = useConvexMutation(
+    gateway.onboarding.recordQuickStart,
+  ).withOptimisticUpdate((store, command) => {
+    if (command.kind !== "skipStep" || !command.step) return;
+    const current = store.getQuery(gateway.onboarding.quickStart, {});
+    if (current) {
+      store.setQuery(
+        gateway.onboarding.quickStart,
+        {},
+        withSkippedStep(current, command.step),
+      );
+    }
+  });
   const tCommon = useTranslations("common");
   useReportSurfaceBusy("quickstart", true);
   useMarkQuickStartUsed(true);
@@ -70,26 +84,33 @@ function WelcomePage() {
   if (!step || !view) return <PageLoading message={tCommon("loading")} />;
 
   if (step === "done") {
-    return <QuickStartDonePanel view={view} tourAction={<TourHandoff />} />;
+    return (
+      <QuickStartDonePanel
+        view={view}
+        tourAction={<GettingStartedTourButton />}
+      />
+    );
   }
 
   const go = (next: FlowStep) => void navigate({ search: { step: next } });
   const skip = () => {
-    record({ kind: "skipStep", step }).catch((error: unknown) =>
+    recordSkip({ kind: "skipStep", step }).catch((error: unknown) =>
       console.error("Failed to skip the step:", error),
     );
-    go(nextFlowStep(step));
+    go(nextOpenStep(step, view));
   };
 
   return (
-    <QuickStartFlowView
+    <QuickStartFlowStep
+      key={step}
       step={step}
       view={view}
       onSkip={skip}
-      onContinue={() => go(nextFlowStep(step))}
-    >
-      <StepBody step={step} view={view} onSkip={skip} />
-    </QuickStartFlowView>
+      onNext={() => go(nextOpenStep(step, view))}
+      renderBody={(guardedSkip) => (
+        <StepBody step={step} view={view} onSkip={guardedSkip} />
+      )}
+    />
   );
 }
 
@@ -133,23 +154,4 @@ function StepBody({
     case "profile":
       return <ProfileStep />;
   }
-}
-
-const HANDOFF_TOUR = "getting-started";
-
-// "Show me around" (spec §2.8): the standalone getting-started tour through the shared runner,
-// resuming at the saved step when it was paused.
-function TourHandoff() {
-  const { startTour } = useTourLauncher();
-  const { tours } = useWhatsNewState();
-  const state = tourButtonState(
-    tours?.find((p) => p.tourId === HANDOFF_TOUR),
-    TOURS.get(HANDOFF_TOUR)?.steps.length ?? 0,
-  );
-  return (
-    <TourHandoffButton
-      state={state}
-      onStart={(returnFocus) => startTour(HANDOFF_TOUR, { returnFocus })}
-    />
-  );
 }

@@ -17,6 +17,7 @@ const NO_FACTS: QuickStartFacts = {
   follows: 0,
   pendingFollowRequests: 0,
   inHousehold: false,
+  householdMembers: 0,
   pendingHouseholdInvite: false,
   hasLocation: false,
   visibilitySet: false,
@@ -102,6 +103,7 @@ describe("deriveQuickStart: steps", () => {
       id: "household",
       status: "todo",
       optional: true,
+      count: 0,
       pendingInvite: false,
     });
     expect(
@@ -110,11 +112,31 @@ describe("deriveQuickStart: steps", () => {
       id: "household",
       status: "todo",
       optional: true,
+      count: 0,
       pendingInvite: true,
     });
     expect(
-      stepOf(input({ facts: { inHousehold: true } }), "household"),
+      stepOf(
+        input({ facts: { inHousehold: true, householdMembers: 1 } }),
+        "household",
+      ),
     ).toMatchObject({ status: "done" });
+  });
+
+  it("household carries the member count, so a household of one reads as just you", () => {
+    // Done semantics stay membership: a household of one is done (the step is optional).
+    expect(
+      stepOf(
+        input({ facts: { inHousehold: true, householdMembers: 1 } }),
+        "household",
+      ),
+    ).toMatchObject({ status: "done", count: 1 });
+    expect(
+      stepOf(
+        input({ facts: { inHousehold: true, householdMembers: 2 } }),
+        "household",
+      ),
+    ).toMatchObject({ status: "done", count: 2 });
   });
 
   it("profile is done by a location or an explicit visibility", () => {
@@ -150,6 +172,7 @@ describe("deriveQuickStart: steps", () => {
           copies: 5,
           completions: 1,
           inHousehold: true,
+          householdMembers: 2,
           hasLocation: true,
         },
       }),
@@ -177,6 +200,16 @@ describe("deriveQuickStart: eligibility and the welcome", () => {
   it("the welcome stops once dismissed", () => {
     const view = deriveQuickStart(
       input({ state: { skippedSteps: [], welcomeDismissedAt: NOW - 1 } }),
+    );
+    expect(view.eligible).toBe(true);
+    expect(view.showWelcome).toBe(false);
+  });
+
+  it("the welcome stops once the member opened quick setup on their own", () => {
+    // E.g. a household invite link sends a new member straight to /welcome: the welcome's offer
+    // ("Start quick setup") is already taken, so it must not greet them afterwards.
+    const view = deriveQuickStart(
+      input({ state: { skippedSteps: [], startedAt: NOW - 1 } }),
     );
     expect(view.eligible).toBe(true);
     expect(view.showWelcome).toBe(false);

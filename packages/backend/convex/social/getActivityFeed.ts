@@ -526,6 +526,7 @@ const subjectOf = (
 //                       copy, else the box art, like listProfileCompletions' row; nothing when the
 //                       profile is locked.
 //   acquisitionBatch / exchange -> none (a batch names its puzzles in its covers).
+// An entry's `title` is that subject's title when the entry also links: no target, no title.
 const resolveTarget = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
@@ -666,4 +667,5 @@ const toActivityEntryView = (
   ...(actor?.linkable ? { actor: { handle: entry.memberId as string } } : {}),
   ...(target ? { target } : {}),
   ...(subject ? { subject } : {}),
+  ...(target && subject ? { title: subject.title } : {}),
 });

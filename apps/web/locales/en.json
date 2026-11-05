@@ -1384,6 +1384,8 @@
       "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
       "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
       "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
+      "shelfOffered": "You have <shelfLink>{offeredCount, plural, one {# puzzle up for swap} other {# puzzles up for swap}}</shelfLink> — <browseLink>browse what others have</browseLink> and find your next one. 🧩",
+      "shelfOnly": "You have <shelfLink>{ownedCount, plural, one {# puzzle on your shelf} other {# puzzles on your shelf}}</shelfLink> — {ownedCount, plural, one {offer it for swap} other {offer a few for swap}} and get things moving. 🧩",
       "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving. 🧩"
     },
     "pendingBanner": {
@@ -1402,7 +1404,7 @@
     "shelf": {
       "title": "Your Shelf",
       "meta": "{owned, plural, one {# on the shelf} other {# on the shelf}} · {forTrade, plural, =0 {none up for trade} one {# up for trade} other {# up for trade}}",
-      "viewCollections": "View Collections",
+      "allPuzzles": "All my puzzles",
       "empty": "Your shelf is waiting for its first puzzle — add one and it'll sit right here, ready to be admired (and swapped). 🧩",
       "addFirst": "Add Your First Puzzle",
       "stats": {
@@ -1430,7 +1432,7 @@
     "pulse": {
       "inMotion": {
         "title": "In Motion",
-        "all": "All",
+        "all": "All<sr> exchanges</sr>",
         "meta": "{kind} · {direction} · {who}",
         "kind": {
           "trade": "Trade",
@@ -1453,7 +1455,7 @@
       },
       "goals": {
         "title": "Goals",
-        "all": "All",
+        "all": "All<sr> goals</sr>",
         "done": "{current}/{target} done",
         "empty": "No goals yet — set yourself a target and watch the ring fill up. 🧩",
         "noCurrent": "No current goals — set a new target and watch the ring fill up. 🧩",
@@ -1466,6 +1468,9 @@
         "acquisitionBatch": "<strong>{name}</strong> added {count, plural, one {# puzzle} other {# puzzles}} to their shelf",
         "exchange": "<strong>{name}</strong> completed a swap",
         "started": "<strong>{name}</strong> started a puzzle",
+        "acquisitionTitled": "<strong>{name}</strong> added <puzzle>{title}</puzzle> to their shelf",
+        "completionTitled": "<strong>{name}</strong> finished <puzzle>{title}</puzzle>",
+        "startedTitled": "<strong>{name}</strong> started <puzzle>{title}</puzzle>",
         "empty": "All quiet for now — follow fellow puzzlers and their latest moves will show up here. 🧩"
       }
     },
@@ -4164,6 +4169,8 @@
     },
     "welcome": "Welcome back, {name}! 🧩",
     "welcomeAnonymous": "Welcome back! 🧩",
+    "welcomeNew": "Welcome, {name}! 🧩",
+    "welcomeNewAnonymous": "Welcome! 🧩",
     "groups": {
       "library": {
         "label": "My Library",
@@ -4352,6 +4359,7 @@
       "admin": "Admin",
       "privacySafety": "Privacy & safety",
       "homepage": "JigSwap homepage",
+      "helpGuides": "Help & guides",
       "signOut": "Sign out"
     },
     "theme": {
@@ -4382,7 +4390,8 @@
         "logCompletionSub": "Finished one? Record it",
         "findSwap": "Find a swap",
         "findSwapSub": "See what other puzzlers offer",
-        "whatsNewSub": "Latest features and fixes"
+        "whatsNewSub": "Latest features and fixes",
+        "helpGuidesSub": "Short guided tours of JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}",
@@ -5327,6 +5336,12 @@
       "body": "New features and fixes will show up here."
     },
     "readMore": "Read more",
+    "showLess": "Show less",
+    "showOlder": "{count, plural, one {Show # older update} other {Show # older updates}}",
+    "filter": {
+      "label": "Filter updates by type",
+      "all": "All"
+    },
     "seeAll": "See all updates",
     "modal": {
       "eyebrow": "New in JigSwap",
@@ -5336,6 +5351,7 @@
       "take": "Take the tour",
       "replay": "Replay the tour",
       "resume": "Resume tour (step {step} of {total})",
+      "resumeShort": "Resume",
       "restart": "Start over"
     },
     "tabs": {
@@ -5448,7 +5464,7 @@
         },
         "account-menu": {
           "title": "Settings and quick setup",
-          "body": "Your profile, notifications and Quick setup live here."
+          "body": "Your profile, notifications and Quick setup live here, and Help & guides lists every tour."
         }
       },
       "guide": {
@@ -5614,17 +5630,18 @@
     },
     "welcome": {
       "title": "Welcome to JigSwap!",
-      "body": "Shall we set up your shelf? Add the puzzles you own, the ones you've finished, and the people you puzzle with.",
+      "body": "Shall we set up your shelf? It takes four quick steps.",
       "stepPuzzles": "Add the puzzles on your shelf",
       "stepSolves": "Mark the ones you've finished",
       "stepPeople": "Find the people you puzzle with",
+      "stepProfile": "Make your profile your own",
       "time": "Takes about 3 minutes. You can stop at any time.",
       "start": "Start quick setup",
       "explore": "Explore on my own"
     },
     "card": {
       "title": "Quick setup",
-      "progress": "{done} of {total}",
+      "progress": "{done} of {total} done",
       "progressLabel": "{done} of {total} steps done",
       "hide": "Hide quick setup",
       "hiddenToast": "Quick setup is hidden. You can reopen it from your account menu.",
@@ -5661,6 +5678,7 @@
       "household": {
         "title": "Household",
         "done": "You're in a household",
+        "justYou": "Just you so far",
         "pending": "Invitation waiting"
       },
       "profile": {
@@ -5674,6 +5692,19 @@
       "optionalStep": "Optional step",
       "skip": "Skip",
       "continue": "Continue",
+      "commitAndContinue": {
+        "puzzles": "Add {count} and continue",
+        "solves": "Log {count} and continue",
+        "profile": "Save and continue"
+      },
+      "discard": {
+        "title": "Leave without saving?",
+        "puzzles": "{count, plural, one {The puzzle you picked hasn't been added to your shelf yet.} other {The # puzzles you picked haven't been added to your shelf yet.}}",
+        "solves": "{count, plural, one {The puzzle you ticked hasn't been logged yet.} other {The # puzzles you ticked haven't been logged yet.}}",
+        "profile": "Your new location hasn't been saved yet.",
+        "keep": "Keep editing",
+        "discard": "Discard"
+      },
       "finishLater": "Finish later"
     },
     "people": {
@@ -5686,6 +5717,7 @@
       "create": "Create a household",
       "alone": "I puzzle alone",
       "inviteMember": "Invite a member",
+      "inviteMore": "Invite by name or email",
       "pendingTitle": "{name} invited you to their household"
     },
     "profile": {
@@ -5703,7 +5735,9 @@
     },
     "done": {
       "title": "Your shelf is ready",
+      "almostTitle": "Almost there: {count, plural, one {# step} other {# steps}} left",
       "summary": "{copies, plural, one {# puzzle} other {# puzzles}} · {solves} finished · {following} following",
+      "continueSetup": "Continue setup",
       "goToShelf": "Go to my shelf",
       "tour": "Show me around"
     }

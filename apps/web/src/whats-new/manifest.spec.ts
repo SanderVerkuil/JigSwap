@@ -97,3 +97,21 @@ describe("committed manifest", () => {
     ).toMatchFileSnapshot(WHATS_NEW_MANIFEST_FILE);
   }, 60000);
 });
+
+// Two updates with one title read as the same update on the page (UX-90). Frontmatter only, so
+// this stays cheap (no Markdown rendering).
+describe("docs/whats-new titles", () => {
+  it("are unique within each locale", async () => {
+    const files = await readWhatsNewSourceFiles();
+    for (const locale of ["en", "nl"]) {
+      const titles = files
+        .filter((file) => file.name.endsWith(`.${locale}.md`))
+        .map((file) => /^title:\s*(.+)$/m.exec(file.raw)?.[1]?.trim());
+      expect(titles.length, locale).toBeGreaterThan(0);
+      expect(
+        titles.filter((title, i) => titles.indexOf(title) !== i),
+        locale,
+      ).toEqual([]);
+    }
+  });
+});

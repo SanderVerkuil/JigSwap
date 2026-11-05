@@ -1,7 +1,7 @@
 ---
 id: messages-improvements
 publishedAt: "2026-10-18T16:00:00Z"
-title: "Verbeteringen in Berichten"
+title: "Foto's en locaties in Berichten"
 summary: "Stuur foto's en deel een ontmoetingsplek, direct vanuit een gesprek."
 category: feature
 highlight: true

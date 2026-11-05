@@ -19,6 +19,8 @@ Click your avatar to open the account menu. Besides **Profile**,
 **Preferences**, **Notifications** and **Privacy & safety**, it has:
 
 - **What's new**: recent features and fixes (see below).
+- **Help & guides**: every guided tour, on the **Guides** tab of What's new
+  (see [Guides](#guides)).
 - **Quick setup**: reopens the guided setup for your shelf. See
   [Your Dashboard](/docs/getting-started/dashboard#quick-setup).
 
@@ -27,8 +29,12 @@ Click your avatar to open the account menu. Besides **Profile**,
 **Where:** **What's new** in your account menu (`/whats-new`).
 
 The What's new page lists recent features, improvements and fixes, newest
-first. Updates you haven't seen yet are marked **New**, and the menu item shows
-how many there are, for example **What's new (2)**.
+first. Each update shows a short summary: choose **Read more** for the details.
+The page starts with the latest updates, and a button at the bottom, for
+example **Show 32 older updates**, lists the rest. Choose **Feature**,
+**Improvement** or **Fix** at the top to see one kind of update, or **All**.
+Updates you haven't seen yet are marked **New** and shown in full, and the menu
+item shows how many there are, for example **What's new (2)**.
 
 When there's something new, JigSwap may also show it in a short dialog. Click
 **Read more** to open the full entry, or **Maybe later** to close it.
@@ -37,11 +43,14 @@ The page has two tabs: **Updates** (the list above) and **Guides**.
 
 ### Guides
 
-The **Guides** tab (`/whats-new?tab=guides`) lists every guided tour in one
-place, grouped by area, with how many you've finished. Each guide shows how
-many steps it has and where you are: **Step 2 of 3** when you stopped partway,
-**Done** when you finished it. A guide that came with an update links back to
-it with **Introduced** and the month.
+**Where:** **Help & guides** in your account menu or, on a phone, in the
+quick-action sheet (`/whats-new?tab=guides`).
+
+The **Guides** tab lists every guided tour in one place, grouped by area, with
+how many you've finished. Each guide shows how many steps it has and where you
+are: **Step 2 of 3** when you stopped partway, **Done** when you finished it.
+A guide that came with an update links back to it with **Introduced** and the
+month.
 
 Some updates also come with a short tour of the feature. Click
 **Take the tour** on the update or on its guide, then use **Next** and
@@ -50,13 +59,15 @@ Some updates also come with a short tour of the feature. Click
 - Some steps ask you to try the feature. They show "Press the highlighted
   button to continue." Press the highlighted button and the tour moves on.
 - If you leave a tour partway, you can resume it from its guide on the
-  **Guides** tab, with **Resume tour** (or **Start over**). An update's tour
-  also resumes from the update, and the tour from Quick setup from Quick
-  setup.
+  **Guides** tab, with **Resume** (or **Start over**). An update's tour also
+  resumes from the update, with **Resume tour**, and the tour from Quick setup
+  from Quick setup.
 - **Replay the tour** runs a finished tour again.
-- On **Exchanges**, **Circles**, **Completions** and **Add Puzzle**, the
-  **?** button in the page header (**Show me how**) starts that page's guide
-  at its step on that page. On **Household** it starts the **Who sees what**
+- On **People**, **Exchanges**, **Circles**, **Completions** and
+  **Add Puzzle**, and on the **Dashboard** on a computer or tablet, the **?**
+  button in the page header (**Show me how**) starts that page's guide at its
+  step on that page: **Find your way around** on the Dashboard, **Member
+  profiles** on People. On **Household** it starts the **Who sees what**
   guide. On a phone, the **?** on **Exchanges** ends the row of filters, and
   the one on **Household** ends the note above the tabs.
 

@@ -66,9 +66,10 @@ details
 3. Daarna krijgt je vriend de vraag of jullie elkaar willen volgen. Niemand
    volgt iemand totdat je vriend dat bevestigt.
 
-> **Opmerking:** Je hebt een gebruikersnaam nodig voordat je je QR-code of
-> uitnodigingslink kunt delen. Heb je er nog geen, dan vraagt JigSwap je er een
-> in te stellen.
+> **Opmerking:** Voor **Toon mijn QR** heb je een gebruikersnaam nodig, omdat
+> je profieladres onder de code staat. Heb je er nog geen, dan vraagt JigSwap je
+> er een in te stellen. De stap **Vind je puzzelmaatjes** van Snel instellen
+> deelt je uitnodigingslink ook zonder gebruikersnaam.
 
 ### Per e-mail
 

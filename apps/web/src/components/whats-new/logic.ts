@@ -4,6 +4,7 @@ import type {
   WhatsNewEntry,
   WhatsNewLocalizedContent,
 } from "@/whats-new/types";
+import type { WhatsNewCategory } from "@jigswap/contracts";
 
 export interface MonthGroup<T> {
   /** UTC `YYYY-MM`. */
@@ -113,4 +114,65 @@ export function contentFor(
   locale: string,
 ): WhatsNewLocalizedContent {
   return locale === "nl" ? entry.content.nl : entry.content.en;
+}
+
+/** How many entries the Updates tab shows before "Show older updates". */
+export const WHATS_NEW_PAGE_SIZE = 10;
+
+/** The category filter's choices, in display order after "All". */
+export const WHATS_NEW_CATEGORIES: readonly WhatsNewCategory[] = [
+  "feature",
+  "improvement",
+  "fix",
+];
+
+export type WhatsNewCategoryFilter = WhatsNewCategory | "all";
+
+/**
+ * The entries the Updates tab renders (UX-90): the newest `pageSize` in the chosen category, plus
+ * every unread entry in it (the visit marks the unread snapshot seen, so each one must be on
+ * screen) and the deep-linked entry wherever it is (the member asked for it); everything in the
+ * category once older updates are shown. `olderCount` is how many entries in the category are
+ * left out. Order is the input's (newest first).
+ */
+export function visibleEntries<
+  T extends { id: string; category: WhatsNewCategory },
+>({
+  entries,
+  category,
+  showOlder,
+  unreadIds,
+  deepLinkId,
+  pageSize = WHATS_NEW_PAGE_SIZE,
+}: {
+  entries: readonly T[];
+  category: WhatsNewCategoryFilter;
+  showOlder: boolean;
+  /** Undefined while the read state loads. */
+  unreadIds: readonly string[] | undefined;
+  deepLinkId: string | undefined;
+  pageSize?: number;
+}): { visible: T[]; olderCount: number } {
+  const unread = new Set(unreadIds);
+  const visible: T[] = [];
+  let inCategory = 0;
+  let olderCount = 0;
+  for (const entry of entries) {
+    const matches = category === "all" || entry.category === category;
+    const position = matches ? inCategory++ : -1;
+    const shown =
+      entry.id === deepLinkId ||
+      (matches && (showOlder || position < pageSize || unread.has(entry.id)));
+    if (shown) visible.push(entry);
+    else if (matches) olderCount++;
+  }
+  return { visible, olderCount };
+}
+
+/** The categories the entries use, in the filter's order (the filter offers only these). */
+export function categoriesIn(
+  entries: readonly { category: WhatsNewCategory }[],
+): WhatsNewCategory[] {
+  const used = new Set(entries.map((entry) => entry.category));
+  return WHATS_NEW_CATEGORIES.filter((category) => used.has(category));
 }

@@ -5,19 +5,25 @@ import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
-import { MY_SHELF_SIZE } from "./shelf-section";
+import { MY_SHELF_SIZE, shelfBoxCount } from "./shelf-section";
 import { useCurrentMember } from "./use-current-member";
 
 // "Fresh on the Shelf": the member's most recently added copies as a
-// horizontal scroller of puzzle cards. With an empty library it renders
-// nothing at all — the Shelf section already owns the first-puzzle invitation.
+// horizontal scroller of puzzle cards. It only appears once the library holds
+// more copies than the shelf shows on this device: until then the shelf above
+// already shows every one of them (and with an empty library the shelf owns the
+// first-puzzle invitation). Once shown it still starts at the newest copy, so
+// it overlaps the shelf's boxes; it is only guaranteed to add at least one
+// puzzle the shelf does not show.
 export function FreshSection() {
   const t = useTranslations("dashboard.fresh");
+  const isMobile = useIsMobile();
   const { member, isMemberLoading } = useCurrentMember();
 
   // Same arguments as the Shelf section above, so both share one subscription.
@@ -43,9 +49,10 @@ export function FreshSection() {
     );
   }
 
+  // `total` counts the whole library; `recent` holds only the newest few.
+  if ((shelf?.total ?? 0) <= shelfBoxCount(isMobile)) return null;
   // The shelf read is already newest-first; take the freshest six.
   const fresh = (shelf?.recent ?? []).slice(0, 6);
-  if (fresh.length === 0) return null;
 
   return (
     <section>

@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   announcedCount,
   canOpenHighlight,
+  categoriesIn,
   formatWhatsNewCount,
   groupByMonth,
   isoDateUtc,
   knownUnreadIds,
   pickHighlightEntry,
+  visibleEntries,
 } from "./logic";
 
 const at = (iso: string) => Date.parse(iso);
@@ -140,5 +142,114 @@ describe("formatWhatsNewCount", () => {
     expect(formatWhatsNewCount(1)).toBe("1");
     expect(formatWhatsNewCount(9)).toBe("9");
     expect(formatWhatsNewCount(10)).toBe("9+");
+  });
+});
+
+describe("visibleEntries (first page, filter, show older)", () => {
+  // Newest first: f0 i1 f2 x3 i4 f5 i6 f7, as the bundle orders them.
+  const categories = [
+    "feature",
+    "improvement",
+    "feature",
+    "fix",
+    "improvement",
+    "feature",
+    "improvement",
+    "feature",
+  ] as const;
+  const letter = { feature: "f", improvement: "i", fix: "x" } as const;
+  const entries = categories.map((category, i) => ({
+    id: `${letter[category]}${i}`,
+    category,
+  }));
+  const ids = (result: { visible: { id: string }[] }) =>
+    result.visible.map((entry) => entry.id);
+  const base = {
+    entries,
+    category: "all" as const,
+    showOlder: false,
+    unreadIds: [],
+    deepLinkId: undefined,
+    pageSize: 3,
+  };
+
+  it("shows the newest page and counts the older entries", () => {
+    const result = visibleEntries(base);
+    expect(ids(result)).toEqual(["f0", "i1", "f2"]);
+    expect(result.olderCount).toBe(5);
+  });
+
+  it("shows everything once older updates are revealed", () => {
+    const result = visibleEntries({ ...base, showOlder: true });
+    expect(ids(result)).toEqual(entries.map((entry) => entry.id));
+    expect(result.olderCount).toBe(0);
+  });
+
+  it("always shows unread entries, in their place, since the visit marks them seen", () => {
+    const result = visibleEntries({ ...base, unreadIds: ["f5", "i1"] });
+    expect(ids(result)).toEqual(["f0", "i1", "f2", "f5"]);
+    expect(result.olderCount).toBe(4);
+    // Still loading: nothing extra.
+    expect(ids(visibleEntries({ ...base, unreadIds: undefined }))).toEqual([
+      "f0",
+      "i1",
+      "f2",
+    ]);
+  });
+
+  it("always shows the deep-linked entry, even an old one", () => {
+    const result = visibleEntries({ ...base, deepLinkId: "f7" });
+    expect(ids(result)).toEqual(["f0", "i1", "f2", "f7"]);
+    expect(result.olderCount).toBe(4);
+    // An id the bundle does not know changes nothing.
+    expect(ids(visibleEntries({ ...base, deepLinkId: "gone" }))).toEqual([
+      "f0",
+      "i1",
+      "f2",
+    ]);
+  });
+
+  it("pages within the chosen category", () => {
+    const result = visibleEntries({ ...base, category: "feature" });
+    expect(ids(result)).toEqual(["f0", "f2", "f5"]);
+    expect(result.olderCount).toBe(1);
+    expect(ids(visibleEntries({ ...base, category: "fix" }))).toEqual(["x3"]);
+    expect(visibleEntries({ ...base, category: "fix" }).olderCount).toBe(0);
+  });
+
+  it("keeps an unread entry of another category out of a filtered list", () => {
+    expect(
+      ids(visibleEntries({ ...base, category: "fix", unreadIds: ["f7"] })),
+    ).toEqual(["x3"]);
+  });
+
+  it("keeps the deep-linked entry in a filtered list, where the member asked for it", () => {
+    const result = visibleEntries({
+      ...base,
+      category: "fix",
+      deepLinkId: "f7",
+    });
+    expect(ids(result)).toEqual(["x3", "f7"]);
+    expect(result.olderCount).toBe(0);
+  });
+});
+
+describe("categoriesIn", () => {
+  it("lists the categories the entries use, in the filter's fixed order", () => {
+    expect(
+      categoriesIn([
+        { category: "fix" },
+        { category: "improvement" },
+        { category: "fix" },
+      ]),
+    ).toEqual(["improvement", "fix"]);
+    expect(
+      categoriesIn([
+        { category: "fix" },
+        { category: "feature" },
+        { category: "improvement" },
+      ]),
+    ).toEqual(["feature", "improvement", "fix"]);
+    expect(categoriesIn([])).toEqual([]);
   });
 });

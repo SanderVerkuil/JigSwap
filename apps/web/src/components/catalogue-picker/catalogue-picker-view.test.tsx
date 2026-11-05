@@ -196,6 +196,16 @@ describe("CataloguePickerView", () => {
     expect(attr(busy, "disabled")).toBeDefined();
   });
 
+  it("hides its submit inside quick setup, where Continue adds the picks", () => {
+    const els = render({ picks: [pick("a"), pick("b")], hideSubmit: true });
+    expect(
+      buttons(els).some((el) => attr(el, "data-picker-submit") !== undefined),
+    ).toBe(false);
+    expect(buttons(els).some((el) => text(el).startsWith("Add 2"))).toBe(false);
+    // The tray stays: the picks are still listed and editable.
+    expect(byLabel(buttons(els), "Remove Puzzle a")).toHaveLength(1);
+  });
+
   it("links 'Register' to the full form with the query and returnTo", () => {
     const els = render({
       term: "Cats at night",

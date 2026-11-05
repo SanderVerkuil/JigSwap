@@ -24,6 +24,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, Bell, Package, Target } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
@@ -39,6 +40,10 @@ type Member = NonNullable<ReturnType<typeof useCurrentMember>["member"]>;
 const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
 
 /* ----------------------------------------------------------- In Motion */
+
+// The section links read "All" on screen; the hidden rest of the message ("All
+// exchanges", "All goals") gives each its own accessible name.
+const srOnly = (chunks: ReactNode) => <span className="sr-only">{chunks}</span>;
 
 // Soft status pill tones: Pending amber, Accepted/Disputed violet,
 // Completed green — everything else muted.
@@ -157,7 +162,7 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
         icon={ArrowLeftRight}
         action={
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/trades">{t("all")}</Link>
+            <Link href="/trades">{t.rich("all", { sr: srOnly })}</Link>
           </Button>
         }
       />
@@ -275,7 +280,7 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
         icon={Target}
         action={
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/goals">{t("all")}</Link>
+            <Link href="/goals">{t.rich("all", { sr: srOnly })}</Link>
           </Button>
         }
       />
@@ -311,6 +316,22 @@ function GoalsColumn({ goals }: { goals: GoalRow[] }) {
 }
 
 /* -------------------------------------------------------------- Latest */
+
+// A single add, a solve or a start names its puzzle when the feed sent a title (the server only
+// sends one alongside a link the viewer may open); otherwise the generic sentence.
+function latestMessageKey(entry: ActivityEntry) {
+  if (!entry.title) return entry.kind;
+  switch (entry.kind) {
+    case "acquisition":
+      return "acquisitionTitled";
+    case "completion":
+      return "completionTitled";
+    case "started":
+      return "startedTitled";
+    default:
+      return entry.kind;
+  }
+}
 
 function ActivityRow({
   entry,
@@ -381,9 +402,13 @@ function ActivityRow({
         avatar
       )}
       <div className="text-muted-foreground min-w-0 flex-1 text-sm leading-snug">
-        {t.rich(entry.kind, {
+        {t.rich(latestMessageKey(entry), {
           name: displayName(actor),
           count,
+          title: entry.title ?? "",
+          puzzle: (chunks) => (
+            <span className="text-foreground font-medium">{chunks}</span>
+          ),
           strong: (chunks) =>
             entry.actor ? (
               <ActorLink actor={entry.actor} className="py-3">

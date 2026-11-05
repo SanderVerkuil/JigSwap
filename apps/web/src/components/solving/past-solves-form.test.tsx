@@ -1,12 +1,27 @@
-import type { PastSolveChoice } from "@/lib/past-solves";
+// @vitest-environment happy-dom
+import {
+  createStepCommitStore,
+  StepCommitContext,
+  type StepCommitStore,
+} from "@/components/quick-start/step-commit";
+import type { PastCompletionItem, PastSolveChoice } from "@/lib/past-solves";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render as renderDom,
+  screen,
+} from "@testing-library/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PastSolveRow, PastSolvesList } from "./past-solves-form";
+
+afterEach(cleanup);
 
 const render = (ui: ReactElement, locale: "en" | "nl" = "en") =>
   renderToStaticMarkup(
@@ -127,7 +142,7 @@ describe("PastSolveRow", () => {
 describe("PastSolvesList", () => {
   const submit = async () => true;
 
-  it("leads with the question, lists every candidate and starts with a disabled submit", () => {
+  it("leads with the question, lists every candidate and never offers to log 0", () => {
     const els = elementsOf(
       render(
         <PastSolvesList
@@ -145,12 +160,11 @@ describe("PastSolvesList", () => {
     ).toBe(true);
     const labels = els.filter((el) => el.tagName === "label").map(textOf);
     expect(labels).toEqual(["I finished Mountain Lake", "I finished Cats"]);
+    // Nothing ticked: no submit at all, so never "Log 0 puzzles".
     const buttons = els.filter(
       (el) => el.tagName === "button" && !attr(el, "role"),
     );
-    const submitButton = buttons.at(-1)!;
-    expect(textOf(submitButton)).toBe("Log 0 puzzles");
-    expect(submitButton.attrs.some((a) => a.name === "disabled")).toBe(true);
+    expect(buttons).toEqual([]);
   });
 
   it("caps the first page at 25 rows with 'Show more'", () => {
@@ -198,6 +212,95 @@ describe("PastSolvesList", () => {
         "href",
       ),
     ).toBe("/welcome?step=puzzles");
+  });
+});
+
+// Ticking happens in the DOM (Radix checkbox), so these render with Testing Library.
+describe("PastSolvesList (ticking)", () => {
+  const CANDIDATES = [
+    { copyId: "a", title: "Mountain Lake" },
+    { copyId: "b", title: "Cats" },
+  ];
+  const list = (
+    onSubmit: (items: PastCompletionItem[]) => Promise<boolean>,
+    store?: StepCommitStore,
+  ) => {
+    const ui = (
+      <PastSolvesList
+        candidates={CANDIDATES}
+        pending={false}
+        onSubmit={onSubmit}
+      />
+    );
+    return renderDom(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        {store ? <StepCommitContext value={store}>{ui}</StepCommitContext> : ui}
+      </IntlProvider>,
+    );
+  };
+  const tick = (title: string) =>
+    act(() => {
+      fireEvent.click(
+        screen.getByRole("checkbox", { name: `I finished ${title}` }),
+      );
+    });
+
+  it("shows its own submit with the count once something is ticked", () => {
+    list(async () => true);
+    tick("Cats");
+    expect(screen.getByRole("button", { name: "Log 1 puzzle" })).toBeTruthy();
+  });
+
+  it("inside quick setup hides its submit and hands the ticks to Continue", async () => {
+    const store = createStepCommitStore();
+    const onSubmit = vi.fn(async () => true);
+    list(onSubmit, store);
+    tick("Mountain Lake");
+    tick("Cats");
+    expect(screen.queryByRole("button", { name: /^Log / })).toBeNull();
+    expect(store.getSnapshot()).toEqual({
+      kind: "solves",
+      count: 2,
+      ready: true,
+    });
+
+    // "Pick a date" without a date can't be saved yet.
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "Pick a date" })[0]!,
+      );
+    });
+    expect(store.getSnapshot()?.ready).toBe(false);
+    act(() => {
+      fireEvent.click(
+        screen.getAllByRole("radio", { name: "I don't remember" })[0]!,
+      );
+    });
+    expect(store.getSnapshot()?.ready).toBe(true);
+
+    let saved: boolean | undefined;
+    await act(async () => {
+      saved = await store.commit();
+    });
+    expect(saved).toBe(true);
+    expect(onSubmit).toHaveBeenCalledWith([
+      { copyId: "a", datePrecision: "unknown" },
+      { copyId: "b", datePrecision: "unknown" },
+    ]);
+    // Logged rows clear, so nothing is pending any more.
+    expect(store.getSnapshot()?.count).toBe(0);
+  });
+
+  it("keeps the ticks when saving fails", async () => {
+    const store = createStepCommitStore();
+    list(async () => false, store);
+    tick("Cats");
+    let saved: boolean | undefined;
+    await act(async () => {
+      saved = await store.commit();
+    });
+    expect(saved).toBe(false);
+    expect(store.getSnapshot()?.count).toBe(1);
   });
 });
 

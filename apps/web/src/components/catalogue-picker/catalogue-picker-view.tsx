@@ -29,6 +29,9 @@ export interface CataloguePickerViewProps {
   // that opens the tray, so neither drifts below a growing results list. Opt-in, because
   // /welcome wraps the picker in its own sticky flow footer.
   stickyFooter?: boolean;
+  // Inside quick setup the flow's Continue adds the picks ("Add 3 and continue"), so the picker
+  // shows no submit of its own.
+  hideSubmit?: boolean;
   onTermChange: (term: string) => void;
   onToggle: (row: PickerRow) => void;
   onRemove: (definitionId: string) => void;
@@ -48,6 +51,7 @@ export function CataloguePickerView({
   isSubmitting,
   returnTo,
   stickyFooter = false,
+  hideSubmit = false,
   onTermChange,
   onToggle,
   onRemove,
@@ -268,36 +272,38 @@ export function CataloguePickerView({
           {t("availabilityNote")}
         </p>
 
-        <div className="flex items-center justify-end gap-3">
-          {docked && (
+        {!hideSubmit && (
+          <div className="flex items-center justify-end gap-3">
+            {docked && (
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0 pointer-coarse:min-h-11 sm:hidden"
+                aria-expanded={trayOpen}
+                aria-controls={trayId}
+                onClick={() => setTrayOpen((open) => !open)}
+              >
+                {t("pickedHeading", { count: picks.length })}
+                <ChevronUp
+                  aria-hidden
+                  className={cn(
+                    "transition-transform motion-reduce:transition-none",
+                    trayOpen && "rotate-180",
+                  )}
+                />
+              </Button>
+            )}
             <Button
               type="button"
-              variant="outline"
-              className="shrink-0 pointer-coarse:min-h-11 sm:hidden"
-              aria-expanded={trayOpen}
-              aria-controls={trayId}
-              onClick={() => setTrayOpen((open) => !open)}
+              data-picker-submit
+              className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full min-w-0 flex-1 text-white pointer-coarse:min-h-11 sm:w-auto sm:flex-none"
+              disabled={picks.length === 0 || isSubmitting}
+              onClick={onSubmit}
             >
-              {t("pickedHeading", { count: picks.length })}
-              <ChevronUp
-                aria-hidden
-                className={cn(
-                  "transition-transform motion-reduce:transition-none",
-                  trayOpen && "rotate-180",
-                )}
-              />
+              {t("submit", { count: picks.length })}
             </Button>
-          )}
-          <Button
-            type="button"
-            data-picker-submit
-            className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 w-full min-w-0 flex-1 text-white pointer-coarse:min-h-11 sm:w-auto sm:flex-none"
-            disabled={picks.length === 0 || isSubmitting}
-            onClick={onSubmit}
-          >
-            {t("submit", { count: picks.length })}
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

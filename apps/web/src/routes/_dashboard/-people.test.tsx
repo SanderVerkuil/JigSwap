@@ -12,8 +12,9 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { act } from "react";
+import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
@@ -31,8 +32,17 @@ vi.mock("@convex-dev/react-query", () => ({ convexQuery: () => ({}) }));
 vi.mock("@/gateway", () => ({
   gateway: { social: {}, identity: {} },
 }));
+// The header actions the page publishes, kept so a test can render them.
+const published = vi.hoisted(() => ({ actions: undefined as ReactNode }));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
-  usePageHeader: () => {},
+  usePageHeader: (factory: () => { actions?: ReactNode }) => {
+    published.actions = factory().actions;
+  },
+}));
+vi.mock("@/components/tour/guide-help-button", () => ({
+  GuideHelpButton: ({ tourId }: { tourId: string }) => (
+    <button type="button" data-guide={tourId} />
+  ),
 }));
 vi.mock("@/components/social/activity-feed", () => ({
   ActivityFeed: () => <p>activity panel</p>,
@@ -132,5 +142,19 @@ describe("People tabs", () => {
 
     expect(document.body.textContent).toContain("find panel");
     expect(region().scrollTop).toBe(600);
+  });
+});
+
+describe("People header", () => {
+  it("publishes the member-profiles guide's ? button (UX-91)", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(<RouterProvider router={makeRouter()} />);
+    });
+    expect(renderToStaticMarkup(<>{published.actions}</>)).toContain(
+      'data-guide="member-profiles"',
+    );
+    act(() => root.unmount());
   });
 });

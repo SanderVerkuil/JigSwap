@@ -14,14 +14,18 @@ import { useTranslations } from "use-intl";
 
 // "Invite with a link" for the household admin: mints a single-use, 14-day household link
 // (social.createHouseholdInviteLink) and hands it to the share sheet. Whoever signs up through
-// it gets a pending household invite to accept; nobody is added automatically.
+// it gets a pending household invite to accept; nobody is added automatically. The quick start's
+// household step leaves out "Revoke open links" (showRevoke={false}): it is management, which
+// stays on the household page.
 export function HouseholdInviteLink({
   memberId,
   onShared,
+  showRevoke = true,
 }: {
   memberId: string;
   // Called on any share action (the quick start's push-prompt trigger).
   onShared?: () => void;
+  showRevoke?: boolean;
 }) {
   const t = useTranslations("inviteShare");
 
@@ -65,15 +69,17 @@ export function HouseholdInviteLink({
       )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <p className="text-muted-foreground text-xs">{t("linkNote")}</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="pointer-coarse:min-h-11"
-          disabled={revoke.isPending}
-          onClick={() => revoke.mutate({})}
-        >
-          {t("revokeLinks")}
-        </Button>
+        {showRevoke && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="pointer-coarse:min-h-11"
+            disabled={revoke.isPending}
+            onClick={() => revoke.mutate({})}
+          >
+            {t("revokeLinks")}
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -19,6 +19,8 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 **Voorkeuren**, **Meldingen** en **Privacy en veiligheid** vind je daar:
 
 - **Wat is er nieuw**: recente functies en oplossingen (zie hieronder).
+- **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
+  **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
   [Je Dashboard](/docs/getting-started/dashboard#snel-instellen).
 
@@ -27,9 +29,13 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 **Waar:** **Wat is er nieuw** in je accountmenu (`/whats-new`).
 
 De pagina Wat is er nieuw toont recente functies, verbeteringen en oplossingen,
-de nieuwste eerst. Updates die je nog niet hebt gezien, zijn gemarkeerd met
-**Nieuw**, en het menu-item toont hoeveel het er zijn, bijvoorbeeld
-**Wat is er nieuw (2)**.
+de nieuwste eerst. Bij elke update staat een korte samenvatting: kies
+**Lees meer** voor de details. De pagina begint met de laatste updates, en een
+knop onderaan, bijvoorbeeld **32 oudere updates tonen**, toont de rest. Kies
+bovenaan **Functie**, **Verbetering** of **Oplossing** om één soort update te
+zien, of **Alle**. Updates die je nog niet hebt gezien, zijn gemarkeerd met
+**Nieuw** en staan helemaal open, en het menu-item toont hoeveel het er zijn,
+bijvoorbeeld **Wat is er nieuw (2)**.
 
 Is er iets nieuws, dan kan JigSwap het ook in een kort venster tonen. Klik op
 **Lees meer** om het volledige bericht te openen, of op **Misschien later** om
@@ -40,12 +46,14 @@ De pagina heeft twee tabbladen: **Updates** (de lijst hierboven) en
 
 ### Rondleidingen
 
-Het tabblad **Rondleidingen** (`/whats-new?tab=guides`) toont alle
-rondleidingen op één plek, per onderwerp gegroepeerd, met hoeveel je er hebt
-afgerond. Bij elke rondleiding staat hoeveel stappen hij heeft en waar je bent:
-**Stap 2 van 3** als je halverwege stopte, **Klaar** als je hem hebt afgerond.
-Hoort een rondleiding bij een update, dan linkt **Verschenen in** met de maand
-terug naar die update.
+**Waar:** **Hulp en rondleidingen** in je accountmenu of, op een telefoon, in
+het paneel van de snelle-actieknop (`/whats-new?tab=guides`).
+
+Het tabblad **Rondleidingen** toont alle rondleidingen op één plek, per
+onderwerp gegroepeerd, met hoeveel je er hebt afgerond. Bij elke rondleiding
+staat hoeveel stappen hij heeft en waar je bent: **Stap 2 van 3** als je
+halverwege stopte, **Klaar** als je hem hebt afgerond. Hoort een rondleiding
+bij een update, dan linkt **Verschenen in** met de maand terug naar die update.
 
 Bij sommige updates hoort ook een korte rondleiding door de functie. Klik bij
 de update of bij de rondleiding op **Doe de rondleiding** en gebruik dan
@@ -56,16 +64,18 @@ te stoppen.
   gemarkeerde knop om verder te gaan." Druk op de gemarkeerde knop en de
   rondleiding gaat verder.
 - Stop je halverwege, dan kun je de rondleiding hervatten op het tabblad
-  **Rondleidingen**, met **Rondleiding hervatten** (of **Opnieuw beginnen**).
-  De rondleiding van een update hervat je ook bij die update, en die uit Snel
-  instellen via Snel instellen.
+  **Rondleidingen**, met **Hervatten** (of **Opnieuw beginnen**). De
+  rondleiding van een update hervat je ook bij die update, met
+  **Rondleiding hervatten**, en die uit Snel instellen via Snel instellen.
 - **Rondleiding opnieuw bekijken** speelt een afgeronde rondleiding opnieuw af.
-- Op **Uitwisselingen**, **Kringen**, **Voltooiingen** en **Puzzel Toevoegen**
+- Op **Mensen**, **Uitwisselingen**, **Kringen**, **Voltooiingen** en
+  **Puzzel Toevoegen**, en op het **Dashboard** op een computer of tablet,
   start de knop **?** in de paginakop (**Laat me zien hoe**) de rondleiding van
-  die pagina, bij de stap op die pagina. Op **Huishouden** start hij de
-  rondleiding **Wie ziet wat**. Op een telefoon staat de **?** op
-  **Uitwisselingen** aan het eind van de rij filters, en op **Huishouden** aan
-  het eind van de tekst boven de tabbladen.
+  die pagina, bij de stap op die pagina: **Je weg vinden** op het Dashboard,
+  **Ledenprofielen** op Mensen. Op **Huishouden** start hij de rondleiding
+  **Wie ziet wat**. Op een telefoon staat de **?** op **Uitwisselingen** aan
+  het eind van de rij filters, en op **Huishouden** aan het eind van de tekst
+  boven de tabbladen.
 
 ## JigSwap op je telefoon installeren
 

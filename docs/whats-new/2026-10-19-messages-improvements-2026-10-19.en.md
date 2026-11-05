@@ -1,7 +1,7 @@
 ---
 id: messages-improvements-2026-10-19
 publishedAt: "2026-10-19T09:00:00Z"
-title: "Improvements to messages"
+title: "Writing messages got easier"
 summary: "The attach button is now a paperclip next to Send, you can share a puzzle in a circle chat, and messages support formatting, links and emoji."
 category: improvement
 notify: false

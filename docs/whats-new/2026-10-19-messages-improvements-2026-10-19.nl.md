@@ -1,7 +1,7 @@
 ---
 id: messages-improvements-2026-10-19
 publishedAt: "2026-10-19T09:00:00Z"
-title: "Verbeteringen in Berichten"
+title: "Makkelijker berichten schrijven"
 summary: "De knop om iets bij te voegen is nu een paperclip naast Versturen, je kunt een puzzel delen in een kringchat, en berichten ondersteunen opmaak, links en emoji."
 category: improvement
 notify: false

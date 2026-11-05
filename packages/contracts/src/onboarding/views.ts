@@ -12,7 +12,10 @@ export interface QuickStartStepView {
   status: QuickStartStepStatus;
   /** Only household is optional; it never counts toward `requiredDone`. */
   optional: boolean;
-  /** puzzles: copies, solves: finished solves, people: members followed. Capped at 51 ("50+"). */
+  /**
+   * puzzles: copies, solves: finished solves, people: members followed, household: people in the
+   * member's household, themselves included (0 when in none). Capped at 51 ("50+").
+   */
   count?: number;
   /** household only: an invite to a household is waiting for the member. */
   pendingInvite?: boolean;
@@ -21,7 +24,7 @@ export interface QuickStartStepView {
 export interface QuickStartView {
   /** The account is younger than 7 days. */
   eligible: boolean;
-  /** Eligible and the welcome dialog was never dismissed. */
+  /** Eligible, the welcome dialog was never dismissed, and the member never opened /welcome. */
   showWelcome: boolean;
   /** Not dismissed, a required step is still open, and the account is < 30 days old or has 0 copies. */
   cardVisible: boolean;

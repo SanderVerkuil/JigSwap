@@ -16,6 +16,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
+import { useStepCommitRegistration } from "./step-commit";
 
 type Visibility = "public" | "private";
 
@@ -62,6 +63,21 @@ function ProfileStepLoaded({
   const saveVisibility = useMutation({
     mutationFn: useConvexMutation(gateway.social.setProfileVisibility),
     onError: () => toast.error(t("saveError")),
+  });
+  // A typed but unsaved location is the step's pending work: Continue reads "Save and continue"
+  // and saves it first. Visibility needs nothing, it saves on choice.
+  useStepCommitRegistration({
+    kind: "profile",
+    count: location.trim() === savedLocation.trim() ? 0 : 1,
+    ready: true,
+    commit: async () => {
+      try {
+        await saveLocation.mutateAsync({ location: location.trim() });
+        return true;
+      } catch {
+        return false;
+      }
+    },
   });
 
   return (

@@ -12,20 +12,23 @@ import type { QuickStartView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, ListChecks, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { cardMode, progressSegments, rowState } from "./logic";
+import { cardMode, progressSegments, rowState, stepPosition } from "./logic";
 import { QuickStartProgress, StepMarker, useStepText } from "./parts";
 import {
   markQuickStartHidden,
   useMarkQuickStartUsed,
   useQuickStartSession,
 } from "./session";
+import { GettingStartedTourButton } from "./tour-handoff";
 
 // The dashboard checklist (spec §2.3, §5.2), between BriefingHero and ShelfSection. Visibility
 // comes from the server (getQuickStart.cardVisible); the one-row "all set up" state is per
-// session. Hiding stores the dismissal on the server and moves focus to the Shelf heading.
+// session. Hiding stores the dismissal on the server and moves focus to the Shelf heading. The card
+// ends with "Show me around", so the getting-started tour is offered beyond the /welcome done panel
+// (UX-91).
 export function QuickSetupCard() {
   const t = useTranslations("quickStart.card");
   const { member } = useCurrentMember();
@@ -56,17 +59,27 @@ export function QuickSetupCard() {
     );
   };
 
-  return <QuickSetupCardView view={view} mode={mode} onHide={hide} />;
+  return (
+    <QuickSetupCardView
+      view={view}
+      mode={mode}
+      onHide={hide}
+      tourAction={<GettingStartedTourButton />}
+    />
+  );
 }
 
 export function QuickSetupCardView({
   view,
   mode,
   onHide,
+  tourAction,
 }: {
   view: QuickStartView;
   mode: "active" | "allDone";
   onHide: () => void;
+  /** A final row after the steps (not a step itself): the getting-started tour. */
+  tourAction?: ReactNode;
 }) {
   const t = useTranslations("quickStart.card");
   const { title, subLine } = useStepText();
@@ -76,7 +89,7 @@ export function QuickSetupCardView({
     return (
       <section aria-label={t("title")}>
         <div className="flex min-h-11 items-center gap-3.5">
-          <StepMarker state="done" number={0} />
+          <StepMarker state="done" />
           <p className="min-w-0 flex-1 text-sm font-semibold">{t("allDone")}</p>
           <Button
             variant="ghost"
@@ -120,9 +133,10 @@ export function QuickSetupCardView({
         labelledBy={headingId}
       />
       <ol className="mt-2">
-        {view.steps.map((step, i) => {
+        {view.steps.map((step) => {
           const state = rowState(step);
           const sub = subLine(step);
+          const position = stepPosition(step.id);
           return (
             <li key={step.id} className="border-t first:border-t-0">
               <Link
@@ -132,7 +146,9 @@ export function QuickSetupCardView({
               >
                 <StepMarker
                   state={state}
-                  number={i + 1}
+                  number={
+                    position.kind === "required" ? position.index : undefined
+                  }
                   pending={step.pendingInvite && state === "todo"}
                 />
                 <span className="min-w-0 flex-1">
@@ -164,6 +180,7 @@ export function QuickSetupCardView({
           );
         })}
       </ol>
+      {tourAction && <div className="border-t pt-3">{tourAction}</div>}
     </section>
   );
 }

@@ -22,6 +22,14 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 
+// The stat rows use the router's Link directly (a row's hash, /profile#reviews).
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  Link: ({ to, children }: { to: string; children?: ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/dashboard-home/use-current-member", () => ({
   useCurrentMember: () => ({ member: { _id: "me" }, isMemberLoading: false }),
 }));

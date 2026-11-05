@@ -2,6 +2,7 @@
 // unit-test in node. "Done" comes from the server (onboarding.quickStart); these rules only
 // decide what the welcome dialog, the /welcome flow and the dashboard card show.
 
+import { isImmersiveMobileRoute } from "@/components/dashboard-layout/route-meta";
 import type {
   QuickStartStepId,
   QuickStartStepView,
@@ -26,6 +27,11 @@ export function parseFlowStep(value: unknown): FlowStep | undefined {
     : undefined;
 }
 
+/** The required steps still to do, in flow order. Skipped steps count as closed, as on the card. */
+export function openRequiredSteps(view: QuickStartView): QuickStartStepView[] {
+  return view.steps.filter((s) => !s.optional && s.status === "todo");
+}
+
 /**
  * The step to show. A requested step is always honoured (any step can be opened from the card);
  * without one, the first required step that is neither done nor skipped, or `done`. Undefined
@@ -37,15 +43,42 @@ export function resolveFlowStep(
 ): FlowStep | undefined {
   if (requested) return requested;
   if (!view) return undefined;
+  return openRequiredSteps(view)[0]?.id ?? "done";
+}
+
+/**
+ * Where Skip and Continue go: the next step after `step` that is still to do (the optional
+ * household included), else `done`. Done and skipped steps are passed over, so a member who
+ * opened a step from the card never walks back through finished ones. Open steps before `step`
+ * are left to the done panel, which links back to them.
+ */
+export function nextOpenStep(
+  step: QuickStartStepId,
+  view: QuickStartView,
+): FlowStep {
+  const status = (id: FlowStep) => view.steps.find((s) => s.id === id)?.status;
   return (
-    view.steps.find((s) => !s.optional && s.status === "todo")?.id ?? "done"
+    FLOW_STEPS.slice(FLOW_STEPS.indexOf(step) + 1).find(
+      (id) => status(id) === "todo",
+    ) ?? "done"
   );
 }
 
-export function nextFlowStep(step: FlowStep): FlowStep {
-  return FLOW_STEPS[
-    Math.min(FLOW_STEPS.indexOf(step) + 1, FLOW_STEPS.length - 1)
-  ];
+/**
+ * The view as it will read once a Skip is stored: the step turns from to do to skipped. Used as
+ * Skip's optimistic update, so the next screen (often the done panel) never shows the skipped
+ * step as still open.
+ */
+export function withSkippedStep(
+  view: QuickStartView,
+  step: QuickStartStepId,
+): QuickStartView {
+  return {
+    ...view,
+    steps: view.steps.map((s) =>
+      s.id === step && s.status === "todo" ? { ...s, status: "skipped" } : s,
+    ),
+  };
 }
 
 /** Required steps are numbered 1–4 ("Step 2 of 4"); household is the optional step. */
@@ -97,6 +130,19 @@ export function welcomeSurfaceBusy({
   if (memberLoading) return true;
   if (!hasMember) return false;
   return view === undefined || view.showWelcome;
+}
+
+/**
+ * Where the welcome dialog may open. It is mounted in the signed-in shell, so a member who signs
+ * up from a deep link (a catalogue "Join" button, a sign-in `redirect_url`) still gets it on the
+ * page they land on; but never over the quick setup flow it offers, nor over a full-screen phone
+ * thread. Elsewhere it waits for the member's next page.
+ */
+export function welcomeDialogAllowed(pathname: string): boolean {
+  return (
+    pathname.replace(/\/+$/, "") !== "/welcome" &&
+    !isImmersiveMobileRoute(pathname)
+  );
 }
 
 /**

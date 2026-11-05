@@ -14,19 +14,24 @@ import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Puzzle } from "lucide-react";
 import { useRef, useState } from "react";
 import { useTranslations } from "use-intl";
-import { welcomeSurfaceBusy } from "./logic";
+import { welcomeDialogAllowed, welcomeSurfaceBusy } from "./logic";
 import { PRIMARY_LOOK } from "./parts";
 
-// The one-time welcome dialog (spec §2.1, §5.1), mounted on /dashboard only. It wins the
+// The one-time welcome dialog (spec §2.1, §5.1), mounted once in the signed-in shell so it greets
+// a new member on whatever page they land (UX-86), except where welcomeDialogAllowed says no
+// (/welcome, a full-screen phone thread): there it waits for the next page. It wins the
 // surface-busy priority over the What's new highlight: it reports busy while the member and the
-// onboarding query load, not just while open, because the highlight checks once after its 600 ms
-// timer. Every close is final (dismissWelcome); "Start quick setup" also opens /welcome. Nothing
-// redirects on its own.
+// onboarding query load and while it is due, even on a page where it waits, because the highlight
+// checks once after its 600 ms timer. Every close is final (dismissWelcome); "Start quick setup"
+// also opens /welcome. Nothing redirects on its own.
 export function WelcomeDialog() {
+  const allowed = welcomeDialogAllowed(
+    useLocation({ select: (location) => location.pathname }),
+  );
   const { member, isMemberLoading } = useCurrentMember();
   const { data: view } = useQuery(
     convexQuery(gateway.onboarding.quickStart, member ? {} : "skip"),
@@ -53,7 +58,7 @@ export function WelcomeDialog() {
 
   return (
     <Dialog
-      open={!closed && view?.showWelcome === true}
+      open={!closed && allowed && view?.showWelcome === true}
       onOpenChange={(open) => !open && close()}
     >
       <WelcomeDialogContent onClose={close} />
@@ -84,7 +89,13 @@ function WelcomeDialogContent({ onClose }: { onClose: () => void }) {
 export function WelcomeDialogBody({ onClose }: { onClose: () => void }) {
   const t = useTranslations("quickStart.welcome");
   const fullWidth = "w-full sm:w-auto";
-  const lines = [t("stepPuzzles"), t("stepSolves"), t("stepPeople")];
+  // The four required steps, numbered as in the flow ("Step 2 of 4"); household is optional.
+  const lines = [
+    t("stepPuzzles"),
+    t("stepSolves"),
+    t("stepPeople"),
+    t("stepProfile"),
+  ];
   return (
     <>
       <div

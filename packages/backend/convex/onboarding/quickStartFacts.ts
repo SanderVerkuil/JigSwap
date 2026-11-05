@@ -70,8 +70,18 @@ export const quickStartFactsOf = async (
   // Only needed when the member follows nobody yet (a request to a private profile also counts).
   // A request counts as pending exactly when the member's own follow button says so: a silently
   // declined one still does, so this step can't reveal a decline (SEC-39).
-  const pendingRequest =
-    follows.length > 0 ? false : await hasRequestReadingAsPending(ctx, me);
+  // The household's size only when in one: a household of one reads "just you so far".
+  const [pendingRequest, householdMembers] = await Promise.all([
+    follows.length > 0 ? false : hasRequestReadingAsPending(ctx, me),
+    household === null
+      ? []
+      : ctx.db
+          .query("householdMembers")
+          .withIndex("by_household", (q) =>
+            q.eq("householdId", household.householdId),
+          )
+          .take(COUNT_CAP),
+  ]);
 
   return {
     copies: copies.length,
@@ -79,6 +89,7 @@ export const quickStartFactsOf = async (
     follows: follows.length,
     pendingFollowRequests: pendingRequest ? 1 : 0,
     inHousehold: household !== null,
+    householdMembers: householdMembers.length,
     pendingHouseholdInvite: pendingInvite,
     hasLocation: (member.location ?? "").trim() !== "",
     visibilitySet: profile?.visibility !== undefined,

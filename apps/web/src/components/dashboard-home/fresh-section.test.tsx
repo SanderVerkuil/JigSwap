@@ -14,7 +14,10 @@ vi.mock("./use-current-member", () => ({
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  useQuery: () => ({ data: { recent: [{ _id: "c1" }, { _id: "c2" }] } }),
+  // More copies than the shelf shows, or the section stays hidden.
+  useQuery: () => ({
+    data: { total: 9, recent: [{ _id: "c1" }, { _id: "c2" }] },
+  }),
 }));
 // Stub the card (its own layout is covered elsewhere); keep the real grid provider.
 vi.mock("@/components/ui/puzzle-card", async () => ({

@@ -1,4 +1,5 @@
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
+import { useStepCommitRegistration } from "@/components/quick-start/step-commit";
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -51,7 +52,8 @@ function useCatalogueSearch(term: string) {
 // for swap, and add them with `library.acquireCopies` calls of at most 25 each, one after the
 // other. Each call is all or nothing; if one is refused, the picks already added leave the tray
 // and the rest stay picked to retry. `returnTo` is where "Register" comes back to after the full
-// add form.
+// add form. Inside quick setup the flow's Continue makes those calls instead of the picker's own
+// submit.
 export function CataloguePicker({
   returnTo,
   onAdded,
@@ -127,6 +129,22 @@ export function CataloguePicker({
     },
   });
 
+  // Inside quick setup, Continue adds the picks; the toasts above report the outcome. A refused
+  // chunk doesn't throw: the rest stay picked, so Continue stays on the step for the retry.
+  const inFlow = useStepCommitRegistration({
+    kind: "puzzles",
+    count: picks.length,
+    ready: true,
+    commit: async () => {
+      try {
+        const { remaining } = await submit.mutateAsync(picks);
+        return remaining.length === 0;
+      } catch {
+        return false;
+      }
+    },
+  });
+
   return (
     <CataloguePickerView
       term={term}
@@ -136,6 +154,7 @@ export function CataloguePicker({
       isSubmitting={submit.isPending}
       returnTo={returnTo}
       stickyFooter={stickyFooter}
+      hideSubmit={inFlow}
       onTermChange={setTerm}
       onToggle={(row) => setPicks((current) => togglePick(current, row))}
       onRemove={(id) => setPicks((current) => removePick(current, id))}

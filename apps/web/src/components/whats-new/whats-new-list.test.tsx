@@ -1,10 +1,17 @@
+// @vitest-environment happy-dom
 import type { WhatsNewEntry } from "@/whats-new/types";
 import type { WhatsNewTourProgressView } from "@jigswap/contracts";
+import {
+  cleanup,
+  fireEvent,
+  render as renderDom,
+  screen,
+} from "@testing-library/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { WhatsNewList } from "./whats-new-list";
@@ -69,27 +76,30 @@ const ENTRIES: WhatsNewEntry[] = [
   }),
 ];
 
-const render = (
-  props: {
-    entries?: WhatsNewEntry[];
-    unreadIds?: string[];
-    tours?: WhatsNewTourProgressView[];
-  },
-  locale: "en" | "nl" = "en",
-) =>
-  renderToStaticMarkup(
-    <IntlProvider
-      locale={locale}
-      messages={locale === "en" ? en : nl}
-      timeZone="Europe/Amsterdam"
-    >
-      <WhatsNewList
-        entries={props.entries ?? ENTRIES}
-        unreadIds={props.unreadIds}
-        tours={props.tours}
-      />
-    </IntlProvider>,
-  );
+type ListProps = {
+  entries?: WhatsNewEntry[];
+  unreadIds?: string[];
+  tours?: WhatsNewTourProgressView[];
+  deepLinkId?: string;
+};
+
+const list = (props: ListProps, locale: "en" | "nl" = "en") => (
+  <IntlProvider
+    locale={locale}
+    messages={locale === "en" ? en : nl}
+    timeZone="Europe/Amsterdam"
+  >
+    <WhatsNewList
+      entries={props.entries ?? ENTRIES}
+      unreadIds={props.unreadIds}
+      tours={props.tours}
+      deepLinkId={props.deepLinkId}
+    />
+  </IntlProvider>
+);
+
+const render = (props: ListProps, locale: "en" | "nl" = "en") =>
+  renderToStaticMarkup(list(props, locale));
 
 // Assert on a real HTML tree (parse5), never on regex-extracted markup.
 type Node = DefaultTreeAdapterMap["childNode"];
@@ -277,6 +287,29 @@ describe("WhatsNewList", () => {
     ]);
   });
 
+  it("sizes the tour, Start over and CTA actions for touch (UX-167)", () => {
+    const paused: WhatsNewTourProgressView = {
+      tourId: "households",
+      status: "in_progress",
+      step: 1,
+      updatedAt: 1,
+    };
+    const els = parse(render({ unreadIds: [], tours: [paused] }));
+    const actions = [
+      ...elementsOf(article(els, "households")),
+      ...elementsOf(article(els, "faster")),
+    ].filter((el) => el.tagName === "button" || el.tagName === "a");
+    expect(actions.map(textOf)).toEqual([
+      "Resume tour (step 2 of 3)",
+      "Start over",
+      "Open household",
+      "Open library",
+    ]);
+    for (const action of actions) {
+      expect(classes(action)).toContain("pointer-coarse:min-h-11");
+    }
+  });
+
   it("makes the CTA the primary action when there is no tour, and omits actions without either", () => {
     const els = parse(render({ unreadIds: [] }));
     const cta = elementsOf(article(els, "faster")).find(
@@ -307,5 +340,161 @@ describe("WhatsNewList", () => {
     expect(els.some((el) => el.tagName === "section")).toBe(false);
     const h2 = els.find((el) => el.tagName === "h2")!;
     expect(textOf(h2)).toBe("No updates yet");
+  });
+});
+
+// Thirteen read entries, one a day, newest first; every fourth is a fix, the rest improvements.
+const MANY: WhatsNewEntry[] = Array.from({ length: 13 }, (_, i) =>
+  entry(`e${i}`, new Date(Date.UTC(2026, 9, 30 - i)).toISOString(), {
+    category: i % 4 === 3 ? "fix" : "improvement",
+  }),
+);
+
+const articleIds = (els: Element[]) =>
+  els
+    .filter((el) => el.tagName === "article")
+    .map((el) => attr(el, "id")!.replace(/^entry-/, ""));
+
+describe("WhatsNewList is readable on a phone (UX-90)", () => {
+  afterEach(cleanup);
+
+  const detailsOf = (els: Element[], id: string) =>
+    elementsOf(article(els, id)).find((el) => el.tagName === "details");
+
+  it("keeps a read entry's image and body behind Read more, with the summary outside", () => {
+    const withImage: WhatsNewEntry[] = [
+      { ...ENTRIES[1]!, image: "/whats-new/names.png" },
+    ];
+    const els = parse(render({ entries: withImage, unreadIds: [] }));
+    const details = detailsOf(els, "names")!;
+    expect(attr(details, "open")).toBeUndefined();
+    const summary = elementsOf(details).find((el) => el.tagName === "summary")!;
+    expect(attr(summary, "aria-describedby")).toBe("entry-names-title");
+    const labels = elementsOf(summary)
+      .filter((el) => el.tagName === "span")
+      .map(textOf);
+    expect(labels).toEqual(["Read more", "Show less"]);
+    // The image and body are inside the disclosure; the summary paragraph is not.
+    expect(elementsOf(details).some((el) => el.tagName === "img")).toBe(true);
+    expect(textOf(details)).toContain("EN names body");
+    expect(textOf(details)).not.toContain("EN names summary");
+    expect(textOf(article(els, "names"))).toContain("EN names summary");
+
+    const nlSummary = elementsOf(
+      detailsOf(
+        parse(render({ entries: withImage, unreadIds: [] }, "nl")),
+        "names",
+      )!,
+    ).find((el) => el.tagName === "summary")!;
+    expect(
+      elementsOf(nlSummary)
+        .filter((el) => el.tagName === "span")
+        .map(textOf),
+    ).toEqual(["Lees meer", "Minder tonen"]);
+  });
+
+  it("opens the body of unread and deep-linked entries", () => {
+    const els = parse(
+      render({ unreadIds: ["households"], deepLinkId: "faster" }),
+    );
+    expect(attr(detailsOf(els, "households")!, "open")).toBe("");
+    expect(attr(detailsOf(els, "faster")!, "open")).toBe("");
+    expect(attr(detailsOf(els, "names")!, "open")).toBeUndefined();
+  });
+
+  it("has no disclosure for an entry without an image or body", () => {
+    const bare = entry("bare", "2026-10-01T00:00:00Z", {
+      content: {
+        en: content("EN bare", { html: "" }),
+        nl: content("NL bare", { html: "" }),
+      },
+    });
+    const els = parse(render({ entries: [bare], unreadIds: [] }));
+    expect(detailsOf(els, "bare")).toBeUndefined();
+  });
+
+  it("renders the newest ten and offers the rest behind Show N older updates", () => {
+    const els = parse(render({ entries: MANY, unreadIds: [] }));
+    expect(articleIds(els)).toEqual(MANY.slice(0, 10).map((e) => e.id));
+    const more = els.filter(
+      (el) => el.tagName === "button" && textOf(el).includes("older"),
+    );
+    expect(more.map(textOf)).toEqual(["Show 3 older updates"]);
+
+    const nlEls = parse(render({ entries: MANY, unreadIds: [] }, "nl"));
+    expect(
+      nlEls
+        .filter((el) => el.tagName === "button")
+        .map(textOf)
+        .filter((text) => text.includes("oudere")),
+    ).toEqual(["3 oudere updates tonen"]);
+  });
+
+  it("always renders unread and deep-linked older entries", () => {
+    const els = parse(
+      render({ entries: MANY, unreadIds: ["e11"], deepLinkId: "e12" }),
+    );
+    expect(articleIds(els)).toEqual([
+      ...MANY.slice(0, 10).map((e) => e.id),
+      "e11",
+      "e12",
+    ]);
+    expect(attr(detailsOf(els, "e12")!, "open")).toBe("");
+    expect(
+      els
+        .filter((el) => el.tagName === "button" && textOf(el).includes("older"))
+        .map(textOf),
+    ).toEqual(["Show 1 older update"]);
+    // Nothing older to show: no button.
+    expect(
+      parse(render({ unreadIds: [] })).some(
+        (el) => el.tagName === "button" && textOf(el).includes("older"),
+      ),
+    ).toBe(false);
+  });
+
+  it("offers a filter for the categories in use, All pressed first", () => {
+    const els = parse(render({ entries: MANY, unreadIds: [] }));
+    const group = els.find((el) => attr(el, "role") === "group")!;
+    expect(attr(group, "aria-label")).toBe("Filter updates by type");
+    const chips = elementsOf(group).filter((el) => el.tagName === "button");
+    expect(chips.map((el) => [textOf(el), attr(el, "aria-pressed")])).toEqual([
+      ["All", "true"],
+      ["Improvement", "false"],
+      ["Fix", "false"],
+    ]);
+    // One category: nothing to filter.
+    expect(
+      parse(render({ entries: [ENTRIES[0]!], unreadIds: [] })).some(
+        (el) => attr(el, "role") === "group",
+      ),
+    ).toBe(false);
+  });
+
+  it("filters by category and reveals older updates, moving focus to the first one shown", () => {
+    renderDom(list({ entries: MANY, unreadIds: [] }));
+    const shown = () =>
+      Array.from(document.querySelectorAll("article")).map((el) =>
+        el.id.replace(/^entry-/, ""),
+      );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fix" }));
+    expect(
+      screen.getByRole("button", { name: "Fix" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen.getByRole("button", { name: "All" }).getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(shown()).toEqual(["e3", "e7", "e11"]);
+    expect(screen.queryByRole("button", { name: /older/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+    expect(shown()).toHaveLength(10);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show 3 older updates" }),
+    );
+    expect(shown()).toEqual(MANY.map((e) => e.id));
+    expect(document.activeElement?.id).toBe("entry-e10-title");
+    expect(screen.queryByRole("button", { name: /older/ })).toBeNull();
   });
 });

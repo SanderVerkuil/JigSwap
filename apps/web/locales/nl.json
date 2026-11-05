@@ -1384,6 +1384,8 @@
       "swapsOnly": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> — houd die stukjes in beweging.",
       "pendingOnly": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
       "goalOnly": "Alles rustig aan het ruilfront — en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
+      "shelfOffered": "Je hebt <shelfLink>{offeredCount, plural, one {# puzzel te ruil} other {# puzzels te ruil}}</shelfLink> — <browseLink>kijk wat anderen hebben</browseLink> en vind je volgende puzzel. 🧩",
+      "shelfOnly": "Je hebt <shelfLink>{ownedCount, plural, one {# puzzel op je plank} other {# puzzels op je plank}}</shelfLink> — {ownedCount, plural, one {zet hem te ruil} other {zet er een paar te ruil}} en breng de boel in beweging. 🧩",
       "empty": "Je plank is er klaar voor — voeg een puzzel toe of neus rond in de community om de boel in beweging te krijgen. 🧩"
     },
     "pendingBanner": {
@@ -1402,7 +1404,7 @@
     "shelf": {
       "title": "Jouw Plank",
       "meta": "{owned, plural, one {# op de plank} other {# op de plank}} · {forTrade, plural, =0 {geen te ruil} one {# te ruil} other {# te ruil}}",
-      "viewCollections": "Collecties Bekijken",
+      "allPuzzles": "Al mijn puzzels",
       "empty": "Je plank wacht op zijn eerste puzzel — voeg er een toe en hij staat hier te pronken (en te ruilen). 🧩",
       "addFirst": "Voeg Je Eerste Puzzel Toe",
       "stats": {
@@ -1430,7 +1432,7 @@
     "pulse": {
       "inMotion": {
         "title": "In Beweging",
-        "all": "Alles",
+        "all": "Alle<sr> uitwisselingen</sr>",
         "meta": "{kind} · {direction} · {who}",
         "kind": {
           "trade": "Ruil",
@@ -1453,7 +1455,7 @@
       },
       "goals": {
         "title": "Doelen",
-        "all": "Alles",
+        "all": "Alle<sr> doelen</sr>",
         "done": "{current}/{target} gedaan",
         "empty": "Nog geen doelen — stel jezelf een doel en zie de ring vollopen. 🧩",
         "noCurrent": "Geen lopende doelen — stel een nieuw doel en zie de ring vollopen. 🧩",
@@ -1466,6 +1468,9 @@
         "acquisitionBatch": "<strong>{name}</strong> heeft {count, plural, one {# puzzel} other {# puzzels}} op de plank gezet",
         "exchange": "<strong>{name}</strong> heeft een ruil afgerond",
         "started": "<strong>{name}</strong> is aan een puzzel begonnen",
+        "acquisitionTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> op de plank gezet",
+        "completionTitled": "<strong>{name}</strong> heeft <puzzle>{title}</puzzle> afgemaakt",
+        "startedTitled": "<strong>{name}</strong> is aan <puzzle>{title}</puzzle> begonnen",
         "empty": "Voorlopig alles rustig — volg medepuzzelaars en hun nieuwste stappen verschijnen hier. 🧩"
       }
     },
@@ -4164,6 +4169,8 @@
     },
     "welcome": "Welkom terug, {name}! 🧩",
     "welcomeAnonymous": "Welkom terug! 🧩",
+    "welcomeNew": "Welkom, {name}! 🧩",
+    "welcomeNewAnonymous": "Welkom! 🧩",
     "groups": {
       "library": {
         "label": "Mijn Bibliotheek",
@@ -4352,6 +4359,7 @@
       "admin": "Beheer",
       "privacySafety": "Privacy en veiligheid",
       "homepage": "JigSwap-homepage",
+      "helpGuides": "Hulp en rondleidingen",
       "signOut": "Uitloggen"
     },
     "theme": {
@@ -4382,7 +4390,8 @@
         "logCompletionSub": "Eentje af? Leg het vast",
         "findSwap": "Zoek een ruil",
         "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
-        "whatsNewSub": "De nieuwste functies en oplossingen"
+        "whatsNewSub": "De nieuwste functies en oplossingen",
+        "helpGuidesSub": "Korte rondleidingen door JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # ongelezen bericht} other {{name}, # ongelezen berichten}}",
@@ -5327,6 +5336,12 @@
       "body": "Nieuwe functies en oplossingen verschijnen hier."
     },
     "readMore": "Lees meer",
+    "showLess": "Minder tonen",
+    "showOlder": "{count, plural, one {# oudere update tonen} other {# oudere updates tonen}}",
+    "filter": {
+      "label": "Updates filteren op soort",
+      "all": "Alle"
+    },
     "seeAll": "Alle updates bekijken",
     "modal": {
       "eyebrow": "Nieuw in JigSwap",
@@ -5336,6 +5351,7 @@
       "take": "Doe de rondleiding",
       "replay": "Rondleiding opnieuw bekijken",
       "resume": "Rondleiding hervatten (stap {step} van {total})",
+      "resumeShort": "Hervatten",
       "restart": "Opnieuw beginnen"
     },
     "tabs": {
@@ -5448,7 +5464,7 @@
         },
         "account-menu": {
           "title": "Instellingen en snel instellen",
-          "body": "Je profiel, meldingen en Snel instellen vind je hier."
+          "body": "Hier vind je je profiel, meldingen en Snel instellen. Hulp en rondleidingen zet alle rondleidingen op een rij."
         }
       },
       "guide": {
@@ -5614,17 +5630,18 @@
     },
     "welcome": {
       "title": "Welkom bij JigSwap!",
-      "body": "Zullen we je plank inrichten? Voeg je puzzels toe, welke je al hebt afgemaakt en met wie je puzzelt.",
+      "body": "Zullen we je plank inrichten? Dat gaat in vier snelle stappen.",
       "stepPuzzles": "Voeg de puzzels op je plank toe",
       "stepSolves": "Vink aan welke je al hebt afgemaakt",
       "stepPeople": "Vind de mensen met wie je puzzelt",
+      "stepProfile": "Maak je profiel persoonlijk",
       "time": "Duurt ongeveer 3 minuten. Je kunt altijd stoppen.",
       "start": "Snel instellen",
       "explore": "Zelf rondkijken"
     },
     "card": {
       "title": "Snel instellen",
-      "progress": "{done} van {total}",
+      "progress": "{done} van {total} klaar",
       "progressLabel": "{done} van {total} stappen klaar",
       "hide": "Snel instellen verbergen",
       "hiddenToast": "Snel instellen is verborgen. Je kunt het weer openen via je accountmenu.",
@@ -5661,6 +5678,7 @@
       "household": {
         "title": "Huishouden",
         "done": "Je zit in een huishouden",
+        "justYou": "Voorlopig alleen jij",
         "pending": "Uitnodiging wacht op je"
       },
       "profile": {
@@ -5674,6 +5692,19 @@
       "optionalStep": "Optionele stap",
       "skip": "Overslaan",
       "continue": "Doorgaan",
+      "commitAndContinue": {
+        "puzzles": "{count} toevoegen en doorgaan",
+        "solves": "{count} vastleggen en doorgaan",
+        "profile": "Opslaan en doorgaan"
+      },
+      "discard": {
+        "title": "Weggaan zonder op te slaan?",
+        "puzzles": "{count, plural, one {De puzzel die je hebt gekozen, staat nog niet op je plank.} other {De # puzzels die je hebt gekozen, staan nog niet op je plank.}}",
+        "solves": "{count, plural, one {De puzzel die je hebt aangevinkt, is nog niet vastgelegd.} other {De # puzzels die je hebt aangevinkt, zijn nog niet vastgelegd.}}",
+        "profile": "Je nieuwe locatie is nog niet opgeslagen.",
+        "keep": "Verder bewerken",
+        "discard": "Niet opslaan"
+      },
       "finishLater": "Later afmaken"
     },
     "people": {
@@ -5686,6 +5717,7 @@
       "create": "Een huishouden aanmaken",
       "alone": "Ik puzzel alleen",
       "inviteMember": "Een lid uitnodigen",
+      "inviteMore": "Uitnodigen op naam of e-mail",
       "pendingTitle": "{name} heeft je uitgenodigd voor hun huishouden"
     },
     "profile": {
@@ -5703,7 +5735,9 @@
     },
     "done": {
       "title": "Je plank staat klaar",
+      "almostTitle": "Bijna klaar: nog {count, plural, one {# stap} other {# stappen}}",
       "summary": "{copies, plural, one {# puzzel} other {# puzzels}} · {solves} afgemaakt · {following} gevolgd",
+      "continueSetup": "Verder met instellen",
       "goToShelf": "Naar mijn plank",
       "tour": "Geef me een rondleiding"
     }

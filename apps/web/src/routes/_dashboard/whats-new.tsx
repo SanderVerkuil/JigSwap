@@ -13,6 +13,7 @@ import { pageTitle } from "@/lib/page-title";
 import { useConvexMutation } from "@convex-dev/react-query";
 import {
   createFileRoute,
+  useHydrated,
   useLocation,
   useNavigate,
 } from "@tanstack/react-router";
@@ -43,6 +44,13 @@ function WhatsNewPage() {
   const activeTab = tab ?? "updates";
   const navigate = useNavigate({ from: Route.fullPath });
   const hash = useLocation({ select: (location) => location.hash });
+  // The hash never reaches the server, so it only counts once hydrated: the deep-linked entry then
+  // joins the rendered page (and opens) without the server and first client render disagreeing.
+  const hydrated = useHydrated();
+  const target = hydrated ? hash.replace(/^#/, "") : "";
+  const deepLinkId = target.startsWith("entry-")
+    ? target.slice("entry-".length)
+    : undefined;
   const { unreadIds, tours } = useWhatsNewState();
   const markSeen = useConvexMutation(gateway.whatsNew.markSeen);
 
@@ -56,7 +64,8 @@ function WhatsNewPage() {
 
   // Mark the entries this page shows as seen, once per visit, after the first render with state.
   // Only bundled ids (the snapshot is already intersected), so an entry the backend knows but this
-  // deploy cannot render yet stays unread until it is actually shown.
+  // deploy cannot render yet stays unread until it is actually shown. The list keeps every unread
+  // entry on its first page, open (visibleEntries), so this still only marks what the page shows.
   const markedRef = useRef(false);
   useEffect(() => {
     if (snapshot === undefined || markedRef.current) return;
@@ -70,8 +79,10 @@ function WhatsNewPage() {
   // A #entry-{id} deep link (modal "Read more", W3's notification, a guide's "Introduced" link)
   // or a #guide-{tourId} one: bring the card into view and move focus to its title so screen
   // readers start there (spec Part B §1.11). A guide link without ?tab=guides switches tab first.
+  // An older entry is only rendered once `deepLinkId` passes it to the list (after hydration), so
+  // this runs on `target`, not the raw hash.
   useEffect(() => {
-    const id = hash.replace(/^#/, "");
+    const id = target;
     if (!id.startsWith("entry-") && !id.startsWith("guide-")) return;
     if (id.startsWith("guide-") && activeTab !== "guides") {
       void navigate({
@@ -103,7 +114,7 @@ function WhatsNewPage() {
     };
     reveal();
     return () => cancelAnimationFrame(request);
-  }, [hash, activeTab, navigate]);
+  }, [target, activeTab, navigate]);
 
   const handleTabChange = (value: string) => {
     void navigate({
@@ -137,6 +148,7 @@ function WhatsNewPage() {
           entries={WHATS_NEW_ENTRIES}
           unreadIds={snapshot}
           tours={tours}
+          deepLinkId={deepLinkId}
         />
       </TabsContent>
       <TabsContent value="guides" className="mt-6">

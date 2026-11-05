@@ -41,6 +41,12 @@ vi.mock("@tanstack/react-router", () => ({
   },
 }));
 
+// The card file also holds the connected "Show me around" (tour-handoff), whose What's new state
+// reads the build-time entries module; the views under test never call it.
+vi.mock("@/components/whats-new/use-whats-new-state", () => ({
+  useWhatsNewState: () => ({ unreadIds: undefined, tours: undefined }),
+}));
+
 type Locale = "en" | "nl";
 const render = (node: ReactNode, locale: Locale = "en") =>
   renderToStaticMarkup(
@@ -115,17 +121,55 @@ const VIEW: QuickStartView = {
   requiredTotal: 4,
 };
 
+// Every required step closed: three done, profile skipped.
+const DONE_VIEW: QuickStartView = {
+  ...VIEW,
+  cardVisible: false,
+  steps: [
+    step("puzzles", "done", { count: 7 }),
+    step("solves", "done", { count: 3 }),
+    step("people", "done", { count: 0 }),
+    step("household", "skipped", { pendingInvite: false }),
+    step("profile", "skipped"),
+  ],
+  requiredDone: 3,
+};
+
 describe("QuickSetupCardView (active)", () => {
   const html = render(
     <QuickSetupCardView view={VIEW} mode="active" onHide={() => {}} />,
   );
 
-  it("is a section labelled by its h2, with the x of 4 meta", () => {
+  it("is a section labelled by its h2, with the x of 4 done meta", () => {
     const [section] = byTag(html, "section");
     const [h2] = byTag(html, "h2");
     expect(text(h2!)).toBe("Quick setup");
     expect(attr(section!, "aria-labelledby")).toBe(attr(h2!, "id"));
-    expect(text(section!)).toContain("2 of 4");
+    expect(text(section!)).toContain("2 of 4 done");
+  });
+
+  it("numbers the rows like the flow: 1 to 4, with household unnumbered", () => {
+    const fresh = render(
+      <QuickSetupCardView
+        view={{
+          ...VIEW,
+          steps: VIEW.steps.map((s) => ({ ...s, status: "todo" })),
+        }}
+        mode="active"
+        onHide={() => {}}
+      />,
+    );
+    const markers = byTag(fresh, "a").map((a) =>
+      text(elements(a).find((el) => attr(el, "aria-hidden") === "true")!),
+    );
+    expect(markers).toEqual(["1", "2", "3", "", "4"]);
+  });
+
+  it("never marks a current segment on the card's bar", () => {
+    const bar = all(html).find((el) => attr(el, "role") === "progressbar")!;
+    expect(elements(bar).some((s) => attr(s, "class")?.includes("ring-"))).toBe(
+      false,
+    );
   });
 
   it("has one progressbar with four decorative segments", () => {
@@ -219,6 +263,37 @@ describe("QuickSetupCardView (active)", () => {
     );
   });
 
+  it("says just you for a household of one, in English and Dutch", () => {
+    const withHousehold = (count: number, locale: Locale = "en") =>
+      nameOf(
+        byTag(
+          render(
+            <QuickSetupCardView
+              view={{
+                ...VIEW,
+                steps: VIEW.steps.map((s) =>
+                  s.id === "household"
+                    ? step("household", "done", { count, pendingInvite: false })
+                    : s,
+                ),
+              }}
+              mode="active"
+              onHide={() => {}}
+            />,
+            locale,
+          ),
+          "a",
+        )[3]!,
+      );
+    expect(withHousehold(1)).toBe("HouseholdOptional, done, Just you so far");
+    expect(withHousehold(2)).toBe(
+      "HouseholdOptional, done, You're in a household",
+    );
+    expect(withHousehold(1, "nl")).toBe(
+      "HuishoudenOptioneel, klaar, Voorlopig alleen jij",
+    );
+  });
+
   it("renders in Dutch", () => {
     const nlHtml = render(
       <QuickSetupCardView view={VIEW} mode="active" onHide={() => {}} />,
@@ -231,10 +306,62 @@ describe("QuickSetupCardView (active)", () => {
     expect(nameOf(byTag(nlHtml, "a")[1]!)).toBe(
       "Leg vast wat je al hebt afgemaakt, klaar, 3 vastgelegd",
     );
-    expect(text(parseFragment(nlHtml))).toContain("2 van 4");
+    expect(text(parseFragment(nlHtml))).toContain("2 van 4 klaar");
     expect(attr(byTag(nlHtml, "button")[0]!, "aria-label")).toBe(
       "Snel instellen verbergen",
     );
+  });
+});
+
+describe("QuickSetupCardView: tour row", () => {
+  const noop = () => {};
+  const withTour = (locale: Locale = "en") =>
+    render(
+      <QuickSetupCardView
+        view={VIEW}
+        mode="active"
+        onHide={noop}
+        tourAction={
+          <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
+        }
+      />,
+      locale,
+    );
+
+  it("ends the card with Show me around, after the step list", () => {
+    const html = withTour();
+    expect(
+      controls(html).map((el) => attr(el, "aria-label") ?? nameOf(el)),
+    ).toEqual([
+      "Hide quick setup",
+      "Add your puzzles, done, 7 added",
+      "Log puzzles you finished, done, 3 logged",
+      "Find your people, to do",
+      "HouseholdOptional, skipped, Skipped · Do it now",
+      "Make it yours, to do",
+      "Show me around",
+    ]);
+    // Not a step: the list still holds the five steps and no button.
+    const [ol] = byTag(html, "ol");
+    expect(elements(ol!).filter((el) => el.tagName === "li")).toHaveLength(5);
+    expect(elements(ol!).some((el) => el.tagName === "button")).toBe(false);
+  });
+
+  it("is only there when a tour action is passed", () => {
+    const html = render(
+      <QuickSetupCardView view={VIEW} mode="active" onHide={noop} />,
+    );
+    expect(controls(html).map((el) => nameOf(el))).not.toContain(
+      "Show me around",
+    );
+  });
+
+  it("renders in Dutch", () => {
+    expect(
+      controls(withTour("nl"))
+        .map((el) => nameOf(el))
+        .at(-1),
+    ).toBe("Geef me een rondleiding");
   });
 });
 
@@ -263,9 +390,13 @@ describe("WelcomeDialogBody", () => {
       locale,
     );
 
-  it("has the title, the three numbered lines and the time line", () => {
+  it("has the title, the four numbered steps and the time line", () => {
     const html = renderDialog("en");
     expect(text(byTag(html, "h2")[0]!)).toBe("Welcome to JigSwap!");
+    // The copy counts the same four steps the list numbers.
+    expect(text(parseFragment(html))).toContain(
+      "Shall we set up your shelf? It takes four quick steps.",
+    );
     const [ol] = byTag(html, "ol");
     expect(attr(ol!, "role")).toBe("list");
     const items = elements(ol!).filter((el) => el.tagName === "li");
@@ -273,6 +404,7 @@ describe("WelcomeDialogBody", () => {
       "1Add the puzzles on your shelf",
       "2Mark the ones you've finished",
       "3Find the people you puzzle with",
+      "4Make your profile your own",
     ]);
     expect(text(parseFragment(html))).toContain(
       "Takes about 3 minutes. You can stop at any time.",
@@ -301,7 +433,16 @@ describe("WelcomeDialogBody", () => {
       "Snel instellen",
     ]);
     expect(text(parseFragment(html))).toContain(
+      "Zullen we je plank inrichten? Dat gaat in vier snelle stappen.",
+    );
+    expect(text(parseFragment(html))).toContain(
       "Vink aan welke je al hebt afgemaakt",
+    );
+    const items = elements(byTag(html, "ol")[0]!).filter(
+      (el) => el.tagName === "li",
+    );
+    expect(items.map((li) => text(li)).at(-1)).toBe(
+      "4Maak je profiel persoonlijk",
     );
   });
 });
@@ -320,19 +461,32 @@ describe("QuickStartFlowView", () => {
       locale,
     );
 
-  it("titles the step with a focusable h2 and an eyebrow", () => {
+  // The phone eyebrow is the element that labels the progress bar.
+  const eyebrow = (html: string) => {
+    const bar = all(html).find((el) => attr(el, "role") === "progressbar")!;
+    return all(html).find(
+      (el) => attr(el, "id") === attr(bar, "aria-labelledby"),
+    )!;
+  };
+
+  it("titles the step with a focusable h2 and a short eyebrow", () => {
     const html = renderFlow("solves");
     const [h2] = byTag(html, "h2");
     expect(text(h2!)).toBe("Log puzzles you finished");
     expect(attr(h2!, "tabindex")).toBe("-1");
-    expect(text(parseFragment(html))).toContain(
-      "Step 2 of 4 · Log puzzles you finished",
-    );
+    // The h2 carries the title; the eyebrow only gives the position.
+    expect(text(eyebrow(html))).toBe("Step 2 of 4");
   });
 
   it("marks household as the optional step", () => {
-    expect(text(parseFragment(renderFlow("household")))).toContain(
-      "Optional step · Household",
+    expect(text(eyebrow(renderFlow("household")))).toBe("Optional step");
+  });
+
+  it("keeps the flow in one readable column", () => {
+    const html = renderFlow("solves");
+    const root = all(html)[0]!;
+    expect(attr(root, "class")?.split(/\s+/)).toEqual(
+      expect.arrayContaining(["mx-auto", "w-full", "max-w-2xl"]),
     );
   });
 
@@ -342,6 +496,66 @@ describe("QuickStartFlowView", () => {
       (el) => attr(el, "aria-current") === "step",
     );
     expect(current.map((el) => text(el))).toEqual(["3Find your people"]);
+    // Not a link: it would only reload the step on screen (and the router would
+    // overwrite aria-current with "page").
+    expect(isInteractive(current[0]!)).toBe(false);
+  });
+
+  it("links every other stepper item to its step", () => {
+    const [ol] = byTag(renderFlow("people"), "ol");
+    const links = elements(ol!).filter((el) => el.tagName === "a");
+    expect(links.map((a) => attr(a, "href"))).toEqual([
+      "/welcome?step=puzzles",
+      "/welcome?step=solves",
+      "/welcome?step=household",
+      "/welcome?step=profile",
+    ]);
+    expect(links.map((a) => nameOf(a))).toEqual([
+      "Add your puzzles",
+      "Log puzzles you finished",
+      "HouseholdOptional",
+      "Make it yours",
+    ]);
+  });
+
+  it("numbers the stepper 1 to 4 like the eyebrow, household unnumbered and optional", () => {
+    const html = render(
+      <QuickStartFlowView
+        step="profile"
+        view={{
+          ...VIEW,
+          steps: VIEW.steps.map((s) => ({ ...s, status: "todo" })),
+        }}
+        onSkip={() => {}}
+        onContinue={() => {}}
+      >
+        <p>body</p>
+      </QuickStartFlowView>,
+    );
+    const items = byTag(html, "li");
+    expect(items.map((li) => text(li))).toEqual([
+      "1Add your puzzles",
+      "2Log puzzles you finished",
+      "3Find your people",
+      "HouseholdOptional",
+      "4Make it yours",
+    ]);
+    expect(text(parseFragment(html))).toContain("Step 4 of 4");
+  });
+
+  it("rings the current step's segment on the phone bar", () => {
+    const segmentRings = (id: QuickStartStepView["id"]) => {
+      const bar = all(renderFlow(id)).find(
+        (el) => attr(el, "role") === "progressbar",
+      )!;
+      return elements(bar).map(
+        (s) => attr(s, "class")?.includes("ring-2") ?? false,
+      );
+    };
+    expect(segmentRings("solves")).toEqual([false, true, false, false]);
+    expect(segmentRings("profile")).toEqual([false, false, false, true]);
+    // Household is not one of the four segments.
+    expect(segmentRings("household")).toEqual([false, false, false, false]);
   });
 
   it("ends with Skip then Continue, after the body, in DOM order", () => {
@@ -351,6 +565,82 @@ describe("QuickStartFlowView", () => {
     expect(labels).toContain("Finish later");
     const flat = text(parseFragment(html));
     expect(flat.indexOf("body")).toBeLessThan(flat.lastIndexOf("Skip"));
+  });
+
+  describe("Continue with unsaved step work", () => {
+    const footer = (
+      over: Partial<Parameters<typeof QuickStartFlowView>[0]>,
+      locale: Locale = "en",
+    ) => {
+      const html = render(
+        <QuickStartFlowView
+          step="puzzles"
+          view={VIEW}
+          onSkip={() => {}}
+          onContinue={() => {}}
+          {...over}
+        >
+          <p>body</p>
+        </QuickStartFlowView>,
+        locale,
+      );
+      const [skip, next] = controls(html).slice(-2);
+      return { skip: skip!, next: next! };
+    };
+    const disabled = (el: Element) => attr(el, "disabled") !== undefined;
+
+    it("says what Continue saves, in English and Dutch", () => {
+      const cases = [
+        [
+          { kind: "puzzles", count: 3 },
+          "Add 3 and continue",
+          "3 toevoegen en doorgaan",
+        ],
+        [
+          { kind: "solves", count: 2 },
+          "Log 2 and continue",
+          "2 vastleggen en doorgaan",
+        ],
+        [
+          { kind: "profile", count: 1 },
+          "Save and continue",
+          "Opslaan en doorgaan",
+        ],
+      ] as const;
+      for (const [work, en, nl] of cases) {
+        const pendingWork = { ...work, ready: true };
+        expect(text(footer({ pendingWork }).next)).toBe(en);
+        expect(text(footer({ pendingWork }, "nl").next)).toBe(nl);
+        expect(disabled(footer({ pendingWork }).next)).toBe(false);
+      }
+    });
+
+    it("reads plain Continue when nothing is pending", () => {
+      const { next } = footer({
+        pendingWork: { kind: "solves", count: 0, ready: true },
+      });
+      expect(text(next)).toBe("Continue");
+      expect(text(footer({ pendingWork: null }).next)).toBe("Continue");
+    });
+
+    it("waits for a ticked row that still needs its date", () => {
+      const { next } = footer({
+        pendingWork: { kind: "solves", count: 2, ready: false },
+      });
+      expect(text(next)).toBe("Log 2 and continue");
+      expect(disabled(next)).toBe(true);
+    });
+
+    it("is busy while saving, with Skip held too", () => {
+      const { skip, next } = footer({
+        pendingWork: { kind: "puzzles", count: 3, ready: true },
+        continuing: true,
+      });
+      expect(attr(next, "aria-busy")).toBe("true");
+      expect(disabled(next)).toBe(true);
+      expect(disabled(skip)).toBe(true);
+      expect(nameOf(next)).toBe("Add 3 and continue");
+    });
   });
 
   it("docks the footer above the mobile tab bar, at its measured height", () => {
@@ -372,13 +662,14 @@ describe("QuickStartFlowView", () => {
         .map((el) => text(el))
         .slice(-2),
     ).toEqual(["Overslaan", "Doorgaan"]);
-    expect(text(parseFragment(html))).toContain("Stap 3 van 4");
+    expect(text(eyebrow(html))).toBe("Stap 3 van 4");
+    expect(text(eyebrow(renderFlow("household", "nl")))).toBe("Optionele stap");
   });
 });
 
 describe("QuickStartDonePanel", () => {
   it("announces the summary and links to the shelf", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />);
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />);
     expect(text(byTag(html, "h2")[0]!)).toBe("Your shelf is ready");
     const status = all(html).find((el) => attr(el, "role") === "status");
     expect(text(status!)).toBe("7 puzzles · 3 finished · 0 following");
@@ -386,10 +677,43 @@ describe("QuickStartDonePanel", () => {
     expect(links.map((a) => [text(a), attr(a, "href")])).toEqual([
       ["Go to my shelf", "/dashboard"],
     ]);
+    expect(attr(links[0]!, "class")).toContain("bg-jigsaw-primary");
+  });
+
+  it("says how many required steps are left and leads back to the first", () => {
+    const html = render(<QuickStartDonePanel view={VIEW} />);
+    expect(text(byTag(html, "h2")[0]!)).toBe("Almost there: 2 steps left");
+    const links = byTag(html, "a");
+    expect(links.map((a) => [text(a), attr(a, "href")])).toEqual([
+      ["Continue setup", "/welcome?step=people"],
+      ["Go to my shelf", "/dashboard"],
+    ]);
+    expect(attr(links[0]!, "class")).toContain("bg-jigsaw-primary");
+    expect(attr(links[1]!, "class")).not.toContain("bg-jigsaw-primary");
+    // No celebration while steps are open.
+    expect(html).not.toContain("animate-ping");
+  });
+
+  it("counts one step left in the singular, in English and Dutch", () => {
+    const oneLeft: QuickStartView = {
+      ...DONE_VIEW,
+      steps: DONE_VIEW.steps.map((s) =>
+        s.id === "profile" ? { ...s, status: "todo" } : s,
+      ),
+    };
+    expect(
+      text(byTag(render(<QuickStartDonePanel view={oneLeft} />), "h2")[0]!),
+    ).toBe("Almost there: 1 step left");
+    const nlHtml = render(<QuickStartDonePanel view={oneLeft} />, "nl");
+    expect(text(byTag(nlHtml, "h2")[0]!)).toBe("Bijna klaar: nog 1 stap");
+    expect(byTag(nlHtml, "a").map((a) => [text(a), attr(a, "href")])).toEqual([
+      ["Verder met instellen", "/welcome?step=profile"],
+      ["Naar mijn plank", "/dashboard"],
+    ]);
   });
 
   it("only animates under motion-safe", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />);
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />);
     for (const el of all(html)) {
       const cls = attr(el, "class") ?? "";
       for (const token of cls.split(/\s+/)) {
@@ -401,7 +725,8 @@ describe("QuickStartDonePanel", () => {
   });
 
   it("renders in Dutch", () => {
-    const html = render(<QuickStartDonePanel view={VIEW} />, "nl");
+    const html = render(<QuickStartDonePanel view={DONE_VIEW} />, "nl");
+    expect(text(byTag(html, "h2")[0]!)).toBe("Je plank staat klaar");
     const status = all(html).find((el) => attr(el, "role") === "status");
     expect(text(status!)).toBe("7 puzzels · 3 afgemaakt · 0 gevolgd");
     expect(text(byTag(html, "a")[0]!)).toBe("Naar mijn plank");
@@ -476,7 +801,7 @@ describe("QuickStartDonePanel: tour hand-off", () => {
   it("shows Show me around next to the shelf link", () => {
     const html = render(
       <QuickStartDonePanel
-        view={VIEW}
+        view={DONE_VIEW}
         tourAction={
           <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
         }
@@ -488,6 +813,29 @@ describe("QuickStartDonePanel: tour hand-off", () => {
     ]);
     const [button] = byTag(html, "button");
     expect(attr(button!, "type")).toBe("button");
+  });
+
+  it("keeps Show me around after the shelf link while steps are open", () => {
+    const html = render(
+      <QuickStartDonePanel
+        view={VIEW}
+        tourAction={
+          <TourHandoffButton state={{ kind: "take" }} onStart={noop} />
+        }
+      />,
+    );
+    expect(controls(html).map((el) => nameOf(el))).toEqual([
+      "Continue setup",
+      "Go to my shelf",
+      "Show me around",
+    ]);
+    // Three actions: the row wraps instead of overflowing a narrow column (NL on a tablet).
+    const row = all(html).find((el) =>
+      el.childNodes.some((c) => "tagName" in c && isInteractive(c as Element)),
+    )!;
+    expect(attr(row, "class")?.split(/\s+/)).toEqual(
+      expect.arrayContaining(["sm:flex-row", "sm:flex-wrap"]),
+    );
   });
 
   it("reads as a resume while the tour is paused, and in Dutch", () => {

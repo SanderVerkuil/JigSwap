@@ -9,6 +9,6 @@ notify: false
 ---
 
 Werken we JigSwap bij terwijl je het open hebt, dan meldt een bericht dat er
-een nieuwe versie is. Klik op **Opnieuw laden** om over te stappen wanneer het
-jou uitkomt, of op **Niet nu** om door te gaan. JigSwap laadt nooit vanzelf
+een nieuwe versie is. Kies **Opnieuw laden** om over te stappen wanneer het
+jou uitkomt, of **Niet nu** om door te gaan. JigSwap laadt nooit vanzelf
 opnieuw, dus wat je aan het typen bent gaat niet verloren.

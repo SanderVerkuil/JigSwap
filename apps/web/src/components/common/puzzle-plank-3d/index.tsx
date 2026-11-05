@@ -13,6 +13,7 @@ import { RotateCcw } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 import { useTranslations } from "use-intl";
+import { fallbackScale } from "./fallback-scale";
 import type { PlankSceneProps } from "./scene";
 
 const PlankScene = React.lazy(() => import("./scene"));
@@ -89,6 +90,9 @@ export function PuzzlePlank3D({
   interactive?: boolean;
 }) {
   const container = React.useRef<HTMLDivElement>(null);
+  const fallbackLayer = React.useRef<HTMLDivElement>(null);
+  const fallbackPlank = React.useRef<HTMLDivElement>(null);
+  const [fallbackFit, setFallbackFit] = React.useState(1);
   const [sceneReady, setSceneReady] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
   const [resolved, setResolved] = React.useState<
@@ -129,8 +133,23 @@ export function PuzzlePlank3D({
     return () => io.disconnect();
   }, [mounted]);
 
+  // Shrink the CSS plank to fit its container: a full shelf is wider than a
+  // phone or tablet column. Measured in the observer callback only.
+  const hasBoxes = boxes.length > 0;
+  React.useEffect(() => {
+    const layer = fallbackLayer.current;
+    const plank = fallbackPlank.current;
+    if (!layer || !plank) return;
+    const ro = new ResizeObserver(() =>
+      setFallbackFit(fallbackScale(layer.clientWidth, plank.offsetWidth)),
+    );
+    ro.observe(layer);
+    ro.observe(plank);
+    return () => ro.disconnect();
+  }, [hasBoxes]);
+
   // Empty boxes → nothing to render.
-  if (boxes.length === 0) return null;
+  if (!hasBoxes) return null;
 
   const showScene = mounted && resolved !== null;
   // Use physics scene only when explicitly opted in, WebGL is available, and
@@ -156,12 +175,15 @@ export function PuzzlePlank3D({
     >
       {/* CSS plank: fallback shown until the scene's first frame, or permanently
           when WebGL is unavailable or the scene boundary catches an error.
-          Decorative — hidden from assistive tech. */}
+          Clipped and scaled to its container so it never overflows the page,
+          even once faded out. Decorative — hidden from assistive tech. */}
       <div
+        ref={fallbackLayer}
         aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
+          overflow: "hidden",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -170,7 +192,12 @@ export function PuzzlePlank3D({
           pointerEvents: sceneReady ? "none" : undefined,
         }}
       >
-        <PuzzlePlank boxes={boxes} />
+        <div
+          ref={fallbackPlank}
+          style={{ flexShrink: 0, transform: `scale(${fallbackFit})` }}
+        >
+          <PuzzlePlank boxes={boxes} />
+        </div>
       </div>
 
       {showScene && (

@@ -118,10 +118,14 @@ const insertFollowRequest = (
     });
   });
 
-const insertHouseholdMember = (t: T, memberId: Id<"users">) =>
+const insertHouseholdMember = (
+  t: T,
+  memberId: Id<"users">,
+  householdId = "hh-1",
+) =>
   t.run(async (ctx) => {
     await ctx.db.insert("householdMembers", {
-      householdId: "hh-1",
+      householdId,
       memberId,
       role: "admin",
       joinedAt: Date.now(),
@@ -238,6 +242,7 @@ describe("onboarding.getQuickStart: a fresh member", () => {
           id: "household",
           status: "todo",
           optional: true,
+          count: 0,
           pendingInvite: false,
         },
         { id: "profile", status: "todo", optional: false },
@@ -386,6 +391,26 @@ describe("onboarding.getQuickStart: derived steps", () => {
     expect((await stepOf(t, "ann", "household"))?.status).toBe("done");
   });
 
+  test("household: counts the members of my household, me included", async () => {
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    const bob = await insertUser(t, "bob");
+    const cat = await insertUser(t, "cat");
+    // Someone else's household never adds to mine.
+    await insertHouseholdMember(t, cat, "hh-2");
+    await insertHouseholdMember(t, ann);
+    expect(await stepOf(t, "ann", "household")).toMatchObject({
+      status: "done",
+      count: 1,
+    });
+    await insertHouseholdMember(t, bob);
+    expect(await stepOf(t, "ann", "household")).toMatchObject({
+      status: "done",
+      count: 2,
+    });
+    expect((await stepOf(t, "cat", "household"))?.count).toBe(1);
+  });
+
   test("household: another member's household doesn't count", async () => {
     const t = convexTest(schema, modules);
     await insertUser(t, "ann");
@@ -497,6 +522,20 @@ describe("onboarding.recordQuickStart", () => {
     // A later change keeps the start mark.
     await record(t, "ann", { kind: "dismissCard" });
     expect((await rowsOf(t, ann))[0].startedAt).toBe(first.startedAt);
+  });
+
+  test("opening quick setup without the welcome retires the welcome", async () => {
+    // A household invite link lands a new member on /welcome before any dashboard page.
+    const t = convexTest(schema, modules);
+    const ann = await insertUser(t, "ann");
+    expect((await quickStart(t, "ann")).showWelcome).toBe(true);
+    await record(t, "ann", { kind: "startQuickStart" });
+    expect(await quickStart(t, "ann")).toMatchObject({
+      eligible: true,
+      showWelcome: false,
+      cardVisible: true,
+    });
+    expect((await rowsOf(t, ann))[0].welcomeDismissedAt).toBeUndefined();
   });
 
   test("a no-op on a member without a row writes nothing", async () => {

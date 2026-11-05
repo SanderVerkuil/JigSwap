@@ -5,7 +5,7 @@ import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway } from "@/gateway";
+import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { currentGoals } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -47,58 +47,95 @@ function HeadlineLink({
   );
 }
 
+export type HeadlineVariant =
+  | "swapsPendingGoal"
+  | "swapsPending"
+  | "swapsGoal"
+  | "swapsOnly"
+  | "pendingGoal"
+  | "pendingOnly"
+  | "goalOnly"
+  | "shelfOffered"
+  | "shelfOnly"
+  | "empty";
+
+// Which headline sentence fits: swaps, waiting requests and goal progress lead
+// (every combination has its own sentence); with none of those, the member's
+// shelf does: puzzles up for swap send them browsing, puzzles not offered yet
+// get a nudge to offer a few. Only an empty shelf gets the first-puzzle line.
+export function headlineVariant({
+  activeCount,
+  pendingCount,
+  hasGoal,
+  ownedCount,
+  offeredCount,
+}: {
+  activeCount: number;
+  pendingCount: number;
+  hasGoal: boolean;
+  ownedCount: number;
+  offeredCount: number;
+}): HeadlineVariant {
+  if (activeCount > 0) {
+    if (pendingCount > 0) return hasGoal ? "swapsPendingGoal" : "swapsPending";
+    return hasGoal ? "swapsGoal" : "swapsOnly";
+  }
+  if (pendingCount > 0) return hasGoal ? "pendingGoal" : "pendingOnly";
+  if (hasGoal) return "goalOnly";
+  if (offeredCount > 0) return "shelfOffered";
+  if (ownedCount > 0) return "shelfOnly";
+  return "empty";
+}
+
 // The narrative headline: one large friendly sentence summarising the member's
-// world, with the live numbers as inline underlined links. Variants cover every
-// combination of swaps / pending requests / goal progress so plural and zero
-// cases all read naturally; with no data at all it falls back to a warm
-// welcome line.
-function Headline({
+// world, with the live numbers as inline underlined links (see headlineVariant
+// for which sentence is picked).
+export function Headline({
   activeCount,
   pendingCount,
   goal,
+  ownedCount,
+  offeredCount,
 }: {
   activeCount: number;
   pendingCount: number;
   goal: { pct: number; target: number } | null;
+  ownedCount: number;
+  offeredCount: number;
 }) {
   const t = useTranslations("dashboard.brief");
-
-  const hasSwaps = activeCount > 0;
-  const hasPending = pendingCount > 0;
-  const variant = hasSwaps
-    ? hasPending
-      ? goal
-        ? "swapsPendingGoal"
-        : "swapsPending"
-      : goal
-        ? "swapsGoal"
-        : "swapsOnly"
-    : hasPending
-      ? goal
-        ? "pendingGoal"
-        : "pendingOnly"
-      : goal
-        ? "goalOnly"
-        : null;
+  const variant = headlineVariant({
+    activeCount,
+    pendingCount,
+    hasGoal: goal !== null,
+    ownedCount,
+    offeredCount,
+  });
 
   return (
     <p className="font-heading max-w-[860px] text-xl leading-snug font-semibold tracking-tight text-pretty md:text-3xl md:leading-[1.4]">
-      {variant === null
-        ? t("empty")
-        : t.rich(variant, {
-            swapsCount: activeCount,
-            pendingCount,
-            pct: goal?.pct ?? 0,
-            target: goal?.target ?? 0,
-            swapsLink: (chunks) => (
-              <HeadlineLink href="/trades">{chunks}</HeadlineLink>
-            ),
-            goalLink: (chunks) => (
-              <HeadlineLink href="/goals" tone="green">
-                {chunks}
-              </HeadlineLink>
-            ),
-          })}
+      {t.rich(variant, {
+        swapsCount: activeCount,
+        pendingCount,
+        pct: goal?.pct ?? 0,
+        target: goal?.target ?? 0,
+        ownedCount,
+        offeredCount,
+        swapsLink: (chunks) => (
+          <HeadlineLink href="/trades">{chunks}</HeadlineLink>
+        ),
+        goalLink: (chunks) => (
+          <HeadlineLink href="/goals" tone="green">
+            {chunks}
+          </HeadlineLink>
+        ),
+        shelfLink: (chunks) => (
+          <HeadlineLink href="/my-puzzles">{chunks}</HeadlineLink>
+        ),
+        browseLink: (chunks) => (
+          <HeadlineLink href="/browse">{chunks}</HeadlineLink>
+        ),
+      })}
     </p>
   );
 }
@@ -206,10 +243,20 @@ export function BriefingHero() {
   const { data: goals } = useQuery(
     convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
   );
+  // Same args as the shelf's read, so both share one subscription.
+  const { data: copies } = useQuery(
+    convexQuery(
+      gateway.library.ownedByOwner,
+      member?._id
+        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
+        : "skip",
+    ),
+  );
 
   const loading =
     isMemberLoading ||
-    (member != null && (exchanges === undefined || goals === undefined));
+    (member != null &&
+      (exchanges === undefined || goals === undefined || copies === undefined));
 
   if (loading) {
     return (
@@ -253,6 +300,10 @@ export function BriefingHero() {
         activeCount={active.length}
         pendingCount={pendingIncoming.length}
         goal={goal}
+        ownedCount={(copies ?? []).length}
+        offeredCount={
+          (copies ?? []).filter((copy) => copy.availability.forTrade).length
+        }
       />
       {pendingIncoming[0] && (
         <PendingRequestBanner exchange={pendingIncoming[0]} />

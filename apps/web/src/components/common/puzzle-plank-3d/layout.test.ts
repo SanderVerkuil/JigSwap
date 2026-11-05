@@ -1,6 +1,17 @@
-import { BOX_SCALE, PX } from "@/components/marketing/plank-3d/box";
+import {
+  BOX_SCALE,
+  boxWorldSize,
+  PX,
+} from "@/components/marketing/plank-3d/box";
 import { describe, expect, it } from "vitest";
-import { GAP, layoutRow } from "./layout";
+import {
+  CONTENT_HEADROOM,
+  framedContentHeight,
+  GAP,
+  layoutRow,
+  MIN_VIS_W,
+  ROW_SIDE_MARGIN,
+} from "./layout";
 
 const w = (px: number) => px * PX * BOX_SCALE;
 
@@ -30,5 +41,48 @@ describe("layoutRow", () => {
     expect(slots[0].x).toBeCloseTo(-(wb + GAP) / 2, 6);
     expect(slots[1].x).toBeCloseTo((wb + GAP) / 2, 6);
     expect(slots[1].x - slots[0].x).toBeCloseTo(wb + GAP, 6);
+  });
+});
+
+describe("framedContentHeight", () => {
+  // Height-only framing, as both scenes did before the row width counted.
+  const heightOnly = (maxBoxH: number, aspect: number) =>
+    Math.max(maxBoxH + CONTENT_HEADROOM, MIN_VIS_W / aspect);
+
+  it("fits all five phone boxes on a near-square 358x300 phone canvas", () => {
+    const boxes = Array.from({ length: 5 }, () => ({ width: 92 }));
+    const { rowWidth } = layoutRow(boxes);
+    const maxBoxH = boxWorldSize({ width: 92, height: 124 }).h;
+    const aspect = 358 / 300;
+
+    // The old framing showed less than the row, so the outer covers were cut.
+    expect(heightOnly(maxBoxH, aspect) * aspect).toBeLessThan(rowWidth);
+
+    const contentH = framedContentHeight({ maxBoxH, rowWidth, aspect });
+    expect(contentH * aspect).toBeCloseTo(rowWidth + ROW_SIDE_MARGIN, 6);
+    expect(contentH).toBeGreaterThanOrEqual(maxBoxH + CONTENT_HEADROOM);
+  });
+
+  it("leaves a wide 1100x360 desktop canvas height-bound and unchanged", () => {
+    const boxes = [148, 130, 156, 126, 142].map((height) => ({ height }));
+    const { rowWidth } = layoutRow(boxes);
+    const maxBoxH = boxWorldSize({ height: 156 }).h;
+    const aspect = 1100 / 360;
+
+    const contentH = framedContentHeight({ maxBoxH, rowWidth, aspect });
+    expect(contentH).toBeCloseTo(heightOnly(maxBoxH, aspect), 6);
+    expect(contentH).toBeCloseTo(maxBoxH + CONTENT_HEADROOM, 6);
+    expect(contentH * aspect).toBeGreaterThan(rowWidth + ROW_SIDE_MARGIN);
+  });
+
+  it("keeps the minimum visible width for a lone box on a narrow canvas", () => {
+    const { rowWidth } = layoutRow([{ width: 92 }]);
+    const maxBoxH = boxWorldSize({ width: 92 }).h;
+    const aspect = 300 / 400;
+
+    expect(framedContentHeight({ maxBoxH, rowWidth, aspect })).toBeCloseTo(
+      MIN_VIS_W / aspect,
+      6,
+    );
   });
 });

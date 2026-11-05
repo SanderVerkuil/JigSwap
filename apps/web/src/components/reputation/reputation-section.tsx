@@ -7,6 +7,7 @@ import { gateway } from "@/gateway";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
+import { useEffect } from "react";
 import { useTranslations } from "use-intl";
 
 // A member's public reputation on their own /profile: a summary line (avg
@@ -19,6 +20,9 @@ import { useTranslations } from "use-intl";
 interface ReputationSectionProps {
   memberId: Id<"users"> | undefined;
 }
+
+// The dashboard's rating stat links to /profile#reviews.
+const REVIEWS_ANCHOR = "reviews";
 
 // Map the 0-1 credibility curve onto a coarse, friendly trust hint.
 function credibilityKey(credibility: number): "low" | "medium" | "high" {
@@ -39,6 +43,15 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
       memberId ? { memberId } : "skip",
     ),
   );
+
+  // The router scrolls to a #hash once, when the page renders, which is before
+  // this section's data has arrived; bring the section into view once it has.
+  const ready = profile !== undefined && reviews !== undefined;
+  useEffect(() => {
+    if (ready && window.location.hash === `#${REVIEWS_ANCHOR}`) {
+      document.getElementById(REVIEWS_ANCHOR)?.scrollIntoView();
+    }
+  }, [ready]);
 
   if (profile === undefined || reviews === undefined) {
     return null;
@@ -65,7 +78,7 @@ export function ReputationSection({ memberId }: ReputationSectionProps) {
   }
 
   return (
-    <section>
+    <section id={REVIEWS_ANCHOR} className="scroll-mt-20">
       <SectionHead
         title={t("title")}
         icon={ShieldCheck}
