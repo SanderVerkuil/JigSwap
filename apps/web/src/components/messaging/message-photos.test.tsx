@@ -88,6 +88,57 @@ describe("MessagePhotos", () => {
     });
     expect(button.getAttribute("style")).toContain("aspect-ratio");
     const img = button.querySelector("img[loading='lazy']");
+    expect(img?.getAttribute("src")).toBe(READY.thumbUrl);
+  });
+
+  it("a tile loads the thumbnail, also at 3x (no srcset to pick the original from); the viewer opens the original", async () => {
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", READY)]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Photo from Mara" });
+    const img = button.querySelector("img[loading='lazy']");
+    expect(img?.getAttribute("src")).toBe(READY.thumbUrl);
+    expect(img?.getAttribute("srcset")).toBeNull();
+
+    fireEvent.click(button);
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog.querySelector("img")?.getAttribute("src")).toBe(READY.url);
+  });
+
+  it("every tile of a gallery loads its thumbnail", () => {
+    wrap(
+      <MessagePhotos
+        messages={["m1", "m2", "m3"].map((id) => photo(id, READY))}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    for (const index of [1, 2, 3]) {
+      expect(
+        screen
+          .getByRole("button", { name: `Photo ${index} of 3, open` })
+          .querySelector("img[loading='lazy']")
+          ?.getAttribute("src"),
+      ).toBe(READY.thumbUrl);
+    }
+  });
+
+  it("a photo without a thumbnail is shown as before", () => {
+    const { thumbUrl: _thumbUrl, ...full } = READY;
+    wrap(
+      <MessagePhotos
+        messages={[photo("m1", full)]}
+        own={false}
+        authorName="Mara"
+      />,
+    );
+    const img = screen
+      .getByRole("button", { name: "Photo from Mara" })
+      .querySelector("img[loading='lazy']");
     expect(img?.getAttribute("src")).toBe(READY.url);
   });
 

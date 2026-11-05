@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { PENDING_QUEUE_LIMIT } from "./catalog/pendingQueue";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -61,6 +62,33 @@ const fileAsBob = async (t: TestConvex<typeof schema>) => {
 };
 
 describe("catalog.listPendingChangeProposals", () => {
+  // SEC-26: each row costs several reads to enrich, so a flood can't be allowed to fail the read.
+  test("holds the newest PENDING_QUEUE_LIMIT rows, however many wait", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seedMembers(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < PENDING_QUEUE_LIMIT + 5; i++) {
+        await ctx.db.insert("puzzleChangeProposals", {
+          aggregateId: `proposal-${i}`,
+          puzzleDefinitionId: "no-such-definition",
+          proposedBy: bob,
+          status: "pending",
+          changes: {},
+          baseline: {},
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+    });
+
+    const queue = await asAdmin(t).query(
+      api.catalog.listPendingChangeProposals.listPendingChangeProposals,
+      {},
+    );
+    expect(queue).toHaveLength(PENDING_QUEUE_LIMIT);
+    expect(queue[0]?.aggregateId).toBe(`proposal-${PENDING_QUEUE_LIMIT + 4}`);
+  });
+
   test("is admin-gated", async () => {
     const t = convexTest(schema, modules);
     await seedMembers(t);

@@ -50,17 +50,14 @@ describe("SECURITY_HEADERS", () => {
     );
   });
 
-  it("lets only our own pages ask for location, and nothing for camera, mic, payment, USB or ad topics", () => {
+  it("lets only our own pages ask for location and the camera, and nothing for mic, payment, USB or ad topics", () => {
     const policy = permissions();
-    // The messaging location picker uses navigator.geolocation.
+    // The messaging location picker uses navigator.geolocation; the catalogue search's barcode
+    // scanner uses navigator.mediaDevices.getUserMedia. Blocking either makes it fail as if the
+    // member had refused it in their browser settings.
     expect(policy.get("geolocation")).toBe("(self)");
-    for (const feature of [
-      "camera",
-      "microphone",
-      "payment",
-      "usb",
-      "browsing-topics",
-    ]) {
+    expect(policy.get("camera")).toBe("(self)");
+    for (const feature of ["microphone", "payment", "usb", "browsing-topics"]) {
       expect(policy.get(feature)).toBe("()");
     }
   });

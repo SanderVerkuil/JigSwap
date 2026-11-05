@@ -28,9 +28,10 @@ vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeader: (factory: () => { meta?: unknown; actions?: unknown }) => {
     mocks.header = factory();
   },
+  usePageHeaderContent: () => ({}),
 }));
 vi.mock("@/compat/clerk", () => ({
-  useUser: () => ({ user: { id: "user_1" } }),
+  useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
   Link: ({ href, children }: { href: string; children?: ReactNode }) => (
@@ -39,9 +40,18 @@ vi.mock("@/compat/link", () => ({
 }));
 vi.mock("@/gateway", () => ({
   gateway: {
-    identity: { byClerkId: "byClerkId" },
-    library: { ownedByOwner: "ownedByOwner", updateOffers: "updateOffers" },
+    identity: { currentUser: "currentUser" },
+    library: {
+      myLibraryWindow: "myLibraryWindow",
+      myLibraryIndex: "myLibraryIndex",
+      myLibraryCopies: "myLibraryCopies",
+      updateOffers: "updateOffers",
+    },
     collections: { addOwnedPuzzle: "addOwnedPuzzle" },
+    sharing: {
+      myCircles: "myCircles",
+      shareCopiesToCircle: "shareCopiesToCircle",
+    },
     household: { copies: "householdCopies", mine: "householdMine" },
     lending: { lentOut: "lentOut", recallLoan: "recallLoan" },
   },
@@ -54,14 +64,18 @@ vi.mock("@convex-dev/react-query", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
     data:
-      name === "byClerkId"
+      name === "currentUser"
         ? { _id: "member_1" }
         : name === "householdMine"
           ? null
-          : [],
+          : name === "myLibraryWindow"
+            ? { rows: [], hasMore: false, matched: 0, total: 0 }
+            : [],
     isPending: false,
+    isPlaceholderData: false,
   }),
   useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  keepPreviousData: undefined,
 }));
 vi.mock("@/components/library/copy-card-actions", () => ({
   useCopyCardActions: () => ({ cardActions: () => [], dialogs: null }),

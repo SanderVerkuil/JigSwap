@@ -128,16 +128,30 @@ describe("owned-copy PuzzleCard", () => {
 });
 
 describe("PuzzleCard (browse)", () => {
+  // UX-38: every request button says what the owner offers, as the copy page's does.
+  it.each([
+    [{ forTrade: false, forSale: false, forLend: true }, "Ask to borrow"],
+    [{ forTrade: true, forSale: false, forLend: false }, "Request swap"],
+    [{ forTrade: false, forSale: true, forLend: false }, "Ask to buy"],
+    [{ forTrade: true, forSale: true, forLend: false }, "Request…"],
+  ])(
+    "labels the request button by what's on offer: %j",
+    (availability, label) => {
+      renderCard({ puzzle: { ...copy, availability } });
+      expect(screen.getByRole("button", { name: label })).toBeTruthy();
+    },
+  );
+
   it("doesn't stretch Request across a wide list row, only across a phone's", () => {
     renderCard({}, "en", "list");
-    const request = screen.getByRole("button", { name: "Request" });
+    const request = screen.getByRole("button", { name: "Request swap" });
     expect(request.className).toContain("sm:flex-none");
-    expect(request.className).toContain("flex-1");
+    expect(request.className).toContain("flex-auto");
     cleanup();
 
     renderCard({}, "en", "grid");
     expect(
-      screen.getByRole("button", { name: "Request" }).className,
+      screen.getByRole("button", { name: "Request swap" }).className,
     ).not.toContain("sm:flex-none");
   });
 
@@ -146,12 +160,16 @@ describe("PuzzleCard (browse)", () => {
     const names = screen
       .getAllByRole("button")
       .map((button) => button.getAttribute("aria-label") ?? button.textContent);
-    expect(names).toEqual(["Request", "Message Sander Verkuil", "Favorite"]);
+    expect(names).toEqual([
+      "Request swap",
+      "Message Sander Verkuil",
+      "Favorite",
+    ]);
   });
 
   it("runs the matching action for each button", () => {
     const { handlers } = renderCard();
-    fireEvent.click(screen.getByRole("button", { name: "Request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Request swap" }));
     expect(handlers.onRequestExchange).toHaveBeenCalledWith("copy_1");
     fireEvent.click(
       screen.getByRole("button", { name: "Message Sander Verkuil" }),
@@ -179,7 +197,7 @@ describe("PuzzleCard (browse)", () => {
 
   it("names the actions in Dutch", () => {
     renderCard({}, "nl");
-    expect(screen.getByRole("button", { name: "Aanvragen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ruil aanvragen" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Bericht sturen aan Sander Verkuil" }),
     ).toBeTruthy();

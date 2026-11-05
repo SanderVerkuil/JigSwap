@@ -18,6 +18,7 @@ import { PageLoading } from "@/components/ui/loading";
 import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -126,7 +127,7 @@ function AdminEditForm({
   const t = useTranslations("admin.puzzles");
   const tSuggest = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
 
   usePageHeader(
     () => ({
@@ -203,7 +204,7 @@ function AdminEditForm({
     onError: (error) =>
       toast.error(
         isUploadRateLimited(error)
-          ? tCommon("photoUploadRateLimited")
+          ? uploadLimitMessage(error)
           : t(errorKeyFor(error)),
       ),
   });
@@ -218,11 +219,12 @@ function AdminEditForm({
 
   // Rendered twice — inline below `lg:` (its position today) and again inside the sticky
   // context panel at `lg:` — via the CSS-only hidden/visible split below, not two hand-written
-  // copies: same element, same handlers, mounted at two DOM positions.
+  // copies: same element, same handlers, mounted at two DOM positions. The hint takes its own
+  // full-width line above the buttons so it never squeezes into a narrow column beside them.
   const actionsRow = (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
       {!canSubmit && (
-        <span className="text-muted-foreground text-sm">
+        <span className="text-muted-foreground basis-full text-sm">
           {t("edit.noChanges")}
         </span>
       )}
@@ -267,7 +269,7 @@ function AdminEditForm({
         <div className="lg:hidden">{actionsRow}</div>
       </div>
 
-      <aside className="hidden lg:sticky lg:top-2 lg:block lg:self-start">
+      <aside className="hidden lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+0.5rem)] lg:block lg:self-start">
         <FormContextPanel
           image={
             <CoverImageField

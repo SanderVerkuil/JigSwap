@@ -5,7 +5,7 @@ import { query } from "../_generated/server";
 import schema from "../schema";
 
 // Catalog read: publisher suggestions for the definition forms. Distinct publisher values over
-// the by_publisher index (approved puzzles only, matching every sibling catalog read) MERGED with
+// the approved rows of by_status_publisher (matching every sibling catalog read) MERGED with
 // the domain's curated known-publishers allowlist, so suggestions are useful before any data
 // carries a publisher. Case-insensitive dedupe; the allowlist's canonical casing wins.
 export const getAllPublishers = query({
@@ -13,9 +13,7 @@ export const getAllPublishers = query({
   handler: async (ctx): Promise<PublisherView[]> => {
     const rows = await stream(ctx.db, schema)
       .query("puzzles")
-      .withIndex("by_publisher", (q) => q)
-      // filterWith (not .filter, which streams reject) is applied before distinct.
-      .filterWith(async (p) => p.status === "approved")
+      .withIndex("by_status_publisher", (q) => q.eq("status", "approved"))
       .distinct(["publisher"])
       .collect();
 

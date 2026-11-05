@@ -360,7 +360,7 @@ describe("goalFormErrorsFromCode", () => {
 });
 
 describe("currentGoals", () => {
-  const now = new Date(2026, 9, 30, 12);
+  const today = Date.UTC(2026, 9, 30);
   const goal = (
     id: string,
     over: { isActive?: boolean; isAchieved?: boolean; targetDate?: number },
@@ -374,7 +374,7 @@ describe("currentGoals", () => {
       goal("chasing", { targetDate: Date.UTC(2026, 11, 31) }),
       goal("open", {}),
     ];
-    expect(currentGoals(goals, now).map((g) => g.id)).toEqual([
+    expect(currentGoals(goals, today).map((g) => g.id)).toEqual([
       "chasing",
       "open",
       "achieved",
@@ -386,7 +386,7 @@ describe("currentGoals", () => {
       isAchieved: true,
       targetDate: Date.UTC(2025, 11, 31),
     });
-    expect(currentGoals([lastYear], now)).toEqual([]);
+    expect(currentGoals([lastYear], today)).toEqual([]);
   });
 
   it("keeps an achieved goal through its last day and when it has no end", () => {
@@ -396,7 +396,7 @@ describe("currentGoals", () => {
     });
     const openEnded = goal("openEnded", { isAchieved: true });
     expect(
-      currentGoals([lastDayToday, openEnded], now).map((g) => g.id),
+      currentGoals([lastDayToday, openEnded], today).map((g) => g.id),
     ).toEqual(["lastDayToday", "openEnded"]);
   });
 
@@ -407,7 +407,7 @@ describe("currentGoals", () => {
           goal("archived", { isActive: false, isAchieved: true }),
           goal("ended", { targetDate: Date.UTC(2026, 0, 31) }),
         ],
-        now,
+        today,
       ),
     ).toEqual([]);
   });

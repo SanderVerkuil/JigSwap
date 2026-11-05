@@ -326,6 +326,8 @@ export interface HrefInput {
   readonly actorCount: number;
   /** The subject still exists and the viewer may see it; false links to the parent list. */
   readonly subjectAvailable: boolean;
+  /** How many items a grouped admin review row stands for: more than one opens the queue. */
+  readonly itemCount?: number;
 }
 
 const seg = encodeURIComponent;
@@ -334,6 +336,7 @@ const seg = encodeURIComponent;
 export const notificationHref = (input: HrefInput): string | null => {
   const { type, subject } = input;
   if (!input.hasRefs) return legacyNotificationHref(type, input.relatedId);
+  const grouped = (input.itemCount ?? 1) > 1;
 
   if (isTradeType(type)) {
     return subject?.kind === "exchange" && input.subjectAvailable
@@ -362,12 +365,13 @@ export const notificationHref = (input: HrefInput): string | null => {
         ? `/my-puzzles/${seg(subject.copyId)}`
         : "/my-puzzles";
     case "admin_proposal_filed":
-      return subject?.kind === "changeProposal"
+      return subject?.kind === "changeProposal" && !grouped
         ? `/admin/puzzles/proposals/${seg(subject.proposalId)}`
         : "/admin/puzzles/proposals";
-    // Opens the moderation console on that submission (the console's `item` is the puzzle `_id`).
+    // Opens the moderation console on that submission (the console's `item` is the puzzle `_id`);
+    // a grouped row opens the queue, which starts on submissions.
     case "admin_definition_submitted":
-      return subject?.kind === "puzzle" && input.subjectAvailable
+      return subject?.kind === "puzzle" && input.subjectAvailable && !grouped
         ? `/admin/moderation?tab=submissions&item=${seg(subject.puzzleId)}`
         : "/admin/moderation";
     case "whats_new":

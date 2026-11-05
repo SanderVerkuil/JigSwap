@@ -10,6 +10,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 type T = TestConvex<typeof schema>;
 
 // Reports (spec 2.5): filing (visibility per target kind, dedupe, evidence snapshot, the Art. 16(2)
@@ -1659,10 +1662,12 @@ describe("admin decideReport: comments and reviews", () => {
       rating: 1,
       updatedAt: before!.updatedAt,
     });
-    const reviews = await asCarol(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const reviews = await asCarol(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(reviews.find((r) => r.id === bobReview)).toMatchObject({
       rating: 1,
       text: null,

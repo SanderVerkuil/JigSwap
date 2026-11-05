@@ -251,11 +251,6 @@ export default defineSchema({
     // the uniqueness rule only the statuses that hold a barcode (a rejected row releases it).
     .index("by_ean_status", ["ean", "status"])
     .index("by_upc_status", ["upc", "status"])
-    .index("by_series", ["series"])
-    // Existing indexes are great!
-    .index("by_brand", ["brand"])
-    .index("by_publisher", ["publisher"])
-    .index("by_tags", ["tags"])
     // Whether a blob is a puzzle's box art (message-photo claims refuse it).
     .index("by_image", ["image"])
     .index("by_aggregate_id", ["aggregateId"])
@@ -266,6 +261,11 @@ export default defineSchema({
     // by_status is also the bounded pending-submissions count (admin/getPendingCounts).
     .index("by_status", ["status"])
     .index("by_status_brand", ["status", "brand"])
+    // The public facet reads (catalog/getAll*) distinct over these from the approved rows only, so
+    // pending and rejected submissions cost them no reads, however many arrive (SEC-26).
+    .index("by_status_publisher", ["status", "publisher"])
+    .index("by_status_series", ["status", "series"])
+    .index("by_status_tags", ["status", "tags"])
     .searchIndex("by_searchable_text", {
       searchField: "searchableText",
       // Lets public suggestions exclude pending/rejected submissions at the index level.
@@ -664,6 +664,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_puzzle", ["puzzleId"])
+    // Most recently updated first, for the review lists' pages. `updatedAt` is required, so this
+    // needs no backfill.
+    .index("by_puzzle_updated", ["puzzleId", "updatedAt"])
     .index("by_user_puzzle", ["userId", "puzzleId"]),
 
   // One star-only review per (member, physical copy). Write-gated to the
@@ -837,10 +840,12 @@ export default defineSchema({
 
   // Smaller WebP copies of a served image blob (lib/imageModeration/renditions) for the places
   // that show it small (cards, thumbnails). One row per SOURCE blob, made once the image may be
-  // shown (renditionsStore.isRenditionSource); `width`/`height` are the source's. Each slot is
+  // shown (renditionsStore.renditionKindOf); `width`/`height` are the source's. Each slot is
   // its rung's width, or the source's own width in the first rung the source does not exceed
   // (the later slots then stay empty); a slot is also absent when its WebP came out not clearly
-  // smaller than the source (renditionEncode). A row with no slot means "nothing smaller to
+  // smaller than the source (renditionEncode). An image only ever shown small (a completion photo,
+  // a circle icon) has `small` alone, at 256 px. A message photo has no row here: its one thumbnail
+  // lives on its own row (messageAttachments.thumbFileId). A row with no slot means "nothing smaller to
   // offer". Every slot blob counts as referenced (blobReferences), and the row and its blobs are
   // deleted with the source (renditionsStore.deleteRenditions). Read models serve them only
   // through the source's own publication gate, and only as URLs.
@@ -848,7 +853,7 @@ export default defineSchema({
     sourceId: v.id("_storage"),
     width: v.number(),
     height: v.number(),
-    small: v.optional(renditionSlotValidator), // 480 px wide (or the source's width)
+    small: v.optional(renditionSlotValidator), // 480 px wide, or 256 (or the source's width)
     medium: v.optional(renditionSlotValidator), // 640 px wide (or the source's width)
     large: v.optional(renditionSlotValidator), // 960 px wide (or the source's width)
     createdAt: v.number(),
@@ -983,6 +988,10 @@ export default defineSchema({
     // indexes above order by offeredPuzzleId, so they cannot pick a member's newest exchanges.
     .index("by_initiator_created", ["initiatorId", "createdAt"])
     .index("by_recipient_created", ["recipientId", "createdAt"])
+    // Most recent activity first per party, for the finished exchanges' pages
+    // (exchange/listMyExchangeHistory). `updatedAt` is required, so these need no backfill.
+    .index("by_initiator_updated", ["initiatorId", "updatedAt"])
+    .index("by_recipient_updated", ["recipientId", "updatedAt"])
     // Per party and status, newest first: the bounded lists read the live statuses here, so an old
     // open exchange is never cut off by the newest-history window (exchange/readViews,
     // readMemberExchanges).
@@ -1155,8 +1164,14 @@ export default defineSchema({
         threadAggregateId: v.string(),
         uploaderId: v.id("users"),
         fileId: v.id("_storage"),
-        // A smaller rendition; not produced yet (the shared pipeline has no thumbnail step).
+        // One 640 px WebP of the clean image (or at its own width when narrower), made in the
+        // background once the photo is servable (lib/imageModeration/renditionsStore), and served
+        // only where the photo is (messageAttachmentViews). Deleted with the photo's blobs
+        // (deleteAttachmentBlobs), and at once on a CSAM match.
         thumbFileId: v.optional(v.id("_storage")),
+        // When the thumbnail job finished: with no thumbFileId, no WebP came out clearly smaller,
+        // so it is not decoded again.
+        thumbCheckedAt: v.optional(v.number()),
         // Pixel size the client reported at staging (layout only: the aspect-ratio box).
         width: v.optional(v.number()),
         height: v.optional(v.number()),
@@ -1526,6 +1541,9 @@ export default defineSchema({
     // last time it absorbed an actor. Absent = never grouped.
     groupKey: v.optional(v.string()),
     updatedAt: v.optional(v.number()),
+    // How many items a grouped admin review row stands for (SEC-26), for groups whose copy counts
+    // them. Absent = one; a row that absorbed no second item never carries it.
+    itemCount: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"])
@@ -2134,6 +2152,17 @@ export default defineSchema({
     ownedPuzzles: v.number(),
     countedAt: v.number(),
   }).index("by_key", ["key"]),
+
+  // Per-member library counters (PERF-B5q), so a shelf reads one row instead of scanning the member's
+  // copies: an edit that moves neither number then re-runs nothing subscribed to them. Kept in step
+  // by every write that adds, removes, re-owns or re-offers a copy (library/memberLibraryCounts).
+  // A member without a row (before library/backfillMemberLibraryCounts reaches them, or past its scan
+  // cap) is counted from their copies at read time.
+  memberLibraryCounts: defineTable({
+    memberId: v.id("users"),
+    owned: v.number(),
+    forTrade: v.number(),
+  }).index("by_member", ["memberId"]),
 
   // Per-definition aggregates the catalog and definition pages show (PERF-B4m, SEC-29), so a page
   // reads one row instead of every review, copy and completion of the definition. Only the

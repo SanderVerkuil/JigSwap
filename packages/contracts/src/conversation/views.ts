@@ -131,7 +131,7 @@ export interface LocationAvailabilityView {
 
 /**
  * A message photo for one reader (spec 2026-10-20: every photo is a message from send time on).
- * - `ready`: show it (`url`/`thumbUrl`).
+ * - `ready`: show it: a tile from `thumbUrl` (once it has a thumbnail), the photo viewer from `url`.
  * - `blurred`: show the blurhash behind "Show" (sensitive band, a sender who is not the reader's
  *   mutual follower, or a photo the reader reported); decided per reader, and carrying NO url:
  *   the tap calls conversation.revealMessageImage. Once revealed it comes back `ready` with

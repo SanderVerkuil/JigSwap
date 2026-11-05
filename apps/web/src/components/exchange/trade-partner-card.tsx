@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/ui/star-rating";
 import { Switch } from "@/components/ui/switch";
 import { gateway, type Id } from "@/gateway";
+import { mailtoHref } from "@/lib/mailto";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -94,7 +95,7 @@ export function TradePartnerCard({
             )}
             {partner.email && (
               <a
-                href={`mailto:${partner.email}`}
+                href={mailtoHref(partner.email)}
                 className="inline-flex items-center gap-1 hover:underline"
               >
                 <Mail className="h-3.5 w-3.5" aria-hidden />

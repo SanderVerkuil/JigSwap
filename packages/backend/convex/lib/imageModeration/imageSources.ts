@@ -10,8 +10,8 @@ import type { QueryCtx } from "../../_generated/server";
 
 export type ImageSources = {
   url: string;
-  /** The smallest rendition (480 px wide, or the source's width when narrower); absent when there
-   *  is none. */
+  /** The smallest rendition (its kind's first rung, or the source's width when narrower); absent
+   *  when there is none. */
   thumbUrl?: string;
   /** `<url> <width>w` for each rendition and, unless a rendition is already as wide as it, the
    *  original; absent when there are no renditions. */
@@ -27,8 +27,8 @@ export const thumbUrlOf = (image: ImageSources | null): string | null =>
 
 /**
  * The renditions of a source blob as URLs, next to the source's own `url`. Only call it AFTER
- * the source's publication gate has passed (boxArtUrl's servableBoxArtId for box art): it does
- * not check whether the image may be shown.
+ * the source's publication gate has passed (boxArtUrl's servableBoxArtId for box art; approved and
+ * hash-cleared for a photo): it does not check whether the image may be shown.
  */
 export const renditionSources = async (
   ctx: QueryCtx,

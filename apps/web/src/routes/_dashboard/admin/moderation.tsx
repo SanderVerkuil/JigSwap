@@ -168,8 +168,9 @@ function ModerationPage() {
   const markCsam = useMutation({
     mutationFn: useConvexMutation(gateway.admin.markCsamEscalation),
   });
-  // Bounded counts (admin/getPendingCounts) for the queues whose tab does not load the whole
-  // queue: Reports.
+  // Bounded counts (admin/getPendingCounts) for the tabs whose list doesn't hold the whole queue, so
+  // a long queue reads "50+" rather than a list's cap. A backend without them falls back to the
+  // list's length.
   const { data: pendingCounts } = useQuery(
     convexQuery(gateway.admin.pendingCounts, {}),
   );
@@ -535,12 +536,18 @@ function ModerationPage() {
             <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
               <Inbox aria-hidden />
               {t("tabs.submissions")}
-              <TabCount count={pending?.length} />
+              <TabCount
+                count={pendingCounts?.submissions.count ?? pending?.length}
+                capped={pendingCounts?.submissions.capped}
+              />
             </TabsTrigger>
             <TabsTrigger value="flagged" className={TAB_TRIGGER_CLASS}>
               <Flag aria-hidden />
               {t("tabs.flagged")}
-              <TabCount count={flagged?.length} />
+              <TabCount
+                count={pendingCounts?.flagged.count ?? flagged?.length}
+                capped={pendingCounts?.flagged.capped}
+              />
             </TabsTrigger>
             <TabsTrigger value="unchecked" className={TAB_TRIGGER_CLASS}>
               <ScanEye aria-hidden />

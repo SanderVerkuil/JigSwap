@@ -1,13 +1,16 @@
 import type { Notification, NotificationState } from "@jigswap/domain";
 import type { Doc, Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
+import { ADMIN_NOTIFICATION_TYPES } from "../../viewRules";
 import { convexNotificationRepository } from "../convexNotificationRepository";
 import { toRow } from "../notificationMapper";
 
 // Write-time grouping: a new follower joins the recipient's unread new_follower row if it absorbed
-// an actor within the window, and a message joins the recipient's unread row for its thread
-// (`thread:<threadId>`, DMs and circle threads alike, no window: one unread row per thread),
-// instead of adding a row.
+// an actor within the window, a message joins the recipient's unread row for its thread
+// (`thread:<threadId>`, DMs and circle threads alike, no window: one unread row per thread), and a
+// submission or suggestion for review joins the admin's unread row for that review queue
+// (`admin_review:<type>`, no window; SEC-26: a flood is one row that keeps counting, until the admin
+// has read it), instead of adding a row.
 const NEW_FOLLOWER_GROUP = "new_follower";
 export const GROUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -17,9 +20,11 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 // The group a notification joins and how long an unread row stays open to it; null = ungrouped.
+// `countsItems`: the group's copy says how many items arrived, which actorCount can't (one member's
+// twenty submissions are one actor).
 const groupOf = (
   state: NotificationState,
-): { key: string; windowMs: number } | null => {
+): { key: string; windowMs: number; countsItems?: true } | null => {
   if (state.actorId === undefined) return null;
   if (state.type === "new_follower") {
     return { key: NEW_FOLLOWER_GROUP, windowMs: GROUP_WINDOW_MS };
@@ -28,6 +33,13 @@ const groupOf = (
     return {
       key: `thread:${state.subject.threadId}`,
       windowMs: Number.POSITIVE_INFINITY,
+    };
+  }
+  if (ADMIN_NOTIFICATION_TYPES.has(state.type)) {
+    return {
+      key: `admin_review:${state.type}`,
+      windowMs: Number.POSITIVE_INFINITY,
+      countsItems: true,
     };
   }
   return null;
@@ -103,6 +115,7 @@ export const inAppChannel =
       ...(state.relatedId !== undefined ? { relatedId: state.relatedId } : {}),
       actorIds,
       actorCount,
+      ...(group.countsItems ? { itemCount: (target.itemCount ?? 1) + 1 } : {}),
       isRead: false,
       updatedAt: now,
     });

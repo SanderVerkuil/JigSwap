@@ -45,7 +45,7 @@ crons.daily(
 // webhook was lost (backfillUserRoles). Skipped where CLERK_SECRET_KEY is unset (previews).
 crons.daily(
   "reconcile role mirror",
-  { hourUTC: 4, minuteUTC: 15 },
+  { hourUTC: 4, minuteUTC: 5 },
   internal.backfillUserRoles.run,
   {},
 );
@@ -66,7 +66,7 @@ crons.daily(
 // (conversation/attachmentModerationStore).
 crons.daily(
   "sent photo retention",
-  { hourUTC: 4, minuteUTC: 15 },
+  { hourUTC: 4, minuteUTC: 25 },
   internal.conversation.attachmentModerationStore.sweepUncheckedSentPhotos,
   {},
 );
@@ -96,7 +96,7 @@ crons.daily(
 // once RETENTION_ENFORCE also names "notifications" (lib/retention).
 crons.weekly(
   "count expired notifications (dry run)",
-  { dayOfWeek: "monday", hourUTC: 4, minuteUTC: 15 },
+  { dayOfWeek: "monday", hourUTC: 4, minuteUTC: 50 },
   internal.notifications.retention.sweepExpiredNotifications,
   { mode: "dry-run" },
 );
@@ -114,7 +114,7 @@ crons.interval(
 // from source, repairing any a write path forgot to mark (library/definitionStats.reconcile).
 crons.daily(
   "reconcile definition stats",
-  { hourUTC: 4, minuteUTC: 15 },
+  { hourUTC: 4, minuteUTC: 35 },
   internal.library.definitionStats.reconcile,
   {},
 );

@@ -13,7 +13,7 @@ import en from "../../../locales/en.json";
 import { BulkActionBar } from "./bulk-action-bar";
 
 // The selection bar says how many puzzles are selected, selects or clears them all, and offers the
-// four bulk actions only once something is selected.
+// five bulk actions only once something is selected.
 
 const handlers = () => ({
   onSelectAll: vi.fn(),
@@ -21,6 +21,7 @@ const handlers = () => ({
   onExit: vi.fn(),
   onOffer: vi.fn(),
   onAddToCollection: vi.fn(),
+  onShareWithCircle: vi.fn(),
 });
 
 const renderBar = (props: Partial<ComponentProps<typeof BulkActionBar>>) => {
@@ -40,6 +41,7 @@ const ACTIONS = [
   "Offer to lend",
   "Withdraw offers",
   "Add to collection",
+  "Share with circle",
 ];
 
 afterEach(cleanup);
@@ -78,6 +80,19 @@ describe("BulkActionBar", () => {
     );
     expect(on.onOffer.mock.calls).toEqual([["offerSwap"], ["withdraw"]]);
     expect(on.onAddToCollection).toHaveBeenCalledOnce();
+  });
+
+  it("offers Share with circle in both layouts", () => {
+    const on = renderBar({ selectedCount: 2 });
+    fireEvent.click(
+      inline().getByRole("button", { name: "Share with circle" }),
+    );
+    fireEvent.click(
+      within(screen.getByTestId("bulk-actions-compact")).getByRole("button", {
+        name: "Share with circle",
+      }),
+    );
+    expect(on.onShareWithCircle).toHaveBeenCalledTimes(2);
   });
 
   it("disables the actions while one is running", () => {

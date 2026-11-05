@@ -1,5 +1,8 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { QueryClient } from "@tanstack/react-query";
+import {
+  defaultShouldDehydrateQuery,
+  QueryClient,
+} from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import {
@@ -16,6 +19,7 @@ import {
   type DehydratedIntl,
 } from "./lib/i18n-catalog";
 import { appScrollRestoration } from "./lib/scroll-restoration";
+import { holdConvexUntilAuth } from "./lib/ssr-member-data";
 import { routeTree } from "./routeTree.gen";
 
 // This page render's CSP nonce, set by cspMiddleware (lib/csp.ts); undefined in dev and
@@ -32,6 +36,8 @@ const getCspNonce = createIsomorphicFn()
     }
   })
   .client(() => undefined);
+
+type DehydratedRouter = DehydratedIntl & { signedIn?: boolean };
 
 export function getRouter() {
   const CONVEX_URL = import.meta.env.VITE_CONVEX_URL as string;
@@ -88,9 +94,13 @@ export function getRouter() {
     // than a dead one. Clerk's strings for the locale start loading too, but
     // hydration does not wait for them (Clerk renders nothing localized during
     // SSR). setupRouterSsrQueryIntegration below chains onto both hooks.
-    dehydrate: (): DehydratedIntl =>
-      dehydrateIntl(router.state.matches[0]?.context),
-    hydrate: async (state: DehydratedIntl) => {
+    dehydrate: (): DehydratedRouter => {
+      const root = router.state.matches[0]?.context;
+      return { ...dehydrateIntl(root), signedIn: Boolean(root?.userId) };
+    },
+    hydrate: async (state: DehydratedRouter) => {
+      // Before the query integration below hydrates (and so subscribes to) any member data.
+      if (state.signedIn) holdConvexUntilAuth(convex);
       if (state.locale) void loadClerkLocalization(state.locale);
       await hydrateIntl(state);
     },
@@ -101,7 +111,12 @@ export function getRouter() {
       </ConvexProvider>
     ),
   });
-  setupRouterSsrQueryIntegration({ router, queryClient });
+  // Only what loaded: a read that failed or ran out of time on the server is simply read by the browser.
+  setupRouterSsrQueryIntegration({
+    router,
+    queryClient,
+    dehydrateOptions: { shouldDehydrateQuery: defaultShouldDehydrateQuery },
+  });
 
   return router;
 }

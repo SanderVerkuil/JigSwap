@@ -37,7 +37,8 @@
       "tryAgain": "Opnieuw proberen",
       "reload": "Pagina opnieuw laden"
     },
-    "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
+    "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw.",
+    "photoUploadRateLimitedUntil": "Je hebt voorlopig het maximale aantal foto's geüpload. Probeer het {when} opnieuw."
   },
   "notFound": {
     "title": "Pagina niet gevonden",
@@ -396,6 +397,7 @@
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
     "puzzleAdded": "Toegevoegd aan je puzzels",
+    "addedNotOffered": "Toegevoegd aan je puzzels, maar aanbieden is niet gelukt. Dat kun je aanzetten op de pagina van de puzzel.",
     "addAnother": "Nog een toevoegen",
     "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
     "addToCollection": "Toevoegen aan collectie",
@@ -536,6 +538,8 @@
       "completed": "Voltooid"
     },
     "resultCount": "{count} van {total} puzzels",
+    "showMore": "Meer tonen",
+    "rowsAtMax": "Je ziet de eerste {max} puzzels. Zoek of filter om de rest te vinden.",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
@@ -680,6 +684,7 @@
       "offerLend": "Aanbieden om uit te lenen",
       "withdraw": "Aanbod intrekken",
       "addToCollection": "Aan collectie toevoegen",
+      "shareWithCircle": "Delen met kring",
       "result": {
         "offerSwap": "{count, plural, one {# puzzel aangeboden voor ruil} other {# puzzels aangeboden voor ruil}}",
         "offerLend": "{count, plural, one {# puzzel aangeboden om uit te lenen} other {# puzzels aangeboden om uit te lenen}}",
@@ -703,6 +708,16 @@
         "noneAdded": "Er is niets aan {name} toegevoegd",
         "housemates": "{count, plural, one {# is van een huisgenoot en komt niet in je collecties.} other {# zijn van huisgenoten en komen niet in je collecties.}}",
         "failed": "{count, plural, one {# kon niet worden toegevoegd. Probeer het opnieuw.} other {# konden niet worden toegevoegd. Probeer het opnieuw.}}"
+      },
+      "circle": {
+        "title": "Met een kring delen",
+        "description": "{count, plural, =0 {Hier zit niets bij dat je kunt delen.} one {Kies een kring voor # puzzel.} other {Kies een kring voor # puzzels.}}",
+        "housemates": "{count, plural, one {# is van een huisgenoot. Alleen de eigenaar kan een puzzel delen.} other {# zijn van huisgenoten. Alleen de eigenaar kan een puzzel delen.}}",
+        "hidden": "{count, plural, one {# wordt niet aangeboden, dus kringleden zien hem pas als je hem aanbiedt.} other {# worden niet aangeboden, dus kringleden zien ze pas als je ze aanbiedt.}}",
+        "alreadyShared": "{count, plural, one {# was daar al gedeeld.} other {# waren daar al gedeeld.}}",
+        "gone": "{count, plural, one {# staat niet meer in je bibliotheek.} other {# staan niet meer in je bibliotheek.}}",
+        "failed": "{count, plural, one {# kon niet worden gedeeld. Probeer het opnieuw.} other {# konden niet worden gedeeld. Probeer het opnieuw.}}",
+        "nothingShared": "Er is niets nieuws gedeeld met {name}"
       }
     }
   },
@@ -784,6 +799,8 @@
     "message": "Bericht",
     "all": "Alle",
     "exchangesCount": "{count, plural, one {# uitwisseling} other {# uitwisselingen}}",
+    "exchangesCountMore": "{count}+ uitwisselingen",
+    "showMore": "Meer tonen",
     "rowMeta": "{direction} · met {who} · {when}",
     "groups": {
       "needsYou": "Wacht op jou",
@@ -1525,7 +1542,6 @@
     "fieldAvailability": "Beschikbaarheid",
     "textPlaceholder": "Titel, merk of thema…",
     "card": {
-      "request": "Aanvragen",
       "messageOwner": "Bericht sturen aan de eigenaar",
       "messageOwnerName": "Bericht sturen aan {name}",
       "favorite": "Favoriet"
@@ -2111,6 +2127,7 @@
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
     "addedPartly": "{added} van de {total} puzzels toegevoegd. De rest is nog gekozen, dus je kunt het opnieuw proberen.",
+    "addedPartlyRateLimited": "{added} van de {total} puzzels toegevoegd, meer kan vandaag niet. De rest is nog gekozen, dus je kunt ze morgen toevoegen.",
     "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw.",
     "rateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw."
   },
@@ -2505,6 +2522,9 @@
       "shareCopy": "Deel je puzzels",
       "shareDescription": "Leden zien een gedeelde puzzel zolang je hem aanbiedt om te ruilen, uit te lenen of te verkopen. Een privépuzzel blijft verborgen. Vink puzzels aan om ze te delen, vink ze uit om te stoppen met delen.",
       "copyFallback": "Exemplaar",
+      "removeMember": "{name} verwijderen",
+      "removeFailed": "{name} verwijderen is niet gelukt. Probeer het opnieuw.",
+      "permissionFailed": "Wijzigen wat {name} mag is niet gelukt. Probeer het opnieuw.",
       "close": "Sluiten"
     },
     "share": {
@@ -2561,6 +2581,8 @@
   "people": {
     "yourNetwork": "Jouw netwerk",
     "memberCount": "{count, plural, one {# lid} other {# leden}}",
+    "memberCountMore": "{count}+ leden",
+    "showMoreMembers": "Meer tonen",
     "followsYou": "Volgt jou",
     "requests": {
       "title": "Volgverzoeken",
@@ -3102,10 +3124,12 @@
         "sentence": "{hasPuzzle, select, yes {Een moderator heeft een foto van <b>{puzzle}</b> verwijderd.} other {Een moderator heeft een van je puzzelfoto's verwijderd.}}"
       },
       "admin_proposal_filed": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een wijziging voor <b>{puzzle}</b> voorgesteld.} other {<b>{actor}</b> heeft een wijziging voor een cataloguspuzzel voorgesteld.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft een wijziging voor <b>{puzzle}</b> voorgesteld.} other {<b>{actor}</b> heeft een wijziging voor een cataloguspuzzel voorgesteld.}}",
+        "sentenceGrouped": "<b>{count, number}</b> nieuwe voorgestelde wijzigingen om te beoordelen."
       },
       "admin_definition_submitted": {
-        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft <b>{puzzle}</b> ingediend voor moderatie.} other {<b>{actor}</b> heeft een nieuwe puzzel ingediend voor moderatie.}}"
+        "sentence": "{hasPuzzle, select, yes {<b>{actor}</b> heeft <b>{puzzle}</b> ingediend voor moderatie.} other {<b>{actor}</b> heeft een nieuwe puzzel ingediend voor moderatie.}}",
+        "sentenceGrouped": "<b>{count, number}</b> nieuwe puzzelinzendingen om te modereren."
       },
       "new_follower": {
         "sentence": "<b>{actor}</b> volgt je nu.",
@@ -3287,7 +3311,8 @@
       "dateUnknown": "Datum onbekend",
       "inYear": "In {year}",
       "yearCount": "{count, plural, one {# voltooiing} other {# voltooiingen}}",
-      "showMore": "Nog {count} tonen"
+      "showMore": "Nog {count} tonen",
+      "historyAtMax": "Je ziet de nieuwste {max} voltooiingen."
     },
     "logSolve": {
       "trigger": "Voltooiing vastleggen",
@@ -3522,7 +3547,7 @@
     "share": "Delen",
     "resetLink": "Uitnodigingslink resetten",
     "needUsernameTitle": "Stel eerst een gebruikersnaam in",
-    "needUsernameBody": "Je QR-bijschrift en profiellink gebruiken je gebruikersnaam. Stel er een in bij je accountinstellingen en kom dan terug.",
+    "needUsernameBody": "Je QR-bijschrift toont je profiellink, en die heeft een gebruikersnaam of een eigen link nodig. Stel er een in bij je accountinstellingen en kom dan terug.",
     "openSettings": "Accountinstellingen openen",
     "invitedYou": "{name} heeft je uitgenodigd voor JigSwap",
     "followEachOther": "{name} heeft hun code met je gedeeld — elkaar volgen?",
@@ -3795,11 +3820,6 @@
     "onLoanTo": "Uitgeleend aan {name}",
     "recallAction": "Terugvragen",
     "recalling": "Terugvragen…",
-    "recallConfirmTitle": "Deze puzzel terugvragen?",
-    "recallConfirmBody": "Hiermee beëindig je de lening en staat de puzzel weer bij jou. Laat {name} weten dat je hem terug wilt.",
-    "recallConfirm": "Puzzel terugvragen",
-    "recalled": "Lening beëindigd. De puzzel staat weer bij jou.",
-    "recallFailed": "Terugvragen is niet gelukt. Probeer het opnieuw.",
     "historyTitle": "Leengeschiedenis",
     "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
     "noHistory": "Dit exemplaar is nooit uitgeleend.",
@@ -4684,6 +4704,7 @@
     "reviewTooLong": "Die review is te lang (maximaal 2.000 tekens).",
     "reviewRateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
     "noReviews": "Nog geen reviews. Wees de eerste.",
+    "showMoreReviews": "Meer reviews tonen",
     "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {
       "swap": "Ruilen",
@@ -5211,7 +5232,7 @@
           "content_removed": "Inhoud verwijderen"
         },
         "removeConfirmTitle": "Deze inhoud verwijderen?",
-        "removeConfirmBody": "Beide leden zien dat een moderator het heeft verwijderd, en de auteur krijgt je motivering. Dit kan niet ongedaan worden gemaakt.",
+        "removeConfirmBody": "Het verdwijnt voor iedereen die het kon zien, en de auteur krijgt je motivering. Dit kan niet ongedaan worden gemaakt.",
         "cancel": "Annuleren",
         "decided": "Besluit opgeslagen",
         "decideError": "Het besluit opslaan is niet gelukt. Probeer het opnieuw."
@@ -5539,6 +5560,7 @@
     "noRatings": "Nog geen beoordelingen.",
     "reviews": "Reviews",
     "noReviews": "Nog geen reviews.",
+    "showMoreReviews": "Meer reviews tonen",
     "anonymousReviewer": "Een JigSwap-lid",
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",

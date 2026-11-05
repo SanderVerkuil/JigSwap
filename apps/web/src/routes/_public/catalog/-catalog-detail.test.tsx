@@ -2,7 +2,14 @@
 import { gateway, type Id } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import type { ComponentType, ReactNode } from "react";
@@ -13,6 +20,10 @@ import nl from "../../../../locales/nl.json";
 import { Route } from "./$id";
 
 const PUZZLE_ID = "puzzle1";
+const mocks = vi.hoisted(() => ({
+  // The manual "next page" read, through the route's Convex client.
+  nextReviews: vi.fn<(query: unknown, args: unknown) => Promise<unknown>>(),
+}));
 // What the mocked router's notFound() returns, so a test can tell a 404 from any other throw.
 const NOT_FOUND = { isNotFound: true } as const;
 
@@ -41,6 +52,7 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
     useParams: () => ({ id: PUZZLE_ID }),
+    useRouteContext: () => ({ convexClient: { query: mocks.nextReviews } }),
   }),
   redirect: vi.fn(),
   notFound: () => NOT_FOUND,
@@ -81,7 +93,16 @@ const ratingOf = (breakdown: Breakdown): View["rating"] => {
 
 const unrated = ratingOf([0, 0, 0, 0, 0]);
 
-const renderDetail = (view: View, locale: "en" | "nl" = "en") => {
+type ReviewPage = FunctionReturnType<
+  typeof gateway.social.listPublicPuzzleReviews
+>;
+const NO_REVIEWS: ReviewPage = { page: [], isDone: true, continueCursor: "" };
+
+const renderDetail = (
+  view: View,
+  locale: "en" | "nl" = "en",
+  firstPage: ReviewPage = NO_REVIEWS,
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -101,25 +122,128 @@ const renderDetail = (view: View, locale: "en" | "nl" = "en") => {
     view,
   );
   queryClient.setQueryData(
-    convexQuery(gateway.social.listPublicPuzzleReviews, { puzzleId }).queryKey,
-    [],
+    convexQuery(gateway.social.listPublicPuzzleReviews, {
+      puzzleId,
+      paginationOpts: { numItems: 20, cursor: null },
+    }).queryKey,
+    firstPage,
   );
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <IntlProvider
-        locale={locale}
-        messages={locale === "en" ? en : nl}
-        timeZone="Europe/Amsterdam"
-      >
-        <Page />
-      </IntlProvider>
-    </QueryClientProvider>,
-  );
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <IntlProvider
+          locale={locale}
+          messages={locale === "en" ? en : nl}
+          timeZone="Europe/Amsterdam"
+        >
+          <Page />
+        </IntlProvider>
+      </QueryClientProvider>,
+    ),
+    queryClient,
+  };
 };
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mocks.nextReviews.mockReset();
+});
+
+const review = (id: string, text: string) =>
+  ({
+    id,
+    author: null,
+    rating: 4,
+    text,
+    updatedAt: 1,
+  }) as ReviewPage["page"][number];
+
+describe("public catalogue reviews", () => {
+  it("shows the server-rendered first page with no way to more when it is all there", () => {
+    renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: true,
+      continueCursor: "",
+    });
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /more reviews/ })).toBeNull();
+  });
+
+  it("appends the next pages, each review once, and stops at the last", async () => {
+    mocks.nextReviews.mockResolvedValue({
+      page: [review("r1", "Lovely box"), review("r2", "Tough edges")],
+      isDone: true,
+      continueCursor: "",
+    });
+    renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: false,
+      continueCursor: "cursor-1",
+    });
+    expect(screen.getByText("1+")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show more reviews" }));
+    await screen.findByText("Tough edges");
+    expect(mocks.nextReviews.mock.calls[0][1]).toMatchObject({
+      paginationOpts: { numItems: 20, cursor: "cursor-1" },
+    });
+    expect(screen.getAllByText("Lovely box")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /more reviews/ })).toBeNull();
+    expect(screen.getByText("2")).toBeTruthy();
+  });
+
+  // PERF-B13: the first page is live and later pages are fixed. Left to hold its numItems, the first
+  // page would drop its last row when a new review arrives, into the gap before the next page.
+  it("pins the first page once a page follows it, so a new review loses no row", async () => {
+    mocks.nextReviews.mockResolvedValue({
+      page: [review("r2", "Tough edges")],
+      isDone: true,
+      continueCursor: "",
+    });
+    const { queryClient } = renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: false,
+      continueCursor: "cursor-1",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Show more reviews" }));
+    await screen.findByText("Tough edges");
+    // While the pinned read loads, the rows on screen stay.
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+
+    const pinned = convexQuery(gateway.social.listPublicPuzzleReviews, {
+      puzzleId: PUZZLE_ID as Id<"puzzles">,
+      paginationOpts: { numItems: 20, cursor: null, endCursor: "cursor-1" },
+    }).queryKey;
+    await waitFor(() =>
+      expect(queryClient.getQueryState(pinned)?.fetchStatus).toBe("fetching"),
+    );
+    act(() => {
+      queryClient.setQueryData(pinned, {
+        page: [review("r3", "Brand new"), review("r1", "Lovely box")],
+        isDone: false,
+        continueCursor: "cursor-1",
+      });
+    });
+    await screen.findByText("Brand new");
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+    expect(screen.getByText("Tough edges")).toBeTruthy();
+  });
+
+  it("keeps the first page unpinned until a page follows it", () => {
+    const { queryClient } = renderDetail(viewWith(unrated), "en", {
+      page: [review("r1", "Lovely box")],
+      isDone: false,
+      continueCursor: "cursor-1",
+    });
+    const reads = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((query) => JSON.stringify(query.queryKey));
+    expect(reads.some((read) => read.includes("endCursor"))).toBe(false);
+  });
+});
 
 describe("public catalogue detail copy", () => {
   it("formats the piece count and difficulty in the visitor's language", () => {

@@ -36,6 +36,7 @@ import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
@@ -79,6 +80,7 @@ export function ManageCircleDialog({
       });
     } catch (error) {
       console.error("Failed to remove member:", error);
+      toast.error(t("manage.removeFailed", { name: seatName(member) }));
     }
   };
 
@@ -94,6 +96,7 @@ export function ManageCircleDialog({
       });
     } catch (error) {
       console.error("Failed to change permission:", error);
+      toast.error(t("manage.permissionFailed", { name: seatName(member) }));
     }
   };
 
@@ -181,6 +184,9 @@ export function ManageCircleDialog({
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={t("manage.removeMember", {
+                          name: seatName(member),
+                        })}
                         onClick={() => handleRemove(member)}
                       >
                         <Trash2 className="h-4 w-4" />

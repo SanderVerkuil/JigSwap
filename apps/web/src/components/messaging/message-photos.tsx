@@ -447,9 +447,11 @@ function PhotoTile({
           className="absolute inset-0 size-full object-cover"
         />
       )}
+      {/* The thumbnail once the photo has one: a tile is at most 288px wide. No srcset with the
+          original: a 3x phone would pick it, and the viewer opens it anyway. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={(compact && view.thumbUrl) || view.url}
+        src={view.thumbUrl ?? view.url}
         alt=""
         loading="lazy"
         decoding="async"

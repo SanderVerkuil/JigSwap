@@ -551,6 +551,34 @@ describe("NotificationItem rendering", () => {
     expect(container.textContent).toContain("+2");
   });
 
+  // SEC-26: a flood of review work is one updating row that counts, naming neither one puzzle nor
+  // one member, and it opens the queue.
+  it.each([
+    [
+      "admin_definition_submitted",
+      "/admin/moderation",
+      "Unread, 12 new puzzle submissions to moderate.",
+    ],
+    [
+      "admin_proposal_filed",
+      "/admin/puzzles/proposals",
+      "Unread, 3 new suggested edits to review.",
+    ],
+  ] as const)("a grouped %s row counts what arrived", (type, href, text) => {
+    const { container } = renderItem(
+      base({
+        type,
+        actors: [mara],
+        actorCount: 1,
+        itemCount: text.includes("12") ? 12 : 3,
+        context: { puzzleTitle: "Only the newest" },
+        href,
+      }),
+    );
+    expect(rowLink(container)!.textContent).toBe(text);
+    expect(rowLink(container)!.getAttribute("href")).toBe(href);
+  });
+
   it.each([
     [
       "en",

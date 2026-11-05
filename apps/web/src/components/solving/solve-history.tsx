@@ -2,23 +2,28 @@ import { Button } from "@/components/ui/button";
 import {
   groupSolveHistory,
   HISTORY_PAGE_SIZE,
+  HISTORY_ROWS_MAX,
   type HistoryRow,
 } from "@/lib/completion-history";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
 // The completion log's History: the member's finished solves under one heading per year (undated
-// solves last, lib/completion-history), a page at a time. Show more adds the next page. The rows
-// themselves come from the page (renderRow).
+// solves last, lib/completion-history), as far as `limit`. Show more asks for the next page. Past
+// the most the log joins at once it says so instead. The rows themselves come from the page
+// (renderRow), which may still be joining one.
 export function SolveHistory<T extends HistoryRow>({
   rows,
+  limit,
+  onShowMore,
   renderRow,
 }: {
   rows: readonly T[];
+  limit: number;
+  onShowMore: () => void;
   renderRow: (row: T, index: number, isLast: boolean) => ReactNode;
 }) {
   const t = useTranslations("solving.completions");
-  const [limit, setLimit] = useState(HISTORY_PAGE_SIZE);
   const history = groupSolveHistory(rows, limit);
   if (history.total === 0) return null;
   const remaining = history.total - history.shown;
@@ -44,14 +49,19 @@ export function SolveHistory<T extends HistoryRow>({
           </div>
         </section>
       ))}
-      {remaining > 0 && (
+      {remaining > 0 && limit < HISTORY_ROWS_MAX && (
         <Button
           variant="outline"
           className="pointer-coarse:min-h-11"
-          onClick={() => setLimit((current) => current + HISTORY_PAGE_SIZE)}
+          onClick={onShowMore}
         >
           {t("showMore", { count: Math.min(HISTORY_PAGE_SIZE, remaining) })}
         </Button>
+      )}
+      {remaining > 0 && limit >= HISTORY_ROWS_MAX && (
+        <p className="text-muted-foreground text-sm">
+          {t("historyAtMax", { max: HISTORY_ROWS_MAX })}
+        </p>
       )}
     </>
   );

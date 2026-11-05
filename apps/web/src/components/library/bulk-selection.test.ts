@@ -4,10 +4,12 @@ import {
   canSelectCopy,
   chunk,
   OFFER_CHANGES,
+  planCircleShare,
   planCollectionAdd,
   planOfferAction,
   runWithConcurrency,
   selectedInView,
+  shareInBatches,
   toggleSelection,
   undoChanges,
   type BulkCopy,
@@ -161,6 +163,115 @@ describe("planCollectionAdd", () => {
     );
     expect(plan.copyIds).toEqual(["agg_a"]);
     expect(plan.housemates).toBe(1);
+  });
+});
+
+describe("planCircleShare", () => {
+  const OFFERED = { ...CLOSED, forLend: true };
+
+  it("sends only the member's own copies: only a copy's owner may share it", () => {
+    const plan = planCircleShare(
+      [
+        copy("a", { availability: OFFERED }),
+        copy("b", { availability: OFFERED }),
+        copy("c", { aggregateId: undefined, availability: OFFERED }),
+      ],
+      (copyDocId) => copyDocId === "b",
+    );
+    expect(plan.copyIds).toEqual(["agg_a"]);
+    expect(plan.housemates).toBe(1);
+  });
+
+  it("names the own copies circle members won't see once shared", () => {
+    const plan = planCircleShare(
+      [
+        copy("offered", { availability: OFFERED }),
+        copy("closed"),
+        copy("private", { visibility: "private" }),
+        copy("theirs"),
+      ],
+      (copyDocId) => copyDocId === "theirs",
+    );
+    expect(plan.copyIds).toEqual(["agg_offered", "agg_closed", "agg_private"]);
+    expect(plan.hidden).toEqual(["agg_closed", "agg_private"]);
+  });
+});
+
+describe("shareInBatches", () => {
+  class Gone extends Error {}
+  const isGone = (error: unknown) => error instanceof Gone;
+  const ids = (count: number) =>
+    Array.from({ length: count }, (_, i) => `c${i}`);
+
+  it("sends at most one batch's worth at a time and adds up the answers", async () => {
+    const sizes: number[] = [];
+    const result = await shareInBatches(
+      ids(250),
+      async (batch) => {
+        sizes.push(batch.length);
+        return { shared: batch.length - 1, alreadyShared: 1 };
+      },
+      isGone,
+    );
+    expect(sizes).toEqual([100, 100, 50]);
+    expect(result).toMatchObject({
+      shared: 247,
+      alreadyShared: 3,
+      gone: [],
+      failed: [],
+    });
+    expect(result.done).toHaveLength(250);
+  });
+
+  it("narrows an all-or-nothing refusal down to the copies that are gone, and shares the rest", async () => {
+    const lost = new Set(["c3", "c7"]);
+    const shared: string[] = [];
+    const sizes: number[] = [];
+    const result = await shareInBatches(
+      ids(8),
+      async (batch) => {
+        sizes.push(batch.length);
+        if (batch.some((id) => lost.has(id))) throw new Gone();
+        shared.push(...batch);
+        return { shared: batch.length, alreadyShared: 0 };
+      },
+      isGone,
+    );
+    expect(result.gone.sort()).toEqual(["c3", "c7"]);
+    expect(result.failed).toEqual([]);
+    expect(result.shared).toBe(6);
+    expect(shared.sort()).toEqual(["c0", "c1", "c2", "c4", "c5", "c6"]);
+    // Far fewer calls than one per copy.
+    expect(sizes.length).toBeLessThan(2 * 8);
+  });
+
+  it("counts a batch refused for any other reason as failed and goes on with the next", async () => {
+    const refusal = new Error("offline");
+    let call = 0;
+    const result = await shareInBatches(
+      ids(120),
+      async (batch) => {
+        call += 1;
+        if (call === 1) throw refusal;
+        return { shared: batch.length, alreadyShared: 0 };
+      },
+      isGone,
+    );
+    expect(call).toBe(2);
+    expect(result.failed).toHaveLength(100);
+    expect(result.shared).toBe(20);
+    expect(result.refusal).toBe(refusal);
+  });
+
+  it("sends nothing for an empty plan", async () => {
+    const send = async () => ({ shared: 0, alreadyShared: 0 });
+    expect(await shareInBatches([], send, isGone)).toEqual({
+      shared: 0,
+      alreadyShared: 0,
+      done: [],
+      gone: [],
+      failed: [],
+    });
   });
 });
 

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
-import { gateway, type Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import {
   catalogueSearchKey,
   detectBarcode,
@@ -84,26 +84,15 @@ function AddPuzzleChooserPage() {
     convexQuery(gateway.catalog.myContributedPuzzles, {}),
   );
 
-  // The member's copies, to mark puzzles already on their shelf. Same args as the quick picker
-  // and the dashboard shelf, so the subscription is shared.
+  // What the member already has a copy of, to mark puzzles already on their shelf.
   const { member } = useCurrentMember();
-  const { data: copies } = useQuery(
+  const { data: ownedIds } = useQuery(
     convexQuery(
-      gateway.library.ownedByOwner,
-      member?._id
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
+      gateway.library.myOwnedDefinitionIds,
+      member?._id ? {} : "skip",
     ),
   );
-  const ownedDefinitionIds = useMemo(
-    () =>
-      new Set(
-        (copies ?? []).flatMap((c) =>
-          c.puzzleDefinitionId ? [c.puzzleDefinitionId] : [],
-        ),
-      ),
-    [copies],
-  );
+  const ownedDefinitionIds = useMemo(() => new Set(ownedIds), [ownedIds]);
 
   // The approved catalogue, searched server-side and paginated with infinite
   // scroll, so matches beyond the loaded page are still found.

@@ -37,6 +37,9 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Signed out: useCurrentMember skips, so MessageButton renders its (disabled) loading state.
+vi.mock("@/compat/clerk", () => ({
+  useAuth: () => ({ isSignedIn: false }),
+}));
 const useSignedOut = () => ({
   isLoading: false,
   isAuthenticated: false,

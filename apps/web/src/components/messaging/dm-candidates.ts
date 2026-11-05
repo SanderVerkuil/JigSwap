@@ -19,12 +19,12 @@ export interface DmCandidate {
 // `recent`: the revealed partners of the viewer's DM and exchange threads, in
 // inbox order (an existing pair thread connects them). A thread that is
 // blocked or read-only is left out, as is an anonymised or inactive partner.
-// `mutual`: members who follow the viewer back (mutual follow connects them),
+// `mutual`: members who follow the viewer back (mutual follow connects them; the
+// server answers that per edge, so it holds however many followers the viewer has),
 // minus the recent ones, by name; nameless entries last.
 export function dmCandidates(
   inbox: readonly AnyInboxThread[],
   following: readonly FollowEdge[],
-  followers: readonly FollowEdge[],
 ): { recent: DmCandidate[]; mutual: DmCandidate[] } {
   const seen = new Set<string>();
   const recent: DmCandidate[] = [];
@@ -44,10 +44,9 @@ export function dmCandidates(
     });
   }
 
-  const followsMe = new Set(followers.map((edge) => edge.memberId));
   const mutual: DmCandidate[] = [];
   for (const edge of following) {
-    if (!followsMe.has(edge.memberId) || seen.has(edge.memberId)) continue;
+    if (!edge.followsYou || seen.has(edge.memberId)) continue;
     seen.add(edge.memberId);
     mutual.push({ memberId: edge.memberId, name: { name: edge.displayName } });
   }

@@ -142,13 +142,9 @@ const seed = () => {
       },
     ],
     [getFunctionName(gateway.social.following)]: [
-      edge("u_mara", "Mara"),
-      edge("u_eva", "Eva"),
-      edge("u_femke", "Femke"),
-    ],
-    [getFunctionName(gateway.social.followers)]: [
-      edge("u_mara", "Mara"),
-      edge("u_eva", "Eva"),
+      { ...edge("u_mara", "Mara"), followsYou: true },
+      { ...edge("u_eva", "Eva"), followsYou: true },
+      { ...edge("u_femke", "Femke"), followsYou: false },
     ],
   };
 };
@@ -346,7 +342,7 @@ describe("NewConversationMenu — member picker", () => {
 
   it("points to People when there is no one to pick", async () => {
     mocks.queries[getFunctionName(gateway.conversation.getMyInbox)] = [];
-    mocks.queries[getFunctionName(gateway.social.followers)] = [];
+    mocks.queries[getFunctionName(gateway.social.following)] = [];
     renderMenu();
     const dialog = await openPicker("Message a member");
 

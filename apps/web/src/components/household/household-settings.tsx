@@ -15,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
-import { useConvexMutation } from "@convex-dev/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Settings } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,24 +28,26 @@ import { HouseholdNameSetting } from "./household-name-setting";
 
 // "Household settings": the household's name (HouseholdNameSetting), then the household-wide default access for member copies without their own
 // choice. Every member sees it and how many copies follow it (counted server-side across all
-// members); only the admin can change it, after confirming how many copies it affects.
+// members, by a read only this panel asks for); only the admin can change it, after confirming how
+// many copies it affects, so the select waits for that number.
 export function HouseholdSettings({
   isAdmin,
   name,
   defaultCopyPermission,
-  copiesUsingDefault,
   onError,
 }: {
   isAdmin: boolean;
   name: string | undefined;
   defaultCopyPermission: HouseholdPermission;
-  copiesUsingDefault: number;
   onError: (error: unknown) => void;
 }) {
   const t = useTranslations("household.settings");
   const tAccess = useTranslations("household.copyAccess");
   const tCommon = useTranslations("common");
   const [pending, setPending] = useState<HouseholdPermission | null>(null);
+  const { data: copiesUsingDefault } = useQuery(
+    convexQuery(gateway.household.copiesUsingDefault, {}),
+  );
 
   const setDefault = useMutation({
     mutationFn: useConvexMutation(gateway.household.setDefaultCopyPermission),
@@ -71,7 +74,7 @@ export function HouseholdSettings({
         {isAdmin ? (
           <Select
             value={defaultCopyPermission}
-            disabled={setDefault.isPending}
+            disabled={setDefault.isPending || copiesUsingDefault == null}
             onValueChange={(value: HouseholdPermission) => {
               if (value !== defaultCopyPermission) setPending(value);
             }}
@@ -92,7 +95,13 @@ export function HouseholdSettings({
         )}
       </div>
       <p className="text-muted-foreground text-sm">{t("defaultHelp")}</p>
-      <p className="text-sm">{t("affected", { count: copiesUsingDefault })}</p>
+      {copiesUsingDefault == null ? (
+        <Skeleton className="h-5 w-64 max-w-full" />
+      ) : (
+        <p className="text-sm">
+          {t("affected", { count: copiesUsingDefault })}
+        </p>
+      )}
       {!isAdmin && (
         <p className="text-muted-foreground text-xs">{t("adminOnly")}</p>
       )}
@@ -107,7 +116,7 @@ export function HouseholdSettings({
               {t("confirmTitle", { permission: pending ?? "manage" })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("confirmBody", { count: copiesUsingDefault })}
+              {t("confirmBody", { count: copiesUsingDefault ?? 0 })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

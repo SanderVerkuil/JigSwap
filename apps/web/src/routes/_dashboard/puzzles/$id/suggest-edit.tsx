@@ -353,7 +353,7 @@ function SuggestEditForm({
         </div>
       </div>
 
-      <aside className="hidden lg:sticky lg:top-2 lg:block lg:self-start">
+      <aside className="hidden lg:sticky lg:top-[calc(var(--app-sticky-top,0px)+0.5rem)] lg:block lg:self-start">
         <FormContextPanel
           image={
             <CoverImageField

@@ -158,7 +158,7 @@ export function ShelfSection() {
     ),
   );
   const { data: exchanges } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
+    convexQuery(gateway.exchange.myLive, member?._id ? {} : "skip"),
   );
 
   // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
@@ -198,12 +198,7 @@ export function ShelfSection() {
 
   const owned = shelf?.total ?? 0;
   const forTrade = shelf?.forTrade ?? 0;
-  const activeExchanges = (exchanges ?? []).filter(
-    (e) =>
-      e.status === "proposed" ||
-      e.status === "accepted" ||
-      e.status === "disputed",
-  ).length;
+  const activeExchanges = (exchanges ?? []).length;
 
   const tradesCompleted = stats?.tradesCompleted ?? 0;
   const totalReviews = stats?.totalReviews ?? 0;

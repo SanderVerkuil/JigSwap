@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
+import { readMemberLibraryCounts } from "../library/memberLibraryCounts";
 import { blockStateBetween } from "../social/blocks";
 import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 import { requireMember } from "./requireMember";
@@ -19,7 +20,8 @@ const STATS_COLLECTION_CAP = 5000;
 // exact same owned/trades/rating math without duplicating a whole query or re-deriving the
 // visibility ACL, which stays the caller's responsibility. `puzzlesOwned` counts the member's
 // PRIVATE copies only when `includePrivateCopies` (the viewer is the member or a household mate —
-// library/copyVisibility.seesPrivateCopiesOf); everyone else gets the count of visible copies.
+// library/copyVisibility.seesPrivateCopiesOf), read from their counter so the dashboard's stats
+// don't subscribe to the whole library; everyone else gets the count of visible copies.
 export const computeMemberStats = async (
   ctx: QueryCtx,
   userId: Id<"users">,
@@ -30,10 +32,14 @@ export const computeMemberStats = async (
   averageRating: number;
   totalReviews: number;
 }> => {
-  const puzzlesOwned = await ctx.db
-    .query("ownedPuzzles")
-    .withIndex("by_owner", (q) => q.eq("ownerId", userId))
-    .take(STATS_COLLECTION_CAP);
+  const puzzlesOwned = opts.includePrivateCopies
+    ? (await readMemberLibraryCounts(ctx, userId)).owned
+    : (
+        await ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+          .take(STATS_COLLECTION_CAP)
+      ).filter((copy) => !isCopyPrivate(copy)).length;
 
   const tradesAsRequester = await ctx.db
     .query("exchanges")
@@ -58,9 +64,7 @@ export const computeMemberStats = async (
       : 0;
 
   return {
-    puzzlesOwned: opts.includePrivateCopies
-      ? puzzlesOwned.length
-      : puzzlesOwned.filter((copy) => !isCopyPrivate(copy)).length,
+    puzzlesOwned,
     tradesCompleted: tradesAsRequester.length + tradesAsOwner.length,
     averageRating: Math.round(averageRating * 10) / 10,
     totalReviews: reviews.length,

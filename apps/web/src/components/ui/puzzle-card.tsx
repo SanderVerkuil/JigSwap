@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  REQUEST_ACTION_ICONS,
+  requestActionKey,
+} from "@/components/exchange/request-trade";
+import {
   conditionDotClass,
   useConditionLabel,
 } from "@/components/library/condition";
@@ -98,10 +102,18 @@ interface PuzzleCardProps {
   /** Toggles the catalogue favourite of this copy's puzzle; `favorited` is its current state. */
   onFavorite?: (puzzleId: Id<"ownedPuzzles">) => void;
   favorited?: boolean;
-  onLogSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  // The dialogs these open live on the page. `opener` is the ⋯ trigger, for the dialog to hand
+  // focus back to.
+  onLogSolve?: (
+    puzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   // Start/Finish solve swap: the page resolves whether the caller has an in-progress solve on
   // this copy (`solveInProgress`) and handles the action (start vs finish) itself.
-  onStartSolve?: (puzzleId: Id<"ownedPuzzles">) => void;
+  onStartSolve?: (
+    puzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   solveInProgress?: boolean;
   // The owner's "Share with circles…" (the page owns the dialog). `opener` is the ⋯ trigger, for
   // the dialog to hand focus back to.
@@ -157,8 +169,14 @@ interface PuzzleOverflowMenuProps {
   ownedId: Id<"ownedPuzzles">;
   /** The card's puzzle title: names the trigger so each card's menu is distinguishable. */
   title: string;
-  onLogSolve?: (id: Id<"ownedPuzzles">) => void;
-  onStartSolve?: (id: Id<"ownedPuzzles">) => void;
+  onLogSolve?: (
+    id: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
+  onStartSolve?: (
+    id: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => void;
   solveInProgress?: boolean;
   onEdit?: (id: Id<"ownedPuzzles">) => void;
   onShareWithCircles?: (
@@ -228,7 +246,7 @@ function PuzzleOverflowMenu({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
-                onLogSolve(ownedId);
+                onLogSolve(ownedId, triggerRef);
               }}
             >
               <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
@@ -239,7 +257,7 @@ function PuzzleOverflowMenu({
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
-                onStartSolve(ownedId);
+                onStartSolve(ownedId, triggerRef);
               }}
             >
               {solveInProgress ? (
@@ -351,6 +369,7 @@ export function PuzzleCard({
   const t = useTranslations("puzzles");
   const tCompletions = useTranslations("solving.completions");
   const tCard = useTranslations("browse.card");
+  const tRequest = useTranslations("tradeRequest.cta");
   const tCatalog = useTranslations("puzzles.puzzles");
   const conditionLabel = useConditionLabel();
   const boxArtInCheck = useBoxArtInCheck();
@@ -381,6 +400,9 @@ export function PuzzleCard({
   const imageChecking = !view.imageUrl && boxArtInCheck.has(puzzle.puzzleId);
 
   const offers = OFFERS.filter(({ flag }) => puzzle.availability[flag]);
+  // The request button names what the owner offers ("Ask to borrow" on a lend-only copy).
+  const requestAction = requestActionKey(puzzle.availability);
+  const RequestIcon = REQUEST_ACTION_ICONS[requestAction];
 
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
@@ -550,8 +572,9 @@ export function PuzzleCard({
   // Requesting the copy is what Browse is for, so it is a labelled primary button; Message and the
   // favourite heart are named icon buttons with a tooltip. The heart keeps one name and reports its
   // state through aria-pressed. The two icons wrap together under Request on a card too narrow
-  // for all three (two-column tablet grid, longer Dutch label), so Request's label is never cut
-  // off and the icons never split up. 40px targets, 44px on touch screens.
+  // for all three (two-column tablet grid, a label that names the offer, longer Dutch), so
+  // Request's label is never cut off and the icons never split up. 40px targets, 44px on touch
+  // screens.
   const iconActions = (onMessage || onFavorite) && (
     <div className="ml-auto flex items-center gap-2">
       {onMessage && (
@@ -615,13 +638,17 @@ export function PuzzleCard({
         <Button
           onClick={() => onRequestExchange(ownedId)}
           // A list row can be 850px wide: past a phone, Request keeps its natural width there.
+          // flex-auto starts from the label's one-line width, so the row wraps the icons below
+          // rather than squeeze it; only a card narrower than the label itself makes it wrap
+          // ("Vragen om te lenen" on a phone). min-w-0 lifts Button's touch minimum, which would
+          // otherwise be all the row reserves for it.
           className={cn(
-            "h-10 flex-1 pointer-coarse:h-11",
+            "h-auto min-h-10 min-w-0 flex-auto py-1.5 leading-tight whitespace-normal pointer-coarse:min-h-11 pointer-coarse:min-w-0",
             viewMode === "list" && "sm:flex-none",
           )}
         >
-          <ArrowLeftRight className="h-4 w-4" aria-hidden />
-          {tCard("request")}
+          <RequestIcon className="h-4 w-4" aria-hidden />
+          {tRequest(requestAction)}
         </Button>
       )}
       {iconActions}

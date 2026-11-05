@@ -45,6 +45,7 @@ import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
@@ -136,7 +137,7 @@ function ContributePuzzlePage() {
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
 
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -326,7 +327,7 @@ function ContributePuzzlePage() {
       // filing's and the cover check's own refusals (their limits, a text bound) name their
       // reason (SEC-26).
       if (isUploadRateLimited(error)) {
-        toast.error(tCommon("photoUploadRateLimited"));
+        toast.error(uploadLimitMessage(error));
         return;
       }
       const failure = contributeError(error, Date.now());

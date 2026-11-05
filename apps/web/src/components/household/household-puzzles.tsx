@@ -7,7 +7,12 @@ import {
 } from "@/components/library/copy-card-actions";
 import { EmptyState } from "@/components/library/empty-state";
 import { FilterBar, type FilterOption } from "@/components/library/filter-bar";
+import {
+  LIBRARY_ROWS_MAX,
+  useLibraryRows,
+} from "@/components/library/use-library-rows";
 import { MemberInitial } from "@/components/members/member-initial";
+import { PuzzleCardSkeleton } from "@/components/puzzles/puzzle-card-skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
@@ -16,9 +21,10 @@ import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
+import type { HouseholdCopyPermission } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { Grid, List, Plus, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export type AvailabilityFilter = "all" | "available" | "forTrade" | "forLend";
@@ -60,6 +66,7 @@ export function HouseholdPuzzles({
 }) {
   const t = useTranslations("household.puzzles");
   const tPuzzles = useTranslations("puzzles");
+  const tCommon = useTranslations("common");
   const displayName = useMemberDisplayName();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [owner, setOwner] = useState<OwnerFilter>("all");
@@ -68,48 +75,48 @@ export function HouseholdPuzzles({
   const viewer = household.members.find((member) => member.isYou);
   const mates = household.members.filter((member) => !member.isYou);
 
-  const { data: own } = useQuery(
-    convexQuery(
-      gateway.library.ownedByOwner,
-      viewer
-        ? {
-            ownerId: viewer.memberId as Id<"users">,
-            includeUnavailable: true,
-          }
-        : "skip",
-    ),
+  // Filtering by availability needs the whole library (a lean row per copy, library.myLibraryIndex);
+  // anything else reads a window of it.
+  const wholeLibrary = availability !== "all";
+  const { data: index } = useQuery(
+    convexQuery(gateway.library.myLibraryIndex, wholeLibrary ? {} : "skip"),
   );
-  const { data: matesCopies } = useQuery(
-    convexQuery(gateway.household.copies, {}),
+  const matchedIds = useMemo(
+    () =>
+      index &&
+      filterHouseholdPuzzles(index, owner, availability).map(
+        (copy) => copy._id,
+      ),
+    [index, owner, availability],
   );
+  const list = useLibraryRows({
+    enabled: viewer !== undefined,
+    viewKey: JSON.stringify(["household", owner, availability]),
+    windowArgs: owner === "all" ? {} : { memberId: owner as Id<"users"> },
+    ids: wholeLibrary ? matchedIds : null,
+  });
+  const copies = useMemo(
+    () => list.entries.flatMap(({ copy }) => (copy ? [copy] : [])),
+    [list.entries],
+  );
+  const matchedCount = wholeLibrary ? matchedIds?.length : list.counts?.matched;
+  const totalCount = wholeLibrary ? index?.length : list.counts?.total;
 
-  const ownerId = viewer?.memberId ?? "";
-  const copies = [
-    ...(own ?? []).map((copy) => ({
-      copy,
-      ownerId,
-      household: undefined,
-      availability: copy.availability,
-    })),
-    ...(matesCopies ?? []).map((copy) => ({
-      copy,
-      ownerId: copy.household.owner.memberId,
-      household: copy.household,
-      availability: copy.availability,
-    })),
-  ];
-
-  const householdAccessById = new Map(
-    (matesCopies ?? []).map((copy) => [copy._id, copy.household]),
-  );
+  const householdAccessById = useMemo(() => {
+    const access = new Map<string, { viewerAccess: HouseholdCopyPermission }>();
+    for (const copy of copies) {
+      if (copy.household) access.set(copy._id, copy.household);
+    }
+    return access;
+  }, [copies]);
   const solveStateByCopyId = useSolveStateByCopyId(true);
   const { cardActions, dialogs } = useCopyCardActions({
-    copies: copies.map(({ copy }) => copy),
+    copies,
     householdAccessById,
     solveStateByCopyId,
   });
 
-  if (own === undefined || matesCopies === undefined || !viewer) {
+  if (list.loading || !viewer) {
     return (
       <div className="grid grid-cols-[repeat(auto-fill,minmax(212px,1fr))] gap-[18px]">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -118,8 +125,6 @@ export function HouseholdPuzzles({
       </div>
     );
   }
-
-  const visible = filterHouseholdPuzzles(copies, owner, availability);
 
   const availabilityOptions: FilterOption<AvailabilityFilter>[] = [
     { value: "all", label: tPuzzles("filters.all") },
@@ -147,7 +152,7 @@ export function HouseholdPuzzles({
     </Button>
   );
 
-  if (copies.length === 0) {
+  if (totalCount === 0 && list.entries.length === 0) {
     return (
       <EmptyState
         title={t("emptyTitle")}
@@ -223,10 +228,12 @@ export function HouseholdPuzzles({
         onChange={setAvailability}
         count={
           <span className="flex items-center gap-2">
-            {tPuzzles("resultCount", {
-              count: visible.length,
-              total: copies.length,
-            })}
+            {matchedCount !== undefined &&
+              totalCount !== undefined &&
+              tPuzzles("resultCount", {
+                count: matchedCount,
+                total: totalCount,
+              })}
             <span className="flex shrink-0 items-center gap-1">
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -251,7 +258,7 @@ export function HouseholdPuzzles({
         }
       />
 
-      {visible.length === 0 ? (
+      {list.entries.length === 0 && !list.stale ? (
         <EmptyState
           title={t("noMatches")}
           action={
@@ -267,31 +274,60 @@ export function HouseholdPuzzles({
           }
         />
       ) : (
-        <div className="mt-3">
+        // While the next rows or another filter load, what's on screen stays, dimmed and marked busy.
+        <div
+          aria-busy={list.stale}
+          className={cn(
+            "mt-3",
+            list.stale && "opacity-60 motion-safe:transition-opacity",
+          )}
+        >
           <PuzzleViewProvider viewMode={viewMode}>
-            {visible.map(({ copy, household: access }) => (
-              <PuzzleCard
-                headingLevel={2}
-                key={copy._id}
-                puzzle={copy}
-                variant="default"
-                viewBasePath="/my-puzzles"
-                imageFit="contain"
-                {...cardActions(copy._id)}
-                owner={
-                  access ? (
-                    <CopyOwnerLine
-                      owner={access.owner}
-                      viewOnly={access.viewerAccess === "view"}
-                    />
-                  ) : (
-                    <CopyOwnerLine owner={viewer} isYou />
-                  )
-                }
-              />
-            ))}
+            {list.entries.map(({ id, copy }) =>
+              copy ? (
+                <PuzzleCard
+                  headingLevel={2}
+                  key={copy._id}
+                  puzzle={copy}
+                  variant="default"
+                  viewBasePath="/my-puzzles"
+                  imageFit="contain"
+                  {...cardActions(copy._id)}
+                  owner={
+                    copy.household ? (
+                      <CopyOwnerLine
+                        owner={copy.household.owner}
+                        viewOnly={copy.household.viewerAccess === "view"}
+                      />
+                    ) : (
+                      <CopyOwnerLine owner={viewer} isYou />
+                    )
+                  }
+                />
+              ) : (
+                <PuzzleCardSkeleton key={id} />
+              ),
+            )}
           </PuzzleViewProvider>
         </div>
+      )}
+      {/* aria-disabled, not disabled, while the next rows load: a disabled button drops focus. */}
+      {list.hasMore && (
+        <Button
+          variant="outline"
+          className="h-11 self-center md:h-9"
+          aria-disabled={list.stale}
+          onClick={() => {
+            if (!list.stale) list.loadMore();
+          }}
+        >
+          {list.stale ? tCommon("loading") : tPuzzles("showMore")}
+        </Button>
+      )}
+      {list.atMax && (
+        <p className="text-muted-foreground text-center text-sm">
+          {tPuzzles("rowsAtMax", { max: LIBRARY_ROWS_MAX })}
+        </p>
       )}
       {dialogs}
     </div>

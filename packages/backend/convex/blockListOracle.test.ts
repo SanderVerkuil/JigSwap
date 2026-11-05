@@ -16,6 +16,9 @@ import schema from "./schema";
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 type T = TestConvex<typeof schema>;
 type Who = "viewer" | "priv" | "pub" | "mate" | "owner";
 
@@ -149,10 +152,12 @@ const block = (t: T, blockerId: Id<"users">, blockedId: Id<"users">) =>
 const listsSeenBy = async (t: T, who: Who, s: Seeded) => {
   const viewer = as(t, who);
   return {
-    puzzleReviews: await viewer.query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId: s.puzzleId },
-    ),
+    puzzleReviews: await viewer
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
+        puzzleId: s.puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page),
     copyComments: await viewer.query(
       api.social.listPuzzleComments.listPuzzleComments,
       { copyId: s.copyId },
@@ -167,10 +172,12 @@ const listsSeenBy = async (t: T, who: Who, s: Seeded) => {
         { memberId: s.u.owner },
       )
     ).map(({ reviewer, ...rest }) => ({ ...rest, author: reviewer })),
-    publicReviews: await viewer.query(
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-      { puzzleId: s.puzzleId },
-    ),
+    publicReviews: await viewer
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+        puzzleId: s.puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page),
   };
 };
 

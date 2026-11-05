@@ -235,7 +235,7 @@ function EditProfileFormLoaded({
       }
       // Location lives on the identity user row.
       try {
-        await updateProfile({ location: location.trim() || undefined });
+        await updateProfile({ location: location.trim() });
       } catch {
         errors.general = t("saveError");
       }

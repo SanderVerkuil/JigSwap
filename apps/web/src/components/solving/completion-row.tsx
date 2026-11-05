@@ -32,9 +32,9 @@ import { CircleCheck, Clock, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
-// One of the member's solves as listMyCompletions returns it.
+// One of the member's solves as the completion log joins it (getMyCompletionsByIds).
 export type CompletionRowData = FunctionReturnType<
-  typeof gateway.solving.myCompletions
+  typeof gateway.solving.myCompletionsByIds
 >[number];
 
 // What a row asks the completion log to open; the log owns the dialogs.
@@ -273,8 +273,12 @@ export function CompletionRow({
                   setViewing(photoIndex);
                 }}
               >
+                {/* A 44px tile, so the browser takes the small rendition once the photo has one;
+                    the viewer opens the original. */}
                 <Image
                   src={photo.url}
+                  srcSet={photo.srcSet}
+                  sizes={photo.srcSet ? "44px" : undefined}
                   alt=""
                   width={44}
                   height={44}

@@ -91,7 +91,8 @@ function useSuggestions(): { memberId: string; followsYou: boolean }[] {
   const out: { memberId: string; followsYou: boolean }[] = [];
   for (const edge of followers) {
     const id = edge.memberId as string;
-    if (seen.has(id)) continue;
+    // `youFollow` answers it even for someone past the newest edges of `following`.
+    if (edge.youFollow || seen.has(id)) continue;
     seen.add(id);
     out.push({ memberId: id, followsYou: true });
   }

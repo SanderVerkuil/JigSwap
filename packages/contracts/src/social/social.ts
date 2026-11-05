@@ -50,6 +50,16 @@ export interface FollowEdgeView {
   /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
   displayName?: string;
   createdAt: number;
+  /** On the viewer's following list: this member follows the viewer back. */
+  followsYou?: boolean;
+  /** On the viewer's followers list: the viewer follows this member too. */
+  youFollow?: boolean;
+}
+
+/** One member of the viewer's network (`social.myNetwork`): someone they follow or who follows them. */
+export interface NetworkMemberView {
+  memberId: string;
+  followsYou: boolean;
 }
 
 /**

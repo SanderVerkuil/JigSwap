@@ -45,9 +45,9 @@ Vanaf een puzzelkaart kun je:
 - **Bewerken** — wijzig de details van de kopie.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
-- **Terugvragen** — als een puzzel momenteel is uitgeleend, vraag je hem
-  terug. JigSwap vraagt eerst om bevestiging en laat daarna weten of het gelukt
-  is.
+- **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
+  lening af. JigSwap vraagt eerst om bevestiging en laat daarna weten of het
+  gelukt is.
 
 ## Veel puzzels tegelijk wijzigen
 
@@ -56,11 +56,13 @@ die je wilt, of kies **Alles selecteren** voor alles wat je huidige zoekterm en
 filters tonen. Onder aan de lijst verschijnt dan een balk met:
 
 - **Aanbieden voor ruil** en **Aanbieden om uit te lenen**: voegt dat aanbod toe
-  en houdt wat een puzzel al aanbood. Is de balk smal, dan staan deze en
-  **Aanbod intrekken** onder **Aanbod**.
+  en houdt wat een puzzel al aanbood. Tenzij je scherm heel breed is, staan deze
+  en **Aanbod intrekken** onder **Aanbod**.
 - **Aanbod intrekken**: haalt elk aanbod van de geselecteerde puzzels af.
 - **Aan collectie toevoegen**: zet de geselecteerde puzzels in een collectie die
   je kiest.
+- **Delen met kring**: deelt de geselecteerde puzzels met een kring die je kiest.
+  Kringleden zien een gedeelde puzzel zolang je hem aanbiedt.
 
 Daarna zie je wat er is veranderd en wat niet, met **Ongedaan maken** voor het
 aanbod. Een uitgeleende puzzel of een puzzel in een lopende uitwisseling kun je
@@ -69,8 +71,8 @@ een kopie kan zien: een privékopie is zichtbaar zolang je hem aanbiedt en weer
 privé zodra je elk aanbod intrekt.
 
 Een puzzel van een huisgenoot kun je alleen selecteren als die jou hem laat
-beheren, en hij komt niet in je eigen collecties. Met **Klaar** stop je met
-selecteren.
+beheren. Hij komt niet in je eigen collecties, en alleen de eigenaar kan hem met
+een kring delen. Met **Klaar** stop je met selecteren.
 
 ## De detailpagina van een kopie
 
@@ -107,8 +109,9 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
 **Ongedaan maken**, en hij verandert nooit wie de kopie kan zien (zie
 hieronder). Is de kopie uitgeleend, dan kun je pas weer een aanbod aanzetten
-als hij terug is. Bij **Terugvragen** vragen we eerst om
-bevestiging: je beëindigt dan de lening en de puzzel staat weer bij jou.
+als hij terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
+vragen eerst om bevestiging, daarna eindigt de lening en staat de puzzel weer
+bij jou.
 **Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
 
 **Beoordelingen van dit exemplaar** zijn sterren voor deze fysieke kopie. Wie

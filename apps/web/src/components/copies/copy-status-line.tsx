@@ -1,14 +1,15 @@
 "use client";
 
 import type { Availability } from "@/components/add-puzzle/add-puzzle-mappers";
+import { RecallLoanButton } from "@/components/exchange/recall-loan-button";
 import { cn } from "@/lib/utils";
 import { ArrowLeftRight, Globe, Lock, Package } from "lucide-react";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "use-intl";
-import { RecallLoanButton } from "./recall-loan-button";
 
 /** The copy's open loan, as the copy page knows it. */
 export interface OpenLoan {
+  puzzleTitle: string;
   borrowerName: string;
   openedAt: number;
   /** The loan's domain id from lending.lentOut; null while unknown (no Recall then). */
@@ -102,6 +103,7 @@ export function CopyStatusLine({
       {detailed && openLoan?.loanId && (
         <RecallLoanButton
           loanId={openLoan.loanId}
+          puzzleTitle={openLoan.puzzleTitle}
           borrowerName={openLoan.borrowerName}
         />
       )}

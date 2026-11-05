@@ -44,9 +44,11 @@ export const personView = async (
 // the requests. A sent invite is listed while it can still be accepted (isOpenHouseholdInvite: not
 // lapsed, its inviter still the admin). A request to join is listed while pending and not lapsed;
 // a dropped one (asked through a link the household's admin did not mint, or across a block) never
-// is. Also the household-wide default copy
-// permission (resolved) and how many copies, across ALL members, follow it (no explicit value) —
-// what a change of the default would affect.
+// is. Also the household-wide default copy permission (resolved).
+//
+// My Puzzles subscribes to this and SSR prefetches it for every household member, so it reads no
+// copies: an open list must not pay for the household's whole library. How many copies follow the
+// default is household/countCopiesUsingDefault.
 export const getMyHousehold = query({
   args: {},
   handler: async (ctx): Promise<HouseholdView | null> => {
@@ -109,17 +111,6 @@ export const getMyHousehold = query({
       }
     }
 
-    let copiesUsingDefault = 0;
-    for (const row of rows) {
-      const copies = await ctx.db
-        .query("ownedPuzzles")
-        .withIndex("by_owner", (q) => q.eq("ownerId", row.memberId))
-        .collect();
-      copiesUsingDefault += copies.filter(
-        (copy) => copy.householdPermission === undefined,
-      ).length;
-    }
-
     const household = await ctx.db
       .query("households")
       .withIndex("by_aggregate_id", (q) =>
@@ -139,7 +130,6 @@ export const getMyHousehold = query({
         undefined,
         await householdDefaultOf(ctx, membership.householdId),
       ),
-      copiesUsingDefault,
     };
   },
 });

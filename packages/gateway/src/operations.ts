@@ -109,9 +109,18 @@ export const gateway = {
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
     // The signed-in member's own shelf: library-wide counts plus only the newest few copies joined
-    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where the whole library
-    // is needed (My Puzzles, pickers, arrange-shelf).
+    // (dashboard Shelf/Fresh and the profile shelf). Use ownedByOwner only where a picker shows every
+    // copy with its cover (arrange-shelf, a collection's Add puzzles, logging a solve).
     myShelf: api.library.getMyShelf.getMyShelf,
+    // My Puzzles and the household's Puzzles tab: the first rows of the viewer's library (their own
+    // and their housemates'), a lean row per copy for search, sort, status pills and Select all, and
+    // the full rows of just what those show.
+    myLibraryWindow: api.library.listMyLibraryWindow.listMyLibraryWindow,
+    myLibraryIndex: api.library.listMyLibraryIndex.listMyLibraryIndex,
+    myLibraryCopies: api.library.getMyLibraryCopies.getMyLibraryCopies,
+    // Which catalogue definitions the member already has a copy of (the add flows' "on your shelf").
+    myOwnedDefinitionIds:
+      api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
     ownedWithCollectionStatus:
@@ -156,6 +165,10 @@ export const gateway = {
   // Invite-based (admin invites, invitee accepts/declines); a member is in at most one household.
   household: {
     mine: api.household.getMyHousehold.getMyHousehold,
+    // How many copies follow the household's default permission: reads the copies, so only the
+    // settings panel asks for it (never put it back in `mine`, which My Puzzles reads).
+    copiesUsingDefault:
+      api.household.countCopiesUsingDefault.countCopiesUsingDefault,
     myInvites: api.household.listMyHouseholdInvites.listMyHouseholdInvites,
     copies: api.household.listHouseholdCopies.listHouseholdCopies,
     // The viewer's own copies with the household permission each grants (absent = "manage").
@@ -216,9 +229,13 @@ export const gateway = {
     // (ExchangeView / ExchangeSummaryView) rather than raw rows;
     // party-visibility, ordering and the joins are preserved so the UI is unchanged.
     byId: api.exchange.getExchangeById.getExchangeById,
-    forUser: api.exchange.getUserExchanges.getUserExchanges,
-    incoming: api.exchange.getExchangesByOwner.getExchangesByOwner,
-    outgoing: api.exchange.getExchangesByRequester.getExchangesByRequester,
+    // The Exchanges page and the dashboard: everything still in play, finished exchanges a page at a
+    // time, one exchange a deep link names, and the phone chrome's count of waiting requests.
+    myLive: api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+    myHistory: api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+    mySummary: api.exchange.getMyExchangeSummary.getMyExchangeSummary,
+    myPendingRequestCount:
+      api.exchange.getMyPendingRequestCount.getMyPendingRequestCount,
     accept: api.exchange.accept.accept,
     decline: api.exchange.decline.decline,
     complete: api.exchange.confirmCompletion.confirmCompletion,
@@ -339,7 +356,12 @@ export const gateway = {
     updateGoal: api.solving.updateGoal.updateGoal,
     setGoalArchived: api.solving.setGoalArchived.setGoalArchived,
     deleteGoal: api.solving.deleteGoal.deleteGoal,
-    myCompletions: api.solving.listMyCompletions.listMyCompletions,
+    // The completion log: a lean row per solve, and the full rows of those on screen.
+    myCompletionIndex: api.solving.listMyCompletionIndex.listMyCompletionIndex,
+    myCompletionsByIds: api.solving.getMyCompletionsByIds.getMyCompletionsByIds,
+    // Per copy: is a solve on it finished, or in progress? For pills and "already solved" marks,
+    // which never need the joined rows above.
+    mySolveStates: api.solving.listMySolveStates.listMySolveStates,
     completionHistory: api.solving.getCompletionHistory.getCompletionHistory,
     myGoals: api.solving.listMyGoals.listMyGoals,
     myInProgress: api.solving.listMyInProgress.listMyInProgress,
@@ -495,8 +517,10 @@ export const gateway = {
     profileCopies: api.social.listProfileCopies.listProfileCopies,
     profileCompletions:
       api.social.listProfileCompletions.listProfileCompletions,
-    // The caller's OWN followers / following (no member id: another member's lists would name
-    // private members, SEC-13).
+    // The caller's OWN network, a page at a time (the People page), and their OWN followers /
+    // following, bounded, for the pickers that offer them all (no member id: another member's lists
+    // would name private members, SEC-13).
+    myNetwork: api.social.listMyNetwork.listMyNetwork,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
@@ -525,11 +549,11 @@ export const gateway = {
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).
     // Same `puzzleComments` table + post-comment use case as the copy-keyed variants above.
     postPuzzleReview: api.social.postPuzzleReview.postPuzzleReview,
-    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviews,
+    listPuzzleReviews: api.social.listPuzzleReviews.listPuzzleReviewsPage,
     // Author-only: "Delete my review" removes the caller's own review of the puzzle.
     deletePuzzleReview: api.social.deletePuzzleReview.deletePuzzleReview,
     listPublicPuzzleReviews:
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
+      api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage,
     // Presence (opt-in, mutual-only, reciprocal): the caller's own share/override settings and
     // their setter, and which of up to 50 members the caller may see online or away (offline
     // and hidden members are absent). The heartbeats live under `presence` above.

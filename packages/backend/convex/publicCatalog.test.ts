@@ -8,6 +8,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 const NOW = 1_000_000;
 
 const mkUser = (
@@ -257,10 +260,12 @@ describe("listPublicPuzzleReviews", () => {
     const t = convexTest(schema, modules);
     const { approved } = await seed(t);
 
-    const reviews = await t.query(
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-      { puzzleId: approved },
-    );
+    const reviews = await t
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+        puzzleId: approved,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     // Newest first: rev-priya (private author), then rev-pia (public author).
     expect(reviews).toHaveLength(2);
     expect(reviews[0].author).toBeNull(); // Priya: private profile -> "A JigSwap member"
@@ -284,10 +289,12 @@ describe("listPublicPuzzleReviews", () => {
       });
     });
 
-    const reviews = await t.query(
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-      { puzzleId: approved },
-    );
+    const reviews = await t
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+        puzzleId: approved,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     const paulsReview = reviews.find((r) => r.text === "Great fit.");
     expect(paulsReview?.author?.name).toBe("Paul Public");
     expect(paulsReview?.author?.avatar).toBeNull();
@@ -310,10 +317,12 @@ describe("listPublicPuzzleReviews", () => {
       });
     });
 
-    const reviews = await t.query(
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-      { puzzleId: approved },
-    );
+    const reviews = await t
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+        puzzleId: approved,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     const norowReview = reviews.find((r) => r.text === "No profile row here.");
     expect(norowReview?.author).toBeNull(); // fail-closed: no row -> "A JigSwap member"
     // The explicit-public author is still named — the reveal path is unbroken.
@@ -339,10 +348,12 @@ describe("listPublicPuzzleReviews", () => {
       });
     });
 
-    const reviews = await t.query(
-      api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-      { puzzleId: approved },
-    );
+    const reviews = await t
+      .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+        puzzleId: approved,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(reviews.map((r) => r.text)).toEqual([
       "Tough edges!", // NOW + 2
       "Lovely gradient sky.", // NOW + 1
@@ -355,10 +366,12 @@ describe("listPublicPuzzleReviews", () => {
     const { pending } = await seed(t);
 
     expect(
-      await t.query(
-        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-        { puzzleId: pending },
-      ),
+      await t
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+          puzzleId: pending,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page),
     ).toEqual([]);
   });
 
@@ -367,10 +380,12 @@ describe("listPublicPuzzleReviews", () => {
     const { approved } = await seed(t);
 
     const raw = JSON.stringify(
-      await t.query(
-        api.social.listPublicPuzzleReviews.listPublicPuzzleReviews,
-        { puzzleId: approved },
-      ),
+      await t
+        .query(api.social.listPublicPuzzleReviews.listPublicPuzzleReviewsPage, {
+          puzzleId: approved,
+          paginationOpts: FIRST_PAGE,
+        })
+        .then((result) => result.page),
     );
     expect(raw).not.toContain("clerk_"); // usernames equal clerk ids in the seed
     expect(raw).not.toContain("Utrecht");

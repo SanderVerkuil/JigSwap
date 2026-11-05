@@ -64,6 +64,7 @@ const row = (over: Partial<CompletionRowData> = {}): CompletionRowData => ({
   thumbnailUrl: undefined,
   link: { kind: "definition", id: "puzzle-1" },
   editableUntil: NOW + HOUR,
+  libraryInfo: undefined,
   ...over,
 });
 
@@ -261,6 +262,33 @@ describe("CompletionRow photos", () => {
       { url: "https://files.test/one.jpg", pending: false },
       { url: "https://files.test/two.jpg", pending: true },
     ],
+  });
+
+  it("lets a photo's 44px tile pick its rendition, and leaves one without renditions alone", () => {
+    renderRow(
+      row({
+        photoItems: [
+          {
+            url: "https://files.test/one.jpg",
+            pending: false,
+            srcSet:
+              "https://files.test/one-small.webp 256w, https://files.test/one.jpg 1600w",
+          },
+          { url: "https://files.test/two.jpg", pending: true },
+        ],
+      }),
+    );
+    const tile = (name: string) =>
+      screen.getByRole("button", { name }).querySelector("img")!;
+    const first = tile("Tirol, photo 1 of 2");
+    expect(first.getAttribute("src")).toBe("https://files.test/one.jpg");
+    expect(first.getAttribute("srcset")).toBe(
+      "https://files.test/one-small.webp 256w, https://files.test/one.jpg 1600w",
+    );
+    expect(first.getAttribute("sizes")).toBe("44px");
+    const second = tile("Tirol, photo 2 of 2, pending review");
+    expect(second.getAttribute("srcset")).toBeNull();
+    expect(second.getAttribute("sizes")).toBeNull();
   });
 
   it("makes each photo a button named for the solve", () => {

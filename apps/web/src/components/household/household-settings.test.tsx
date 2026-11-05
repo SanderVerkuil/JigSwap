@@ -1,4 +1,5 @@
-import { ConvexQueryClient } from "@convex-dev/react-query";
+import { gateway } from "@/gateway";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { parseFragment, type DefaultTreeAdapterMap } from "parse5";
@@ -20,7 +21,8 @@ const render = (
     isAdmin: boolean;
     name?: string;
     defaultCopyPermission: "manage" | "view";
-    copiesUsingDefault: number;
+    // What the panel's own read answers; absent while it hasn't yet.
+    copiesUsingDefault?: number;
   },
   locale: "en" | "nl" = "en",
 ) => {
@@ -29,6 +31,13 @@ const render = (
   const queryClient = new QueryClient({
     defaultOptions: { queries: { queryKeyHashFn: convexQueryClient.hashFn() } },
   });
+  const { copiesUsingDefault, ...panelProps } = props;
+  if (copiesUsingDefault !== undefined) {
+    queryClient.setQueryData(
+      convexQuery(gateway.household.copiesUsingDefault, {}).queryKey,
+      copiesUsingDefault,
+    );
+  }
   return renderToStaticMarkup(
     <ConvexProviderWithAuth client={convex} useAuth={useSignedOut}>
       <QueryClientProvider client={queryClient}>
@@ -37,7 +46,11 @@ const render = (
           messages={locale === "en" ? en : nl}
           timeZone="Europe/Amsterdam"
         >
-          <HouseholdSettings name={undefined} {...props} onError={() => {}} />
+          <HouseholdSettings
+            name={undefined}
+            {...panelProps}
+            onError={() => {}}
+          />
         </IntlProvider>
       </QueryClientProvider>
     </ConvexProviderWithAuth>,
@@ -79,6 +92,9 @@ const textOf = (el: Element): string =>
 
 const texts = (html: string) => elementsOf(html).map(textOf);
 
+const els = (html: string, slot: string) =>
+  elementsOf(html).filter((e) => attr(e, "data-slot") === slot);
+
 describe("HouseholdSettings", () => {
   it("gives the admin an access select and says how many copies the default affects", () => {
     const html = render({
@@ -99,6 +115,16 @@ describe("HouseholdSettings", () => {
     expect(texts(html)).not.toContain(
       "Only the household admin can change this.",
     );
+  });
+
+  it("doesn't let the admin change the default before it can say how many copies that affects", () => {
+    const html = render({ isAdmin: true, defaultCopyPermission: "view" });
+    const trigger = elementsOf(html).find(
+      (e) => attr(e, "role") === "combobox",
+    );
+    expect(trigger && attr(trigger, "data-disabled")).toBeDefined();
+    expect(html).not.toContain("use the household default");
+    expect(els(html, "skeleton")).toHaveLength(1);
   });
 
   it("shows members the default read-only", () => {

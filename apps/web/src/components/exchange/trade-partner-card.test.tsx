@@ -166,6 +166,14 @@ describe("TradePartnerCard", () => {
     expect(screen.getByText("4,5")).toBeTruthy();
   });
 
+  it("keeps URL syntax in the partner's email inside the address (SEC-78)", () => {
+    renderCard(revealed({ email: "a?bcc=x%40evil.com@site.nl" }));
+    const mail = screen.getByRole("link", { name: /site\.nl/ });
+    expect(mail.getAttribute("href")).toBe(
+      "mailto:a%3Fbcc%3Dx%2540evil.com@site.nl",
+    );
+  });
+
   it("omits the email when the viewer may not see it", () => {
     renderCard(revealed({ email: undefined }));
     expect(screen.queryByText(/@example\.test/)).toBeNull();

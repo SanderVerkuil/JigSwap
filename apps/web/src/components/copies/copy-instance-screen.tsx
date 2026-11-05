@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ShareWithCirclesDialog } from "@/components/circles/share-with-circles-dialog";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { acquisitionMonthOf } from "@/components/copies/acquisition-month";
 import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
@@ -30,6 +31,7 @@ import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
 import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
+import { difficultyClasses } from "@/components/puzzles/difficulty-classes";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
@@ -43,6 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { formatCompletionDate } from "@/lib/completion-format";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
 import { durationParts } from "@/lib/humanize-duration";
@@ -169,22 +172,6 @@ function CopyInstanceNotFound() {
   return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
 }
 
-// Difficulty colour swatch, matching the shared PuzzleCard scheme.
-function difficultyClasses(difficulty?: string) {
-  switch (difficulty) {
-    case "easy":
-      return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200";
-    case "hard":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200";
-    case "expert":
-      return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
-
 function CopyInstanceDetail({
   copy,
   copyId,
@@ -284,6 +271,7 @@ function CopyInstanceDetail({
   );
   const openLoan = openLoanEntry
     ? {
+        puzzleTitle: snapshot.title,
         borrowerName: projectedName(openLoanEntry.borrower, t("anonymousUser")),
         openedAt: openLoanEntry.openedAt,
         loanId:
@@ -379,6 +367,13 @@ function CopyInstanceDetail({
 
   const formatMonth = (timestamp: number) =>
     format.dateTime(new Date(timestamp), { year: "numeric", month: "short" });
+  // A stored value that isn't a real date (the server has refused them since UX-97) counts as not
+  // recorded: the manager gets "Add details" to fix it, not "Invalid Date".
+  const acquiredAt =
+    snapshot.acquisitionDate != null &&
+    acquisitionMonthOf(snapshot.acquisitionDate, "UTC") !== null
+      ? snapshot.acquisitionDate
+      : null;
 
   // Humanize a solve duration (minutes) to a localized "2 hours" / "1 day" / "1 week" via the
   // largest sensible unit — Intl unit formatting handles plurals + locale.
@@ -614,11 +609,11 @@ function CopyInstanceDetail({
             />
             {/* Acquisition (manager-only data): shown when recorded; when neither part is,
                 managers get "Add details", which opens the editor on those fields. */}
-            {snapshot.acquisitionDate != null && (
+            {acquiredAt !== null && (
               <MetaItem
                 icon={<Calendar className="h-3.5 w-3.5" />}
                 label={t("acquired")}
-                value={formatMonth(snapshot.acquisitionDate)}
+                value={formatMonth(acquiredAt)}
               />
             )}
             {snapshot.acquisitionSource && (
@@ -632,7 +627,7 @@ function CopyInstanceDetail({
             )}
             {copy.viewerCanManage &&
               copy.aggregateId != null &&
-              snapshot.acquisitionDate == null &&
+              acquiredAt === null &&
               !snapshot.acquisitionSource && (
                 <MetaItem
                   icon={<Calendar className="h-3.5 w-3.5" />}
@@ -878,7 +873,13 @@ function CopyInstanceDetail({
               open={editOpen}
               onOpenChange={setEditOpen}
               copy={copy}
-              onAddPhotos={() => addPhotoInputRef.current?.click()}
+              onAddPhotos={
+                // With every place taken by photos still being checked, the photo strip has no
+                // file input for the button to open.
+                gallery.length + copy.pendingPhotos.length < copy.photoLimit
+                  ? () => addPhotoInputRef.current?.click()
+                  : undefined
+              }
               focus={editFocus}
             />
           )}
@@ -977,7 +978,7 @@ function PhotoStrip({
   inputRef: RefObject<HTMLInputElement | null>;
 }) {
   const t = useTranslations("copyInstance");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1029,7 +1030,7 @@ function PhotoStrip({
       // An upload URL refused by the member's upload limit says to wait (SEC-20); the attach's own
       // refusals (the photo limit, a full copy) name their reason (SEC-19).
       if (isUploadRateLimited(error)) {
-        toast.error(tCommon("photoUploadRateLimited"));
+        toast.error(uploadLimitMessage(error));
         return;
       }
       const refusal = copyPhotoError(error, Date.now());

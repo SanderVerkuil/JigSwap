@@ -46,6 +46,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
+import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
 import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { safeReturnTo } from "@/lib/return-to";
@@ -156,7 +157,7 @@ function AddPuzzlePage() {
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
-  const tCommon = useTranslations("common");
+  const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
   const tShell = useTranslations("shell");
   const format = useFormatter();
@@ -389,28 +390,43 @@ function AddPuzzlePage() {
         throw new CopyStepError(error);
       })) as string;
 
-      // 3. Apply availability if any chip is on.
+      // 3. Apply availability if any chip is on. The copy exists by now: a failed offer must not
+      // read as a failed add, or a retry adds a second copy. It stays unoffered, and the toast says
+      // so; its page has the switches.
+      let notOffered = false;
       if (hasAnyAvailability(form.availability)) {
-        await updateSharing(availabilityToSharing(copyId, form.availability));
+        try {
+          await updateSharing(availabilityToSharing(copyId, form.availability));
+        } catch (error) {
+          console.error("Offering the new copy failed:", error);
+          notOffered = true;
+        }
       }
 
       // 4. Land on the new copy, unless the member stays on the form or a flow takes them back.
-      return andAnother || returnTo ? null : await resolveCopyPageId(copyId);
+      return {
+        notOffered,
+        copyPageId:
+          andAnother || returnTo ? null : await resolveCopyPageId(copyId),
+      };
     },
-    onSuccess: (copyPageId, { andAnother }) => {
+    onSuccess: ({ copyPageId, notOffered }, { andAnother }) => {
+      if (notOffered) toast.error(t("addedNotOffered"));
       if (andAnother) {
-        toast.success(t("puzzleAdded"));
+        if (!notOffered) toast.success(t("puzzleAdded"));
         resetForm();
       } else if (returnTo) {
-        toast.success(t("puzzleAdded"));
+        if (!notOffered) toast.success(t("puzzleAdded"));
         void navigate({ href: returnTo });
       } else {
-        toast.success(t("puzzleAdded"), {
-          action: {
-            label: t("addAnother"),
-            onClick: () => void navigate({ to: "/my-puzzles/add" }),
-          },
-        });
+        if (!notOffered) {
+          toast.success(t("puzzleAdded"), {
+            action: {
+              label: t("addAnother"),
+              onClick: () => void navigate({ to: "/my-puzzles/add" }),
+            },
+          });
+        }
         if (copyPageId) {
           void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
         } else {
@@ -424,7 +440,7 @@ function AddPuzzlePage() {
       // filing's, the cover check's and the copy's own refusals (their limits, a text bound) name
       // their reason (SEC-26; the daily copy budget, SEC-29).
       if (isUploadRateLimited(error)) {
-        toast.error(tCommon("photoUploadRateLimited"));
+        toast.error(uploadLimitMessage(error));
         return;
       }
       const failure = contributeError(error, Date.now());

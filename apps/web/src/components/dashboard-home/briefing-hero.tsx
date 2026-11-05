@@ -5,7 +5,8 @@ import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, Id } from "@/gateway";
+import { gateway } from "@/gateway";
+import { useMemberToday } from "@/hooks/use-member-today";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { currentGoals } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
@@ -16,12 +17,10 @@ import type { FunctionReturnType } from "convex/server";
 import { CircleCheck, Plus, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
+import { MY_SHELF_SIZE } from "./shelf-section";
 import { useCurrentMember } from "./use-current-member";
 
-type ExchangeRow = FunctionReturnType<typeof gateway.exchange.forUser>[number];
-
-// Exchanges that still need somebody's attention.
-const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
+type ExchangeRow = FunctionReturnType<typeof gateway.exchange.myLive>[number];
 
 function HeadlineLink({
   href,
@@ -236,27 +235,28 @@ function QuickActions() {
 // shell chrome owns the greeting).
 export function BriefingHero() {
   const { member, isMemberLoading } = useCurrentMember();
+  const today = useMemberToday();
 
   const { data: exchanges } = useQuery(
-    convexQuery(gateway.exchange.forUser, member?._id ? {} : "skip"),
+    // Only what's still in play: finished exchanges have no part in the headline.
+    convexQuery(gateway.exchange.myLive, member?._id ? {} : "skip"),
   );
   const { data: goals } = useQuery(
     convexQuery(gateway.solving.myGoals, member?._id ? {} : "skip"),
   );
-  // Same args as the shelf's read, so both share one subscription.
-  const { data: copies } = useQuery(
+  // Same args as the shelf's read, so both share one subscription. Its counts come from the member's
+  // counters, so the headline doesn't read the library.
+  const { data: shelf } = useQuery(
     convexQuery(
-      gateway.library.ownedByOwner,
-      member?._id
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
+      gateway.library.myShelf,
+      member?._id ? { limit: MY_SHELF_SIZE } : "skip",
     ),
   );
 
   const loading =
     isMemberLoading ||
     (member != null &&
-      (exchanges === undefined || goals === undefined || copies === undefined));
+      (exchanges === undefined || goals === undefined || shelf === undefined));
 
   if (loading) {
     return (
@@ -274,12 +274,12 @@ export function BriefingHero() {
     );
   }
 
-  const active = (exchanges ?? []).filter((e) => ACTIVE_STATUSES.has(e.status));
+  const active = exchanges ?? [];
   const pendingIncoming = (exchanges ?? []).filter(
     (e) => e.userRole === "owner" && e.status === "proposed",
   );
 
-  const activeGoal = currentGoals(goals ?? [])[0];
+  const activeGoal = currentGoals(goals ?? [], today)[0];
   const goal =
     activeGoal && activeGoal.targetCompletions > 0
       ? {
@@ -300,10 +300,8 @@ export function BriefingHero() {
         activeCount={active.length}
         pendingCount={pendingIncoming.length}
         goal={goal}
-        ownedCount={(copies ?? []).length}
-        offeredCount={
-          (copies ?? []).filter((copy) => copy.availability.forTrade).length
-        }
+        ownedCount={shelf?.total ?? 0}
+        offeredCount={shelf?.forTrade ?? 0}
       />
       {pendingIncoming[0] && (
         <PendingRequestBanner exchange={pendingIncoming[0]} />

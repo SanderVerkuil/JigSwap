@@ -5,6 +5,7 @@ import {
   asImage,
   deleteAttachmentBlobs,
   MESSAGE_PHOTO_LABEL,
+  scheduleMessageThumb,
   settleSendBatch,
 } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
@@ -63,6 +64,7 @@ export const decideImageReview = mutation({
       if (!reencoded) {
         await enqueueImageModeration(ctx, "message", attachmentId);
       }
+      await scheduleMessageThumb(ctx, attachmentId);
       await stampModerationAction(ctx, {
         actorId: adminId,
         kind: "message_image_restored",

@@ -27,11 +27,8 @@ export class InMemoryPuzzleDefinitionRepository implements PuzzleDefinitionRepos
   ): Promise<PuzzleDefinition | null> {
     for (const state of this.store.values()) {
       if (state.id === excluding || !statuses.includes(state.status)) continue;
-      if (
-        state.ean === barcode ||
-        state.upc === barcode ||
-        state.modelNumber === barcode
-      ) {
+      // As the Convex adapter: a barcode is an EAN or a UPC. A model number isn't one.
+      if (state.ean === barcode || state.upc === barcode) {
         return PuzzleDefinition.rehydrate(state);
       }
     }

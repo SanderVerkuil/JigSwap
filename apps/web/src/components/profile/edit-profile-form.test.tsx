@@ -37,6 +37,7 @@ vi.mock("@convex-dev/react-query", async (importOriginal) => ({
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const EDIT_PROFILE = getFunctionName(gateway.social.editProfile);
+const UPDATE_PROFILE = getFunctionName(gateway.identity.updateProfile);
 const SET_VISIBILITY = getFunctionName(gateway.social.setProfileVisibility);
 
 // A member who never picked a username or slug: the link preview falls back to
@@ -52,7 +53,10 @@ const member: Member = {
   updatedAt: Date.UTC(2026, 0, 1),
 };
 
-const renderForm = (profile: { displayName?: string; bio?: string } = {}) => {
+const renderForm = (
+  profile: { displayName?: string; bio?: string } = {},
+  accountFields: Partial<Member> = {},
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -78,7 +82,10 @@ const renderForm = (profile: { displayName?: string; bio?: string } = {}) => {
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <EditProfileForm member={member} onDone={onDone} />
+        <EditProfileForm
+          member={{ ...member, ...accountFields }}
+          onDone={onDone}
+        />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -180,6 +187,33 @@ describe("EditProfileForm saving", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(editProfileCalls()).toHaveLength(0);
+  });
+
+  // undefined means "leave it as it is" to updateProfile, so an emptied field must send "".
+  it("clears a location the member emptied", async () => {
+    const { onDone } = renderForm({}, { location: "Utrecht" });
+    fireEvent.change(screen.getByLabelText("Location"), {
+      target: { value: "  " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_PROFILE, {
+      location: "",
+    });
+  });
+
+  it("sends a changed location trimmed", async () => {
+    const { onDone } = renderForm({}, { location: "Utrecht" });
+    fireEvent.change(screen.getByLabelText("Location"), {
+      target: { value: "  Obdam " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(mocks.mutation).toHaveBeenCalledWith(UPDATE_PROFILE, {
+      location: "Obdam",
+    });
   });
 
   it("flags an emptied display name inline and saves nothing", () => {

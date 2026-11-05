@@ -7,6 +7,7 @@ import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
+import { formatQueueCount } from "@/lib/queue-count";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -47,23 +48,23 @@ function AdminPuzzlesPage() {
     [replaceSearch],
   );
 
-  const { data: pending } = useQuery(
-    convexQuery(gateway.admin.listPendingChangeProposals, {}),
-  );
   const { data: pendingCounts } = useQuery(
     convexQuery(gateway.admin.pendingCounts, {}),
   );
+  const proposals = pendingCounts?.proposals;
   usePageHeaderActions(
     () => (
       <Button variant="outline" size="sm" asChild>
         <Link to="/admin/puzzles/proposals">
           <Lightbulb className="h-4 w-4" />
           {t2("title")}
-          {pending && pending.length > 0 ? ` (${pending.length})` : ""}
+          {proposals && proposals.count > 0
+            ? ` (${formatQueueCount(proposals.count, proposals.capped)})`
+            : ""}
         </Link>
       </Button>
     ),
-    [pending?.length],
+    [proposals?.count, proposals?.capped],
   );
 
   return (

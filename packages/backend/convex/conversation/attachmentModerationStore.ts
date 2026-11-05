@@ -18,12 +18,14 @@ import {
 } from "../lib/retention";
 import {
   asImage,
+  deleteMessageThumb,
   expireStagedAttachment,
   expireUncheckedSentPhoto,
   MESSAGE_IMAGE_BLUR_THRESHOLD,
   MESSAGE_PHOTO_LABEL,
   purgeUndeliveredAttachment,
   REJECTED_ATTACHMENT_TTL_MS,
+  scheduleMessageThumb,
   settleSendBatch,
   UNCHECKED_SENT_PHOTO_TTL_MS,
 } from "./messageAttachments";
@@ -32,6 +34,7 @@ import {
 // driven by conversation/moderateMessageImage. Thin like the library and completion stores, plus
 // the two message-specific steps: verdicts map onto the message bands, and every verdict or
 // hash-check clear settles the photo's send batch (the sender's refusal notice; messageAttachments.ts).
+// The writes that can make a photo servable also schedule its thumbnail, and a quarantine deletes it.
 
 export const getImageForModeration = internalQuery({
   args: { imageId: v.id("messageAttachments") },
@@ -110,6 +113,7 @@ export const setModerationVerdict = internalMutation({
       ...verdict,
       updatedAt: Date.now(),
     });
+    await scheduleMessageThumb(ctx, imageId);
     if (status === "rejected") {
       await ctx.scheduler.runAfter(
         REJECTED_ATTACHMENT_TTL_MS,
@@ -126,14 +130,17 @@ export const setModerationVerdict = internalMutation({
   },
 });
 
-// A CSAM hash match: FORCE "quarantined" on the preserved blob and always escalate. A photo sent
-// while still being checked is a message: its recipient reads "removed" exactly as for a
-// rejection, and nothing of it was ever served to them (the read gate needs a passed hash check).
-// Its send batch is settled like after a verdict (the sender's generic "not sent" notice).
+// A CSAM hash match: FORCE "quarantined" on the preserved blob, delete any thumbnail, and always
+// escalate. A photo sent while still being checked is a message: its recipient reads "removed"
+// exactly as for a rejection, and nothing of it was ever served to them (the read gate needs a
+// passed hash check). Its send batch is settled like after a verdict (the sender's generic "not
+// sent" notice).
 export const quarantineImage = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
-    if (await ctx.db.get(imageId)) {
+    const row = asImage(await ctx.db.get(imageId));
+    if (row) {
+      await deleteMessageThumb(ctx, row);
       // Same 30-day point as a rejection, where it is hidden (never deleted) from the sender.
       await ctx.scheduler.runAfter(
         REJECTED_ATTACHMENT_TTL_MS,
@@ -168,6 +175,7 @@ export const setHashCheck = internalMutation({
   handler: async (ctx, { imageId, ...result }) => {
     await applyHashCheckResult(ctx, imageId, result);
     if (result.status === "no_match" || result.status === "skipped") {
+      await scheduleMessageThumb(ctx, imageId);
       await settleSendBatch(ctx, imageId);
     }
   },

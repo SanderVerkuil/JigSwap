@@ -20,7 +20,6 @@ const household = (
   pendingInvites: [],
   joinRequests: [],
   defaultCopyPermission: "manage",
-  copiesUsingDefault: 0,
 });
 
 // Mirrors the server's leave rules (Household.leave / drop), which the switch applies.

@@ -74,6 +74,22 @@ describe("QR dialog", () => {
     expect(mocks.mutation).not.toHaveBeenCalled();
   });
 
+  // The caption shows the canonical handle (SEC-07), so a slug is enough without a username.
+  it("doesn't ask for a username when a custom link already gives a readable handle", async () => {
+    renderDialog(null, "mara-puzzles");
+    await waitFor(() =>
+      expect(mocks.mutation).toHaveBeenCalledWith(MY_INVITE_LINK, {}),
+    );
+    expect(screen.queryByText(en.invite.needUsernameTitle)).toBeNull();
+    expect(screen.getByText(/\/members\/mara-puzzles$/)).toBeTruthy();
+  });
+
+  it("asks when the only handle is the bare member id", async () => {
+    renderDialog(null, "m1");
+    expect(await screen.findByText(en.invite.needUsernameTitle)).toBeTruthy();
+    expect(mocks.mutation).not.toHaveBeenCalled();
+  });
+
   it("fetches the invite link once there is a username, and says what Copy and Share send", async () => {
     renderDialog("mara");
     await waitFor(() =>

@@ -199,8 +199,11 @@ function ThreadListBody({
   const presence = usePresenceOf(inbox?.map(dmPartnerId) ?? []);
 
   // After "Show older conversations", focus moves to the first row it added
-  // (the last row when it added none), since the button may be gone.
+  // (the last row when it added none), since the button may be gone. With a
+  // search on and still no match there is no row: focus moves to Clear, unless
+  // the button stayed, where a keyboard user's focus already is.
   const listRef = useRef<HTMLUListElement>(null);
+  const clearRef = useRef<HTMLButtonElement>(null);
   const focusRowRef = useRef<number | null>(null);
   useEffect(() => {
     const index = focusRowRef.current;
@@ -209,6 +212,9 @@ function ThreadListBody({
     const rows =
       listRef.current?.querySelectorAll<HTMLElement>(":scope > li > a");
     if (rows?.length) rows[Math.min(index, rows.length - 1)].focus();
+    else if (document.activeElement === document.body) {
+      clearRef.current?.focus();
+    }
   }, [inbox, loadingOlder]);
 
   if (isError) {
@@ -330,6 +336,7 @@ function ThreadListBody({
             size="sm"
             className="max-md:min-h-11"
             onClick={clear}
+            ref={clearRef}
           >
             {t("clearSearch")}
           </Button>

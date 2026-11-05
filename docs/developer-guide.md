@@ -236,7 +236,11 @@ TanStack Router. See [`03-bff-tanstack-start.md`](../spec/architecture/03-bff-ta
 - **Data fetching:** all Convex interaction is `useQuery`/`useMutation`/`useAction` from
   `convex/react` against `gateway.*` (imported via the `@/gateway` shim at
   `apps/web/src/gateway/index.ts`). There is **no intermediate HTTP BFF layer on the critical path
-  for UI data.** SSR uses the Convex HTTP client pre-authed with the Clerk JWT.
+  for UI data.** SSR uses the Convex HTTP client pre-authed with the Clerk JWT. The dashboard home
+  and My Puzzles also read the member's data during SSR, so it is in their first paint
+  (`apps/web/src/lib/ssr-member-data.ts`): only for a request with a member and a token, within a
+  time budget, and in HTML that goes out `private, no-store`. Import a route's prefetch dynamically
+  in its loader, or it lands in every public page's bundle.
 - **i18n:** `use-intl` (not next-intl, despite the README). Messages live in
   `apps/web/locales/source.json` (dev) and `locales/{en,nl}.json` (prod). Locale detection is
   cookie → `Accept-Language` → default `en`. See `apps/web/src/lib/i18n.ts`.

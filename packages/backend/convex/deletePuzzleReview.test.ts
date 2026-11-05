@@ -7,6 +7,9 @@ import schema from "./schema";
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
+// A review list is paged; these tests look at what one generous page says.
+const FIRST_PAGE = { numItems: 50, cursor: null };
+
 // SEC-70: a member can delete their own review of a puzzle (stars and text), and only their own.
 // listPuzzleReviews says which row is the viewer's (`canDelete`), computed server-side.
 
@@ -71,10 +74,12 @@ describe("deletePuzzleReview", () => {
       rating: 2,
     });
 
-    const asSeenByAlice = await asAlice(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const asSeenByAlice = await asAlice(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     // Told apart by their stars: an author can read as anonymous to the viewer (SEC-11), and
     // canDelete must hold for such a row too.
     const canDeleteByRating = new Map(
@@ -94,10 +99,12 @@ describe("deletePuzzleReview", () => {
       puzzleId,
     });
     expect(mine.puzzle).toBeNull();
-    const list = await asBob(t).query(
-      api.social.listPuzzleReviews.listPuzzleReviews,
-      { puzzleId },
-    );
+    const list = await asBob(t)
+      .query(api.social.listPuzzleReviews.listPuzzleReviewsPage, {
+        puzzleId,
+        paginationOpts: FIRST_PAGE,
+      })
+      .then((result) => result.page);
     expect(list.map((r) => r.rating)).toEqual([2]);
   });
 

@@ -10,6 +10,7 @@ import { GuideHelpButton } from "@/components/tour/guide-help-button";
 import { useTourLauncher } from "@/components/whats-new/tour-launcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { pageTitle } from "@/lib/page-title";
+import { loadMemberDataOnServer } from "@/lib/ssr-member-data";
 import { createFileRoute } from "@tanstack/react-router";
 
 // The (dashboard) landing (URL: /dashboard): the editorial "morning briefing".
@@ -24,6 +25,15 @@ import { createFileRoute } from "@tanstack/react-router";
 // 1024px window with the docked sidebar has always had. The shelf stays on the viewport `lg`
 // breakpoint: beside the stats its 3D plank would be cropped on a tablet (UX-17).
 export const Route = createFileRoute("/_dashboard/dashboard")({
+  // Imported on demand so the browser never downloads it: a route's loader isn't code-split, so a
+  // static import here would put the sections it shares constants with on every public page.
+  loader: ({ context }) =>
+    loadMemberDataOnServer(
+      context,
+      async () =>
+        (await import("@/components/dashboard-home/prefetch-dashboard-home"))
+          .prefetchDashboardHome,
+    ),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "dashboard") }],
   }),

@@ -25,6 +25,7 @@ import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { FollowButton } from "@/components/social/follow-button";
 import { MemberActionsMenu } from "@/components/social/member-actions-menu";
 import { MessageButton } from "@/components/social/message-button";
+import { useStartedLabel } from "@/components/solving/use-started-label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { gateway, Id } from "@/gateway";
-import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
@@ -680,7 +680,7 @@ function CurrentlySolvingSection({
   items: NonNullable<UnlockedProfile["currentlySolving"]>;
 }) {
   const t = useTranslations("profile.currentlySolving");
-  const relativeTime = useRelativeTime();
+  const startedLabel = useStartedLabel();
   if (items.length === 0) return null;
   return (
     <section>
@@ -714,7 +714,7 @@ function CurrentlySolvingSection({
               <p className="text-muted-foreground text-xs">
                 {item.pieceCount !== undefined &&
                   `${t("pieces", { count: item.pieceCount })} · `}
-                {relativeTime(new Date(item.startDate))}
+                {startedLabel(item.startDate)}
               </p>
             </div>
           </div>

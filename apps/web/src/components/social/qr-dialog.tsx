@@ -37,14 +37,17 @@ type QrDialogProps = {
   avatarUrl?: string | null;
 };
 
-// Shared body: the username-gate prompt, OR the QR card. The gate comes first so a member without
-// a username never mints an invite token; the fetch lives in QrCard, which mounts only past it.
+// Shared body: the username-gate prompt, OR the QR card. The gate is for a caption that would only
+// show a bare member id: no username and no custom link. It comes first so such a member never
+// mints an invite token; the fetch lives in QrCard, which mounts only past it.
 // `onNavigate` closes the enclosing dialog when the username-gate link routes away — otherwise the
 // dialog lingers open over the settings page (whose route can be the same one it navigates to).
 function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
   const t = useTranslations("invite");
 
-  if (props.username == null) {
+  const readableHandle =
+    props.handle !== undefined && props.handle !== props.memberId;
+  if (props.username == null && !readableHandle) {
     return (
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
         <h2 className="font-heading text-xl">{t("needUsernameTitle")}</h2>
@@ -58,14 +61,14 @@ function QrDialogContent(props: QrDialogProps & { onNavigate?: () => void }) {
     );
   }
 
-  return <QrCard {...props} username={props.username} />;
+  return <QrCard {...props} />;
 }
 
 // Avatar + name, the QR card, the mono caption, the copy/share actions and what they send. Fetches
 // (and caches for the lifetime of this mount) the member's invite token — mounted fresh each time
 // the dialog opens (Radix unmounts DialogContent while closed), so a plain mount effect is enough;
 // no `open` prop needed here.
-function QrCard(props: QrDialogProps & { username: string }) {
+function QrCard(props: QrDialogProps) {
   const t = useTranslations("invite");
   const displayName = useMemberDisplayName();
   const nameSource = { name: props.displayName, username: props.username };
@@ -153,7 +156,8 @@ function QrCard(props: QrDialogProps & { username: string }) {
             variant="brand"
             disabled={!qrUrl}
             onClick={() => {
-              if (qrUrl) void navigator.share({ url: qrUrl });
+              // A dismissed share sheet rejects; that is fine.
+              if (qrUrl) navigator.share({ url: qrUrl }).catch(() => {});
             }}
           >
             <Share2 className="size-4" />

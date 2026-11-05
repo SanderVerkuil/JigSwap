@@ -33,39 +33,18 @@ export interface SolveState {
   inProgressStartDate?: number;
 }
 
-// The member's solve log keyed by the copy's ownedPuzzles _id: whether each copy has a solve in
+// The member's solve states keyed by the copy's ownedPuzzles _id: whether each copy has a solve in
 // progress (and the newest one to finish) or a completed one.
 export function useSolveStateByCopyId(
   enabled: boolean,
 ): Map<string, SolveState> {
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, enabled ? {} : "skip"),
+  const { data: states } = useQuery(
+    convexQuery(gateway.solving.mySolveStates, enabled ? {} : "skip"),
   );
-  return useMemo(() => {
-    const map = new Map<string, SolveState>();
-    for (const completion of completions ?? []) {
-      if (!completion.ownedPuzzleId) continue;
-      const state = map.get(completion.ownedPuzzleId) ?? {
-        inProgress: false,
-        completed: false,
-      };
-      if (completion.isCompleted) state.completed = true;
-      else {
-        state.inProgress = true;
-        // Retain the newest in-progress completion so the card's Finish action targets it.
-        if (
-          completion.aggregateId &&
-          (state.inProgressStartDate === undefined ||
-            completion.startDate > state.inProgressStartDate)
-        ) {
-          state.inProgressCompletionId = completion.aggregateId;
-          state.inProgressStartDate = completion.startDate;
-        }
-      }
-      map.set(completion.ownedPuzzleId, state);
-    }
-    return map;
-  }, [completions]);
+  return useMemo(
+    () => new Map((states ?? []).map((state) => [state.copyId, state])),
+    [states],
+  );
 }
 
 interface ActionableCopy {
@@ -98,8 +77,14 @@ export function useCopyCardActions({
   cardActions: (copyId: string) => {
     onEdit?: (id: Id<"ownedPuzzles">) => void;
     onDelete?: (id: Id<"ownedPuzzles">) => void;
-    onLogSolve: (id: Id<"ownedPuzzles">) => void;
-    onStartSolve: (id: Id<"ownedPuzzles">) => void;
+    onLogSolve: (
+      id: Id<"ownedPuzzles">,
+      opener: RefObject<HTMLElement | null>,
+    ) => void;
+    onStartSolve: (
+      id: Id<"ownedPuzzles">,
+      opener: RefObject<HTMLElement | null>,
+    ) => void;
     onShareWithCircles?: (
       id: Id<"ownedPuzzles">,
       opener: RefObject<HTMLElement | null>,
@@ -112,22 +97,26 @@ export function useCopyCardActions({
   const router = useRouter();
   const t = useTranslations("puzzles");
   const tCommon = useTranslations("common");
-  // The copy a solve is being logged against; null when the dialog is closed.
+  // Each dialog's `opener` is the card's ⋯ trigger: the menu item that opened it is gone by the time
+  // it closes. The copy a solve is being logged against; null when the dialog is closed.
   const [solveTarget, setSolveTarget] = useState<{
     copyId: string;
     title: string;
     canManage: boolean;
+    opener: RefObject<HTMLElement | null>;
   } | null>(null);
   // The copy a solve is being started on; null when the dialog is closed.
   const [startTarget, setStartTarget] = useState<{
     copyId: string;
     title: string;
+    opener: RefObject<HTMLElement | null>;
   } | null>(null);
   // The in-progress completion being finished; null when the dialog is closed.
   const [finishTarget, setFinishTarget] = useState<{
     completionId: string;
     startDate: number;
     puzzleTitle?: string;
+    opener: RefObject<HTMLElement | null>;
   } | null>(null);
   // The copy whose circle shares are being edited; null when the dialog is closed. `opener` is the
   // card's ⋯ trigger: the menu item that opened the dialog is gone by the time it closes.
@@ -175,7 +164,10 @@ export function useCopyCardActions({
     router.push(`/my-puzzles/${ownedPuzzleId}/edit`);
   };
 
-  const handleLogSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+  const handleLogSolve = (
+    ownedPuzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => {
     // Solves are logged against the Copy aggregateId; guard rows predating the backfill rather
     // than open a dialog that can't persist.
     const copy = copies.find((p) => p._id === ownedPuzzleId);
@@ -188,10 +180,14 @@ export function useCopyCardActions({
       title: copy.puzzle?.title ?? "",
       // Only someone who may manage the copy is offered to update its missing-pieces count.
       canManage: householdAccessById.get(copy._id)?.viewerAccess !== "view",
+      opener,
     });
   };
 
-  const handleStartSolve = (ownedPuzzleId: Id<"ownedPuzzles">) => {
+  const handleStartSolve = (
+    ownedPuzzleId: Id<"ownedPuzzles">,
+    opener: RefObject<HTMLElement | null>,
+  ) => {
     // Starting a solve takes the Copy aggregateId; guard rows predating the backfill rather
     // than open a dialog that can't persist.
     const copy = copies.find((p) => p._id === ownedPuzzleId);
@@ -209,11 +205,13 @@ export function useCopyCardActions({
         completionId: state.inProgressCompletionId,
         startDate: state.inProgressStartDate,
         puzzleTitle: copy.puzzle?.title,
+        opener,
       });
     } else {
       setStartTarget({
         copyId: copy.aggregateId,
         title: copy.puzzle?.title ?? "",
+        opener,
       });
     }
   };
@@ -271,6 +269,7 @@ export function useCopyCardActions({
           copyId={solveTarget.copyId}
           puzzleTitle={solveTarget.title}
           viewerIsOwner={solveTarget.canManage}
+          returnFocusRef={solveTarget.opener}
         />
       )}
 
@@ -280,6 +279,7 @@ export function useCopyCardActions({
           onOpenChange={(open) => !open && setStartTarget(null)}
           copyId={startTarget.copyId}
           puzzleTitle={startTarget.title}
+          returnFocusRef={startTarget.opener}
         />
       )}
 
@@ -299,6 +299,7 @@ export function useCopyCardActions({
           completionId={finishTarget.completionId}
           minEndDate={finishTarget.startDate}
           puzzleTitle={finishTarget.puzzleTitle}
+          returnFocusRef={finishTarget.opener}
         />
       )}
 

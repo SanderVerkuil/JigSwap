@@ -25,6 +25,9 @@ const PUZZLE_ID = "puzzle_1";
 const mocks = vi.hoisted(() => ({
   // Query results keyed by Convex function name.
   data: new Map<string, unknown>(),
+  // The paged review list.
+  reviews: { results: [] as unknown[], status: "Exhausted" },
+  loadMoreReviews: vi.fn<(count: number) => void>(),
   favorited: false,
   push: vi.fn<(href: string) => void>(),
   postReview: vi.fn<(args: unknown) => Promise<unknown>>(),
@@ -51,6 +54,12 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
   useNavigate: () => vi.fn(),
+}));
+vi.mock("convex-helpers/react", () => ({
+  usePaginatedQuery: () => ({
+    ...mocks.reviews,
+    loadMore: mocks.loadMoreReviews,
+  }),
 }));
 vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -173,7 +182,7 @@ beforeEach(() => {
   mocks.postReview.mockReset().mockResolvedValue(null);
   mocks.toastSuccess.mockReset();
   mocks.toastError.mockReset();
-  mocks.data.set(getFunctionName(gateway.social.listPuzzleReviews), []);
+  mocks.reviews = { results: [], status: "Exhausted" };
   mocks.data.set(getFunctionName(gateway.identity.currentUser), null);
   mocks.data.set(getFunctionName(gateway.solving.getMyReviews), {
     puzzle: null,
@@ -504,5 +513,44 @@ describe("puzzle detail page: review composer", () => {
     ).toBeTruthy();
     expect(screen.getByText(tNl.chooseRatingToPost)).toBeTruthy();
     expect(screen.getByRole("radio", { name: "3 sterren" })).toBeTruthy();
+  });
+});
+
+describe("puzzle detail page: reviews come a page at a time", () => {
+  const review = (id: string, text: string) => ({
+    id,
+    author: { anonymous: true, anonRef: id },
+    rating: 4,
+    text,
+    updatedAt: 1,
+    canDelete: false,
+  });
+
+  it("says the count is partial while more remain, and Show more asks for them", () => {
+    setView(emptyView());
+    mocks.reviews = {
+      results: [review("r1", "Lovely box")],
+      status: "CanLoadMore",
+    };
+    renderPage();
+    expect(screen.getByText("Lovely box")).toBeTruthy();
+    expect(screen.getByText("1+")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: t.showMoreReviews }));
+    expect(mocks.loadMoreReviews).toHaveBeenCalledWith(20);
+  });
+
+  it("says there are none only once it knows, and offers no more at the end", () => {
+    setView(emptyView());
+    mocks.reviews = { results: [], status: "LoadingFirstPage" };
+    const { unmount } = renderPage();
+    expect(screen.queryByText(t.noReviews)).toBeNull();
+    unmount();
+
+    mocks.reviews = { results: [], status: "Exhausted" };
+    renderPage();
+    expect(screen.getByText(t.noReviews)).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: t.showMoreReviews }),
+    ).toBeNull();
   });
 });

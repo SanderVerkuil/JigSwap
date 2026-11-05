@@ -10,8 +10,8 @@ import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
 import { gateway, Id } from "@/gateway";
 import {
   formatCompletionDate,
-  formatSolveTime,
   hrefForLink,
+  solveDurationText,
 } from "@/lib/completion-format";
 import { formatDateOnly } from "@/lib/date-input";
 import { cn } from "@/lib/utils";
@@ -154,8 +154,7 @@ export function ProfileCompletionsSection({
                   date: formatDateOnly(format, completion.endDate),
                 })
               : formatCompletionDate(tLog, format, completion),
-            completion.completionTimeMinutes !== undefined &&
-              formatSolveTime(tLog, completion.completionTimeMinutes),
+            solveDurationText(tLog, completion),
           ]
             .filter(Boolean)
             .join(" · ");
@@ -195,7 +194,7 @@ export function ProfileCompletionsSection({
                 {(completion.photoUrls.length > 0 ||
                   completion.pendingPhotos.length > 0) && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {completion.photoUrls.map((url) => (
+                    {completion.photoUrls.map((url, photoIndex) => (
                       <a
                         key={url}
                         href={url}
@@ -203,8 +202,18 @@ export function ProfileCompletionsSection({
                         rel="noreferrer"
                         aria-label={title}
                       >
+                        {/* A 44px tile: the small rendition once the photo has one (a stale
+                            backend sends no srcSets); the link opens the original. */}
                         <Image
                           src={url}
+                          srcSet={
+                            completion.photoSrcSets?.[photoIndex] ?? undefined
+                          }
+                          sizes={
+                            completion.photoSrcSets?.[photoIndex]
+                              ? "44px"
+                              : undefined
+                          }
                           alt=""
                           width={44}
                           height={44}

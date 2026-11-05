@@ -14,9 +14,8 @@ export const getAllSeries = query({
     publisher: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<SeriesView[]> => {
-    // Scoped path: collect + dedupe in JS. A brand reads only its APPROVED puzzles through
-    // by_status_brand; a big publisher's catalog (by_publisher, filtered below) is larger but
-    // still fine at this app's scale — revisit if that changes.
+    // Scoped path: collect + dedupe in JS. A brand or publisher reads only its APPROVED puzzles,
+    // through by_status_brand or by_status_publisher.
     if (args.brand || args.publisher) {
       const rows = args.brand
         ? await ctx.db
@@ -27,15 +26,12 @@ export const getAllSeries = query({
             .collect()
         : await ctx.db
             .query("puzzles")
-            .withIndex("by_publisher", (q) => q.eq("publisher", args.publisher))
+            .withIndex("by_status_publisher", (q) =>
+              q.eq("status", "approved").eq("publisher", args.publisher),
+            )
             .collect();
       const scoped = [
-        ...new Set(
-          rows
-            .filter((p) => p.status === "approved")
-            .map((p) => p.series)
-            .filter((s): s is string => !!s),
-        ),
+        ...new Set(rows.map((p) => p.series).filter((s): s is string => !!s)),
       ].sort((a, b) => a.localeCompare(b));
       if (scoped.length > 0) return scoped;
       // Unknown maker (or no series recorded for it yet): fall through to the global list.
@@ -45,9 +41,7 @@ export const getAllSeries = query({
 
     const rows = await stream(ctx.db, schema)
       .query("puzzles")
-      .withIndex("by_series", (q) => q)
-      // filterWith (not .filter, which streams reject) is applied before distinct.
-      .filterWith(async (p) => p.status === "approved")
+      .withIndex("by_status_series", (q) => q.eq("status", "approved"))
       .distinct(["series"])
       .collect();
     return rows

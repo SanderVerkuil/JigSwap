@@ -126,6 +126,7 @@ export const unregisterPushSubscription = mutation({
 // endpoint itself identifies the browser to its push service.
 const PUSH_SERVICE_HOSTS: readonly (readonly [string, PushDeviceService])[] = [
   ["fcm.googleapis.com", "chrome"],
+  ["android.googleapis.com", "chrome"],
   ["push.services.mozilla.com", "firefox"],
   ["push.apple.com", "safari"],
   ["notify.windows.com", "edge"],

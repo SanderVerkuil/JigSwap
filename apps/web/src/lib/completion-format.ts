@@ -114,15 +114,22 @@ export function formatCompletionMeta(
   const parts = [
     pieceCount ? t("pieces", { pieces: pieceCount }) : t("completed"),
   ];
-  const duration = solveDuration(completion);
-  if (duration?.kind === "time") {
-    parts.push(formatSolveTime(t, duration.minutes));
-  } else if (duration?.kind === "days") {
-    parts.push(t("overDays", { days: duration.days }));
-  } else if (duration?.kind === "sameDay") {
-    parts.push(t("sameDay"));
-  }
+  const duration = solveDurationText(t, completion);
+  if (duration) parts.push(duration);
   return parts.join(" · ");
+}
+
+// solveDuration in words: "3h 20m", "over 3 days" or "in one day"; null when there is none to show.
+export function solveDurationText(
+  t: ReturnType<typeof useTranslations<"solving.completions">>,
+  completion: DatedCompletion & { completionTimeMinutes?: number },
+): string | null {
+  const duration = solveDuration(completion);
+  if (duration?.kind === "time") return formatSolveTime(t, duration.minutes);
+  if (duration?.kind === "days") {
+    return t("overDays", { days: duration.days });
+  }
+  return duration?.kind === "sameDay" ? t("sameDay") : null;
 }
 
 // Whether a finished solve counts toward the "This year" stat: dated and year-only solves in the

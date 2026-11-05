@@ -1,4 +1,5 @@
-import type { OwnedCopyView } from "../library/views";
+import type { DocId } from "../catalog/views";
+import type { CopyAvailability, OwnedCopyView } from "../library/views";
 
 // Household read models (queries under `household/*`). Household members accepted each other, so
 // they see each other's name/avatar; an invitee sees the inviter (who initiated contact), and the
@@ -79,8 +80,6 @@ export interface HouseholdView {
   joinRequests: HouseholdJoinRequestView[];
   /** Household-wide permission for member copies without an explicit value (unset = "manage"). */
   defaultCopyPermission: HouseholdCopyPermission;
-  /** How many copies, across all members, have no explicit value and so follow the default. */
-  copiesUsingDefault: number;
 }
 
 /** `household.myInvites`: a pending invite the viewer received. */
@@ -100,6 +99,47 @@ export interface HouseholdCopyView extends OwnedCopyView {
     owner: HouseholdPersonView;
     viewerAccess: HouseholdCopyPermission;
   };
+}
+
+/**
+ * A copy in the viewer's library as My Puzzles and the household's Puzzles tab render it: their own
+ * copy, or a housemate's, which alone carries `household`.
+ */
+export interface MyLibraryCopyView extends OwnedCopyView {
+  household?: HouseholdCopyView["household"];
+}
+
+/** `library.myLibraryWindow`: the first rows of the viewer's library. */
+export interface MyLibraryWindowView {
+  rows: MyLibraryCopyView[];
+  /** More copies follow the ones asked for. */
+  hasMore: boolean;
+  /** How many copies the requested owners have. */
+  matched: number;
+  /** How many copies the viewer's whole library has, housemates' included. */
+  total: number;
+}
+
+/**
+ * `library.myLibraryIndex`: one lean row per copy of the viewer's library, with what search, sort,
+ * the status pills and the bulk actions need and nothing else (no notes, no covers).
+ */
+export interface MyLibraryIndexRow {
+  _id: DocId;
+  aggregateId?: string;
+  ownerId: DocId;
+  createdAt: number;
+  availability: CopyAvailability;
+  visibility?: "private" | "visible";
+  snapshot?: { title: string; brand?: string; pieceCount: number };
+  puzzle: {
+    title: string;
+    brand?: string;
+    pieceCount: number;
+    tags?: string[];
+  } | null;
+  /** Present on a housemate's copy: what the viewer may do with it. */
+  viewerAccess?: HouseholdCopyPermission;
 }
 
 /**

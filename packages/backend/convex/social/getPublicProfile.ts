@@ -4,6 +4,7 @@ import type {
 } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { canViewDefinition } from "../catalog/definitionVisibility";
 import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
@@ -139,7 +140,8 @@ export const getPublicProfile = query({
     const story = profile?.bio ? profile.bio : undefined;
 
     // Single pass over the member's completions backs both `stats` and `records`. Legacy rows may
-    // lack a copySnapshot piece count/title; fall back to the joined puzzle definition. Capped —
+    // lack a copySnapshot piece count/title; fall back to the joined puzzle definition, as far as
+    // the viewer may read it (canViewDefinition). Capped —
     // this read is UNAUTHENTICATED, so an uncapped .collect() could be pointed at an arbitrarily
     // large collection and blow the Convex read limit / 500 the page. No real member comes close to
     // 2000 completions; past that the count/piecesPlaced/records undercount rather than erroring.
@@ -156,25 +158,30 @@ export const getPublicProfile = query({
     for (const completion of completed) {
       let pieceCount = completion.copySnapshot?.pieceCount;
       let title = completion.copySnapshot?.title;
+      let countedPieces = pieceCount;
       if (
         (pieceCount === undefined || title === undefined) &&
         completion.puzzleId
       ) {
         const puzzle = await ctx.db.get(completion.puzzleId);
         if (puzzle) {
-          pieceCount ??= puzzle.pieceCount;
-          title ??= puzzle.title;
+          // Its pieces count towards the total whatever its status: the total names nothing. Its
+          // live title and pieces are only quoted to a viewer who may open it (SEC-34).
+          countedPieces ??= puzzle.pieceCount;
+          if (await canViewDefinition(ctx, puzzle, viewerId)) {
+            pieceCount ??= puzzle.pieceCount;
+            title ??= puzzle.title;
+          }
         }
       }
 
-      if (pieceCount !== undefined) {
-        piecesPlaced += pieceCount;
-        if (
-          title !== undefined &&
-          (!hardest || pieceCount > hardest.pieceCount)
-        ) {
-          hardest = { title, pieceCount };
-        }
+      if (countedPieces !== undefined) piecesPlaced += countedPieces;
+      if (
+        pieceCount !== undefined &&
+        title !== undefined &&
+        (!hardest || pieceCount > hardest.pieceCount)
+      ) {
+        hardest = { title, pieceCount };
       }
 
       if (
@@ -217,8 +224,10 @@ export const getPublicProfile = query({
             let thumbnailUrl: string | undefined;
             const puzzle = c.puzzleId ? await ctx.db.get(c.puzzleId) : null;
             if (puzzle) {
-              title ??= puzzle.title;
-              pieceCount ??= puzzle.pieceCount;
+              if (await canViewDefinition(ctx, puzzle, viewerId)) {
+                title ??= puzzle.title;
+                pieceCount ??= puzzle.pieceCount;
+              }
               if (puzzle.image) {
                 thumbnailUrl =
                   (await boxArtThumbUrl(ctx, puzzle.image)) ?? undefined;

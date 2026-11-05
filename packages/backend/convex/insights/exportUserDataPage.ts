@@ -428,7 +428,11 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
           missingPiecesCount: c.copySnapshot.missingPiecesCount,
           borrowed: c.copySnapshot.wasBorrowed,
         },
-        photos: await resolvePhotoItems(ctx, c),
+        // The photo and its state: its small tile's srcSet is no data of theirs.
+        photos: (await resolvePhotoItems(ctx, c)).map(({ url, pending }) => ({
+          url,
+          pending,
+        })),
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
       }),

@@ -5,21 +5,23 @@ import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { clampLimit } from "../lib/pageSize";
 import { toOwnedCopyView } from "./mappers";
+import { readMemberLibraryCounts } from "./memberLibraryCounts";
 import { resolveCopyCoverUrl } from "./resolveCoverUrl";
-
-// Bound for the counting scan. No real member comes close to 5000 copies (the same bound as
-// identity/getUserStats); past it the counts undercount rather than the read failing, and the scan
-// keeps the most recently added copies, so the newest always reach the shelf.
-export const MY_SHELF_SCAN_CAP = 5000;
 
 const DEFAULT_SHELF_SIZE = 6;
 const MAX_SHELF_SIZE = 12;
 
+// How many of the newest rows the shelf reads to pick its copies. by_owner orders by _creationTime
+// and the shelf by `createdAt`; the two only part for rows written outside the normal add paths, so
+// a small margin over the largest shelf is enough.
+const SHELF_WINDOW = 50;
+
 // Library read: the signed-in member's OWN shelf summary for the dashboard and profile shelves.
 // Self-only (the caller comes from requireMember, never from an argument), so owner-only fields
-// stay on. `total` and `forTrade` span the whole library, private copies included, from one
-// by_owner scan; only the newest `limit` copies by createdAt (default 6, at most 12) are joined to
-// their puzzle and cover, so a shelf never subscribes to the whole joined library.
+// stay on. `total` and `forTrade` span the whole library, private copies included, and come from
+// the member's counters (library/memberLibraryCounts), so this read covers one counter row plus the
+// newest rows: editing an older copy, or anything that moves neither number, doesn't re-run it. Only
+// the newest `limit` copies by createdAt (default 6, at most 12) are joined to their puzzle and cover.
 export const getMyShelf = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args): Promise<MyShelfView> => {
@@ -29,14 +31,16 @@ export const getMyShelf = query({
       max: MAX_SHELF_SIZE,
     });
 
-    // Newest first (by_owner ends in _creationTime), so past the cap the OLDEST copies drop out.
-    const owned = await ctx.db
+    const counts = await readMemberLibraryCounts(ctx, memberId);
+
+    // Newest first (by_owner ends in _creationTime).
+    const window = await ctx.db
       .query("ownedPuzzles")
       .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
       .order("desc")
-      .take(MY_SHELF_SCAN_CAP);
+      .take(SHELF_WINDOW);
 
-    const newest = [...owned]
+    const newest = window
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, limit);
     const recent = await Promise.all(
@@ -50,8 +54,8 @@ export const getMyShelf = query({
     );
 
     return {
-      total: owned.length,
-      forTrade: owned.filter((copy) => copy.availability.forTrade).length,
+      total: counts.owned,
+      forTrade: counts.forTrade,
       recent,
     };
   },

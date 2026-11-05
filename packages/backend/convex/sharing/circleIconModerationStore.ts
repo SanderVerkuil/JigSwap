@@ -8,6 +8,7 @@ import {
   quarantineArgs,
   recordCsamEscalation,
 } from "../lib/imageModeration/quarantine";
+import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { settleCircleIcon } from "./circleIcons";
 
 // DB-facing steps of the shared image-moderation pipeline (lib/imageModeration/pipeline) for circle
@@ -64,8 +65,8 @@ export const setFile = internalMutation({
 });
 
 // Record the verdict. FIRST VERDICT WINS: only a row still pending takes it. A rejection deletes
-// the blob (unless an escalation preserves it) and stamps the automated decision; an approval
-// settles the icon.
+// the blob (unless an escalation preserves it) and any rendition and stamps the automated decision;
+// an approval settles the icon.
 export const setVerdict = internalMutation({
   args: {
     imageId: v.id("circleIcons"),
@@ -88,6 +89,7 @@ export const setVerdict = internalMutation({
       return;
     }
     if (verdict.moderationStatus !== "rejected") return;
+    await deleteRenditions(ctx, row.fileId);
     if (!(await isPreservedBlob(ctx, row.fileId))) {
       try {
         await ctx.storage.delete(row.fileId);
@@ -104,13 +106,14 @@ export const setVerdict = internalMutation({
 });
 
 // A CSAM hash match (lib/imageModeration/quarantine). FORCES the row to "quarantined" whatever its
-// status now, points it at the preserved blob, and ALWAYS raises the escalation, even when the row
-// is gone.
+// status now, deletes the rendition of the blob it held, points it at the preserved blob, and
+// ALWAYS raises the escalation, even when the row is gone.
 export const quarantine = internalMutation({
   args: { imageId: v.id("circleIcons"), ...quarantineArgs },
   handler: async (ctx, { imageId, ...match }) => {
     const row = await ctx.db.get(imageId);
     if (row) {
+      await deleteRenditions(ctx, row.fileId);
       await ctx.db.patch(imageId, {
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),

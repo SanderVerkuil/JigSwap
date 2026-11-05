@@ -167,9 +167,9 @@ heeft, want daarna is de lening definitief afgesloten.
 Ben je de uitlener, gebruik dan **Terugvragen** onder **Leningen ›
 Uitgeleend**, of op de kaart van de puzzel in **Mijn Puzzels**, zodra je de
 puzzel terug hebt. De lening is dan definitief afgesloten, en wie de puzzel
-leende krijgt daar geen melding van. Onder **Leningen** vragen we je eerst om
-te bevestigen, en met **Bericht** ernaast spreek je af hoe je de puzzel
-terugkrijgt, als je met de lener verbonden bent.
+leende krijgt daar geen melding van. We vragen je eerst om te bevestigen. Onder
+**Leningen** spreek je met **Bericht** ernaast af hoe je de puzzel terugkrijgt,
+als je met de lener verbonden bent.
 
 Een puzzel kan maar aan één lid tegelijk uitgeleend zijn. Zolang hij is
 uitgeleend, is hij niet beschikbaar: niemand kan hem aanvragen, je kunt hem niet

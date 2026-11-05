@@ -1,3 +1,4 @@
+import { circleShareErrorKey } from "@/components/circles/circle-share";
 import { gateway } from "@/gateway";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useState } from "react";
@@ -8,9 +9,11 @@ import {
   chunk,
   COLLECTION_ADD_CONCURRENCY,
   OFFER_CHANGES,
+  planCircleShare,
   planCollectionAdd,
   planOfferAction,
   runWithConcurrency,
+  shareInBatches,
   undoChanges,
   type BulkCopy,
   type BulkOfferAction,
@@ -29,6 +32,10 @@ import {
 //
 // Add to collection sends the member's own copies one `collections.addOwnedPuzzle` call each, four
 // at a time; housemates' copies never go into personal collections.
+//
+// Share with circle sends the member's own copies through `sharing.shareCopiesToCircle` in calls of
+// at most 100: only a copy's owner may share it, and the server checks that and the member's seat.
+// The toast says what it left out, what failed and which shared copies members won't see yet.
 export function useBulkCopyActions({
   isHousemateCopy,
 }: {
@@ -37,10 +44,13 @@ export function useBulkCopyActions({
 }) {
   const t = useTranslations("puzzles.bulk.result");
   const tCollection = useTranslations("puzzles.bulk.collection");
+  const tCircle = useTranslations("puzzles.bulk.circle");
+  const tCircles = useTranslations("circles");
   const updateOffers = useConvexMutation(gateway.library.updateOffers);
   const addCopyToCollection = useConvexMutation(
     gateway.collections.addOwnedPuzzle,
   );
+  const shareCopies = useConvexMutation(gateway.sharing.shareCopiesToCircle);
   const [busy, setBusy] = useState(false);
 
   const writeOffers = (copyIds: string[], change: Partial<Offers>) =>
@@ -176,5 +186,61 @@ export function useBulkCopyActions({
     }
   };
 
-  return { offer, addToCollection, busy };
+  const shareWithCircle = async (
+    circle: { aggregateId: string; name: string },
+    copies: readonly BulkCopy[],
+  ) => {
+    const plan = planCircleShare(copies, isHousemateCopy);
+
+    setBusy(true);
+    const outcome = await shareInBatches(
+      plan.copyIds,
+      (copyIds) => shareCopies({ circleId: circle.aggregateId, copyIds }),
+      (error) => circleShareErrorKey(error) === "shareErrors.CopyNotFound",
+    ).finally(() => setBusy(false));
+
+    const done = new Set(outcome.done);
+    const hidden = plan.hidden.filter((copyId) => done.has(copyId)).length;
+    const gone = outcome.gone.length;
+    const failed = outcome.failed.length;
+    const notes = (skip?: "gone" | "failed") => {
+      const text = [
+        outcome.alreadyShared > 0 &&
+          tCircle("alreadyShared", { count: outcome.alreadyShared }),
+        plan.housemates > 0 &&
+          tCircle("housemates", { count: plan.housemates }),
+        hidden > 0 && tCircle("hidden", { count: hidden }),
+        skip !== "gone" && gone > 0 && tCircle("gone", { count: gone }),
+        skip !== "failed" && failed > 0 && tCircle("failed", { count: failed }),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return text ? { description: text } : {};
+    };
+
+    if (outcome.shared > 0) {
+      toast.success(
+        tCircles("share.sharedToast", {
+          count: outcome.shared,
+          circle: circle.name,
+        }),
+        notes(),
+      );
+    } else if (failed > 0) {
+      // Everything refused for one reason (a View only seat, a circle that's gone) says that reason.
+      const key = circleShareErrorKey(outcome.refusal);
+      toast.error(
+        key === "shareErrors.generic"
+          ? tCircle("failed", { count: failed })
+          : tCircles(key),
+        notes("failed"),
+      );
+    } else if (gone > 0) {
+      toast.error(tCircle("gone", { count: gone }), notes("gone"));
+    } else {
+      toast.info(tCircle("nothingShared", { name: circle.name }), notes());
+    }
+  };
+
+  return { offer, addToCollection, shareWithCircle, busy };
 }

@@ -89,6 +89,10 @@ export const RATE_LIMITS = {
   // announce a follow/unfollow or request/cancel loop once a day
   // (notifications/adapters/channels/followNoticeThrottle). The in-app row is not counted.
   followNotice: { windowMs: DAY, max: 1 },
+  // Pushes about review work to one admin (admin_definition_submitted, admin_proposal_filed), both
+  // queues together, keyed by the admin (the notifications push channel). A flood reaches their
+  // device once an hour; the in-app row counts the rest (SEC-26).
+  adminReviewPush: { windowMs: HOUR, max: 1 },
   // Exchange proposals (exchange/propose), all owners together: an hourly and a daily cap.
   exchangePropose: { windowMs: HOUR, max: 20 },
   exchangeProposeDaily: { windowMs: DAY, max: 50 },

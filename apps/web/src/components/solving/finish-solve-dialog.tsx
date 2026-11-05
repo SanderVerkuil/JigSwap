@@ -28,7 +28,7 @@ import {
 } from "@/lib/date-input";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 import { solvingErrorCode } from "./solving-error";
@@ -44,6 +44,8 @@ interface FinishSolveDialogProps {
   // Names the puzzle in the question ("When did you finish {puzzle}?"); a generic question
   // without it.
   puzzleTitle?: string;
+  // Where focus goes on close when what opened the dialog (a menu item) is gone by then.
+  returnFocusRef?: RefObject<HTMLElement | null>;
   // Called after a successful finish (before the dialog closes, after the follow-up is
   // requested). Useful for post-save navigation.
   onSuccess?: () => void;
@@ -58,6 +60,7 @@ export function FinishSolveDialog({
   minEndDate,
   puzzleTitle,
   onSuccess,
+  returnFocusRef,
 }: FinishSolveDialogProps) {
   const t = useTranslations("solving.logSolve");
   const tCommon = useTranslations("common");
@@ -108,7 +111,15 @@ export function FinishSolveDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Scrolls on a short screen, so Save stays reachable. */}
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto"
+        onCloseAutoFocus={(event) => {
+          const target = returnFocusRef?.current;
+          if (!target?.isConnected) return;
+          event.preventDefault();
+          target.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t("finishTitle")}</DialogTitle>
           <DialogDescription>

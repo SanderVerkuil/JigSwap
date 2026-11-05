@@ -1,6 +1,6 @@
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { useStepCommitRegistration } from "@/components/quick-start/step-commit";
-import { gateway, type Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
@@ -75,13 +75,10 @@ export function CataloguePicker({
   const { data: mySubmissions } = useQuery(
     convexQuery(gateway.catalog.myContributedPuzzles, member ? {} : "skip"),
   );
-  // Same args as the dashboard shelf, so the subscription is shared.
-  const { data: copies } = useQuery(
+  const { data: ownedIds } = useQuery(
     convexQuery(
-      gateway.library.ownedByOwner,
-      member?._id
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
+      gateway.library.myOwnedDefinitionIds,
+      member?._id ? {} : "skip",
     ),
   );
 
@@ -91,13 +88,9 @@ export function CataloguePicker({
         term: deferredTerm,
         results,
         mySubmissions: mySubmissions ?? [],
-        ownedDefinitionIds: new Set(
-          (copies ?? []).flatMap((c) =>
-            c.puzzleDefinitionId ? [c.puzzleDefinitionId] : [],
-          ),
-        ),
+        ownedDefinitionIds: new Set(ownedIds),
       }),
-    [deferredTerm, results, mySubmissions, copies],
+    [deferredTerm, results, mySubmissions, ownedIds],
   );
 
   const acquireCopies = useConvexMutation(gateway.library.acquireCopies);
@@ -117,15 +110,17 @@ export function CataloguePicker({
         return;
       }
       console.error("Batch add failed:", error);
+      const refusal = addErrorKey(error);
       toast.error(
         copyIds.length === 0
-          ? t("addFailed")
-          : t("addedPartly", { added: copyIds.length, total: tray.length }),
+          ? t(refusal)
+          : t(
+              refusal === "rateLimited"
+                ? "addedPartlyRateLimited"
+                : "addedPartly",
+              { added: copyIds.length, total: tray.length },
+            ),
       );
-    },
-    onError: (error) => {
-      console.error("Batch add failed:", error);
-      toast.error(t(addErrorKey(error)));
     },
   });
 

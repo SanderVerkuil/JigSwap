@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gateway, type Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { localTodayInput } from "@/lib/date-input";
 import {
   pastSolveCandidates,
@@ -44,22 +44,18 @@ export function PastSolvesForm({
 }) {
   const t = useTranslations("quickStart.solves");
   const { member } = useCurrentMember();
-  const { data: copies } = useQuery(
-    convexQuery(
-      gateway.library.ownedByOwner,
-      member
-        ? { ownerId: member._id as Id<"users">, includeUnavailable: true }
-        : "skip",
-    ),
+  // The lean library index, less housemates' copies: a row needs only its title.
+  const { data: library } = useQuery(
+    convexQuery(gateway.library.myLibraryIndex, member ? {} : "skip"),
   );
-  const { data: completions } = useQuery(
-    convexQuery(gateway.solving.myCompletions, member ? {} : "skip"),
+  const { data: solveStates } = useQuery(
+    convexQuery(gateway.solving.mySolveStates, member ? {} : "skip"),
   );
   const record = useMutation({
     mutationFn: useConvexMutation(gateway.solving.recordPastCompletions),
   });
 
-  if (copies === undefined || completions === undefined) {
+  if (library === undefined || solveStates === undefined) {
     return (
       <div className="space-y-3" aria-busy="true">
         <Skeleton className="h-6 w-2/3" />
@@ -85,7 +81,10 @@ export function PastSolvesForm({
 
   return (
     <PastSolvesList
-      candidates={pastSolveCandidates(copies, completions).map((copy) => ({
+      candidates={pastSolveCandidates(
+        library.filter((copy) => !copy.viewerAccess),
+        new Set(solveStates.map((state) => state.copyId)),
+      ).map((copy) => ({
         copyId: copy.aggregateId as string,
         title: copy.snapshot?.title ?? copy.puzzle?.title ?? "",
       }))}

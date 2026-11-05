@@ -155,6 +155,11 @@ export interface NotificationView {
   actors: NotificationActorView[];
   /** Total distinct actors (>= actors.length when grouped). */
   actorCount: number;
+  /**
+   * Set on a grouped admin review row (more than one): how many submissions or suggestions arrived
+   * since the admin last read it. Not the queue's size: another admin may have handled some.
+   */
+  itemCount?: number;
   context: NotificationViewContext;
   /** Where the row links to (computed server-side); null when there is no useful destination. */
   href: string | null;

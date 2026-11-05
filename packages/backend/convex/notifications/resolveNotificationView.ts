@@ -840,9 +840,13 @@ export const resolveNotificationView = async (
   );
   const firstActor = actors[0] ?? null;
 
-  const subjectFacts = subject
-    ? await resolveSubject(ctx, cache, viewerId, row, subject)
-    : null;
+  // A grouped admin review row stands for its queue, not for the item it was last about: that item
+  // being decided or deleted leaves the row as it is, and it shows no one puzzle's cover or state.
+  const itemCount = row.itemCount ?? 1;
+  const subjectFacts =
+    subject && itemCount === 1
+      ? await resolveSubject(ctx, cache, viewerId, row, subject)
+      : null;
 
   // A connection offer names its inviter only while it is open: once it is answered or expired the
   // row stays as an unavailable, nameless "someone invited you" (no actor, no avatar, no handle).
@@ -914,7 +918,9 @@ export const resolveNotificationView = async (
       actorHandle: firstActor?.handle ?? null,
       actorCount,
       subjectAvailable: subjectFacts?.available ?? true,
+      itemCount,
     }),
+    ...(itemCount > 1 ? { itemCount } : {}),
     state: decision.state,
     ...(decision.resolvedAs !== undefined
       ? { resolvedAs: decision.resolvedAs }

@@ -1,8 +1,12 @@
+import {
+  circleHiddenReason,
+  SHARE_BATCH_SIZE,
+} from "@/components/circles/circle-share";
 import type { HouseholdCopyPermission } from "@jigswap/contracts";
 
 // Pure rules for My Puzzles' selection mode: which copies can be selected, what a bulk offer action
-// sends and leaves alone, how it is undone, and how a collection add is spread. Kept free of React
-// and Convex so they are unit-tested on their own.
+// sends and leaves alone, how it is undone, and how a collection add or a circle share is spread.
+// Kept free of React and Convex calls so they are unit-tested on their own.
 
 // Mirrors the backend's MAX_OFFERS_BATCH: one `library.updateOffers` call takes at most 100 copies.
 export const BULK_OFFERS_BATCH = 100;
@@ -149,6 +153,88 @@ export function planCollectionAdd(
     else if (copy.aggregateId) copyIds.push(copy.aggregateId);
   }
   return { copyIds, housemates };
+}
+
+export interface CircleSharePlan {
+  // What's sent, by domain id: the member's own copies.
+  copyIds: string[];
+  // Selected housemates' copies, left out.
+  housemates: number;
+  // The sent copies circle members won't see even once shared: they only see what's on offer, and a
+  // private copy is visible only while it is.
+  hidden: string[];
+}
+
+// The copies a bulk "Share with circle" sends: only a copy's owner may share it (the server refuses
+// the whole call otherwise), so a housemate's copy is counted instead, even one the member manages.
+export function planCircleShare(
+  copies: readonly BulkCopy[],
+  isHousemateCopy: (copyDocId: string) => boolean,
+): CircleSharePlan {
+  const plan: CircleSharePlan = { copyIds: [], housemates: 0, hidden: [] };
+  for (const copy of copies) {
+    if (isHousemateCopy(copy._id)) {
+      plan.housemates += 1;
+    } else if (copy.aggregateId) {
+      plan.copyIds.push(copy.aggregateId);
+      if (circleHiddenReason(copy)) plan.hidden.push(copy.aggregateId);
+    }
+  }
+  return plan;
+}
+
+export interface CircleShareOutcome {
+  shared: number;
+  alreadyShared: number;
+  // Copies now in the circle, newly or already.
+  done: string[];
+  // Copies refused one by one: gone from the member's library since they were selected.
+  gone: string[];
+  // Copies in calls that failed for any other reason (offline, or the circle itself refused).
+  failed: string[];
+  // Why the last of those calls failed.
+  refusal?: unknown;
+}
+
+// Share copies in server-sized calls, one after another (each call updates the same circle). A call
+// is all or nothing: one copy that is no longer the member's refuses all of it. So `isGone` splits
+// such a call in two and tries each half, down to the copies at fault, and the others still go in.
+// Any other refusal fails the call's copies and the next call still runs.
+export async function shareInBatches(
+  copyIds: readonly string[],
+  send: (
+    copyIds: string[],
+  ) => Promise<{ shared: number; alreadyShared: number }>,
+  isGone: (error: unknown) => boolean,
+): Promise<CircleShareOutcome> {
+  const outcome: CircleShareOutcome = {
+    shared: 0,
+    alreadyShared: 0,
+    done: [],
+    gone: [],
+    failed: [],
+  };
+  const sendAll = async (ids: string[]): Promise<void> => {
+    try {
+      const { shared, alreadyShared } = await send(ids);
+      outcome.shared += shared;
+      outcome.alreadyShared += alreadyShared;
+      outcome.done.push(...ids);
+    } catch (error) {
+      if (!isGone(error)) {
+        outcome.failed.push(...ids);
+        outcome.refusal = error;
+      } else if (ids.length === 1) {
+        outcome.gone.push(...ids);
+      } else {
+        const middle = Math.ceil(ids.length / 2);
+        await sendAll(ids.slice(0, middle));
+        await sendAll(ids.slice(middle));
+      }
+    }
+  };
+  for (const batch of chunk(copyIds, SHARE_BATCH_SIZE)) await sendAll(batch);
+  return outcome;
 }
 
 // Run `task` over every item with at most `limit` running at once. A failing item doesn't stop

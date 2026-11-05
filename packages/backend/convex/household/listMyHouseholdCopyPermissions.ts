@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { toOwnedCopyView } from "../library/mappers";
+import { LIBRARY_INDEX_CAP, newestCopiesOf } from "../library/myLibraryRows";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 import { householdDefaultOf, membershipOf } from "./memberships";
 
@@ -11,7 +12,7 @@ import { householdDefaultOf, membershipOf } from "./memberships";
 // else the household default, else "manage") and whether it is explicit or inherited, for the
 // household page's bulk editor. Empty when the viewer is in no household.
 // Not paginated, like the other owner-library reads (getOwnedPuzzlesByOwner, listHouseholdCopies).
-// Newest first.
+// Newest first, at most LIBRARY_INDEX_CAP.
 export const listMyHouseholdCopyPermissions = query({
   args: {},
   handler: async (ctx): Promise<HouseholdOwnCopyView[]> => {
@@ -23,10 +24,7 @@ export const listMyHouseholdCopyPermissions = query({
       membership.householdId,
     );
 
-    const copies = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_owner", (q) => q.eq("ownerId", viewerId))
-      .collect();
+    const copies = await newestCopiesOf(ctx, [viewerId], LIBRARY_INDEX_CAP);
     const views = await Promise.all(
       copies.map(async (copy) => {
         const puzzle = await ctx.db.get(copy.puzzleId);

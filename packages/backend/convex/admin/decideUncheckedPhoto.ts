@@ -7,6 +7,7 @@ import {
   deleteAttachmentBlobs,
   deleteReveals,
   MESSAGE_PHOTO_LABEL,
+  scheduleMessageThumb,
 } from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
@@ -95,17 +96,18 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
 // restored or its removal confirmed (which deletes it and notifies the uploader), exactly like an
 // automatic rejection; its renditions are deleted, and an approved one gets them in the
 // background (lib/imageModeration/renditionsStore). A rejected COMPLETION photo gets the same
-// side effects as an automatic rejection: it is detached from the completion and its blob
-// deleted. Rejected BOX ART likewise
+// side effects as an automatic rejection: it is detached from the completion and its blob and
+// renditions deleted; an approved one gets its renditions in the background too. Rejected BOX ART
+// likewise
 // (catalog/boxArtModerationStore.detachRejectedBoxArt): detached from every definition and
 // proposal holding it and its renditions and blob deleted; approved box art is served (boxArtUrl)
 // and gets its renditions in the background (lib/imageModeration/renditionsStore). A CIRCLE ICON
-// likewise: a rejected one's blob is deleted (its uploader is told it was removed), an approved
-// one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
+// likewise: a rejected one's blob and rendition are deleted (its uploader is told it was removed),
+// an approved one becomes the circle's icon (sharing/circleIcons.settleCircleIcon).
 //
 // A MESSAGE photo (spec 2026-10-20 D5; only a sent, "unscored" one): approve serves it to the
-// thread (its message updates in place; the non-mutual blur still applies), which needs a passed
-// hash check AND the re-encode (else "Check again" first). Reject is a moderator removal: status
+// thread (its message updates in place; the non-mutual blur still applies) and schedules its
+// thumbnail, which needs a passed hash check AND the re-encode (else "Check again" first). Reject is a moderator removal: status
 // "removed" (both sides read "Removed by moderation"; the message and its caption stay), its blobs
 // and reveals deleted unless a report holds it, and the uploader gets the content_removed
 // statement of reasons (decided by a person). Nothing about the conversation is stamped. A sent
@@ -203,6 +205,7 @@ export const decideUncheckedPhoto = mutation({
           updatedAt: now,
           ...release,
         });
+        await scheduleMessageThumb(ctx, id);
       } else {
         await ctx.db.patch(id, {
           moderationStatus: "removed",
@@ -266,6 +269,7 @@ export const decideUncheckedPhoto = mutation({
       assertDecidable(row, decision);
       await ctx.db.patch(id, { ...decided, ...release });
       if (decision === "reject") {
+        await deleteRenditions(ctx, row.fileId);
         if (!(await isPreservedBlob(ctx, row.fileId))) {
           try {
             await ctx.storage.delete(row.fileId);
@@ -290,6 +294,7 @@ export const decideUncheckedPhoto = mutation({
     if (!id || !row) throw new ConvexError("Photo not found");
     assertDecidable(row, decision);
     await ctx.db.patch(id, { ...decided, ...release });
+    if (decision !== "reject") await scheduleRenditions(ctx, row.fileId);
     const title =
       decision === "reject"
         ? await detachRejectedCompletionPhoto(ctx, row)

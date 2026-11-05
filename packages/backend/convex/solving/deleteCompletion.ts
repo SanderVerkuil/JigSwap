@@ -6,6 +6,7 @@ import {
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { deleteRenditions } from "../lib/imageModeration/renditionsStore";
 import { deleteBlobUnlessReferenced } from "../lib/storage/blobLifecycle";
 import { convexCompletionRepository } from "./adapters/convexCompletionRepository";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
@@ -61,7 +62,9 @@ export const deleteCompletion = mutation({
       for (const fileId of fileIds) {
         // A blob anything else still holds stays: a CSAM escalation preserves it (the escalation
         // row keeps it findable for the operator after the sidecar is gone), or a row written
-        // before the claim rule holds the same id, such as catalogue box art (SEC-01).
+        // before the claim rule holds the same id, such as catalogue box art (SEC-01). Its
+        // renditions go in any case (reads fall back to the original).
+        await deleteRenditions(ctx, fileId);
         await deleteBlobUnlessReferenced(ctx, fileId);
       }
     }

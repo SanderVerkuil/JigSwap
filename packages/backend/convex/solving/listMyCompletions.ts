@@ -5,11 +5,13 @@ import { canViewDefinition } from "../catalog/definitionVisibility";
 import { requireMember } from "../identity/requireMember";
 import { boxArtThumbUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
+import { renditionSources } from "../lib/imageModeration/imageSources";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
   type CopyViewContext,
 } from "../library/canViewCopy";
+import { toCopyPuzzleView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
 
 // The navigation target for a completion row, most-specific-first: the viewer's own copy page,
@@ -28,13 +30,10 @@ type CompletionLink = {
 // web derives from the list (the history page, "already solved" sets, counts) undercounts.
 export const COMPLETION_LIST_CAP = 1000;
 
-// Read side for the solving history view: the acting member's own completions, newest first.
-// Auth-gated; photo storage ids are resolved to display items (url + pending flag) via
-// resolvePhotoItems, and the ids themselves are not sent (withPhotoItems).
-// Each row is also enriched with a navigation `link` and a `thumbnailUrl`, resolved once per
-// DISTINCT copy/puzzle (many completions share one) since this is a self-facing read only, and
-// with `editableUntil` (epoch ms, null = no deadline) from the domain's edit-window rule, so the
-// UI only offers Edit while the server would accept it.
+// Read side for the solving history view: the acting member's own completions, newest first, with
+// each row enriched (enrichCompletions). The completion log itself now reads the lean
+// listMyCompletionIndex and joins only what's on screen (getMyCompletionsByIds). Kept for web builds
+// from before that: this build no longer calls it. Remove once those have aged out.
 export const listMyCompletions = query({
   args: {},
   handler: async (ctx) => {
@@ -47,110 +46,137 @@ export const listMyCompletions = query({
       .order("desc")
       .take(COMPLETION_LIST_CAP);
 
-    // Resolve display/navigation data once per DISTINCT copy/puzzle — many completions share one.
-    const copyIds = [
-      ...new Set(
-        rows.flatMap((r) => (r.ownedPuzzleId ? [r.ownedPuzzleId] : [])),
-      ),
-    ];
-    const puzzleIds = [
-      ...new Set(rows.flatMap((r) => (r.puzzleId ? [r.puzzleId] : []))),
-    ];
-
-    const copies = new Map<string, Doc<"ownedPuzzles"> | null>();
-    await Promise.all(
-      copyIds.map(async (id) => copies.set(id as string, await ctx.db.get(id))),
-    );
-    const puzzles = new Map<string, Doc<"puzzles"> | null>();
-    await Promise.all(
-      puzzleIds.map(async (id) =>
-        puzzles.set(id as string, await ctx.db.get(id)),
-      ),
-    );
-
-    // Reachability per distinct copy. The circle-shared context is built lazily: only when some
-    // copy is foreign and not currently held (the common all-own case never pays for it).
-    // Sequential on purpose: the lazy ??= init and the ownerVisibility memo aren't safe to
-    // parallelize — a Promise.all would race N context builds.
-    let context: CopyViewContext | null = null;
-    const reachable = new Map<string, boolean>();
-    for (const [id, copy] of copies) {
-      if (!copy) {
-        reachable.set(id, false);
-        continue;
-      }
-      if (copy.ownerId === me || copy.heldBy === me) {
-        reachable.set(id, true);
-        continue;
-      }
-      context ??= await buildCopyViewContext(ctx, me);
-      reachable.set(id, await canViewCopyWithContext(ctx, copy, context));
-    }
-
-    // Thumbnails per distinct copy (cover — approved only — then box art) and per distinct
-    // puzzle (box art) for rows whose copy is gone or unreachable.
-    const copyThumbs = new Map<string, string | null>();
-    await Promise.all(
-      [...copies.entries()].map(async ([id, copy]) => {
-        if (!copy || !reachable.get(id)) {
-          copyThumbs.set(id, null);
-          return;
-        }
-        const puzzle = copy.puzzleId ? await ctx.db.get(copy.puzzleId) : null;
-        copyThumbs.set(id, await resolveCopyCoverUrl(ctx, copy, puzzle));
-      }),
-    );
-    const puzzleThumbs = new Map<string, string | null>();
-    // Whether the member may open each definition's page (canViewDefinition, that page's gate):
-    // a definition that is no longer approved gets no link unless they submitted it or are an admin.
-    const puzzleOpenable = new Map<string, boolean>();
-    await Promise.all(
-      [...puzzles.entries()].map(async ([id, puzzle]) => {
-        puzzleThumbs.set(
-          id,
-          puzzle?.image ? await boxArtThumbUrl(ctx, puzzle.image) : null,
-        );
-        puzzleOpenable.set(
-          id,
-          puzzle !== null && (await canViewDefinition(ctx, puzzle, me)),
-        );
-      }),
-    );
-
-    return Promise.all(
-      rows.map(async (row) => {
-        const copyKey = row.ownedPuzzleId as string | undefined;
-        const puzzleKey = row.puzzleId as string | undefined;
-        const copy = copyKey ? (copies.get(copyKey) ?? null) : null;
-        const copyReachable = copyKey
-          ? (reachable.get(copyKey) ?? false)
-          : false;
-        const puzzle = puzzleKey ? (puzzles.get(puzzleKey) ?? null) : null;
-
-        let link: CompletionLink | undefined;
-        if (copy && copy.ownerId === me) {
-          link = { kind: "myCopy", id: copy._id as string };
-        } else if (copy && copyReachable) {
-          link = { kind: "copy", id: copy._id as string };
-        } else if (puzzle && puzzleOpenable.get(puzzleKey as string)) {
-          link = { kind: "definition", id: puzzle._id as string };
-        }
-
-        const thumbnailUrl =
-          (copyKey && copyReachable ? copyThumbs.get(copyKey) : null) ??
-          (puzzleKey ? puzzleThumbs.get(puzzleKey) : null) ??
-          undefined;
-
-        return {
-          ...(await withPhotoItems(ctx, row)),
-          thumbnailUrl,
-          link,
-          editableUntil: editableUntilOf(row),
-        };
-      }),
-    );
+    return enrichCompletions(ctx, me, rows);
   },
 });
+
+// A completion row as the log renders it. Auth-gated by the caller, and `rows` must be `me`'s own:
+// photo storage ids are resolved to display items (url + pending flag) via resolvePhotoItems, and
+// the ids themselves are not sent (withPhotoItems). Each row is also enriched with a navigation
+// `link` and a `thumbnailUrl`, resolved once per DISTINCT copy/puzzle (many completions share one)
+// since this is a self-facing read only, with `libraryInfo` (the title and piece count of a copy the
+// member owns now, as toCopyPuzzleView gives them to its owner), and with `editableUntil` (epoch ms,
+// null = no deadline) from the domain's edit-window rule, so the UI only offers Edit while the
+// server would accept it.
+export const enrichCompletions = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+  rows: readonly Doc<"completions">[],
+) => {
+  // Resolve display/navigation data once per DISTINCT copy/puzzle — many completions share one.
+  const copyIds = [
+    ...new Set(rows.flatMap((r) => (r.ownedPuzzleId ? [r.ownedPuzzleId] : []))),
+  ];
+  const puzzleIds = [
+    ...new Set(rows.flatMap((r) => (r.puzzleId ? [r.puzzleId] : []))),
+  ];
+
+  const copies = new Map<string, Doc<"ownedPuzzles"> | null>();
+  await Promise.all(
+    copyIds.map(async (id) => copies.set(id as string, await ctx.db.get(id))),
+  );
+  const puzzles = new Map<string, Doc<"puzzles"> | null>();
+  await Promise.all(
+    puzzleIds.map(async (id) =>
+      puzzles.set(id as string, await ctx.db.get(id)),
+    ),
+  );
+
+  // Reachability per distinct copy. The circle-shared context is built lazily: only when some
+  // copy is foreign and not currently held (the common all-own case never pays for it).
+  // Sequential on purpose: the lazy ??= init and the ownerVisibility memo aren't safe to
+  // parallelize — a Promise.all would race N context builds.
+  let context: CopyViewContext | null = null;
+  const reachable = new Map<string, boolean>();
+  for (const [id, copy] of copies) {
+    if (!copy) {
+      reachable.set(id, false);
+      continue;
+    }
+    if (copy.ownerId === me || copy.heldBy === me) {
+      reachable.set(id, true);
+      continue;
+    }
+    context ??= await buildCopyViewContext(ctx, me);
+    reachable.set(id, await canViewCopyWithContext(ctx, copy, context));
+  }
+
+  // Thumbnails per distinct copy (cover — approved only — then box art) and per distinct
+  // puzzle (box art) for rows whose copy is gone or unreachable.
+  const copyThumbs = new Map<string, string | null>();
+  // The title and piece count of each copy the member owns now.
+  const libraryInfo = new Map<string, { title: string; pieceCount: number }>();
+  await Promise.all(
+    [...copies.entries()].map(async ([id, copy]) => {
+      if (!copy || !reachable.get(id)) {
+        copyThumbs.set(id, null);
+        return;
+      }
+      const puzzle = copy.puzzleId ? await ctx.db.get(copy.puzzleId) : null;
+      copyThumbs.set(id, await resolveCopyCoverUrl(ctx, copy, puzzle));
+      if (copy.ownerId === me) {
+        // What My Puzzles says of this copy: a definition the member may not read is its snapshot.
+        const facts = toCopyPuzzleView(copy, puzzle, {
+          includeOwnerOnly: true,
+        });
+        if (facts) {
+          libraryInfo.set(id, {
+            title: facts.title,
+            pieceCount: facts.pieceCount,
+          });
+        }
+      }
+    }),
+  );
+  const puzzleThumbs = new Map<string, string | null>();
+  // Whether the member may open each definition's page (canViewDefinition, that page's gate):
+  // a definition that is no longer approved gets no link unless they submitted it or are an admin.
+  const puzzleOpenable = new Map<string, boolean>();
+  await Promise.all(
+    [...puzzles.entries()].map(async ([id, puzzle]) => {
+      puzzleThumbs.set(
+        id,
+        puzzle?.image ? await boxArtThumbUrl(ctx, puzzle.image) : null,
+      );
+      puzzleOpenable.set(
+        id,
+        puzzle !== null && (await canViewDefinition(ctx, puzzle, me)),
+      );
+    }),
+  );
+
+  return Promise.all(
+    rows.map(async (row) => {
+      const copyKey = row.ownedPuzzleId as string | undefined;
+      const puzzleKey = row.puzzleId as string | undefined;
+      const copy = copyKey ? (copies.get(copyKey) ?? null) : null;
+      const copyReachable = copyKey ? (reachable.get(copyKey) ?? false) : false;
+      const puzzle = puzzleKey ? (puzzles.get(puzzleKey) ?? null) : null;
+
+      let link: CompletionLink | undefined;
+      if (copy && copy.ownerId === me) {
+        link = { kind: "myCopy", id: copy._id as string };
+      } else if (copy && copyReachable) {
+        link = { kind: "copy", id: copy._id as string };
+      } else if (puzzle && puzzleOpenable.get(puzzleKey as string)) {
+        link = { kind: "definition", id: puzzle._id as string };
+      }
+
+      const thumbnailUrl =
+        (copyKey && copyReachable ? copyThumbs.get(copyKey) : null) ??
+        (puzzleKey ? puzzleThumbs.get(puzzleKey) : null) ??
+        undefined;
+
+      return {
+        ...(await withPhotoItems(ctx, row)),
+        thumbnailUrl,
+        link,
+        libraryInfo: copyKey ? libraryInfo.get(copyKey) : undefined,
+        editableUntil: editableUntilOf(row),
+      };
+    }),
+  );
+};
 
 // A completion row as its own member reads it: the photos go out as `photoItems` (URLs), never as
 // the row's `photos` storage ids (SEC-01). Shared with getCompletionHistory.
@@ -162,8 +188,10 @@ export const withPhotoItems = async (
   return { ...rest, photoItems: await resolvePhotoItems(ctx, row) };
 };
 
-// A completion photo ready for display: the served URL plus whether moderation is still pending.
-export type PhotoItem = { url: string; pending: boolean };
+// A completion photo ready for display: the served URL (the original, which the photo viewer
+// opens), whether moderation is still pending and, once an approved photo has renditions, the
+// `srcSet` its small tile picks from.
+export type PhotoItem = { url: string; pending: boolean; srcSet?: string };
 
 // Resolve a completion's photos to displayable items. Photos whose moderation sidecar says
 // "rejected" (or "quarantined") are dropped — and ONLY those. Pending stays visible but flagged `pending: true`
@@ -199,7 +227,11 @@ export const resolvePhotoItems = async (
       const url = await ctx.storage.getUrl(fileId);
       if (!url) return null;
       // An unscored photo (could not be checked yet) reads as pending to its owner.
-      return { url, pending: status === "pending" || status === "unscored" };
+      if (status === "pending" || status === "unscored") {
+        return { url, pending: true };
+      }
+      const { srcSet } = await renditionSources(ctx, fileId, url);
+      return { url, pending: false, ...(srcSet !== undefined && { srcSet }) };
     }),
   );
   return items.filter((item): item is PhotoItem => item !== null);

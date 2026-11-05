@@ -6,6 +6,8 @@ import { enrichExchangeSummary, readMemberExchanges } from "./readViews";
 // Exchange read (thin adapter): exchanges where the signed-in member is the recipient (incoming).
 // Returns [] when unauthenticated, unknown or deactivated, newest-first — matching legacy
 // exchanges.getExchangesByOwner.
+// Kept for web builds from before the Exchanges page moved to listMyLiveExchanges and
+// listMyExchangeHistory: this build no longer calls it. Remove once those have aged out.
 export const getExchangesByOwner = query({
   args: {},
   handler: async (ctx): Promise<ExchangeSummaryView[]> => {

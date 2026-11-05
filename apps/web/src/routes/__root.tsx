@@ -184,8 +184,9 @@ export const Route = createRootRouteWithContext<{
       // Hand the Clerk token to the server HTTP client so SSR loaders see the auth.
       ctx.context.convexQueryClient.serverHttpClient?.setAuth(ssrToken);
     }
-    // No token here: this context is serialized into the HTML.
-    return { userId: auth.userId, intl };
+    // No token here: this context is serialized into the HTML. ssrAuthed only says the server client
+    // has one, so a loader never reads member data as nobody.
+    return { userId: auth.userId, intl, ssrAuthed: Boolean(ssrToken) };
   },
   errorComponent: (props) => (
     <RootDocument>

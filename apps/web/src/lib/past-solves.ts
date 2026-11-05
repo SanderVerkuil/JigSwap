@@ -26,13 +26,9 @@ export type PastCompletionItem = {
 // without an aggregateId can't be logged by recordPastCompletions, so they're left out.
 export function pastSolveCandidates<
   C extends { _id: string; aggregateId?: string; createdAt: number },
->(
-  copies: readonly C[],
-  completions: readonly { ownedPuzzleId?: string }[],
-): C[] {
-  const solved = new Set(completions.map((c) => c.ownedPuzzleId));
+>(copies: readonly C[], solvedCopyIds: ReadonlySet<string>): C[] {
   return copies
-    .filter((c) => c.aggregateId !== undefined && !solved.has(c._id))
+    .filter((c) => c.aggregateId !== undefined && !solvedCopyIds.has(c._id))
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 

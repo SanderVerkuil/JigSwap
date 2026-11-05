@@ -1,7 +1,7 @@
 "use client";
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
-import { conversationErrorCode } from "@/components/messaging/format";
+import { useOpenDm } from "@/components/messaging/open-dm";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -9,11 +9,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MessageCircle } from "lucide-react";
-import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 // "Message" entry point beside the follow toggle. Gated by the same
@@ -35,7 +33,7 @@ export function MessageButton({
   memberName?: string;
 }) {
   const t = useTranslations("messages");
-  const navigate = useNavigate();
+  const { open, pending } = useOpenDm();
   const { member } = useCurrentMember();
   const me = member?._id;
 
@@ -45,21 +43,8 @@ export function MessageButton({
       me ? { recipientId: memberId } : "skip",
     ),
   );
-  const openDmThread = useMutation({
-    mutationFn: useConvexMutation(gateway.conversation.openDmThread),
-  });
-  const pending = openDmThread.isPending;
-
-  const handleClick = async () => {
-    try {
-      const threadId = await openDmThread.mutateAsync({
-        recipientId: memberId,
-      });
-      await navigate({ to: "/messages/$threadId", params: { threadId } });
-    } catch (error) {
-      const code = conversationErrorCode(error);
-      toast.error(code === "NotConnected" ? t("notConnected") : t("openError"));
-    }
+  const handleClick = () => {
+    void open(memberId);
   };
 
   const button = (enabled: boolean) =>

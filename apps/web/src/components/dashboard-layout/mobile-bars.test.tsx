@@ -51,13 +51,6 @@ vi.mock("@/components/whats-new/use-whats-new-state", () => ({
 vi.mock("./shell-user-button", () => ({ ShellUserButton: () => null }));
 vi.mock("./mobile-quick-sheet", () => ({ MobileQuickSheet: () => null }));
 
-// Incoming swap requests awaiting an answer, the Swaps tab's pending count.
-const proposedToMe = (id: string) => ({
-  _id: id,
-  userRole: "owner",
-  status: "proposed",
-});
-
 const renderBars = ({
   unread = 0,
   pending = 0,
@@ -85,8 +78,8 @@ const renderBars = ({
     unread,
   );
   queryClient.setQueryData(
-    convexQuery(gateway.exchange.forUser, {}).queryKey,
-    Array.from({ length: pending }, (_, i) => proposedToMe(`x${i}`)),
+    convexQuery(gateway.exchange.myPendingRequestCount, {}).queryKey,
+    pending,
   );
   render(
     <QueryClientProvider client={queryClient}>

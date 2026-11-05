@@ -234,6 +234,39 @@ describe("moderation console: the tab bar", () => {
   });
 });
 
+// SEC-26 / SEC-19: the lists stop at a cap, so a long queue must not read as an exact count.
+describe("moderation console: the tab counts", () => {
+  const tab = (name: RegExp) => screen.getByRole("tab", { name });
+
+  it("follow the server's bounded counts, saying when it stopped counting", async () => {
+    await openConsole();
+    convex.set({
+      "admin.pendingCounts": {
+        submissions: { count: 50, capped: true },
+        flagged: { count: 7, capped: false },
+        appeals: { count: 0, capped: false },
+        reports: { count: 0, capped: false },
+        hashMatches: { count: 0, capped: false },
+        contact: { count: 0, capped: false },
+        proposals: { count: 0, capped: false },
+      },
+    });
+
+    expect(
+      (await screen.findByRole("tab", { name: /50\+/ })).textContent,
+    ).toContain("Submissions");
+    expect(tab(/Flagged/).textContent).toContain("7");
+  });
+
+  it("fall back to the list's length on a backend without the counts", async () => {
+    await openConsole();
+
+    expect(
+      await screen.findByRole("tab", { name: /Submissions.*2/ }),
+    ).toBeTruthy();
+  });
+});
+
 describe("moderation console: Edit & Approve", () => {
   it("saves the submission it was opened for when a new row lands on top", async () => {
     const update = vi.fn<Mutate>(() => Promise.resolve(null));
