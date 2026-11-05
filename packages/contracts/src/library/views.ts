@@ -544,6 +544,12 @@ export interface CopyInstanceView {
      * the owner, the current holder and the owner's household can see it.
      */
     visibility: "private" | "visible";
+    /**
+     * The owner's chosen visibility, kept while the copy is offered: a "private" copy is visible
+     * only for as long as an offer is on and private again once every offer is withdrawn. Present
+     * only when `viewerCanManage`; the edit controls show this, not `visibility`.
+     */
+    visibilityPreference?: "private" | "visible";
     acquisitionDate?: number;
     acquisitionSource?: "bought_new" | "bought_used" | "trade" | "gift";
     /** The puzzle definition's difficulty, when set. */
@@ -665,7 +671,7 @@ export interface PuzzleDefinitionDetailView {
     /** The viewer's owning copy's `ownedPuzzles` _id, or null when they own none. */
     copyId: string | null;
     /** The viewer's owning copy's condition, or null when they own none. */
-    condition: string | null;
+    condition: CopyCondition | null;
   };
   /** Up to 5 reachable available copies, newest first. */
   availableCopies: CopyOfferView[];

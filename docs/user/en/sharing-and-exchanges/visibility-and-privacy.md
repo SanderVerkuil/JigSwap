@@ -58,9 +58,10 @@ A private copy is still visible to:
   yours and your housemate can still manage it. If that member declines the
   swap, or it's cancelled, the copy is private to them again.
 
-> **Note:** Only a visible copy can be offered. While a copy is offered for
-> swap, lend or sale, the private option is disabled. Withdraw the offer first.
-> Turning on an offer makes a private copy visible again.
+> **Note:** An offer makes a private copy visible while it lasts: members need
+> to see a copy to ask for it. Your **Private** choice is kept, so once you
+> withdraw every offer the copy is private again. You can choose **Private**
+> while a copy is offered, too.
 
 ## Set your profile to public or private
 

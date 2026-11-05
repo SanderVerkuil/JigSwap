@@ -8,7 +8,6 @@ import {
 import { Star, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
-import { COVER_SWATCHES } from "./add-puzzle-schema";
 
 type Dim = { w: number; h: number };
 type DimMap = Record<string, Dim>;
@@ -53,25 +52,25 @@ function MeasuredThumb({
   );
 }
 
+/**
+ * The box photo picker of a NEW catalogue puzzle: imported candidates plus the member's own upload.
+ * The selected photo is what the form sends as createPuzzle's `image`; `selectedPhotoUrl` is
+ * undefined when none is selected, and pressing the selected photo again deselects it (the form
+ * then saves no picture). There are no colour swatches: nothing stores a cover colour.
+ */
 export function CoverColourField({
-  color,
-  mode,
   photoOptions,
   selectedPhotoUrl,
-  onSelectColor,
   onSelectPhoto,
   onUploadPhoto,
 }: {
-  color: string;
-  mode: "color" | "photo";
   photoOptions: ReadonlyArray<{
     url: string;
     uploaded?: boolean;
     alt?: string;
   }>;
   selectedPhotoUrl?: string;
-  onSelectColor: (c: string) => void;
-  onSelectPhoto: (url: string) => void;
+  onSelectPhoto: (url: string | undefined) => void;
   onUploadPhoto: (file: File) => void;
 }) {
   const t = useTranslations("puzzles");
@@ -95,10 +94,15 @@ export function CoverColourField({
     setDims((prev) => (url in prev ? prev : { ...prev, [url]: dim }));
   };
 
-  // Reset measurement + user-pick state when the SET of option urls changes
-  // (i.e. a new import replaced the candidates).
+  // Reset measurement + user-pick state when the SET of imported option urls changes
+  // (i.e. a new import replaced the candidates). An upload is not a new import: re-arming
+  // auto-select then would swap the member's own photo for an imported one.
   const urlSet = useMemo(
-    () => photoOptions.map((o) => o.url).join("|"),
+    () =>
+      photoOptions
+        .filter((o) => !o.uploaded)
+        .map((o) => o.url)
+        .join("|"),
     [photoOptions],
   );
   const prevUrlSet = useRef(urlSet);
@@ -135,14 +139,13 @@ export function CoverColourField({
     return top.url;
   }, [importedUrls, dims]);
 
-  // Auto-select the best image exactly once, never overriding a manual pick.
+  // Auto-select the best image exactly once, never overriding a manual pick (deselecting counts).
   useEffect(() => {
-    if (mode !== "photo") return;
     if (userPicked.current) return;
     if (!best) return;
     if (best === selectedPhotoUrl) return;
     onSelectPhotoRef.current(best);
-  }, [mode, best, selectedPhotoUrl]);
+  }, [best, selectedPhotoUrl]);
 
   // Render order: imported options by measured area desc (unmeasured → 0,
   // sorted after measured ones), then uploaded option(s) last.
@@ -164,7 +167,7 @@ export function CoverColourField({
       <div className="flex flex-wrap gap-2.5 pt-2">
         {/* Photo thumbnails — one per option */}
         {orderedOptions.map((opt) => {
-          const selected = mode === "photo" && selectedPhotoUrl === opt.url;
+          const selected = selectedPhotoUrl === opt.url;
           const d = dims[opt.url];
           const isBest = !opt.uploaded && best === opt.url;
           const measured = d && d.w > 0;
@@ -192,7 +195,7 @@ export function CoverColourField({
                     aria-pressed={selected}
                     onClick={() => {
                       userPicked.current = true;
-                      onSelectPhoto(opt.url);
+                      onSelectPhoto(selected ? undefined : opt.url);
                     }}
                     className={[
                       "relative size-11 overflow-hidden rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
@@ -236,27 +239,6 @@ export function CoverColourField({
           );
         })}
 
-        {/* Colour swatches */}
-        {COVER_SWATCHES.map((c, i) => {
-          const selected = mode === "color" && color === c;
-          return (
-            <button
-              key={c}
-              type="button"
-              aria-label={`Cover colour ${i + 1}`}
-              aria-pressed={selected}
-              onClick={() => onSelectColor(c)}
-              style={{
-                background: `linear-gradient(140deg, ${c}, color-mix(in oklab, ${c}, black 30%))`,
-              }}
-              className={[
-                "size-9 rounded-md cursor-pointer shadow-[0_0_0_1px_var(--border)]",
-                selected ? "ring-2 ring-foreground" : "ring-2 ring-transparent",
-              ].join(" ")}
-            />
-          );
-        })}
-
         {/* Upload photo */}
         <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-3.5 text-sm font-semibold text-muted-foreground hover:bg-accent">
           <Upload className="size-3.5" /> {t("uploadPhoto")}
@@ -266,7 +248,10 @@ export function CoverColourField({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onUploadPhoto(file);
+              if (!file) return;
+              // Uploading is a manual pick: auto-select never replaces the member's own photo.
+              userPicked.current = true;
+              onUploadPhoto(file);
             }}
           />
         </label>

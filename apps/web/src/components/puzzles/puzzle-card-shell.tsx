@@ -222,24 +222,21 @@ export function PuzzleCardShell({
         </p>
       )}
 
+      {/* Tags are plain muted "#tag" text, so they never read as a status or an offer. */}
       {puzzle.tags && puzzle.tags.length > 0 && (
-        <div
+        <p
           className={cn(
-            "flex flex-wrap gap-1 mb-2",
+            "flex flex-wrap gap-x-2 gap-y-0.5 mb-2 text-xs text-muted-foreground",
             compactOnPhones && "max-sm:hidden",
           )}
         >
           {puzzle.tags.slice(0, 3).map((tag, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
+            <span key={index} className="max-w-full truncate">
+              #{tag}
+            </span>
           ))}
-          {puzzle.tags.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{puzzle.tags.length - 3}
-            </Badge>
-          )}
-        </div>
+          {puzzle.tags.length > 3 && <span>+{puzzle.tags.length - 3}</span>}
+        </p>
       )}
 
       {/* footer + actions sit ABOVE the stretched-link overlay (relative z-10) so their

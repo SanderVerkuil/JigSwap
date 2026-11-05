@@ -36,7 +36,8 @@ export const makeUpdateCopySharing =
     }
 
     const setting = SharingSetting.create({
-      visibility: cmd.visibility,
+      // An omitted visibility keeps the owner's stored choice (offer toggles never send it).
+      visibility: cmd.visibility ?? copy.sharing.visibility,
       forTrade: cmd.forTrade,
       forSale: cmd.forSale,
       forLend: cmd.forLend,

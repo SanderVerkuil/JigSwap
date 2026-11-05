@@ -6,9 +6,9 @@ import { useTranslations } from "use-intl";
 
 export type CopyVisibility = "private" | "visible";
 
-// Owner control for who can see a copy. A copy offered for swap, lend or sale is always visible
-// (the backend rejects private + an offer), so while `offered` the Private option is disabled with
-// the reason spelled out; the parent switches the value to visible when an offer is turned on.
+// Owner control for who can see a copy: the owner's own choice. An offer for swap, lend or sale
+// makes a private copy visible only while it lasts, so Private stays selectable while `offered`
+// and the note says what that means (private again once every offer is withdrawn).
 export function CopyVisibilityControl({
   value,
   onChange,
@@ -27,14 +27,12 @@ export function CopyVisibilityControl({
       Icon: Globe,
       label: t("visible"),
       hint: t("visibleHint"),
-      unavailable: false,
     },
     {
       key: "private" as const,
       Icon: Lock,
       label: t("private"),
       hint: t("privateHint"),
-      unavailable: offered,
     },
   ];
   return (
@@ -44,23 +42,22 @@ export function CopyVisibilityControl({
         aria-label={t("label")}
         className="grid gap-2 sm:grid-cols-2"
       >
-        {options.map(({ key, Icon, label, hint, unavailable }) => {
+        {options.map(({ key, Icon, label, hint }) => {
           const selected = value === key;
-          const off = disabled || unavailable;
           return (
             <button
               key={key}
               type="button"
               role="radio"
               aria-checked={selected}
-              disabled={off}
+              disabled={disabled}
               onClick={() => onChange(key)}
               className={cn(
                 "flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors",
                 selected
                   ? "border-jigsaw-primary bg-jigsaw-primary/5"
                   : "border-border bg-card hover:bg-accent",
-                off && "cursor-not-allowed opacity-50 hover:bg-card",
+                disabled && "cursor-not-allowed opacity-50 hover:bg-card",
               )}
             >
               <Icon
@@ -80,7 +77,9 @@ export function CopyVisibilityControl({
         })}
       </div>
       <p className="text-muted-foreground text-xs">
-        {offered ? t("privateDisabled") : t("offerNote")}
+        {offered && value === "private"
+          ? t("privateWhileOffered")
+          : t("offerNote")}
       </p>
     </div>
   );

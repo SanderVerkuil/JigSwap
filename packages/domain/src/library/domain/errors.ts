@@ -8,6 +8,7 @@ export type LibraryErrorCode =
   | "NotOwner"
   | "InvalidCondition"
   | "InvalidPrice"
+  | "InvalidAcquisitionDate"
   | "DuplicateCollectionName"
   | "CannotDeleteDefaultCollection"
   | "CopyNotInCollection"
@@ -18,11 +19,11 @@ export type LibraryErrorCode =
   | "NotLender"
   | "EmptyAcquireBatch"
   | "AcquireBatchTooLarge"
-  | "CopyMustBeVisibleToOffer"
   | "OwnershipChanged"
   | "AlreadyLentOut"
   | "TooManyImages"
-  | "ImageTextTooLong";
+  | "ImageTextTooLong"
+  | "OffersBatchTooLarge";
 
 export class LibraryError extends DomainError {
   override readonly name = "LibraryError";
@@ -47,6 +48,14 @@ export class LibraryError extends DomainError {
   // A price (sale or acquisition) failed validation.
   static invalidPrice(detail: string): LibraryError {
     return new LibraryError("InvalidPrice", `Invalid price: ${detail}`);
+  }
+
+  // An acquisition date that isn't a real date or lies outside the possible range.
+  static invalidAcquisitionDate(): LibraryError {
+    return new LibraryError(
+      "InvalidAcquisitionDate",
+      "Not a date a copy can have been acquired on",
+    );
   }
 
   // Two collections of the same owner cannot share a name (the uniqueness check is an
@@ -139,14 +148,6 @@ export class LibraryError extends DomainError {
     );
   }
 
-  // A copy offered for swap, lend or sale must be visible to the community.
-  static copyMustBeVisibleToOffer(): LibraryError {
-    return new LibraryError(
-      "CopyMustBeVisibleToOffer",
-      "A copy offered for swap, lend or sale must be visible",
-    );
-  }
-
   // A copy already holds the most photos it may have.
   static tooManyImages(max: number): LibraryError {
     return new LibraryError(
@@ -163,6 +164,14 @@ export class LibraryError extends DomainError {
     return new LibraryError(
       "ImageTextTooLong",
       `A photo ${field} can be at most ${max} characters`,
+    );
+  }
+
+  // A bulk offer change with more distinct copies than the cap.
+  static offersBatchTooLarge(max: number): LibraryError {
+    return new LibraryError(
+      "OffersBatchTooLarge",
+      `At most ${max} puzzles can be changed at once`,
     );
   }
 }

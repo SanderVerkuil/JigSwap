@@ -17,11 +17,13 @@ import { toConvexError } from "./errors";
 
 // Composition root for replacing a copy's sharing setting. The reserved-copy guard (a copy
 // reserved by an active exchange cannot be made available) is enforced in the use case via the
-// reservation port. `copyId` is the domain aggregateId.
+// reservation port. `copyId` is the domain aggregateId. `visibility` is the owner's choice and may
+// be "private" on an offered copy (it is visible while offered); omitted keeps the stored choice,
+// so offer toggles never overwrite it.
 export const updateCopySharing = mutation({
   args: {
     copyId: v.string(),
-    visibility: v.union(v.literal("private"), v.literal("visible")),
+    visibility: v.optional(v.union(v.literal("private"), v.literal("visible"))),
     forTrade: v.optional(v.boolean()),
     forSale: v.optional(v.boolean()),
     forLend: v.optional(v.boolean()),
@@ -54,7 +56,7 @@ export const updateCopySharing = mutation({
     const result = await update({
       actingMemberId,
       copyId: toCopyId(args.copyId),
-      visibility: args.visibility as Visibility,
+      visibility: args.visibility as Visibility | undefined,
       forTrade: args.forTrade,
       forSale: args.forSale,
       forLend: args.forLend,

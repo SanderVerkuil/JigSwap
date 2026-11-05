@@ -1,7 +1,8 @@
 "use client";
 
-// ⌘K command palette: a real global search across Puzzles, People, Circles and the member's
-// Collections (gateway.search.global) plus the static "Go To" nav destinations and quick actions.
+// ⌘K command palette: a real global search across Puzzles, the member's own copies ("In your
+// library"), People, Circles and the member's Collections (gateway.search.global) plus the static
+// "Go To" nav destinations and quick actions.
 // The destinations and quick actions are ALWAYS listed: cmdk filters them on their localized
 // title plus bilingual keywords (route-meta), so typing "gol", "mess" or "ruil" still reaches
 // Goals, Messages or Exchanges. From MIN_TERM_LENGTH characters the live result groups render
@@ -28,6 +29,7 @@ import { defaultFilter } from "cmdk";
 import { useConvexAuth } from "convex/react";
 import {
   Blend,
+  BookOpen,
   CircleCheck,
   FolderOpen,
   Plus,
@@ -138,6 +140,9 @@ export function CommandPalette({
     isAuthenticated &&
     typed.length >= MIN_TERM_LENGTH &&
     (typed !== term || results === undefined);
+  // Web deploys before Convex, and a failed or superseded backend deploy can keep it that way for
+  // longer, so a backend that doesn't return `copies` yet must not crash the app.
+  const copies = results?.copies ?? [];
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription.
@@ -252,6 +257,37 @@ export function CommandPalette({
               : t("search.empty")}
           </CommandEmpty>
         )}
+
+        {/* The member's own copies come first: someone typing a title they own most likely
+            wants their copy, not the catalogue entry. */}
+        {copies.length > 0 ? (
+          <CommandGroup heading={t("search.groupLibrary")}>
+            {copies.map((hit) => (
+              <CommandItem
+                key={hit.id}
+                value={keep(hit.id)}
+                onSelect={() => go(hit.href)}
+              >
+                {hit.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={hit.image}
+                    alt=""
+                    className="size-5 rounded object-cover"
+                  />
+                ) : (
+                  <BookOpen />
+                )}
+                <span>{hit.title}</span>
+                {hit.brand ? (
+                  <span className="text-muted-foreground ml-auto truncate text-xs">
+                    {hit.brand}
+                  </span>
+                ) : null}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ) : null}
 
         {results && results.puzzles.length > 0 ? (
           <CommandGroup heading={t("search.groupPuzzles")}>

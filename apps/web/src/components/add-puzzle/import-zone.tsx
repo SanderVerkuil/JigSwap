@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { CircleCheck, Link, Link2, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
 export function ImportZone({
@@ -22,6 +22,7 @@ export function ImportZone({
   const relativeTime = useRelativeTime();
   const { state, run } = usePuzzleImport();
   const [url, setUrl] = useState("");
+  const urlInputId = useId();
 
   // Stable callback refs so the prefill effect never captures stale closures.
   const onDraftRef = useRef(onDraft);
@@ -54,13 +55,17 @@ export function ImportZone({
           {t("importFromUrl")}
         </span>
       </div>
-      <p className="mb-3 ml-10 text-sm text-foreground/80">
+      <p className="mb-3 text-sm text-foreground/80 sm:ml-10">
         {t("importUrlBlurb")}
       </p>
-      <div className="ml-10 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 sm:ml-10">
         <div className="relative min-w-[220px] flex-1">
           <Link2 className="pointer-events-none absolute left-3 top-1/2 size-[15px] -translate-y-1/2 text-muted-foreground" />
+          <label htmlFor={urlInputId} className="sr-only">
+            {t("importUrlPlaceholder")}
+          </label>
           <Input
+            id={urlInputId}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => {
@@ -89,7 +94,12 @@ export function ImportZone({
           )}
         </Button>
       </div>
-      <div className="ml-10 mt-2 min-h-[18px]">
+      {/* Always mounted, so screen readers announce the outcome when it appears. */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-2 min-h-[18px] sm:ml-10"
+      >
         {state.status === "ready" && !state.match && (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-jigsaw-secondary">
             <CircleCheck className="size-3.5" /> {t("importImported")}

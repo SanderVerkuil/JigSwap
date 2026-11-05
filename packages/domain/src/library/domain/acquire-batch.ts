@@ -3,7 +3,8 @@ import { LibraryError } from "./errors";
 import { PuzzleDefinitionId } from "./ids";
 
 // The most definitions one batch add may acquire (counted after deduplication). Keeps a single
-// transaction's reads and writes bounded, and matches the quick-start picker's tray.
+// transaction's reads and writes bounded; the web picker sends a larger tray in chunks of this
+// size.
 export const MAX_ACQUIRE_BATCH = 25;
 
 export interface AcquireBatchRequest {

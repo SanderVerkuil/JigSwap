@@ -4,7 +4,8 @@ import { householdMateIds } from "../household/memberships";
 
 // THE single source of a copy's effective visibility. Every read that decides whether someone
 // other than the owner may see (or count) a copy goes through here, never through the raw
-// `ownedPuzzles.visibility` column.
+// `ownedPuzzles.visibility` column: that column holds the OWNER'S CHOICE, which stays "private" on a
+// copy that is currently offered (the offer makes it visible only while it lasts).
 
 export type CopyVisibility = "private" | "visible";
 
@@ -20,21 +21,31 @@ const isOffered = (row: VisibilityFields): boolean =>
   row.availability.forLend;
 
 /**
- * The visibility a copy row actually has:
- *   - offered for swap/lend/sale -> "visible" (an offer implies visibility — defense in depth for a
- *     stored private+offered combination the domain now rejects on write);
+ * The owner's chosen visibility (the domain SharingSetting's `visibility`), whether or not the copy
+ * is offered right now:
  *   - `visibilityAuthoritative` set -> the stored value (unset -> "visible");
  *   - otherwise (a row from before the per-copy toggle, backfilled or not) -> "visible": its stored
  *     "private" was the old domain default, not the owner's choice.
+ * Only the owner's side (the domain load, manager views) reads this; who may see the copy is
+ * effectiveCopyVisibility.
+ */
+export const copyVisibilityPreference = (
+  row: VisibilityFields,
+): CopyVisibility =>
+  row.visibilityAuthoritative === true
+    ? (row.visibility ?? "visible")
+    : "visible";
+
+/**
+ * The visibility a copy row actually has: "visible" while it is offered for swap/lend/sale (an offer
+ * nobody can see is meaningless), otherwise the owner's choice (copyVisibilityPreference). A stored
+ * "private" on an offered copy is the owner's choice, kept for when the offer is withdrawn.
  * Order-independent by construction: correct before and after the backfill has run.
  */
 export const effectiveCopyVisibility = (
   row: VisibilityFields,
-): CopyVisibility => {
-  if (isOffered(row)) return "visible";
-  if (row.visibilityAuthoritative === true) return row.visibility ?? "visible";
-  return "visible";
-};
+): CopyVisibility =>
+  isOffered(row) ? "visible" : copyVisibilityPreference(row);
 
 export const isCopyPrivate = (row: VisibilityFields): boolean =>
   effectiveCopyVisibility(row) === "private";

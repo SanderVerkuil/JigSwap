@@ -133,7 +133,7 @@ const renderDensity = (
     // The content column is the card's second child in grid mode.
     content: byText("Sheep everywhere").parentElement!.classList,
     description: byText("Sheep everywhere").classList,
-    tags: byText("cartoon").parentElement!.classList,
+    tags: byText("#cartoon").parentElement!.classList,
   };
 };
 

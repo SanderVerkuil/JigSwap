@@ -12,6 +12,19 @@ export interface PuzzleSearchHit {
   href: string;
 }
 
+/**
+ * One of the signed-in member's OWN copies ("In your library"). `href` points at the owner's copy
+ * page (/my-puzzles/<ownedPuzzles _id>). Never another member's copy.
+ */
+export interface CopySearchHit {
+  id: string;
+  title: string;
+  brand?: string;
+  /** Already-resolved cover URL: the copy's approved cover photo, else the box art (null when unset). */
+  image: string | null;
+  href: string;
+}
+
 /** A member (person) hit. `href` points at the people surface. */
 export interface PersonSearchHit {
   id: string;
@@ -39,6 +52,7 @@ export interface CollectionSearchHit {
 /** The grouped result set returned by the single global-search query. */
 export interface GlobalSearchResults {
   puzzles: PuzzleSearchHit[];
+  copies: CopySearchHit[];
   people: PersonSearchHit[];
   circles: CircleSearchHit[];
   collections: CollectionSearchHit[];

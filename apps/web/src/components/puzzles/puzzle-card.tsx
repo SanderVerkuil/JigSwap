@@ -1,13 +1,14 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { Heart, Plus } from "lucide-react";
+import { Check, Heart, Plus } from "lucide-react";
 import { useTranslations } from "use-intl";
 import { PuzzleCardShell } from "./puzzle-card-shell";
 import { PUZZLE_GRID_COVER_SIZES } from "./puzzle-view-provider";
@@ -18,9 +19,33 @@ type Puzzle = FunctionReturnType<typeof gateway.catalog.recentPuzzles>[number];
 
 interface PuzzleCardProps {
   puzzle: Puzzle;
+  /**
+   * "catalogue" (default): the card opens the catalogue page, with a heart and a + to add a copy.
+   * "pick": the Add Puzzle chooser's card. The whole card opens the add-a-copy form, with a
+   * labelled "Add to Library" button and a small Details link; no heart.
+   */
+  variant?: "catalogue" | "pick";
+  /** pick variant: the member already owns a copy of this puzzle ("On your shelf"). */
+  onShelf?: boolean;
 }
 
-export function PuzzleCard({ puzzle }: PuzzleCardProps) {
+// The add-a-copy form for a catalogue puzzle.
+export const addCopyHref = (puzzleId: string) =>
+  `/my-puzzles/add/new?puzzleId=${puzzleId}`;
+
+export function PuzzleCard({
+  puzzle,
+  variant = "catalogue",
+  onShelf = false,
+}: PuzzleCardProps) {
+  return variant === "pick" ? (
+    <PickPuzzleCard puzzle={puzzle} onShelf={onShelf} />
+  ) : (
+    <CataloguePuzzleCard puzzle={puzzle} />
+  );
+}
+
+function CataloguePuzzleCard({ puzzle }: { puzzle: Puzzle }) {
   const t = useTranslations("puzzles");
   // Catalog-card strings (the favourite labels) live under the nested
   // `puzzles.puzzles.*` namespace, not the flat `puzzles.*` one used by `t`.
@@ -79,6 +104,81 @@ export function PuzzleCard({ puzzle }: PuzzleCardProps) {
           >
             <Link href={`/my-puzzles/add/new?puzzleId=${puzzle._id}`}>
               <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      }
+    />
+  );
+}
+
+// The chooser's card: picking a puzzle is the point, so the card itself, and its one labelled
+// button, open the add-a-copy form. The catalogue page stays one small Details link away.
+function PickPuzzleCard({
+  puzzle,
+  onShelf,
+}: {
+  puzzle: Puzzle;
+  onShelf: boolean;
+}) {
+  const t = useTranslations("puzzles");
+  const tPicker = useTranslations("cataloguePicker");
+  const boxArtInCheck = useBoxArtInCheck();
+  const addHref = addCopyHref(puzzle._id);
+
+  return (
+    <PuzzleCardShell
+      puzzle={{
+        id: puzzle._id,
+        title: puzzle.title,
+        brand: puzzle.brand,
+        pieceCount: puzzle.pieceCount,
+        difficulty: puzzle.difficulty,
+        description: puzzle.description,
+        tags: puzzle.tags,
+        imageUrl: puzzle.image,
+        imageSrcSet: puzzle.imageSrcSet,
+      }}
+      // The chooser's auto-fill grid has the default grid's column bounds (PuzzlePickList).
+      imageSizes={PUZZLE_GRID_COVER_SIZES}
+      imageHref={addHref}
+      imageFit="contain"
+      imageChecking={!puzzle.image && boxArtInCheck.has(puzzle._id)}
+      badges={
+        onShelf ? (
+          <div className="mb-2">
+            <Badge variant="outline">
+              <Check aria-hidden />
+              {tPicker("onShelf")}
+            </Badge>
+          </div>
+        ) : undefined
+      }
+      actions={
+        // Wraps instead of truncating: on a narrow card (or with a long Dutch label) Details drops
+        // to its own line, and the Add label may still wrap inside its button, so neither is cut.
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <Button
+            size="sm"
+            asChild
+            className="h-auto min-h-8 min-w-0 flex-auto py-1.5 whitespace-normal"
+          >
+            <Link href={addHref}>
+              <Plus aria-hidden className="h-4 w-4" />
+              {t("addToLibrary")}
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-muted-foreground shrink-0"
+          >
+            <Link
+              href={`/puzzles/${puzzle._id}`}
+              aria-label={t("chooser.detailsOf", { title: puzzle.title })}
+            >
+              {t("chooser.details")}
             </Link>
           </Button>
         </div>

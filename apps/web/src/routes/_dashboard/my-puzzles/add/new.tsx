@@ -1,13 +1,12 @@
-import { useRouter, useSearchParams } from "@/compat/navigation";
+import { useSearchParams } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
+  AddPuzzleSummary,
   AvailabilityChips,
   availabilityToSharing,
   CATALOG_TEXT_LIMITS,
-  CONDITION_OPTIONS,
   contributeError,
   CopyStepError,
-  COVER_SWATCHES,
   CoverColourField,
   coverStep,
   CoverStepError,
@@ -23,6 +22,8 @@ import {
   SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { useConditionOptions } from "@/components/library/condition";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { Button } from "@/components/ui/button";
@@ -56,14 +57,23 @@ import {
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useConvex } from "convex/react";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/add/new")({
+  // Copy mode (?puzzleId) adds a copy of a catalogue puzzle; it creates nothing.
   head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "createPuzzle") }],
+    meta: [
+      {
+        title: pageTitle(
+          match.context,
+          match.search.puzzleId ? "addCopy" : "createPuzzle",
+        ),
+      },
+    ],
   }),
   // The page reads ?puzzleId off the URL via the next/navigation compat
   // (useSearchParams -> useSearch({ strict: false })); validate it so the
@@ -98,8 +108,8 @@ interface FormState {
   difficulty: "easy" | "medium" | "hard" | "expert";
   condition: "new_sealed" | "like_new" | "good" | "fair" | "poor";
   availability: { forTrade: boolean; forLend: boolean; forSale: boolean };
-  coverColor: string;
-  coverMode: "color" | "photo";
+  // "photo" when a box photo is selected (the upload, else selectedImageUrl); "none" sends no image.
+  coverMode: "none" | "photo";
   coverFile: File | undefined;
   importedImages: string[];
   // Alt text per imported image URL (only HTML-scraped images carry it); shown in the cover picker.
@@ -123,9 +133,10 @@ const DEFAULT_FORM: FormState = {
   pieceCount: undefined,
   difficulty: "medium",
   condition: "good",
-  availability: { forTrade: true, forLend: false, forSale: false },
-  coverColor: COVER_SWATCHES[0],
-  coverMode: "color",
+  // Every offer starts off, like the catalogue picker and the domain default: a copy goes on the
+  // market (Browse, swap/loan requests) only when the member switches an offer on.
+  availability: { forTrade: false, forLend: false, forSale: false },
+  coverMode: "none",
   coverFile: undefined,
   importedImages: [],
   importedImageAlts: undefined,
@@ -141,26 +152,19 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
-// Reached from the catalogue picker (returnTo set): availability starts all off, like the picker
-// and the domain default, instead of pre-ticking swap.
-const QUICK_FLOW_FORM: FormState = {
-  ...DEFAULT_FORM,
-  availability: { forTrade: false, forLend: false, forSale: false },
-};
-
 function AddPuzzlePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
+  const tShell = useTranslations("shell");
 
   const navigate = useNavigate();
+  const convex = useConvex();
   const returnTo = searchParams.get("returnTo") ?? undefined;
-  const formDefaults = returnTo ? QUICK_FLOW_FORM : DEFAULT_FORM;
   const [form, setForm] = useState<FormState>(() => ({
-    ...formDefaults,
+    ...DEFAULT_FORM,
     title: searchParams.get("title") ?? "",
     ean: searchParams.get("ean") ?? "",
     upc: searchParams.get("upc") ?? "",
@@ -237,6 +241,25 @@ function AddPuzzlePage() {
   const isCopyMode = !!puzzleIdFromUrl;
   const copyLoading = isCopyMode && specificPuzzle === undefined;
 
+  // The route's static head is "Create a Puzzle", which copy mode is not: there the page titles
+  // itself "Add your copy" under My Library › Add Puzzle (the chooser it came from).
+  usePageHeader(
+    () =>
+      isCopyMode
+        ? {
+            title: t("chooser.addYourCopy"),
+            crumbs: [
+              { label: tShell("groups.library.label"), href: "/library" },
+              {
+                label: tShell("pages.addPuzzle.title"),
+                href: "/my-puzzles/add",
+              },
+            ],
+          }
+        : {},
+    [isCopyMode, t, tShell],
+  );
+
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
   // previous URL when the file changes (or on unmount), so no setState runs inside an effect.
   const coverFileUrl = useMemo(
@@ -250,7 +273,7 @@ function AddPuzzlePage() {
     [coverFileUrl],
   );
 
-  // The photo URL used for the live preview: uploaded file takes priority, else selected import
+  // The selected box photo: uploaded file takes priority, else the selected import.
   const previewPhotoUrl =
     form.coverMode === "photo"
       ? (coverFileUrl ?? form.selectedImageUrl)
@@ -276,12 +299,12 @@ function AddPuzzlePage() {
       importedImageAlts: draft.imageAlts ? { ...draft.imageAlts } : undefined,
       selectedImageUrl: imgs[0],
       coverFile: undefined,
-      coverMode: imgs.length ? "photo" : "color",
+      coverMode: imgs.length ? "photo" : "none",
     }));
   };
 
   const resetForm = () => {
-    setForm(formDefaults);
+    setForm(DEFAULT_FORM);
     setSelectedDefinitionId(null);
     setPendingMatch(null);
   };
@@ -330,12 +353,22 @@ function AddPuzzlePage() {
     image: imageId,
   });
 
+  // createOwned returns the copy's domain id; the copy page is keyed on its document id. The copy
+  // is already added when this runs, so a failed lookup only changes where the member lands.
+  const resolveCopyPageId = async (copyId: string) => {
+    try {
+      return await convex.query(gateway.library.copyDocId, { copyId });
+    } catch {
+      return null;
+    }
+  };
+
   // The WHOLE multi-step create — optional image upload/import, createPuzzle,
-  // createOwned, updateSharing — runs as ONE mutationFn so isPending spans the full
-  // sequence (busy-state rule v2). Both footer buttons share it; the `andAnother`
-  // variant only changes what happens after success (reset vs navigate).
+  // createOwned, updateSharing, resolving the landing page — runs as ONE mutationFn so
+  // isPending spans the full sequence (busy-state rule v2). Both footer buttons share it; the
+  // `andAnother` variant only changes what happens after success (reset vs navigate).
   const submitPuzzle = useMutation({
-    mutationFn: async (_variables: { andAnother: boolean }) => {
+    mutationFn: async ({ andAnother }: { andAnother: boolean }) => {
       // 1. Resolve the catalog definition id (existing match or create new).
       let definitionId = selectedDefinitionId;
       if (!definitionId) {
@@ -359,14 +392,29 @@ function AddPuzzlePage() {
       if (hasAnyAvailability(form.availability)) {
         await updateSharing(availabilityToSharing(copyId, form.availability));
       }
+
+      // 4. Land on the new copy, unless the member stays on the form or a flow takes them back.
+      return andAnother || returnTo ? null : await resolveCopyPageId(copyId);
     },
-    onSuccess: (_, { andAnother }) => {
-      toast.success(t("puzzleAdded"));
+    onSuccess: (copyPageId, { andAnother }) => {
       if (andAnother) {
+        toast.success(t("puzzleAdded"));
         resetForm();
+      } else if (returnTo) {
+        toast.success(t("puzzleAdded"));
+        void navigate({ href: returnTo });
       } else {
-        if (returnTo) void navigate({ href: returnTo });
-        else router.push("/puzzles");
+        toast.success(t("puzzleAdded"), {
+          action: {
+            label: t("addAnother"),
+            onClick: () => void navigate({ to: "/my-puzzles/add" }),
+          },
+        });
+        if (copyPageId) {
+          void navigate({ to: "/my-puzzles/$id", params: { id: copyPageId } });
+        } else {
+          void navigate({ to: "/my-puzzles" });
+        }
       }
     },
     onError: (error) => {
@@ -409,10 +457,7 @@ function AddPuzzlePage() {
     ...o,
     label: t(`difficulty_${o.value}`),
   }));
-  const conditionOptions = CONDITION_OPTIONS.map((o) => ({
-    value: o.value,
-    label: t(`condition_${o.value}`),
-  }));
+  const conditionOptions = useConditionOptions();
 
   // The chosen definition shown read-only at the top of copy mode.
   const chosenDefinition = isCopyMode ? (
@@ -490,64 +535,29 @@ function AddPuzzlePage() {
     </div>
   );
 
-  // The cover-photo picker (kept for the copy too, so a member can attach their
-  // own shelf photo) and notes — shared between modes.
-  const coverAndNotes = (
-    <div className="flex flex-col gap-5">
-      {/* Cover colour / photo */}
-      <div className="flex flex-col gap-1.5">
-        <Label>{t("coverColour")}</Label>
-        <p className="text-xs text-muted-foreground">{t("coverColourHint")}</p>
-        <CoverColourField
-          color={form.coverColor}
-          mode={form.coverMode}
-          photoOptions={[
-            ...form.importedImages.map((url) => ({
-              url,
-              alt: form.importedImageAlts?.[url],
-            })),
-            ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
-          ]}
-          selectedPhotoUrl={
-            form.coverFile ? coverFileUrl : form.selectedImageUrl
-          }
-          onSelectColor={(c) =>
-            setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
-          }
-          onSelectPhoto={(url) =>
-            setForm((f) =>
-              url === coverFileUrl
-                ? { ...f, coverMode: "photo" }
-                : {
-                    ...f,
-                    coverMode: "photo",
-                    coverFile: undefined,
-                    selectedImageUrl: url,
-                  },
-            )
-          }
-          onUploadPhoto={(file) =>
-            setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
-          }
-        />
-      </div>
+  // Copy mode saves no photo: the only image this form can store is a NEW catalogue puzzle's box
+  // art (createPuzzle's image). Photos of the member's own copy are added on the copy's page.
+  const copyPhotosLater = (
+    <p className="text-xs text-muted-foreground">
+      {t("chooser.copyPhotosLater")}
+    </p>
+  );
 
-      {/* Notes */}
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="ap-notes">
-          {t("fieldNotes")}{" "}
-          <span className="text-xs font-normal text-muted-foreground">
-            {t("optional")}
-          </span>
-        </Label>
-        <Textarea
-          id="ap-notes"
-          value={form.notes}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          placeholder={t("notesPlaceholderLong")}
-          rows={3}
-        />
-      </div>
+  const copyNotes = (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor="ap-notes">
+        {t("fieldNotes")}{" "}
+        <span className="text-xs font-normal text-muted-foreground">
+          {t("optional")}
+        </span>
+      </Label>
+      <Textarea
+        id="ap-notes"
+        value={form.notes}
+        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+        placeholder={t("notesPlaceholderLong")}
+        rows={3}
+      />
     </div>
   );
 
@@ -576,7 +586,7 @@ function AddPuzzlePage() {
         onClick={() =>
           returnTo
             ? void navigate({ href: returnTo })
-            : router.push(isCopyMode ? "/my-puzzles/add" : "/puzzles")
+            : void navigate({ to: "/my-puzzles/add" })
         }
       >
         {t("cancel")}
@@ -593,15 +603,22 @@ function AddPuzzlePage() {
   // copy-specific fields. No import zone, no definition editing.
   const copyColumn = (
     <>
-      {copyLoading ? (
-        <div className="h-24 animate-pulse rounded-xl bg-muted" />
-      ) : (
-        chosenDefinition
-      )}
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("chooser.addYourCopyHint")}
+        </p>
+        {copyLoading ? (
+          <div className="h-24 animate-pulse rounded-xl bg-muted" />
+        ) : (
+          chosenDefinition
+        )}
+      </div>
       <SectionDivider label={t("chooser.copyDetails")} />
       {copyFields}
-      <SectionDivider label={t("dividerCover")} />
-      {coverAndNotes}
+      <div className="flex flex-col gap-2">
+        {copyNotes}
+        {copyPhotosLater}
+      </div>
       {footerButtons}
     </>
   );
@@ -655,7 +672,7 @@ function AddPuzzlePage() {
         </div>
 
         {/* Publisher + Piece Count */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ap-publisher">
               {t("fieldPublisher")}{" "}
@@ -689,7 +706,7 @@ function AddPuzzlePage() {
         </div>
 
         {/* Brand (product line) + Series — both optional */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="ap-brand">
               {t("fieldBrand")}{" "}
@@ -778,49 +795,54 @@ function AddPuzzlePage() {
       <SectionDivider label={t("dividerCover")} />
 
       <div className="flex flex-col gap-5">
-        {/* Cover colour / photo */}
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("coverColour")}</Label>
-          <p className="text-xs text-muted-foreground">
-            {t("coverColourHint")}
-          </p>
-          <CoverColourField
-            color={form.coverColor}
-            mode={form.coverMode}
-            photoOptions={[
-              ...form.importedImages.map((url) => ({
-                url,
-                alt: form.importedImageAlts?.[url],
-              })),
-              ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
-            ]}
-            selectedPhotoUrl={
-              form.coverFile ? coverFileUrl : form.selectedImageUrl
-            }
-            onSelectColor={(c) =>
-              setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
-            }
-            onSelectPhoto={(url) =>
-              setForm((f) =>
-                url === coverFileUrl
-                  ? { ...f, coverMode: "photo" }
-                  : {
-                      ...f,
-                      coverMode: "photo",
-                      coverFile: undefined,
-                      selectedImageUrl: url,
-                    },
-              )
-            }
-            onUploadPhoto={(file) =>
-              setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
-            }
-          />
-        </div>
+        {/* Box photo: only a NEW catalogue puzzle stores one (createPuzzle's image). Once the
+            member picks an existing puzzle from an import match, nothing would save it. */}
+        {selectedDefinitionId ? (
+          copyPhotosLater
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <Label>
+              {t("boxPhoto")}{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("optional")}
+              </span>
+            </Label>
+            <p className="text-xs text-muted-foreground">{t("boxPhotoHint")}</p>
+            <CoverColourField
+              photoOptions={[
+                ...form.importedImages.map((url) => ({
+                  url,
+                  alt: form.importedImageAlts?.[url],
+                })),
+                ...(coverFileUrl
+                  ? [{ url: coverFileUrl, uploaded: true }]
+                  : []),
+              ]}
+              selectedPhotoUrl={previewPhotoUrl}
+              onSelectPhoto={(url) =>
+                setForm((f) =>
+                  url === undefined
+                    ? { ...f, coverMode: "none" }
+                    : url === coverFileUrl
+                      ? { ...f, coverMode: "photo" }
+                      : {
+                          ...f,
+                          coverMode: "photo",
+                          coverFile: undefined,
+                          selectedImageUrl: url,
+                        },
+                )
+              }
+              onUploadPhoto={(file) =>
+                setForm((f) => ({ ...f, coverFile: file, coverMode: "photo" }))
+              }
+            />
+          </div>
+        )}
 
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
-          <Label>
+          <Label htmlFor="ap-tags">
             {t("fieldTags")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
               {t("optional")}
@@ -828,6 +850,7 @@ function AddPuzzlePage() {
           </Label>
           <p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
           <TagInput
+            id="ap-tags"
             value={form.tags}
             onChange={(tags) => setForm((f) => ({ ...f, tags }))}
             placeholder={t("tagsPlaceholder")}
@@ -869,7 +892,7 @@ function AddPuzzlePage() {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 flex flex-col gap-4">
             {/* EAN + UPC */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="ap-ean">{tf("ean.label")}</Label>
                 <Input
@@ -1012,6 +1035,17 @@ function AddPuzzlePage() {
         </Collapsible>
       </div>
 
+      <AddPuzzleSummary
+        title={form.title}
+        brand={form.brand || form.publisher}
+        pieceCount={form.pieceCount}
+        coverPhotoUrl={selectedDefinitionId ? undefined : previewPhotoUrl}
+        offers={[
+          form.availability.forTrade ? t("availTrade") : "",
+          form.availability.forLend ? t("availLend") : "",
+          form.availability.forSale ? t("availSale") : "",
+        ]}
+      />
       {footerButtons}
     </>
   );
@@ -1029,11 +1063,14 @@ function AddPuzzlePage() {
         }
         pieceCount={specificPuzzle?.pieceCount ?? form.pieceCount}
         difficulty={specificPuzzle?.difficulty ?? form.difficulty}
-        coverColor={form.coverColor}
+        // Only what the submit saves: the catalogue puzzle's own picture in copy mode, the selected
+        // box photo when the form creates a new catalogue puzzle, nothing for an import match.
         coverPhotoUrl={
           isCopyMode
-            ? (previewPhotoUrl ?? specificPuzzle?.image ?? undefined)
-            : previewPhotoUrl
+            ? (specificPuzzle?.image ?? undefined)
+            : selectedDefinitionId
+              ? undefined
+              : previewPhotoUrl
         }
         available={hasAnyAvailability(form.availability)}
       />
@@ -1045,10 +1082,6 @@ function AddPuzzlePage() {
           items={[
             { ok: !!form.title.trim(), label: t("checkTitle") },
             { ok: !!form.pieceCount, label: t("checkPieces") },
-            {
-              ok: hasAnyAvailability(form.availability),
-              label: t("checkAvailability"),
-            },
           ]}
         />
       )}

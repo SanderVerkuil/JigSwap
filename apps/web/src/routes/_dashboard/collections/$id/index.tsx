@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { useRouter } from "@/compat/navigation";
 import {
   computeCollectionStats,
   DifficultyMix,
@@ -9,6 +10,7 @@ import {
   EditCollectionDialog,
   type EditableCollection,
 } from "@/components/collections/edit-collection-dialog";
+import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
@@ -60,6 +62,8 @@ function CollectionPending() {
 
 function CollectionDetailPage() {
   const { id } = Route.useParams();
+  const router = useRouter();
+  const { member } = useCurrentMember();
   const relativeTime = useRelativeTime();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
@@ -73,6 +77,9 @@ function CollectionDetailPage() {
 
   const removeFromCollection = useMutation({
     mutationFn: useConvexMutation(gateway.collections.removeOwnedPuzzle),
+  });
+  const addToCollection = useMutation({
+    mutationFn: useConvexMutation(gateway.collections.addOwnedPuzzle),
   });
   const updateCollection = useMutation({
     mutationFn: useConvexMutation(gateway.collections.update),
@@ -94,24 +101,32 @@ function CollectionDetailPage() {
 
   const stats = useMemo(() => computeCollectionStats(puzzles), [puzzles]);
 
+  // Takes a copy out of this collection (the copy stays in the library), confirmed by a toast
+  // whose Undo puts it back. The domain remove/add take the Collection + Copy aggregateIds.
   const handleRemovePuzzle = async (ownedPuzzleId: Id<"ownedPuzzles">) => {
-    // The domain remove takes the Collection + Copy aggregateIds; resolve them from the loaded
-    // collection and its member rows, and guard rows that predate the backfill.
     const copy = collection?.puzzles?.find((p) => p && p._id === ownedPuzzleId);
-    if (!collection?.aggregateId || !copy?.aggregateId) {
-      console.error(
-        "Cannot remove: collection or copy is missing aggregateId.",
-      );
+    const collectionId = collection?.aggregateId;
+    const copyId = copy?.aggregateId;
+    if (!collectionId || !copyId) {
+      toast.error(t("removeError"));
       return;
     }
     try {
-      await removeFromCollection.mutateAsync({
-        collectionId: collection.aggregateId,
-        copyId: copy.aggregateId,
-      });
-    } catch (error) {
-      console.error("Failed to remove puzzle from collection:", error);
+      await removeFromCollection.mutateAsync({ collectionId, copyId });
+    } catch {
+      toast.error(t("removeError"));
+      return;
     }
+    toast.success(t("removed", { title: copy?.puzzle?.title ?? "" }), {
+      action: {
+        label: t("undo"),
+        onClick: () => {
+          addToCollection
+            .mutateAsync({ collectionId, copyId })
+            .catch(() => toast.error(t("undoRemoveError")));
+        },
+      },
+    });
   };
 
   // Copy the current page URL to the clipboard; guard for SSR / browsers that
@@ -180,6 +195,8 @@ function CollectionDetailPage() {
   };
 
   const isEmpty = puzzles.length === 0;
+  // A public collection is open to visitors too; only its owner may change it.
+  const viewerOwnsCollection = !!member && member._id === collection.userId;
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -198,9 +215,11 @@ function CollectionDetailPage() {
                 visibility: collection.visibility,
                 color: collection.color ?? undefined,
                 icon: collection.icon ?? undefined,
+                isDefault: collection.isDefault,
               } satisfies EditableCollection)
             : null
         }
+        onDeleted={() => router.push("/collections")}
       />
 
       {/* Share dialog — only reached for private collections (public ones copy
@@ -296,20 +315,24 @@ function CollectionDetailPage() {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2.5">
-            <Button variant="brand" asChild>
-              <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4" />
-                {t("addPuzzles")}
-              </Link>
-            </Button>
+            {viewerOwnsCollection && (
+              <Button variant="brand" asChild>
+                <Link href={`/collections/${id}/add-puzzles`}>
+                  <Plus className="h-4 w-4" />
+                  {t("addPuzzles")}
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" onClick={handleShare}>
               <Share2 className="h-4 w-4" />
               {t("share")}
             </Button>
-            <Button variant="ghost" onClick={() => setEditOpen(true)}>
-              <Edit className="h-4 w-4" />
-              {tCommon("edit")}
-            </Button>
+            {viewerOwnsCollection && (
+              <Button variant="ghost" onClick={() => setEditOpen(true)}>
+                <Edit className="h-4 w-4" />
+                {tCommon("edit")}
+              </Button>
+            )}
           </div>
         </div>
         <p className="text-muted-foreground shrink-0 text-xs">
@@ -360,14 +383,16 @@ function CollectionDetailPage() {
       {isEmpty ? (
         <EmptyState
           title={t("noPuzzlesInCollection")}
-          sub={t("addPuzzlesFirst")}
+          sub={viewerOwnsCollection ? t("addPuzzlesFirst") : undefined}
           action={
-            <Button variant="brand" asChild>
-              <Link href={`/collections/${id}/add-puzzles`}>
-                <Plus className="h-4 w-4" />
-                {t("addPuzzles")}
-              </Link>
-            </Button>
+            viewerOwnsCollection ? (
+              <Button variant="brand" asChild>
+                <Link href={`/collections/${id}/add-puzzles`}>
+                  <Plus className="h-4 w-4" />
+                  {t("addPuzzles")}
+                </Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -377,7 +402,11 @@ function CollectionDetailPage() {
               key={puzzle._id}
               puzzle={puzzle}
               variant="collection"
-              onRemove={handleRemovePuzzle}
+              onRemove={viewerOwnsCollection ? handleRemovePuzzle : undefined}
+              // One URL per copy for its owner: their own copies open on /my-puzzles (as from
+              // My Puzzles); visitors get the public /copies page. Both keep the collection
+              // as breadcrumb context.
+              viewBasePath={viewerOwnsCollection ? "/my-puzzles" : "/copies"}
               viewSearch={`?from=collection:${id}`}
             />
           ))}

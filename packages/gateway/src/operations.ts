@@ -102,6 +102,9 @@ export const gateway = {
     // must be the caller's (else the whole batch is rejected); deduped, capped, returns counts.
     setHouseholdPermissions:
       api.library.setCopiesHouseholdPermission.setCopiesHouseholdPermission,
+    // Bulk offers for My Puzzles' selection: set (or withdraw) offers on up to 100 copies the caller
+    // manages, keeping each copy's visibility choice. Returns counts plus the skipped copies and why.
+    updateOffers: api.library.updateCopiesOffers.updateCopiesOffers,
     // Reads go through the domain-driven library module (file.export namespacing); each is a thin
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row.
     ownedByOwner: api.library.getOwnedPuzzlesByOwner.getOwnedPuzzlesByOwner,
@@ -117,6 +120,9 @@ export const gateway = {
     // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
     // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
     getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
+    // A copy's domain id (what createOwned returns) -> its Convex id, for linking to the copy page.
+    // Null unless the caller may manage the copy (owner, or household member at "manage").
+    copyDocId: api.library.getCopyDocId.getCopyDocId,
     // Redesigned catalog detail of a puzzle DEFINITION: catalog facts + community rating
     // distribution + ownership/completion/availability stats + the viewer's own ownership + a short
     // list of REACHABLE available copies (Browse's public-OR-circle gate).

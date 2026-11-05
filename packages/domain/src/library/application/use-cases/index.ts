@@ -12,5 +12,6 @@ export * from "./return-loan";
 export * from "./set-copy-cover";
 export * from "./transfer-copy-ownership";
 export * from "./update-collection";
+export * from "./update-copies-offers";
 export * from "./update-copy-details";
 export * from "./update-copy-sharing";

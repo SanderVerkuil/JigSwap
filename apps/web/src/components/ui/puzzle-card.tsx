@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  conditionDotClass,
+  useConditionLabel,
+} from "@/components/library/condition";
+import {
   PuzzleCardShell,
   type PuzzleCardView,
 } from "@/components/puzzles/puzzle-card-shell";
@@ -27,7 +31,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { gateway, Id } from "@/gateway";
@@ -40,13 +43,18 @@ import {
   CircleCheck,
   Clock,
   Edit,
+  FolderMinus,
   FolderOpen,
   Heart,
   Lock,
   MessageCircle,
   MoreHorizontal,
+  Package,
+  Play,
+  Tag,
   Trash2,
   User,
+  type LucideIcon,
 } from "lucide-react";
 import { ReactNode } from "react";
 import { useTranslations } from "use-intl";
@@ -109,14 +117,25 @@ interface PuzzleCardProps {
   className?: string;
 }
 
+// What a copy is offered for, each with its own icon, in the card's offer chips.
+const OFFERS: ReadonlyArray<{
+  flag: "forTrade" | "forLend" | "forSale";
+  label: "trade" | "lend" | "sale";
+  Icon: LucideIcon;
+}> = [
+  { flag: "forTrade", label: "trade", Icon: ArrowLeftRight },
+  { flag: "forLend", label: "lend", Icon: Package },
+  { flag: "forSale", label: "sale", Icon: Tag },
+];
+
 // ---------------------------------------------------------------------------
 // Persistent top-right "⋯" overflow menu chip (owner-management actions).
 // Rendered as a cover overlay so it sits above the stretched-link (z-10) and
 // is always mounted for keyboard/SR reachability. Suppressed in selection/pick.
 // ---------------------------------------------------------------------------
-// Shared top-right "corner chip" styling for the card's overlay controls (the ⋯ menu and the
-// collection remove button): frosted glass, always mounted, dimmed at rest on hover-capable
-// devices, full on card-hover/focus/touch. 44px hit area via negative margin + padding.
+// Top-right "corner chip" styling for the card's ⋯ menu trigger: frosted glass, always mounted,
+// dimmed at rest on hover-capable devices, full on card-hover/focus/touch. 44px hit area via
+// negative margin + padding.
 const CORNER_CHIP_CLASS = [
   "flex h-[40px] w-[40px] items-center justify-center rounded-full",
   "bg-background/70 backdrop-blur-md border border-border/50 shadow-sm",
@@ -136,6 +155,8 @@ interface PuzzleOverflowMenuProps {
   // When set, the menu includes an "add to collection" submenu (the Copy aggregateId the add needs).
   showCollection?: boolean;
   copyAggregateId?: string;
+  // On a collection's page: take this copy out of the collection (the copy itself stays).
+  onRemoveFromCollection?: (id: Id<"ownedPuzzles">) => void;
 }
 
 function PuzzleOverflowMenu({
@@ -147,13 +168,21 @@ function PuzzleOverflowMenu({
   onDelete,
   showCollection = false,
   copyAggregateId,
+  onRemoveFromCollection,
 }: PuzzleOverflowMenuProps) {
   const t = useTranslations("puzzles");
   const tSolving = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
 
   // Don't mount the chip at all when nothing is wired.
-  if (!onLogSolve && !onStartSolve && !onEdit && !onDelete && !showCollection)
+  if (
+    !onLogSolve &&
+    !onStartSolve &&
+    !onEdit &&
+    !onDelete &&
+    !showCollection &&
+    !onRemoveFromCollection
+  )
     return null;
 
   return (
@@ -193,7 +222,11 @@ function PuzzleOverflowMenu({
                 onStartSolve(ownedId);
               }}
             >
-              <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              {solveInProgress ? (
+                <CircleCheck className="h-4 w-4 mr-2 shrink-0" />
+              ) : (
+                <Play className="h-4 w-4 mr-2 shrink-0" />
+              )}
               {solveInProgress ? tStart("finishTrigger") : tStart("trigger")}
             </DropdownMenuItem>
           )}
@@ -222,6 +255,17 @@ function PuzzleOverflowMenu({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           )}
+          {onRemoveFromCollection && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveFromCollection(ownedId);
+              }}
+            >
+              <FolderMinus className="h-4 w-4 mr-2 shrink-0" />
+              {t("removeFromCollection")}
+            </DropdownMenuItem>
+          )}
           {onDelete && (
             <>
               <DropdownMenuSeparator />
@@ -239,40 +283,6 @@ function PuzzleOverflowMenu({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
-  );
-}
-
-// Collection cards use the top-right corner (where owner cards show the ⋯ menu) for a single
-// "remove from this collection" action, with a tooltip clarifying what it does.
-function PuzzleCornerRemove({
-  ownedId,
-  onRemove,
-}: {
-  ownedId: Id<"ownedPuzzles">;
-  onRemove: (id: Id<"ownedPuzzles">) => void;
-}) {
-  const t = useTranslations("puzzles");
-  return (
-    <div className="absolute top-2 right-2 z-10">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t("removeFromCollection")}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(ownedId);
-              }}
-              className={`${CORNER_CHIP_CLASS} text-destructive hover:bg-destructive/10`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{t("removeFromCollection")}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
     </div>
   );
 }
@@ -309,6 +319,7 @@ export function PuzzleCard({
   const tCompletions = useTranslations("solving.completions");
   const tCard = useTranslations("browse.card");
   const tCatalog = useTranslations("puzzles.puzzles");
+  const conditionLabel = useConditionLabel();
   const boxArtInCheck = useBoxArtInCheck();
   const { viewMode } = usePuzzleView();
 
@@ -336,20 +347,28 @@ export function PuzzleCard({
   };
   const imageChecking = !view.imageUrl && boxArtInCheck.has(puzzle.puzzleId);
 
+  const offers = OFFERS.filter(({ flag }) => puzzle.availability[flag]);
+
   // Context badges: condition, availability flags, and the owner — the
   // owned-copy specifics that the shared shell deliberately doesn't know about.
+  // Each kind of fact has its own look: condition is a coloured dot and its word, offers are
+  // tinted chips with an icon, and the shell shows tags as plain "#tag" text.
   const conditionRow = (
     <div className="flex flex-wrap items-center gap-2 mb-2">
-      <Badge
-        variant={
-          puzzle.condition === "new_sealed" || puzzle.condition === "like_new"
-            ? "default"
-            : "secondary"
-        }
-        className="text-xs"
+      <span
+        data-testid="copy-condition"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground"
       >
-        {t(puzzle.condition)}
-      </Badge>
+        <span
+          aria-hidden
+          className={cn(
+            "size-2 shrink-0 rounded-sm",
+            conditionDotClass(puzzle.condition),
+          )}
+        />
+        <span className="sr-only">{t("condition")}: </span>
+        {conditionLabel(puzzle.condition)}
+      </span>
       {/* Only the owner and their household ever receive a private copy. */}
       {puzzle.visibility === "private" ? (
         <Badge variant="outline" className="gap-1 text-xs">
@@ -360,24 +379,21 @@ export function PuzzleCard({
     </div>
   );
 
-  const availabilityRow = showAvailability && (
+  const availabilityRow = showAvailability && offers.length > 0 && (
     // Wraps: all three offers do not fit one row of a compact phone card.
-    <div className="flex flex-wrap items-center gap-2 mb-2">
-      {puzzle.availability.forLend ? (
-        <Badge variant="outline" className="text-xs">
-          {t("lend")}
-        </Badge>
-      ) : null}
-      {puzzle.availability.forTrade ? (
-        <Badge variant="outline" className="text-xs">
-          {t("trade")}
-        </Badge>
-      ) : null}
-      {puzzle.availability.forSale ? (
-        <Badge variant="outline" className="text-xs">
-          {t("sale")}
-        </Badge>
-      ) : null}
+    <div
+      data-testid="copy-offers"
+      className="flex flex-wrap items-center gap-1.5 mb-2"
+    >
+      {offers.map(({ flag, label, Icon }) => (
+        <span
+          key={flag}
+          className="inline-flex items-center gap-1 rounded-full border border-jigsaw-secondary/40 bg-jigsaw-secondary-tint px-2 py-0.5 text-xs font-medium text-green-800 dark:text-green-300"
+        >
+          <Icon className="size-3 shrink-0" aria-hidden />
+          {t(label)}
+        </span>
+      ))}
     </div>
   );
 
@@ -407,6 +423,11 @@ export function PuzzleCard({
       </>
     );
 
+  // On a collection's page, onRemove takes the copy out of that collection: a ⋯ menu item, not
+  // a one-tap control (the page passes it only to the collection's owner).
+  const onRemoveFromCollection =
+    variant === "collection" ? onRemove : undefined;
+
   // Whether this variant should show the ⋯ overflow menu (owner-management actions).
   // Suppressed in selection/pick where card-click owns the interaction.
   const showOverflowMenu =
@@ -418,7 +439,8 @@ export function PuzzleCard({
       onStartSolve ||
       onEdit ||
       onDelete ||
-      showCollectionDropdown
+      showCollectionDropdown ||
+      onRemoveFromCollection
     );
 
   // Image overlays: the ⋯ overflow chip (top-right), the selection ring's
@@ -446,10 +468,8 @@ export function PuzzleCard({
           onDelete={onDelete}
           showCollection={showCollectionDropdown}
           copyAggregateId={puzzle.aggregateId}
+          onRemoveFromCollection={onRemoveFromCollection}
         />
-      )}
-      {showActions && variant === "collection" && onRemove && (
-        <PuzzleCornerRemove ownedId={ownedId} onRemove={onRemove} />
       )}
       {isSelected && (
         <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
@@ -461,6 +481,10 @@ export function PuzzleCard({
           <input
             type="checkbox"
             checked={isSelected}
+            // Named after the puzzle; disabled when the page gives this copy no way to select it
+            // (e.g. a housemate's view-only copy in My Puzzles' selection mode).
+            aria-label={t("bulk.selectCopy", { title: view.title })}
+            disabled={!onSelect}
             onChange={() => onSelect?.(ownedId)}
             // The whole card already toggles selection; stop the click here from
             // bubbling to the card so the toggle doesn't fire twice and cancel out.
@@ -475,7 +499,7 @@ export function PuzzleCard({
   // Browse/exchange/social actions stay in the bottom action row as before.
   // The owner-management actions (log solve, edit, delete) AND "add to collection" now live in
   // the ⋯ overflow menu (the latter as a submenu), so they no longer render a bottom-row control.
-  // The collection variant's onRemove moves to the top-right corner chip (PuzzleCornerRemove).
+  // The collection variant's onRemove is the ⋯ menu's "Remove from this collection".
   // onView is intentionally omitted here: whole-card navigation covers it (stretched link).
   const browseActions = !!(
     (variant !== "collection" && onRemove) ||

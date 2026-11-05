@@ -172,20 +172,117 @@ describe("updateSharing", () => {
     expect(names(copy.pullEvents())).toEqual(["CopyMadeUnavailable"]);
   });
 
-  it("rejects offering a private copy (CopyMustBeVisibleToOffer) and changes nothing", () => {
+  it("offers a private copy: keeps the owner's private choice and is visible while offered", () => {
     const copy = acquire();
     copy.pullEvents();
     const result = copy.updateSharing(
-      SharingSetting.create({ visibility: "private", forLend: true }),
+      SharingSetting.create({ visibility: "private", forTrade: true }),
       LATER,
     );
-    expect(result.isErr).toBe(true);
-    if (result.isErr)
-      expect(result.error.code).toBe("CopyMustBeVisibleToOffer");
-    expect(copy.sharing.visibility).toBe("visible");
-    expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
-    expect(copy.toState().updatedAt).toBe(NOW);
-    expect(copy.pullEvents()).toHaveLength(0);
+    expect(result.isOk).toBe(true);
+    expect(copy.sharing.visibility).toBe("private");
+    expect(copy.sharing.effectiveVisibility()).toBe("visible");
+    expect(copy.sharing.isAvailableFor("trade")).toBe(true);
+    expect(copy.toState().updatedAt).toBe(LATER);
+    const events = copy.pullEvents();
+    expect(names(events)).toEqual(["CopyMadeAvailable"]);
+    expect(events[0]).toBeInstanceOf(CopyMadeAvailable);
+  });
+});
+
+describe("updateDetails", () => {
+  const MARCH = new Date("2025-03-01T12:00:00Z");
+
+  it("records when and how the copy was acquired, keeping the paid price and other details", () => {
+    const price = Price.create(1500, "EUR");
+    if (!price.isOk) throw new Error("setup failed");
+    const result = Copy.acquire({
+      id: copyId,
+      ownerId: owner,
+      snapshot: snapshot(),
+      condition: "good",
+      acquisition: Acquisition.create({ price: price.value }),
+      notes: "corner bent",
+      now: NOW,
+    });
+    if (!result.isOk) throw new Error("setup failed");
+    const copy = result.value;
+    copy.pullEvents();
+
+    const updated = copy.updateDetails(
+      { acquisition: { date: MARCH, source: "bought_used" } },
+      LATER,
+    );
+    expect(updated.isOk).toBe(true);
+    const state = copy.toState();
+    expect(state.acquisition.date).toEqual(MARCH);
+    expect(state.acquisition.source).toBe("bought_used");
+    expect(state.acquisition.price).toBe(price.value);
+    expect(state.notes).toBe("corner bent");
+    expect(state.updatedAt).toBe(LATER);
+    expect(names(copy.pullEvents())).toEqual(["CopyDetailsUpdated"]);
+  });
+
+  it("a supplied acquisition replaces both date and source, so an omitted one is cleared", () => {
+    const copy = acquire();
+    copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+    copy.updateDetails({ acquisition: { source: "trade" } }, LATER);
+    expect(copy.toState().acquisition.date).toBeUndefined();
+    expect(copy.toState().acquisition.source).toBe("trade");
+    copy.updateDetails({ acquisition: {} }, LATER);
+    expect(copy.toState().acquisition.source).toBeUndefined();
+  });
+
+  it("leaves the acquisition alone when none is supplied", () => {
+    const copy = acquire();
+    copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+    copy.updateDetails({ notes: "lovely" }, LATER);
+    expect(copy.toState().acquisition.date).toEqual(MARCH);
+    expect(copy.toState().acquisition.source).toBe("gift");
+  });
+
+  describe("an impossible acquisition date", () => {
+    it.each([
+      ["not a real date", new Date(NaN)],
+      ["from before 1900", new Date("1899-12-31T12:00:00Z")],
+      ["more than a year ahead", new Date("2027-06-30T12:00:00Z")],
+    ])("refuses one %s and keeps the details as they were", (_, date) => {
+      const copy = acquire();
+      copy.updateDetails({ acquisition: { date: MARCH, source: "gift" } }, NOW);
+      copy.pullEvents();
+
+      const result = copy.updateDetails(
+        { acquisition: { date, source: "trade" }, notes: "changed" },
+        LATER,
+      );
+
+      expect(result.isErr && result.error.code).toBe("InvalidAcquisitionDate");
+      expect(copy.toState().acquisition.date).toEqual(MARCH);
+      expect(copy.toState().acquisition.source).toBe("gift");
+      expect(copy.toState().notes).not.toBe("changed");
+      expect(copy.pullEvents()).toEqual([]);
+    });
+
+    it("accepts any month of the current year, which the month picker offers", () => {
+      const copy = acquire();
+      const december = new Date("2026-12-01T12:00:00Z");
+      expect(
+        copy.updateDetails({ acquisition: { date: december } }, NOW).isOk,
+      ).toBe(true);
+      expect(copy.toState().acquisition.date).toEqual(december);
+    });
+
+    it("refuses one on a new copy", () => {
+      const result = Copy.acquire({
+        id: copyId,
+        ownerId: owner,
+        snapshot: snapshot(),
+        condition: "good",
+        acquisition: Acquisition.create({ date: new Date(NaN) }),
+        now: NOW,
+      });
+      expect(result.isErr && result.error.code).toBe("InvalidAcquisitionDate");
+    });
   });
 });
 
@@ -334,6 +431,17 @@ describe("Copy possession (lend / return)", () => {
     const carol = toOwnerId("carol");
     expect(copy.lendOut(carol, LATER).isOk).toBe(true);
     expect(copy.heldBy).toBe(carol);
+  });
+
+  it("lendOut of a private copy that was offered makes it private again", () => {
+    const copy = acquire();
+    copy.updateSharing(
+      SharingSetting.create({ visibility: "private", forLend: true }),
+      NOW,
+    );
+    copy.lendOut(borrower, LATER);
+    expect(copy.sharing.isAvailableForAnyExchange()).toBe(false);
+    expect(copy.sharing.effectiveVisibility()).toBe("private");
   });
 
   it("returnToOwner restores possession to the owner", () => {

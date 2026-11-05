@@ -20,7 +20,7 @@ export interface UpdateCopyDetailsDeps {
 }
 
 // Transaction script: load (→ CopyNotFound), check ownership, delegate the descriptive-field
-// patch (missing-piece count, notes) to the aggregate, persist, publish.
+// patch (missing-piece count, notes, acquisition date/source) to the aggregate, persist, publish.
 export const makeUpdateCopyDetails =
   (deps: UpdateCopyDetailsDeps): UpdateCopyDetails =>
   async (cmd: UpdateCopyDetailsCommand) => {
@@ -34,6 +34,7 @@ export const makeUpdateCopyDetails =
       {
         missingPiecesCount: cmd.missingPiecesCount,
         notes: cmd.notes,
+        acquisition: cmd.acquisition,
       },
       deps.clock.now(),
     );

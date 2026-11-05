@@ -1,9 +1,11 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
-import { availabilityToSharing } from "@/components/add-puzzle";
 import { ImageZoom } from "@/components/common/image-zoom";
+import { CopyOfferSwitches } from "@/components/copies/copy-offer-switches";
 import { CopyOwner } from "@/components/copies/copy-owner";
 import { copyPhotoError } from "@/components/copies/copy-photo-error";
+import { CopyStatusLine } from "@/components/copies/copy-status-line";
+import { formatCopyTenure } from "@/components/copies/copy-tenure";
 import { EditCopyDialog } from "@/components/copies/edit-copy-dialog";
 import { PhotoLightbox } from "@/components/copies/photo-lightbox";
 import {
@@ -18,6 +20,10 @@ import {
 } from "@/components/exchange/request-trade-dialog";
 import { HouseholdAccess } from "@/components/household/household-access";
 import { ImageEditorDialog } from "@/components/image-editor/image-editor-dialog";
+import {
+  conditionDotClass,
+  useConditionLabel,
+} from "@/components/library/condition";
 import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
@@ -169,7 +175,7 @@ function CopyInstanceSkeleton() {
   return (
     <div className="w-full space-y-8">
       <div className="grid gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <Skeleton className="aspect-square w-full rounded-2xl" />
+        <Skeleton className="mx-auto aspect-square w-full max-w-[40vh] rounded-2xl lg:mx-0 lg:max-w-none" />
         <div className="space-y-4">
           <Skeleton className="h-9 w-2/3 rounded-lg" />
           <Skeleton className="h-5 w-1/3 rounded-lg" />
@@ -202,21 +208,6 @@ function difficultyClasses(difficulty?: string) {
   }
 }
 
-// Condition dot colour, by copy condition.
-function conditionDotClass(condition: string) {
-  switch (condition) {
-    case "new_sealed":
-    case "like_new":
-      return "bg-jigsaw-secondary";
-    case "good":
-      return "bg-jigsaw-primary";
-    case "fair":
-      return "bg-amber-400";
-    default:
-      return "bg-destructive";
-  }
-}
-
 function CopyInstanceDetail({
   copy,
   copyId,
@@ -235,10 +226,13 @@ function CopyInstanceDetail({
   const tOwner = useTranslations("copyOwner");
   const tConversation = useTranslations("copyConversation");
   const tPuzzles = useTranslations("puzzles");
+  const tLogSolve = useTranslations("solving.logSolve");
   const tStart = useTranslations("solving.startSolve");
   const tCompletions = useTranslations("solving.completions");
   const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
+  const conditionLabel = useConditionLabel();
   const format = useFormatter();
+  const projectedName = useProjectedMemberName();
   // A stable "now" captured once per mount, so duration/relative-time renders are
   // idempotent (calling Date.now() during render is an impure-render violation).
   const [now] = useState(() => Date.now());
@@ -254,6 +248,12 @@ function CopyInstanceDetail({
   const [editOpen, setEditOpen] = useState(false);
   // The photo strip's file input, so the copy editor's "Add photo" can open the same picker.
   const addPhotoInputRef = useRef<HTMLInputElement>(null);
+  // Where the editor opens: on its acquisition fields when reached from "Add details".
+  const [editFocus, setEditFocus] = useState<"acquisition" | undefined>();
+  const openEditor = (focus?: "acquisition") => {
+    setEditFocus(focus);
+    setEditOpen(true);
+  };
   // The trade-request dialog's target (null = closed); set from the non-owner Request action.
   const [requestCopy, setRequestCopy] = useState<RequestableCopy | null>(null);
   // Start/Finish solve swap: `startOpen` drives the start dialog; `finishTarget` holds the
@@ -282,34 +282,24 @@ function CopyInstanceDetail({
     .filter((c) => !c.isCompleted && c.aggregateId)
     .sort((a, b) => b.startDate - a.startDate)[0];
 
-  const updateSharing = useMutation({
-    mutationFn: useConvexMutation(gateway.library.updateSharing),
-  });
-
-  // Toggle a single sharing flag on the copy. Optimistic from the user's view via Convex
-  // reactivity; on failure we surface a toast and the next query refresh restores the real state.
-  const toggleSharing = async (flag: "forTrade" | "forLend") => {
-    if (!copy.viewerCanManage || copy.aggregateId == null) return;
-    try {
-      await updateSharing.mutateAsync(
-        availabilityToSharing(
-          copy.aggregateId,
-          { ...availability, [flag]: !availability[flag] },
-          // Keep the owner's visibility choice; turning an offer on makes it visible.
-          snapshot.visibility,
-        ),
-      );
-    } catch (error) {
-      // Refused while an exchange in progress reserves the copy or it is out on loan: say so.
-      toast.error(
-        t(
-          convexErrorCode(error) === "CopyReserved"
-            ? "editCopy.copyReserved"
-            : "editCopy.editFailed",
-        ),
-      );
-    }
-  };
+  // Custody for the status line: the copy's open loan, and (for managers, who may recall it) its
+  // loan id from lending.lentOut, which lists the open loans the caller may manage.
+  const openLoanEntry = copy.loans.find((loan) => loan.status === "open");
+  const { data: lentOut } = useQuery(
+    convexQuery(
+      gateway.lending.lentOut,
+      copy.viewerCanManage && openLoanEntry ? {} : "skip",
+    ),
+  );
+  const openLoan = openLoanEntry
+    ? {
+        borrowerName: projectedName(openLoanEntry.borrower, t("anonymousUser")),
+        openedAt: openLoanEntry.openedAt,
+        loanId:
+          lentOut?.find((loan) => loan.copyDocId === copy.copyId)?.loanId ??
+          null,
+      }
+    : null;
 
   // When the arriving link carried `?from=collection:<id>`, resolve that collection so the
   // page head can show contextual breadcrumbs instead of the canonical trail below. Skipped
@@ -328,7 +318,8 @@ function CopyInstanceDetail({
   // "Owned copy"), the breadcrumb trail, and the owner-only Edit action. For the
   // owner route (owned) the crumbs are left to the shell's auto trail (My Library ›
   // My Puzzles › <name>, since /my-puzzles/$id's pageKey matches the nav item);
-  // the public route publishes an explicit Community › Owned Copies › <name> trail.
+  // the public route publishes an explicit Community › Browse Puzzles › <name> trail (the crumb
+  // uses Browse's own nav label, since that is where it leads).
   // A readable `?from=collection:<id>` context overrides both with My Library ›
   // Collections › <name> and highlights Collections in the sidebar; no context (or an
   // unreadable/malformed one) falls back to the behavior above, byte-identical.
@@ -348,10 +339,10 @@ function CopyInstanceDetail({
           ? undefined
           : [
               { label: tShell("groups.community.label"), href: "/community" },
-              { label: tShell("crumbs.ownedCopies"), href: "/browse" },
+              { label: tShell("pages.browse.title"), href: "/browse" },
             ],
       actions: copy.viewerCanManage ? (
-        <Button variant="outline" onClick={() => setEditOpen(true)}>
+        <Button variant="outline" onClick={() => openEditor()}>
           <Edit className="h-4 w-4" />
           {t("actions.edit")}
         </Button>
@@ -395,57 +386,20 @@ function CopyInstanceDetail({
     return format.number(value, { style: "unit", unit, unitDisplay: "long" });
   };
 
-  const acquisitionSourceLabel = (
-    source?: "bought_new" | "bought_used" | "trade" | "gift",
-  ) => (source ? t(`acquisitionSourceLabel.${source}`) : "—");
-
-  const conditionLabel = (condition: string) => {
-    // Reuse the puzzles condition namespace where it exists; map the copy union.
-    switch (condition) {
-      case "new_sealed":
-        return t("conditionLabel.new_sealed");
-      case "like_new":
-        return t("conditionLabel.like_new");
-      default:
-        return tPuzzles(`puzzles.condition.${condition}`);
-    }
-  };
-
-  // "In your library" duration: whole years + months from acquisition to now,
-  // formatted like "1y 5m" (or "5m" / "<1m"). Owner-only context.
-  const ownedDuration = (since: number): string => {
-    let months = Math.floor((now - since) / (1000 * 60 * 60 * 24 * 30.4375));
-    if (months < 1) return t("durationLessThanMonth");
-    const years = Math.floor(months / 12);
-    months = months % 12;
-    const parts: string[] = [];
-    if (years > 0) parts.push(t("durationYears", { years }));
-    if (months > 0) parts.push(t("durationMonths", { months }));
-    return parts.join(" ");
-  };
-
-  const difficultyLabel = (difficulty?: string) =>
-    difficulty ? tDifficulty(difficulty) : tDifficulty("unknown");
-
   return (
     <div className="flex w-full flex-col gap-10">
       {/* Hero */}
       <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        {/* Cover — full width on mobile, capped beside the info column at lg. Hovering opens a side
-            panel that magnifies where the cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+        {/* Cover — capped at 40vh and centred below lg so the title, status and actions start on the
+            first screen of a phone; beside the info column at lg. Hovering opens a side panel that
+            magnifies where the cursor points. */}
+        <div className="bg-muted relative mx-auto aspect-square w-full max-w-[40vh] overflow-hidden rounded-2xl shadow-sm lg:mx-0 lg:max-w-[300px]">
           {snapshot.image ? (
             <ImageZoom src={snapshot.image} alt={snapshot.title} fill />
           ) : (
             <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
               <Puzzle className="h-1/3 w-1/3" />
             </div>
-          )}
-          {isAvailable && (
-            <span className="bg-jigsaw-secondary absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              {t("available")}
-            </span>
           )}
         </div>
 
@@ -478,16 +432,28 @@ function CopyInstanceDetail({
             )}
           </p>
 
+          {/* Status: custody, offers and who can see it, in one line (offers only for visitors). */}
+          <CopyStatusLine
+            detailed={copy.viewerCanManage}
+            availability={availability}
+            visibilityPreference={
+              snapshot.visibilityPreference ?? snapshot.visibility
+            }
+            openLoan={openLoan}
+          />
+
           {/* Badges */}
           <div className="mt-3.5 flex flex-wrap items-center gap-2">
-            <Badge
-              className={cn(
-                "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
-                difficultyClasses(snapshot.difficulty),
-              )}
-            >
-              {difficultyLabel(snapshot.difficulty)}
-            </Badge>
+            {snapshot.difficulty && (
+              <Badge
+                className={cn(
+                  "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                  difficultyClasses(snapshot.difficulty),
+                )}
+              >
+                {tDifficulty(snapshot.difficulty)}
+              </Badge>
+            )}
             <span className="border-border text-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold">
               <span
                 className={cn(
@@ -497,21 +463,6 @@ function CopyInstanceDetail({
               />
               {conditionLabel(snapshot.condition)}
             </span>
-            {availability.forTrade && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forTrade")}
-              </Badge>
-            )}
-            {availability.forLend && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forLend")}
-              </Badge>
-            )}
-            {availability.forSale && (
-              <Badge variant="secondary" className="rounded-full text-xs">
-                {t("forSale")}
-              </Badge>
-            )}
             {myInProgress && (
               <Badge variant="secondary" className="rounded-full text-xs">
                 <Clock className="mr-1 h-3 w-3" />
@@ -527,81 +478,24 @@ function CopyInstanceDetail({
             </p>
           )}
 
-          {/* Meta row */}
-          <div className="mt-4 flex flex-wrap gap-x-8 gap-y-4">
-            <MetaItem
-              icon={<UserRound className="h-3.5 w-3.5" />}
-              label={tOwner("label")}
-              value={
-                <CopyOwner
-                  owner={copy.owner}
-                  householdOwner={copy.household?.owner}
-                  viewerIsOwner={copy.viewerIsOwner}
-                />
-              }
-            />
-            <MetaItem
-              icon={<Calendar className="h-3.5 w-3.5" />}
-              label={t("acquired")}
-              value={
-                snapshot.acquisitionDate
-                  ? formatMonth(snapshot.acquisitionDate)
-                  : "—"
-              }
-            />
-            <MetaItem
-              icon={<Gift className="h-3.5 w-3.5" />}
-              label={t("source")}
-              value={acquisitionSourceLabel(snapshot.acquisitionSource)}
-            />
-            <MetaItem
-              icon={<Clock className="h-3.5 w-3.5" />}
-              label={t("inYourLibrary")}
-              value={
-                copy.acquiredByViewerAt !== null
-                  ? ownedDuration(copy.acquiredByViewerAt)
-                  : "—"
-              }
-            />
-            {snapshot.tags.length > 0 && (
-              <MetaItem
-                icon={<Tag className="h-3.5 w-3.5" />}
-                label={t("tags")}
-                value={snapshot.tags.join(", ")}
+          {/* Offers (managers): labelled switches that never change the owner's visibility choice. */}
+          {copy.viewerCanManage && (
+            <div className="mt-5">
+              <CopyOfferSwitches
+                copyId={copy.aggregateId}
+                availability={availability}
+                visibilityPreference={
+                  snapshot.visibilityPreference ?? snapshot.visibility
+                }
+                onLoan={openLoanEntry !== undefined}
               />
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="mt-5 flex flex-wrap gap-2.5">
             {canSolve ? (
               <>
-                {copy.viewerCanManage && (
-                  <>
-                    <Button
-                      variant={availability.forTrade ? "brand" : "outline"}
-                      aria-pressed={availability.forTrade}
-                      disabled={copy.aggregateId == null}
-                      onClick={() => void toggleSharing("forTrade")}
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                      {availability.forTrade
-                        ? t("offeredForSwap")
-                        : t("offerForSwap")}
-                    </Button>
-                    <Button
-                      variant={availability.forLend ? "brand" : "outline"}
-                      aria-pressed={availability.forLend}
-                      disabled={copy.aggregateId == null}
-                      onClick={() => void toggleSharing("forLend")}
-                    >
-                      <Package className="h-4 w-4" />
-                      {availability.forLend
-                        ? t("offeredForLend")
-                        : t("offerForLend")}
-                    </Button>
-                  </>
-                )}
                 {!myInProgress && (
                   <Button
                     variant="outline"
@@ -609,7 +503,7 @@ function CopyInstanceDetail({
                     onClick={() => setLogOpen(true)}
                   >
                     <CircleCheck className="h-4 w-4" />
-                    {t("actions.logCompletion")}
+                    {tLogSolve("trigger")}
                   </Button>
                 )}
                 {myInProgress ? (
@@ -689,6 +583,73 @@ function CopyInstanceDetail({
               </>
             )}
           </div>
+
+          {/* Meta row: after the actions, so they start on the first screen of a phone. */}
+          <div className="mt-5 flex flex-wrap gap-x-8 gap-y-4">
+            <MetaItem
+              icon={<UserRound className="h-3.5 w-3.5" />}
+              label={tOwner("label")}
+              value={
+                <CopyOwner
+                  owner={copy.owner}
+                  householdOwner={copy.household?.owner}
+                  viewerIsOwner={copy.viewerIsOwner}
+                />
+              }
+            />
+            {/* Acquisition (manager-only data): shown when recorded; when neither part is,
+                managers get "Add details", which opens the editor on those fields. */}
+            {snapshot.acquisitionDate != null && (
+              <MetaItem
+                icon={<Calendar className="h-3.5 w-3.5" />}
+                label={t("acquired")}
+                value={formatMonth(snapshot.acquisitionDate)}
+              />
+            )}
+            {snapshot.acquisitionSource && (
+              <MetaItem
+                icon={<Gift className="h-3.5 w-3.5" />}
+                label={t("source")}
+                value={t(
+                  `acquisitionSourceLabel.${snapshot.acquisitionSource}`,
+                )}
+              />
+            )}
+            {copy.viewerCanManage &&
+              copy.aggregateId != null &&
+              snapshot.acquisitionDate == null &&
+              !snapshot.acquisitionSource && (
+                <MetaItem
+                  icon={<Calendar className="h-3.5 w-3.5" />}
+                  label={t("acquired")}
+                  value={
+                    <button
+                      type="button"
+                      onClick={() => openEditor("acquisition")}
+                      className="text-jigsaw-primary hover:underline"
+                    >
+                      {t("addDetails")}
+                    </button>
+                  }
+                />
+              )}
+            {/* The viewer's own tenure: only the owner has one. */}
+            {copy.viewerIsOwner && copy.acquiredByViewerAt !== null && (
+              <MetaItem
+                icon={<Clock className="h-3.5 w-3.5" />}
+                label={t("inYourLibrary")}
+                value={formatCopyTenure(copy.acquiredByViewerAt, now, t)}
+              />
+            )}
+            {snapshot.tags.length > 0 && (
+              <MetaItem
+                icon={<Tag className="h-3.5 w-3.5" />}
+                label={t("tags")}
+                value={snapshot.tags.join(", ")}
+              />
+            )}
+          </div>
+
           {copy.household && (
             <HouseholdAccess copyId={copyId} household={copy.household} />
           )}
@@ -718,11 +679,15 @@ function CopyInstanceDetail({
           label={t("statTimesLentOut")}
           divided
         />
-        <Stat
-          value={stats.yourCopyRating != null ? stats.yourCopyRating : "—"}
-          label={t("statYourCopyRating")}
-          divided
-        />
+        {/* The viewer's own rating of this copy: for those who can solve it here (owner and
+            household), or anyone who has rated it. */}
+        {(canSolve || stats.yourCopyRating != null) && (
+          <Stat
+            value={stats.yourCopyRating != null ? stats.yourCopyRating : "—"}
+            label={t("statYourCopyRating")}
+            divided
+          />
+        )}
       </div>
 
       {/* Photos */}
@@ -898,6 +863,7 @@ function CopyInstanceDetail({
               onOpenChange={setEditOpen}
               copy={copy}
               onAddPhotos={() => addPhotoInputRef.current?.click()}
+              focus={editFocus}
             />
           )}
         </>
@@ -1386,6 +1352,10 @@ function CopyReviewsSection({
           </div>
         </>
       )}
+      {/* Where copy reviews come from: whoever logs a solve of the copy is asked to rate it. */}
+      <p className="text-muted-foreground mt-2 text-xs">
+        {t("copyReviewsHint")}
+      </p>
     </section>
   );
 }

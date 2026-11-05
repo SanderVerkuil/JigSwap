@@ -32,7 +32,10 @@ import {
 } from "../lib/imageModeration/imageSources";
 import { areMutualFollowers, projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
-import { effectiveCopyVisibility } from "./copyVisibility";
+import {
+  copyVisibilityPreference,
+  effectiveCopyVisibility,
+} from "./copyVisibility";
 import { definitionRatingOf } from "./definitionStats";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 
@@ -481,6 +484,10 @@ export const getCopyInstanceView = query({
         notes: viewerCanManage ? copy.notes : undefined,
         availability: copy.availability,
         visibility: effectiveCopyVisibility(copy),
+        // The owner's own choice (kept while offered) is for the edit controls only.
+        visibilityPreference: viewerCanManage
+          ? copyVisibilityPreference(copy)
+          : undefined,
         acquisitionDate: viewerCanManage ? copy.acquisitionDate : undefined,
         acquisitionSource: viewerCanManage ? copy.acquisitionSource : undefined,
         // The definition's own catalogue facts: for a definition that is not approved, only for

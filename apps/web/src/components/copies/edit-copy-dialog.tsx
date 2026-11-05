@@ -3,11 +3,11 @@
 import {
   AvailabilityChips,
   availabilityToSharing,
-  CONDITION_OPTIONS,
   SegmentedPills,
   type ConditionValue,
 } from "@/components/add-puzzle";
 import { convexErrorCode } from "@/components/exchange/request-trade";
+import { useConditionOptions } from "@/components/library/condition";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,9 +25,10 @@ import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { Check, ImageOff, ImagePlus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTimeZone, useTranslations } from "use-intl";
+import { acquisitionMonthOf, acquisitionMonthStart } from "./acquisition-month";
 import {
   CopyVisibilityControl,
   type CopyVisibility,
@@ -36,6 +37,19 @@ import {
 type CopyInstanceView = NonNullable<
   FunctionReturnType<typeof gateway.library.getCopyInstanceView>
 >;
+type AcquisitionSource = NonNullable<
+  CopyInstanceView["snapshot"]["acquisitionSource"]
+>;
+
+const ACQUISITION_SOURCES: readonly AcquisitionSource[] = [
+  "bought_new",
+  "bought_used",
+  "trade",
+  "gift",
+];
+const FIRST_ACQUISITION_YEAR = 1950;
+const selectClass =
+  "bg-card focus:ring-primary h-10 w-full rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:h-9 md:text-sm";
 
 // Owner-only inline editor for a single owned copy. Each field maps to a granular Library
 // mutation; on save we diff against the loaded snapshot and fire only the mutations whose value
@@ -45,21 +59,45 @@ type CopyInstanceView = NonNullable<
 // ID rule: condition / sharing / details target the Copy `aggregateId`; cover selection targets
 // the copy's Convex `_id` (copyId). When `aggregateId` is null (rows predating the backfill) the
 // domain-keyed fields cannot be written, so those controls are disabled.
-export function EditCopyDialog({
-  open,
-  onOpenChange,
-  copy,
-  onAddPhotos,
-}: {
+//
+// "Acquired" is a month and year (stored as acquisition-month instants); "Source" how the copy was
+// acquired. `focus="acquisition"` opens the dialog on those fields (the page's "Add details").
+//
+// Every opening starts from the copy as it is NOW: the page keeps this dialog mounted while its
+// offer switches change the copy, and form state kept from page load would write those offers back
+// on an unrelated save. So each opening remounts the form (a new key), while closing keeps it
+// mounted for the exit animation.
+type EditCopyDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   copy: CopyInstanceView;
   // Starts the page's photo upload. Offered when the copy has no photos to pick a cover from;
   // the dialog closes as it hands over.
   onAddPhotos?: () => void;
-}) {
+  focus?: "acquisition";
+};
+
+export function EditCopyDialog(props: EditCopyDialogProps) {
+  const [opening, setOpening] = useState(0);
+  const [wasOpen, setWasOpen] = useState(props.open);
+  if (props.open !== wasOpen) {
+    setWasOpen(props.open);
+    if (props.open) setOpening((n) => n + 1);
+  }
+  return <EditCopyDialogForm key={opening} {...props} />;
+}
+
+function EditCopyDialogForm({
+  open,
+  onOpenChange,
+  copy,
+  onAddPhotos,
+  focus,
+}: EditCopyDialogProps) {
   const t = useTranslations("copyInstance");
-  const tPuzzles = useTranslations("puzzles");
+  const format = useFormatter();
+  const timeZone = useTimeZone() ?? "UTC";
+  const acquiredMonthRef = useRef<HTMLSelectElement>(null);
 
   const changeCondition = useMutation({
     mutationFn: useConvexMutation(gateway.library.changeCondition),
@@ -82,12 +120,41 @@ export function EditCopyDialog({
     snapshot.condition as ConditionValue,
   );
   const [availability, setAvailability] = useState(snapshot.availability);
-  const [visibility, setVisibility] = useState<CopyVisibility>(
-    snapshot.visibility,
-  );
+  // The owner's own choice, kept while the copy is offered (it is visible only while an offer is
+  // on). A backend without visibilityPreference falls back to the effective visibility.
+  const initialVisibility: CopyVisibility =
+    snapshot.visibilityPreference ?? snapshot.visibility;
+  const [visibility, setVisibility] =
+    useState<CopyVisibility>(initialVisibility);
   const offered =
     availability.forTrade || availability.forLend || availability.forSale;
+  // Lending a copy out withdraws its offers. Until it is back an offer can't go on, but one that is
+  // on can come off. Judged against the stored offers, so a chip switched off here can go back on.
+  const onLoan = copy.loans.some((loan) => loan.status === "open");
   const [notes, setNotes] = useState(snapshot.notes ?? "");
+  // When and how it was acquired: month + year (both or neither) and a source; "" = not recorded.
+  const stored =
+    snapshot.acquisitionDate != null
+      ? acquisitionMonthOf(snapshot.acquisitionDate, timeZone)
+      : null;
+  const storedMonth = stored ? String(stored.month) : "";
+  const storedYear = stored ? String(stored.year) : "";
+  const [acquiredMonth, setAcquiredMonth] = useState(storedMonth);
+  const [acquiredYear, setAcquiredYear] = useState(storedYear);
+  const [acquisitionSource, setAcquisitionSource] = useState<
+    AcquisitionSource | ""
+  >(snapshot.acquisitionSource ?? "");
+  const acquiredIncomplete = (acquiredMonth === "") !== (acquiredYear === "");
+  const [thisYear] = useState(() => new Date().getFullYear());
+  const years = Array.from(
+    {
+      length:
+        thisYear -
+        Math.min(FIRST_ACQUISITION_YEAR, stored?.year ?? thisYear) +
+        1,
+    },
+    (_, i) => thisYear - i,
+  );
   // `null` => catalogue/global image; otherwise a gallery image id.
   const [coverImageId, setCoverImageId] = useState<string | null>(
     snapshot.coverImageId,
@@ -98,10 +165,7 @@ export function EditCopyDialog({
     updateDetails.isPending ||
     setCopyCover.isPending;
 
-  const conditionOptions = CONDITION_OPTIONS.map((o) => ({
-    value: o.value,
-    label: tPuzzles(`condition_${o.value}`),
-  }));
+  const conditionOptions = useConditionOptions();
 
   const save = async () => {
     try {
@@ -117,26 +181,47 @@ export function EditCopyDialog({
         availability.forTrade !== snapshot.availability.forTrade ||
         availability.forLend !== snapshot.availability.forLend ||
         availability.forSale !== snapshot.availability.forSale;
-      // One write for the sharing setting (availability + visibility); availabilityToSharing
-      // forces "visible" whenever an offer is on.
-      if (domainEditable) {
-        const sharing = availabilityToSharing(
-          aggregateId,
-          availability,
-          visibility,
+      // One write for the sharing setting: the offers plus the owner's own visibility choice,
+      // which may stay "private" while an offer is on.
+      if (
+        domainEditable &&
+        (availabilityChanged || visibility !== initialVisibility)
+      ) {
+        ops.push(
+          updateSharing.mutateAsync(
+            availabilityToSharing(aggregateId, availability, visibility),
+          ),
         );
-        if (availabilityChanged || sharing.visibility !== snapshot.visibility) {
-          ops.push(updateSharing.mutateAsync(sharing));
-        }
       }
 
+      // One details write for the notes and the acquisition. An unchanged month keeps the stored
+      // instant (it may carry an exact day from a received swap); a supplied acquisition always
+      // carries both fields, since the backend replaces them as a pair.
+      const details: {
+        notes?: string;
+        acquisition?: { date?: number; source?: AcquisitionSource };
+      } = {};
       const trimmedNotes = notes.trim();
-      if (domainEditable && trimmedNotes !== (snapshot.notes ?? "")) {
+      if (trimmedNotes !== (snapshot.notes ?? "")) details.notes = trimmedNotes;
+      const monthChanged =
+        acquiredMonth !== storedMonth || acquiredYear !== storedYear;
+      if (
+        monthChanged ||
+        acquisitionSource !== (snapshot.acquisitionSource ?? "")
+      ) {
+        const date = !monthChanged
+          ? snapshot.acquisitionDate
+          : acquiredYear
+            ? acquisitionMonthStart(Number(acquiredYear), Number(acquiredMonth))
+            : undefined;
+        details.acquisition = {
+          ...(date != null ? { date } : {}),
+          ...(acquisitionSource ? { source: acquisitionSource } : {}),
+        };
+      }
+      if (domainEditable && Object.keys(details).length > 0) {
         ops.push(
-          updateDetails.mutateAsync({
-            copyId: aggregateId,
-            notes: trimmedNotes,
-          }),
+          updateDetails.mutateAsync({ copyId: aggregateId, ...details }),
         );
       }
 
@@ -169,7 +254,14 @@ export function EditCopyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onOpenAutoFocus={(event) => {
+          if (focus !== "acquisition") return;
+          event.preventDefault();
+          acquiredMonthRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t("editCopy.title")}</DialogTitle>
           <DialogDescription>{snapshot.title}</DialogDescription>
@@ -192,21 +284,21 @@ export function EditCopyDialog({
             <Label>{t("availability")}</Label>
             <AvailabilityChips
               value={availability}
-              onChange={(next) => {
-                setAvailability(next);
-                // An offer makes the copy visible: reflect it in the form right away.
-                if (next.forTrade || next.forLend || next.forSale) {
-                  setVisibility("visible");
-                }
-              }}
+              onChange={setAvailability}
+              isLocked={(offer) => onLoan && !snapshot.availability[offer]}
             />
+            {onLoan && (
+              <p className="text-muted-foreground text-xs">
+                {t("offers.lockedOnLoan")}
+              </p>
+            )}
           </div>
 
           {/* Visibility */}
           <div className="space-y-2">
             <Label>{t("editCopy.visibility.label")}</Label>
             <CopyVisibilityControl
-              value={offered ? "visible" : visibility}
+              value={visibility}
               onChange={setVisibility}
               offered={offered}
               disabled={!domainEditable}
@@ -223,6 +315,75 @@ export function EditCopyDialog({
               placeholder={t("editCopy.notesPlaceholder")}
               rows={3}
             />
+          </div>
+
+          {/* Acquired (month + year) and source */}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label id="edit-copy-acquired">{t("acquired")}</Label>
+              <div
+                role="group"
+                aria-labelledby="edit-copy-acquired"
+                className="grid grid-cols-2 gap-2"
+              >
+                <select
+                  ref={acquiredMonthRef}
+                  aria-label={t("editCopy.acquiredMonth")}
+                  value={acquiredMonth}
+                  disabled={!domainEditable}
+                  onChange={(e) => setAcquiredMonth(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">{t("editCopy.monthPlaceholder")}</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      {format.dateTime(
+                        new Date(acquisitionMonthStart(2000, month)),
+                        { month: "long", timeZone: "UTC" },
+                      )}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={t("editCopy.acquiredYear")}
+                  value={acquiredYear}
+                  disabled={!domainEditable}
+                  onChange={(e) => setAcquiredYear(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">{t("editCopy.yearPlaceholder")}</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {acquiredIncomplete && (
+                <p className="text-destructive text-xs">
+                  {t("editCopy.acquiredIncomplete")}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-copy-source">{t("source")}</Label>
+              <select
+                id="edit-copy-source"
+                value={acquisitionSource}
+                disabled={!domainEditable}
+                onChange={(e) =>
+                  setAcquisitionSource(e.target.value as AcquisitionSource | "")
+                }
+                className={selectClass}
+              >
+                <option value="">{t("editCopy.sourceUnknown")}</option>
+                {ACQUISITION_SOURCES.map((source) => (
+                  <option key={source} value={source}>
+                    {t(`acquisitionSourceLabel.${source}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Cover picker */}
@@ -323,7 +484,11 @@ export function EditCopyDialog({
           >
             {t("editCopy.cancel")}
           </Button>
-          <Button variant="brand" onClick={() => void save()} disabled={saving}>
+          <Button
+            variant="brand"
+            onClick={() => void save()}
+            disabled={saving || acquiredIncomplete}
+          >
             {saving ? t("editCopy.saving") : t("editCopy.save")}
           </Button>
         </DialogFooter>

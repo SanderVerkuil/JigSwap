@@ -280,7 +280,7 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/community": { pageKey: "community", variant: "landing" },
   "/browse": { pageKey: "browse", group: "community" },
   // Anyone's owned copy detail: nav-highlights Community; the page publishes its
-  // own "Community › Owned Copies › <name>" crumbs + title at runtime.
+  // own "Community › Browse Puzzles › <name>" crumbs + title at runtime.
   "/copies": { pageKey: "copyInstance", group: "community" },
   "/copies/$id": { pageKey: "copyInstance", group: "community" },
   // The shared puzzle catalogue (discovery) + its contribute sub-route.

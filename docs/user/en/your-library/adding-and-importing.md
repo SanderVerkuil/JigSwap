@@ -21,9 +21,14 @@ Adding a puzzle is a two-step flow:
    catalogue by title or brand.
 4. To look a puzzle up by its **barcode**, type or paste the 12- or 13-digit
    number from the box. If no puzzle has that barcode yet, click
-   **Register it** to create one with the barcode already filled in.
-5. If your puzzle already exists in the catalogue, select it to add a copy of
-   it to your library. If it's new, click **Create new**.
+   **Register it** to create one with the barcode already filled in. On a
+   phone or tablet whose browser can read barcodes (such as Chrome on
+   Android), you can also tap **Scan a barcode** next to the search box and
+   point your camera at the box.
+5. If your puzzle already exists in the catalogue, click it (or its
+   **Add to Library** button) to add a copy of it to your library. **Details**
+   opens its catalogue page instead. Puzzles you already own are marked
+   **On your shelf**. If it's new, click **Create new**.
 
 ## Step 2 — Create or copy
 
@@ -38,15 +43,15 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 
 **Fill in the details manually (or adjust the imported ones):**
 
-- **Title**, **brand**, **piece count**, **difficulty**, **condition**.
+- **Title**, **brand**, **piece count**, **difficulty**, **condition** (New (sealed), Like new, Good, Fair or Poor).
 - **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.
-- A **cover** — pick a color swatch, or upload/scrape a photo. A cover photo is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder. If the check takes longer, you get a message after saving, and on your own puzzles the placeholder says **Being checked**; you don't need to do anything.
+- A **box photo** (optional, for a new catalogue puzzle) — upload one, or pick one the import found. Once it has been checked, it becomes the puzzle's picture in the catalogue. It is checked automatically (like every photo you upload) before anyone sees it; a photo the check refuses can't be used, and until the check has finished the puzzle shows its placeholder. If the check takes longer, you get a message after saving, and on your own puzzles the placeholder says **Being checked**; you don't need to do anything. Photos of your own copy go on its page, once you've added it.
 - **Tags** and **notes**.
 - **Advanced fields** (collapsible): EAN, UPC, model number, artist, series, shape, dimensions.
 
-A **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look.
+On a large screen, a **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look. On a phone or tablet, a short summary sits above the add button instead.
 
-> **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability, notes, photos, etc.).
+> **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability and notes). You add photos of your own copy on its page afterwards.
 
 ## Add several puzzles at once
 
@@ -60,10 +65,14 @@ Use this to fill your shelf quickly, for example when you first join.
    you already own are marked **On your shelf**.
 4. Review your picks under **Picked**. For each one, you can switch on
    **Available to swap**. Picks aren't offered for swap or loan unless you do.
+   On a phone, the **Add N puzzles** button stays at the bottom of the screen
+   once you've picked something; tap **Picked (N)** next to it to see your
+   picks.
 5. Click **Add N puzzles** (for example, **Add 4 puzzles**).
 
-You can pick up to 25 puzzles at a time. Either all of them are added, or, if
-something goes wrong, none are, so you can safely try again.
+You can pick up to 100 puzzles at a time. They're added in groups of 25. If
+something goes wrong, the groups already added stay on your shelf and the rest
+stay picked, so you can safely try again.
 
 > **Can't find it?** Click **Register a new puzzle** (or **Register** followed
 > by your search) to create it. When you're done, you return to the picker,

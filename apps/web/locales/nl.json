@@ -343,6 +343,7 @@
     "completed": "Voltooid",
     "addPuzzle": "Puzzel Toevoegen",
     "mySuggestions": "Mijn voorstellen",
+    "moreActions": "Meer acties",
     "editPuzzle": "Puzzel Bewerken",
     "deletePuzzle": "Puzzel Verwijderen",
     "requestExchange": "Uitwisseling Aanvragen",
@@ -350,6 +351,21 @@
     "managePuzzles": "Beheer je puzzelcollectie",
     "noPuzzles": "Nog geen puzzels hier",
     "addFirstPuzzle": "Voeg je eerste puzzel toe om te beginnen met ruilen.",
+    "noMatch": {
+      "title": "Geen puzzels gevonden voor “{filters}”",
+      "sub": "Zoek of filter op iets anders, of bekijk je hele bibliotheek.",
+      "showAll": "Alles tonen"
+    },
+    "librarySearch": {
+      "label": "Zoek in je puzzels",
+      "placeholder": "Zoek op titel, merk of tag"
+    },
+    "sort": {
+      "label": "Sorteren op",
+      "recent": "Onlangs toegevoegd",
+      "title": "Titel A–Z",
+      "pieces": "Minste stukken eerst"
+    },
     "noImage": "Geen Afbeelding",
     "addPuzzleDescription": "Voeg een nieuwe puzzel toe aan je collectie",
     "selectPuzzle": "Puzzel Selecteren",
@@ -365,10 +381,11 @@
     "puzzleCreationFailed": "Puzzel aanmaken mislukt",
     "addRateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw.",
     "rateLimited": "Je hebt voorlopig het maximale aantal puzzels toegevoegd. Probeer het {when} opnieuw.",
-    "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of kies een omslagkleur.",
+    "coverRateLimited": "Je hebt voorlopig het maximale aantal omslagfoto's toegevoegd. Probeer het {when} opnieuw, of ga verder zonder foto.",
     "textTooLong": "Een van de velden is te lang. Maak het korter en probeer het opnieuw.",
     "noPuzzleSelected": "Selecteer eerst een puzzel",
-    "puzzleAdded": "Puzzel toegevoegd aan je collectie",
+    "puzzleAdded": "Toegevoegd aan Mijn Puzzels",
+    "addAnother": "Nog een toevoegen",
     "puzzleAdditionFailed": "Puzzel toevoegen aan collectie mislukt",
     "addToCollection": "Toevoegen aan Collectie",
     "acquisitionDatePlaceholder": "Wanneer heb je deze puzzel verworven?",
@@ -390,9 +407,6 @@
     "selectPieceCount": "Selecteer aantal stukken",
     "customPieceCountPlaceholder": "Voer aangepast aantal stukken in",
     "excellent": "Uitstekend",
-    "good": "Goed",
-    "fair": "Redelijk",
-    "poor": "Slecht",
     "statusInformation": "Statusinformatie",
     "statusInformationDescription": "Volg je puzzelvoltooiing en verwervingsdetails",
     "puzzleCompleted": "Ik heb deze puzzel voltooid",
@@ -466,12 +480,6 @@
         "expert": "Expert",
         "unknown": "Onbekend"
       },
-      "condition": {
-        "excellent": "Uitstekend",
-        "good": "Goed",
-        "fair": "Redelijk",
-        "poor": "Slecht"
-      },
       "filters": {
         "brand": "Merk",
         "selectBrand": "Selecteer merk",
@@ -516,7 +524,6 @@
       "completed": "Voltooid"
     },
     "resultCount": "{count} van {total} puzzels",
-    "searchHint": "Druk op {shortcut} om puzzels, mensen en meer te zoeken",
     "householdPointer": "Alle puzzels in je huishouden",
     "householdPointerNamed": "Alle puzzels in {name}",
     "gridView": "Rasterweergave",
@@ -526,8 +533,6 @@
     "deleteConfirmAction": "Verwijderen",
     "deleteReserved": "Je kunt deze puzzel niet verwijderen zolang hij bij een lopende uitwisseling hoort of is uitgeleend. Dat kan wel zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
     "loadingPuzzles": "Puzzels laden…",
-    "new_sealed": "Nieuw (Verzegeld)",
-    "like_new": "Zo Goed Als Nieuw",
     "importFromUrl": "Importeer via een winkellink",
     "importUrlPlaceholder": "Plak een product-URL van een puzzel",
     "importFetch": "Gegevens ophalen",
@@ -543,9 +548,8 @@
     "matchDifferent": "Nee, het is een andere",
     "importUrlBlurb": "Plak een link van een puzzelwinkel en wij vullen de details voor je in.",
     "importImported": "Details geïmporteerd",
-    "coverColour": "Omslagkleur",
-    "coverColourHint": "Kies een kleur of upload een foto — zo verschijnt je puzzel op de plank.",
-    "contributeCoverColourHint": "Kies een kleur of upload een foto — zo verschijnt de puzzel in de catalogus.",
+    "boxPhoto": "Foto van de doos",
+    "boxPhotoHint": "Een foto van de voorkant van de doos. Na de controle wordt dit de afbeelding van de puzzel in de catalogus.",
     "addToLibrary": "Toevoegen aan bibliotheek",
     "saveAndAddAnother": "Opslaan & nog een toevoegen",
     "addReadyHint": "Vul titel en aantal stukken in om door te gaan.",
@@ -563,7 +567,6 @@
     "checkTitle": "Titel ingevuld",
     "checkBrand": "Merk ingevuld",
     "checkPieces": "Aantal stukken ingevuld",
-    "checkAvailability": "Beschikbaarheid ingesteld",
     "contributePuzzle": "Een puzzel bijdragen",
     "fieldTitle": "Puzzeltitel",
     "fieldTitlePlaceholder": "bijv. Sterrennacht",
@@ -576,7 +579,7 @@
     "fieldDifficulty": "Moeilijkheid",
     "fieldCondition": "Conditie",
     "fieldAvailability": "Beschikbaarheid",
-    "availabilityHint": "Hoe je deze puzzel wilt delen. Kies wat van toepassing is.",
+    "availabilityHint": "Optioneel: zet er een aan om dit exemplaar aan te bieden bij Puzzels Ontdekken. Laat ze uit om het gewoon in je bibliotheek te houden.",
     "fieldTags": "Tags",
     "tagsHint": "Druk op Enter om toe te voegen — zo vinden anderen je puzzel.",
     "tagsLimit": "Maximaal {max} tags",
@@ -600,16 +603,10 @@
     "difficulty_hard": "Moeilijk",
     "difficulty_expert": "Expert",
     "difficultyNotSure": "Weet ik niet",
-    "condition_like_new": "Uitstekend",
-    "condition_good": "Goed",
-    "condition_fair": "Redelijk",
-    "condition_poor": "Slecht",
     "availTrade": "Voor ruil",
     "availLend": "Voor uitlenen",
     "availSale": "Te koop",
     "previewAvailable": "Beschikbaar",
-    "previewView": "Bekijken",
-    "previewAdd": "Toevoegen",
     "previewTitlePlaceholder": "Titel van je puzzel",
     "previewBrandPlaceholder": "Merk",
     "uploadPhoto": "Foto uploaden",
@@ -623,7 +620,7 @@
       "yourSubmissions": "Jouw inzendingen",
       "yourSubmissionsHint": "Puzzels die je aan de catalogus hebt toegevoegd en nog niet zijn goedgekeurd.",
       "allPuzzles": "Alle puzzels",
-      "allPuzzlesHint": "Kies er een uit de gedeelde catalogus om een exemplaar aan je collectie toe te voegen.",
+      "allPuzzlesHint": "Kies er een uit de gedeelde catalogus om een exemplaar aan je bibliotheek toe te voegen.",
       "cantFind": "Kun je je puzzel niet vinden? Maak een nieuwe aan.",
       "createNew": "Nieuwe aanmaken",
       "noResults": "Geen puzzels gevonden",
@@ -632,20 +629,65 @@
       "barcodeNotFound": "Nog geen puzzel met barcode {code}",
       "barcodeNotFoundHint": "Registreer hem, zodat jij en iedereen hem kunnen toevoegen.",
       "registerIt": "Registreer hem",
+      "details": "Details",
+      "detailsOf": "Details van {title}",
       "chosenPuzzle": "Een exemplaar toevoegen van",
-      "copyDetails": "Jouw exemplaar"
+      "copyDetails": "Jouw exemplaar",
+      "addYourCopy": "Exemplaar toevoegen",
+      "addYourCopyHint": "Geef aan in welke staat het is en hoe je het wilt delen.",
+      "copyPhotosLater": "Zodra het in je bibliotheek staat, kun je op de pagina ervan foto's van je eigen exemplaar toevoegen."
     },
-    "removeFromCollection": "Uit deze collectie verwijderen",
+    "removeFromCollection": "Uit deze collectie halen",
     "private": "Privé",
     "ownerFilter": {
       "label": "Van wie",
-      "all": "Alles",
+      "all": "Van iedereen",
       "mine": "Van mij",
-      "household": "Van huisgenoten"
+      "household": "Van huisgenoten",
+      "trigger": "{owner, select, mine {Van mij} household {Van huisgenoten} other {Van iedereen}}"
     },
     "boxArtCheck": {
       "label": "Wordt gecontroleerd",
       "toast": "Je afbeelding wordt nog gecontroleerd. Tot die controle klaar is, ziet niemand hem, ook jij niet: in plaats daarvan staat er een standaardafbeelding. De controle wordt automatisch opnieuw gedaan, je hoeft niets te doen."
+    },
+    "bulk": {
+      "select": "Selecteren",
+      "done": "Klaar",
+      "barLabel": "Acties voor de geselecteerde puzzels",
+      "exit": "Stoppen met selecteren",
+      "selectedCount": "{count, plural, =0 {Niets geselecteerd} one {# geselecteerd} other {# geselecteerd}}",
+      "selectAll": "Alles selecteren ({count})",
+      "clear": "Selectie wissen",
+      "selectCopy": "{title} selecteren",
+      "offers": "Aanbod",
+      "offerSwap": "Aanbieden voor ruil",
+      "offerLend": "Aanbieden om uit te lenen",
+      "withdraw": "Aanbod intrekken",
+      "addToCollection": "Aan collectie toevoegen",
+      "result": {
+        "offerSwap": "{count, plural, one {# puzzel aangeboden voor ruil} other {# puzzels aangeboden voor ruil}}",
+        "offerLend": "{count, plural, one {# puzzel aangeboden om uit te lenen} other {# puzzels aangeboden om uit te lenen}}",
+        "withdraw": "{count, plural, one {Aanbod ingetrokken voor # puzzel} other {Aanbod ingetrokken voor # puzzels}}",
+        "nothingChanged": "Er is niets veranderd",
+        "unchanged": "{count, plural, one {# stond al zo.} other {# stonden al zo.}}",
+        "onLoan": "{count, plural, one {# is uitgeleend en bleef zoals hij was.} other {# zijn uitgeleend en bleven zoals ze waren.}}",
+        "reserved": "{count, plural, one {# hoort bij een lopende uitwisseling en bleef zoals hij was.} other {# horen bij een lopende uitwisseling en bleven zoals ze waren.}}",
+        "notAllowed": "{count, plural, one {# mag je niet wijzigen.} other {# mag je niet wijzigen.}}",
+        "failed": "{count, plural, one {# kon niet worden opgeslagen. Probeer het opnieuw.} other {# konden niet worden opgeslagen. Probeer het opnieuw.}}",
+        "visibleWhileOffered": "{count, plural, one {# privépuzzel is zichtbaar zolang je hem aanbiedt, en weer privé zodra je elk aanbod intrekt.} other {# privépuzzels zijn zichtbaar zolang je ze aanbiedt, en weer privé zodra je elk aanbod intrekt.}}",
+        "undo": "Ongedaan maken",
+        "undoFailed": "Ongedaan maken lukte niet. Controleer de puzzels en probeer het opnieuw."
+      },
+      "collection": {
+        "title": "Aan een collectie toevoegen",
+        "description": "{count, plural, one {Kies een collectie voor # puzzel.} other {Kies een collectie voor # puzzels.}}",
+        "none": "Je hebt nog geen collectie.",
+        "create": "Collectie maken",
+        "added": "{count, plural, one {# puzzel staat nu in {name}} other {# puzzels staan nu in {name}}}",
+        "noneAdded": "Er is niets aan {name} toegevoegd",
+        "housemates": "{count, plural, one {# is van een huisgenoot en komt niet in je collecties.} other {# zijn van huisgenoten en komen niet in je collecties.}}",
+        "failed": "{count, plural, one {# kon niet worden toegevoegd. Probeer het opnieuw.} other {# konden niet worden toegevoegd. Probeer het opnieuw.}}"
+      }
     }
   },
   "trades": {
@@ -1901,15 +1943,25 @@
     "pickedHeading": "Gekozen ({count})",
     "onShelf": "Op je plank",
     "noResults": "Geen puzzels gevonden voor \"{query}\".",
+    "keepTypingBarcode": "Typ de barcode verder…",
+    "barcodeLength": "Barcodes op puzzeldozen hebben 12 of 13 cijfers.",
+    "scan": {
+      "open": "Barcode scannen",
+      "title": "Barcode scannen",
+      "description": "Richt je camera op de barcode op de doos.",
+      "denied": "Cameratoegang is geblokkeerd. Sta die toe in je browserinstellingen, of typ de barcode in.",
+      "failed": "De camera kon niet starten. Typ de barcode in."
+    },
     "notListed": "Niet gevonden?",
     "register": "\"{query}\" registreren",
     "registerNew": "Een nieuwe puzzel registreren",
     "forTrade": "Beschikbaar om te ruilen",
     "forTradeLabel": "{title} beschikbaar om te ruilen",
-    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen, tenzij je hieronder ruilen aanzet. Dat kun je later per puzzel aanpassen.",
+    "availabilityNote": "Toegevoegde puzzels worden niet aangeboden om te ruilen of uit te lenen. Na het kiezen kun je elke puzzel apart aanbieden om te ruilen, en dat later per puzzel aanpassen.",
     "limitReached": "Je kunt maximaal {max} puzzels tegelijk toevoegen.",
     "submit": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "added": "{count, plural, one {# puzzel aan je plank toegevoegd} other {# puzzels aan je plank toegevoegd}}",
+    "addedPartly": "{added} van de {total} puzzels toegevoegd. De rest is nog gekozen, dus je kunt het opnieuw proberen.",
     "addFailed": "Deze puzzels konden niet worden toegevoegd, dus er is niets toegevoegd. Probeer het opnieuw.",
     "rateLimited": "Je hebt vandaag al veel puzzels toegevoegd. Probeer het morgen opnieuw."
   },
@@ -1920,6 +1972,7 @@
     "createCollectionDescription": "Maak een nieuwe collectie om je puzzels te organiseren",
     "editCollection": "Collectie Bewerken",
     "editCollectionDescription": "Update je collectiedetails",
+    "editNamed": "{name} bewerken",
     "noCollections": "Nog geen collecties",
     "emptyHint": "Een collectie is een plank met een eigen naam om je puzzels te groeperen. Maak er een aan, open hem en kies Puzzels Toevoegen om hem te vullen vanuit je bibliotheek.",
     "collectionNamePlaceholder": "Voer collectienaam in",
@@ -1932,7 +1985,11 @@
     "icon": "Pictogram",
     "color": "Kleur",
     "create": "Maken",
+    "created": "“{name}” is aangemaakt. Voeg er nu puzzels aan toe.",
+    "createError": "Kon de collectie niet aanmaken. Probeer het opnieuw.",
+    "duplicateName": "Je hebt al een collectie met de naam “{name}”.",
     "save": "Opslaan",
+    "saveError": "Kon je wijzigingen niet opslaan. Probeer het opnieuw.",
     "puzzles": "puzzels",
     "default": "Standaard",
     "addPuzzles": "Puzzels Toevoegen",
@@ -1952,9 +2009,12 @@
     "notFound": "Collectie niet gevonden",
     "meta": "{shelves, plural, one {# plank} other {# planken}} · {puzzles, plural, one {# puzzel} other {# puzzels}}",
     "newCollection": "Nieuwe Collectie",
-    "deleteConfirmTitle": "Deze collectie verwijderen?",
-    "deleteConfirmBody": "Dit verwijdert de collectie permanent. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteCollection": "Collectie verwijderen",
+    "deleteConfirmTitle": "“{name}” verwijderen?",
+    "deleteConfirmBody": "De collectie wordt definitief verwijderd. De puzzels erin blijven gewoon in je bibliotheek.",
     "deleteConfirmAction": "Verwijderen",
+    "deleted": "“{name}” is verwijderd",
+    "deleteError": "Kon de collectie niet verwijderen. Probeer het opnieuw.",
     "loadingCollections": "Collecties laden…",
     "piecesTotal": "Stukjes Totaal",
     "avgDifficulty": "Gem. Moeilijkheid",
@@ -1975,11 +2035,24 @@
       "privateLinkCopied": "Link gekopieerd — collectie blijft privé",
       "error": "Kon delen niet bijwerken. Probeer het opnieuw."
     },
-    "noPuzzlesAvailable": "Geen Puzzels Beschikbaar",
     "addPuzzlesFirst": "Voeg eerst puzzels toe aan je bibliotheek en orden ze dan in collecties.",
     "addSelected": "{count, plural, one {# puzzel toevoegen} other {# puzzels toevoegen}}",
     "updatedAgo": "Bijgewerkt {time}",
-    "added": "Toegevoegd"
+    "added": "Toegevoegd",
+    "picker": {
+      "libraryEmpty": "Nog niets in je bibliotheek",
+      "libraryEmptyHint": "Voeg eerst puzzels toe aan je bibliotheek en orden ze daarna in collecties.",
+      "addToLibrary": "Puzzel toevoegen",
+      "allInCollection": "Alles zit er al in",
+      "allInCollectionHint": "Elke puzzel uit je bibliotheek zit al in deze collectie.",
+      "noMatch": "Geen puzzels gevonden voor “{term}”",
+      "noMatchHint": "Probeer een andere titel of een ander merk.",
+      "addFailed": "{count, plural, one {Kon # puzzel niet toevoegen. Hij is nog geselecteerd, dus je kunt het opnieuw proberen.} other {Kon # puzzels niet toevoegen. Ze zijn nog geselecteerd, dus je kunt het opnieuw proberen.}}"
+    },
+    "removed": "“{title}” is uit deze collectie gehaald",
+    "undo": "Ongedaan maken",
+    "removeError": "Kon de puzzel niet uit deze collectie halen. Probeer het opnieuw.",
+    "undoRemoveError": "Kon de puzzel niet terugzetten. Probeer het opnieuw."
   },
   "household": {
     "loading": "Je huishouden laden…",
@@ -3448,6 +3521,11 @@
     "onLoanTo": "Uitgeleend aan {name}",
     "recallAction": "Terugvragen",
     "recalling": "Terugvragen…",
+    "recallConfirmTitle": "Deze puzzel terugvragen?",
+    "recallConfirmBody": "Hiermee beëindig je de lening en staat de puzzel weer bij jou. Laat {name} weten dat je hem terug wilt.",
+    "recallConfirm": "Puzzel terugvragen",
+    "recalled": "Lening beëindigd. De puzzel staat weer bij jou.",
+    "recallFailed": "Terugvragen is niet gelukt. Probeer het opnieuw.",
     "historyTitle": "Leengeschiedenis",
     "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
     "noHistory": "Dit exemplaar is nooit uitgeleend.",
@@ -3757,6 +3835,7 @@
     "addPuzzle": "Puzzel toevoegen — JigSwap",
     "contributePuzzle": "Een puzzel bijdragen — JigSwap",
     "createPuzzle": "Puzzel aanmaken — JigSwap",
+    "addCopy": "Exemplaar toevoegen — JigSwap",
     "quickAddPuzzles": "Meerdere puzzels toevoegen — JigSwap",
     "puzzles": "Puzzelcatalogus — JigSwap",
     "puzzle": "Puzzeldetails — JigSwap",
@@ -3800,6 +3879,7 @@
       "empty": "Geen resultaten gevonden.",
       "goTo": "Ga Naar",
       "quickActions": "Snelle Acties",
+      "groupLibrary": "In je bibliotheek",
       "groupPuzzles": "Puzzels",
       "groupPeople": "Mensen",
       "groupCircles": "Kringen",
@@ -4045,9 +4125,6 @@
       "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
-    "crumbs": {
-      "ownedCopies": "Exemplaren"
-    },
     "plankReset": "Herstellen"
   },
   "copyInstance": {
@@ -4094,29 +4171,21 @@
       "requestViewOnly": "Je mag in deze kring alleen bekijken",
       "message": "Bericht",
       "proposeSwap": "Ruil voorstellen",
-      "offerToLend": "Aanbieden om uit te lenen",
-      "logCompletion": "Voltooiing vastleggen"
+      "offerToLend": "Aanbieden om uit te lenen"
     },
-    "available": "Beschikbaar",
-    "forTrade": "Te ruilen",
-    "forLend": "Uit te lenen",
-    "forSale": "Te koop",
     "acquired": "Verworven",
     "source": "Bron",
     "inYourLibrary": "In jouw bibliotheek",
     "tags": "Labels",
-    "durationLessThanMonth": "<1m",
-    "durationYears": "{years}j",
-    "durationMonths": "{months}m",
+    "addDetails": "Details toevoegen",
+    "durationLessThanMonth": "Minder dan een maand",
+    "durationYears": "{years} jaar",
+    "durationMonths": "{months, plural, one {# maand} other {# maanden}}",
     "acquisitionSourceLabel": {
       "bought_new": "Nieuw gekocht",
       "bought_used": "Tweedehands gekocht",
       "trade": "Ruil",
       "gift": "Cadeau"
-    },
-    "conditionLabel": {
-      "new_sealed": "Nieuw (verzegeld)",
-      "like_new": "Zo goed als nieuw"
     },
     "statTimesCompleted": "keer voltooid",
     "statFastestFinish": "snelste tijd",
@@ -4148,6 +4217,7 @@
     "communityRating": "Communitybeoordeling",
     "communityRatings": "{count} communitybeoordelingen",
     "copyReviews": "Beoordelingen van dit exemplaar",
+    "copyReviewsHint": "Wie een voltooiing van dit exemplaar vastlegt, kan het beoordelen.",
     "noCopyReviews": "Nog geen beoordelingen van dit exemplaar.",
     "comments": "Reacties",
     "addComment": "Voeg een reactie toe…",
@@ -4186,10 +4256,29 @@
       "resetZoom": "Zoom herstellen",
       "zoomLevel": "Zoom {percent}%"
     },
-    "offerForSwap": "Aanbieden voor ruil",
-    "offeredForSwap": "Aangeboden voor ruil",
-    "offerForLend": "Aanbieden om uit te lenen",
-    "offeredForLend": "Aangeboden om uit te lenen",
+    "offers": {
+      "swapLabel": "Aanbieden voor ruil",
+      "swapHint": "Leden kunnen een ruil voorstellen.",
+      "lendLabel": "Aanbieden om uit te lenen",
+      "lendHint": "Leden kunnen vragen of ze hem mogen lenen.",
+      "lockedOnLoan": "Hij is uitgeleend. Zodra je hem terug hebt, kun je hem weer aanbieden.",
+      "swapOn": "Aangeboden voor ruil",
+      "swapOff": "Niet meer aangeboden voor ruil",
+      "lendOn": "Aangeboden om uit te lenen",
+      "lendOff": "Niet meer aangeboden om uit te lenen",
+      "visibleWhileOffered": "Zolang je hem aanbiedt, is hij zichtbaar. Trek je elk aanbod in, dan is hij weer privé.",
+      "privateAgain": "Hij is weer privé.",
+      "undo": "Ongedaan maken"
+    },
+    "status": {
+      "onLoan": "Uitgeleend aan {name} sinds {date}",
+      "offered": "Aangeboden voor {offers}",
+      "offerSwap": "ruil",
+      "offerLend": "uitlenen",
+      "offerSale": "verkoop",
+      "visibleWhileOffered": "Zichtbaar zolang je hem aanbiedt, daarna weer privé",
+      "notOffered": "Niet aangeboden"
+    },
     "editCopy": {
       "title": "Exemplaar bewerken",
       "save": "Opslaan",
@@ -4202,18 +4291,31 @@
       "useCatalogueImage": "Catalogusafbeelding gebruiken",
       "noPhotosForCover": "Voeg fotos toe aan dit exemplaar om een eigen omslag te kiezen.",
       "notesPlaceholder": "Voeg een notitie toe over dit exemplaar…",
+      "acquiredMonth": "Maand van verwerving",
+      "acquiredYear": "Jaar van verwerving",
+      "monthPlaceholder": "Maand",
+      "yearPlaceholder": "Jaar",
+      "acquiredIncomplete": "Kies zowel een maand als een jaar.",
+      "sourceUnknown": "Niet ingevuld",
       "visibility": {
         "label": "Wie kan dit exemplaar zien",
         "visible": "Zichtbaar voor de community",
         "visibleHint": "Je vrienden zien het in je bibliotheek.",
         "private": "Privé — alleen jij en je huishouden",
         "privateHint": "Verborgen voor alle anderen, ook voor je vrienden.",
-        "offerNote": "Bied je een puzzel aan om te ruilen, uit te lenen of te verkopen, dan wordt hij zichtbaar.",
-        "privateDisabled": "Dit exemplaar wordt aangeboden en is dus zichtbaar. Trek het aanbod in om het privé te maken."
+        "offerNote": "Bied je een puzzel aan om te ruilen, uit te lenen of te verkopen, dan is hij zichtbaar zolang het aanbod loopt.",
+        "privateWhileOffered": "Hij wordt aangeboden en is dus nu zichtbaar. Trek je elk aanbod in, dan is hij weer privé."
       }
     },
     "photoCover": "Omslag",
     "photoPending": "Wacht op controle"
+  },
+  "condition": {
+    "new_sealed": "Nieuw (verzegeld)",
+    "like_new": "Zo goed als nieuw",
+    "good": "Goed",
+    "fair": "Redelijk",
+    "poor": "Slecht"
   },
   "copyOwner": {
     "label": "Eigenaar",
@@ -5163,7 +5265,7 @@
         },
         "per-copy": {
           "title": "Eén puzzel tegelijk",
-          "body": "Wil je één puzzel verbergen, open hem dan, druk op Bewerken en kies Privé onder Wie kan dit exemplaar zien. Dan zien alleen jij en je huishouden hem. Een puzzel die je aanbiedt om te ruilen, lenen of verkopen kan niet privé zijn."
+          "body": "Wil je één puzzel verbergen, open hem dan, druk op Bewerken en kies Privé onder Wie kan dit exemplaar zien. Dan zien alleen jij en je huishouden hem. Bied je hem aan om te ruilen, uit te lenen of te verkopen, dan is hij zichtbaar zolang het aanbod loopt; trek je elk aanbod in, dan is hij weer privé."
         }
       }
     },
@@ -5223,7 +5325,7 @@
         },
         "find": {
           "title": "Later terugvinden",
-          "body": "Mijn voorstellen toont alles wat je hebt voorgesteld."
+          "body": "Open hier het ⋯-menu en kies Mijn voorstellen om alles te zien wat je hebt voorgesteld."
         },
         "follow": {
           "title": "Volg je voorstellen",

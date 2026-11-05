@@ -343,6 +343,7 @@
     "completed": "Completed",
     "addPuzzle": "Add Puzzle",
     "mySuggestions": "My suggestions",
+    "moreActions": "More actions",
     "editPuzzle": "Edit Puzzle",
     "deletePuzzle": "Delete Puzzle",
     "requestExchange": "Request Exchange",
@@ -350,6 +351,21 @@
     "managePuzzles": "Manage your puzzle collection",
     "noPuzzles": "No puzzles here yet",
     "addFirstPuzzle": "Add your first puzzle to start trading.",
+    "noMatch": {
+      "title": "No puzzles match “{filters}”",
+      "sub": "Try a different search or filter, or show your whole library.",
+      "showAll": "Show all"
+    },
+    "librarySearch": {
+      "label": "Search your puzzles",
+      "placeholder": "Search title, brand or tag"
+    },
+    "sort": {
+      "label": "Sort by",
+      "recent": "Recently added",
+      "title": "Title A–Z",
+      "pieces": "Fewest pieces first"
+    },
     "noImage": "No Image",
     "addPuzzleDescription": "Add a new puzzle to your collection",
     "selectPuzzle": "Select Puzzle",
@@ -365,10 +381,11 @@
     "puzzleCreationFailed": "Failed to create puzzle",
     "addRateLimited": "You've added a lot of puzzles today. Try again tomorrow.",
     "rateLimited": "You've added the most puzzles allowed for now. Try again {when}.",
-    "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or pick a cover colour instead.",
+    "coverRateLimited": "You've added the most cover photos allowed for now. Try again {when}, or continue without a photo.",
     "textTooLong": "One of the fields is too long. Shorten it and try again.",
     "noPuzzleSelected": "Please select a puzzle first",
-    "puzzleAdded": "Puzzle added to your collection",
+    "puzzleAdded": "Added to My Puzzles",
+    "addAnother": "Add another",
     "puzzleAdditionFailed": "Failed to add puzzle to collection",
     "addToCollection": "Add to Collection",
     "acquisitionDatePlaceholder": "When did you acquire this puzzle?",
@@ -390,9 +407,6 @@
     "selectPieceCount": "Select piece count",
     "customPieceCountPlaceholder": "Enter custom piece count",
     "excellent": "Excellent",
-    "good": "Good",
-    "fair": "Fair",
-    "poor": "Poor",
     "statusInformation": "Status Information",
     "statusInformationDescription": "Track your puzzle completion and acquisition details",
     "puzzleCompleted": "I have completed this puzzle",
@@ -466,12 +480,6 @@
         "expert": "Expert",
         "unknown": "Unknown"
       },
-      "condition": {
-        "excellent": "Excellent",
-        "good": "Good",
-        "fair": "Fair",
-        "poor": "Poor"
-      },
       "filters": {
         "brand": "Brand",
         "selectBrand": "Select brand",
@@ -516,7 +524,6 @@
       "completed": "Completed"
     },
     "resultCount": "{count} of {total} puzzles",
-    "searchHint": "Press {shortcut} to search puzzles, people and more",
     "householdPointer": "All puzzles in your household",
     "householdPointerNamed": "All puzzles in {name}",
     "gridView": "Grid view",
@@ -526,8 +533,6 @@
     "deleteConfirmAction": "Delete",
     "deleteReserved": "You can't delete this puzzle while it's part of an exchange in progress or out on loan. You can once the exchange is completed, declined or cancelled, or once the puzzle is back.",
     "loadingPuzzles": "Loading puzzles…",
-    "new_sealed": "New (Sealed)",
-    "like_new": "Like New",
     "importFromUrl": "Import from a store link",
     "importUrlPlaceholder": "Paste a puzzle product URL",
     "importFetch": "Fetch details",
@@ -543,9 +548,8 @@
     "matchDifferent": "No, it's different",
     "importUrlBlurb": "Paste a link from any puzzle shop and we'll fill in the details for you.",
     "importImported": "Details imported",
-    "coverColour": "Cover colour",
-    "coverColourHint": "Pick a colour or upload a photo — this is how your puzzle appears on the shelf.",
-    "contributeCoverColourHint": "Pick a colour or upload a photo — this is how the puzzle appears in the catalogue.",
+    "boxPhoto": "Box photo",
+    "boxPhotoHint": "A photo of the box front. Once it has been checked, it becomes this puzzle's picture in the catalogue.",
     "addToLibrary": "Add to Library",
     "saveAndAddAnother": "Save & Add Another",
     "addReadyHint": "Fill in title and piece count to continue.",
@@ -563,7 +567,6 @@
     "checkTitle": "Title filled in",
     "checkBrand": "Brand filled in",
     "checkPieces": "Piece count filled in",
-    "checkAvailability": "Availability set",
     "contributePuzzle": "Contribute a Puzzle",
     "fieldTitle": "Puzzle Title",
     "fieldTitlePlaceholder": "e.g. Starry Night",
@@ -576,7 +579,7 @@
     "fieldDifficulty": "Difficulty",
     "fieldCondition": "Condition",
     "fieldAvailability": "Availability",
-    "availabilityHint": "How you'd like to share this puzzle. Pick any that apply.",
+    "availabilityHint": "Optional: switch one on to offer this copy in Browse. Leave them off to just keep it in your library.",
     "fieldTags": "Tags",
     "tagsHint": "Press Enter to add. Helps people discover your puzzle.",
     "tagsLimit": "Up to {max} tags",
@@ -600,16 +603,10 @@
     "difficulty_hard": "Hard",
     "difficulty_expert": "Expert",
     "difficultyNotSure": "Not sure",
-    "condition_like_new": "Excellent",
-    "condition_good": "Good",
-    "condition_fair": "Fair",
-    "condition_poor": "Poor",
     "availTrade": "For Trade",
     "availLend": "For Loan",
     "availSale": "For Sale",
     "previewAvailable": "Available",
-    "previewView": "View",
-    "previewAdd": "Add",
     "previewTitlePlaceholder": "Your puzzle title",
     "previewBrandPlaceholder": "Brand",
     "uploadPhoto": "Upload photo",
@@ -632,8 +629,13 @@
       "barcodeNotFound": "No puzzle with barcode {code} yet",
       "barcodeNotFoundHint": "Register it so you, and everyone else, can add it.",
       "registerIt": "Register it",
+      "details": "Details",
+      "detailsOf": "Details of {title}",
       "chosenPuzzle": "Adding a copy of",
-      "copyDetails": "Your copy"
+      "copyDetails": "Your copy",
+      "addYourCopy": "Add your copy",
+      "addYourCopyHint": "Record its condition and how you'd like to share it.",
+      "copyPhotosLater": "You can add photos of your own copy on its page once it's in your library."
     },
     "removeFromCollection": "Remove from this collection",
     "private": "Private",
@@ -641,11 +643,51 @@
       "label": "Whose puzzles",
       "all": "All",
       "mine": "Mine",
-      "household": "Household members'"
+      "household": "Household members'",
+      "trigger": "Whose: {owner, select, mine {Mine} household {Household members''} other {All}}"
     },
     "boxArtCheck": {
       "label": "Being checked",
       "toast": "Your image is still being checked. Until it has passed, nobody sees it, you included: a placeholder is shown instead. It is checked again automatically, so there is nothing you need to do."
+    },
+    "bulk": {
+      "select": "Select",
+      "done": "Done",
+      "barLabel": "Actions for the selected puzzles",
+      "exit": "Stop selecting",
+      "selectedCount": "{count, plural, =0 {Nothing selected} one {# selected} other {# selected}}",
+      "selectAll": "Select all ({count})",
+      "clear": "Clear selection",
+      "selectCopy": "Select {title}",
+      "offers": "Offers",
+      "offerSwap": "Offer for swap",
+      "offerLend": "Offer to lend",
+      "withdraw": "Withdraw offers",
+      "addToCollection": "Add to collection",
+      "result": {
+        "offerSwap": "{count, plural, one {Offered # puzzle for swap} other {Offered # puzzles for swap}}",
+        "offerLend": "{count, plural, one {Offered # puzzle to lend} other {Offered # puzzles to lend}}",
+        "withdraw": "{count, plural, one {Withdrew the offers on # puzzle} other {Withdrew the offers on # puzzles}}",
+        "nothingChanged": "Nothing changed",
+        "unchanged": "{count, plural, one {# was already set that way.} other {# were already set that way.}}",
+        "onLoan": "{count, plural, one {# is on loan, so it was left as it is.} other {# are on loan, so they were left as they are.}}",
+        "reserved": "{count, plural, one {# is part of an ongoing exchange, so it was left as it is.} other {# are part of an ongoing exchange, so they were left as they are.}}",
+        "notAllowed": "{count, plural, one {# isn't yours to change.} other {# aren't yours to change.}}",
+        "failed": "{count, plural, one {# couldn't be saved. Try again.} other {# couldn't be saved. Try again.}}",
+        "visibleWhileOffered": "{count, plural, one {# private puzzle is visible while it's on offer and private again once you withdraw every offer.} other {# private puzzles are visible while they're on offer and private again once you withdraw every offer.}}",
+        "undo": "Undo",
+        "undoFailed": "Couldn't undo that. Check the puzzles and try again."
+      },
+      "collection": {
+        "title": "Add to a collection",
+        "description": "{count, plural, one {Choose a collection for # puzzle.} other {Choose a collection for # puzzles.}}",
+        "none": "You don't have a collection yet.",
+        "create": "Create a collection",
+        "added": "{count, plural, one {# puzzle is now in {name}} other {# puzzles are now in {name}}}",
+        "noneAdded": "Nothing was added to {name}",
+        "housemates": "{count, plural, one {# belongs to a household member and stays out of your collections.} other {# belong to household members and stay out of your collections.}}",
+        "failed": "{count, plural, one {# couldn't be added. Try again.} other {# couldn't be added. Try again.}}"
+      }
     }
   },
   "trades": {
@@ -1901,15 +1943,25 @@
     "pickedHeading": "Picked ({count})",
     "onShelf": "On your shelf",
     "noResults": "No puzzles match \"{query}\".",
+    "keepTypingBarcode": "Keep typing the barcode…",
+    "barcodeLength": "Barcodes on puzzle boxes have 12 or 13 digits.",
+    "scan": {
+      "open": "Scan a barcode",
+      "title": "Scan a barcode",
+      "description": "Point your camera at the barcode on the box.",
+      "denied": "Camera access is blocked. Allow it in your browser settings, or type the barcode.",
+      "failed": "Couldn't start the camera. Type the barcode instead."
+    },
     "notListed": "Can't find it?",
     "register": "Register \"{query}\"",
     "registerNew": "Register a new puzzle",
     "forTrade": "Available to swap",
     "forTradeLabel": "{title} available to swap",
-    "availabilityNote": "Added puzzles are not offered for swap or loan unless you switch on swapping below. You can change that per puzzle later.",
+    "availabilityNote": "Added puzzles aren't offered for swap or loan. You can offer each one for swap after picking it, and change that per puzzle later.",
     "limitReached": "You can add up to {max} puzzles at once.",
     "submit": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "added": "{count, plural, one {# puzzle added to your shelf} other {# puzzles added to your shelf}}",
+    "addedPartly": "Added {added} of {total} puzzles. The rest are still picked, so you can try again.",
     "addFailed": "Couldn't add these puzzles, so nothing was added. Please try again.",
     "rateLimited": "You've added a lot of puzzles today. Try again tomorrow."
   },
@@ -1920,6 +1972,7 @@
     "createCollectionDescription": "Create a new collection to organize your puzzles",
     "editCollection": "Edit Collection",
     "editCollectionDescription": "Update your collection details",
+    "editNamed": "Edit {name}",
     "noCollections": "No collections yet",
     "emptyHint": "A collection is a named shelf for grouping your puzzles. Create one, then open it and choose Add Puzzles to fill it from your library.",
     "collectionNamePlaceholder": "Enter collection name",
@@ -1932,7 +1985,11 @@
     "icon": "Icon",
     "color": "Color",
     "create": "Create",
+    "created": "Created “{name}”. Now add some puzzles to it.",
+    "createError": "Couldn't create the collection. Please try again.",
+    "duplicateName": "You already have a collection called “{name}”.",
     "save": "Save",
+    "saveError": "Couldn't save your changes. Please try again.",
     "puzzles": "puzzles",
     "default": "Default",
     "addPuzzles": "Add Puzzles",
@@ -1952,9 +2009,12 @@
     "notFound": "Collection not found",
     "meta": "{shelves, plural, one {# shelf} other {# shelves}} · {puzzles, plural, one {# puzzle} other {# puzzles}}",
     "newCollection": "New Collection",
-    "deleteConfirmTitle": "Delete this collection?",
-    "deleteConfirmBody": "This permanently deletes the collection. This action cannot be undone.",
+    "deleteCollection": "Delete collection",
+    "deleteConfirmTitle": "Delete “{name}”?",
+    "deleteConfirmBody": "The collection is deleted for good. The puzzles in it stay in your library.",
     "deleteConfirmAction": "Delete",
+    "deleted": "Deleted “{name}”",
+    "deleteError": "Couldn't delete the collection. Please try again.",
     "loadingCollections": "Loading collections…",
     "piecesTotal": "Pieces Total",
     "avgDifficulty": "Avg. Difficulty",
@@ -1975,11 +2035,24 @@
       "privateLinkCopied": "Link copied — collection stays private",
       "error": "Couldn't update sharing. Please try again."
     },
-    "noPuzzlesAvailable": "No Puzzles Available",
     "addPuzzlesFirst": "Add puzzles to your library first, then organise them into collections.",
     "addSelected": "{count, plural, one {Add # puzzle} other {Add # puzzles}}",
     "updatedAgo": "Updated {time}",
-    "added": "Added"
+    "added": "Added",
+    "picker": {
+      "libraryEmpty": "Nothing in your library yet",
+      "libraryEmptyHint": "Add puzzles to your library first, then file them into collections.",
+      "addToLibrary": "Add a puzzle",
+      "allInCollection": "Everything is already in here",
+      "allInCollectionHint": "Every puzzle in your library is already in this collection.",
+      "noMatch": "No puzzles match “{term}”",
+      "noMatchHint": "Try another title or brand.",
+      "addFailed": "{count, plural, one {Couldn't add # puzzle. It's still selected, so you can try again.} other {Couldn't add # puzzles. They're still selected, so you can try again.}}"
+    },
+    "removed": "Removed “{title}” from this collection",
+    "undo": "Undo",
+    "removeError": "Couldn't take the puzzle out of this collection. Please try again.",
+    "undoRemoveError": "Couldn't put the puzzle back. Please try again."
   },
   "household": {
     "loading": "Loading your household…",
@@ -3448,6 +3521,11 @@
     "onLoanTo": "On loan to {name}",
     "recallAction": "Recall",
     "recalling": "Recalling…",
+    "recallConfirmTitle": "Recall this puzzle?",
+    "recallConfirmBody": "This ends the loan and marks the puzzle as back with you. Let {name} know so they can return it.",
+    "recallConfirm": "Recall puzzle",
+    "recalled": "Loan ended. The puzzle is marked as back with you.",
+    "recallFailed": "Couldn't recall the puzzle. Please try again.",
     "historyTitle": "Loan history",
     "historyDescription": "Every time this copy has been lent out.",
     "noHistory": "This copy has never been lent out.",
@@ -3757,6 +3835,7 @@
     "addPuzzle": "Add puzzle — JigSwap",
     "contributePuzzle": "Contribute a puzzle — JigSwap",
     "createPuzzle": "Create puzzle — JigSwap",
+    "addCopy": "Add your copy — JigSwap",
     "quickAddPuzzles": "Add several puzzles — JigSwap",
     "puzzles": "Puzzles catalogue — JigSwap",
     "puzzle": "Puzzle details — JigSwap",
@@ -3800,6 +3879,7 @@
       "empty": "No results found.",
       "goTo": "Go To",
       "quickActions": "Quick Actions",
+      "groupLibrary": "In your library",
       "groupPuzzles": "Puzzles",
       "groupPeople": "People",
       "groupCircles": "Circles",
@@ -4045,9 +4125,6 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
-    "crumbs": {
-      "ownedCopies": "Owned Copies"
-    },
     "plankReset": "Reset"
   },
   "copyInstance": {
@@ -4094,29 +4171,21 @@
       "requestViewOnly": "You have view-only access in this circle",
       "message": "Message",
       "proposeSwap": "Propose a Swap",
-      "offerToLend": "Offer to Lend",
-      "logCompletion": "Log a Completion"
+      "offerToLend": "Offer to Lend"
     },
-    "available": "Available",
-    "forTrade": "For Trade",
-    "forLend": "For Loan",
-    "forSale": "For Sale",
     "acquired": "Acquired",
     "source": "Source",
     "inYourLibrary": "In your library",
     "tags": "Tags",
-    "durationLessThanMonth": "<1m",
-    "durationYears": "{years}y",
-    "durationMonths": "{months}m",
+    "addDetails": "Add details",
+    "durationLessThanMonth": "Less than a month",
+    "durationYears": "{years, plural, one {# year} other {# years}}",
+    "durationMonths": "{months, plural, one {# month} other {# months}}",
     "acquisitionSourceLabel": {
       "bought_new": "Bought new",
       "bought_used": "Bought used",
       "trade": "Trade",
       "gift": "Gift"
-    },
-    "conditionLabel": {
-      "new_sealed": "New (sealed)",
-      "like_new": "Like new"
     },
     "statTimesCompleted": "times completed",
     "statFastestFinish": "fastest finish",
@@ -4148,6 +4217,7 @@
     "communityRating": "Community Rating",
     "communityRatings": "{count} community ratings",
     "copyReviews": "Copy Reviews",
+    "copyReviewsHint": "Anyone who logs a solve of this copy can rate it.",
     "noCopyReviews": "No reviews of this copy yet.",
     "comments": "Comments",
     "addComment": "Add a comment…",
@@ -4186,10 +4256,29 @@
       "resetZoom": "Reset zoom",
       "zoomLevel": "Zoom {percent}%"
     },
-    "offerForSwap": "Offer for Swap",
-    "offeredForSwap": "Offered for Swap",
-    "offerForLend": "Offer to Lend",
-    "offeredForLend": "Offered for Lend",
+    "offers": {
+      "swapLabel": "Offer for swap",
+      "swapHint": "Members can propose a swap for it.",
+      "lendLabel": "Offer to lend",
+      "lendHint": "Members can ask to borrow it.",
+      "lockedOnLoan": "It's on loan. You can offer it again once it's back.",
+      "swapOn": "Offered for swap",
+      "swapOff": "No longer offered for swap",
+      "lendOn": "Offered to lend",
+      "lendOff": "No longer offered to lend",
+      "visibleWhileOffered": "It's visible while it's on offer and private again once you withdraw every offer.",
+      "privateAgain": "It's private again.",
+      "undo": "Undo"
+    },
+    "status": {
+      "onLoan": "On loan to {name} since {date}",
+      "offered": "Offered for {offers}",
+      "offerSwap": "swap",
+      "offerLend": "lending",
+      "offerSale": "sale",
+      "visibleWhileOffered": "Visible while offered, private again when you withdraw",
+      "notOffered": "Not offered"
+    },
     "editCopy": {
       "title": "Edit copy",
       "save": "Save",
@@ -4202,18 +4291,31 @@
       "useCatalogueImage": "Use catalogue image",
       "noPhotosForCover": "Add photos to this copy to choose a custom cover.",
       "notesPlaceholder": "Add a note about this copy…",
+      "acquiredMonth": "Month acquired",
+      "acquiredYear": "Year acquired",
+      "monthPlaceholder": "Month",
+      "yearPlaceholder": "Year",
+      "acquiredIncomplete": "Choose both a month and a year.",
+      "sourceUnknown": "Not recorded",
       "visibility": {
         "label": "Who can see this copy",
         "visible": "Visible to the community",
         "visibleHint": "Your friends can see it in your library.",
         "private": "Private — only you and your household",
         "privateHint": "Hidden from everyone else, friends included.",
-        "offerNote": "Offering a puzzle for swap, lend or sale makes it visible.",
-        "privateDisabled": "This copy is on offer, so it is visible. Withdraw the offer to make it private."
+        "offerNote": "Offering a puzzle for swap, lend or sale makes it visible while the offer lasts.",
+        "privateWhileOffered": "On offer, so it's visible for now. It goes back to private when you withdraw every offer."
       }
     },
     "photoCover": "Cover",
     "photoPending": "Pending review"
+  },
+  "condition": {
+    "new_sealed": "New (sealed)",
+    "like_new": "Like new",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor"
   },
   "copyOwner": {
     "label": "Owner",
@@ -5163,7 +5265,7 @@
         },
         "per-copy": {
           "title": "One puzzle at a time",
-          "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. A puzzle you offer for swap, lend or sale can't be private."
+          "body": "To hide a single puzzle, open it, press Edit and, under Who can see this copy, choose Private. Then only you and your household see it. If you offer it for swap, lend or sale, it's visible while the offer lasts and private again once you withdraw every offer."
         }
       }
     },
@@ -5223,7 +5325,7 @@
         },
         "find": {
           "title": "Find them later",
-          "body": "My suggestions lists everything you've suggested."
+          "body": "Open the ⋯ menu here and choose My suggestions to see everything you've suggested."
         },
         "follow": {
           "title": "Follow your suggestions",

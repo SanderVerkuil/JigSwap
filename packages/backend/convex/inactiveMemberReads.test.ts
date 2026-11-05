@@ -174,7 +174,13 @@ describe("reads that resolve the caller from Clerk", () => {
     ).rejects.toThrow();
     expect(
       await as.query(api.search.globalSearch.global, { term: "mountain" }),
-    ).toEqual({ puzzles: [], people: [], circles: [], collections: [] });
+    ).toEqual({
+      puzzles: [],
+      copies: [],
+      people: [],
+      circles: [],
+      collections: [],
+    });
     expect(
       await as.query(api.identity.getCurrentUser.getCurrentUser, {}),
     ).toBeNull();
@@ -214,7 +220,13 @@ describe("reads that resolve the caller from Clerk", () => {
     ).rejects.toThrow();
     expect(
       await t.query(api.search.globalSearch.global, { term: "mountain" }),
-    ).toEqual({ puzzles: [], people: [], circles: [], collections: [] });
+    ).toEqual({
+      puzzles: [],
+      copies: [],
+      people: [],
+      circles: [],
+      collections: [],
+    });
     expect(
       await t.query(api.identity.getCurrentUser.getCurrentUser, {}),
     ).toBeNull();

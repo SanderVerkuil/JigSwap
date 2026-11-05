@@ -11,6 +11,7 @@
 // control carries its own remove (×) button; "Clear All" resets everything and a
 // muted live result count sits on the right. Active accents use the brand violet
 // (bg-jigsaw-primary), never the near-black --primary, per the design language.
+import { useConditionLabel } from "@/components/library/condition";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,6 +83,7 @@ interface QueryBuilderProps {
   categories: CategoryOption[];
   // Translators are passed in so the builder stays presentational and the page
   // owns the namespaces (`browse` for builder chrome, `puzzles` for enum labels).
+  // Condition labels come from the app-wide condition vocabulary instead.
   tBrowse: (key: string) => string;
   tEnum: (key: string) => string;
 }
@@ -95,6 +97,7 @@ export function QueryBuilder({
   tBrowse,
   tEnum,
 }: QueryBuilderProps) {
+  const conditionLabel = useConditionLabel();
   const [addOpen, setAddOpen] = useState(false);
   // Which Select should auto-open after being added, and which control to focus.
   const [openSelect, setOpenSelect] = useState<FieldKey | null>(null);
@@ -306,7 +309,10 @@ export function QueryBuilder({
               onValueChange={(v) => set({ condition: v as Condition })}
               placeholder={tBrowse("allConditions")}
               ariaLabel={fieldLabels.condition}
-              options={CONDITIONS.map((c) => ({ value: c, label: tEnum(c) }))}
+              options={CONDITIONS.map((c) => ({
+                value: c,
+                label: conditionLabel(c),
+              }))}
             />
           </ConditionShell>
         )}

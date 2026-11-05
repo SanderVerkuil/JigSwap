@@ -180,8 +180,8 @@ const summary = (_id: string, title: string, brand?: string) => ({
 
 describe("the cover hint", () => {
   it.each([
-    ["en", en.puzzles.contributeCoverColourHint, /shelf/i],
-    ["nl", nl.puzzles.contributeCoverColourHint, /plank/i],
+    ["en", en.puzzles.boxPhotoHint, /shelf/i],
+    ["nl", nl.puzzles.boxPhotoHint, /plank/i],
   ] as const)(
     "promises the catalogue, not a shelf, in %s",
     (locale, hint, shelf) => {

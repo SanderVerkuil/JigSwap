@@ -291,7 +291,7 @@ describe("copy mutation use cases", () => {
     });
 
     it.each([{ forTrade: true }, { forSale: true }, { forLend: true }])(
-      "rejects a private setting that offers the copy (%o) and saves nothing",
+      "offers a private copy (%o) and keeps the owner's private choice",
       async (flags) => {
         const result = await run()({
           actingMemberId: alice,
@@ -299,16 +299,51 @@ describe("copy mutation use cases", () => {
           visibility: "private",
           ...flags,
         });
-        expect(result.isErr).toBe(true);
-        if (result.isErr) {
-          expect(result.error.code).toBe("CopyMustBeVisibleToOffer");
-        }
-        expect(events.published).toHaveLength(0);
+        expect(result.isOk).toBe(true);
+        expect(events.names()).toEqual(["CopyMadeAvailable"]);
         const stored = await copies.findById(copyId);
-        expect(stored?.sharing.visibility).toBe("visible");
-        expect(stored?.sharing.isAvailableForAnyExchange()).toBe(false);
+        expect(stored?.sharing.visibility).toBe("private");
+        expect(stored?.sharing.effectiveVisibility()).toBe("visible");
       },
     );
+
+    it("an omitted visibility keeps the stored choice when offering and when withdrawing", async () => {
+      await run()({ actingMemberId: alice, copyId, visibility: "private" });
+
+      const offered = await run()({
+        actingMemberId: alice,
+        copyId,
+        forLend: true,
+      });
+      expect(offered.isOk).toBe(true);
+      const whileOffered = await copies.findById(copyId);
+      expect(whileOffered?.sharing.visibility).toBe("private");
+      expect(whileOffered?.sharing.isAvailableFor("lend")).toBe(true);
+      expect(whileOffered?.sharing.effectiveVisibility()).toBe("visible");
+
+      const withdrawn = await run()({ actingMemberId: alice, copyId });
+      expect(withdrawn.isOk).toBe(true);
+      const afterwards = await copies.findById(copyId);
+      expect(afterwards?.sharing.isAvailableForAnyExchange()).toBe(false);
+      expect(afterwards?.sharing.effectiveVisibility()).toBe("private");
+      expect(events.names()).toEqual([
+        "CopyMadeUnavailable",
+        "CopyMadeAvailable",
+        "CopyMadeUnavailable",
+      ]);
+    });
+
+    it("an omitted visibility keeps a visible copy visible", async () => {
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        forTrade: true,
+      });
+      expect(result.isOk).toBe(true);
+      expect((await copies.findById(copyId))?.sharing.visibility).toBe(
+        "visible",
+      );
+    });
 
     it("allows withdrawing availability even when reserved (not making available)", async () => {
       reservations.reserve(copyId);
@@ -396,6 +431,20 @@ describe("copy mutation use cases", () => {
       const saved = await copies.findById(copyId);
       expect(saved?.toState().missingPiecesCount).toBe(3);
       expect(saved?.toState().notes).toBe("corner piece missing");
+    });
+
+    it("records the acquisition date and source", async () => {
+      const march = new Date("2025-03-01T12:00:00Z");
+      const result = await run()({
+        actingMemberId: alice,
+        copyId,
+        acquisition: { date: march, source: "bought_new" },
+      });
+      expect(result.isOk).toBe(true);
+      expect(events.names()).toEqual(["CopyDetailsUpdated"]);
+      const saved = (await copies.findById(copyId))?.toState();
+      expect(saved?.acquisition.date).toEqual(march);
+      expect(saved?.acquisition.source).toBe("bought_new");
     });
 
     it("rejects a non-owner", async () => {

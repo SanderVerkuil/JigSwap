@@ -1,0 +1,459 @@
+// @vitest-environment happy-dom
+// The "-" prefix keeps the TanStack route generator from treating this file as a route.
+import {
+  PageHeaderSlotProvider,
+  usePageHeaderContent,
+} from "@/components/dashboard-layout/page-header-slot";
+import { gateway, type Id } from "@/gateway";
+import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
+import type { PuzzleDefinitionView } from "@jigswap/contracts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
+import type { ComponentType } from "react";
+import { toast } from "sonner";
+import { IntlProvider } from "use-intl";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import en from "../../../../../locales/en.json";
+import { Route } from "./new";
+
+// The add form against mocked Convex calls: which writes a submit makes. Every Convex mutation,
+// action and one-shot query is routed by function name into `mocks`.
+const mocks = vi.hoisted(() => ({
+  call: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+  navigate: vi.fn(),
+  search: {} as Record<string, unknown>,
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (options: object) => ({ options }),
+  useNavigate: () => mocks.navigate,
+  useSearch: () => mocks.search,
+  useRouter: () => ({ history: {}, invalidate: vi.fn() }),
+  useLocation: () => ({ pathname: "/my-puzzles/add/new" }),
+  useParams: () => ({}),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+}));
+
+vi.mock("@convex-dev/react-query", async (importOriginal) => {
+  const call =
+    (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
+      mocks.call(getFunctionName(ref), args);
+  return {
+    ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
+    useConvexMutation: call,
+    useConvexAction: call,
+  };
+});
+
+vi.mock("convex/react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("convex/react")>()),
+  useConvex: () => ({
+    query: (ref: Parameters<typeof getFunctionName>[0], args: unknown) =>
+      mocks.call(getFunctionName(ref), args),
+  }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
+
+// The box-art upload (re-encode, upload URL, server check) is its own hook; here it resolves with
+// the clean storage id the catalogue mutation accepts.
+vi.mock("@/hooks/use-upload-box-art", () => ({
+  useUploadBoxArt: () => (file: File) => mocks.call(UPLOAD_BOX_ART, file),
+}));
+
+const ACQUIRE = getFunctionName(gateway.library.createOwned);
+const UPDATE_SHARING = getFunctionName(gateway.library.updateSharing);
+const COPY_DOC_ID = getFunctionName(gateway.library.copyDocId);
+const CREATE_PUZZLE = getFunctionName(gateway.catalog.createPuzzle);
+const EXTRACT = getFunctionName(gateway.catalog.extractPuzzleFromUrl);
+const UPLOAD_BOX_ART = "uploadBoxArt";
+
+const PUZZLE_DOC_ID = "puzzle_doc_1" as Id<"puzzles">;
+const PUZZLE: PuzzleDefinitionView = {
+  _id: PUZZLE_DOC_ID,
+  _creationTime: 0,
+  aggregateId: "puzzle_agg_1",
+  title: "Café",
+  brand: "Goliath",
+  pieceCount: 1000,
+  difficulty: "medium",
+  image: null,
+  status: "approved",
+  createdAt: 0,
+  updatedAt: 0,
+};
+
+const callsTo = (name: string) =>
+  mocks.call.mock.calls.filter(([n]) => n === name).map(([, args]) => args);
+
+const renderPage = (search: Record<string, unknown> = {}) => {
+  mocks.search = search;
+  const convexQueryClient = new ConvexQueryClient(
+    new ConvexReactClient("https://example.convex.cloud"),
+  );
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        queryKeyHashFn: convexQueryClient.hashFn(),
+        staleTime: Infinity,
+        retry: false,
+        queryFn: () => new Promise<never>(() => {}),
+      },
+    },
+  });
+  queryClient.setQueryData(
+    convexQuery(gateway.catalog.puzzleById, { puzzleId: PUZZLE_DOC_ID })
+      .queryKey,
+    PUZZLE,
+  );
+  const Page = routeOptions.component;
+  render(
+    <QueryClientProvider client={queryClient}>
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PageHeaderSlotProvider>
+          <Page />
+          <PublishedHeader />
+        </PageHeaderSlotProvider>
+      </IntlProvider>
+    </QueryClientProvider>,
+  );
+};
+
+const routeOptions = (
+  Route as unknown as {
+    options: {
+      component: ComponentType;
+      head: (ctx: {
+        match: { context: unknown; search: Record<string, unknown> };
+      }) => { meta: Array<{ title: string }> };
+    };
+  }
+).options;
+
+// What the page published into the shell's page head (title + crumb trail), as text.
+function PublishedHeader() {
+  const { title, crumbs } = usePageHeaderContent();
+  return (
+    <output data-testid="published-header">
+      {[...(crumbs ?? []).map((c) => `${c.label}@${c.href}`), title]
+        .filter(Boolean)
+        .join(" > ")}
+    </output>
+  );
+}
+const publishedHeader = () =>
+  screen.getByTestId("published-header").textContent;
+
+const offerChip = (name: string) => screen.getByRole("button", { name });
+
+// The resolved landing for a submit: what the page navigated to, once.
+const landing = async () => {
+  await waitFor(() => expect(mocks.navigate).toHaveBeenCalledTimes(1));
+  return mocks.navigate.mock.calls[0]?.[0];
+};
+
+beforeEach(() => {
+  mocks.call.mockReset();
+  mocks.call.mockImplementation(async (name) =>
+    name === ACQUIRE
+      ? "copy_agg_1"
+      : name === COPY_DOC_ID
+        ? "copy_doc_1"
+        : name === CREATE_PUZZLE
+          ? "puzzle_agg_new"
+          : name === UPLOAD_BOX_ART
+            ? "storage_clean_1"
+            : null,
+  );
+  mocks.navigate.mockReset();
+  vi.mocked(toast.success).mockReset();
+  vi.mocked(toast.error).mockReset();
+});
+afterEach(cleanup);
+
+describe("adding a copy of a catalogue puzzle", () => {
+  it("starts with every offer off and adds the copy without offering it", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    for (const name of ["For Trade", "For Loan", "For Sale"]) {
+      expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalled());
+    expect(callsTo(UPDATE_SHARING)).toEqual([]);
+  });
+
+  it("offers the copy only when the member switches an offer on", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(offerChip("For Loan"));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    await waitFor(() => expect(callsTo(UPDATE_SHARING)).toHaveLength(1));
+    expect(callsTo(UPDATE_SHARING)[0]).toMatchObject({
+      copyId: "copy_agg_1",
+      forTrade: false,
+      forLend: true,
+      forSale: false,
+    });
+  });
+});
+
+describe("condition", () => {
+  it("offers all five conditions, by the words the copy shows later, and adds the one picked", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    const picker = screen.getByRole("radiogroup", { name: "Condition" });
+    expect(
+      Array.from(picker.querySelectorAll('[role="radio"]')).map(
+        (r) => r.textContent,
+      ),
+    ).toEqual(["New (sealed)", "Like new", "Good", "Fair", "Poor"]);
+
+    fireEvent.click(screen.getByRole("radio", { name: "New (sealed)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    expect(callsTo(ACQUIRE)[0]).toMatchObject({ condition: "new_sealed" });
+  });
+});
+
+describe("creating a new puzzle", () => {
+  it("starts with every offer off and does not list availability as a step", () => {
+    renderPage();
+    for (const name of ["For Trade", "For Loan", "For Sale"]) {
+      expect(offerChip(name).getAttribute("aria-pressed")).toBe("false");
+    }
+    expect(screen.getByText(en.puzzles.checkTitle)).toBeTruthy();
+    expect(screen.queryByText("Availability set")).toBeNull();
+  });
+});
+
+describe("after adding", () => {
+  it("lands on the new copy's page and offers to add another", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({
+      to: "/my-puzzles/$id",
+      params: { id: "copy_doc_1" },
+    });
+    expect(callsTo(COPY_DOC_ID)).toEqual([{ copyId: "copy_agg_1" }]);
+    expect(toast.error).not.toHaveBeenCalled();
+    const [message, options] = vi.mocked(toast.success).mock.calls[0] ?? [];
+    expect(message).toBe("Added to My Puzzles");
+    const action = (
+      options as { action?: { label: string; onClick: () => void } }
+    ).action;
+    expect(action?.label).toBe("Add another");
+
+    mocks.navigate.mockReset();
+    action?.onClick();
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+
+  it("falls back to My Puzzles when the copy page can't be resolved", async () => {
+    mocks.call.mockImplementation(async (name) => {
+      if (name === ACQUIRE) return "copy_agg_1";
+      if (name === COPY_DOC_ID) throw new Error("offline");
+      return null;
+    });
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({ to: "/my-puzzles" });
+    // The copy was added: no failure toast.
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("goes back to the flow it came from when returnTo is set", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID, returnTo: "/welcome?step=puzzles" });
+    fireEvent.click(screen.getByRole("button", { name: "Add to Library" }));
+
+    expect(await landing()).toEqual({ href: "/welcome?step=puzzles" });
+    expect(callsTo(COPY_DOC_ID)).toEqual([]);
+  });
+});
+
+describe("the box photo", () => {
+  const fileInput = () =>
+    document.querySelector<HTMLInputElement>('input[type="file"]');
+  const upload = () =>
+    fireEvent.change(fileInput()!, {
+      target: { files: [new File(["x"], "box.jpg", { type: "image/jpeg" })] },
+    });
+  const fillRequired = () => {
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldTitle), {
+      target: { value: "Café" },
+    });
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+  };
+
+  it("is not offered when adding a copy, since nothing would store it", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(fileInput()).toBeNull();
+    expect(screen.getByText(en.puzzles.chooser.copyPhotosLater)).toBeTruthy();
+  });
+
+  it("offers no colour swatches, which nothing stores", () => {
+    renderPage();
+    expect(screen.queryByRole("button", { name: /colour/i })).toBeNull();
+    expect(screen.getByText(en.puzzles.boxPhoto)).toBeTruthy();
+  });
+
+  it("sends an uploaded photo as the new catalogue puzzle's box art", async () => {
+    renderPage();
+    fillRequired();
+    upload();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(callsTo(CREATE_PUZZLE)[0]).toMatchObject({
+      title: "Café",
+      pieceCount: 1000,
+      image: "storage_clean_1",
+    });
+  });
+
+  it("sends no photo once the member deselects it", async () => {
+    renderPage();
+    fillRequired();
+    upload();
+    const thumb = screen.getByRole("button", { pressed: true });
+    fireEvent.click(thumb);
+    expect(thumb.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(callsTo(CREATE_PUZZLE)[0]).toMatchObject({ image: undefined });
+    expect(callsTo(UPLOAD_BOX_ART)).toEqual([]);
+  });
+
+  it("is withdrawn once an import match turns the form into adding a copy", async () => {
+    mocks.call.mockImplementation(async (name) =>
+      name === EXTRACT
+        ? {
+            ok: true,
+            draft: { title: "Café", sourceUrl: "https://shop.example/cafe" },
+            match: {
+              puzzleId: PUZZLE_DOC_ID,
+              aggregateId: "puzzle_agg_1",
+              title: "Café",
+              pieceCount: 1000,
+            },
+          }
+        : null,
+    );
+    renderPage();
+    expect(fileInput()).not.toBeNull();
+    fireEvent.change(
+      screen.getByPlaceholderText("https://www.ravensburger.com/…"),
+      { target: { value: "https://shop.example/cafe" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Fetch details/ }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: en.puzzles.matchUseThis }),
+    );
+
+    expect(fileInput()).toBeNull();
+    expect(screen.getByText(en.puzzles.chooser.copyPhotosLater)).toBeTruthy();
+  });
+});
+
+describe("on phones and tablets", () => {
+  it("recaps what the submit adds right above the submit buttons", () => {
+    renderPage();
+    expect(screen.queryByTestId("add-summary")).toBeNull();
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldTitle), {
+      target: { value: "Café" },
+    });
+    fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+      target: { value: "1000" },
+    });
+    fireEvent.click(offerChip("For Trade"));
+
+    const summary = screen.getByTestId("add-summary");
+    expect(summary.textContent).toContain("Café");
+    expect(summary.textContent).toContain("1000 pieces");
+    expect(summary.textContent).toContain("For Trade");
+    const submit = screen.getByRole("button", { name: "Add Puzzle" });
+    expect(
+      summary.compareDocumentPosition(submit) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows no look-alike buttons in the live preview", () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    expect(screen.queryByRole("button", { name: "View" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
+  });
+});
+
+describe("accessible inputs", () => {
+  it("names the tag and import fields by their labels", () => {
+    renderPage();
+    expect(
+      screen.getByRole("textbox", {
+        name: `${en.puzzles.fieldTags} ${en.puzzles.optional}`,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", { name: en.puzzles.importUrlPlaceholder }),
+    ).toBeTruthy();
+  });
+});
+
+describe("cancelling", () => {
+  it("returns to the add chooser from the full form", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/my-puzzles/add" });
+  });
+});
+
+describe("page title", () => {
+  it("calls copy mode 'Add your copy', under My Library > Add Puzzle", async () => {
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    await waitFor(() =>
+      expect(publishedHeader()).toBe(
+        "My Library@/library > Add Puzzle@/my-puzzles/add > Add your copy",
+      ),
+    );
+    expect(
+      screen.getByText("Record its condition and how you'd like to share it."),
+    ).toBeTruthy();
+  });
+
+  it("keeps the route's own title on the full form", () => {
+    renderPage();
+    expect(publishedHeader()).toBe("");
+  });
+
+  it("names the document after the mode", () => {
+    const title = (search: Record<string, unknown>) =>
+      routeOptions.head({
+        match: { context: { intl: { messages: en } }, search },
+      }).meta[0]?.title;
+    expect(title({ puzzleId: PUZZLE_DOC_ID })).toBe("Add your copy — JigSwap");
+    expect(title({})).toBe(en.titles.createPuzzle);
+  });
+});

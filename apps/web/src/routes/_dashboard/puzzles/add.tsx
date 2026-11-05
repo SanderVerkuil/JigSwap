@@ -1,10 +1,10 @@
 import { useRouter } from "@/compat/navigation";
 import {
   AddPuzzleLayout,
+  AddPuzzleSummary,
   CATALOG_TEXT_LIMITS,
   contributeError,
   ContributeSuccess,
-  COVER_SWATCHES,
   CoverColourField,
   coverStep,
   CoverStepError,
@@ -76,8 +76,8 @@ interface FormState {
   pieceCount: number | undefined;
   // "" is "Not sure": the definition is submitted without a difficulty rather than a guessed one.
   difficulty: "" | "easy" | "medium" | "hard" | "expert";
-  coverColor: string;
-  coverMode: "color" | "photo";
+  // "photo" when a box photo is selected (the upload, else selectedImageUrl); "none" sends no image.
+  coverMode: "none" | "photo";
   coverFile: File | undefined;
   importedImages: string[];
   // Alt text per imported image URL (only HTML-scraped images carry it); shown in the cover picker.
@@ -99,8 +99,7 @@ const DEFAULT_FORM: FormState = {
   publisher: "",
   pieceCount: undefined,
   difficulty: "",
-  coverColor: COVER_SWATCHES[0],
-  coverMode: "color",
+  coverMode: "none",
   coverFile: undefined,
   importedImages: [],
   importedImageAlts: undefined,
@@ -256,7 +255,7 @@ function ContributePuzzlePage() {
       importedImageAlts: draft.imageAlts ? { ...draft.imageAlts } : undefined,
       selectedImageUrl: imgs[0],
       coverFile: undefined,
-      coverMode: imgs.length ? "photo" : "color",
+      coverMode: imgs.length ? "photo" : "none",
     }));
   };
 
@@ -401,7 +400,7 @@ function ContributePuzzlePage() {
         </div>
 
         {/* Publisher + Piece Count */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="cp-publisher">
               {t("fieldPublisher")}{" "}
@@ -429,7 +428,7 @@ function ContributePuzzlePage() {
         </div>
 
         {/* Brand (product line) + Series — both optional */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="cp-brand">
               {t("fieldBrand")}{" "}
@@ -479,15 +478,16 @@ function ContributePuzzlePage() {
       <SectionDivider label={t("dividerCover")} />
 
       <div className="flex flex-col gap-5">
-        {/* Cover colour / photo */}
+        {/* Box photo */}
         <div className="flex flex-col gap-1.5">
-          <Label>{t("coverColour")}</Label>
-          <p className="text-xs text-muted-foreground">
-            {t("contributeCoverColourHint")}
-          </p>
+          <Label>
+            {t("boxPhoto")}{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("optional")}
+            </span>
+          </Label>
+          <p className="text-xs text-muted-foreground">{t("boxPhotoHint")}</p>
           <CoverColourField
-            color={form.coverColor}
-            mode={form.coverMode}
             photoOptions={[
               ...form.importedImages.map((url) => ({
                 url,
@@ -495,22 +495,19 @@ function ContributePuzzlePage() {
               })),
               ...(coverFileUrl ? [{ url: coverFileUrl, uploaded: true }] : []),
             ]}
-            selectedPhotoUrl={
-              form.coverFile ? coverFileUrl : form.selectedImageUrl
-            }
-            onSelectColor={(c) =>
-              setForm((f) => ({ ...f, coverColor: c, coverMode: "color" }))
-            }
+            selectedPhotoUrl={previewPhotoUrl}
             onSelectPhoto={(url) =>
               setForm((f) =>
-                url === coverFileUrl
-                  ? { ...f, coverMode: "photo" }
-                  : {
-                      ...f,
-                      coverMode: "photo",
-                      coverFile: undefined,
-                      selectedImageUrl: url,
-                    },
+                url === undefined
+                  ? { ...f, coverMode: "none" }
+                  : url === coverFileUrl
+                    ? { ...f, coverMode: "photo" }
+                    : {
+                        ...f,
+                        coverMode: "photo",
+                        coverFile: undefined,
+                        selectedImageUrl: url,
+                      },
               )
             }
             onUploadPhoto={(file) =>
@@ -521,7 +518,7 @@ function ContributePuzzlePage() {
 
         {/* Tags */}
         <div className="flex flex-col gap-1.5">
-          <Label>
+          <Label htmlFor="cp-tags">
             {t("fieldTags")}{" "}
             <span className="text-xs font-normal text-muted-foreground">
               {t("optional")}
@@ -529,6 +526,7 @@ function ContributePuzzlePage() {
           </Label>
           <p className="text-xs text-muted-foreground">{t("tagsHint")}</p>
           <TagInput
+            id="cp-tags"
             value={form.tags}
             onChange={(tags) => setForm((f) => ({ ...f, tags }))}
             placeholder={t("tagsPlaceholder")}
@@ -553,7 +551,7 @@ function ContributePuzzlePage() {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 flex flex-col gap-4">
             {/* EAN + UPC */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cp-ean">{tf("ean.label")}</Label>
                 <Input
@@ -699,6 +697,13 @@ function ContributePuzzlePage() {
         </Collapsible>
       </div>
 
+      <AddPuzzleSummary
+        title={form.title}
+        brand={form.brand || form.publisher}
+        pieceCount={form.pieceCount}
+        coverPhotoUrl={previewPhotoUrl}
+      />
+
       {/* Footer buttons */}
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <Button
@@ -734,7 +739,6 @@ function ContributePuzzlePage() {
         brand={form.brand || form.publisher}
         pieceCount={form.pieceCount}
         difficulty={form.difficulty || undefined}
-        coverColor={form.coverColor}
         coverPhotoUrl={previewPhotoUrl}
         available={false}
       />
