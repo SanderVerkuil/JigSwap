@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -221,15 +222,7 @@ describe("photo pipeline stamps", () => {
 const seedAction = (
   t: TestConvex<typeof schema>,
   action: {
-    kind:
-      | "definition_approved"
-      | "definition_rejected"
-      | "definition_edited_approved"
-      | "photo_restored"
-      | "photo_removal_confirmed"
-      | "photo_auto_rejected"
-      | "role_granted"
-      | "role_revoked";
+    kind: Doc<"moderationActions">["kind"];
     at: number;
     actorId?: Awaited<ReturnType<typeof seedMember>>;
     targetLabel?: string;
@@ -335,8 +328,39 @@ describe("getModerationStats", () => {
   });
 });
 
+// One page of the activity feed as the console asks for it (newest first).
+const activityPage = (
+  t: TestConvex<typeof schema>,
+  args: {
+    numItems?: number;
+    cursor?: string | null;
+    kind?: Doc<"moderationActions">["kind"];
+    actorId?: string;
+  } = {},
+) => {
+  const { numItems = 25, cursor = null, ...filters } = args;
+  return asAdmin(t).query(
+    api.admin.getModerationActivity.getModerationActivity,
+    { paginationOpts: { numItems, cursor }, ...filters },
+  );
+};
+
+// A second member, Bob, who is also an admin in some tests (actor filter).
+const seedBob = (t: TestConvex<typeof schema>) =>
+  t.run(async (ctx) => {
+    const now = Date.now();
+    return ctx.db.insert("users", {
+      clerkId: "clerk_bob",
+      email: "bob@example.com",
+      name: "Bob",
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+
 describe("getModerationActivity", () => {
-  test("returns newest-first with the actor's display name joined in", async () => {
+  test("returns newest-first with the actor's id and display name joined in", async () => {
     const t = convexTest(schema, modules);
     const alice = await seedMember(t);
     const now = Date.now();
@@ -354,29 +378,32 @@ describe("getModerationActivity", () => {
       targetId: "t-new",
     });
 
-    const rows = await asAdmin(t).query(
-      api.admin.getModerationActivity.getModerationActivity,
-      {},
-    );
-    expect(rows).toEqual([
+    const { page, isDone } = await activityPage(t);
+    expect(isDone).toBe(true);
+    expect(page.map(({ actionId: _id, ...row }) => row)).toEqual([
       {
         kind: "photo_auto_rejected",
-        actorName: null, // system action: no actorId
+        actorId: null, // system action: no actorId
+        actorName: null,
         targetLabel: "Newer",
         targetId: "t-new",
+        target: null,
         at: now - 1000,
       },
       {
         kind: "definition_approved",
+        actorId: alice,
         actorName: "Alice",
         targetLabel: "Older",
         targetId: "t-old",
+        target: null, // no definition with that aggregate id
         at: now - 3000,
       },
     ]);
+    expect(new Set(page.map((row) => row.actionId)).size).toBe(2);
   });
 
-  test("respects limit and defaults to 30", async () => {
+  test("pages through the whole log, not just the latest 30", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);
     const now = Date.now();
@@ -391,19 +418,161 @@ describe("getModerationActivity", () => {
       }
     });
 
-    const admin = asAdmin(t);
-    expect(
-      await admin.query(
-        api.admin.getModerationActivity.getModerationActivity,
-        {},
-      ),
-    ).toHaveLength(30);
-    const limited = await admin.query(
-      api.admin.getModerationActivity.getModerationActivity,
-      { limit: 5 },
+    const first = await activityPage(t, { numItems: 30 });
+    expect(first.page).toHaveLength(30);
+    expect(first.page[0].targetLabel).toBe("Puzzle 0"); // newest first
+    expect(first.isDone).toBe(false);
+    const second = await activityPage(t, {
+      numItems: 30,
+      cursor: first.continueCursor,
+    });
+    expect(second.page.map((row) => row.targetLabel)).toEqual([
+      "Puzzle 30",
+      "Puzzle 31",
+      "Puzzle 32",
+      "Puzzle 33",
+      "Puzzle 34",
+    ]);
+    expect(second.isDone).toBe(true);
+  });
+
+  test("filters by kind, newest first", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const now = Date.now();
+    await seedAction(t, {
+      kind: "report_warned",
+      at: now - 3000,
+      targetId: "a",
+    });
+    await seedAction(t, {
+      kind: "role_granted",
+      at: now - 2000,
+      targetId: "b",
+    });
+    await seedAction(t, {
+      kind: "report_warned",
+      at: now - 1000,
+      targetId: "c",
+    });
+
+    const { page } = await activityPage(t, { kind: "report_warned" });
+    expect(page.map((row) => [row.kind, row.targetId])).toEqual([
+      ["report_warned", "c"],
+      ["report_warned", "a"],
+    ]);
+  });
+
+  test("filters by actor, alone and together with a kind", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const bob = await seedBob(t);
+    const now = Date.now();
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: now - 4000,
+      actorId: alice,
+      targetId: "alice-approved",
+    });
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: now - 3000,
+      actorId: bob,
+      targetId: "bob-approved",
+    });
+    await seedAction(t, {
+      kind: "definition_rejected",
+      at: now - 2000,
+      actorId: alice,
+      targetId: "alice-rejected",
+    });
+    await seedAction(t, {
+      kind: "photo_auto_rejected",
+      at: now - 1000,
+      targetId: "system",
+    });
+
+    const byAlice = await activityPage(t, { actorId: alice });
+    expect(byAlice.page.map((row) => row.targetId)).toEqual([
+      "alice-rejected",
+      "alice-approved",
+    ]);
+    const aliceApprovals = await activityPage(t, {
+      actorId: alice,
+      kind: "definition_approved",
+    });
+    expect(aliceApprovals.page.map((row) => row.targetId)).toEqual([
+      "alice-approved",
+    ]);
+  });
+
+  test("an actor filter that is not a member id matches nothing instead of failing", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    await seedAction(t, {
+      kind: "definition_approved",
+      at: Date.now(),
+      actorId: alice,
+    });
+
+    const { page, isDone } = await activityPage(t, { actorId: "not-an-id" });
+    expect(page).toEqual([]);
+    expect(isDone).toBe(true);
+  });
+
+  test("resolves each row's target to the page it can link to", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    const bob = await seedBob(t);
+    const aggregateId = await submitPending(t);
+    const puzzleId = await t.run(
+      async (ctx) =>
+        (await ctx.db
+          .query("puzzles")
+          .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
+          .first())!._id,
     );
-    expect(limited).toHaveLength(5);
-    expect(limited[0].targetLabel).toBe("Puzzle 0"); // newest first
+    const reportId = await t.run((ctx) =>
+      ctx.db.insert("reports", {
+        reporterId: alice,
+        targetKind: "user",
+        targetId: bob,
+        reportedUserId: bob,
+        reason: "spam_scam",
+        evidence: {},
+        status: "actioned",
+        decision: "warned",
+        createdAt: Date.now(),
+      }),
+    );
+    const now = Date.now();
+    const seeds: [Doc<"moderationActions">["kind"], string][] = [
+      ["definition_approved", aggregateId],
+      ["proposal_rejected", aggregateId],
+      ["definition_rejected", "gone-aggregate"],
+      ["role_granted", "clerk_bob"],
+      ["role_revoked", "clerk_nobody"],
+      ["report_warned", reportId],
+      ["report_dismissed", "not-a-report-id"],
+      ["photo_restored", "img-1"],
+      ["csam_escalation_updated", "esc-1"],
+    ];
+    for (const [index, [kind, targetId]] of seeds.entries()) {
+      await seedAction(t, { kind, targetId, at: now - index * 1000 });
+    }
+
+    const { page } = await activityPage(t);
+    expect(page.map((row) => [row.kind, row.target])).toEqual([
+      ["definition_approved", { kind: "puzzle", puzzleId }],
+      ["proposal_rejected", { kind: "puzzle", puzzleId }],
+      ["definition_rejected", null],
+      ["role_granted", { kind: "member", userId: bob }],
+      ["role_revoked", null],
+      ["report_warned", { kind: "report", reportId }],
+      ["report_dismissed", null],
+      ["photo_restored", null],
+      ["csam_escalation_updated", null],
+    ]);
   });
 });
 
@@ -415,10 +584,9 @@ describe("moderation read models are admin-gated", () => {
       asAlice(t).query(api.admin.getModerationStats.getModerationStats, {}),
     ).rejects.toThrow(/Forbidden/);
     await expect(
-      asAlice(t).query(
-        api.admin.getModerationActivity.getModerationActivity,
-        {},
-      ),
+      asAlice(t).query(api.admin.getModerationActivity.getModerationActivity, {
+        paginationOpts: { numItems: 25, cursor: null },
+      }),
     ).rejects.toThrow(/Forbidden/);
   });
 
@@ -428,7 +596,9 @@ describe("moderation read models are admin-gated", () => {
       t.query(api.admin.getModerationStats.getModerationStats, {}),
     ).rejects.toThrow(/Unauthenticated/);
     await expect(
-      t.query(api.admin.getModerationActivity.getModerationActivity, {}),
+      t.query(api.admin.getModerationActivity.getModerationActivity, {
+        paginationOpts: { numItems: 25, cursor: null },
+      }),
     ).rejects.toThrow(/Unauthenticated/);
   });
 });
@@ -482,23 +652,28 @@ describe("role-change kinds in moderation read models", () => {
       targetId: "clerk_cleo",
     });
 
-    const rows = await asAdmin(t).query(
-      api.admin.getModerationActivity.getModerationActivity,
-      {},
-    );
-    expect(rows).toEqual([
+    const { page } = await activityPage(t);
+    expect(
+      page.map(({ kind, actorId, actorName, targetLabel, at }) => ({
+        kind,
+        actorId,
+        actorName,
+        targetLabel,
+        at,
+      })),
+    ).toEqual([
       {
         kind: "role_granted",
+        actorId: alice,
         actorName: "Alice",
         targetLabel: "Bob",
-        targetId: "clerk_bob",
         at: now - 1000,
       },
       {
         kind: "role_revoked",
+        actorId: alice,
         actorName: "Alice",
         targetLabel: "Cleo",
-        targetId: "clerk_cleo",
         at: now - 2000,
       },
     ]);

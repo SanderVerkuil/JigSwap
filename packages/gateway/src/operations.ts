@@ -678,6 +678,9 @@ export const gateway = {
     listRejectedPhotos: api.admin.listRejectedPhotos.listRejectedPhotos,
     restorePhoto: api.admin.restorePhoto.restorePhoto,
     confirmPhotoRemoval: api.admin.confirmPhotoRemoval.confirmPhotoRemoval,
+    // How much work waits in each admin queue (bounded counts with a `capped` flag), for the
+    // moderation tab pills, the admin sidebar badges and the /admin hub tiles.
+    pendingCounts: api.admin.getPendingCounts.getPendingCounts,
     // Photo-screening health (configured? how many photos are waiting unscored?).
     getPhotoScreeningHealth:
       api.admin.getPhotoScreeningHealth.getPhotoScreeningHealth,
@@ -719,12 +722,14 @@ export const gateway = {
   },
 
   // Admin triage: the operational/support inboxes written by the public contact
-  // form and docs-feedback widget. Reads and the handled-transition are admin-only
-  // (enforced server-side in the Convex functions).
+  // form and docs-feedback widget. Reads and the new <-> handled transitions are
+  // admin-only (enforced server-side in the Convex functions).
   adminTriage: {
     contactMessages: api.contact.listContactMessages.listContactMessages,
     markContactHandled:
       api.contact.markContactMessageHandled.markContactMessageHandled,
+    // The Undo of markContactHandled: a handled message back to new.
+    reopenContact: api.contact.reopenContactMessage.reopenContactMessage,
     docFeedback: api.docs.listDocFeedback.listDocFeedback,
   },
 

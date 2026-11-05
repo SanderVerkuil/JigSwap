@@ -2841,7 +2841,7 @@
       },
       "puzzle_rejected": {
         "title": "Puzzel afgewezen",
-        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is afgewezen.} other {Je puzzelinzending is afgewezen.}}"
+        "message": "{hasPuzzleTitle, select, yes {Je puzzelinzending “{puzzleTitle}” is afgewezen.} other {Je puzzelinzending is afgewezen.}}{hasReason, select, yes { Reden: {reason}} other {}}"
       },
       "proposal_approved": {
         "title": "Wijzigingsvoorstel goedgekeurd",
@@ -4154,7 +4154,7 @@
     "circles": "Kringen — JigSwap",
     "admin": "Beheer — JigSwap",
     "adminCategories": "Categoriebeheer — JigSwap",
-    "adminUsers": "Gebruikers — JigSwap",
+    "adminUsers": "Leden — JigSwap",
     "adminModeration": "Moderatie — JigSwap",
     "adminPuzzles": "Puzzels — JigSwap",
     "adminContact": "Contactberichten — JigSwap",
@@ -4335,8 +4335,8 @@
       },
       "adminModeration": {
         "title": "Moderatie",
-        "subtitle": "Beoordeel openstaande inzendingen voordat ze in de openbare catalogus verschijnen.",
-        "description": "Keur ingediende puzzels goed of af"
+        "subtitle": "Beoordeel inzendingen, foto's en meldingen van leden op één plek.",
+        "description": "Beoordeel inzendingen, foto's en meldingen"
       },
       "adminPuzzles": {
         "title": "Puzzels",
@@ -4349,7 +4349,7 @@
         "description": "Beheer vertaalde puzzelcategorieën"
       },
       "adminUsers": {
-        "title": "Gebruikers",
+        "title": "Leden",
         "subtitle": "Alle leden van JigSwap, nieuwste eerst.",
         "description": "Bekijk en doorzoek alle leden"
       },
@@ -4360,7 +4360,7 @@
       },
       "adminFeedback": {
         "title": "Feedback",
-        "subtitle": "“Was deze pagina nuttig?”-stemmen uit de documentatie, nieuwste eerst.",
+        "subtitle": "“Was deze pagina nuttig?”-stemmen per documentatiepagina, minst nuttige eerst.",
         "description": "Bekijk stemmen over de documentatie"
       },
       "whatsNew": {
@@ -4423,6 +4423,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # verzoek wacht op je antwoord} other {{name}, # verzoeken wachten op je antwoord}}"
     },
     "breadcrumbLabel": "Broodkruimel",
+    "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
     "plankReset": "Herstellen"
   },
   "copyInstance": {
@@ -4763,7 +4764,7 @@
       "loading": "Inzendingen laden…",
       "empty": "Geen openstaande inzendingen.",
       "pieces": "{count} stukjes",
-      "reject": "Afkeuren",
+      "reject": "Afwijzen",
       "error": "Inzending bijwerken mislukt",
       "toast": {
         "approved": "“{title}” goedgekeurd — nog {count} in de wachtrij.",
@@ -4775,7 +4776,9 @@
         "manualApproved": "Foto goedgekeurd bij “{title}” — nog {count} in de wachtrij.",
         "manualRejected": "Foto afgewezen bij “{title}” — nog {count} in de wachtrij.",
         "hashCheckWaived": "Foto bij “{title}” goedgekeurd zonder hash-check — nog {count} in de wachtrij.",
-        "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd."
+        "recheckQueued": "De foto bij “{title}” wordt opnieuw gecontroleerd.",
+        "appealRestored": "Foto in bericht hersteld — nog {count} in de wachtrij.",
+        "appealKept": "Foto in bericht blijft verwijderd — nog {count} in de wachtrij."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4783,25 +4786,42 @@
       },
       "kpis": {
         "approved": "Goedgekeurd",
-        "rejected": "Afgekeurd",
-        "flagsCleared": "Meldingen afgehandeld",
+        "rejected": "Afgewezen",
+        "flagsCleared": "Markeringen afgehandeld",
         "avgReview": "Gem. beoordelingstijd",
-        "thisWeek": "deze week"
+        "period": "Afgelopen 7 dagen"
       },
       "tabs": {
         "submissions": "Inzendingen",
-        "flagged": "Gemarkeerde afbeeldingen",
+        "flagged": "Gemarkeerd",
         "activity": "Activiteitenlog",
         "unchecked": "Niet-gecontroleerde foto's",
+        "appeals": "Beoordelingsverzoeken",
         "hashMatches": "Hash-matches",
-        "reports": "Meldingen"
+        "reports": "Gemeld"
       },
       "detail": {
         "submitted": "Ingezonden",
         "difficulty": "Moeilijkheid",
-        "note": "Notitie van inzender"
+        "note": "Notitie van inzender",
+        "sheetTitle": {
+          "submissions": "Inzending",
+          "flagged": "Gemarkeerde afbeelding",
+          "unchecked": "Niet-gecontroleerde foto",
+          "appeals": "Beoordelingsverzoek"
+        }
       },
-      "dupWarning": "Mogelijk duplicaat van <strong>{title}</strong> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "handledElsewhere": {
+        "title": "Al elders afgehandeld",
+        "body": "Dit item is uit de wachtrij verdwenen terwijl je het open had, dus de acties staan uit.",
+        "next": "Volgend item"
+      },
+      "revealGuard": {
+        "reveal": "Klik of tik om de foto te tonen",
+        "hide": "Weer verbergen"
+      },
+      "dupWarning": "Mogelijk duplicaat van <link>{title}</link> dat al in de catalogus staat. Controleer voor het goedkeuren.",
+      "rejectAsDuplicate": "Afwijzen als duplicaat",
       "actions": {
         "approve": "Goedkeuren & publiceren",
         "edit": "Bewerken & goedkeuren"
@@ -4809,12 +4829,30 @@
       "editDialog": {
         "title": "Bewerken & goedkeuren",
         "description": "Corrigeer de gegevens van de inzending en sla op om deze in één stap goed te keuren en te publiceren.",
-        "save": "Opslaan & goedkeuren"
+        "fullEditor": "Wil je de afbeelding, categorie, serie, vorm of barcodes corrigeren? <link>Open de volledige editor</link> en keur de inzending daarna hier goed.",
+        "save": "Opslaan & goedkeuren",
+        "handledElsewhere": "Deze inzending is elders afgehandeld terwijl je aan het bewerken was. Goedkeuren kan hier niet meer."
+      },
+      "rejectDialog": {
+        "title": "Deze inzending afwijzen?",
+        "description": "“{title}” wordt definitief afgewezen en kan later niet meer worden goedgekeurd. Het lid dat de puzzel heeft ingediend, krijgt de reden te zien die je hier opgeeft.",
+        "handledElsewhere": "Deze inzending is elders afgehandeld. Afwijzen kan hier niet meer.",
+        "reasonLegend": "Reden",
+        "presets": {
+          "duplicate": "{hasTitle, select, yes {Duplicaat van “{title}”} other {Staat al in de catalogus}}",
+          "incomplete": "Onvolledige of onjuiste gegevens",
+          "notJigsaw": "Geen legpuzzel",
+          "other": "Andere reden"
+        },
+        "noteLabel": "Toelichting voor het lid",
+        "noteHint": "{required, select, yes {Verplicht: het lid ziet alleen deze toelichting.} other {Optioneel: komt na de reden.}}",
+        "noteCounter": "{count}/{max}",
+        "previewLabel": "Het lid leest",
+        "confirm": "Inzending afwijzen"
       },
       "flag": {
         "loading": "Gemarkeerde afbeeldingen laden…",
         "unlabeled": "Gemarkeerde afbeelding",
-        "reveal": "Beweeg eroverheen of tik om de gemarkeerde afbeelding te tonen",
         "severity": {
           "high": "Hoge ernst",
           "medium": "Gemiddelde ernst",
@@ -4825,7 +4863,9 @@
         "label": "Label",
         "score": "Score",
         "confirm": "Verwijdering bevestigen",
-        "confirmArm": "Weet je het zeker?",
+        "confirmTitle": "Deze foto definitief verwijderen?",
+        "confirmBody": "De foto wordt van het exemplaar verwijderd en de uploader krijgt bericht dat hij is verwijderd. Dit kun je niet ongedaan maken.",
+        "confirmAction": "Foto verwijderen",
         "restore": "Foto herstellen",
         "hashTimedOutHint": "De hash-check van deze foto op bekend misbruikmateriaal was verlopen voordat hij werd afgewezen. Herstellen publiceert hem niet: hij gaat terug naar Niet-gecontroleerde foto's, waar alleen Goedkeuren zonder hash-check hem publiceert."
       },
@@ -4833,49 +4873,89 @@
       "activity": {
         "loading": "Activiteit laden…",
         "system": "Systeem",
+        "kindFilter": "Filteren op actie",
+        "allKinds": "Alle acties",
+        "actorFilter": "Acties van {name}",
+        "actorFilterUnnamed": "Acties van één beheerder",
+        "clearActor": "Alle beheerders tonen",
+        "emptyFiltered": "Geen acties die bij dit filter passen.",
+        "loadMore": "Meer laden",
+        "kinds": {
+          "definition_approved": "Inzending goedgekeurd",
+          "definition_edited_approved": "Inzending bewerkt en goedgekeurd",
+          "definition_rejected": "Inzending afgewezen",
+          "definition_disabled": "Puzzel uitgeschakeld",
+          "definition_reenabled": "Puzzel weer ingeschakeld",
+          "definition_edited": "Puzzel bewerkt",
+          "proposal_approved": "Wijzigingsvoorstel goedgekeurd",
+          "proposal_rejected": "Wijzigingsvoorstel afgewezen",
+          "photo_removal_confirmed": "Foto verwijderd",
+          "photo_auto_rejected": "Foto automatisch gemarkeerd",
+          "photo_restored": "Foto hersteld",
+          "photo_manually_approved": "Niet-gecontroleerde foto goedgekeurd",
+          "photo_manually_rejected": "Niet-gecontroleerde foto afgewezen",
+          "photo_hash_check_waived": "Goedgekeurd zonder hash-check",
+          "image_quarantined": "Foto in quarantaine (hash-match)",
+          "csam_escalation_updated": "Hash-match-escalatie bijgewerkt",
+          "role_granted": "Beheerdersrol toegekend",
+          "role_revoked": "Beheerdersrol ingetrokken",
+          "report_dismissed": "Melding afgewezen",
+          "report_content_removed": "Gemelde inhoud verwijderd",
+          "report_warned": "Lid gewaarschuwd na een melding",
+          "message_image_auto_rejected": "Foto in bericht automatisch gemarkeerd",
+          "message_image_restored": "Foto in bericht hersteld",
+          "photo_recheck_requested": "Niet-gecontroleerde foto opnieuw gecontroleerd",
+          "category_created": "Categorie aangemaakt",
+          "category_updated": "Categorie bewerkt",
+          "category_deactivated": "Categorie gedeactiveerd",
+          "category_reactivated": "Categorie gereactiveerd",
+          "categories_reordered": "Categorieën in een nieuwe volgorde gezet",
+          "contact_message_handled": "Contactbericht afgehandeld",
+          "contact_message_reopened": "Contactbericht heropend"
+        },
         "deletedMemberTarget": "een verwijderd lid",
-        "definition_approved": "<strong>{actor}</strong> keurde <strong>{target}</strong> goed",
-        "definition_edited_approved": "<strong>{actor}</strong> bewerkte en keurde <strong>{target}</strong> goed",
-        "definition_rejected": "<strong>{actor}</strong> wees <strong>{target}</strong> af",
-        "definition_disabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> uit",
-        "definition_reenabled": "<strong>{actor}</strong> schakelde <strong>{target}</strong> weer in",
-        "definition_edited": "<strong>{actor}</strong> bewerkte <strong>{target}</strong>",
-        "proposal_approved": "<strong>{actor}</strong> keurde een wijzigingsvoorstel voor <strong>{target}</strong> goed",
-        "proposal_rejected": "<strong>{actor}</strong> wees een wijzigingsvoorstel voor <strong>{target}</strong> af",
-        "photo_removal_confirmed": "<strong>{actor}</strong> verwijderde een foto bij <strong>{target}</strong>",
-        "photo_auto_rejected": "<strong>{actor}</strong> markeerde automatisch een foto bij <strong>{target}</strong>",
-        "photo_restored": "<strong>{actor}</strong> herstelde een foto bij <strong>{target}</strong>",
-        "role_granted": "<strong>{actor}</strong> maakte <strong>{target}</strong> beheerder",
-        "role_revoked": "<strong>{actor}</strong> trok de beheerdersrol van <strong>{target}</strong> in",
-        "photo_manually_approved": "<strong>{actor}</strong> keurde een niet-gecontroleerde foto goed bij <strong>{target}</strong>",
-        "photo_manually_rejected": "<strong>{actor}</strong> wees een niet-gecontroleerde foto af bij <strong>{target}</strong>",
-        "photo_hash_check_waived": "<strong>{actor}</strong> keurde een foto zonder hash-check goed bij <strong>{target}</strong>",
-        "image_quarantined": "<strong>{actor}</strong> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<strong>{target}</strong>)",
-        "csam_escalation_updated": "<strong>{actor}</strong> werkte een hash-match-escalatie bij (<strong>{target}</strong>)",
-        "report_dismissed": "<strong>{actor}</strong> wees een melding over <strong>{target}</strong> af",
-        "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding",
-        "message_image_auto_rejected": "<strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd",
-        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling",
-        "photo_recheck_requested": "<strong>{actor}</strong> liet een niet-gecontroleerde foto opnieuw controleren (<strong>{target}</strong>)",
-        "category_created": "<strong>{actor}</strong> maakte de categorie <strong>{target}</strong> aan",
-        "category_updated": "<strong>{actor}</strong> bewerkte de categorie <strong>{target}</strong>",
-        "category_deactivated": "<strong>{actor}</strong> deactiveerde de categorie <strong>{target}</strong>",
-        "category_reactivated": "<strong>{actor}</strong> reactiveerde de categorie <strong>{target}</strong>",
-        "categories_reordered": "<strong>{actor}</strong> zette de cataloguscategorieën in een nieuwe volgorde",
-        "contact_message_handled": "<strong>{actor}</strong> markeerde een contactbericht als afgehandeld"
+        "definition_approved": "<actorLink>{actor}</actorLink> keurde <targetLink>{target}</targetLink> goed",
+        "definition_edited_approved": "<actorLink>{actor}</actorLink> bewerkte en keurde <targetLink>{target}</targetLink> goed",
+        "definition_rejected": "<actorLink>{actor}</actorLink> wees <targetLink>{target}</targetLink> af",
+        "definition_disabled": "<actorLink>{actor}</actorLink> schakelde <targetLink>{target}</targetLink> uit",
+        "definition_reenabled": "<actorLink>{actor}</actorLink> schakelde <targetLink>{target}</targetLink> weer in",
+        "definition_edited": "<actorLink>{actor}</actorLink> bewerkte <targetLink>{target}</targetLink>",
+        "proposal_approved": "<actorLink>{actor}</actorLink> keurde een wijzigingsvoorstel voor <targetLink>{target}</targetLink> goed",
+        "proposal_rejected": "<actorLink>{actor}</actorLink> wees een wijzigingsvoorstel voor <targetLink>{target}</targetLink> af",
+        "photo_removal_confirmed": "<actorLink>{actor}</actorLink> verwijderde een foto bij <targetLink>{target}</targetLink>",
+        "photo_auto_rejected": "<actorLink>{actor}</actorLink> markeerde automatisch een foto bij <targetLink>{target}</targetLink>",
+        "photo_restored": "<actorLink>{actor}</actorLink> herstelde een foto bij <targetLink>{target}</targetLink>",
+        "role_granted": "<actorLink>{actor}</actorLink> maakte <targetLink>{target}</targetLink> beheerder",
+        "role_revoked": "<actorLink>{actor}</actorLink> trok de beheerdersrol van <targetLink>{target}</targetLink> in",
+        "photo_manually_approved": "<actorLink>{actor}</actorLink> keurde een niet-gecontroleerde foto goed bij <targetLink>{target}</targetLink>",
+        "photo_manually_rejected": "<actorLink>{actor}</actorLink> wees een niet-gecontroleerde foto af bij <targetLink>{target}</targetLink>",
+        "photo_hash_check_waived": "<actorLink>{actor}</actorLink> keurde een foto zonder hash-check goed bij <targetLink>{target}</targetLink>",
+        "image_quarantined": "<actorLink>{actor}</actorLink> zette een foto in quarantaine na een hash-match met bekend misbruikmateriaal (<targetLink>{target}</targetLink>)",
+        "csam_escalation_updated": "<actorLink>{actor}</actorLink> werkte een hash-match-escalatie bij (<targetLink>{target}</targetLink>)",
+        "report_dismissed": "<actorLink>{actor}</actorLink> wees een melding over <targetLink>{target}</targetLink> af",
+        "report_content_removed": "<actorLink>{actor}</actorLink> verwijderde gemelde inhoud van <targetLink>{target}</targetLink>",
+        "report_warned": "<actorLink>{actor}</actorLink> waarschuwde <targetLink>{target}</targetLink> na een melding",
+        "message_image_auto_rejected": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> automatisch gemarkeerd",
+        "message_image_restored": "<actorLink>{actor}</actorLink> heeft een <targetLink>{target}</targetLink> hersteld na een verzoek om herbeoordeling",
+        "photo_recheck_requested": "<actorLink>{actor}</actorLink> liet een niet-gecontroleerde foto opnieuw controleren (<targetLink>{target}</targetLink>)",
+        "category_created": "<actorLink>{actor}</actorLink> maakte de categorie <targetLink>{target}</targetLink> aan",
+        "category_updated": "<actorLink>{actor}</actorLink> bewerkte de categorie <targetLink>{target}</targetLink>",
+        "category_deactivated": "<actorLink>{actor}</actorLink> deactiveerde de categorie <targetLink>{target}</targetLink>",
+        "category_reactivated": "<actorLink>{actor}</actorLink> reactiveerde de categorie <targetLink>{target}</targetLink>",
+        "categories_reordered": "<actorLink>{actor}</actorLink> zette de cataloguscategorieën in een nieuwe volgorde",
+        "contact_message_handled": "<actorLink>{actor}</actorLink> markeerde een contactbericht als afgehandeld",
+        "contact_message_reopened": "<actorLink>{actor}</actorLink> zette een contactbericht terug naar Nieuw"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
         "title": "Fotocontrole vraagt aandacht",
         "missingToken": "Fotocontrole is niet ingesteld op deze deployment (aanbieder {provider}; ontbreekt: {vars}). Nieuwe foto's blijven alleen zichtbaar voor de uploader totdat ze gecontroleerd kunnen worden.",
         "disabled": "Fotocontrole staat uit op deze deployment (MODERATION_PROVIDER=none). Nieuwe foto's worden zonder controle gepubliceerd.",
-        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het runbook voor eenmalige migraties uit zodra de controle werkt."
+        "unscored": "{countLabel} {count, plural, one {foto kon} other {foto's konden}} nog niet worden gecontroleerd en {count, plural, one {is} other {zijn}} alleen zichtbaar voor de uploader. Voer de hercontrole uit het <link>runbook voor eenmalige migraties</link> uit zodra de controle werkt."
       },
       "uncheckedEmpty": "Er wachten geen foto's op controle.",
       "unchecked": {
         "loading": "Niet-gecontroleerde foto's laden…",
-        "reveal": "Beweeg eroverheen of tik om de foto te tonen",
         "status": {
           "pending": "Wordt gecontroleerd",
           "unscored": "Kon niet worden gecontroleerd",
@@ -4909,12 +4989,60 @@
         "reasonLabel": "Reden",
         "approve": "Foto goedkeuren",
         "reject": "Foto afwijzen",
-        "rejectArm": "Weet je het zeker?",
+        "rejectConfirmTitle": "Deze foto afwijzen?",
         "recheck": "Opnieuw controleren",
         "waive": "Goedkeuren zonder hash-check",
-        "waiveArm": "Ja, publiceren zonder hash-check",
-        "hint": "Goedkeuren publiceert de foto voor andere leden. Afwijzen verbergt hem; een afgewezen foto van een exemplaar gaat naar Gemarkeerde afbeeldingen, een afgewezen foto van een gelegde puzzel wordt verwijderd, en een afgewezen catalogusafbeelding wordt van de puzzel gehaald en verwijderd. Opnieuw controleren laat de automatische controle nog een keer los op een foto die niet gecontroleerd kon worden, bijvoorbeeld als de controledienst weer werkt. Een foto in een bericht wordt na goedkeuring in het gesprek getoond; afwijzen verwijdert hem voor beide leden en laat de afzender dat weten. Een kringpictogram wordt na goedkeuring het pictogram van de kring; afwijzen verwijdert het en de kring houdt zijn vorige pictogram.",
-        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, na een tweede klik ter bevestiging (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
+        "waiveConfirmTitle": "Publiceren zonder hash-check?",
+        "waiveConfirmBody": "Deze foto is nooit gecontroleerd op bekend misbruikmateriaal. Vindt een latere controle toch een match, dan gaat de foto alsnog in quarantaine.",
+        "effects": {
+          "copy": {
+            "approve": "Goedkeuren toont de foto bij het exemplaar aan andere leden.",
+            "reject": "Afwijzen verbergt de foto en zet hem bij Gemarkeerde afbeeldingen, waar je hem nog kunt herstellen of definitief verwijderen."
+          },
+          "completion": {
+            "approve": "Goedkeuren toont de foto bij de gelegde puzzel aan andere leden.",
+            "reject": "Afwijzen haalt de foto van de gelegde puzzel en verwijdert hem."
+          },
+          "boxArt": {
+            "approve": "Goedkeuren toont de catalogusafbeelding bij de puzzel.",
+            "reject": "Afwijzen haalt de catalogusafbeelding van de puzzel en verwijdert het bestand."
+          },
+          "message": {
+            "approve": "Goedkeuren toont de foto in het gesprek.",
+            "reject": "Afwijzen verwijdert de foto voor beide leden en laat de afzender dat weten."
+          },
+          "circleIcon": {
+            "approve": "Goedkeuren maakt dit het nieuwe pictogram van de kring.",
+            "reject": "Afwijzen verwijdert het pictogram; de kring houdt zijn vorige pictogram."
+          },
+          "recheck": "Opnieuw controleren laat de automatische controle nog een keer lopen, bijvoorbeeld zodra de controledienst weer werkt."
+        },
+        "hashTimedOutHint": "De hash-check op bekend misbruikmateriaal kon niet binnen 7 dagen worden gedaan, dus de automatische hercontroles zijn gestopt. Goedkeuren zonder hash-check publiceert de foto zonder die controle, nadat je dat bevestigt (een hash-match die later wordt gevonden, zet hem alsnog in quarantaine); afwijzen verbergt hem zoals elke afwijzing."
+      },
+      "appealsEmpty": "Er wachten geen foto's op een beoordeling.",
+      "appeal": {
+        "loading": "Beoordelingsverzoeken laden…",
+        "intro": "De afzender vroeg om een beoordeling nadat de automatische controle deze foto tegenhield. Je ziet alleen de foto, nooit het gesprek.",
+        "imageAlt": "Foto in bericht ter beoordeling",
+        "rowSource": "Foto in bericht",
+        "label": "Label",
+        "score": "Score",
+        "sentBy": "Verstuurd door",
+        "uploadedAt": "Geüpload",
+        "requestedAt": "Beoordeling gevraagd",
+        "reason": "Reden",
+        "noPreview": "Geen voorbeeld: deze foto is nog niet door de hash-check, of het bestand is weg. Zolang hij hier niet te zien is, kun je hem niet herstellen.",
+        "effects": {
+          "restore": "Herstellen keurt de foto goed en bezorgt hem in het gesprek zodra de afzender hem heeft verstuurd.",
+          "keepRemoved": "Verwijderd laten wist de foto definitief; de afzender ziet dat de beslissing blijft staan."
+        },
+        "restore": "Foto herstellen",
+        "keepRemoved": "Verwijderd laten",
+        "keepConfirmTitle": "Deze foto verwijderd laten?",
+        "keepConfirmBody": "De foto wordt definitief gewist en de afzender ziet dat de beslissing blijft staan. Dit kun je niet ongedaan maken.",
+        "keepConfirmAction": "Verwijderd laten",
+        "notAwaiting": "Over dit beoordelingsverzoek is al beslist.",
+        "cannotRestore": "Deze foto kan niet worden hersteld: hij is niet door de hash-check, of het bestand is weg."
       },
       "csam": {
         "loading": "Hash-matches laden…",
@@ -4950,7 +5078,9 @@
         "noteLabel": "Meldingskenmerk of notitie",
         "notePlaceholder": "bijv. kenmerk van het Meldpunt",
         "markReported": "Markeer als gemeld",
-        "close": "Sluiten",
+        "close": "Escalatie sluiten",
+        "closeConfirmTitle": "Deze escalatie sluiten?",
+        "closeConfirmBody": "Sluiten is definitief: daarna kun je de escalatie niet heropenen en geen notities meer toevoegen. Het bestand blijft in quarantaine.",
         "updated": "Escalatie bijgewerkt.",
         "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
@@ -4985,6 +5115,8 @@
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
         "detailTitle": "Melding",
         "detailDescription": "Het bewijs bij deze melding en het beslisformulier.",
+        "notFoundTitle": "Deze melding bestaat niet meer",
+        "notFound": "Misschien is de melding verwijderd, of is de link verouderd.",
         "reason": "Reden",
         "targetKind": "Onderwerp",
         "reporter": "Melder",
@@ -5010,6 +5142,7 @@
           "content_removed": "Inhoud verwijderd"
         },
         "decidedBy": "Besloten door {name}",
+        "nextOpenReport": "Volgende open melding",
         "decisionLegend": "Besluit",
         "decide": {
           "dismissed": "Afwijzen",
@@ -5019,11 +5152,10 @@
         "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
-        "templateNames": {
-          "removal": "Sjabloon verwijdering",
-          "warning": "Sjabloon waarschuwing",
-          "noViolation": "Sjabloon geen overtreding"
-        },
+        "insertTemplate": "Sjabloon invoegen",
+        "replaceTemplateTitle": "Je tekst vervangen?",
+        "replaceTemplateBody": "Het sjabloon voor “{decision}” vervangt wat je hebt geschreven. Je eigen tekst gaat dan verloren.",
+        "replaceTemplateConfirm": "Tekst vervangen",
         "templateContent": {
           "user": "je gedrag op JigSwap",
           "message": "je bericht",
@@ -5063,8 +5195,12 @@
     "contact": {
       "loading": "Berichten laden…",
       "empty": "Nog geen contactberichten.",
+      "emptyNew": "Geen nieuwe contactberichten.",
+      "emptyHandled": "Nog geen afgehandelde contactberichten.",
       "statusNew": "Nieuw",
       "statusHandled": "Afgehandeld",
+      "statusAll": "Alle",
+      "statusFilter": "Berichten filteren op status",
       "subject": {
         "swap": "Lenen of ruilen",
         "account": "Mijn account",
@@ -5072,14 +5208,23 @@
         "other": "Iets anders"
       },
       "markHandled": "Markeren als afgehandeld",
+      "findMember": "Lid zoeken",
+      "findMemberLabel": "Lid zoeken: {email}",
       "markHandledSuccess": "Bericht gemarkeerd als afgehandeld",
-      "markHandledError": "Bericht bijwerken mislukt"
+      "markHandledError": "Bericht bijwerken mislukt",
+      "undo": "Ongedaan maken",
+      "reopenSuccess": "Bericht teruggezet naar Nieuw",
+      "reopenError": "Kon het bericht niet terugzetten naar Nieuw",
+      "loadMore": "Meer laden"
     },
     "docFeedback": {
       "loading": "Feedback laden…",
       "empty": "Nog geen feedback.",
       "helpful": "Nuttig",
-      "notHelpful": "Niet nuttig"
+      "notHelpful": "Niet nuttig",
+      "helpfulCount": "{count} nuttig",
+      "notHelpfulCount": "{count} niet nuttig ({share})",
+      "comments": "{count, plural, one {# opmerking} other {# opmerkingen}}"
     },
     "categories": {
       "loading": "Categorieën laden…",
@@ -5108,7 +5253,7 @@
       "list": {
         "statusInactive": "Inactief",
         "translationTooltip": "{language}: “{value}”",
-        "missingTranslationTooltip": "{language}: vertaling ontbreekt",
+        "missingTranslation": "{language} ontbreekt",
         "edit": "Bewerken",
         "deactivate": "Deactiveren",
         "deactivateConfirmTitle": "“{name}” deactiveren?",
@@ -5118,8 +5263,12 @@
         "reactivate": "Reactiveren",
         "reactivateSuccess": "Categorie gereactiveerd",
         "reactivateError": "Categorie reactiveren mislukt",
+        "undo": "Ongedaan maken",
         "reorderError": "Categorieën herordenen mislukt",
-        "dragHandle": "Sleep om {name} te herordenen"
+        "dragHandle": "Sleep om {name} te herordenen",
+        "moreActions": "Meer acties voor {name}",
+        "moveUp": "Omhoog",
+        "moveDown": "Omlaag"
       }
     },
     "puzzles": {
@@ -5128,6 +5277,14 @@
         "title": "Nog geen puzzeldefinities",
         "description": "Ingediende puzzeldefinities verschijnen hier met hun moderatiestatus."
       },
+      "emptyFiltered": {
+        "title": "Geen puzzeldefinities gevonden",
+        "description": "Probeer een andere status of zoekterm."
+      },
+      "searchPlaceholder": "Zoek op titel, merk of artiest…",
+      "searchLabel": "Puzzeldefinities zoeken",
+      "statusFilter": "Puzzeldefinities filteren op status",
+      "allStatuses": "Alle",
       "pieces": "{count} stukjes",
       "submittedBy": "door {name}",
       "ownerCount": "{count, plural, one {# eigenaar} other {# eigenaren}}",
@@ -5138,16 +5295,17 @@
         "rejected": "Afgewezen",
         "disabled": "Uitgeschakeld"
       },
+      "review": "Beoordelen",
+      "reviewLabel": "Beoordelen: “{title}”",
       "disable": "Uitschakelen",
       "reenable": "Weer inschakelen",
       "disableConfirmTitle": "“{title}” uitschakelen?",
       "disableConfirmBody": "De puzzel verdwijnt uit bladeren en zoeken en kan niet meer aan collecties worden toegevoegd. Bestaande exemplaren blijven onaangetast. Je kunt de puzzel altijd weer inschakelen.",
-      "reenableConfirmTitle": "“{title}” weer inschakelen?",
-      "reenableConfirmBody": "De puzzel wordt weer openbaar zichtbaar en kan weer worden toegevoegd.",
       "disableSuccess": "“{title}” uitgeschakeld",
       "disableError": "Kon de puzzel niet uitschakelen. Probeer het opnieuw.",
       "reenableSuccess": "“{title}” weer ingeschakeld",
       "reenableError": "Kon de puzzel niet weer inschakelen. Probeer het opnieuw.",
+      "undo": "Ongedaan maken",
       "loadMore": "Meer laden",
       "edit": {
         "button": "Bewerken",
@@ -5244,11 +5402,17 @@
     "queueEmpty": {
       "title": "Alles afgehandeld"
     },
+    "queryError": {
+      "title": "Er ging iets mis",
+      "description": "Dit kon niet worden geladen. Probeer het opnieuw, of herlaad de pagina als het blijft gebeuren.",
+      "retry": "Opnieuw proberen"
+    },
     "users": {
       "loading": "Leden laden…",
-      "searchPlaceholder": "Zoek op naam of gebruikersnaam…",
+      "searchPlaceholder": "Naam, gebruikersnaam of e-mail…",
       "emptyTitle": "Geen leden gevonden",
       "empty": "Geen leden gevonden voor deze zoekopdracht.",
+      "emptyEmail": "Geen lid gebruikt dit e-mailadres. Zoeken op e-mail werkt alleen met het hele adres.",
       "columns": {
         "member": "Lid",
         "email": "E-mail",
@@ -5263,7 +5427,7 @@
       "adminBadge": "Beheerder",
       "loadMore": "Meer laden",
       "makeAdmin": "Beheerder maken",
-      "removeAdmin": "Beheerder verwijderen",
+      "removeAdmin": "Beheerdersrol intrekken",
       "grantConfirmTitle": "{name} beheerder maken?",
       "grantConfirmBody": "Dit geeft volledige toegang tot de beheerconsole, inclusief moderatie en ledenbeheer. De wijziging wordt vastgelegd in het auditlogboek.",
       "revokeConfirmTitle": "Beheerdersrechten van {name} intrekken?",
@@ -5296,10 +5460,12 @@
         "status": {
           "pending": "In afwachting",
           "approved": "Goedgekeurd",
-          "rejected": "Afgewezen"
+          "rejected": "Afgewezen",
+          "disabled": "Uitgeschakeld"
         },
         "auditPerformedTitle": "Uitgevoerde moderatieacties",
         "auditPerformedEmpty": "Geen uitgevoerde moderatieacties.",
+        "auditPerformedAll": "Alles bekijken in het activiteitenlog",
         "auditReceivedTitle": "Auditlogboek",
         "auditReceivedEmpty": "Geen auditvermeldingen voor dit lid."
       }

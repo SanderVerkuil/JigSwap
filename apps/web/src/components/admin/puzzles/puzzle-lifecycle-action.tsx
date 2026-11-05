@@ -3,9 +3,12 @@
 // Shared disable/re-enable lifecycle affordance used by BOTH the /admin/puzzles
 // list rows and the /admin/puzzles/$puzzleId detail page (the two call sites
 // that justify the extraction). Renders the status-appropriate trigger button
-// plus its controlled AlertDialog confirm and calls the catalog disable/reenable
-// mutations. Legacy definitions without an aggregateId still render the button
-// but keep it disabled — the mutations key on the Catalog aggregate.
+// and calls the catalog disable/reenable mutations. Both directions are
+// reversible, so each success toast offers Undo (the opposite mutation, whose
+// own toast offers Undo again). Disabling hides a public puzzle, so it still
+// asks first in an AlertDialog; re-enabling is the safe direction and fires at
+// once. Legacy definitions without an aggregateId still render the button but
+// keep it disabled — the mutations key on the Catalog aggregate.
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +27,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+type LifecycleAction = "disable" | "reenable";
+
+const OPPOSITE: Record<LifecycleAction, LifecycleAction> = {
+  disable: "reenable",
+  reenable: "disable",
+};
+
 export function PuzzleLifecycleAction({
   aggregateId,
   title,
@@ -36,28 +46,33 @@ export function PuzzleLifecycleAction({
   const t = useTranslations("admin.puzzles");
   const tCommon = useTranslations("common");
 
-  const disable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.disable),
+  const disableFn = useConvexMutation(gateway.catalog.disable);
+  const reenableFn = useConvexMutation(gateway.catalog.reenable);
+  // One observer for both directions, so an Undo also shows as busy. A react-query mutation still
+  // runs when the toast's Undo fires after this button re-rendered for the new status.
+  const lifecycle = useMutation({
+    mutationFn: ({ action, id }: { action: LifecycleAction; id: string }) =>
+      (action === "disable" ? disableFn : reenableFn)({
+        puzzleDefinitionId: id,
+      }),
   });
-  const reenable = useMutation({
-    mutationFn: useConvexMutation(gateway.catalog.reenable),
-  });
-  const [confirming, setConfirming] = useState<"disable" | "reenable" | null>(
-    null,
-  );
-  const busy = disable.isPending || reenable.isPending;
+  const [confirmingDisable, setConfirmingDisable] = useState(false);
+  const busy = lifecycle.isPending;
 
-  const runConfirmed = async () => {
-    if (!confirming || !aggregateId) return;
-    const action = confirming;
-    setConfirming(null);
+  // Runs one direction and toasts with an Undo that runs the other.
+  const run = async (action: LifecycleAction, id: string) => {
     try {
-      const run = action === "disable" ? disable : reenable;
-      await run.mutateAsync({ puzzleDefinitionId: aggregateId });
+      await lifecycle.mutateAsync({ action, id });
       toast.success(
         t(action === "disable" ? "disableSuccess" : "reenableSuccess", {
           title,
         }),
+        {
+          action: {
+            label: t("undo"),
+            onClick: () => void run(OPPOSITE[action], id),
+          },
+        },
       );
     } catch {
       toast.error(t(action === "disable" ? "disableError" : "reenableError"));
@@ -72,7 +87,7 @@ export function PuzzleLifecycleAction({
           variant="outline"
           className="text-destructive hover:text-destructive"
           disabled={busy || !aggregateId}
-          onClick={() => setConfirming("disable")}
+          onClick={() => setConfirmingDisable(true)}
         >
           {t("disable")}
         </Button>
@@ -82,41 +97,32 @@ export function PuzzleLifecycleAction({
           size="sm"
           variant="outline"
           disabled={busy || !aggregateId}
-          onClick={() => setConfirming("reenable")}
+          onClick={() => {
+            if (aggregateId) void run("reenable", aggregateId);
+          }}
         >
           {t("reenable")}
         </Button>
       )}
-      <AlertDialog
-        open={confirming !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfirming(null);
-        }}
-      >
+      <AlertDialog open={confirmingDisable} onOpenChange={setConfirmingDisable}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirming === "reenable"
-                ? t("reenableConfirmTitle", { title })
-                : t("disableConfirmTitle", { title })}
+              {t("disableConfirmTitle", { title })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirming === "reenable"
-                ? t("reenableConfirmBody")
-                : t("disableConfirmBody")}
+              {t("disableConfirmBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              className={
-                confirming === "disable"
-                  ? buttonVariants({ variant: "destructive" })
-                  : undefined
-              }
-              onClick={() => void runConfirmed()}
+              className={buttonVariants({ variant: "destructive" })}
+              onClick={() => {
+                if (aggregateId) void run("disable", aggregateId);
+              }}
             >
-              {confirming === "reenable" ? t("reenable") : t("disable")}
+              {t("disable")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -22,6 +22,7 @@ import type * as admin_decideUncheckedPhoto from "../admin/decideUncheckedPhoto.
 import type * as admin_deleteCopyPhoto from "../admin/deleteCopyPhoto.js";
 import type * as admin_getModerationActivity from "../admin/getModerationActivity.js";
 import type * as admin_getModerationStats from "../admin/getModerationStats.js";
+import type * as admin_getPendingCounts from "../admin/getPendingCounts.js";
 import type * as admin_getPhotoScreeningHealth from "../admin/getPhotoScreeningHealth.js";
 import type * as admin_getPuzzleDefinitionDetail from "../admin/getPuzzleDefinitionDetail.js";
 import type * as admin_getReport from "../admin/getReport.js";
@@ -117,6 +118,7 @@ import type * as catalog_urlImportGate from "../catalog/urlImportGate.js";
 import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeProposal.js";
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
+import type * as contact_reopenContactMessage from "../contact/reopenContactMessage.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as conversation_adapters_circleRoster from "../conversation/adapters/circleRoster.js";
 import type * as conversation_adapters_connectionPolicy from "../conversation/adapters/connectionPolicy.js";
@@ -630,6 +632,7 @@ declare const fullApi: ApiFromModules<{
   "admin/deleteCopyPhoto": typeof admin_deleteCopyPhoto;
   "admin/getModerationActivity": typeof admin_getModerationActivity;
   "admin/getModerationStats": typeof admin_getModerationStats;
+  "admin/getPendingCounts": typeof admin_getPendingCounts;
   "admin/getPhotoScreeningHealth": typeof admin_getPhotoScreeningHealth;
   "admin/getPuzzleDefinitionDetail": typeof admin_getPuzzleDefinitionDetail;
   "admin/getReport": typeof admin_getReport;
@@ -725,6 +728,7 @@ declare const fullApi: ApiFromModules<{
   "catalog/withdrawChangeProposal": typeof catalog_withdrawChangeProposal;
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
+  "contact/reopenContactMessage": typeof contact_reopenContactMessage;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
   "conversation/adapters/circleRoster": typeof conversation_adapters_circleRoster;
   "conversation/adapters/connectionPolicy": typeof conversation_adapters_connectionPolicy;

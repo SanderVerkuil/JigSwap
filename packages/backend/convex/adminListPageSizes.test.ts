@@ -109,17 +109,18 @@ describe("admin list page sizes are clamped server-side", () => {
     expect(page.isDone).toBe(false);
   });
 
-  test("getModerationActivity: default 30, at most 100, at least 1", async () => {
+  test("getModerationActivity: at most 100 per page, at least 1", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const activity = (limit?: number) =>
-      asAdmin(t).query(
-        api.admin.getModerationActivity.getModerationActivity,
-        limit === undefined ? {} : { limit },
-      );
-    expect(await activity()).toHaveLength(30);
+    const activity = async (numItems: number) =>
+      (
+        await asAdmin(t).query(
+          api.admin.getModerationActivity.getModerationActivity,
+          { paginationOpts: { numItems, cursor: null } },
+        )
+      ).page;
     expect(await activity(1e6)).toHaveLength(100);
-    expect(await activity(Number.NaN)).toHaveLength(30);
+    expect(await activity(Number.NaN)).toHaveLength(100);
     expect(await activity(0)).toHaveLength(1);
     expect(await activity(-4)).toHaveLength(1);
   });

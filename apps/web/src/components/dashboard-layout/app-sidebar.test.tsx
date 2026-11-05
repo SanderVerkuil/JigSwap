@@ -4,6 +4,7 @@
 // background and a chevron on hover and focus, marked as the current page on the hub itself.
 // UX-05: tablets default to the icon rail, where the Messages count pill is hidden, so the rail
 // keeps a dot on the icon; the count itself stays in the link's accessible name.
+// UX-146: the admin items carry the work waiting in their queues, with the same rail dot.
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -16,6 +17,9 @@ const mocks = vi.hoisted(() => ({
   pathname: "/dashboard",
   member: null as { _id: string } | null,
   unreadTotal: undefined as number | undefined,
+  user: null as { id: string } | null,
+  isAdmin: false,
+  pendingCounts: undefined as unknown,
 }));
 
 vi.mock("@/compat/navigation", () => ({
@@ -23,14 +27,18 @@ vi.mock("@/compat/navigation", () => ({
 }));
 vi.mock("@/compat/clerk", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/compat/clerk")>()),
-  useUser: () => ({ user: null }),
+  useUser: () => ({ user: mocks.user }),
 }));
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
-  // Only the unread total is ever asked for here: isAdmin and every other nav item skip.
-  useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => ({
-    data: queryKey.includes("skip") ? undefined : mocks.unreadTotal,
-  }),
+  // isAdmin and every other nav item skip until a test sets them up.
+  useQuery: ({ queryKey }: { queryKey: readonly unknown[] }) => {
+    if (queryKey.includes("skip")) return { data: undefined };
+    const name = String(queryKey[1]);
+    if (name.includes("isCurrentUserAdmin")) return { data: mocks.isAdmin };
+    if (name.includes("getPendingCounts")) return { data: mocks.pendingCounts };
+    return { data: mocks.unreadTotal };
+  },
 }));
 vi.mock("@/components/dashboard-home/use-current-member", () => ({
   useCurrentMember: () => ({ member: mocks.member }),
@@ -59,6 +67,9 @@ afterEach(() => {
   mocks.pathname = "/dashboard";
   mocks.member = null;
   mocks.unreadTotal = undefined;
+  mocks.user = null;
+  mocks.isAdmin = false;
+  mocks.pendingCounts = undefined;
 });
 
 function renderSidebar(pathname = "/dashboard") {
@@ -157,6 +168,59 @@ describe("AppSidebar Messages count", () => {
   it("shows no dot with nothing unread", () => {
     mocks.member = { _id: "m1" };
     mocks.unreadTotal = 0;
+    renderSidebar();
+    expect(railDot()).toBeUndefined();
+  });
+});
+
+describe("AppSidebar admin queue counts", () => {
+  const none = { count: 0, capped: false };
+  const contactItem = () =>
+    screen
+      .getByRole("link", { name: /^Contact/ })
+      .closest("[data-sidebar=menu-item]") as HTMLElement;
+  const railDot = () =>
+    Array.from(contactItem().querySelectorAll("[aria-hidden=true]")).find(
+      (element) =>
+        classesOf(element).includes("group-data-[collapsible=icon]:block"),
+    );
+
+  it("keeps the waiting work visible on the rail, in the primary colour, and in the link's name", () => {
+    mocks.user = { id: "u1" };
+    mocks.isAdmin = true;
+    mocks.pendingCounts = {
+      submissions: none,
+      flagged: none,
+      appeals: none,
+      reports: none,
+      hashMatches: none,
+      proposals: none,
+      contact: { count: 3, capped: false },
+    };
+    renderSidebar();
+
+    const dot = railDot();
+    expect(dot).toBeDefined();
+    expect(classesOf(dot as Element)).toContain("hidden");
+    expect(classesOf(dot as Element)).toContain("bg-primary");
+    expect(classesOf(dot as Element)).not.toContain("bg-jigsaw-primary-accent");
+    expect(
+      screen.getByRole("link", { name: /^Contact/ }).textContent,
+    ).toContain("3 waiting");
+  });
+
+  it("shows no dot on an empty queue", () => {
+    mocks.user = { id: "u1" };
+    mocks.isAdmin = true;
+    mocks.pendingCounts = {
+      submissions: none,
+      flagged: none,
+      appeals: none,
+      reports: none,
+      hashMatches: none,
+      proposals: none,
+      contact: none,
+    };
     renderSidebar();
     expect(railDot()).toBeUndefined();
   });

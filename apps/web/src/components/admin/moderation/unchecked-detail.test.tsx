@@ -37,7 +37,6 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
-  vi.useRealTimers();
 });
 
 const render = (
@@ -67,6 +66,12 @@ const render = (
 const button = (label: string) =>
   [...container.querySelectorAll("button")].find((b) =>
     b.textContent?.includes(label),
+  )!;
+const dialog = () =>
+  document.body.querySelector<HTMLElement>("[role='alertdialog']");
+const dialogButton = (label: string) =>
+  [...(dialog()?.querySelectorAll("button") ?? [])].find(
+    (b) => b.textContent?.trim() === label,
   )!;
 
 describe("UncheckedDetail", () => {
@@ -111,7 +116,7 @@ describe("UncheckedDetail", () => {
     expect(button("Goedkeuren zonder hash-check")).toBeDefined();
   });
 
-  it("a timed-out photo offers only the waiver, which needs a second click (no plain Approve)", () => {
+  it("a timed-out photo offers only the waiver, which asks in a dialog that says the check is skipped (no plain Approve)", () => {
     const onApprove = vi.fn();
     const onWaive = vi.fn();
     render({
@@ -123,19 +128,21 @@ describe("UncheckedDetail", () => {
 
     act(() => button("Approve without hash check").click());
     expect(onWaive).not.toHaveBeenCalled();
-    act(() => button("Yes, publish without hash check").click());
+    const text = dialog()!.textContent ?? "";
+    expect(text).toContain("Publish without the hash check?");
+    expect(text).toContain(
+      "This photo was never checked against known abuse material.",
+    );
+    // The waiver repeats what approving does to this kind of photo.
+    expect(text).toContain(
+      "Approving shows the photo on its copy to other members.",
+    );
+    act(() => dialogButton("Approve without hash check").click());
     expect(onWaive).toHaveBeenCalledTimes(1);
     expect(onApprove).not.toHaveBeenCalled();
   });
 
-  it("an ordinary unchecked photo offers no waiver", () => {
-    render();
-    expect(button("Approve without hash check")).toBeUndefined();
-    expect(button("Approve Photo")).toBeDefined();
-  });
-
-  it("an armed waiver disarms after 3 seconds, and arming reject disarms it", () => {
-    vi.useFakeTimers();
+  it("cancelling the waiver or the rejection does nothing", () => {
     const onWaive = vi.fn();
     const onReject = vi.fn();
     render({
@@ -144,14 +151,57 @@ describe("UncheckedDetail", () => {
       onReject,
     });
     act(() => button("Approve without hash check").click());
-    act(() => {
-      vi.advanceTimersByTime(3100);
-    });
-    act(() => button("Approve without hash check").click());
+    act(() => dialogButton("Cancel").click());
     act(() => button("Reject Photo").click());
-    expect(button("Approve without hash check")).toBeDefined();
+    act(() => dialogButton("Cancel").click());
     expect(onWaive).not.toHaveBeenCalled();
     expect(onReject).not.toHaveBeenCalled();
+  });
+
+  it("an ordinary unchecked photo offers no waiver", () => {
+    render();
+    expect(button("Approve without hash check")).toBeUndefined();
+    expect(button("Approve Photo")).toBeDefined();
+  });
+
+  it("says in one sentence per decision what approving and rejecting do to this kind of photo (en/nl)", () => {
+    render();
+    let text = container.textContent ?? "";
+    expect(text).toContain(
+      "Approving shows the photo on its copy to other members.",
+    );
+    expect(text).toContain(
+      "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good.",
+    );
+    // Only this photo's source is explained, not every source at once.
+    expect(text).not.toContain("conversation");
+    expect(text).not.toContain("Check again runs");
+
+    render({
+      photo: {
+        ...photo,
+        key: "message:m1",
+        source: "message",
+        status: "unscored",
+        canRecheck: true,
+      },
+    });
+    text = container.textContent ?? "";
+    expect(text).toContain("Approving shows the photo in its conversation.");
+    expect(text).toContain(
+      "Rejecting removes the photo for both members and tells the sender.",
+    );
+    expect(text).toContain("Check again runs the automated check once more");
+    expect(text).not.toContain("Flagged images");
+
+    render({ photo: { ...photo, source: "circleIcon" } }, "nl");
+    text = container.textContent ?? "";
+    expect(text).toContain(
+      "Goedkeuren maakt dit het nieuwe pictogram van de kring.",
+    );
+    expect(text).toContain(
+      "Afwijzen verwijdert het pictogram; de kring houdt zijn vorige pictogram.",
+    );
   });
 
   it("an unknown reason falls back to a generic label", () => {
@@ -159,7 +209,7 @@ describe("UncheckedDetail", () => {
     expect(container.textContent).toContain("Unknown");
   });
 
-  it("approve fires immediately; reject needs a second click", () => {
+  it("approve fires immediately; reject asks in a dialog that repeats what rejecting does to this source (en/nl)", () => {
     const onApprove = vi.fn();
     const onReject = vi.fn();
     render({ onApprove, onReject });
@@ -168,20 +218,30 @@ describe("UncheckedDetail", () => {
 
     act(() => button("Reject Photo").click());
     expect(onReject).not.toHaveBeenCalled();
-    act(() => button("Are you sure?").click());
+    expect(dialog()!.textContent).toContain("Reject this photo?");
+    expect(dialog()!.textContent).toContain(
+      "Rejecting hides it and moves it to Flagged images",
+    );
+    act(() => dialogButton("Reject Photo").click());
     expect(onReject).toHaveBeenCalledTimes(1);
-  });
 
-  it("an armed reject disarms after 3 seconds", () => {
-    vi.useFakeTimers();
-    const onReject = vi.fn();
-    render({ onReject });
-    act(() => button("Reject Photo").click());
-    act(() => {
-      vi.advanceTimersByTime(3100);
-    });
-    act(() => button("Reject Photo").click());
-    expect(onReject).not.toHaveBeenCalled();
+    render(
+      {
+        photo: {
+          ...photo,
+          key: "message:m1",
+          source: "message",
+          status: "unscored",
+          canRecheck: true,
+        },
+      },
+      "nl",
+    );
+    act(() => button("Foto afwijzen").click());
+    expect(dialog()!.textContent).toContain("Deze foto afwijzen?");
+    expect(dialog()!.textContent).toContain(
+      "Afwijzen verwijdert de foto voor beide leden en laat de afzender dat weten.",
+    );
   });
 
   it("offers Check again on a copy or completion photo that can be re-checked", () => {

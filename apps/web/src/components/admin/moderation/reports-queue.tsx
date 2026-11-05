@@ -4,9 +4,15 @@
 // admin.listReports (paginated, newest first) filtered by status. Each row
 // shows reason, target summary, reporter → reported, how many open reports
 // the reported member has, and age. A row opens the decision drawer
-// (admin.getReport + the decide form). Admin-only: the route group already
-// gates the page, and every admin function re-checks isAdmin.
+// (admin.getReport + the decide form); from a decided report it goes on to
+// the next open one (nextOpenReportId), and the member's other reports open in
+// the same drawer. The status filter and the open report
+// are the route's (URL search `status` / `report`), so a reload, Back or a
+// shared link restores them. Admin-only: the route group already gates the
+// page, and every admin function re-checks isAdmin.
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import {
@@ -16,28 +22,60 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { gateway, type Id } from "@/gateway";
+import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, FileX } from "lucide-react";
+import { useRef } from "react";
 import { useTranslations } from "use-intl";
+import { REPORT_STATUSES, type ReportStatus } from "./moderation-search";
 import { ReportDetail } from "./report-detail";
 
-const STATUSES = ["open", "actioned", "dismissed"] as const;
-type Status = (typeof STATUSES)[number];
 const PAGE_SIZE = 25;
 
-export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
+/**
+ * The report to go on to after `current`: the next open report below it in `rows` (the loaded
+ * queue, newest first), wrapping to the top. Once deciding has taken `current` out of an open
+ * list, its place is found by `createdAt`, so this is the report that slid into it. Null when no
+ * other open report is loaded.
+ */
+export function nextOpenReportId(
+  rows: readonly { reportId: string; status: string; createdAt: number }[],
+  current: { reportId: string; createdAt: number },
+): string | null {
+  const at = rows.findIndex((row) => row.reportId === current.reportId);
+  const start =
+    at >= 0
+      ? at + 1
+      : rows.findIndex((row) => row.createdAt < current.createdAt);
+  const isNext = (row: (typeof rows)[number]) =>
+    row.status === "open" && row.reportId !== current.reportId;
+  const below = start >= 0 ? rows.slice(start).find(isNext) : undefined;
+  return (below ?? rows.find(isNext))?.reportId ?? null;
+}
+
+export function ReportsQueue({
+  emptyTitle,
+  status,
+  openId,
+  onStatusChange,
+  onOpen,
+}: {
+  emptyTitle: string;
+  status: ReportStatus;
+  /** The report whose drawer is open (from the URL); null when closed. */
+  openId: string | null;
+  onStatusChange: (status: ReportStatus) => void;
+  /** Opens a report's drawer, or closes it with null. */
+  onOpen: (reportId: string | null) => void;
+}) {
   const t = useTranslations("admin.moderation.reports");
   const tReasons = useTranslations("safety.report.reasons");
   const relativeTime = useRelativeTime();
-  const [status, setStatus] = useState<Status>("open");
-  const [openId, setOpenId] = useState<Id<"reports"> | null>(null);
 
   const {
     results,
@@ -48,6 +86,12 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
     { status },
     { initialNumItems: PAGE_SIZE },
   );
+  // The drawer scrolls; another report opened from inside it starts at its top.
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const openFromDrawer = (reportId: string) => {
+    if (drawerRef.current) drawerRef.current.scrollTop = 0;
+    onOpen(reportId);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -56,14 +100,14 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
         aria-label={t("statusFilter")}
         className="flex flex-wrap gap-2"
       >
-        {STATUSES.map((value) => (
+        {REPORT_STATUSES.map((value) => (
           <Button
             key={value}
             variant={status === value ? "default" : "outline"}
             size="sm"
             className="h-11 md:h-8"
             aria-pressed={status === value}
-            onClick={() => setStatus(value)}
+            onClick={() => onStatusChange(value)}
           >
             {t(`statuses.${value}`)}
           </Button>
@@ -80,7 +124,7 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
             <button
               key={report.reportId}
               type="button"
-              onClick={() => setOpenId(report.reportId)}
+              onClick={() => onOpen(report.reportId)}
               className="flex min-h-11 w-full items-center gap-3 border-b px-3 py-3 text-left last:border-b-0 hover:bg-accent/50"
             >
               <span className="min-w-0 flex-1">
@@ -148,9 +192,12 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
 
       <Sheet
         open={openId !== null}
-        onOpenChange={(open) => !open && setOpenId(null)}
+        onOpenChange={(open) => !open && onOpen(null)}
       >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent
+          ref={drawerRef}
+          className="w-full overflow-y-auto sm:max-w-xl"
+        >
           <SheetHeader className="px-5 pb-0">
             <SheetTitle>{t("detailTitle")}</SheetTitle>
             <SheetDescription className="sr-only">
@@ -158,7 +205,14 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
             </SheetDescription>
           </SheetHeader>
           <div className="px-5 pb-5">
-            {openId && <ReportDetailLoader reportId={openId} />}
+            {openId && (
+              // The id comes from the URL; getReport normalises it server-side.
+              <ReportDetailLoader
+                reportId={openId}
+                queue={results}
+                onOpenReport={openFromDrawer}
+              />
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -166,12 +220,49 @@ export function ReportsQueue({ emptyTitle }: { emptyTitle: string }) {
   );
 }
 
-function ReportDetailLoader({ reportId }: { reportId: Id<"reports"> }) {
+function ReportDetailLoader({
+  reportId,
+  queue,
+  onOpenReport,
+}: {
+  reportId: string;
+  /** The loaded queue rows, for the next open report. */
+  queue: Parameters<typeof nextOpenReportId>[0];
+  onOpenReport: (reportId: string) => void;
+}) {
   const t = useTranslations("admin.moderation.reports");
-  const { data: report } = useQuery(
-    convexQuery(gateway.admin.getReport, { reportId }),
-  );
+  const {
+    data: report,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.admin.getReport, { reportId }));
+  // getReport throws ConvexError NotFound for a report that is gone or an id
+  // that was never one (a stale or mangled link); any other failure gets the
+  // retryable error state, never a spinner.
+  if (isError && convexErrorCode(error) === "NotFound") {
+    return (
+      <QueueEmpty
+        icon={FileX}
+        title={t("notFoundTitle")}
+        label={t("notFound")}
+      />
+    );
+  }
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (report === undefined) return <PageLoading message={t("loading")} />;
   // Keyed so a half-filled decide form never carries over to another report.
-  return <ReportDetail key={report.reportId} report={report} />;
+  return (
+    <ReportDetail
+      key={report.reportId}
+      report={report}
+      nextReportId={nextOpenReportId(queue, report)}
+      onOpenReport={onOpenReport}
+    />
+  );
 }

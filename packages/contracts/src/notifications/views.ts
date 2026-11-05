@@ -102,8 +102,9 @@ export interface NotificationViewContext {
   thumbnailUrl?: string;
   goalTitle?: string;
   /**
-   * Moderator-entered reason: the rejection reason (proposal_rejected), or the statement of reasons
-   * (content_removed, member_warned; message_image_rejected's automated statement).
+   * Moderator-entered reason: the rejection reason (puzzle_rejected, proposal_rejected), or the
+   * statement of reasons (content_removed, member_warned; message_image_rejected's automated
+   * statement).
    */
   reason?: string;
   /** The moderator's decision on a report the viewer filed (report_decided). */

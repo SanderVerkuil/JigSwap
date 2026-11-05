@@ -1,23 +1,25 @@
 import { QueueEmpty } from "@/components/admin/queue-empty";
-import { CommunityProfileAction } from "@/components/admin/users/community-profile-action";
-import { UserRoleAction } from "@/components/admin/users/user-role-action";
-import { MemberInitial } from "@/components/members/member-initial";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useUrlSearchInput } from "@/components/admin/users/use-url-search-input";
+import {
+  looksLikeEmail,
+  validateAdminUsersSearch,
+} from "@/components/admin/users/users-search";
+import { UsersTable } from "@/components/admin/users/users-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
-import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
 import { Search, UserX } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useFormatter, useTranslations } from "use-intl";
+import { useCallback } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/users/")({
+  // `?q=` is the search, so Back from a member's page restores the filtered list.
+  validateSearch: validateAdminUsersSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminUsers") }],
   }),
@@ -28,22 +30,29 @@ const PAGE_SIZE = 25;
 
 // Admin directory of every member. The role badge renders the DISPLAY-ONLY mirrored Clerk
 // role (users.role); authorization is enforced server-side from the JWT (identity/isAdmin)
-// in admin/listUsers — this page never gates on the mirror. Each row's member cell links to
-// the detail page (/admin/users/$userId); the role grant/revoke affordance is the shared
-// UserRoleAction (confirm dialog + setUserRole action + own-row hiding).
+// in admin/listUsers — this page never gates on the mirror. The table (UsersTable) links each
+// member to the detail page (/admin/users/$userId) and narrows its columns to the space it has;
+// on a wide table each row also carries the shared UserRoleAction (confirm dialog +
+// setUserRole action + own-row hiding).
 function AdminUsersPage() {
   const t = useTranslations("admin.users");
-  const displayName = useMemberDisplayName();
-  const format = useFormatter();
 
-  const [searchInput, setSearchInput] = useState("");
-  // Debounced server search: usePaginatedQuery restarts pagination whenever its args change,
-  // so only push the term once the admin stops typing.
-  const [search, setSearch] = useState("");
-  useEffect(() => {
-    const handle = setTimeout(() => setSearch(searchInput.trim()), 300);
-    return () => clearTimeout(handle);
-  }, [searchInput]);
+  const { q: search } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  // Debounced server search: usePaginatedQuery restarts pagination whenever its args change, so
+  // the term only reaches `?q=` (replacing the entry) once the admin stops typing.
+  const [searchInput, setSearchInput] = useUrlSearchInput(
+    search,
+    useCallback(
+      (term: string | undefined) =>
+        void navigate({
+          search: (prev) => ({ ...prev, q: term }),
+          replace: true,
+          resetScroll: false,
+        }),
+      [navigate],
+    ),
+  );
 
   const {
     results: users,
@@ -69,96 +78,15 @@ function AdminUsersPage() {
       {status === "LoadingFirstPage" ? (
         <PageLoading message={t("loading")} />
       ) : users.length === 0 ? (
-        <QueueEmpty icon={UserX} title={t("emptyTitle")} label={t("empty")} />
+        <QueueEmpty
+          icon={UserX}
+          title={t("emptyTitle")}
+          label={
+            search && looksLikeEmail(search) ? t("emptyEmail") : t("empty")
+          }
+        />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-muted-foreground">
-                <th className="px-4 py-3 font-medium">{t("columns.member")}</th>
-                <th className="px-4 py-3 font-medium">{t("columns.email")}</th>
-                <th className="px-4 py-3 font-medium">{t("columns.joined")}</th>
-                <th className="px-4 py-3 font-medium">{t("columns.status")}</th>
-                <th className="px-4 py-3 font-medium">{t("columns.role")}</th>
-                <th className="px-4 py-3 text-right font-medium">
-                  {t("columns.copies")}
-                </th>
-                <th className="px-4 py-3">
-                  <span className="sr-only">{t("columns.actions")}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id} className="border-b last:border-0">
-                  <td className="px-4 py-3">
-                    <Link
-                      to="/admin/users/$userId"
-                      params={{ userId: user._id }}
-                      className="flex items-center gap-3 hover:underline"
-                    >
-                      <Avatar className="size-8 shrink-0">
-                        {user.avatar && (
-                          <AvatarImage
-                            src={user.avatar}
-                            alt={displayName(user)}
-                          />
-                        )}
-                        <AvatarFallback>
-                          <MemberInitial source={user} />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{displayName(user)}</div>
-                        {user.username && (
-                          <div className="text-xs text-muted-foreground">
-                            @{user.username}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {user.email}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {format.dateTime(new Date(user.createdAt), {
-                      dateStyle: "medium",
-                    })}
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.isActive ? (
-                      <Badge variant="secondary">{t("active")}</Badge>
-                    ) : (
-                      <Badge variant="outline">{t("inactive")}</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.role === "admin" && <Badge>{t("adminBadge")}</Badge>}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {user.ownedCopyCount}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <CommunityProfileAction
-                        userId={user._id}
-                        name={displayName(user)}
-                        isActive={user.isActive}
-                        compact
-                      />
-                      <UserRoleAction
-                        userId={user._id}
-                        name={displayName(user)}
-                        role={user.role}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <UsersTable users={users} />
       )}
 
       {status === "CanLoadMore" && (

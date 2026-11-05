@@ -1,64 +1,57 @@
-import { PuzzleLifecycleAction } from "@/components/admin/puzzles/puzzle-lifecycle-action";
+import { AdminPuzzleList } from "@/components/admin/puzzles/admin-puzzle-list";
+import {
+  validateAdminPuzzlesSearch,
+  type AdminPuzzlesSearch,
+} from "@/components/admin/puzzles/puzzles-search";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageLoading } from "@/components/ui/loading";
 import { gateway } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-// sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
-import { usePaginatedQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
-import { ImageOff, Lightbulb, Puzzle as PuzzleIcon } from "lucide-react";
-import { useFormatter, useTranslations } from "use-intl";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Lightbulb } from "lucide-react";
+import { useCallback } from "react";
+import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/admin/puzzles/")({
+  // `?status=` and `?q=` are the filters, so Back from a definition restores the filtered list.
+  validateSearch: validateAdminPuzzlesSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminPuzzles") }],
   }),
   component: AdminPuzzlesPage,
 });
 
-// Derived from the gateway (not `@jigswap/contracts` directly), mirroring the
-// rest of the web tier (e.g. collection-stats.tsx's CollectionPuzzle).
-type Row = FunctionReturnType<
-  typeof gateway.admin.listPuzzleDefinitions
->["page"][number];
-
-const STATUS_VARIANT: Record<
-  Row["status"],
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  pending: "secondary",
-  approved: "default",
-  rejected: "destructive",
-  disabled: "outline",
-};
-
-// Admin console over EVERY catalog definition (all moderation statuses), newest first with
-// load-more pagination. Approved rows can be reversibly disabled and disabled rows re-enabled
-// via the shared PuzzleLifecycleAction (button + AlertDialog confirm); the audit trail lands
-// in the moderation Activity Log via the mutations' moderationActions stamps.
+// Admin console over EVERY catalog definition (AdminPuzzleList): all moderation statuses, newest
+// first with load-more pagination, narrowed by the status pills and the search box, both kept in
+// the URL (?status=&q=). Pending rows link to their moderation item; approved rows can be
+// reversibly disabled and disabled rows re-enabled via the shared PuzzleLifecycleAction (disable
+// confirms; both toast with Undo); the audit trail lands in the moderation Activity Log via the
+// mutations' moderationActions stamps.
 function AdminPuzzlesPage() {
-  const t = useTranslations("admin.puzzles");
   const t2 = useTranslations("admin.proposals");
-  const format = useFormatter();
-
-  const {
-    results: rows,
-    status,
-    loadMore,
-    isLoading,
-  } = usePaginatedQuery(
-    gateway.admin.listPuzzleDefinitions,
-    {},
-    { initialNumItems: 25 },
+  const { status, q: search } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  // Filter changes replace the history entry and keep the scroll position: a view change on the
+  // same page, not a new page.
+  const replaceSearch = useCallback(
+    (update: (prev: AdminPuzzlesSearch) => AdminPuzzlesSearch) =>
+      void navigate({ search: update, replace: true, resetScroll: false }),
+    [navigate],
+  );
+  // Stable, so the search box's debounce (useUrlSearchInput) is not restarted by a re-render.
+  const writeSearch = useCallback(
+    (term: string | undefined) =>
+      replaceSearch((prev) => ({ ...prev, q: term })),
+    [replaceSearch],
   );
 
   const { data: pending } = useQuery(
     convexQuery(gateway.admin.listPendingChangeProposals, {}),
+  );
+  const { data: pendingCounts } = useQuery(
+    convexQuery(gateway.admin.pendingCounts, {}),
   );
   usePageHeaderActions(
     () => (
@@ -73,103 +66,15 @@ function AdminPuzzlesPage() {
     [pending?.length],
   );
 
-  if (isLoading && rows.length === 0) {
-    return <PageLoading message={t("loading")} />;
-  }
-
   return (
-    <div className="space-y-4">
-      {rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-6 py-12 text-center">
-          <PuzzleIcon className="size-8 text-muted-foreground" aria-hidden />
-          <p className="font-semibold">{t("empty.title")}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("empty.description")}
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-xl border bg-card">
-          {rows.map((row) => (
-            <div
-              key={row._id}
-              className="flex items-center gap-3 border-b px-4 py-3 last:border-0"
-            >
-              <Link
-                to="/admin/puzzles/$puzzleId"
-                params={{ puzzleId: row._id }}
-                className="flex min-w-0 flex-1 items-center gap-3"
-              >
-                {row.image ? (
-                  <img
-                    src={row.image}
-                    alt=""
-                    className="size-11 shrink-0 rounded-lg border object-cover"
-                  />
-                ) : (
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border bg-muted">
-                    <PuzzleIcon
-                      className="size-5 text-muted-foreground"
-                      aria-hidden
-                    />
-                  </span>
-                )}
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="truncate font-semibold underline-offset-4 hover:underline">
-                      {row.title}
-                    </span>
-                    <Badge variant={STATUS_VARIANT[row.status]}>
-                      {t(`status.${row.status}`)}
-                    </Badge>
-                    {/* The box art's file is gone (SEC-01): re-upload it from the detail page. */}
-                    {row.imageMissing === true && (
-                      <Badge
-                        variant="outline"
-                        className="border-destructive/40 text-destructive"
-                      >
-                        <ImageOff aria-hidden />
-                        {t("imageMissing")}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {row.brand && `${row.brand} · `}
-                    {t("pieces", { count: row.pieceCount })}
-                    {row.submitterName &&
-                      ` · ${t("submittedBy", { name: row.submitterName })}`}
-                  </p>
-                </div>
-              </Link>
-              <div className="hidden shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground sm:flex">
-                <span>
-                  {format.dateTime(row.createdAt, { dateStyle: "medium" })}
-                </span>
-                <span>{t("ownerCount", { count: row.ownerCount })}</span>
-              </div>
-              <div className="flex shrink-0 items-center">
-                <PuzzleLifecycleAction
-                  aggregateId={row.aggregateId}
-                  title={row.title}
-                  status={row.status}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {status === "CanLoadMore" && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => loadMore(25)}
-            disabled={isLoading}
-          >
-            {t("loadMore")}
-          </Button>
-        </div>
-      )}
-    </div>
+    <AdminPuzzleList
+      status={status}
+      search={search}
+      onStatusChange={(next) =>
+        replaceSearch((prev) => ({ ...prev, status: next }))
+      }
+      onSearchChange={writeSearch}
+      pendingCount={pendingCounts?.submissions}
+    />
   );
 }

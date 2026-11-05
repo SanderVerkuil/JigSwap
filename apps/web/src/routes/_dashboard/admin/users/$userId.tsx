@@ -3,6 +3,7 @@ import { StatTile } from "@/components/admin/stat-tile";
 import { AuditList } from "@/components/admin/users/audit-list";
 import { CommunityProfileAction } from "@/components/admin/users/community-profile-action";
 import { UserRoleAction } from "@/components/admin/users/user-role-action";
+import { UserSubmissions } from "@/components/admin/users/user-submissions";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +15,7 @@ import { pageTitle } from "@/lib/page-title";
 import { convexQuery } from "@convex-dev/react-query";
 import { ADMIN_USER_STATS_CAP } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { UserX } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -24,16 +25,6 @@ export const Route = createFileRoute("/_dashboard/admin/users/$userId")({
   }),
   component: AdminUserDetailPage,
 });
-
-// Catalog submission statuses the UI knows today; anything else (e.g. a future
-// "disabled") renders as a plain outline badge with the raw status string —
-// the DTO deliberately types status as string.
-const STATUS_VARIANT: Record<string, "secondary" | "outline" | "destructive"> =
-  {
-    approved: "secondary",
-    pending: "outline",
-    rejected: "destructive",
-  };
 
 // Everything the backend knows about one member that is admin-relevant, from
 // the single admin/getUserDetail read model (gated server-side: requireMember
@@ -194,41 +185,26 @@ function AdminUserDetailPage() {
         <h2 className="text-sm font-semibold">
           {t("detail.submissionsTitle")}
         </h2>
-        {submissions.length === 0 ? (
-          <div className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-            {t("detail.submissionsEmpty")}
-          </div>
-        ) : (
-          <div className="rounded-xl border bg-card px-4">
-            {submissions.map((submission) => (
-              <div
-                key={submission._id}
-                className="flex items-center gap-3 border-b py-3 last:border-b-0"
-              >
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                  {submission.title}
-                </span>
-                <Badge variant={STATUS_VARIANT[submission.status] ?? "outline"}>
-                  {submission.status in STATUS_VARIANT
-                    ? t(`detail.status.${submission.status}`)
-                    : submission.status}
-                </Badge>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {format.dateTime(new Date(submission.createdAt), {
-                    dateStyle: "medium",
-                  })}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        <UserSubmissions submissions={submissions} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold">
-            {t("detail.auditPerformedTitle")}
-          </h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <h2 className="text-sm font-semibold">
+              {t("detail.auditPerformedTitle")}
+            </h2>
+            {audit.performed.length > 0 && (
+              // The list here is capped; the activity log pages through all of them.
+              <Link
+                to="/admin/moderation"
+                search={{ tab: "activity", actor: profile._id }}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text underline-offset-2 hover:underline md:min-h-0"
+              >
+                {t("detail.auditPerformedAll")}
+              </Link>
+            )}
+          </div>
           <AuditList
             entries={audit.performed}
             emptyLabel={t("detail.auditPerformedEmpty")}

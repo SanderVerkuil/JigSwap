@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { ChangedFieldChips } from "@/components/suggest-edit/changed-field-chips";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +24,12 @@ function ProposalsQueuePage() {
   const t = useTranslations("admin.proposals");
   const tShell = useTranslations("shell");
   const format = useFormatter();
-  const { data: rows } = useQuery(
-    convexQuery(gateway.admin.listPendingChangeProposals, {}),
-  );
+  const {
+    data: rows,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery(convexQuery(gateway.admin.listPendingChangeProposals, {}));
 
   usePageHeader(
     () => ({
@@ -38,6 +42,11 @@ function ProposalsQueuePage() {
     [t, tShell],
   );
 
+  if (isError) {
+    return (
+      <AdminQueryError onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
   if (rows === undefined) {
     return <PageLoading message={t("title")} />;
   }

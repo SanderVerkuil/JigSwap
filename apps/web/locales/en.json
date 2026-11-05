@@ -2841,7 +2841,7 @@
       },
       "puzzle_rejected": {
         "title": "Puzzle rejected",
-        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was rejected.} other {Your puzzle submission was rejected.}}"
+        "message": "{hasPuzzleTitle, select, yes {Your puzzle submission “{puzzleTitle}” was rejected.} other {Your puzzle submission was rejected.}}{hasReason, select, yes { Reason: {reason}} other {}}"
       },
       "proposal_approved": {
         "title": "Suggestion approved",
@@ -4154,7 +4154,7 @@
     "circles": "Circles — JigSwap",
     "admin": "Admin — JigSwap",
     "adminCategories": "Category management — JigSwap",
-    "adminUsers": "Users — JigSwap",
+    "adminUsers": "Members — JigSwap",
     "adminModeration": "Moderation — JigSwap",
     "adminPuzzles": "Puzzles — JigSwap",
     "adminContact": "Contact messages — JigSwap",
@@ -4335,8 +4335,8 @@
       },
       "adminModeration": {
         "title": "Moderation",
-        "subtitle": "Review pending submissions before they appear in the public catalog.",
-        "description": "Approve or reject pending puzzle submissions"
+        "subtitle": "Review submissions, photos and member reports in one place.",
+        "description": "Review submissions, photos and reports"
       },
       "adminPuzzles": {
         "title": "Puzzles",
@@ -4349,7 +4349,7 @@
         "description": "Manage localized puzzle categories"
       },
       "adminUsers": {
-        "title": "Users",
+        "title": "Members",
         "subtitle": "Every member of JigSwap, newest first.",
         "description": "Browse and search all members"
       },
@@ -4360,7 +4360,7 @@
       },
       "adminFeedback": {
         "title": "Feedback",
-        "subtitle": "“Was this page helpful?” votes from the documentation, newest first.",
+        "subtitle": "“Was this page helpful?” votes per documentation page, least helpful first.",
         "description": "Review docs helpfulness votes"
       },
       "whatsNew": {
@@ -4423,6 +4423,7 @@
       "withPendingRequests": "{count, plural, one {{name}, # request waiting for your reply} other {{name}, # requests waiting for your reply}}"
     },
     "breadcrumbLabel": "Breadcrumb",
+    "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
     "plankReset": "Reset"
   },
   "copyInstance": {
@@ -4775,7 +4776,9 @@
         "manualApproved": "Approved photo on “{title}” — {count} left in queue.",
         "manualRejected": "Rejected photo on “{title}” — {count} left in queue.",
         "hashCheckWaived": "Approved photo on “{title}” without a hash check — {count} left in queue.",
-        "recheckQueued": "Checking the photo on “{title}” again."
+        "recheckQueued": "Checking the photo on “{title}” again.",
+        "appealRestored": "Restored the message photo — {count} left in queue.",
+        "appealKept": "Kept the message photo removed — {count} left in queue."
       },
       "banner": {
         "pill": "ADMIN",
@@ -4786,22 +4789,39 @@
         "rejected": "Rejected",
         "flagsCleared": "Flags cleared",
         "avgReview": "Avg. review time",
-        "thisWeek": "this week"
+        "period": "Last 7 days"
       },
       "tabs": {
         "submissions": "Submissions",
         "flagged": "Flagged Images",
         "activity": "Activity Log",
         "unchecked": "Unchecked Photos",
+        "appeals": "Review Requests",
         "hashMatches": "Hash matches",
         "reports": "Reports"
       },
       "detail": {
         "submitted": "Submitted",
         "difficulty": "Difficulty",
-        "note": "Submitter note"
+        "note": "Submitter note",
+        "sheetTitle": {
+          "submissions": "Submission",
+          "flagged": "Flagged image",
+          "unchecked": "Unchecked photo",
+          "appeals": "Review request"
+        }
       },
-      "dupWarning": "Possible duplicate of <strong>{title}</strong> already in the catalog. Review before approving.",
+      "handledElsewhere": {
+        "title": "Already handled elsewhere",
+        "body": "This item left the queue while you had it open, so its actions are switched off.",
+        "next": "Next item"
+      },
+      "revealGuard": {
+        "reveal": "Click or tap to reveal the photo",
+        "hide": "Hide again"
+      },
+      "dupWarning": "Possible duplicate of <link>{title}</link> already in the catalog. Review before approving.",
+      "rejectAsDuplicate": "Reject as duplicate",
       "actions": {
         "approve": "Approve & Publish",
         "edit": "Edit & Approve"
@@ -4809,12 +4829,30 @@
       "editDialog": {
         "title": "Edit & Approve",
         "description": "Fix the submission's details, then save to approve and publish it in one step.",
-        "save": "Save & Approve"
+        "fullEditor": "Need to fix the cover, category, series, shape or barcodes? <link>Open the full editor</link>, then approve it here.",
+        "save": "Save & Approve",
+        "handledElsewhere": "This submission was handled elsewhere while you were editing it, so it can no longer be approved from here."
+      },
+      "rejectDialog": {
+        "title": "Reject this submission?",
+        "description": "“{title}” will be rejected for good: it can't be approved later. The member who submitted it is told the reason you give here.",
+        "handledElsewhere": "This submission was handled elsewhere, so it can no longer be rejected from here.",
+        "reasonLegend": "Reason",
+        "presets": {
+          "duplicate": "{hasTitle, select, yes {Duplicate of “{title}”} other {Already in the catalogue}}",
+          "incomplete": "Incomplete or wrong details",
+          "notJigsaw": "Not a jigsaw puzzle",
+          "other": "Other reason"
+        },
+        "noteLabel": "Note for the member",
+        "noteHint": "{required, select, yes {Required: the member sees only this note.} other {Optional: added after the reason.}}",
+        "noteCounter": "{count}/{max}",
+        "previewLabel": "The member reads",
+        "confirm": "Reject submission"
       },
       "flag": {
         "loading": "Loading flagged images…",
         "unlabeled": "Flagged image",
-        "reveal": "Hover or tap to reveal flagged image",
         "severity": {
           "high": "High severity",
           "medium": "Medium severity",
@@ -4825,7 +4863,9 @@
         "label": "Label",
         "score": "Score",
         "confirm": "Confirm Removal",
-        "confirmArm": "Are you sure?",
+        "confirmTitle": "Remove this photo for good?",
+        "confirmBody": "The photo is deleted from the copy and its uploader is told it was removed. This can't be undone.",
+        "confirmAction": "Remove photo",
         "restore": "Restore Photo",
         "hashTimedOutHint": "This photo's hash check against known abuse material timed out before it was rejected. Restoring it does not publish it: it goes back to Unchecked Photos, where only Approve without hash check publishes it."
       },
@@ -4833,49 +4873,89 @@
       "activity": {
         "loading": "Loading activity…",
         "system": "System",
+        "kindFilter": "Filter by action",
+        "allKinds": "All actions",
+        "actorFilter": "Actions by {name}",
+        "actorFilterUnnamed": "Actions by one admin",
+        "clearActor": "Show all admins",
+        "emptyFiltered": "No actions match this filter.",
+        "loadMore": "Load more",
+        "kinds": {
+          "definition_approved": "Submission approved",
+          "definition_edited_approved": "Submission edited & approved",
+          "definition_rejected": "Submission rejected",
+          "definition_disabled": "Puzzle disabled",
+          "definition_reenabled": "Puzzle re-enabled",
+          "definition_edited": "Puzzle edited",
+          "proposal_approved": "Suggested edit approved",
+          "proposal_rejected": "Suggested edit rejected",
+          "photo_removal_confirmed": "Photo removed",
+          "photo_auto_rejected": "Photo auto-flagged",
+          "photo_restored": "Photo restored",
+          "photo_manually_approved": "Unchecked photo approved",
+          "photo_manually_rejected": "Unchecked photo rejected",
+          "photo_hash_check_waived": "Approved without hash check",
+          "image_quarantined": "Photo quarantined (hash match)",
+          "csam_escalation_updated": "Hash-match escalation updated",
+          "role_granted": "Admin role granted",
+          "role_revoked": "Admin role revoked",
+          "report_dismissed": "Report dismissed",
+          "report_content_removed": "Reported content removed",
+          "report_warned": "Member warned after a report",
+          "message_image_auto_rejected": "Message photo auto-flagged",
+          "message_image_restored": "Message photo restored",
+          "photo_recheck_requested": "Unchecked photo checked again",
+          "category_created": "Category created",
+          "category_updated": "Category edited",
+          "category_deactivated": "Category deactivated",
+          "category_reactivated": "Category reactivated",
+          "categories_reordered": "Categories reordered",
+          "contact_message_handled": "Contact message handled",
+          "contact_message_reopened": "Contact message reopened"
+        },
         "deletedMemberTarget": "a deleted member",
-        "definition_approved": "<strong>{actor}</strong> approved <strong>{target}</strong>",
-        "definition_edited_approved": "<strong>{actor}</strong> edited & approved <strong>{target}</strong>",
-        "definition_rejected": "<strong>{actor}</strong> rejected <strong>{target}</strong>",
-        "definition_disabled": "<strong>{actor}</strong> disabled <strong>{target}</strong>",
-        "definition_reenabled": "<strong>{actor}</strong> re-enabled <strong>{target}</strong>",
-        "definition_edited": "<strong>{actor}</strong> edited <strong>{target}</strong>",
-        "proposal_approved": "<strong>{actor}</strong> approved a suggested edit to <strong>{target}</strong>",
-        "proposal_rejected": "<strong>{actor}</strong> rejected a suggested edit to <strong>{target}</strong>",
-        "photo_removal_confirmed": "<strong>{actor}</strong> removed a photo on <strong>{target}</strong>",
-        "photo_auto_rejected": "<strong>{actor}</strong> auto-flagged a photo on <strong>{target}</strong>",
-        "photo_restored": "<strong>{actor}</strong> restored a photo on <strong>{target}</strong>",
-        "role_granted": "<strong>{actor}</strong> made <strong>{target}</strong> an admin",
-        "role_revoked": "<strong>{actor}</strong> removed the admin role from <strong>{target}</strong>",
-        "photo_manually_approved": "<strong>{actor}</strong> approved an unchecked photo on <strong>{target}</strong>",
-        "photo_manually_rejected": "<strong>{actor}</strong> rejected an unchecked photo on <strong>{target}</strong>",
-        "photo_hash_check_waived": "<strong>{actor}</strong> approved a photo without a hash check on <strong>{target}</strong>",
-        "image_quarantined": "<strong>{actor}</strong> quarantined a photo after a known-abuse hash match (<strong>{target}</strong>)",
-        "csam_escalation_updated": "<strong>{actor}</strong> updated a hash-match escalation (<strong>{target}</strong>)",
-        "report_dismissed": "<strong>{actor}</strong> dismissed a report about <strong>{target}</strong>",
-        "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
-        "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report",
-        "message_image_auto_rejected": "<strong>{actor}</strong> auto-flagged a <strong>{target}</strong>",
-        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request",
-        "photo_recheck_requested": "<strong>{actor}</strong> had an unchecked photo checked again (<strong>{target}</strong>)",
-        "category_created": "<strong>{actor}</strong> created the category <strong>{target}</strong>",
-        "category_updated": "<strong>{actor}</strong> edited the category <strong>{target}</strong>",
-        "category_deactivated": "<strong>{actor}</strong> deactivated the category <strong>{target}</strong>",
-        "category_reactivated": "<strong>{actor}</strong> reactivated the category <strong>{target}</strong>",
-        "categories_reordered": "<strong>{actor}</strong> reordered the catalog categories",
-        "contact_message_handled": "<strong>{actor}</strong> marked a contact message as handled"
+        "definition_approved": "<actorLink>{actor}</actorLink> approved <targetLink>{target}</targetLink>",
+        "definition_edited_approved": "<actorLink>{actor}</actorLink> edited & approved <targetLink>{target}</targetLink>",
+        "definition_rejected": "<actorLink>{actor}</actorLink> rejected <targetLink>{target}</targetLink>",
+        "definition_disabled": "<actorLink>{actor}</actorLink> disabled <targetLink>{target}</targetLink>",
+        "definition_reenabled": "<actorLink>{actor}</actorLink> re-enabled <targetLink>{target}</targetLink>",
+        "definition_edited": "<actorLink>{actor}</actorLink> edited <targetLink>{target}</targetLink>",
+        "proposal_approved": "<actorLink>{actor}</actorLink> approved a suggested edit to <targetLink>{target}</targetLink>",
+        "proposal_rejected": "<actorLink>{actor}</actorLink> rejected a suggested edit to <targetLink>{target}</targetLink>",
+        "photo_removal_confirmed": "<actorLink>{actor}</actorLink> removed a photo on <targetLink>{target}</targetLink>",
+        "photo_auto_rejected": "<actorLink>{actor}</actorLink> auto-flagged a photo on <targetLink>{target}</targetLink>",
+        "photo_restored": "<actorLink>{actor}</actorLink> restored a photo on <targetLink>{target}</targetLink>",
+        "role_granted": "<actorLink>{actor}</actorLink> made <targetLink>{target}</targetLink> an admin",
+        "role_revoked": "<actorLink>{actor}</actorLink> removed the admin role from <targetLink>{target}</targetLink>",
+        "photo_manually_approved": "<actorLink>{actor}</actorLink> approved an unchecked photo on <targetLink>{target}</targetLink>",
+        "photo_manually_rejected": "<actorLink>{actor}</actorLink> rejected an unchecked photo on <targetLink>{target}</targetLink>",
+        "photo_hash_check_waived": "<actorLink>{actor}</actorLink> approved a photo without a hash check on <targetLink>{target}</targetLink>",
+        "image_quarantined": "<actorLink>{actor}</actorLink> quarantined a photo after a known-abuse hash match (<targetLink>{target}</targetLink>)",
+        "csam_escalation_updated": "<actorLink>{actor}</actorLink> updated a hash-match escalation (<targetLink>{target}</targetLink>)",
+        "report_dismissed": "<actorLink>{actor}</actorLink> dismissed a report about <targetLink>{target}</targetLink>",
+        "report_content_removed": "<actorLink>{actor}</actorLink> removed reported content from <targetLink>{target}</targetLink>",
+        "report_warned": "<actorLink>{actor}</actorLink> warned <targetLink>{target}</targetLink> after a report",
+        "message_image_auto_rejected": "<actorLink>{actor}</actorLink> auto-flagged a <targetLink>{target}</targetLink>",
+        "message_image_restored": "<actorLink>{actor}</actorLink> restored a <targetLink>{target}</targetLink> after a review request",
+        "photo_recheck_requested": "<actorLink>{actor}</actorLink> had an unchecked photo checked again (<targetLink>{target}</targetLink>)",
+        "category_created": "<actorLink>{actor}</actorLink> created the category <targetLink>{target}</targetLink>",
+        "category_updated": "<actorLink>{actor}</actorLink> edited the category <targetLink>{target}</targetLink>",
+        "category_deactivated": "<actorLink>{actor}</actorLink> deactivated the category <targetLink>{target}</targetLink>",
+        "category_reactivated": "<actorLink>{actor}</actorLink> reactivated the category <targetLink>{target}</targetLink>",
+        "categories_reordered": "<actorLink>{actor}</actorLink> reordered the catalog categories",
+        "contact_message_handled": "<actorLink>{actor}</actorLink> marked a contact message as handled",
+        "contact_message_reopened": "<actorLink>{actor}</actorLink> moved a contact message back to New"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
         "title": "Photo screening needs attention",
         "missingToken": "Screening is not configured on this deployment (provider {provider}; not set: {vars}). New photos stay visible to their uploader only until they can be checked.",
         "disabled": "Screening is turned off on this deployment (MODERATION_PROVIDER=none). New photos are published without a check.",
-        "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the one-shot migrations runbook."
+        "unscored": "{countLabel} {count, plural, one {photo} other {photos}} could not be checked yet and {count, plural, one {is} other {are}} visible to the uploader only. Once screening works, run the re-screen from the <link>one-shot migrations runbook</link>."
       },
       "uncheckedEmpty": "No photos are waiting for a check.",
       "unchecked": {
         "loading": "Loading unchecked photos…",
-        "reveal": "Hover or tap to reveal the photo",
         "status": {
           "pending": "Being checked",
           "unscored": "Could not be checked",
@@ -4909,12 +4989,60 @@
         "reasonLabel": "Reason",
         "approve": "Approve Photo",
         "reject": "Reject Photo",
-        "rejectArm": "Are you sure?",
+        "rejectConfirmTitle": "Reject this photo?",
         "recheck": "Check again",
         "waive": "Approve without hash check",
-        "waiveArm": "Yes, publish without hash check",
-        "hint": "Approving publishes the photo to other members. Rejecting hides it; a rejected copy photo moves to Flagged Images, a rejected completion photo is deleted, and rejected box art is removed from its puzzle and deleted. Check again runs the automated check once more on a photo it could not check, for example after the screening service is working again. A message photo is sent to its conversation when approved; rejecting removes it for both members and tells the sender. A circle icon becomes the circle's icon when approved; rejecting deletes it and the circle keeps its previous icon.",
-        "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after a second click to confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
+        "waiveConfirmTitle": "Publish without the hash check?",
+        "waiveConfirmBody": "This photo was never checked against known abuse material. If a later check still finds a match, the photo is quarantined.",
+        "effects": {
+          "copy": {
+            "approve": "Approving shows the photo on its copy to other members.",
+            "reject": "Rejecting hides it and moves it to Flagged images, where it can still be restored or removed for good."
+          },
+          "completion": {
+            "approve": "Approving shows the photo on its completion to other members.",
+            "reject": "Rejecting removes the photo from its completion and deletes it."
+          },
+          "boxArt": {
+            "approve": "Approving shows the box art on its puzzle.",
+            "reject": "Rejecting removes the box art from its puzzle and deletes it."
+          },
+          "message": {
+            "approve": "Approving shows the photo in its conversation.",
+            "reject": "Rejecting removes the photo for both members and tells the sender."
+          },
+          "circleIcon": {
+            "approve": "Approving makes it the circle's new icon.",
+            "reject": "Rejecting deletes the icon; the circle keeps its previous icon."
+          },
+          "recheck": "Check again runs the automated check once more, for example once the screening service works again."
+        },
+        "hashTimedOutHint": "The hash check against known abuse material could not be done within 7 days, so the automatic re-checks stopped. Approve without hash check publishes the photo without that check, after you confirm (a hash match found later still quarantines it); rejecting hides it like any rejection."
+      },
+      "appealsEmpty": "No photos are waiting for a review.",
+      "appeal": {
+        "loading": "Loading review requests…",
+        "intro": "The sender asked for a review after the automated check stopped this photo. You see only the photo, never the conversation.",
+        "imageAlt": "Message photo sent for review",
+        "rowSource": "Message photo",
+        "label": "Label",
+        "score": "Score",
+        "sentBy": "Sent by",
+        "uploadedAt": "Uploaded",
+        "requestedAt": "Review requested",
+        "reason": "Reason",
+        "noPreview": "No preview: this photo hasn't passed its hash check yet, or its file is gone. Until it shows here, it can't be restored.",
+        "effects": {
+          "restore": "Restoring approves the photo and delivers it to the conversation once its sender has sent it.",
+          "keepRemoved": "Keeping it removed deletes the photo for good; its sender sees that the decision stands."
+        },
+        "restore": "Restore Photo",
+        "keepRemoved": "Keep Removed",
+        "keepConfirmTitle": "Keep this photo removed?",
+        "keepConfirmBody": "The photo is deleted for good and its sender sees that the decision stands. This can't be undone.",
+        "keepConfirmAction": "Keep removed",
+        "notAwaiting": "This review request was already decided.",
+        "cannotRestore": "This photo can't be restored: it hasn't passed its hash check, or its file is gone."
       },
       "csam": {
         "loading": "Loading hash matches…",
@@ -4950,7 +5078,9 @@
         "noteLabel": "Report reference or note",
         "notePlaceholder": "e.g. Meldpunt reference",
         "markReported": "Mark reported",
-        "close": "Close",
+        "close": "Close escalation",
+        "closeConfirmTitle": "Close this escalation?",
+        "closeConfirmBody": "Closing is final: you can't reopen it or add notes afterwards. The quarantined file stays quarantined.",
         "updated": "Escalation updated.",
         "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
@@ -4985,6 +5115,8 @@
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
         "detailTitle": "Report",
         "detailDescription": "The evidence for this report and the decision form.",
+        "notFoundTitle": "This report no longer exists",
+        "notFound": "It may have been removed, or the link is out of date.",
         "reason": "Reason",
         "targetKind": "Target",
         "reporter": "Reporter",
@@ -5010,6 +5142,7 @@
           "content_removed": "Content removed"
         },
         "decidedBy": "Decided by {name}",
+        "nextOpenReport": "Next open report",
         "decisionLegend": "Decision",
         "decide": {
           "dismissed": "Dismiss",
@@ -5019,11 +5152,10 @@
         "removeUnavailable": "Content can only be removed for message, photo, comment and review reports.",
         "statementLabel": "Statement of reasons (sent to the member)",
         "statementHint": "{count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review.",
-        "templateNames": {
-          "removal": "Removal template",
-          "warning": "Warning template",
-          "noViolation": "No-violation template"
-        },
+        "insertTemplate": "Insert template",
+        "replaceTemplateTitle": "Replace your text?",
+        "replaceTemplateBody": "The template for “{decision}” will replace what you've written, and your own text will be lost.",
+        "replaceTemplateConfirm": "Replace text",
         "templateContent": {
           "user": "your conduct on JigSwap",
           "message": "your message",
@@ -5063,8 +5195,12 @@
     "contact": {
       "loading": "Loading messages…",
       "empty": "No contact messages yet.",
+      "emptyNew": "No new contact messages.",
+      "emptyHandled": "No handled contact messages yet.",
       "statusNew": "New",
       "statusHandled": "Handled",
+      "statusAll": "All",
+      "statusFilter": "Filter messages by status",
       "subject": {
         "swap": "Lending or swapping",
         "account": "My account",
@@ -5072,14 +5208,23 @@
         "other": "Something else"
       },
       "markHandled": "Mark as handled",
+      "findMember": "Find member",
+      "findMemberLabel": "Find member: {email}",
       "markHandledSuccess": "Message marked as handled",
-      "markHandledError": "Failed to update message"
+      "markHandledError": "Failed to update message",
+      "undo": "Undo",
+      "reopenSuccess": "Message moved back to New",
+      "reopenError": "Couldn't move the message back to New",
+      "loadMore": "Load more"
     },
     "docFeedback": {
       "loading": "Loading feedback…",
       "empty": "No feedback yet.",
       "helpful": "Helpful",
-      "notHelpful": "Not helpful"
+      "notHelpful": "Not helpful",
+      "helpfulCount": "{count} helpful",
+      "notHelpfulCount": "{count} not helpful ({share})",
+      "comments": "{count, plural, one {# comment} other {# comments}}"
     },
     "categories": {
       "loading": "Loading categories…",
@@ -5108,7 +5253,7 @@
       "list": {
         "statusInactive": "Inactive",
         "translationTooltip": "{language}: “{value}”",
-        "missingTranslationTooltip": "{language}: missing translation",
+        "missingTranslation": "{language} missing",
         "edit": "Edit",
         "deactivate": "Deactivate",
         "deactivateConfirmTitle": "Deactivate “{name}”?",
@@ -5118,8 +5263,12 @@
         "reactivate": "Reactivate",
         "reactivateSuccess": "Category reactivated successfully",
         "reactivateError": "Failed to reactivate category",
+        "undo": "Undo",
         "reorderError": "Failed to reorder categories",
-        "dragHandle": "Drag to reorder {name}"
+        "dragHandle": "Drag to reorder {name}",
+        "moreActions": "More actions for {name}",
+        "moveUp": "Move up",
+        "moveDown": "Move down"
       }
     },
     "puzzles": {
@@ -5128,6 +5277,14 @@
         "title": "No puzzle definitions yet",
         "description": "Submitted puzzle definitions will appear here with their moderation status."
       },
+      "emptyFiltered": {
+        "title": "No matching puzzle definitions",
+        "description": "Try another status or search term."
+      },
+      "searchPlaceholder": "Search by title, brand or artist…",
+      "searchLabel": "Search puzzle definitions",
+      "statusFilter": "Filter puzzle definitions by status",
+      "allStatuses": "All",
       "pieces": "{count} pieces",
       "submittedBy": "by {name}",
       "ownerCount": "{count, plural, one {# owner} other {# owners}}",
@@ -5138,16 +5295,17 @@
         "rejected": "Rejected",
         "disabled": "Disabled"
       },
+      "review": "Review",
+      "reviewLabel": "Review “{title}”",
       "disable": "Disable",
       "reenable": "Re-enable",
       "disableConfirmTitle": "Disable “{title}”?",
       "disableConfirmBody": "The puzzle disappears from browse and search and can no longer be added to collections. Existing copies are not affected. You can re-enable it at any time.",
-      "reenableConfirmTitle": "Re-enable “{title}”?",
-      "reenableConfirmBody": "The puzzle becomes publicly visible and acquirable again.",
       "disableSuccess": "“{title}” disabled",
       "disableError": "Could not disable the puzzle. Please try again.",
       "reenableSuccess": "“{title}” re-enabled",
       "reenableError": "Could not re-enable the puzzle. Please try again.",
+      "undo": "Undo",
       "loadMore": "Load more",
       "edit": {
         "button": "Edit",
@@ -5244,11 +5402,17 @@
     "queueEmpty": {
       "title": "All clear"
     },
+    "queryError": {
+      "title": "Something went wrong",
+      "description": "This couldn't be loaded. Try again, or reload the page if it keeps happening.",
+      "retry": "Try again"
+    },
     "users": {
       "loading": "Loading members…",
-      "searchPlaceholder": "Search by name or username…",
+      "searchPlaceholder": "Name, username or email…",
       "emptyTitle": "No members found",
       "empty": "No members match this search.",
+      "emptyEmail": "No member uses this email address. Searching by email needs the whole address.",
       "columns": {
         "member": "Member",
         "email": "Email",
@@ -5287,7 +5451,7 @@
           "copies": "Copies",
           "forTrade": "For trade",
           "forSale": "For sale",
-          "forLend": "For lend",
+          "forLend": "For lending",
           "collections": "Collections",
           "solves": "Solves"
         },
@@ -5296,10 +5460,12 @@
         "status": {
           "pending": "Pending",
           "approved": "Approved",
-          "rejected": "Rejected"
+          "rejected": "Rejected",
+          "disabled": "Disabled"
         },
         "auditPerformedTitle": "Moderation actions performed",
         "auditPerformedEmpty": "No moderation actions performed.",
+        "auditPerformedAll": "View all in the activity log",
         "auditReceivedTitle": "Audit trail",
         "auditReceivedEmpty": "No audit entries target this member."
       }

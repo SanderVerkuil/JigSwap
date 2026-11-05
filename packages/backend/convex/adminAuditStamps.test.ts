@@ -364,4 +364,60 @@ describe("contact/markContactMessageHandled", () => {
     ).rejects.toThrow("Forbidden");
     expect(await stamps(t)).toEqual([]);
   });
+
+  test("the Undo stamps once, without the sender's name or email; reopening a new message stamps nothing", async () => {
+    const t = convexTest(schema, modules);
+    const { admin } = await seedUsers(t);
+    const id = await seedMessage(t);
+    const reopen = () =>
+      asAdmin(t).mutation(
+        api.contact.reopenContactMessage.reopenContactMessage,
+        { id },
+      );
+
+    await reopen(); // still new: no-op
+    expect(await stamps(t)).toEqual([]);
+
+    await asAdmin(t).mutation(
+      api.contact.markContactMessageHandled.markContactMessageHandled,
+      { id },
+    );
+    await reopen();
+    await reopen(); // already new again: no-op
+
+    const all = await stamps(t);
+    expect(all).toEqual([
+      {
+        actorId: admin,
+        kind: "contact_message_handled",
+        targetLabel: "Contact message",
+        targetId: id,
+      },
+      {
+        actorId: admin,
+        kind: "contact_message_reopened",
+        targetLabel: "Contact message",
+        targetId: id,
+      },
+    ]);
+    expect(JSON.stringify(all)).not.toMatch(/Mara|mara@example\.com/);
+  });
+
+  test("a non-admin cannot reopen, and nothing is stamped", async () => {
+    const t = convexTest(schema, modules);
+    await seedUsers(t);
+    const id = await seedMessage(t);
+    await asAdmin(t).mutation(
+      api.contact.markContactMessageHandled.markContactMessageHandled,
+      { id },
+    );
+    const before = await stamps(t);
+    await expect(
+      asMember(t).mutation(
+        api.contact.reopenContactMessage.reopenContactMessage,
+        { id },
+      ),
+    ).rejects.toThrow("Forbidden");
+    expect(await stamps(t)).toEqual(before);
+  });
 });

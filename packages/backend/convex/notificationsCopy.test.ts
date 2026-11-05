@@ -26,6 +26,15 @@ describe("renderNotificationText", () => {
       }).message,
     ).toBe('Your suggested edit to "Sky" was declined: duplicate');
     expect(
+      renderNotificationText("puzzle_rejected", {
+        puzzleTitle: "Sky",
+        reason: "Not a jigsaw puzzle",
+      }).message,
+    ).toBe('Your submission "Sky" was rejected: Not a jigsaw puzzle');
+    expect(
+      renderNotificationText("puzzle_rejected", { puzzleTitle: "Sky" }).message,
+    ).toBe('Your submission "Sky" was rejected');
+    expect(
       renderNotificationText("report_decided", { decision: "dismissed" })
         .message,
     ).toBe("We reviewed your report and took no action");

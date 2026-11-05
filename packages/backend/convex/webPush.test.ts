@@ -106,9 +106,9 @@ describe("notificationUrl", () => {
     );
   });
 
-  test("routes an admin submission review to the moderation console", () => {
+  test("deep-links an admin submission review to it in the moderation console", () => {
     expect(notificationUrl("admin_definition_submitted", "pz-1")).toBe(
-      "/admin/moderation",
+      "/admin/moderation?tab=submissions&item=pz-1",
     );
     expect(notificationUrl("admin_definition_submitted")).toBe(
       "/admin/moderation",

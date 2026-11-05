@@ -78,8 +78,13 @@ const warnBob = async (t: T, bob: Id<"users">) => {
   return reportId;
 };
 
-const activity = (t: T) =>
-  asAdmin(t).query(api.admin.getModerationActivity.getModerationActivity, {});
+const activity = async (t: T) => {
+  const { page } = await asAdmin(t).query(
+    api.admin.getModerationActivity.getModerationActivity,
+    { paginationOpts: { numItems: 100, cursor: null } },
+  );
+  return page;
+};
 
 describe("member-targeted audit stamps", () => {
   test("a report decision stores the reported member's id and a neutral label", async () => {
@@ -136,6 +141,9 @@ describe("member-targeted audit stamps", () => {
     expect(before.every((row) => row.targetMemberDeleted === undefined)).toBe(
       true,
     );
+    // A role row links the member through targetMemberId (its targetId is no Clerk id any more).
+    expect(before[0]?.target).toEqual({ kind: "member", userId: bob });
+    expect(before[1]?.target).toMatchObject({ kind: "report" });
 
     const stored = await allActions(t);
     // The account purge never touches moderationActions: the users row going is what the read
@@ -149,6 +157,9 @@ describe("member-targeted audit stamps", () => {
       ["role_revoked", "Deleted member", true],
       ["report_warned", "Deleted member", true],
     ]);
+    // A member link with no member left is plain text; the report itself still has its page.
+    expect(after[0]?.target).toBeNull();
+    expect(after[1]?.target).toMatchObject({ kind: "report" });
     expect(await allActions(t)).toEqual(stored);
     expectNoPii(await allActions(t));
   });
@@ -167,10 +178,13 @@ describe("member-targeted audit stamps", () => {
     );
     const [row] = await activity(t);
     expect(row).toEqual({
+      actionId: expect.any(String),
       kind: "definition_approved",
+      actorId: ada,
       actorName: "Ada Admin",
       targetLabel: "Member",
       targetId: "def-1",
+      target: null,
       at: expect.any(Number),
     });
   });

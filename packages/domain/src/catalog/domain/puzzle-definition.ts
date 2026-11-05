@@ -162,11 +162,12 @@ export class PuzzleDefinition {
     return ok(undefined);
   }
 
-  // Moderator rejects a pending submission.
-  reject(now: Date): Result<void, CatalogError> {
+  // Moderator rejects a pending submission, optionally saying why (surfaced to the submitter).
+  // The reason travels on the event only; rejected is terminal, so nothing else reads it.
+  reject(reason: string | undefined, now: Date): Result<void, CatalogError> {
     const moved = this.transition("rejected", now);
     if (moved.isErr) return moved;
-    this.record(new PuzzleDefinitionRejected(this.id, now));
+    this.record(new PuzzleDefinitionRejected(this.id, reason, now));
     return ok(undefined);
   }
 

@@ -1,13 +1,14 @@
 "use client";
 
 // Admin catalog categories as a drag-sortable list in a single bordered
-// container. Order is committed through the reorder mutation with an
-// optimistic patch of the listAll subscription (the withOptimisticUpdate
-// pattern — see use-favorites), so rows land instantly and revert
-// automatically if the server rejects. Editing is delegated to the route via
+// container; each row's menu also moves it one step (Move up / Move down) for
+// pointer and keyboard users who cannot drag. Order is committed through the
+// reorder mutation with an optimistic patch of the listAll subscription (the
+// withOptimisticUpdate pattern — see use-favorites), so rows land instantly
+// and revert automatically if the server rejects. Editing is delegated to the route via
 // onEdit (the shared dialog); (de)activation — the domain's soft delete — is
-// handled here, with deactivation behind an AlertDialog confirm and
-// reactivation firing directly (safe direction).
+// handled here, with deactivation behind an AlertDialog confirm and a success
+// toast that offers Undo, and reactivation firing directly (safe direction).
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Flag } from "@/components/ui/flag";
 import {
   Tooltip,
@@ -41,7 +48,6 @@ import {
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -49,10 +55,19 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation } from "@tanstack/react-query";
-import { Edit, Eye, EyeOff, GripVertical } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Edit,
+  Eye,
+  EyeOff,
+  GripVertical,
+  MoreHorizontal,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "use-intl";
+import { moveCategoryOrder } from "./category-order";
 
 export interface Category {
   _id: string;
@@ -119,27 +134,32 @@ export function CategoryList({
     }),
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = categories.findIndex((c) => c._id === active.id);
-    const newIndex = categories.findIndex((c) => c._id === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    // Renumber the full new order; legacy rows without an aggregateId cannot be
-    // addressed by the domain, so they are skipped (they are not draggable).
-    const order = arrayMove(categories, oldIndex, newIndex)
-      .map((category, index) => ({ category, index }))
-      .filter(({ category }) => category.aggregateId !== undefined)
-      .map(({ category, index }) => ({
-        catalogCategoryId: category.aggregateId!,
-        sortOrder: index,
-      }));
+  // Drag-and-drop and the row menu's Move up / Move down share one
+  // renumbering (moveCategoryOrder) and the same optimistic mutation.
+  const move = async (from: number, to: number) => {
+    const order = moveCategoryOrder(categories, from, to);
+    if (!order) return;
     try {
       await reorderCategories.mutateAsync({ order });
     } catch {
       toast.error(t("reorderError"));
     }
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = categories.findIndex((c) => c._id === active.id);
+    const newIndex = categories.findIndex((c) => c._id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    void move(oldIndex, newIndex);
+  };
+
+  const reactivate = (category: Category) =>
+    setActive(category, true, {
+      success: t("reactivateSuccess"),
+      error: t("reactivateError"),
+    });
 
   const setActive = async (
     category: Category,
@@ -152,7 +172,16 @@ export function CategoryList({
         catalogCategoryId: category.aggregateId,
         isActive,
       });
-      toast.success(messages.success);
+      // Deactivating is reversible, so its toast offers Undo (reactivate).
+      if (isActive) toast.success(messages.success);
+      else {
+        toast.success(messages.success, {
+          action: {
+            label: t("undo"),
+            onClick: () => void reactivate(category),
+          },
+        });
+      }
     } catch {
       toast.error(messages.error);
     }
@@ -170,8 +199,8 @@ export function CategoryList({
           items={categories.map((category) => category._id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="rounded-xl border bg-card">
-            {categories.map((category) => (
+          <div className="@container rounded-xl border bg-card">
+            {categories.map((category, index) => (
               <CategoryRow
                 key={category._id}
                 category={category}
@@ -179,11 +208,14 @@ export function CategoryList({
                 busy={busyId !== null && busyId === category.aggregateId}
                 onEdit={() => onEdit(category)}
                 onDeactivate={() => setConfirming(category)}
-                onReactivate={() =>
-                  setActive(category, true, {
-                    success: t("reactivateSuccess"),
-                    error: t("reactivateError"),
-                  })
+                onReactivate={() => void reactivate(category)}
+                onMoveUp={
+                  index > 0 ? () => void move(index, index - 1) : undefined
+                }
+                onMoveDown={
+                  index < categories.length - 1
+                    ? () => void move(index, index + 1)
+                    : undefined
                 }
               />
             ))}
@@ -237,20 +269,33 @@ function CategoryRow({
   onEdit,
   onDeactivate,
   onReactivate,
+  onMoveUp,
+  onMoveDown,
 }: {
   category: Category;
   busy: boolean;
   onEdit: () => void;
   onDeactivate: () => void;
   onReactivate: () => void;
+  // Undefined at the ends of the list.
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }) {
   const t = useTranslations("admin.categories.list");
   const tField = useTranslations("forms.translatable-field");
   const uiLocale = useLocale() as Locale;
   // The row shows the current UI locale; the other locales collapse into small
-  // flags whose tooltips carry the translation (or expose the gap — visible
-  // gaps are the point of an admin QA surface).
+  // flags whose tooltips (on hover and on keyboard focus) carry the
+  // translation. A missing translation is a visible badge on every row —
+  // visible gaps are the point of an admin QA surface.
   const otherLocales = locales.filter((locale) => locale !== uiLocale);
+  const translationOf = (locale: Locale) => category.name[locale]?.trim();
+  // A legacy row may lack the UI locale's name; show another one rather than
+  // a blank row (the missing badge says which one is absent).
+  const name =
+    translationOf(uiLocale) ||
+    otherLocales.map(translationOf).find(Boolean) ||
+    "";
   // Legacy rows without an aggregateId cannot be reordered (or edited) via the domain API.
   const sortable = category.aggregateId !== undefined;
   const {
@@ -262,12 +307,15 @@ function CategoryRow({
     isDragging,
   } = useSortable({ id: category._id, disabled: !sortable });
 
+  // In a list narrower than @2xl (672px: phones, and tablets beside the
+  // sidebar) the actions wrap onto their own full-width line under the name,
+  // so a long (Dutch) name and the button labels never compete for one row.
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex items-center gap-3 border-b px-4 py-3 last:border-0",
+        "flex flex-wrap items-center gap-3 border-b px-4 py-3 last:border-0 @2xl:flex-nowrap",
         !category.isActive && "opacity-60",
         isDragging && "relative z-10 bg-accent shadow-sm",
       )}
@@ -277,8 +325,9 @@ function CategoryRow({
         {...attributes}
         {...listeners}
         disabled={!sortable}
-        aria-label={t("dragHandle", { name: category.name[uiLocale] })}
-        className="shrink-0 cursor-grab touch-none rounded text-muted-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40"
+        aria-label={t("dragHandle", { name })}
+        // 44px hit area on touch widths (36px from md) around the 16px glyph.
+        className="-mx-3 flex size-11 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-default disabled:opacity-40 md:-mx-2.5 md:size-9"
       >
         <GripVertical className="h-4 w-4" aria-hidden />
       </button>
@@ -289,36 +338,42 @@ function CategoryRow({
       />
       <div className="min-w-0 flex-1 space-y-0.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="font-semibold">{category.name[uiLocale]}</span>
+          <span className="min-w-0 font-semibold break-words">{name}</span>
           {otherLocales.map((locale) => {
-            const translation = category.name[locale]?.trim();
-            const tooltip = translation
-              ? t("translationTooltip", {
-                  language: tField(`locales.${locale}`),
-                  value: translation,
-                })
-              : t("missingTranslationTooltip", {
-                  language: tField(`locales.${locale}`),
-                });
+            const translation = translationOf(locale);
+            if (!translation) return null;
+            const tooltip = t("translationTooltip", {
+              language: tField(`locales.${locale}`),
+              value: translation,
+            });
+            // A focusable trigger, so the tooltip also opens on keyboard focus.
             return (
               <Tooltip key={locale}>
-                <TooltipTrigger asChild>
-                  <span
-                    aria-label={tooltip}
-                    className={cn(
-                      "inline-flex",
-                      translation
-                        ? "opacity-50 hover:opacity-100"
-                        : "opacity-25",
-                    )}
-                  >
-                    <Flag locale={locale} className="h-2.5 w-3.5" />
-                  </span>
+                <TooltipTrigger
+                  type="button"
+                  aria-label={tooltip}
+                  className="inline-flex rounded-sm opacity-50 outline-none hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <Flag locale={locale} className="h-2.5 w-3.5" />
                 </TooltipTrigger>
                 <TooltipContent>{tooltip}</TooltipContent>
               </Tooltip>
             );
           })}
+          {locales
+            .filter((locale) => !translationOf(locale))
+            .map((locale) => (
+              <Badge
+                key={locale}
+                variant="outline"
+                className="gap-1 border-jigsaw-warning/60"
+              >
+                <Flag locale={locale} className="h-2.5 w-3.5" />
+                {t("missingTranslation", {
+                  language: tField(`locales.${locale}`),
+                })}
+              </Badge>
+            ))}
           {!category.isActive && (
             <Badge variant="secondary">{t("statusInactive")}</Badge>
           )}
@@ -329,13 +384,13 @@ function CategoryRow({
           </p>
         )}
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex w-full shrink-0 items-center justify-end gap-2 @2xl:w-auto">
         <Button
           size="sm"
           variant="outline"
           onClick={onEdit}
           disabled={!sortable || busy}
-          className="flex items-center gap-1"
+          className="flex h-11 items-center gap-1 md:h-8"
         >
           <Edit className="h-3 w-3" />
           {t("edit")}
@@ -346,7 +401,7 @@ function CategoryRow({
             variant="outline"
             onClick={onDeactivate}
             disabled={!sortable || busy}
-            className="flex items-center gap-1 text-destructive hover:text-destructive"
+            className="flex h-11 items-center gap-1 text-destructive hover:text-destructive md:h-8"
           >
             <EyeOff className="h-3 w-3" />
             {t("deactivate")}
@@ -357,12 +412,36 @@ function CategoryRow({
             variant="outline"
             onClick={onReactivate}
             disabled={!sortable || busy}
-            className="flex items-center gap-1"
+            className="flex h-11 items-center gap-1 md:h-8"
           >
             <Eye className="h-3 w-3" />
             {t("reactivate")}
           </Button>
         )}
+        {/* A single-pointer and keyboard alternative to dragging the grip. */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={!sortable}
+              aria-label={t("moreActions", { name })}
+              className="size-11 md:size-8"
+            >
+              <MoreHorizontal aria-hidden className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled={!onMoveUp} onSelect={onMoveUp}>
+              <ArrowUp aria-hidden />
+              {t("moveUp")}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!onMoveDown} onSelect={onMoveDown}>
+              <ArrowDown aria-hidden />
+              {t("moveDown")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

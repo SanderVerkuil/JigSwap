@@ -178,4 +178,103 @@ describe("admin.listPuzzleDefinitions", () => {
     expect(second.isDone).toBe(true);
     expect(second.page[0].status).toBe("approved");
   });
+
+  test("a status narrows the list to that status, newest first, and pages", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    await seedPuzzles(t, alice);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      for (const [i, title] of ["Older pending", "Newest pending"].entries()) {
+        await ctx.db.insert("puzzles", {
+          aggregateId: `agg-extra-${i}`,
+          title,
+          pieceCount: 1000,
+          status: "pending",
+          submittedBy: alice,
+          createdAt: now + 10 + i,
+          updatedAt: now + 10 + i,
+        });
+      }
+    });
+
+    const filter = (paginationOpts: {
+      numItems: number;
+      cursor: string | null;
+    }) =>
+      asAdmin(t).query(api.admin.listPuzzleDefinitions.listPuzzleDefinitions, {
+        paginationOpts,
+        status: "pending",
+      });
+    const first = await filter({ numItems: 2, cursor: null });
+    expect(first.page.map((row) => row.title)).toEqual([
+      "Newest pending",
+      "Older pending",
+    ]);
+    expect(first.isDone).toBe(false);
+    const second = await filter({ numItems: 2, cursor: first.continueCursor });
+    expect(second.page.map((row) => row.title)).toEqual(["Puzzle pending"]);
+    expect(second.isDone).toBe(true);
+
+    const disabled = await asAdmin(t).query(
+      api.admin.listPuzzleDefinitions.listPuzzleDefinitions,
+      { paginationOpts: { numItems: 10, cursor: null }, status: "disabled" },
+    );
+    expect(disabled.page.map((row) => row.status)).toEqual(["disabled"]);
+  });
+
+  test("a search term matches any status through the catalogue search index, and combines with a status", async () => {
+    const t = convexTest(schema, modules);
+    const alice = await seedMember(t);
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      const puzzle = (
+        title: string,
+        status: "pending" | "approved" | "rejected" | "disabled",
+      ) =>
+        ctx.db.insert("puzzles", {
+          aggregateId: `agg-${title}`,
+          title,
+          pieceCount: 1000,
+          status,
+          searchableText: title.toLowerCase(),
+          submittedBy: alice,
+          createdAt: now,
+          updatedAt: now,
+        });
+      await puzzle("Starry Night", "approved");
+      await puzzle("Night Watch", "pending");
+      await puzzle("Night Market", "rejected");
+      await puzzle("Mountain Vista", "approved");
+    });
+
+    const search = (args: { search: string; status?: "pending" }) =>
+      asAdmin(t).query(api.admin.listPuzzleDefinitions.listPuzzleDefinitions, {
+        paginationOpts: { numItems: 10, cursor: null },
+        ...args,
+      });
+    const all = await search({ search: "  NIGHT " });
+    expect(all.page.map((row) => row.title).sort()).toEqual([
+      "Night Market",
+      "Night Watch",
+      "Starry Night",
+    ]);
+    const pending = await search({ search: "night", status: "pending" });
+    expect(pending.page.map((row) => row.title)).toEqual(["Night Watch"]);
+    // A blank term is no search.
+    const blank = await search({ search: "   " });
+    expect(blank.page).toHaveLength(4);
+  });
+
+  test("the filters are admin-gated too", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    await expect(
+      asAlice(t).query(api.admin.listPuzzleDefinitions.listPuzzleDefinitions, {
+        paginationOpts: { numItems: 10, cursor: null },
+        status: "pending",
+        search: "night",
+      }),
+    ).rejects.toThrow(/Forbidden/);
+  });
 });

@@ -51,6 +51,13 @@ export function AuditList({
                   target: row.targetMemberDeleted
                     ? t("activity.deletedMemberTarget")
                     : row.targetLabel,
+                  // The Activity Log links these; this compact list only bolds them.
+                  actorLink: (chunks) => (
+                    <strong className="font-semibold">{chunks}</strong>
+                  ),
+                  targetLink: (chunks) => (
+                    <strong className="font-semibold">{chunks}</strong>
+                  ),
                   strong: (chunks) => (
                     <strong className="font-semibold">{chunks}</strong>
                   ),

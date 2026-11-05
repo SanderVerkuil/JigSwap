@@ -23,13 +23,17 @@ const urlUnlessPreserved = async (
 // member's other reports (count plus status/decision). Admin-only, gated like listRejectedPhotos.
 // No URL is ever issued for quarantined (CSAM-matched) bytes or for bytes whose hash check has not
 // passed: not for the photo, and not for a removed message photo's evidence copy (SEC-04).
+// The id comes straight from the console's URL, so it is a plain string normalised here: a mangled
+// link reads as NotFound, the same as a report that is gone, not as a failed argument check the
+// client cannot tell from an outage.
 export const getReport = query({
-  args: { reportId: v.id("reports") },
-  handler: async (ctx, { reportId }) => {
+  args: { reportId: v.string() },
+  handler: async (ctx, args) => {
     await requireMember(ctx);
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
-    const report = await ctx.db.get(reportId);
+    const reportId = ctx.db.normalizeId("reports", args.reportId);
+    const report = reportId ? await ctx.db.get(reportId) : null;
     if (!report) {
       throw new ConvexError({ code: "NotFound", message: "Not found" });
     }

@@ -4,7 +4,9 @@
 // Metadata only. The backend never returns an image, thumbnail or blurhash for these, and this
 // pane must never try to show one. An operator note on top says what to do (report to Meldpunt
 // Offlimits or the police, never open or download), the photos waiting on or timed out of a hash
-// check, then one row per escalation with "Mark reported" (plus an optional reference) or "Close".
+// check, then one row per escalation with "Mark reported" (plus an optional reference) or, once
+// reported, "Close escalation". Closing is final (no reopen, no more notes), so it asks first in an
+// AlertDialog (ConfirmAction).
 // Whether hash matching runs at all is the page-level banner's job (HashCheckHealth), not this tab's.
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +18,7 @@ import type { FunctionReturnType } from "convex/server";
 import { ShieldAlert, TriangleAlert } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslations } from "use-intl";
+import { ConfirmAction } from "./confirm-action";
 
 export type CsamEscalations = FunctionReturnType<
   typeof gateway.admin.listCsamEscalations
@@ -245,14 +248,17 @@ function EscalationRow({
               >
                 {t("addNote")}
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => onMark(escalation.id, "closed", note)}
-              >
-                {t("close")}
-              </Button>
+              <ConfirmAction
+                trigger={
+                  <Button size="sm" variant="outline" disabled={busy}>
+                    {t("close")}
+                  </Button>
+                }
+                title={t("closeConfirmTitle")}
+                description={t("closeConfirmBody")}
+                confirmLabel={t("close")}
+                onConfirm={() => onMark(escalation.id, "closed", note)}
+              />
             </>
           )}
         </div>

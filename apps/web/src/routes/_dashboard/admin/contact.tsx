@@ -1,111 +1,45 @@
-import { QueueEmpty } from "@/components/admin/queue-empty";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PageLoading } from "@/components/ui/loading";
-import type { Id } from "@/gateway";
+import { ContactInbox } from "@/components/admin/contact/contact-inbox";
+import { validateContactSearch } from "@/components/admin/contact/contact-search";
 import { gateway } from "@/gateway";
-import { mailtoHref } from "@/lib/mailto";
 import { pageTitle } from "@/lib/page-title";
-import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Check } from "lucide-react";
-import { toast } from "sonner";
-import { useFormatter, useTranslations } from "use-intl";
+import { convexQuery } from "@convex-dev/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_dashboard/admin/contact")({
+  // `?status=` is the inbox filter (absent = New), so a reload or Back keeps it.
+  validateSearch: validateContactSearch,
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "adminContact") }],
   }),
   component: ContactTriagePage,
 });
 
-// Admin triage inbox for the public contact form: every message newest first,
-// with a single "mark as handled" transition (new -> handled). The listing and
-// the transition are admin-gated server-side in the Convex functions.
+// Admin triage inbox for the public contact form (ContactInbox): New / Handled / All, paginated,
+// with a single "mark as handled" transition (new -> handled). The listing and the transition are
+// admin-gated server-side in the Convex functions.
 function ContactTriagePage() {
-  const t = useTranslations("admin.contact");
-  const tAdmin = useTranslations("admin");
-  const format = useFormatter();
-  const { data: messages } = useQuery(
-    convexQuery(gateway.adminTriage.contactMessages, {}),
+  const { status } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  // The same bounded count the sidebar badge shows (TanStack Query shares the subscription).
+  const { data: pendingCounts } = useQuery(
+    convexQuery(gateway.admin.pendingCounts, {}),
   );
-  const markHandled = useMutation({
-    mutationFn: useConvexMutation(gateway.adminTriage.markContactHandled),
-  });
-  // Scope the pending state to the message being handled so only that row's
-  // button disables, exactly as the old per-id busy flag did.
-  const busyId = markHandled.isPending
-    ? (markHandled.variables?.id ?? null)
-    : null;
-
-  const handle = async (id: Id<"contactMessages">) => {
-    try {
-      await markHandled.mutateAsync({ id });
-      toast.success(t("markHandledSuccess"));
-    } catch {
-      toast.error(t("markHandledError"));
-    }
-  };
-
-  if (messages === undefined) {
-    return <PageLoading message={t("loading")} />;
-  }
-
-  if (messages.length === 0) {
-    return <QueueEmpty title={tAdmin("queueEmpty.title")} label={t("empty")} />;
-  }
 
   return (
-    <div className="rounded-xl border bg-card">
-      {messages.map((message) => (
-        <div
-          key={message._id}
-          className="flex flex-col gap-3 border-b px-4 py-3 last:border-0"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold">{message.name}</span>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  {t(`subject.${message.subject}`)}
-                </Badge>
-                {message.status === "new" ? (
-                  <Badge variant="default">{t("statusNew")}</Badge>
-                ) : (
-                  <Badge variant="secondary">{t("statusHandled")}</Badge>
-                )}
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {/* The address is typed by an anonymous visitor: encoded, it can never add
-                  cc/bcc/body fields to the reply draft. */}
-              <a href={mailtoHref(message.email)} className="underline">
-                {message.email}
-              </a>
-              {" • "}
-              {format.dateTime(new Date(message.createdAt), {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-              {message.locale && ` • ${message.locale}`}
-            </p>
-          </div>
-          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
-          {message.status === "new" && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handle(message._id)}
-              disabled={busyId === message._id}
-              className="flex items-center gap-1 self-start"
-            >
-              <Check className="h-3 w-3" />
-              {t("markHandled")}
-            </Button>
-          )}
-        </div>
-      ))}
-    </div>
+    <ContactInbox
+      status={status ?? "new"}
+      onStatusChange={(next) =>
+        void navigate({
+          search: (prev) => ({
+            ...prev,
+            status: next === "new" ? undefined : next,
+          }),
+          replace: true,
+          resetScroll: false,
+        })
+      }
+      newCount={pendingCounts?.contact}
+    />
   );
 }

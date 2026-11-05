@@ -4,7 +4,11 @@ import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { MODERATION_ACTIVITY_KINDS } from "./activity-log";
 
-type ActivityMessageKey = keyof typeof en.admin.moderation.activity;
+// `kinds` is the nested group of filter labels, not a sentence.
+type ActivityMessageKey = Exclude<
+  keyof typeof en.admin.moderation.activity,
+  "kinds"
+>;
 
 vi.mock("@/gateway", () => ({ gateway: {} }));
 
@@ -29,10 +33,17 @@ describe("moderation activity messages", () => {
         const sentence = t.markup(kind as ActivityMessageKey, {
           actor: "Ada",
           target: "Mountain Vista",
+          actorLink: (chunks) => chunks,
+          targetLink: (chunks) => chunks,
           strong: (chunks) => chunks,
         });
         expect(sentence, kind).toContain("Ada");
         expect(sentence, kind).not.toContain("admin.moderation");
+        // The Activity Log links the actor, so a sentence that only bolds them loses the link.
+        expect(
+          messages.admin.moderation.activity[kind as ActivityMessageKey],
+        ).toContain("<actorLink>{actor}</actorLink>");
+        expect(messages.admin.moderation.activity.kinds).toHaveProperty(kind);
       }
       expect(errors).toEqual([]);
     },
@@ -48,6 +59,7 @@ describe("moderation activity messages", () => {
         "category_reactivated",
         "categories_reordered",
         "contact_message_handled",
+        "contact_message_reopened",
       ]),
     );
   });

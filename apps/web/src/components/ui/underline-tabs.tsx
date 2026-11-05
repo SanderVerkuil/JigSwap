@@ -5,6 +5,7 @@
 // Used by the moderation console and the People page so both underline tab bars
 // stay visually identical — extracted here rather than duplicated.
 
+import { formatQueueCount } from "@/lib/queue-count";
 import { cn } from "@/lib/utils";
 import type { ComponentProps } from "react";
 
@@ -18,11 +19,18 @@ export const UNDERLINE_TABS_LIST_CLASS =
 export const TAB_TRIGGER_CLASS =
   "group flex-none gap-2 focus-visible:ring-inset rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-transparent";
 
-export function TabCount({ count }: { count: number | undefined }) {
+// `capped`: the count stopped at a server-side cap, so it reads "50+" (formatQueueCount).
+export function TabCount({
+  count,
+  capped = false,
+}: {
+  count: number | undefined;
+  capped?: boolean;
+}) {
   if (count === undefined) return null;
   return (
     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-bold text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground">
-      {count}
+      {formatQueueCount(count, capped)}
     </span>
   );
 }

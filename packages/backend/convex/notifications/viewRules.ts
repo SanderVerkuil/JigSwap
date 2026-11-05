@@ -286,8 +286,11 @@ export const legacyNotificationHref = (
       return relatedId
         ? `/admin/puzzles/proposals/${relatedId}`
         : "/admin/puzzles/proposals";
+    // The moderation console selects a submission by its puzzle `_id` (the subscriber's relatedId).
     case "admin_definition_submitted":
-      return "/admin/moderation";
+      return relatedId
+        ? `/admin/moderation?tab=submissions&item=${relatedId}`
+        : "/admin/moderation";
     case "new_follower":
     case "follow_request_received":
     case "follow_request_approved":
@@ -362,6 +365,11 @@ export const notificationHref = (input: HrefInput): string | null => {
       return subject?.kind === "changeProposal"
         ? `/admin/puzzles/proposals/${seg(subject.proposalId)}`
         : "/admin/puzzles/proposals";
+    // Opens the moderation console on that submission (the console's `item` is the puzzle `_id`).
+    case "admin_definition_submitted":
+      return subject?.kind === "puzzle" && input.subjectAvailable
+        ? `/admin/moderation?tab=submissions&item=${seg(subject.puzzleId)}`
+        : "/admin/moderation";
     case "whats_new":
       return subject?.kind === "whatsNew"
         ? `/whats-new#entry-${seg(subject.entryId)}`

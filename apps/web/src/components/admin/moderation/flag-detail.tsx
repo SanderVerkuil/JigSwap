@@ -1,31 +1,37 @@
 "use client";
 
 // Detail pane for a flagged (auto-rejected) copy photo: the image behind a
-// blur-until-reveal guard with a severity badge on top, a metadata grid, and
+// click-to-reveal blur guard (RevealGuard) with a severity badge on top, a metadata grid, and
 // the two review decisions. Mutations live in the route; this pane only
-// renders and calls back. The destructive action uses the app's two-step
-// inline confirm (see photo-lightbox): first click arms, second fires, and an
-// armed button disarms itself after 3s. A photo rejected after its hash check
-// timed out (`hashTimedOut`) says that restoring it does not publish it.
+// renders and calls back. Confirm removal deletes the photo and notifies the
+// uploader, so it asks first in an AlertDialog that says exactly that
+// (ConfirmAction); Restore is not destructive and fires directly. A photo
+// rejected after its hash check timed out (`hashTimedOut`) says that
+// restoring it does not publish it.
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gateway } from "@/gateway";
 import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
-import { EyeOff, ImageOff, Trash2, Undo2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ImageOff, Trash2, Undo2 } from "lucide-react";
 import { useFormatter, useTranslations } from "use-intl";
+import { ConfirmAction } from "./confirm-action";
+import { RevealGuard } from "./reveal-guard";
 import { severityBand, type SeverityBand } from "./severity";
 
 export type FlaggedPhoto = FunctionReturnType<
   typeof gateway.admin.listRejectedPhotos
 >[number];
 
-// Semantic tones per severity band: the badge over the image here, and the
-// little dot in the queue rows (used by the route's renderRow).
-const SEVERITY_BADGE: Record<SeverityBand, string> = {
-  high: "border-transparent bg-destructive text-white",
-  medium: "border-transparent bg-jigsaw-warning text-white",
+// Semantic tones per severity band: the badge over the image here (and on a
+// review request, appeal-detail.tsx), and the little dot in the queue rows
+// (used by the route's renderRow). The badge
+// colours are fixed rather than theme tokens so the small text keeps AA
+// contrast in both themes: white on the dark-mode destructive red and on
+// amber fails it.
+export const SEVERITY_BADGE: Record<SeverityBand, string> = {
+  high: "border-transparent bg-red-700 text-white",
+  medium: "border-transparent bg-jigsaw-warning text-amber-950",
   low: "border-transparent bg-muted text-muted-foreground",
 };
 
@@ -50,25 +56,8 @@ export function FlagDetail({
   const format = useFormatter();
   const band = severityBand(photo.score);
 
-  // Blur guard: hover lifts it on pointer devices; a tap toggles it on touch.
   // NOTE: the caller keys this pane by imageId, so a different photo never
-  // inherits the previous one's reveal or armed confirm.
-  const [revealed, setRevealed] = useState(false);
-  // Two-step destructive confirm; the timer disarms an unconfirmed click.
-  const [armed, setArmed] = useState(false);
-  const disarmTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(disarmTimer.current), []);
-
-  const confirmClick = () => {
-    clearTimeout(disarmTimer.current);
-    if (armed) {
-      setArmed(false);
-      onConfirmRemoval();
-      return;
-    }
-    setArmed(true);
-    disarmTimer.current = setTimeout(() => setArmed(false), 3000);
-  };
+  // inherits the previous one's reveal.
 
   const meta: [string, string][] = [
     [t("onPuzzle"), photo.puzzleTitle],
@@ -87,31 +76,21 @@ export function FlagDetail({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="group relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-muted">
         {photo.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photo.url}
-            alt={photo.puzzleTitle}
-            className="size-full object-cover"
-          />
+          <RevealGuard>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.url}
+              alt={photo.puzzleTitle}
+              className="size-full object-cover"
+            />
+          </RevealGuard>
         ) : (
           <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
             <ImageOff className="size-8" aria-hidden />
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => setRevealed((current) => !current)}
-          aria-pressed={revealed}
-          className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/30 text-white backdrop-blur-xl transition-opacity group-hover:opacity-0",
-            revealed && "opacity-0",
-          )}
-        >
-          <EyeOff className="size-5" aria-hidden />
-          <span className="text-xs font-semibold">{t("reveal")}</span>
-        </button>
         <Badge className={cn("absolute top-3 left-3", SEVERITY_BADGE[band])}>
           {t(`severity.${band}`)}
         </Badge>
@@ -133,10 +112,19 @@ export function FlagDetail({
       )}
 
       <div className="flex flex-wrap items-center gap-2.5 pt-1">
-        <Button variant="destructive" onClick={confirmClick} disabled={busy}>
-          <Trash2 aria-hidden />
-          {armed ? t("confirmArm") : t("confirm")}
-        </Button>
+        <ConfirmAction
+          trigger={
+            <Button variant="destructive" disabled={busy}>
+              <Trash2 aria-hidden />
+              {t("confirm")}
+            </Button>
+          }
+          title={t("confirmTitle")}
+          description={t("confirmBody")}
+          confirmLabel={t("confirmAction")}
+          destructive
+          onConfirm={onConfirmRemoval}
+        />
         <Button variant="outline" onClick={onRestore} disabled={busy}>
           <Undo2 aria-hidden />
           {t("restore")}

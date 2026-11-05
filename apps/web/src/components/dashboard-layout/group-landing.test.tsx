@@ -3,6 +3,8 @@
 // instead of tall tiles, and the Community hub shows the live counts on Messages (unread) and
 // Exchanges (requests waiting for the member's answer): a visual pill below sm, the full count in
 // the row's name at every size. From sm up the tile grid is unchanged.
+// UX-146: the admin hub's tiles carry the work waiting in their queues (`counts`), a pill at every
+// size, announced with the title.
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -39,14 +41,18 @@ afterEach(() => {
   mocks.pendingRequests = 0;
 });
 
-function renderLanding(group: ShellGroupKey, locale: "en" | "nl" = "en") {
+function renderLanding(
+  group: ShellGroupKey,
+  locale: "en" | "nl" = "en",
+  counts?: Parameters<typeof GroupLanding>[0]["counts"],
+) {
   return render(
     <IntlProvider
       locale={locale}
       messages={locale === "nl" ? nl : en}
       timeZone="Europe/Amsterdam"
     >
-      <GroupLanding group={group} />
+      <GroupLanding group={group} counts={counts} />
     </IntlProvider>,
   );
 }
@@ -110,5 +116,58 @@ describe("GroupLanding", () => {
     expect(linkTo("/trades").textContent).toContain(
       "1 verzoek wacht op je antwoord",
     );
+  });
+});
+
+describe("GroupLanding counts", () => {
+  it("shows the work waiting behind a tile as a pill, announced with its title (en/nl)", () => {
+    renderLanding("admin", "en", {
+      adminModeration: { count: 50, capped: true },
+      adminContact: { count: 3, capped: false },
+    });
+    const moderation = linkTo("/admin/moderation");
+    expect(pillOf(moderation)?.textContent).toBe("50+");
+    expect(moderation.querySelector(".sr-only")?.textContent).toBe(
+      ", 50 or more waiting",
+    );
+    const contact = linkTo("/admin/contact");
+    expect(pillOf(contact)?.textContent).toBe("3");
+    expect(contact.querySelector(".sr-only")?.textContent).toBe(", 3 waiting");
+    // Unlike the phone-only live counts, this pill shows at every size: in the row below sm,
+    // beside the icon chip from sm.
+    expect(classesOf(pillOf(contact))).not.toContain("sm:hidden");
+    expect(classesOf(pillOf(contact)?.parentElement)).not.toContain(
+      "sm:hidden",
+    );
+    expect(classesOf(pillOf(contact))).toContain("sm:absolute");
+    expect(classesOf(contact)).toContain("relative");
+    cleanup();
+
+    renderLanding("admin", "nl", {
+      adminContact: { count: 3, capped: false },
+    });
+    expect(
+      linkTo("/admin/contact").querySelector(".sr-only")?.textContent,
+    ).toBe(", 3 te behandelen");
+  });
+
+  it("shows nothing for an empty queue, an unknown count or a tile without a queue", () => {
+    renderLanding("admin", "en", {
+      adminPuzzles: { count: 0, capped: false },
+    });
+    for (const href of [
+      "/admin/puzzles",
+      "/admin/moderation",
+      "/admin/users",
+    ]) {
+      expect(pillOf(linkTo(href))).toBeNull();
+      expect(linkTo(href).querySelector(".sr-only")).toBeNull();
+    }
+  });
+
+  it("a group rendered without counts is unchanged", () => {
+    renderLanding("library");
+    expect(document.querySelectorAll("a").length).toBeGreaterThan(0);
+    expect(document.querySelector(".sr-only")).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
+import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { FormContextPanel } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
@@ -71,15 +72,30 @@ function AdminEditPage() {
   const t = useTranslations("admin.puzzles");
 
   // puzzleById discloses non-approved definitions to admins, so this works for any status.
-  const { data: view } = useQuery(
+  const viewQuery = useQuery(
     convexQuery(gateway.catalog.puzzleById, {
       puzzleId: puzzleId as Id<"puzzles">,
     }),
   );
-  const { data: categories } = useQuery(
+  const categoriesQuery = useQuery(
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
+  const view = viewQuery.data;
+  const categories = categoriesQuery.data;
 
+  // A failed read leaves its data undefined too: show the retryable error
+  // rather than the loading state forever.
+  if (viewQuery.isError || categoriesQuery.isError) {
+    return (
+      <AdminQueryError
+        onRetry={() => {
+          void viewQuery.refetch();
+          void categoriesQuery.refetch();
+        }}
+        retrying={viewQuery.isFetching || categoriesQuery.isFetching}
+      />
+    );
+  }
   if (view === undefined || categories === undefined) {
     return <PageLoading message={t("edit.title")} />;
   }

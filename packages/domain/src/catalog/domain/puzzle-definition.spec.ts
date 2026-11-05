@@ -6,7 +6,7 @@ import {
   toSubmitterId,
 } from "../../shared-kernel";
 import { ALLOWED_APPROVAL_TRANSITIONS } from "./approval";
-import { PuzzleDefinitionSubmitted } from "./events";
+import { PuzzleDefinitionRejected, PuzzleDefinitionSubmitted } from "./events";
 import {
   PuzzleDefinition,
   SubmitPuzzleDefinitionProps,
@@ -169,10 +169,24 @@ describe("approval lifecycle", () => {
   it("rejects a pending definition, recording PuzzleDefinitionRejected", () => {
     const def = submit();
     def.pullEvents();
-    const r = def.reject(LATER);
+    const r = def.reject(undefined, LATER);
     expect(r.isOk).toBe(true);
     expect(def.status).toBe("rejected");
-    expect(names(def.pullEvents())).toEqual(["PuzzleDefinitionRejected"]);
+    const events = def.pullEvents();
+    expect(names(events)).toEqual(["PuzzleDefinitionRejected"]);
+    expect((events[0] as PuzzleDefinitionRejected).reason).toBeUndefined();
+    expect(events[0].occurredAt).toBe(LATER);
+  });
+
+  it("carries the moderator's reason on PuzzleDefinitionRejected", () => {
+    const def = submit();
+    def.pullEvents();
+    def.reject("Duplicate of “Starry Night”", LATER);
+    const [event] = def.pullEvents();
+    expect(event).toBeInstanceOf(PuzzleDefinitionRejected);
+    expect((event as PuzzleDefinitionRejected).reason).toBe(
+      "Duplicate of “Starry Night”",
+    );
   });
 
   it("cannot approve an already-approved definition (illegal transition)", () => {
@@ -186,10 +200,10 @@ describe("approval lifecycle", () => {
   it("cannot reject an approved definition, nor approve a rejected one", () => {
     const approved = submit();
     approved.approve(NOW);
-    expect(approved.reject(LATER).isErr).toBe(true);
+    expect(approved.reject(undefined, LATER).isErr).toBe(true);
 
     const rejected = submit();
-    rejected.reject(NOW);
+    rejected.reject(undefined, NOW);
     expect(rejected.approve(LATER).isErr).toBe(true);
   });
 
@@ -233,7 +247,7 @@ describe("disable / re-enable lifecycle", () => {
     if (r1.isErr) expect(r1.error.code).toBe("IllegalApprovalTransition");
 
     const rejected = submit();
-    rejected.reject(NOW);
+    rejected.reject(undefined, NOW);
     const r2 = rejected.disable(LATER);
     expect(r2.isErr).toBe(true);
     if (r2.isErr) expect(r2.error.code).toBe("IllegalApprovalTransition");

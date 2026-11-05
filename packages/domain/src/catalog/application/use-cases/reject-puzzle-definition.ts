@@ -4,11 +4,9 @@ import {
   runDefinitionAction,
 } from "./run-definition-action";
 
-export const makeRejectPuzzleDefinition = (
-  deps: DefinitionActionDeps,
-): RejectPuzzleDefinition => {
-  const run = runDefinitionAction(deps, (definition, now) =>
-    definition.reject(now),
-  );
-  return (cmd) => run(cmd.puzzleDefinitionId);
-};
+export const makeRejectPuzzleDefinition =
+  (deps: DefinitionActionDeps): RejectPuzzleDefinition =>
+  (cmd) =>
+    runDefinitionAction(deps, (definition, now) =>
+      definition.reject(cmd.reason, now),
+    )(cmd.puzzleDefinitionId);

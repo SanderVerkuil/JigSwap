@@ -51,7 +51,7 @@ const PROPOSAL_STATUS_VARIANT: Record<
 // admin-relevant, from the single admin/getPuzzleDefinitionDetail read model
 // (gated server-side: requireMember + JWT isAdmin). Carries the same
 // reversible disable/re-enable lifecycle action as the list console via the
-// shared PuzzleLifecycleAction (button + AlertDialog confirm).
+// shared PuzzleLifecycleAction (disable confirms; both toast with Undo).
 function AdminPuzzleDetailPage() {
   const { puzzleId } = Route.useParams();
   const t = useTranslations("admin.puzzles");
