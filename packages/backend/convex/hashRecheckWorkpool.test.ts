@@ -80,6 +80,12 @@ beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(capture);
   vi.stubEnv("AXIOM_API_KEY", "");
+  // A configured hash service (the port itself is the fake above): without one, a re-check never
+  // asks the port (SEC-03; hashCheckSkipped.test.ts).
+  vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "offlimits");
+  vi.stubEnv("OFFLIMITS_HCS_BASE_URL", "https://hcs.example.test");
+  vi.stubEnv("OFFLIMITS_HCS_USERNAME", "user");
+  vi.stubEnv("OFFLIMITS_HCS_PASSWORD", "secret");
 });
 afterEach(() => {
   vi.useRealTimers();

@@ -22,10 +22,12 @@ import {
   checkAllHashes,
   makeCsamHashCheckPortFromEnv,
   readCsamHashCheckConfig,
+  skipsHashCheck,
   type ImageHashes,
 } from "./csamHashCheck";
 import {
   checkImageBytes,
+  checkImageSize,
   INVALID_IMAGE_LABEL,
   type ImageFormat,
   type ImageGuardFailure,
@@ -37,7 +39,11 @@ import {
   moderationRetryError,
   type ModerationTable,
 } from "./moderationPool";
-import { decodeUpright, hasTransparency } from "./normaliseImage";
+import {
+  decodeUpright,
+  fitReencodeEdge,
+  hasTransparency,
+} from "./normaliseImage";
 import { findMetadata, stripImageMetadata } from "./stripMetadata";
 
 // The shared image-moderation pipeline behind every table of uploaded photos (copy photos,
@@ -50,16 +56,22 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //   1. Load the row (skip when gone or no longer pending: first verdict wins, re-runs are no-ops),
 //      then count the attempt on the row (moderationPool.beginAttempt: `moderationAttempts`).
 //   2. Download the blob (an upload over HASH_MAX_BYTES is refused unread) and run the input
-//      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count, all
-//      before any decode. Then (on any attempt until the row is marked `reencodedAt`) strip the
+//      guards (lib/imageModeration/guards): size, magic bytes, the header's pixel count (PNG:
+//      one IHDR, not interlaced; JPEG: one frame header, whose blocks fit the decoder's
+//      budget; PNG and WebP: one still image, not an animation), all before any decode; the
+//      decode must match the header.
+//      Then (on any attempt until the row is marked `reencodedAt`) strip the
 //      metadata at byte level (lib/imageModeration/stripMetadata: Exif incl. GPS, XMP, IPTC,
 //      comments, PNG text chunks, WebP EXIF/XMP, Orientation included) and re-encode that in
-//      memory via jimp, turned upright for the Orientation the Exif held — PNG when it has
-//      transparency, else JPEG — plus the blurhash. A malformed block structure or a decode
-//      failure is refused as "decode_failed". An upright WebP (no Orientation, or 1) is not
-//      re-encoded: its stripped bytes are stored (as "image/webp"); one that needs turning is
-//      decoded (WASM) and re-encoded like the rest. Whatever is stored must show no metadata
-//      left (findMetadata), or it is refused too.
+//      memory via jimp, turned upright for the Orientation the Exif held and scaled down to
+//      1600 px on its long edge (normaliseImage.MAX_REENCODE_EDGE, as the web client sends
+//      photos) — PNG when it has transparency, else JPEG — plus the blurhash. Every format is
+//      re-encoded, WebP included (decoded by the WASM decoder, normaliseImage): what is stored
+//      is always the encoder's output, never the container as uploaded, so no chunk the
+//      stripper keeps (a WebP's ICCP or a frame's nested chunks) reaches storage. A malformed
+//      block structure or a decode failure is refused as "decode_failed". Whatever is stored
+//      must be within the upload limit ("too_large") and show no metadata left (findMetadata,
+//      run on the encoder's output), or it is refused too.
 //   3. CSAM hash check (lib/imageModeration/csamHashCheck), until the row has passed one: MD5 +
 //      SHA-1 of the ORIGINAL bytes (what hash lists match) and of the re-encode (what is stored,
 //      upright), BEFORE any refusal, swap or classification. A match stores the matched bytes
@@ -68,9 +80,14 @@ import { findMetadata, stripImageMetadata } from "./stripMetadata";
 //      opens the publication gate (setHashCheck; lib/imageModeration/hashCheckFields), but only
 //      once the row holds the clean blob (after step 5): no read model serves the row before,
 //      so no URL is ever issued for the upload as sent. "unavailable" is logged at error level
-//      and the gate stays closed.
+//      and the gate stays closed. With hash matching switched off (provider none; skipsHashCheck)
+//      nothing is asked and nothing is recorded as checked: after step 5 the gate opens with the
+//      row marked "not hash-checked" and its hashes kept (setHashCheck "skipped";
+//      hashCheckFields). Offlimits selected but incomplete is asked like any outage: its port
+//      answers "unavailable", so the gate stays closed.
 //   4. A refused upload is "rejected" with label "invalid_image" (the reason in
-//      moderationReason), never classified, and its blob is deleted. Never fails open.
+//      moderationReason), never classified, and its blob is deleted; then it leaves the
+//      hash-pending index (setHashCheck "refused"). Never fails open.
 //   5. Swap the row to the clean blob (setFile) and delete the original.
 //   6. Classify the clean bytes via the configured PhotoModerationPort.
 //   7. Record the verdict (setVerdict), or, for a retryable unscored result with attempts left
@@ -107,12 +124,18 @@ export const hashImageBytes = (bytes: Uint8Array): ImageHashes => ({
 
 // Re-encode stripped image bytes (no Exif) to a metadata-free image, turned upright for the
 // Orientation (1..8) the stripped Exif held (lib/imageModeration/normaliseImage). Either output
-// (PNG/JPEG) carries no metadata. Format is alpha-aware: if the source has ANY transparent pixel
-// we emit PNG so the transparency is preserved — a JPEG would flatten the alpha to black (jimp has
-// no WebP encoder). Opaque images emit JPEG (smaller). Returns the bytes plus the mime so the
-// caller stores the blob with the matching content type, and the image's blurhash (lib/blurhash)
-// from the same decode. A WebP is decoded with the WASM decoder (only called for one that needs
-// turning; see runImageModeration).
+// (PNG/JPEG) carries no metadata, and no colour profile either, on purpose: the web client's
+// canvas re-encode already hands over sRGB, so only an original sent as is (a browser whose
+// canvas cannot be trusted, apps/web prepare-photo) loses a wide-gamut profile. Only the one-shot
+// backfill (normaliseImage.stripAndNormalise) keeps colour profiles. Format is alpha-aware: if the
+// source has ANY transparent pixel we emit PNG so the transparency is preserved — a JPEG would
+// flatten the alpha to black (jimp has no WebP encoder). Opaque images emit JPEG (smaller).
+// Returns the bytes plus the mime so the caller stores the blob with the matching content type,
+// and the image's blurhash (lib/blurhash) from the same decode. A WebP is decoded with the WASM
+// decoder (normaliseImage), so it too is stored as the encoder's output. The decode re-runs the
+// input guards and throws on a bitmap that is not the size its header announced (decodeUpright),
+// which the pipeline refuses as "decode_failed". The image is scaled down to MAX_REENCODE_EDGE
+// (1600 px) on its long edge first, the size the web client re-encodes to (normaliseImage).
 export const reencodeImage = async (
   input: Uint8Array,
   format: ImageFormat,
@@ -123,6 +146,8 @@ export const reencodeImage = async (
   blurhash: string;
 }> => {
   const image = await decodeUpright(input, format, orientation);
+  // At most MAX_REENCODE_EDGE on the long edge, as the web client sends it: bounds the encoder.
+  fitReencodeEdge(image);
   // bitmap.data is RGBA; a single non-opaque pixel means the image carries real transparency.
   const hasAlpha = hasTransparency(image.bitmap.data);
   const out = hasAlpha
@@ -153,6 +178,8 @@ export type ModerationRow = {
   pendingHashes?: ImageHashes[];
   /** An admin approved the photo after its hash check timed out (hashCheckFields). */
   hashCheckWaivedBy?: Id<"users">;
+  /** Published without a hash check because none was configured (hashCheckFields). */
+  hashCheckSkippedAt?: number;
 };
 
 /** The verdict the pipeline writes through a table's `setVerdict`. */
@@ -210,13 +237,19 @@ export interface ImageModerationSteps<R extends ModerationRow> {
    * Returns the escalation id.
    */
   quarantine: FunctionReference<"mutation", "internal", QuarantineArgs, string>;
-  /** Record a no_match (opens the publication gate) or unavailable hash-check outcome. */
+  /**
+   * Record a hash-check outcome: no_match (opens the publication gate), unavailable (keeps it
+   * closed, stores the hashes), refused (the upload was refused and its blob is gone: it leaves
+   * the hash-pending index), or skipped (hash matching switched off: the gate opens, the row is
+   * marked "not hash-checked" and keeps the hashes; lib/imageModeration/quarantine
+   * .applyHashCheckResult).
+   */
   setHashCheck: FunctionReference<
     "mutation",
     "internal",
     {
       imageId: string;
-      status: "no_match" | "unavailable";
+      status: "no_match" | "unavailable" | "refused" | "skipped";
       hashes?: ImageHashes[];
     },
     unknown
@@ -392,14 +425,20 @@ const runAttempt = async <R extends ModerationRow>(
   // it, or another row holds the same id (a row written before the claim rule may hold
   // catalogue box art; SEC-01). Checked and deleted in one transaction (lib/storage/
   // blobLifecycle); `original_delete` records the outcome: "deleted", "referenced" or "missing".
-  const deleteUnlessReferenced = async (fileId: Id<"_storage">) => {
+  // Returns whether the blob is gone: false when something still holds it or the delete failed.
+  const deleteUnlessReferenced = async (
+    fileId: Id<"_storage">,
+  ): Promise<boolean> => {
     try {
-      event.original_delete = await ctx.runMutation(
+      const outcome = await ctx.runMutation(
         internal.lib.storage.blobLifecycle.deleteUnlessReferenced,
         { storageId: fileId, except: imageId },
       );
+      event.original_delete = outcome;
+      return outcome !== "referenced";
     } catch (error) {
       event.delete_original_error = errMsg(error);
+      return false;
     }
   };
 
@@ -456,7 +495,11 @@ const runAttempt = async <R extends ModerationRow>(
     // Refuse an upload that fails an input guard: reject it (first verdict wins), then delete
     // the blob, but only when the row took this verdict and still points at it, so a blob a
     // concurrent attempt already decided on is never touched. A store's own reject side effects
-    // may have deleted it already (completion photos): the delete then reports "missing".
+    // may have deleted it already (completion photos): the delete then reports "missing". Once the
+    // blob is gone, the row owes no hash check and leaves the hash-pending index (setHashCheck
+    // "refused"), so refused uploads never pile up in front of the photos that do wait (SEC-55).
+    // A blob that survives (another row holds it, an escalation preserves it, or its delete
+    // failed) keeps the row in the index, its gate closed.
     const refuse = async (reason: ImageGuardFailure) => {
       event.input_guard = reason;
       event.decision = "rejected";
@@ -474,7 +517,12 @@ const runAttempt = async <R extends ModerationRow>(
       ) {
         return;
       }
-      await deleteUnlessReferenced(row.fileId);
+      if (await deleteUnlessReferenced(row.fileId)) {
+        await ctx.runMutation(steps.setHashCheck, {
+          imageId,
+          status: "refused",
+        });
+      }
     };
 
     // Too large to even read: refused without hashing (it cannot be held in memory). Anything
@@ -521,13 +569,10 @@ const runAttempt = async <R extends ModerationRow>(
     // Strip + re-encode on ANY attempt until the row is marked re-encoded, so a retry after a
     // download or swap failure never classifies (and so never publishes) the original with its
     // EXIF/GPS. In memory only: nothing is stored or deleted until the hash check has passed. A
-    // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF over a body
-    // that is not one is a polyglot or a corrupt file); an upright WebP keeps its stripped bytes.
-    let encoded: {
-      bytes: Uint8Array;
-      mime: string;
-      blurhash?: string;
-    } | null = null;
+    // malformed or undecodable image is refused (a header that says JPEG/PNG/GIF/WebP over a
+    // body that is not one is a polyglot or a corrupt file). Every format, WebP included, is
+    // stored as the re-encode (SEC-72).
+    let encoded: Awaited<ReturnType<typeof reencodeImage>> | null = null;
     if (guard.ok && row.reencodedAt === undefined) {
       // GIF has no byte-level stripper: jimp's re-encode (PNG/JPEG) drops its extensions.
       const stripped =
@@ -537,11 +582,6 @@ const runAttempt = async <R extends ModerationRow>(
       if (stripped === null) {
         event.strip_error = "malformed";
         refusal = "decode_failed";
-      } else if (guard.format === "webp" && stripped.orientation === 1) {
-        // Upright already: stored as its stripped bytes (not re-encoded, no blurhash).
-        event.stripped_bytes = stripped.bytes.length;
-        event.reencoded = false;
-        encoded = { bytes: stripped.bytes, mime: "image/webp" };
       } else {
         event.stripped_bytes = stripped.bytes.length;
         event.orientation = stripped.orientation;
@@ -558,17 +598,23 @@ const runAttempt = async <R extends ModerationRow>(
           refusal = "decode_failed";
         }
       }
+      if (encoded && !checkImageSize(encoded.bytes.length).ok) {
+        // What is stored is held to the upload limit too: a small upload (a flat image with
+        // transparency, a WebP) can re-encode to many times its size.
+        event.reencoded_mime = encoded.mime;
+        event.reencoded_bytes = encoded.bytes.length;
+        encoded = null;
+        refusal = "too_large";
+      }
       if (encoded) {
         event.reencoded_mime = encoded.mime;
         event.reencoded_bytes = encoded.bytes.length;
-        // Defence in depth: what is about to be stored must carry no metadata at all.
-        const format =
-          encoded.mime === "image/webp"
-            ? "webp"
-            : encoded.mime === "image/png"
-              ? "png"
-              : "jpeg";
-        const left = findMetadata(encoded.bytes, format);
+        // Defence in depth: what is about to be stored must carry no metadata at all. Checked on
+        // the encoder's output (JPEG or PNG), never on the stripper's own output.
+        const left = findMetadata(
+          encoded.bytes,
+          encoded.mime === "image/png" ? "png" : "jpeg",
+        );
         if (left === null || left.length > 0) {
           event.metadata_left = left === null ? "malformed" : left.join(",");
           encoded = null;
@@ -581,47 +627,59 @@ const runAttempt = async <R extends ModerationRow>(
     // Only the outcome is logged, never the hashes. Once "unavailable" has stored the hashes,
     // the hash re-check (runHashRecheck, on its own Workpool: hashRecheckPool) owns the outcome.
     // A no_match opens the gate only after the swap below, so the upload as sent is never served.
+    // With hash matching switched off (skipsHashCheck) nothing is asked: the photo is published
+    // as before, but after the swap it is marked "not hash-checked" and keeps the hashes of the
+    // original and the re-encode (`skippedHashes`), so it can be checked once matching is
+    // configured. An incomplete Offlimits config is asked, and its port answers "unavailable"
+    // (held, like an outage). Never a no_match without a real answer (SEC-03).
     let openGate = false;
+    let skippedHashes: ImageHashes[] | null = null;
     if (row.hashCheckedAt === undefined && row.pendingHashes === undefined) {
       const variants = encoded
         ? [hashImageBytes(bytes), hashImageBytes(encoded.bytes)]
         : [hashImageBytes(bytes)];
-      const hashCheck = await checkAllHashes(
-        makeCsamHashCheckPortFromEnv(process.env),
-        variants,
-      );
-      event.csam_hashcheck_status = hashCheck.status;
-      event.csam_hashcheck_reason = hashCheck.reason ?? null;
-      if (hashCheck.status === "match" && hashCheck.matched) {
-        await preserveAndQuarantine(ctx, steps.quarantine, event, {
-          imageId,
-          bytes,
-          uploadedFileId: row.fileId,
-          uploaderId: row.uploaderId,
-          matched: hashCheck.matched,
-          provider: hashConfig.provider,
-          originalDiscarded: false,
-        });
-        return;
-      }
-      openGate = hashCheck.status === "no_match" && refusal === null;
-      // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
-      // since the original is deleted after the swap below) and re-check them later. Surface it
-      // at error level for alerting.
-      if (hashCheck.status === "unavailable") {
-        event.outcome = "error";
-        if (refusal === null) {
-          await ctx.runMutation(steps.setHashCheck, {
+      if (skipsHashCheck(hashConfig)) {
+        event.csam_hashcheck_status = "skipped";
+        event.csam_hashcheck_reason = hashConfig.status;
+        if (refusal === null) skippedHashes = variants;
+      } else {
+        const hashCheck = await checkAllHashes(
+          makeCsamHashCheckPortFromEnv(process.env),
+          variants,
+        );
+        event.csam_hashcheck_status = hashCheck.status;
+        event.csam_hashcheck_reason = hashCheck.reason ?? null;
+        if (hashCheck.status === "match" && hashCheck.matched) {
+          await preserveAndQuarantine(ctx, steps.quarantine, event, {
             imageId,
-            status: "unavailable",
-            hashes: variants,
+            bytes,
+            uploadedFileId: row.fileId,
+            uploaderId: row.uploaderId,
+            matched: hashCheck.matched,
+            provider: hashConfig.provider,
+            originalDiscarded: false,
           });
-          // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
-          await ctx.runMutation(
-            internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
-            { table: steps.table, imageId },
-          );
-          event.hash_recheck_in_ms = hashRecheckDelayMs(1);
+          return;
+        }
+        openGate = hashCheck.status === "no_match" && refusal === null;
+        // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
+        // since the original is deleted after the swap below) and re-check them later. Surface it
+        // at error level for alerting.
+        if (hashCheck.status === "unavailable") {
+          event.outcome = "error";
+          if (refusal === null) {
+            await ctx.runMutation(steps.setHashCheck, {
+              imageId,
+              status: "unavailable",
+              hashes: variants,
+            });
+            // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
+            await ctx.runMutation(
+              internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
+              { table: steps.table, imageId },
+            );
+            event.hash_recheck_in_ms = hashRecheckDelayMs(1);
+          }
         }
       }
     }
@@ -631,17 +689,10 @@ const runAttempt = async <R extends ModerationRow>(
       return;
     }
 
-    // Swap the row to the clean blob (the re-encode, or a WebP's stripped bytes) and drop the
-    // original. A row not yet re-encoded always has `encoded` here (otherwise it was refused);
-    // a WebP that had nothing to strip and is stored as image/webp already stays as it is.
+    // Swap the row to the clean blob (the re-encode) and drop the original. A row not yet
+    // re-encoded always has `encoded` here (otherwise it was refused).
     let cleanBytes = bytes;
-    const unchanged =
-      encoded !== null &&
-      encoded.mime === mime &&
-      encoded.bytes.length === bytes.length &&
-      encoded.bytes.every((byte, i) => byte === bytes[i]);
-    const replacement =
-      row.reencodedAt !== undefined || unchanged ? null : encoded;
+    const replacement = row.reencodedAt !== undefined ? null : encoded;
     if (replacement) {
       // Tracks the just-stored blob across the try/catch. If `setFile` throws AFTER the store
       // succeeded, the row still points at the original, so the new blob is unreferenced. There
@@ -688,11 +739,18 @@ const runAttempt = async <R extends ModerationRow>(
       }
     }
 
-    // The row holds the clean blob now: open the publication gate.
+    // The row holds the clean blob now: open the publication gate (marked "not hash-checked"
+    // when no hash matching is configured).
     if (openGate) {
       await ctx.runMutation(steps.setHashCheck, {
         imageId,
         status: "no_match",
+      });
+    } else if (skippedHashes !== null) {
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "skipped",
+        hashes: skippedHashes,
       });
     }
 
@@ -723,8 +781,9 @@ const runAttempt = async <R extends ModerationRow>(
  * current re-check does nothing (isCurrentHashRecheck). no_match opens the publication gate;
  * unavailable arms the next attempt on HASH_RECHECK_DELAYS_MS; a match quarantines exactly like
  * the live pipeline, preserving the blob the row holds now (the re-encode: the original was
- * deleted after the swap, which the escalation records as `originalDiscarded`), also when an admin
- * approved the photo after its hash check timed out (`hashCheckWaivedBy`). An error THROWS
+ * deleted after the swap, which the escalation records as `originalDiscarded`), also when the
+ * photo was published without a hash check: an admin approved it after its check timed out
+ * (`hashCheckWaivedBy`), or none was configured (`hashCheckSkippedAt`). An error THROWS
  * inside the pool (after its wide event), so the pool retries it and, once it gives up, arms the
  * next attempt (onHashRecheckComplete). Outside the pool (a re-check scheduled before the pool
  * existed) it never throws: the next attempt is armed on the pool, and an error is left to the
@@ -752,20 +811,24 @@ export const runHashRecheck = async <R extends ModerationRow>(
   };
   try {
     const row = await ctx.runQuery(steps.load, { imageId });
-    // An admin approval after a timeout does not end the check: a match still wins.
+    // A gate opened without a hash check (an admin's approval after a timeout, or none
+    // configured) does not end the check: a match still wins.
+    const publishedUnchecked =
+      row !== null &&
+      (row.hashCheckWaivedBy !== undefined ||
+        row.hashCheckSkippedAt !== undefined);
     if (
       !row ||
       row.moderationStatus === "quarantined" ||
-      (row.hashCheckedAt !== undefined &&
-        row.hashCheckWaivedBy === undefined) ||
+      (row.hashCheckedAt !== undefined && !publishedUnchecked) ||
       !row.pendingHashes
     ) {
       event.result = "skipped";
       return;
     }
-    // A photo approved without a hash check is checked only against a configured service: the
-    // "none" adapter answers no_match, which would clear its stored hashes unchecked.
-    if (row.hashCheckWaivedBy !== undefined && hashConfig.status !== "ok") {
+    // A photo published without a hash check is checked only against a configured service:
+    // asking an unconfigured one tells nothing.
+    if (publishedUnchecked && hashConfig.status !== "ok") {
       event.outcome = "error";
       event.result = "skipped_unconfigured";
       return;
@@ -778,6 +841,20 @@ export const runHashRecheck = async <R extends ModerationRow>(
     );
     if (!current) {
       event.result = "skipped_stale";
+      return;
+    }
+    // Hash matching was switched off while the photo waited: publish it as the upload pipeline
+    // would now, marked "not hash-checked" with its stored hashes kept. Never a no_match without
+    // a real answer (SEC-03). An incomplete config is not "off": it is asked below and answers
+    // "unavailable", so the photo keeps waiting.
+    if (skipsHashCheck(hashConfig)) {
+      event.csam_hashcheck_status = "skipped";
+      event.csam_hashcheck_reason = hashConfig.status;
+      await ctx.runMutation(steps.setHashCheck, {
+        imageId,
+        status: "skipped",
+        hashes: row.pendingHashes,
+      });
       return;
     }
     const hashCheck = await checkAllHashes(

@@ -24,7 +24,14 @@ type ModerationKind =
   | "report_content_removed"
   | "report_warned"
   | "message_image_auto_rejected"
-  | "message_image_restored";
+  | "message_image_restored"
+  | "photo_recheck_requested"
+  | "category_created"
+  | "category_updated"
+  | "category_deactivated"
+  | "category_reactivated"
+  | "categories_reordered"
+  | "contact_message_handled";
 
 // One-liner used by every moderation decision point so the audit trail can't drift.
 export const stampModerationAction = (

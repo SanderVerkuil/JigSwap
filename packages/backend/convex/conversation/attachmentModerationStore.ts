@@ -35,6 +35,7 @@ export const getImageForModeration = internalQuery({
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
       hashCheckWaivedBy: row.hashCheckWaivedBy,
+      hashCheckSkippedAt: row.hashCheckSkippedAt,
       reencodedAt: row.reencodedAt,
       uploaderId: row.uploaderId,
       // Business context for the wide event: never the thread's content or the other member.
@@ -134,6 +135,8 @@ export const quarantineImage = internalMutation({
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),
         pendingHashes: undefined,
+        // A quarantined photo waits on nothing: it leaves the hash-pending index (SEC-55).
+        hashCheckPendingSince: undefined,
         updatedAt: Date.now(),
       });
     }
@@ -149,11 +152,15 @@ export const quarantineImage = internalMutation({
 });
 
 // Record the hash-check outcome; a clear settles the batch (a photo held before append-at-send).
+// A skipped check (no hash matching configured) opens the gate too, so it settles the batch the
+// same way.
 export const setHashCheck = internalMutation({
   args: { imageId: v.id("messageAttachments"), ...hashCheckResultArgs },
   handler: async (ctx, { imageId, ...result }) => {
     await applyHashCheckResult(ctx, imageId, result);
-    if (result.status === "no_match") await settleSendBatch(ctx, imageId);
+    if (result.status === "no_match" || result.status === "skipped") {
+      await settleSendBatch(ctx, imageId);
+    }
   },
 });
 

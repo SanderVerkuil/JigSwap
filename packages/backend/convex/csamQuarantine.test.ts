@@ -937,14 +937,19 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     expect(after?.hashCheckedAt).toBeUndefined();
   });
 
-  test("provider none: hashCheckedAt is set at once, nothing waits", async () => {
+  // SEC-03: published at once, but marked not hash-checked, with the hashes kept for later.
+  test("provider none: the gate opens at once and nothing waits, but nothing is recorded as checked", async () => {
     vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "none");
-    vi.stubGlobal("fetch", routedFetch("match"));
+    const fetchMock = routedFetch("match");
+    vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.hashCheckedAt).toBeGreaterThan(0);
-    expect(row.pendingHashes).toBeUndefined();
+    expect(row.hashCheckSkippedAt).toBeGreaterThan(0);
+    expect(row.hashCheckPendingSince).toBeUndefined();
+    expect(row.pendingHashes).toHaveLength(2);
+    expect(callsTo(fetchMock, HCS_URL)).toHaveLength(0);
   });
 });
 

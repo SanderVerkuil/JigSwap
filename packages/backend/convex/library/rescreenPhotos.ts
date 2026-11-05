@@ -8,6 +8,7 @@ import {
   checkAllHashes,
   makeCsamHashCheckPortFromEnv,
   readCsamHashCheckConfig,
+  skipsHashCheck,
 } from "../lib/imageModeration/csamHashCheck";
 import {
   hashImageBytes,
@@ -270,7 +271,10 @@ export const rescreenPhotos = internalAction({
       const port = makeModerationPortFromEnv(process.env);
       // Legacy and unscored photos never went through the CSAM hash check: check them first.
       const hashPort = makeCsamHashCheckPortFromEnv(process.env);
-      const hashProvider = readCsamHashCheckConfig(process.env).provider;
+      const hashConfig = readCsamHashCheckConfig(process.env);
+      const hashProvider = hashConfig.provider;
+      // No hash matching configured: there is nothing to check against, so it is not asked.
+      const hashSkipped = skipsHashCheck(hashConfig);
       const quarantine = quarantineStep(args.table);
 
       for (const candidate of page.candidates) {
@@ -281,11 +285,12 @@ export const rescreenPhotos = internalAction({
         }
         const bytes = new Uint8Array(await blob.arrayBuffer());
         // Hash check BEFORE classifying. A match quarantines (re-stored as a new blob, always
-        // escalated, never classified). Unavailable is counted and the row is classified anyway:
-        // these photos are already published, and holding them back is the live pipeline's job.
-        const hashCheck = await checkAllHashes(hashPort, [
-          hashImageBytes(bytes),
-        ]);
+        // escalated, never classified). Unavailable (or skipped: none configured) is counted and
+        // the row is classified anyway: these photos are already published, and holding them back
+        // is the live pipeline's job.
+        const hashCheck = hashSkipped
+          ? ({ status: "skipped" } as const)
+          : await checkAllHashes(hashPort, [hashImageBytes(bytes)]);
         if (hashCheck.status === "match" && hashCheck.matched) {
           await preserveAndQuarantine(
             ctx,
@@ -308,6 +313,9 @@ export const rescreenPhotos = internalAction({
         if (hashCheck.status === "unavailable") {
           event.hash_check_unavailable =
             ((event.hash_check_unavailable as number | undefined) ?? 0) + 1;
+        } else if (hashCheck.status === "skipped") {
+          event.hash_check_skipped =
+            ((event.hash_check_skipped as number | undefined) ?? 0) + 1;
         }
         const result = await port.classify(bytes, blob.type || undefined);
         if (result.status === "unscored") {

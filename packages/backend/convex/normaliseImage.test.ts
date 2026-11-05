@@ -1,8 +1,29 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 import { Jimp } from "jimp";
-import { describe, expect, test } from "vitest";
-import { readImageDimensions } from "./lib/imageModeration/guards";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import {
+  craftGif,
+  gifComment,
+  gifControl,
+  gifFrame,
+  gifNetscapeLoop,
+} from "../test-fixtures/craftGif";
+import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
+import {
+  JPEG_DECODER_MEMORY_MB,
+  jpegDecodeInput,
+  MAX_IMAGE_PIXELS,
+  readImageDimensions,
+} from "./lib/imageModeration/guards";
 import {
   decodeUpright,
   stripAndNormalise,
@@ -54,6 +75,24 @@ const expectUpright = (
 };
 
 const ORIENTATIONS = [1, 2, 3, 4, 5, 6, 7, 8];
+
+// A JPEG with a minimal little-endian Exif block (IFD0: Orientation only) right after its SOI.
+const withExifOrientation = (jpeg: Uint8Array, orientation: number) => {
+  const tiff = [
+    ...[0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00],
+    // One entry: tag 0x0112 (Orientation), SHORT, count 1, the value; then no next IFD.
+    ...[0x01, 0x00, 0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00],
+    ...[orientation, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+  ];
+  const payload = [...new TextEncoder().encode("Exif\0\0"), ...tiff];
+  const length = payload.length + 2;
+  return new Uint8Array([
+    ...jpeg.subarray(0, 2),
+    ...[0xff, 0xe1, length >> 8, length & 0xff],
+    ...payload,
+    ...jpeg.subarray(2),
+  ]);
+};
 
 describe("stripAndNormalise", () => {
   test.each(ORIENTATIONS)(
@@ -122,6 +161,34 @@ describe("stripAndNormalise", () => {
     },
   );
 
+  // A turned image is re-encoded like a new upload, so it is held to the same long edge
+  // (MAX_REENCODE_EDGE): stored originals can be 12 MP, and the encoder's memory follows its
+  // output (SEC-18).
+  test("a turned image over 1600 px comes out upright at 1600 px on its long edge", async () => {
+    // Stored 1200 wide and 2400 tall, with Orientation 6: upright it is 2400 x 1200.
+    const sideways = new Uint8Array(
+      await new Jimp({
+        width: 1200,
+        height: 2400,
+        color: 0x884422ff,
+      }).getBuffer("image/jpeg"),
+    );
+    const original = withExifOrientation(sideways, 6);
+    expect(readImageDimensions(original, "jpeg")).toEqual({
+      width: 1200,
+      height: 2400,
+    });
+
+    const clean = (await stripAndNormalise(original, "jpeg"))!;
+
+    expect(clean.normalised).toBe(true);
+    expect(findMetadata(clean.bytes, "jpeg")).toEqual([]);
+    expect(readImageDimensions(clean.bytes, "jpeg")).toEqual({
+      width: 1600,
+      height: 800,
+    });
+  });
+
   test("a turned WebP with transparency comes out as PNG, alpha kept", async () => {
     const clean = (await stripAndNormalise(fixture("6-alpha.webp"), "webp"))!;
 
@@ -187,6 +254,161 @@ describe("stripAndNormalise", () => {
     expect(
       await stripAndNormalise(fixture("6.png").subarray(0, 40), "png"),
     ).toBeNull();
+  });
+});
+
+// Nothing is decoded that the input guards would refuse, and no decoder may read a different size
+// from the bytes than the header the guards checked (SEC-17).
+describe("decodeUpright decodes only what the guards checked", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("a PNG whose second IHDR announces a bigger image is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const dualIhdr = craftPng(
+      ihdrChunk(1, 1),
+      ihdrChunk(64, 64),
+      transparentIdat(64, 64),
+      iendChunk(),
+    );
+
+    await expect(decodeUpright(dualIhdr, "png", 1)).rejects.toThrow(
+      /unreadable_header/,
+    );
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("an interlaced PNG is never decoded", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+
+    await expect(
+      decodeUpright(transparentPng(5, 5, { interlaced: true }), "png", 1),
+    ).rejects.toThrow(/interlaced/);
+    expect(decode).not.toHaveBeenCalled();
+  });
+
+  test("a decoded bitmap that is not the header's size is refused", async () => {
+    // The decoder reads 64x64 where the header said 3x2.
+    const bigger = await Jimp.fromBuffer(Buffer.from(transparentPng(64, 64)));
+    vi.spyOn(Jimp, "fromBuffer").mockResolvedValueOnce(bigger);
+
+    await expect(decodeUpright(transparentPng(3, 2), "png", 6)).rejects.toThrow(
+      /64x64/,
+    );
+  });
+
+  test("a turned image is checked before it is turned", async () => {
+    // Stored 3 wide and 2 tall with Orientation 6: the header's size, upright 2x3.
+    const image = await decodeUpright(transparentPng(3, 2), "png", 6);
+    expect([image.bitmap.width, image.bitmap.height]).toEqual([2, 3]);
+  });
+
+  // The guards bound jpeg-js by the one frame header in the bytes they checked; the decoder must
+  // get exactly those bytes, with its own allocation caps as a backstop (SEC-18).
+  test("a JPEG is decoded from the bytes the guards checked, under jpeg-js's own caps", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const original = fixture("1.jpg");
+
+    await decodeUpright(original, "jpeg", 1);
+
+    expect(decode).toHaveBeenCalledTimes(1);
+    const [input, options] = decode.mock.calls[0];
+    expect(new Uint8Array(input)).toEqual(jpegDecodeInput(original));
+    // Its JFIF and Exif segments are not.
+    expect(input.byteLength).toBeLessThan(original.length);
+    expect(options).toEqual({
+      "image/jpeg": {
+        maxResolutionInMP: MAX_IMAGE_PIXELS / 1e6,
+        maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB,
+      },
+    });
+    expect(JPEG_DECODER_MEMORY_MB).toBe(197);
+  });
+
+  // The guard walks a GIF as omggif does; even so, omggif is given only the frame it checked, so
+  // no block around it can make omggif decode another one (SEC-18).
+  test("a GIF is decoded from its checked first frame alone", async () => {
+    const decode = vi.spyOn(Jimp, "fromBuffer");
+    const animated = craftGif(
+      4,
+      3,
+      gifNetscapeLoop(),
+      gifComment("made by hand"),
+      gifControl(),
+      gifFrame(4, 3),
+      gifControl(),
+      gifFrame(2, 2),
+    );
+
+    const image = await decodeUpright(animated, "gif", 1);
+
+    expect(decode).toHaveBeenCalledTimes(1);
+    expect(new Uint8Array(decode.mock.calls[0][0])).toEqual(
+      craftGif(4, 3, gifControl(), gifFrame(4, 3)),
+    );
+    expect([image.bitmap.width, image.bitmap.height]).toEqual([4, 3]);
+  });
+});
+
+// A full garbage collection on demand: V8's gc(), switched on for this file.
+setFlagsFromString("--expose-gc");
+const collectGarbage = runInNewContext("gc") as () => void;
+
+// Each WebP decode runs in a decoder instance of its own, whose heap grows to what that image
+// needs and is dropped with it: a big decode never stays resident for the next one (SEC-77).
+describe("the WebP decoder", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("decodes WebPs one after another", async () => {
+    for (const [name, orientation] of [
+      ["1.webp", 1],
+      ["6.webp", 6],
+      ["6-alpha.webp", 6],
+      ["1.webp", 1],
+    ] as const) {
+      const image = await decodeUpright(fixture(name), "webp", orientation);
+      expectUpright(image.bitmap, {
+        tolerance: 2,
+        alpha: name === "6-alpha.webp" ? 128 : 255,
+      });
+    }
+  });
+
+  test("keeps no decoder instance, nor its heap, once its decode is done", async () => {
+    const instances: WeakRef<WebAssembly.Instance>[] = [];
+    const Instance = WebAssembly.Instance;
+    // Every instance the decoder creates, held weakly (a vi.spyOn would keep what it returned).
+    WebAssembly.Instance = new Proxy(Instance, {
+      construct: (target, args: [WebAssembly.Module, WebAssembly.Imports?]) => {
+        const instance = new target(...args);
+        instances.push(new WeakRef(instance));
+        return instance;
+      },
+    });
+    // As in a fresh Node process: no global ImageData yet, which the decoder's glue would define
+    // from inside the instance it is creating.
+    const imageData = Object.getOwnPropertyDescriptor(globalThis, "ImageData");
+    Reflect.deleteProperty(globalThis, "ImageData");
+    try {
+      await decodeUpright(fixture("1.webp"), "webp", 1);
+      await decodeUpright(fixture("6.webp"), "webp", 6);
+    } finally {
+      WebAssembly.Instance = Instance;
+      if (imageData) Object.defineProperty(globalThis, "ImageData", imageData);
+    }
+
+    expect(instances).toHaveLength(2);
+    // Collect in jobs of their own: a WeakRef's target is kept alive until the end of the job
+    // that created or read it.
+    for (let i = 0; i < 3; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      collectGarbage();
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(instances.map((ref) => ref.deref())).toEqual([undefined, undefined]);
   });
 });
 

@@ -467,15 +467,16 @@ Orientation included) and turned upright, the same way new uploads are
 (`lib/imageModeration/normaliseImage`):
 
 - No Orientation (or Orientation 1): stripped at byte level, the pixels untouched.
-- Orientation 2..8 (a phone photo stored sideways or mirrored): decoded, turned upright and
-  re-encoded with no metadata at all. A JPEG stays JPEG (quality 95, no chroma subsampling,
+- Orientation 2..8 (a phone photo stored sideways or mirrored): decoded, turned upright,
+  scaled down to at most 1600 px on its long edge (as new uploads are; it bounds the action's
+  memory) and re-encoded with no metadata at all. A JPEG stays JPEG (quality 95, no chroma subsampling,
   its RGB colour profile kept); a PNG stays PNG; a WebP becomes PNG when it has
   transparency, else JPEG (there is no WebP encoder on the server), and the new blob gets
   the matching content type. Box art cleaned by an earlier `sanitizeBoxArt` that kept an
   Orientation-only Exif block counts as carrying metadata, so it is turned upright too.
-- An image that needs turning but is over the upload limits (10 MB, 25 MP) or does not
-  decode is still stripped at byte level (its GPS matters more than its rotation), just not
-  turned; it then shows sideways.
+- An image that needs turning but is over the upload limits (10 MB, 12.54 MP; see
+  `lib/imageModeration/guards`) or does not decode is still stripped at byte level (its GPS
+  matters more than its rotation), just not turned; it then shows sideways.
 
 The clean image is stored as a new blob, every row that pointed at the old blob is switched
 to it, and the old blob is deleted once nothing references it. Clean images, GIFs and
@@ -577,36 +578,47 @@ escalation id.
 
 ---
 
-## `lib/imageModeration/recheckWaivedHashes` — hash check of photos approved without one
+## `lib/imageModeration/recheckWaivedHashes` — hash check of photos published without one
 
 **When:** on each deployment, **right after the CSAM hash check is configured there**
 (`CSAM_HASHCHECK_PROVIDER=offlimits` plus the `OFFLIMITS_HCS_*` variables), and again whenever
-admins have approved photos without a hash check during a later hash-service outage. A photo
-whose hash check could not be done within 7 days goes to Admin → Moderation → Unchecked photos;
-an admin who publishes it with **Approve without hash check** leaves it marked
-`hashCheckWaivedBy` with its stored hashes (`pendingHashes`), and nothing re-checks it on its
-own (photo-moderation.md, "A timed-out photo: the admin decides"). Without a configured hash
-service a real run refuses to start (a dry run still counts).
+admins have approved photos without a hash check during a later hash-service outage. It checks
+two kinds of photo, and nothing re-checks either on its own:
 
-**What it does:** pages through copy photos, completion photos, box art and message photos
-(`ownedPuzzleImages`, `completionImages`, `boxArtUploads`, `messageAttachments`; 50 rows per
-batch, `batchSize` overrides this, max 100), in that order, or only `table` (`"copy"`,
-`"completion"`, `"boxArt"` or `"message"`) when given. For every photo with `hashCheckWaivedBy`
-and `pendingHashes` that is not quarantined, it enqueues ONE re-check of the stored hashes on
-the hash re-check Workpool (`hashRecheckWorkpool`, at most 2 at once, so the hash service gets
-a gentle stream). Each re-check is decided exactly like a live one:
+- A photo whose hash check could not be done within 7 days goes to Admin → Moderation →
+  Unchecked photos; an admin who publishes it with **Approve without hash check** leaves it
+  marked `hashCheckWaivedBy` with its stored hashes (`pendingHashes`) (photo-moderation.md, "A
+  timed-out photo: the admin decides").
+- A photo uploaded while hash matching was switched off (provider unset or `none`) is
+  published marked `hashCheckSkippedAt`, with its
+  stored hashes (photo-moderation.md, "CSAM hash re-checks"). Photos published before that
+  marker existed kept no hashes and cannot be checked.
+
+Without a configured hash service a real run refuses to start (a dry run still counts).
+
+**What it does:** pages through copy photos, completion photos, box art, message photos and
+circle icons (`ownedPuzzleImages`, `completionImages`, `boxArtUploads`, `messageAttachments`,
+`circleIcons`; 50 rows per batch, `batchSize` overrides this, max 100), in that order, or only
+`table` (`"copy"`, `"completion"`, `"boxArt"`, `"message"` or `"circleIcon"`) when given. For
+every photo with `hashCheckWaivedBy` or `hashCheckSkippedAt`, and `pendingHashes`, that is not
+quarantined, it enqueues ONE re-check of the stored hashes on the hash re-check Workpool
+(`hashRecheckWorkpool`, at most 2 at once, so the hash service gets a gentle stream). Each
+re-check is decided exactly like a live one:
 
 - **match:** quarantined and escalated like a match on upload, overriding the admin's
   approval: the bytes are preserved, the photo is quarantined (for a message photo: removed for
   both members), and a `csamEscalations` row plus an `image_quarantined` stamp are raised. The
   operator reports it from Admin → Moderation → Hash matches as usual; the uploader is not told.
-- **no_match:** recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy`
-  cleared: the photo counts as hash-checked and is not a candidate again. It stays published.
+- **no_match:** recorded (`hashCheckedAt`), and `pendingHashes` and `hashCheckWaivedBy` or
+  `hashCheckSkippedAt` cleared: the photo counts as hash-checked and is not a candidate again.
+  It stays published.
 - **unavailable** or an error: nothing changes and nothing is re-armed; the photo stays a
   candidate for the next run.
 
-`dryRun` defaults to **true**: without `"dryRun":false` it only counts the candidates (`waived`)
-and enqueues nothing; the hash service is never called. **Safe to re-run:** yes; checked and
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts the candidates (`waived`,
+both kinds together) and enqueues nothing; the hash service is never called. On prod, where
+hash matching is off, every photo uploaded since the marker shipped is a candidate, so expect
+the first run to take a while; the pool drains it two re-checks at a time. **Safe to re-run:** yes; checked and
 quarantined photos are no longer candidates. Let the pool drain before re-running (a re-run
 re-enqueues a photo whose check is still queued; the older job then does nothing).
 
@@ -750,3 +762,50 @@ Each page returns `{ scanned, missingImage, heldByMemberRows, isDone, continueCu
 every page means SEC-01 was never used on that deployment. After restoring art for every
 `missingImage` hit, a second run reports none, and no row in Admin → Puzzles shows **Box art
 missing**.
+
+---
+
+## `lib/imageModeration/clearSettledHashPending` — take settled photos out of the hash-pending index
+
+**When:** once per deployment, after the code that clears `hashCheckPendingSince` on refused and
+quarantined photos is deployed (SEC-55). Optional: nothing is wrong while those rows remain (the
+admin counts skip them), but the admin's Hash matches count, the uploader's "box art in check"
+list and the daily hash re-check sweep keep scanning them.
+
+**What it does:** pages through the `by_hash_check_pending` index of copy photos, completion
+photos, box art, message photos and circle icons (50 rows per batch, `batchSize` overrides this,
+max 100), in that order, and clears `hashCheckPendingSince` (nothing else) on a row that waits on
+nothing any more:
+
+- **quarantined** (a hash match; it is never served, whatever its fields say);
+- **refused:** rejected with label `invalid_image`, no stored hashes (`pendingHashes`), and its
+  blob gone.
+
+Everything else keeps the field: photos still waiting on their check or not reached by the
+pipeline yet, timed-out photos (with or without an admin decision; for one an admin rejected,
+the field keeps its gate closed should it be restored), and a refused row whose blob is still
+stored. Clearing the field never publishes anything.
+
+`dryRun` defaults to **true**: without `"dryRun":false` it only counts (`settled`) and writes
+nothing. **Safe to re-run:** yes; a cleared row is no longer in the index, so a second run reports
+`"settled":0`.
+
+```bash
+cd packages/backend
+
+# dev: dry run (counts only), then the real run
+npx convex run lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{}'
+npx convex run lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{"dryRun":false}'
+
+# prod: same, after dev looks right
+npx convex run --prod lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{}'
+npx convex run --prod lib/imageModeration/clearSettledHashPending:clearSettledHashPending '{"dryRun":false}'
+```
+
+The command returns the FIRST batch's `{ scanned, settled, cleared }`; the remaining batches run
+as scheduled functions. Each batch logs one JSON line with
+`"event":"imageModeration.clearSettledHashPending"`, the table, `dry_run` and the running
+totals; the line with `"done":true` carries the whole run's totals.
+
+**Verify:** the real run's final `cleared` equals the dry run's `settled`, and a second dry run
+reports `"settled":0`.

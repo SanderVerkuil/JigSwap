@@ -15,8 +15,15 @@
 //   OFFLIMITS_HCS_BASE_URL  — the HashCheckService endpoint (https only).
 //   OFFLIMITS_HCS_USERNAME  — HCS user id.
 //   OFFLIMITS_HCS_PASSWORD  — HCS password.
-// "offlimits" with any of the three missing behaves as "none" (inert), which the pipeline logs as
-// `csam_hashcheck_config: "missing_config"` and the admin escalations view reports by var NAME.
+// "offlimits" with any of the three missing is `missing_config`: the pipeline logs it at error
+// level, holds photos as if the service were down (skipsHashCheck), and the admin escalations
+// view reports it by var NAME.
+//
+// NOT CONFIGURED NEVER MEANS "NO MATCH" (SEC-03). There is no adapter that answers no_match
+// without asking a real hash list: an unconfigured deployment gets a port that only ever answers
+// "unavailable". With provider "none" the pipeline does not ask it at all (`skipsHashCheck`): it
+// publishes the photo marked "not hash-checked" (`hashCheckSkippedAt`) and keeps its hashes, so
+// the photo can be checked once matching is configured (hashCheckFields).
 //
 // Fixed-IP egress: HCS allow-lists caller IPs, and Convex has no fixed egress IP. A proxy
 // (OFFLIMITS_HCS_PROXY_URL) is NOT implemented: Node's built-in fetch only takes a proxy through
@@ -83,14 +90,6 @@ const readCappedText = async (
   }
   return new TextDecoder().decode(all);
 };
-
-/** The "none" adapter: always no_match. The default when nothing is configured. */
-export const makeNoopCsamHashCheckPort = (): CsamHashCheckPort => ({
-  provider: "none",
-  async check() {
-    return { status: "no_match" };
-  },
-});
 
 /**
  * PROVISIONAL: align with the HCS API manual once access is granted. The manual is not public;
@@ -203,7 +202,7 @@ const clean = (raw: string | undefined): string | undefined => {
 /**
  * Configuration health from env only (never values): the selected provider, whether it is
  * active, and the NAMES of missing vars. "disabled" = provider none; "missing_config" =
- * offlimits selected but not fully configured (inert, behaves as none).
+ * offlimits selected but not fully configured (no check can run; see skipsHashCheck).
  */
 export interface CsamHashCheckConfig {
   provider: CsamHashCheckProvider;
@@ -228,13 +227,40 @@ export const readCsamHashCheckConfig = (
   };
 };
 
-/** Build the configured port. Unconfigured or incomplete config => the "none" adapter. */
+/**
+ * The port of a deployment without working hash matching ("disabled" or "missing_config"): it
+ * never answers no_match, only "unavailable" with the config status as the reason, so nothing it
+ * says can open the publication gate as a passed check. The pipeline does not ask it while
+ * `skipsHashCheck` holds; any other caller (the re-screen, a one-shot) gets a safe answer.
+ */
+export const makeUnconfiguredCsamHashCheckPort = (
+  config: CsamHashCheckConfig,
+): CsamHashCheckPort => ({
+  provider: config.provider,
+  async check() {
+    return { status: "unavailable", reason: config.status };
+  },
+});
+
+/**
+ * Whether the pipeline publishes a photo WITHOUT a hash check (marked "not hash-checked" with its
+ * hashes kept; hashCheckFields) instead of asking the port: only when hash matching is switched
+ * off ("disabled", provider none). Offlimits selected but incomplete ("missing_config") is NOT
+ * skipped: the operator meant checks to run, so it fails closed like an outage. The pipeline asks
+ * the unconfigured port, which answers "unavailable": the photo is held unpublished, re-checked,
+ * then handed to an admin after HASH_CHECK_TIMEOUT_MS (review §4 SEC-03 recommendation 3). This is
+ * the only place that decides it.
+ */
+export const skipsHashCheck = (config: CsamHashCheckConfig): boolean =>
+  config.status === "disabled";
+
+/** Build the configured port. Unconfigured or incomplete config => the unconfigured port. */
 export const makeCsamHashCheckPortFromEnv = (
   env: CsamHashCheckEnv,
   deps?: { fetchImpl?: typeof fetch },
 ): CsamHashCheckPort => {
   const config = readCsamHashCheckConfig(env);
-  if (config.status !== "ok") return makeNoopCsamHashCheckPort();
+  if (config.status !== "ok") return makeUnconfiguredCsamHashCheckPort(config);
   return makeOfflimitsCsamHashCheckPort({
     baseUrl: clean(env.OFFLIMITS_HCS_BASE_URL)!,
     username: clean(env.OFFLIMITS_HCS_USERNAME)!,

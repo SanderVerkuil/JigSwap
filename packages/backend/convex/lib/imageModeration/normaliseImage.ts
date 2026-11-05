@@ -1,9 +1,15 @@
 "use node";
 
-import decodeWebpBytes, {
-  init as initWebpDecoder,
-} from "@jsquash/webp/decode.js";
+import webpDecoderFactory from "@jsquash/webp/codec/dec/webp_dec.js";
+import { initEmscriptenModule } from "@jsquash/webp/utils.js";
 import { Jimp } from "jimp";
+import {
+  checkImageBytes,
+  gifDecodeInput,
+  JPEG_DECODER_MEMORY_MB,
+  jpegDecodeInput,
+  MAX_IMAGE_PIXELS,
+} from "./guards";
 import { applyOrientation, type Bitmap } from "./orientation";
 import {
   jpegIccSegments,
@@ -13,6 +19,9 @@ import {
 import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 
 // Strip an image's metadata and turn its pixels upright. Node only (jimp, a WASM WebP decoder).
+// The moderation pipeline uses `decodeUpright` (and `hasTransparency`): it re-encodes every upload
+// (pipeline.reencodeImage), WebP included. `stripAndNormalise` serves the one-shot backfill
+// (backfillStripMetadata).
 //
 // `stripImageMetadata` drops every Exif block, Orientation included. An image whose Exif held
 // no Orientation (or 1) is stored as the stripped bytes, untouched. One with 2..8 is decoded,
@@ -21,6 +30,7 @@ import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 //   visible. Its RGB ICC profile (APP2) is copied over, so wide-gamut (Display P3) phone photos
 //   keep their colours; a CMYK or grey profile is not (the re-encode is RGB).
 // - PNG stays PNG (lossless).
+// - Any of them is scaled down to MAX_REENCODE_EDGE on its long edge first, like a new upload.
 // - WebP: jimp has no WebP encoder, so it becomes PNG when it has transparency, else JPEG
 //   (quality 95), like the moderation pipeline's re-encode. The caller stores it under the
 //   returned mime.
@@ -33,24 +43,50 @@ import { WEBP_DECODER_WASM_BASE64 } from "./webpDecoderWasm";
 
 const JPEG_QUALITY = 95;
 
-let webpDecoderReady: Promise<void> | null = null;
+// The WebP decoder (libwebp), compiled once per process. Every decode instantiates it afresh: an
+// instance's heap only ever grows (to what the largest image it decoded needed), so a cached one
+// would keep the high-water mark of the biggest WebP resident for every decode after it, in a
+// 512 MiB action (SEC-77). A fresh instance is dropped with its heap once its decode returns
+// (the pixels are copied out of it).
+let webpDecoderModule: Promise<WebAssembly.Module> | null = null;
+
+// The decoder's glue defines a global ImageData (what it returns the pixels as) when there is
+// none, as in Node, from inside the first instance it creates: that class keeps the instance, heap
+// included, reachable for the life of the process. Defined here before any instance exists, no
+// instance is kept.
+const defineImageData = () => {
+  if ("ImageData" in globalThis) return;
+  Object.defineProperty(globalThis, "ImageData", {
+    configurable: true,
+    writable: true,
+    value: class ImageData {
+      constructor(
+        readonly data: Uint8ClampedArray,
+        readonly width: number,
+        readonly height: number,
+      ) {}
+    },
+  });
+};
+
+/** The decoder @jsquash/webp's glue builds: the pixels, or null when the bytes do not decode. */
+type WebpDecoder = { decode(data: Uint8Array): ImageData | null };
 
 const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
-  webpDecoderReady ??= WebAssembly.compile(
+  webpDecoderModule ??= WebAssembly.compile(
     Buffer.from(WEBP_DECODER_WASM_BASE64, "base64"),
-  )
-    // The published typings omit the (supported) precompiled-module argument.
-    .then((module) =>
-      (initWebpDecoder as unknown as (m: WebAssembly.Module) => Promise<void>)(
-        module,
-      ),
-    )
-    .catch((error: unknown) => {
-      webpDecoderReady = null;
-      throw error;
-    });
-  await webpDecoderReady;
-  const image = await decodeWebpBytes(bytes.slice().buffer);
+  ).catch((error: unknown) => {
+    webpDecoderModule = null;
+    throw error;
+  });
+  const wasm = await webpDecoderModule;
+  defineImageData();
+  const decoder: WebpDecoder = await initEmscriptenModule(
+    webpDecoderFactory,
+    wasm,
+  );
+  const image = decoder.decode(bytes);
+  if (!image) throw new Error("WebP decode failed");
   const data = image.data;
   return {
     width: image.width,
@@ -61,19 +97,51 @@ const decodeWebp = async (bytes: Uint8Array): Promise<Bitmap> => {
 
 /**
  * Decode stripped bytes (no Exif) into a jimp image turned upright for `orientation` (1..8).
- * Throws when the bytes do not decode. GIF goes through jimp too (first frame).
+ * GIF goes through jimp too (first frame, at the logical screen size). Throws when the bytes do
+ * not decode, when the input guards (lib/imageModeration/guards) refuse them, and when the
+ * decoded bitmap is not the size the header announced: the guards bound the decode by the
+ * header alone, so a decoder that reads a bigger image from the same bytes is never let through
+ * (SEC-17). A JPEG is decoded from exactly the bytes its frame was checked in
+ * (jpegDecodeInput), under jpeg-js's own caps on resolution and allocation as a backstop
+ * (SEC-18); hitting one is a throw like any other decode failure. A GIF is decoded from its
+ * checked first frame alone (gifDecodeInput), so omggif cannot meet a block it reads differently
+ * from the guard and decode another, bigger frame (SEC-18).
  */
 export const decodeUpright = async (
-  bytes: Uint8Array,
+  input: Uint8Array,
   format: StrippableFormat | "gif",
   orientation: number,
 ) => {
-  if (format === "webp") {
-    return Jimp.fromBitmap(
-      applyOrientation(await decodeWebp(bytes), orientation),
-    );
+  const bytes =
+    format === "jpeg"
+      ? jpegDecodeInput(input)
+      : format === "gif"
+        ? gifDecodeInput(input)
+        : input;
+  const header = checkImageBytes(bytes);
+  if (!header.ok) throw new Error(`refused before decode: ${header.reason}`);
+  if (header.format !== format) {
+    throw new Error(`refused before decode: ${header.format}, not ${format}`);
   }
-  const image = await Jimp.read(Buffer.from(bytes));
+  const assertHeaderSize = (bitmap: { width: number; height: number }) => {
+    if (bitmap.width !== header.width || bitmap.height !== header.height) {
+      throw new Error(
+        `decoded ${bitmap.width}x${bitmap.height}, the header said ${header.width}x${header.height}`,
+      );
+    }
+  };
+  if (format === "webp") {
+    const bitmap = await decodeWebp(bytes);
+    assertHeaderSize(bitmap);
+    return Jimp.fromBitmap(applyOrientation(bitmap, orientation));
+  }
+  const image = await Jimp.fromBuffer(Buffer.from(bytes), {
+    "image/jpeg": {
+      maxResolutionInMP: MAX_IMAGE_PIXELS / 1e6,
+      maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB,
+    },
+  });
+  assertHeaderSize(image.bitmap);
   if (orientation < 2 || orientation > 8) return image;
   const bitmap = image.bitmap;
   return Jimp.fromBitmap(
@@ -82,6 +150,29 @@ export const decodeUpright = async (
       orientation,
     ),
   );
+};
+
+/**
+ * Longest edge, in pixels, of any image the server re-encodes (pipeline.reencodeImage, and
+ * stripAndNormalise when it turns an image): the long edge the web client re-encodes every photo
+ * to (apps/web/src/lib/prepare-photo.ts MAX_EDGE), so an original that reached the server
+ * unconverted is stored like any other photo. It also bounds the encoders' memory, which follows
+ * their output, not just the pixels: jpeg-js collects the JPEG in a plain JS array (8 bytes and
+ * more per output byte), so a detailed 12 MP re-encode (an 8 MB JPEG) needed more than the 512
+ * MiB a Node action has (SEC-18; measured in guards).
+ */
+export const MAX_REENCODE_EDGE = 1600;
+
+/**
+ * Scale a decoded image down, never up, so its long edge is at most MAX_REENCODE_EDGE, aspect
+ * kept (jimp's default resize, which averages the pixels it drops). Mutates the image.
+ */
+export const fitReencodeEdge = (
+  image: Awaited<ReturnType<typeof decodeUpright>>,
+): void => {
+  const { width, height } = image.bitmap;
+  if (Math.max(width, height) <= MAX_REENCODE_EDGE) return;
+  image.scaleToFit({ w: MAX_REENCODE_EDGE, h: MAX_REENCODE_EDGE });
 };
 
 /** Whether a decoded RGBA bitmap has any pixel that is not fully opaque. */
@@ -138,6 +229,7 @@ export const stripAndNormalise = async (
     format,
     stripped.orientation,
   );
+  fitReencodeEdge(image);
   if (
     format === "png" ||
     (format === "webp" && hasTransparency(image.bitmap.data))

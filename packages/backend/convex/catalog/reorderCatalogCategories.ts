@@ -3,7 +3,9 @@ import {
   toCatalogCategoryId,
 } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
+import { stampModerationAction } from "../admin/stampModerationAction";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
@@ -12,7 +14,8 @@ import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
 
 // Composition root for reordering several taxonomy nodes at once. The use case loads every
-// targeted node first (any missing => CatalogCategoryNotFound, before any write).
+// targeted node first (any missing => CatalogCategoryNotFound, before any write). One reorder is
+// one audit row (categories_reordered, SEC-56), however many nodes moved.
 export const reorderCatalogCategories = mutation({
   args: {
     order: v.array(
@@ -20,7 +23,7 @@ export const reorderCatalogCategories = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
+    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
     if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
 
     const reorder = makeReorderCatalogCategories({
@@ -36,5 +39,11 @@ export const reorderCatalogCategories = mutation({
       })),
     });
     if (result.isErr) throw toConvexError(result.error);
+    await stampModerationAction(ctx, {
+      actorId: adminId,
+      kind: "categories_reordered",
+      targetLabel: "Catalog categories",
+      targetId: "catalogCategories",
+    });
   },
 });

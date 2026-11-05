@@ -4279,7 +4279,14 @@
         "report_content_removed": "<strong>{actor}</strong> verwijderde gemelde inhoud van <strong>{target}</strong>",
         "report_warned": "<strong>{actor}</strong> waarschuwde <strong>{target}</strong> na een melding",
         "message_image_auto_rejected": "<strong>{actor}</strong> heeft een <strong>{target}</strong> automatisch gemarkeerd",
-        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling"
+        "message_image_restored": "<strong>{actor}</strong> heeft een <strong>{target}</strong> hersteld na een verzoek om herbeoordeling",
+        "photo_recheck_requested": "<strong>{actor}</strong> liet een niet-gecontroleerde foto opnieuw controleren (<strong>{target}</strong>)",
+        "category_created": "<strong>{actor}</strong> maakte de categorie <strong>{target}</strong> aan",
+        "category_updated": "<strong>{actor}</strong> bewerkte de categorie <strong>{target}</strong>",
+        "category_deactivated": "<strong>{actor}</strong> deactiveerde de categorie <strong>{target}</strong>",
+        "category_reactivated": "<strong>{actor}</strong> reactiveerde de categorie <strong>{target}</strong>",
+        "categories_reordered": "<strong>{actor}</strong> zette de cataloguscategorieën in een nieuwe volgorde",
+        "contact_message_handled": "<strong>{actor}</strong> markeerde een contactbericht als afgehandeld"
       },
       "activityEmpty": "Nog geen moderatieactiviteit.",
       "screening": {
@@ -4337,8 +4344,17 @@
         "empty": "Geen hash-matches.",
         "operatorNoteTitle": "Wat te doen bij een hash-match",
         "operatorNote": "Deze uploads kwamen overeen met een lijst van bekend beeldmateriaal van seksueel misbruik van kinderen. Ze staan in quarantaine: niemand kan ze zien, ook beheerders niet, en het bestand blijft bewaard. Meld elke match bij Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) of de politie en markeer hem daarna als gemeld. Probeer de afbeelding niet te openen, te downloaden of te delen.",
-        "notConfigured": "Hash-matching staat uit op deze omgeving (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\").",
-        "missingConfig": "Hash-matching is gekozen maar niet ingesteld (ontbreekt: {vars}), dus het draait niet.",
+        "health": {
+          "offTitle": "CSAM-hash-matching staat UIT op deze omgeving",
+          "off": "Uploads worden niet vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen (CSAM_HASHCHECK_PROVIDER is niet \"offlimits\") en foto's worden zonder die controle gepubliceerd.",
+          "missingConfigTitle": "CSAM-hash-matching staat UIT: gekozen maar niet ingesteld",
+          "missingConfig": "Offlimits is gekozen, maar dit ontbreekt: {vars}. Geen enkele upload kan worden vergeleken met lijsten van bekend beeldmateriaal van seksueel misbruik van kinderen, dus nieuwe foto's worden niet gepubliceerd: ze worden tot 7 dagen lang opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
+          "unreachableTitle": "CSAM-hash-matching is onbereikbaar",
+          "held": "{countLabel} {count, plural, one {foto wordt} other {foto's worden}} pas gepubliceerd als de hash-check antwoord geeft (oudste {since}). Details staan onder Hash-matches.",
+          "uncheckedTitle": "Foto's geüpload zonder CSAM-hash-check",
+          "unchecked": "{countLabel} {count, plural, one {foto is} other {foto's zijn}} sinds {since} zonder CSAM-hash-check geüpload. Foto's van vóór het begin van deze telling tellen niet mee: hun hashes zijn niet bewaard.",
+          "recheck": "Hash-matching werkt nu: controleer deze foto's met de eenmalige recheckWaivedHashes (zie het runbook voor eenmalige migraties)."
+        },
         "status": {
           "open": "Open",
           "reported": "Gemeld",
@@ -4359,7 +4375,7 @@
         "markReported": "Markeer als gemeld",
         "close": "Sluiten",
         "updated": "Escalatie bijgewerkt.",
-        "waiting": "Hash-check onbereikbaar: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
+        "waiting": "Nog geen antwoord van de hash-check: {countLabel} {count, plural, one {foto wacht} other {foto's wachten}}, niet gepubliceerd (oudste {since}). Ze worden tot 7 dagen lang automatisch opnieuw gecontroleerd en daarna aan een beheerder overgedragen.",
         "noteBy": "{name}, {time}",
         "addNote": "Notitie toevoegen",
         "timedOut": "Hash-check verlopen: {count, plural, one {# foto wacht} other {# foto's wachten}} al meer dan 7 dagen op een beslissing van een beheerder in Niet-gecontroleerde foto's."

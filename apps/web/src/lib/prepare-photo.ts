@@ -15,7 +15,12 @@
 // metadata (EXIF incl. GPS, XMP, IPTC, comments) before anything is stored,
 // served or screened, and enforces the size and type limits.
 
-const MAX_EDGE = 1600;
+/**
+ * Long edge of every photo upload, in px: this re-encode, and the image editor's bake (copy
+ * photos, circle icons). The server re-encodes to the same edge
+ * (backend normaliseImage.MAX_REENCODE_EDGE) and refuses originals over its pixel cap.
+ */
+export const MAX_EDGE = 1600;
 const QUALITY = 0.8;
 
 /** The file picker's accept list. */

@@ -113,13 +113,12 @@ Who wins when answers cross (every step is one Convex transaction, so the first 
   (one re-check each on the hash re-check pool; a match quarantines and escalates over the
   approval, a no_match is recorded and clears `hashCheckWaivedBy` and `pendingHashes`). **Run it
   right after configuring Offlimits** on a deployment (dry run first); see
-  [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-approved-without-one).
+  [one-shot-migrations.md](one-shot-migrations.md#libimagemoderationrecheckwaivedhashes--hash-check-of-photos-published-without-one).
   A re-check of a waived photo never runs against an unconfigured service (it is skipped,
-  `result: "skipped_unconfigured"`): the "none" adapter's no_match would clear its hashes
-  unchecked.
+  `result: "skipped_unconfigured"`): an unconfigured service cannot answer.
 
 What admins see: a photo waiting on its hash check is counted on **Admin → Moderation → Hash
-matches** ("Hash check unreachable: N photos waiting, unpublished", with the oldest wait). While it
+matches** ("No hash-check answer yet: N photos waiting, unpublished", with the oldest wait). While it
 waits it is not in **Unchecked photos** when the classifier approved it: there is nothing for an
 admin to decide yet, and nobody can publish it before the hash check passes. A waiting photo that
 the classifier could not score does appear there, without a preview, and cannot be approved or
@@ -135,8 +134,31 @@ only looks at photos whose classifier check is still `pending`, so it leaves a p
 waiting on its hash check alone.
 
 The hash check is not configured on dev or prod today (`CSAM_HASHCHECK_PROVIDER` unset means
-"none", which answers no_match at once), so no photo waits and none of this runs until it is.
-When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
+"none"), so no photo waits and none of this runs until it is. Without it the hash service is
+never asked and **nothing is recorded as hash-checked**: the pipeline publishes each photo as
+before, but marks it "not hash-checked" (`hashCheckSkippedAt`; the wide event says
+`csam_hashcheck_status: "skipped"`) and keeps the hashes of the original and the re-encode
+(`pendingHashes`), so it can still be checked once the service is configured. `offlimits` with a
+credential missing is not "off" but an outage: the operator meant checks to run, so photos are
+held unpublished exactly as when the service is unreachable (re-checked for up to 7 days, then
+handed to an admin), and every attempt logs at error level (`csam_hashcheck_config:
+"missing_config"`, `csam_hashcheck_status: "unavailable"`). This is decided in one place
+(`csamHashCheck.skipsHashCheck`). A photo still waiting on a re-check when matching is switched
+off is published the same way by that re-check. Photos published before this marker
+existed kept no hashes and cannot be checked after the fact. Once the service is configured,
+`lib/imageModeration/recheckWaivedHashes` checks these photos as well as the waived ones (a match
+quarantines and escalates, a no_match clears the marker); a re-check of one never runs against
+an unconfigured service (`result: "skipped_unconfigured"`). The admin escalations query
+(`admin/listCsamEscalations`, `hashCheck.uncheckedPhotos`, `uncheckedSince`, `uncheckedCapped`)
+counts them per table through the `by_hash_check_skipped` index, capped at 200 per table. The
+index needs no backfill: only rows published after this change carry the marker.
+**Admin → Moderation** shows this state in a red banner at the top of the page
+(`HashCheckHealth`): "CSAM hash matching is OFF" (provider unset), "OFF: selected but not
+configured" (with the missing variable names; new photos are held), or "unreachable", with the
+count of photos held unpublished, plus the count of photos uploaded without a hash check and the
+date of the oldest. That count is of uploads, not of published photos: it includes photos the
+classifier rejected or a moderator removed later, which a later check still covers. Once matching
+works and that count reaches zero, the banner disappears. When it is configured, run `lib/imageModeration/recheckWaivedHashes` right after (above), and
 `lib/imageModeration/backfillBoxArtHashCheck` for older box art (one-shot-migrations.md).
 
 ## Storage sweep: blobs nothing holds (dry run until the owner enables it)

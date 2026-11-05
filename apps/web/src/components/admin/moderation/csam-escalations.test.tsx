@@ -44,8 +44,11 @@ const data = (overrides: Partial<CsamEscalations> = {}): CsamEscalations => ({
     missingVars: [],
     waitingPhotos: 0,
     oldestWaitingSince: null,
-    waitingCap: 200,
+    waitingCapped: false,
     timedOutPhotos: 0,
+    uncheckedPhotos: 0,
+    uncheckedSince: null,
+    uncheckedCapped: false,
   },
   escalations: [escalation()],
   ...overrides,
@@ -151,7 +154,7 @@ describe("CsamEscalationsPanel", () => {
     expect(container.querySelectorAll("button")).toHaveLength(0);
   });
 
-  it("warns when hash matching is not running", () => {
+  it("leaves 'hash matching is not running' to the page banner (HashCheckHealth)", () => {
     render({
       data: data({
         hashCheck: {
@@ -160,13 +163,17 @@ describe("CsamEscalationsPanel", () => {
           missingVars: ["OFFLIMITS_HCS_PASSWORD"],
           waitingPhotos: 0,
           oldestWaitingSince: null,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 0,
+          uncheckedPhotos: 0,
+          uncheckedSince: null,
+          uncheckedCapped: false,
         },
         escalations: [],
       }),
     });
-    expect(container.textContent).toContain("OFFLIMITS_HCS_PASSWORD");
+    expect(container.textContent).not.toContain("OFFLIMITS_HCS_PASSWORD");
+    expect(container.querySelector('[role="status"]')).toBeNull();
     expect(container.textContent).toContain("No hash matches.");
   });
 
@@ -179,15 +186,35 @@ describe("CsamEscalationsPanel", () => {
           missingVars: [],
           waitingPhotos: 3,
           oldestWaitingSince: NOW - 2 * 3_600_000,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 0,
+          uncheckedPhotos: 0,
+          uncheckedSince: null,
+          uncheckedCapped: false,
         },
       }),
     });
     expect(container.textContent).toContain(
-      "Hash check unreachable: 3 photos waiting",
+      "No hash-check answer yet: 3 photos waiting",
     );
     expect(container.textContent).toContain("2 hours ago");
+  });
+
+  it("marks the waiting count with a plus only when a table hit its cap", () => {
+    const waiting = (waitingPhotos: number, waitingCapped: boolean) =>
+      data({
+        hashCheck: {
+          ...data().hashCheck,
+          waitingPhotos,
+          waitingCapped,
+          oldestWaitingSince: NOW - 3_600_000,
+        },
+      });
+    render({ data: waiting(250, false) });
+    expect(container.textContent).toContain("250 photos waiting");
+    expect(container.textContent).not.toContain("250+");
+    render({ data: waiting(200, true) });
+    expect(container.textContent).toContain("200+ photos waiting");
   });
 
   it("points to the admin queue when hash checks timed out", () => {
@@ -199,8 +226,11 @@ describe("CsamEscalationsPanel", () => {
           missingVars: [],
           waitingPhotos: 0,
           oldestWaitingSince: null,
-          waitingCap: 200,
+          waitingCapped: false,
           timedOutPhotos: 2,
+          uncheckedPhotos: 0,
+          uncheckedSince: null,
+          uncheckedCapped: false,
         },
       }),
     });

@@ -63,7 +63,11 @@ const awaitsTimeoutDecision = <T extends GenericTableInfo>(
 // it then). Never before, to anyone.
 const adminUrl = (
   ctx: QueryCtx,
-  row: { hashCheckedAt?: number; hashCheckPendingSince?: number },
+  row: {
+    hashCheckedAt?: number;
+    hashCheckPendingSince?: number;
+    moderationStatus?: string;
+  },
   status: Status,
   fileId: Id<"_storage">,
 ) =>

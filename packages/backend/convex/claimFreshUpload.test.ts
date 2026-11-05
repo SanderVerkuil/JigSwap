@@ -1,5 +1,6 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
+import { Jimp } from "jimp";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   settleDueScheduled,
@@ -107,38 +108,19 @@ const storeBytes = (t: T) =>
       ) as Promise<Id<"_storage">>,
   );
 
-// A well-formed 2x2 WebP with a unique payload (as in completionModeration.test.ts): it passes
-// the input guards and is approved as uploaded (no re-encode swap), so its id stays attached.
-const storeWebp = (t: T) => {
-  const body = new Uint8Array([
-    0x2f,
-    0x01,
-    0x40,
-    0x00,
-    0x00,
-    ...new TextEncoder().encode(crypto.randomUUID()),
-    0,
-  ]);
-  const chunk = body.length - 1;
-  const riff = 4 + 8 + body.length;
-  const bytes = new Uint8Array([
-    ...new TextEncoder().encode("RIFF"),
-    riff & 0xff,
-    riff >> 8,
-    0,
-    0,
-    ...new TextEncoder().encode("WEBPVP8L"),
-    chunk & 0xff,
-    chunk >> 8,
-    0,
-    0,
-    ...body,
-  ]);
+// A real 2x2 PNG (as in completionModeration.test.ts): it passes the input guards and is approved,
+// and the pipeline swaps the row to its re-encode, so the upload's id does not stay attached.
+const storePng = async (t: T) => {
+  const png = await new Jimp({
+    width: 2,
+    height: 2,
+    color: 0x00000080,
+  }).getBuffer("image/png");
   return t.run(
     (ctx) =>
-      ctx.storage.store(new Blob([bytes], { type: "image/webp" })) as Promise<
-        Id<"_storage">
-      >,
+      ctx.storage.store(
+        new Blob([new Uint8Array(png)], { type: "image/png" }),
+      ) as Promise<Id<"_storage">>,
   );
 };
 
@@ -236,7 +218,7 @@ describe("claiming an upload as a copy or completion photo", () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { aliceCopy, bobCopy } = await seed(t);
     const bobCompletion = await recordCompletion(t, "bob", bobCopy.aggregateId);
-    const alicePhoto = await storeWebp(t);
+    const alicePhoto = await storePng(t);
     await addCopyPhoto(t, "alice", aliceCopy.id, alicePhoto);
 
     expect(
@@ -364,10 +346,13 @@ describe("claiming an upload as a copy or completion photo", () => {
       "alice",
       aliceCopy.aggregateId,
     );
-    const photo = await storeWebp(t);
+    const upload = await storePng(t);
 
-    await attachCompletionPhotos(t, "alice", completionId, [photo]);
+    await attachCompletionPhotos(t, "alice", completionId, [upload]);
     await settleDueScheduled(t);
+    // Every accepted image is stored as its re-encode: this is the id the completion holds now.
+    const [{ fileId: photo }] = await completionPhotos(t);
+    expect(photo).not.toBe(upload);
     await attachCompletionPhotos(t, "alice", completionId, [photo, photo]);
 
     expect((await completionPhotos(t)).map((p) => p.fileId)).toEqual([photo]);

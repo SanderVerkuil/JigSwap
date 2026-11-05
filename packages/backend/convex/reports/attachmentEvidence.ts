@@ -13,6 +13,7 @@ import {
   deleteIfOrphaned,
   deleteReveals,
 } from "../conversation/messageAttachments";
+import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { logEvent } from "../lib/logEvent";
 
 // Evidence for a message photo a moderator removed (admin/decideReport, content_removed). A
@@ -25,6 +26,10 @@ import { logEvent } from "../lib/logEvent";
 // Failure: a throwing attempt is retried with EVIDENCE_RETRY_DELAYS_MS. A missing source blob,
 // or a copy still failing after the last attempt, is recorded as `evidenceMissing` and the served
 // blob is deleted anyway: killing the photo's public URL wins over keeping evidence.
+//
+// Never a copy of quarantined (CSAM-matched) bytes: a photo quarantined by now, or a blob a CSAM
+// escalation preserves, is recorded as `evidenceMissing` without a copy. The escalation's preserved
+// blob is the only copy of those bytes, and nobody is shown it (lib/imageModeration/quarantine).
 //
 // Retention: each copy has its purge scheduled for `evidenceRetainUntil` (scheduler.runAt, durable
 // across deploys, exact to the copy) rather than a daily cron sweep; the repo has no crons yet and
@@ -53,11 +58,20 @@ export const EVIDENCE_MAX_ATTEMPTS = EVIDENCE_RETRY_DELAYS_MS.length + 1;
 
 export const loadEvidenceSource = internalQuery({
   args: { attachmentId: v.id("messageAttachments") },
-  handler: async (ctx, { attachmentId }) => {
+  handler: async (
+    ctx,
+    { attachmentId },
+  ): Promise<{ fileId: Id<"_storage"> } | { quarantined: true } | null> => {
     const row = await ctx.db.get(attachmentId);
+    if (row?.kind === "image" && row.moderationStatus === "quarantined") {
+      return { quarantined: true };
+    }
     // A photo's blob, or a shared location's map preview (none when its render failed).
     const fileId = row?.kind === "image" ? row.fileId : row?.mapFileId;
-    return fileId ? { fileId } : null;
+    if (!fileId) return null;
+    return (await isPreservedBlob(ctx, fileId))
+      ? { quarantined: true }
+      : { fileId };
   },
 });
 
@@ -74,6 +88,21 @@ export const preserveEvidence = internalAction({
         internal.reports.attachmentEvidence.loadEvidenceSource,
         { attachmentId },
       );
+      if (source && "quarantined" in source) {
+        logEvent({
+          event: "reports.preserveEvidence",
+          outcome: "success",
+          report_id: reportId,
+          attachment_id: attachmentId,
+          attempt: n,
+          result: "source_quarantined",
+        });
+        await ctx.runMutation(
+          internal.reports.attachmentEvidence.recordEvidence,
+          { reportId, attachmentId },
+        );
+        return;
+      }
       const blob = source ? await ctx.storage.get(source.fileId) : null;
       if (!blob) {
         logEvent({

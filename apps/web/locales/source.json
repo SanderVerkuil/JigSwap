@@ -4279,7 +4279,14 @@
         "report_content_removed": "<strong>{actor}</strong> removed reported content from <strong>{target}</strong>",
         "report_warned": "<strong>{actor}</strong> warned <strong>{target}</strong> after a report",
         "message_image_auto_rejected": "<strong>{actor}</strong> auto-flagged a <strong>{target}</strong>",
-        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request"
+        "message_image_restored": "<strong>{actor}</strong> restored a <strong>{target}</strong> after a review request",
+        "photo_recheck_requested": "<strong>{actor}</strong> had an unchecked photo checked again (<strong>{target}</strong>)",
+        "category_created": "<strong>{actor}</strong> created the category <strong>{target}</strong>",
+        "category_updated": "<strong>{actor}</strong> edited the category <strong>{target}</strong>",
+        "category_deactivated": "<strong>{actor}</strong> deactivated the category <strong>{target}</strong>",
+        "category_reactivated": "<strong>{actor}</strong> reactivated the category <strong>{target}</strong>",
+        "categories_reordered": "<strong>{actor}</strong> reordered the catalog categories",
+        "contact_message_handled": "<strong>{actor}</strong> marked a contact message as handled"
       },
       "activityEmpty": "No moderation activity yet.",
       "screening": {
@@ -4337,8 +4344,17 @@
         "empty": "No hash matches.",
         "operatorNoteTitle": "What to do with a hash match",
         "operatorNote": "These uploads matched a list of known child sexual abuse material. They are quarantined: nobody can see them, admins included, and the file is kept. Report each one to Meldpunt Offlimits (<link>meldpunt.offlimits.nl</link>) or the police, then mark it reported. Do not try to open, download or share the image.",
-        "notConfigured": "Hash matching is off on this deployment (CSAM_HASHCHECK_PROVIDER is not \"offlimits\").",
-        "missingConfig": "Hash matching is selected but not configured (not set: {vars}), so it is not running.",
+        "health": {
+          "offTitle": "CSAM hash matching is OFF on this deployment",
+          "off": "Uploads are not compared with lists of known child sexual abuse material (CSAM_HASHCHECK_PROVIDER is not \"offlimits\"), and photos are published without that check.",
+          "missingConfigTitle": "CSAM hash matching is OFF: selected but not configured",
+          "missingConfig": "Offlimits is selected, but not set: {vars}. No upload can be compared with lists of known child sexual abuse material, so new photos are held unpublished: they are re-checked for up to 7 days, then handed to an admin.",
+          "unreachableTitle": "CSAM hash matching is unreachable",
+          "held": "{countLabel} {count, plural, one {photo is} other {photos are}} held unpublished until the hash check answers (oldest {since}). Details are under Hash matches.",
+          "uncheckedTitle": "Photos uploaded without a CSAM hash check",
+          "unchecked": "{countLabel} {count, plural, one {photo was} other {photos were}} uploaded without a CSAM hash check since {since}. Photos uploaded before this count started are not included: their hashes were not kept.",
+          "recheck": "Hash matching works now: check these photos with the one-shot recheckWaivedHashes (see the one-shot migrations runbook)."
+        },
         "status": {
           "open": "Open",
           "reported": "Reported",
@@ -4359,7 +4375,7 @@
         "markReported": "Mark reported",
         "close": "Close",
         "updated": "Escalation updated.",
-        "waiting": "Hash check unreachable: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
+        "waiting": "No hash-check answer yet: {countLabel} {count, plural, one {photo} other {photos}} waiting, unpublished (oldest {since}). They are re-checked automatically for up to 7 days, then handed to an admin.",
         "noteBy": "{name}, {time}",
         "addNote": "Add note",
         "timedOut": "Hash check timed out: {count, plural, one {# photo} other {# photos}} waited over 7 days and {count, plural, one {needs} other {need}} an admin decision in Unchecked photos."

@@ -152,9 +152,14 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     // The uploader's own box art still being checked (catalog/boxArtInCheck).
     .index("by_uploader_status", ["uploaderId", "moderationStatus"])
+    // ... and its own box art waiting on its hash check, read per uploader so other members'
+    // waiting rows are never scanned (catalog/boxArtInCheck).
+    .index("by_uploader_hash_pending", ["uploaderId", "hashCheckPendingSince"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
-    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"]),
 
   // Puzzles  - the actual puzzle designs that exist in the world
   puzzles: defineTable({
@@ -426,9 +431,9 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
-    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob, or
-    // re-stored a WebP under its real type. Absent = the stored blob is still the upload as sent;
-    // the pipeline re-encodes on any attempt until this is set.
+    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob (or,
+    // before every WebP was re-encoded, to a WebP's stripped bytes). Absent = the stored blob is
+    // still the upload as sent; the pipeline re-encodes on any attempt until this is set.
     reencodedAt: v.optional(v.number()),
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
@@ -445,6 +450,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // Whether a blob is already a copy photo (message-photo claims refuse it).
     .index("by_file", ["fileId"])
     // Account deletion: the photos a member uploaded (conversation/purgeMemberMessagingData).
@@ -571,9 +578,9 @@ export default defineSchema({
     // other members in place of a photo that is still pending/unscored; never exposed for a
     // rejected one. Absent on rows processed before it existed or whose decode failed.
     blurhash: v.optional(v.string()),
-    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob, or
-    // re-stored a WebP under its real type. Absent = the stored blob is still the upload as sent;
-    // the pipeline re-encodes on any attempt until this is set.
+    // When the moderation pipeline swapped the row to its re-encoded (EXIF/GPS-stripped) blob (or,
+    // before every WebP was re-encoded, to a WebP's stripped bytes). Absent = the stored blob is
+    // still the upload as sent; the pipeline re-encodes on any attempt until this is set.
     reencodedAt: v.optional(v.number()),
     // The admin who decided this photo by hand (approve/reject of a pending or unscored photo).
     // A manual decision is final: the re-screen backfill skips such rows.
@@ -588,6 +595,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // Whether a blob is already a completion photo (message-photo claims refuse it).
     .index("by_file", ["fileId"]),
 
@@ -692,6 +701,15 @@ export default defineSchema({
       v.literal("report_warned"),
       v.literal("message_image_auto_rejected"),
       v.literal("message_image_restored"),
+      // Admin writes outside the moderation queues (review 2026-10-29, SEC-56). None feeds a
+      // KPI (admin/getModerationStats). Labels never carry a member's personal data.
+      v.literal("photo_recheck_requested"),
+      v.literal("category_created"),
+      v.literal("category_updated"),
+      v.literal("category_deactivated"),
+      v.literal("category_reactivated"),
+      v.literal("categories_reordered"),
+      v.literal("contact_message_handled"),
     ),
     targetLabel: v.string(), // denormalized display title at decision time
     targetId: v.string(),
@@ -1144,6 +1162,8 @@ export default defineSchema({
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
     .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"])
     // A member's own attachments, for the account-deletion purge.
     .index("by_uploader", ["uploaderId"]),
 
@@ -1492,7 +1512,9 @@ export default defineSchema({
     .index("by_moderation_status", ["moderationStatus"])
     .index("by_hash_check_pending", ["hashCheckPendingSince"])
     // Timed-out hash checks still closed (admin/listUncheckedPhotos): hashCheckedAt undefined.
-    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"]),
+    .index("by_hash_check_timed_out", ["hashCheckedAt", "hashCheckTimedOutAt"])
+    // Published without a hash check, none configured (admin/listCsamEscalations counts them).
+    .index("by_hash_check_skipped", ["hashCheckSkippedAt"]),
 
   // Member-lookup projection of `circles.memberships`, kept in sync by the repository on every save.
   // Lets "every circle a member belongs to" be an indexed read (Convex can't index embedded arrays).

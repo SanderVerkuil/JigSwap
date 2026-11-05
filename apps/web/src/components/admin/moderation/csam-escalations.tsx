@@ -3,8 +3,9 @@
 // "Hash matches" tab: CSAM hash-list matches the pipeline quarantined, for the operator to report.
 // Metadata only. The backend never returns an image, thumbnail or blurhash for these, and this
 // pane must never try to show one. An operator note on top says what to do (report to Meldpunt
-// Offlimits or the police, never open or download), a warning when hash matching is not running,
-// then one row per escalation with "Mark reported" (plus an optional reference) or "Close".
+// Offlimits or the police, never open or download), the photos waiting on or timed out of a hash
+// check, then one row per escalation with "Mark reported" (plus an optional reference) or "Close".
+// Whether hash matching runs at all is the page-level banner's job (HashCheckHealth), not this tab's.
 import { QueueEmpty } from "@/components/admin/queue-empty";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,27 +72,10 @@ export function CsamEscalationsPanel({
         </div>
       </div>
 
-      {hashCheck.status !== "ok" && (
-        <div
-          role="status"
-          className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
-        >
-          <TriangleAlert
-            className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400"
-            aria-hidden
-          />
-          <p className="text-muted-foreground">
-            {hashCheck.status === "missing_config"
-              ? t("missingConfig", { vars: hashCheck.missingVars.join(", ") })
-              : t("notConfigured")}
-          </p>
-        </div>
-      )}
-
       {hashCheck.waitingPhotos > 0 && (
         <WaitingNotice
           count={hashCheck.waitingPhotos}
-          capped={hashCheck.waitingPhotos >= hashCheck.waitingCap}
+          capped={hashCheck.waitingCapped}
           since={hashCheck.oldestWaitingSince}
         />
       )}

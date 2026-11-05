@@ -136,7 +136,28 @@ describe("makeSightengineModerationPort", () => {
     const media = form.get("media") as File;
     expect(media.type).toBe("image/jpeg");
     expect(new Uint8Array(await media.arrayBuffer())).toEqual(bytes);
+    expect(media.name).toBe("photo.jpg");
     expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  // The file name says the same format as the type: a stored WebP (a re-screen of an older
+  // photo) is never sent as photo.jpg.
+  test.each([
+    ["image/jpeg", "photo.jpg"],
+    ["image/png", "photo.png"],
+    ["image/webp", "photo.webp"],
+    ["image/gif", "photo.gif"],
+    [undefined, "photo.jpg"],
+  ])("an image of type %s is uploaded as %s", async (mime, name) => {
+    const fetchImpl = reply(nudity({}));
+    await port(fetchImpl).classify(bytes, mime);
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    const media = (init.body as FormData).get("media") as File;
+    expect(media.name).toBe(name);
+    expect(media.type).toBe(mime ?? "application/octet-stream");
   });
 
   test("an explicit image is rejected", async () => {

@@ -36,6 +36,7 @@ export const getImageForModeration = internalQuery({
       hashCheckedAt: row.hashCheckedAt,
       pendingHashes: row.pendingHashes,
       hashCheckWaivedBy: row.hashCheckWaivedBy,
+      hashCheckSkippedAt: row.hashCheckSkippedAt,
       // Business context for the wide event (which completion / who uploaded).
       completionId: row.completionId,
       uploaderId: row.uploaderId,
@@ -186,6 +187,8 @@ export const quarantineImage = internalMutation({
         moderationStatus: "quarantined",
         ...(match.fileId ? { fileId: match.fileId } : {}),
         pendingHashes: undefined,
+        // A quarantined photo waits on nothing: it leaves the hash-pending index (SEC-55).
+        hashCheckPendingSince: undefined,
         updatedAt: Date.now(),
       });
       const completion = await ctx.db

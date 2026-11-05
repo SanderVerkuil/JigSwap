@@ -2,6 +2,14 @@ import { readFileSync } from "node:fs";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  craftPng,
+  iendChunk,
+  ihdrChunk,
+  pngChunk,
+  transparentIdat,
+  transparentPng,
+} from "../test-fixtures/craftPng";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { readImageDimensions } from "./lib/imageModeration/guards";
@@ -98,8 +106,8 @@ const sanitize = (t: TestConvex<typeof schema>, storageId: Id<"_storage">) =>
   asAlice(t).action(api.catalog.sanitizeBoxArt.sanitizeBoxArt, { storageId });
 
 describe("sanitizeBoxArt", () => {
-  // Each fixture's Exif holds Orientation 6, so each is stored turned upright (a turned WebP as
-  // JPEG: jimp has no WebP encoder); an upright WebP is stored as its stripped bytes.
+  // Each gps fixture's Exif holds Orientation 6, so each is stored turned upright. Every WebP is
+  // decoded and re-encoded, turned or not: as JPEG, there is no WebP encoder on the server.
   test.each([
     ["JPEG", "gps.jpg", "image/jpeg", "image/jpeg", "jpeg", [48, 64]],
     ["PNG", "gps.png", "image/png", "image/png", "png", [30, 40]],
@@ -108,8 +116,8 @@ describe("sanitizeBoxArt", () => {
       "upright WebP",
       "orientation/1.webp",
       "image/webp",
-      "image/webp",
-      "webp",
+      "image/jpeg",
+      "jpeg",
       [24, 16],
     ],
   ] as const)(
@@ -158,6 +166,23 @@ describe("sanitizeBoxArt", () => {
       fixture("gps.jpg").subarray(0, 3300),
       "image/jpeg",
       "malformed",
+    ],
+    [
+      "an interlaced PNG",
+      transparentPng(5, 5, { interlaced: true }),
+      "image/png",
+      "interlaced",
+    ],
+    [
+      "an APNG",
+      craftPng(
+        ihdrChunk(2, 2),
+        pngChunk("acTL", new Uint8Array([0, 0, 0, 1, 0, 0, 0, 0])),
+        transparentIdat(2, 2),
+        iendChunk(),
+      ),
+      "image/png",
+      "animated",
     ],
   ] as const)(
     "%s is refused and the upload deleted",

@@ -12,12 +12,16 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import {
+  ArrowUpDown,
   CheckCircle,
   Eye,
   EyeOff,
   Flag,
+  FolderPlus,
   ImageOff,
+  MailCheck,
   Pencil,
+  RefreshCw,
   ShieldAlert,
   ShieldCheck,
   ShieldOff,
@@ -56,6 +60,13 @@ const KIND_META: Record<ActivityRow["kind"], [LucideIcon, string]> = {
   report_warned: [Flag, "text-jigsaw-warning"],
   message_image_auto_rejected: [Flag, "text-jigsaw-warning"],
   message_image_restored: [Undo2, "text-muted-foreground"],
+  photo_recheck_requested: [RefreshCw, "text-muted-foreground"],
+  category_created: [FolderPlus, "text-jigsaw-success"],
+  category_updated: [Pencil, "text-muted-foreground"],
+  category_deactivated: [EyeOff, "text-jigsaw-warning"],
+  category_reactivated: [Eye, "text-jigsaw-success"],
+  categories_reordered: [ArrowUpDown, "text-muted-foreground"],
+  contact_message_handled: [MailCheck, "text-muted-foreground"],
 };
 
 // Single source of truth for "kinds with an admin.moderation.activity.* message":

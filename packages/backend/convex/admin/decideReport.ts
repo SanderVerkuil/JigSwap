@@ -4,7 +4,10 @@ import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { toLastMessage } from "../conversation/adapters/threadMapper";
-import { releaseEvidenceHold } from "../conversation/messageAttachments";
+import {
+  asImage,
+  releaseEvidenceHold,
+} from "../conversation/messageAttachments";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
 import { makeNotify } from "../notifications/adapters/makeNotify";
@@ -92,9 +95,14 @@ export const decideReport = mutation({
     }
 
     // A reported message photo: on removal, copy its bytes into report-only evidence (which then
-    // deletes the served blob and releases the hold); otherwise just release the hold.
+    // deletes the served blob and releases the hold); otherwise just release the hold. A
+    // quarantined photo (CSAM hash match) is never copied: its bytes stay only in the
+    // escalation's preserved blob, which nobody is shown (lib/imageModeration/quarantine).
     const attachmentId = await reportedAttachmentOf(ctx, report);
-    if (attachmentId && decision === "content_removed") {
+    const quarantined =
+      asImage(attachmentId ? await ctx.db.get(attachmentId) : null)
+        ?.moderationStatus === "quarantined";
+    if (attachmentId && decision === "content_removed" && !quarantined) {
       await ctx.db.patch(report._id, { evidencePendingSince: now });
       await ctx.scheduler.runAfter(
         0,
@@ -175,7 +183,8 @@ const blankLastMessageSummary = async (ctx: MutationCtx, messageId: string) => {
 
 // Tombstone a message: its body and copy reference are cleared, and an image message's photo is
 // marked "removed", a location message's place `removedAt` (their blobs go once
-// reports/attachmentEvidence has copied them). Idempotent.
+// reports/attachmentEvidence has copied them). A quarantined photo stays "quarantined": the
+// quarantine rules (never served, never copied, kept whole) must keep applying to it. Idempotent.
 const tombstoneMessage = async (
   ctx: MutationCtx,
   messageId: string,
@@ -198,7 +207,8 @@ const tombstoneMessage = async (
     : null;
   if (
     attachment?.kind === "image" &&
-    attachment.moderationStatus !== "removed"
+    attachment.moderationStatus !== "removed" &&
+    attachment.moderationStatus !== "quarantined"
   ) {
     await ctx.db.patch(attachment._id, {
       moderationStatus: "removed",
@@ -236,8 +246,9 @@ const reportedAttachmentOf = async (
 // so the content is gone from the database, not just hidden; the report's evidence snapshot
 // keeps the original), remove a message photo with its message, delete a copy photo. A target
 // that is already
-// gone (removed, or its author deleted it) needs nothing more. Other kinds have no content an
-// admin can remove here.
+// gone (removed, or its author deleted it) needs nothing more, and a quarantined copy photo is
+// kept whole, row and blob (the CSAM preservation owns it; it is already shown to nobody). Other
+// kinds have no content an admin can remove here.
 const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
   switch (report.targetKind) {
     case "message": {
@@ -258,7 +269,7 @@ const removeContent = async (ctx: MutationCtx, report: Doc<"reports">) => {
     case "photo": {
       const imageId = ctx.db.normalizeId("ownedPuzzleImages", report.targetId);
       const image = imageId ? await ctx.db.get(imageId) : null;
-      if (image) {
+      if (image && image.moderationStatus !== "quarantined") {
         await deleteCopyPhoto(
           ctx,
           image,

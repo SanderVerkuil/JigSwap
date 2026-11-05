@@ -269,6 +269,8 @@ describe("the timeout", () => {
   });
 
   test("a re-check that finds the service still unavailable past the timeout ends the chain", async () => {
+    // (Without a configured service the re-check would not ask it: SEC-03.)
+    configureHashService();
     const t = withModerationPool(convexTest(schema, modules));
     const s = await seed(t, { waitedMs: pastTimeout, attempt: 9 });
     const enqueued = vi.spyOn(hashRecheckPool, "enqueueAction");

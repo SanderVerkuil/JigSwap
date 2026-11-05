@@ -7,23 +7,86 @@
 //   HEIC, ...) is refused, whatever content type the client claimed.
 // - Pixels: the width x height read from the header is at most MAX_IMAGE_PIXELS, so a tiny file
 //   that would decompress to a huge bitmap (a decompression bomb) is refused before decode.
+//   That only holds when the decoder reads the same size from the same bytes, so a header a
+//   decoder could read differently is refused too, and the decode itself checks the bitmap it
+//   got against the header (normaliseImage.decodeUpright).
 //
-// WebP: jimp 1.x has no WebP codec, so the pipeline does not re-encode an upright WebP. It strips
-// the WebP's EXIF/XMP chunks at byte level instead (stripMetadata) and stores those bytes (no
-// blurhash). One whose EXIF held an Orientation is decoded (WASM, normaliseImage), turned
-// upright and re-encoded like JPEG/PNG.
+// Memory: a Node action has 512 MiB, and a decode that runs past it kills the attempt before
+// anything is refused, so the upload is retried and crashes again. MAX_IMAGE_PIXELS and
+// MAX_JPEG_BLOCKS come from measuring the pipeline's decode, scale to 1600 px
+// (normaliseImage.MAX_REENCODE_EDGE), re-encode and blurhash (Node 26, jimp 1.6.1, 2026-10-31)
+// as the smallest cgroup (no swap) each image completes in. "Detailed" is a high-entropy image
+// whose JPEG nearly fills the 10 MB upload limit; "smooth" a plasma fill of a few MB:
+//   JPEG 4:2:0 4080x3072 (293,760 blocks), detailed 9.3 MB   401 MiB  the worst accepted (o=6: 394)
+//   JPEG 4:2:0 4080x3072 smooth 380; 4096x3061 (294,912 blocks) Orientation 6: 380
+//   JPEG 4:2:0 4032x3024 detailed 8.5 MB                      387; WITHOUT the scale 513 (killed)
+//   JPEG 4:2:0 5000x5000                                      OOM-killed at 512 MiB, refused
+//   JPEG 4:4:4 4032x3024 (571,536 blocks)                     611 MiB, refused
+//   JPEG 4:4:4 2896x2176 (295,392 blocks) detailed 345; CMYK 2504x1880 (294,220) detailed 324
+//   JPEG of 779 bytes, 1x65535, 255 components sampled 15x15: 1.4 GiB, refused
+//   JPEG of 111 bytes, CMYK 80x59200 (296,000 blocks): 373 MiB
+//   PNG RGBA 16-bit 4080x3072 331 MiB; WebP lossless 4080x3072 184; GIF 4032x3024 191
+// jpeg-js's memory follows its blocks (about 800 bytes each), not the pixels, so a JPEG is
+// bounded by both; the encoders' memory follows their output, which the scale bounds. A deployed
+// action carries more than this measurement, hence the headroom (111 MiB at the worst).
+//
+// JPEG: jpeg-js (jimp's decoder) allocates the blocks of every frame header it meets, as many as
+// the components and their sampling ask for, whatever the pixel count. A JPEG is accepted only
+// when the bytes the decoder is given (jpegDecodeInput: without APPn and COM segments) hold
+// exactly one frame header, of 1 to 4 components sampled 1..4, whose blocks fit MAX_JPEG_BLOCKS.
+// jpeg-js's own caps (maxResolutionInMP, maxMemoryUsageInMB: JPEG_DECODER_MEMORY_MB) back that
+// up in decodeUpright.
+//
+// PNG: pngjs (jimp's decoder) takes the size from EVERY IHDR it meets, so the last one decides
+// the bitmap, and it inflates an interlaced (Adam7) image with no bound on the output. A PNG is
+// accepted only with exactly one IHDR, as its first chunk, and not interlaced ("interlaced");
+// the non-interlaced inflate is bounded by that IHDR's size. An APNG (an acTL chunk) is refused
+// ("animated"): jimp has no APNG decoder, and its frames are not what a still decode shows.
+//
+// WebP: libwebp (the WASM decoder, normaliseImage) decodes one still image, the VP8 (lossy) or
+// VP8L (lossless) bitstream that is the first chunk or, behind a VP8X (extended) header, the
+// first one after it. A WebP is accepted only as such a still: an animation (the VP8X animation
+// flag, or an ANIM or ANMF chunk anywhere) is refused ("animated"), and behind a VP8X header the
+// bitstream must be exactly the canvas size, so the size checked is the size decoded.
+// jimp 1.x has no WebP codec, so the pipeline decodes every WebP with the WASM decoder
+// (normaliseImage) and re-encodes it like JPEG/PNG (JPEG, or PNG when it has transparency, with
+// a blurhash): a WebP is never stored as the container it was uploaded in.
 // WebP stays accepted because phones and browsers hand it over and the web client may upload the
 // original when it cannot re-encode in the browser.
 //
 // GIF: jimp decodes the first frame into a bitmap of the logical screen size (omggif), so the
 // screen size bounds the decode, and the first frame must fit inside the screen; the re-encode
-// keeps that one frame.
+// keeps that one frame, so an animated GIF is stored (and classified) as its first frame. The
+// blocks before that frame are walked exactly as omggif walks them, so the frame checked is the
+// frame it decodes; a block omggif would read differently, or refuse, is refused here. As a
+// backstop the decoder is given that frame alone (gifDecodeInput), like JPEG's jpegDecodeInput.
 
 /** Largest accepted upload, in bytes (10 MB). */
 export const MAX_IMAGE_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-/** Largest accepted image, in pixels (25 MP). */
-export const MAX_IMAGE_PIXELS = 25_000_000;
+/**
+ * Largest accepted image, in pixels: 12.54 MP, a 12 MP phone photo (an iPhone's 4032 x 3024, a
+ * Pixel's 4080 x 3072); see the header.
+ */
+export const MAX_IMAGE_PIXELS = 12_540_000;
+
+/**
+ * Most 8x8 blocks jpeg-js may allocate for a JPEG's frame (see jpegHeader): what a 4:2:0 photo
+ * of MAX_IMAGE_PIXELS needs (293,760 for 4080 x 3072), with room for MCU padding. A 4:4:4 JPEG
+ * fits up to about 6.3 MP, a CMYK one up to about 4.7 MP.
+ */
+export const MAX_JPEG_BLOCKS = 296_000;
+
+/**
+ * jpeg-js's own cap on what it allocates (its `maxMemoryUsageInMB`, which counts MiB), a backstop
+ * behind the frame check: for the largest frame the guards accept, its blocks as jpeg-js counts
+ * them (256 bytes each) and their sample lines (64 bytes per block), its colour and RGBA pixels
+ * (8 bytes per pixel), plus 10 MiB for tables.
+ */
+export const JPEG_DECODER_MEMORY_MB =
+  Math.ceil(
+    (MAX_JPEG_BLOCKS * (256 + 64) + MAX_IMAGE_PIXELS * 8) / (1024 * 1024),
+  ) + 10;
 
 export type ImageFormat = "jpeg" | "png" | "webp" | "gif";
 
@@ -32,7 +95,9 @@ export type ImageGuardFailure =
   | "too_large" // more than MAX_IMAGE_UPLOAD_BYTES
   | "unsupported_format" // the magic bytes are not JPEG / PNG / WebP / GIF
   | "unreadable_header" // a supported format whose header has no usable dimensions
-  | "too_many_pixels" // more than MAX_IMAGE_PIXELS
+  | "too_many_pixels" // more than MAX_IMAGE_PIXELS, or (JPEG) more than MAX_JPEG_BLOCKS
+  | "interlaced" // an interlaced (Adam7) PNG, whose decode has no output bound
+  | "animated" // an animated WebP or an APNG: only a still image is decoded
   | "decode_failed"; // a header over a body that does not decode (set by the pipeline)
 
 /** The verdict label a refused upload is recorded with. */
@@ -56,8 +121,22 @@ const u24le = (b: Uint8Array, i: number): number =>
   b[i] | (b[i + 1] << 8) | (b[i + 2] << 16);
 const u32be = (b: Uint8Array, i: number): number =>
   ((b[i] << 24) >>> 0) + ((b[i + 1] << 16) | (b[i + 2] << 8) | b[i + 3]);
+const u32le = (b: Uint8Array, i: number): number =>
+  (b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24)) >>> 0;
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/**
+ * What a header says about the decode: its size, (PNG) whether it is interlaced, (PNG, WebP)
+ * whether it is an animation, and (JPEG) the 8x8 blocks the decoder allocates for it.
+ */
+type Header = {
+  width: number;
+  height: number;
+  interlaced?: boolean;
+  animated?: boolean;
+  jpegBlocks?: number;
+};
 
 /** The image format the magic bytes announce, or null for anything else. */
 export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
@@ -80,69 +159,181 @@ export const sniffImageFormat = (bytes: Uint8Array): ImageFormat | null => {
   return null;
 };
 
-// JPEG: walk the marker segments up to the first start-of-frame (SOF0..SOF15, except DHT C4,
-// JPG C8 and DAC CC), whose payload is [precision][height u16][width u16].
-const jpegDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
+const concatBytes = (parts: Uint8Array[]): Uint8Array => {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+};
+
+/**
+ * The bytes the JPEG decoder is given: the image without its APPn and COM segments, except
+ * APP14 "Adobe" (it says how to convert the colours). None of the others changes a pixel, and
+ * an Exif thumbnail or an ICC profile may hold bytes that read as a frame header. Walked by the
+ * segment lengths up to EOI (anything after it is dropped) or to where the structure stops
+ * holding together (the rest is dropped too, and the decode fails).
+ */
+export const jpegDecodeInput = (b: Uint8Array): Uint8Array => {
+  const parts = [b.subarray(0, 2)];
   let i = 2;
-  while (i + 3 < b.length) {
-    if (b[i] !== 0xff) return null;
+  while (i + 1 < b.length && b[i] === 0xff) {
     const marker = b[i + 1];
-    // Fill bytes: a run of 0xFF before the marker.
     if (marker === 0xff) {
-      i += 1;
+      i += 1; // fill byte
       continue;
+    }
+    if (marker === 0xd9) {
+      parts.push(b.subarray(i, i + 2));
+      break;
     }
     // Stand-alone markers carry no length.
     if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      parts.push(b.subarray(i, i + 2));
       i += 2;
       continue;
     }
-    // End of image / start of scan before any frame header: no dimensions.
-    if (marker === 0xd9 || marker === 0xda) return null;
-    const length = u16be(b, i + 2);
-    if (length < 2) return null;
-    const isSof =
-      marker >= 0xc0 &&
-      marker <= 0xcf &&
-      marker !== 0xc4 &&
-      marker !== 0xc8 &&
-      marker !== 0xcc;
-    if (isSof) {
-      if (i + 9 > b.length) return null;
-      return { height: u16be(b, i + 5), width: u16be(b, i + 7) };
+    if (i + 4 > b.length) break;
+    const end = i + 2 + u16be(b, i + 2);
+    if (end < i + 4 || end > b.length) break;
+    const app = (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
+    if (!app || (marker === 0xee && ascii(b, i + 4, "Adobe"))) {
+      parts.push(b.subarray(i, end));
     }
-    i += 2 + length;
+    i = end;
+    if (marker === 0xda) {
+      // Entropy-coded data runs to the next marker that is not a stuffed 0xFF00 or a restart.
+      let j = i;
+      while (j + 1 < b.length) {
+        const next = b[j + 1];
+        if (b[j] === 0xff && next !== 0x00 && next !== 0xff) {
+          if (next < 0xd0 || next > 0xd7) break;
+        }
+        j += 1;
+      }
+      if (j + 1 >= b.length) j = b.length;
+      parts.push(b.subarray(i, j));
+      i = j;
+    }
   }
-  return null;
+  return concatBytes(parts);
 };
 
-// PNG: the first chunk is IHDR, whose data starts with width u32 and height u32.
-const pngDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
-  if (b.length < 24 || !ascii(b, 12, "IHDR")) return null;
-  return { width: u32be(b, 16), height: u32be(b, 20) };
+// JPEG: jpeg-js (jimp's decoder) allocates its 8x8 blocks (an Int32Array(64) each, about 800
+// bytes in V8) the moment it meets a frame header, SOF0, SOF1 or SOF2 (the only ones it
+// decodes), for every one it meets, and checks there was only one at the very end. How many
+// depends on the components and their sampling, not on the pixel count: a 1 x 65535 header with
+// 255 components sampled 15x15 allocates over 1 GiB. So in the bytes the decoder is given
+// (jpegDecodeInput) the two bytes of a frame header (FF C0..C2) must occur exactly once, at any
+// offset (wherever the decoder's own walk could take it), and that frame header must hold
+// together: 1 to 4 components (what jpeg-js turns into pixels), each sampled 1..4 (the JPEG
+// standard's range). Its block count is what jpeg-js allocates for it: per component, its
+// sampled blocks in every MCU, the image padded to whole MCUs.
+const jpegHeader = (b: Uint8Array): Header | null => {
+  const input = jpegDecodeInput(b);
+  let at = -1;
+  for (let i = 0; i + 1 < input.length; i++) {
+    if (input[i] === 0xff && input[i + 1] >= 0xc0 && input[i + 1] <= 0xc2) {
+      if (at !== -1) return null;
+      at = i;
+    }
+  }
+  // [marker][length u16][precision][height u16][width u16][n], then n x [id][h << 4 | v][table].
+  if (at === -1 || at + 10 > input.length) return null;
+  const components = input[at + 9];
+  if (components < 1 || components > 4) return null;
+  if (u16be(input, at + 2) !== 8 + 3 * components) return null;
+  if (at + 10 + 3 * components > input.length) return null;
+  const sampling: { h: number; v: number }[] = [];
+  for (let c = 0; c < components; c++) {
+    const hv = input[at + 11 + 3 * c];
+    const h = hv >> 4;
+    const v = hv & 0x0f;
+    if (h < 1 || h > 4 || v < 1 || v > 4) return null;
+    sampling.push({ h, v });
+  }
+  const height = u16be(input, at + 5);
+  const width = u16be(input, at + 7);
+  const maxH = Math.max(...sampling.map((s) => s.h));
+  const maxV = Math.max(...sampling.map((s) => s.v));
+  const mcusPerLine = Math.ceil(width / 8 / maxH);
+  const mcusPerColumn = Math.ceil(height / 8 / maxV);
+  const jpegBlocks = sampling.reduce(
+    (sum, { h, v }) => sum + mcusPerLine * h * mcusPerColumn * v,
+    0,
+  );
+  return { width, height, jpegBlocks };
+};
+
+// PNG: the chunk list, walked by its lengths up to IEND (pngjs refuses anything after it), must
+// hold exactly one IHDR, and it must be the first chunk, 13 bytes long: width u32, height u32,
+// bit depth, colour type, compression, filter, interlace method. A chunk that runs past the end
+// of the file ends the walk (pngjs cannot read past it either). An acTL chunk makes it an APNG.
+const pngHeader = (b: Uint8Array): Header | null => {
+  if (b.length < 8 + 8 + 13) return null;
+  if (u32be(b, 8) !== 13 || !ascii(b, 12, "IHDR")) return null;
+  let animated = false;
+  let i = 8 + 12 + 13;
+  while (i + 8 <= b.length) {
+    if (ascii(b, i + 4, "IHDR")) return null;
+    if (ascii(b, i + 4, "IEND")) break;
+    if (ascii(b, i + 4, "acTL")) animated = true;
+    i += 12 + u32be(b, i);
+  }
+  return {
+    width: u32be(b, 16),
+    height: u32be(b, 20),
+    interlaced: b[28] !== 0,
+    animated,
+  };
 };
 
 // GIF: the logical screen descriptor right after the 6-byte signature (u16 LE each), checked
 // together with the FIRST image descriptor, which is the frame jimp decodes: it must lie inside
-// the logical screen (and so within the pixel budget the screen is checked against). Anything
-// before it must be well-formed extension blocks. No image descriptor => no usable header.
-const gifDimensions = (
-  b: Uint8Array,
-): { width: number; height: number } | null => {
+// the logical screen (and so within the pixel budget the screen is checked against).
+// The blocks before it are walked the way omggif (jimp's decoder) walks them, which is not
+// simply by their size-prefixed sub-blocks: it reads a graphic control extension (F9) as exactly
+// one 4-byte sub-block and its terminator, and throws on any label other than F9, FE (comment)
+// and FF (application). An application extension whose first sub-block is not its 11-byte
+// identifier it skips by a fixed 17 bytes, whatever the sub-blocks say: walked by their sizes
+// instead, a crafted file shows a 1x1 frame here and a 65535x16384 one to omggif (SEC-18). So
+// a GIF is accepted only with blocks both walks read alike: a graphic control extension of
+// exactly that shape, comments, and application extensions that open with the identifier.
+// The first frame's data must end inside the file. No image descriptor => no usable header.
+type GifLayout = {
+  screen: { width: number; height: number };
+  /** Where the signature, logical screen descriptor and global colour table end. */
+  headerEnd: number;
+  /** The last graphic control extension before the first frame (its transparency), [from, to). */
+  control: [number, number] | null;
+  /** The first frame: image descriptor, local colour table and data, [from, to). */
+  frame: [number, number];
+};
+
+const gifLayout = (b: Uint8Array): GifLayout | null => {
   if (b.length < 13) return null;
   const screen = { width: u16le(b, 6), height: u16le(b, 8) };
-  const flags = b[10];
-  // Global colour table: 3 * 2^(n+1) bytes when the flag bit is set.
-  let i = 13 + (flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0);
+  // Size-prefixed sub-blocks from `at` up to their 0 terminator: the index after it, or null
+  // when they run past the end.
+  const subBlocksEnd = (at: number): number | null => {
+    let i = at;
+    while (i < b.length && b[i] !== 0) i += b[i] + 1;
+    return i < b.length ? i + 1 : null;
+  };
+  // A colour table: 3 * 2^(n+1) bytes when the flag bit is set.
+  const colourTable = (flags: number) =>
+    flags & 0x80 ? 3 * (1 << ((flags & 0x07) + 1)) : 0;
+  const headerEnd = 13 + colourTable(b[10]);
+  let control: [number, number] | null = null;
+  let i = headerEnd;
   while (i < b.length) {
     const block = b[i];
     if (block === 0x2c) {
-      // Image descriptor: left, top, width, height (u16 LE each).
-      if (i + 9 >= b.length) return null;
+      // Image descriptor: left, top, width, height (u16 LE each), flags; then the local colour
+      // table, the LZW minimum code size and the data sub-blocks.
+      if (i + 10 > b.length) return null;
       const left = u16le(b, i + 1);
       const top = u16le(b, i + 3);
       const width = u16le(b, i + 5);
@@ -155,40 +346,139 @@ const gifDimensions = (
       ) {
         return null;
       }
-      return screen;
+      const data = i + 10 + colourTable(b[i + 9]);
+      const end = data < b.length ? subBlocksEnd(data + 1) : null;
+      if (end === null) return null;
+      return { screen, headerEnd, control, frame: [i, end] };
     }
     if (block !== 0x21) return null; // trailer (0x3B) or garbage before any frame
-    // Extension: introducer, label, then size-prefixed sub-blocks ending with a 0 size.
+    const label = b[i + 1];
+    const from = i;
     i += 2;
-    while (i < b.length && b[i] !== 0) i += b[i] + 1;
-    i += 1;
+    if (label === 0xf9) {
+      if (b[i] !== 4 || b[i + 5] !== 0) return null;
+      i += 6;
+      control = [from, i];
+      continue;
+    }
+    if (label !== 0xfe && !(label === 0xff && b[i] === 0x0b)) return null;
+    const end = subBlocksEnd(i);
+    if (end === null) return null;
+    i = end;
   }
   return null;
 };
 
-// WebP: the first chunk after "RIFF....WEBP" is VP8 (lossy), VP8L (lossless) or VP8X (extended).
-const webpDimensions = (
+const gifDimensions = (
   b: Uint8Array,
+): { width: number; height: number } | null => gifLayout(b)?.screen ?? null;
+
+const GIF_TRAILER = new Uint8Array([0x3b]);
+
+/**
+ * The bytes the GIF decoder is given: the signature, logical screen and global colour table,
+ * the last graphic control extension before the first frame (it says which colour is
+ * transparent), that first frame, and the trailer. The frame is the one gifDimensions checked,
+ * and nothing is left around it that omggif could walk differently (application extensions,
+ * comments) or would parse but never draw (later frames). When the walk fails, nothing past the
+ * logical screen is kept, so the decode is refused.
+ */
+export const gifDecodeInput = (b: Uint8Array): Uint8Array => {
+  const layout = gifLayout(b);
+  if (!layout) return b.subarray(0, Math.min(b.length, 13));
+  const { headerEnd, control, frame } = layout;
+  return concatBytes([
+    b.subarray(0, headerEnd),
+    ...(control ? [b.subarray(...control)] : []),
+    b.subarray(...frame),
+    GIF_TRAILER,
+  ]);
+};
+
+/** The VP8X flag bit that marks an animation. */
+const VP8X_ANIMATION = 0x02;
+
+// The size a VP8 (lossy) or VP8L (lossless) bitstream chunk starting at `at` announces.
+const webpBitstreamSize = (
+  b: Uint8Array,
+  at: number,
 ): { width: number; height: number } | null => {
-  if (ascii(b, 12, "VP8 ")) {
-    // Frame tag (3 bytes) at 20, start code 9D 01 2A at 23, then 14-bit width / height.
-    if (b.length < 30 || b[23] !== 0x9d || b[24] !== 0x01 || b[25] !== 0x2a) {
+  const data = at + 8;
+  if (ascii(b, at, "VP8 ")) {
+    // Frame tag (3 bytes), start code 9D 01 2A, then 14-bit width / height.
+    if (
+      b.length < data + 10 ||
+      b[data + 3] !== 0x9d ||
+      b[data + 4] !== 0x01 ||
+      b[data + 5] !== 0x2a
+    ) {
       return null;
     }
-    return { width: u16le(b, 26) & 0x3fff, height: u16le(b, 28) & 0x3fff };
+    return {
+      width: u16le(b, data + 6) & 0x3fff,
+      height: u16le(b, data + 8) & 0x3fff,
+    };
   }
-  if (ascii(b, 12, "VP8L")) {
-    // Signature 0x2F at 20, then (width - 1) and (height - 1) as two 14-bit fields.
-    if (b.length < 25 || b[20] !== 0x2f) return null;
-    const bits = (b[21] | (b[22] << 8) | (b[23] << 16) | (b[24] << 24)) >>> 0;
+  if (ascii(b, at, "VP8L")) {
+    // Signature 0x2F, then (width - 1) and (height - 1) as two 14-bit fields.
+    if (b.length < data + 5 || b[data] !== 0x2f) return null;
+    const bits = u32le(b, data + 1);
     return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
   }
-  if (ascii(b, 12, "VP8X")) {
-    // Flags (4 bytes) at 20, then canvas (width - 1) and (height - 1) as u24 LE.
-    if (b.length < 30) return null;
-    return { width: u24le(b, 24) + 1, height: u24le(b, 27) + 1 };
-  }
   return null;
+};
+
+// WebP: the chunks after "RIFF....WEBP", walked by their sizes (padded to even) over the bytes
+// there, so the walk sees every chunk libwebp's own walk could reach. The first is VP8 (lossy) or
+// VP8L (lossless), a simple still, or VP8X (extended): flags, 3 reserved bytes, then the canvas
+// (width - 1) and (height - 1) as u24 LE, 10 bytes in all, followed by optional chunks (ICCP,
+// ALPH, ...) and the bitstream libwebp decodes, the first VP8 or VP8L chunk, which must be the
+// canvas size. The VP8X animation flag or an ANIM or ANMF chunk anywhere makes it an animation.
+const webpHeader = (b: Uint8Array): Header | null => {
+  const chunks: number[] = [];
+  for (let i = 12; i + 8 <= b.length;) {
+    chunks.push(i);
+    const size = u32le(b, i + 4);
+    i += 8 + size + (size & 1);
+  }
+  if (chunks.length === 0) return null;
+  const animated = chunks.some(
+    (at) => ascii(b, at, "ANIM") || ascii(b, at, "ANMF"),
+  );
+  const [first] = chunks;
+  if (!ascii(b, first, "VP8X")) {
+    const size = webpBitstreamSize(b, first);
+    return size && { ...size, animated };
+  }
+  if (u32le(b, first + 4) !== 10 || b.length < first + 18) return null;
+  const canvas = {
+    width: u24le(b, first + 12) + 1,
+    height: u24le(b, first + 15) + 1,
+  };
+  if (animated || b[first + 8] & VP8X_ANIMATION) {
+    return { ...canvas, animated: true };
+  }
+  const bitstream = chunks.find(
+    (at) => ascii(b, at, "VP8 ") || ascii(b, at, "VP8L"),
+  );
+  const size = bitstream === undefined ? null : webpBitstreamSize(b, bitstream);
+  if (!size || size.width !== canvas.width || size.height !== canvas.height) {
+    return null;
+  }
+  return canvas;
+};
+
+const readHeader = (bytes: Uint8Array, format: ImageFormat): Header | null => {
+  const header =
+    format === "jpeg"
+      ? jpegHeader(bytes)
+      : format === "png"
+        ? pngHeader(bytes)
+        : format === "gif"
+          ? gifDimensions(bytes)
+          : webpHeader(bytes);
+  if (!header || header.width <= 0 || header.height <= 0) return null;
+  return header;
 };
 
 /** The width and height from the image header, or null when the header is unusable. */
@@ -196,16 +486,8 @@ export const readImageDimensions = (
   bytes: Uint8Array,
   format: ImageFormat,
 ): { width: number; height: number } | null => {
-  const dims =
-    format === "jpeg"
-      ? jpegDimensions(bytes)
-      : format === "png"
-        ? pngDimensions(bytes)
-        : format === "gif"
-          ? gifDimensions(bytes)
-          : webpDimensions(bytes);
-  if (!dims || dims.width <= 0 || dims.height <= 0) return null;
-  return dims;
+  const header = readHeader(bytes, format);
+  return header && { width: header.width, height: header.height };
 };
 
 /** The size guard, for a byte count known before the download (storage metadata). */
@@ -216,16 +498,26 @@ export const checkImageSize = (
     ? { ok: false, reason: "too_large" }
     : { ok: true };
 
-/** Every guard on the downloaded bytes: size, magic bytes, then the header's pixel count. */
+/**
+ * Every guard on the downloaded bytes: size, magic bytes, then the header: its pixel count,
+ * (JPEG) the blocks its frame makes the decoder allocate, (PNG) no interlacing, and (PNG, WebP)
+ * one still image, no animation.
+ */
 export const checkImageBytes = (bytes: Uint8Array): ImageGuardResult => {
   const size = checkImageSize(bytes.length);
   if (!size.ok) return size;
   const format = sniffImageFormat(bytes);
   if (!format) return { ok: false, reason: "unsupported_format" };
-  const dims = readImageDimensions(bytes, format);
-  if (!dims) return { ok: false, reason: "unreadable_header" };
-  if (dims.width * dims.height > MAX_IMAGE_PIXELS) {
+  const header = readHeader(bytes, format);
+  if (!header) return { ok: false, reason: "unreadable_header" };
+  const { width, height } = header;
+  if (
+    width * height > MAX_IMAGE_PIXELS ||
+    (header.jpegBlocks ?? 0) > MAX_JPEG_BLOCKS
+  ) {
     return { ok: false, reason: "too_many_pixels" };
   }
-  return { ok: true, format, ...dims };
+  if (header.interlaced) return { ok: false, reason: "interlaced" };
+  if (header.animated) return { ok: false, reason: "animated" };
+  return { ok: true, format, width, height };
 };

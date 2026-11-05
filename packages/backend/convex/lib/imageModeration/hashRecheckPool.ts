@@ -237,14 +237,15 @@ export const armHashRecheck = async (
 };
 
 /**
- * Re-check, once and at once, the stored hashes of a photo an admin approved WITHOUT a hash check
- * after its check timed out (isWaivedHashRecheckCandidate; the one-shot
- * lib/imageModeration/recheckWaivedHashes). Such a row is not "waiting", so armHashRecheck refuses
- * it: this bumps the row's attempt (an older job of it turns stale) and enqueues that attempt on
- * the pool in the same transaction. The answer is runHashRecheck's: a match quarantines and
- * escalates over the approval; no_match records the check (hashCheckedAt, and the stored hashes
- * and the waiver cleared); "unavailable" or a failure arms nothing more (the row is not waiting),
- * so the photo stays a candidate for the next run. Returns whether it enqueued.
+ * Re-check, once and at once, the stored hashes of a photo published WITHOUT a hash check: an
+ * admin approved it after its check timed out, or none was configured
+ * (isWaivedHashRecheckCandidate; the one-shot lib/imageModeration/recheckWaivedHashes). Such a
+ * row is not "waiting", so armHashRecheck refuses it: this bumps the row's attempt (an older job
+ * of it turns stale) and enqueues that attempt on the pool in the same transaction. The answer is
+ * runHashRecheck's: a match quarantines and escalates over the approval; no_match records the
+ * check (hashCheckedAt, and the stored hashes and the waiver or skip marker cleared);
+ * "unavailable" or a failure arms nothing more (the row is not waiting), so the photo stays a
+ * candidate for the next run. Returns whether it enqueued.
  */
 export const enqueueWaivedHashRecheck = async (
   ctx: MutationCtx,
