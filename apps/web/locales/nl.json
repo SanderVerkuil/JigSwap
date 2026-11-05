@@ -721,6 +721,7 @@
       "duplicate": "Je hebt al een openstaande aanvraag voor deze puzzel.",
       "ownCopy": "Je kunt je eigen puzzel niet aanvragen.",
       "missingTerms": "Er ontbreken gegevens. Controleer het formulier en probeer het opnieuw.",
+      "rateLimited": "Je hebt de laatste tijd veel aanvragen verstuurd. Probeer het later opnieuw.",
       "generic": "De aanvraag kon niet worden verstuurd. Probeer het opnieuw."
     }
   },
@@ -1047,6 +1048,7 @@
     "usernameReverifyCancelled": "Gebruikersnaam niet gewijzigd — je hebt de verificatiestap geannuleerd.",
     "locationPlaceholder": "Plaats, Land",
     "bioPlaceholder": "Vertel andere leden iets over jezelf…",
+    "bioCounter": "{count}/{max}",
     "slug": {
       "label": "Eigen link",
       "placeholder": "jouw-naam",
@@ -1922,7 +1924,8 @@
       "searchHeading": "Zoek een lid",
       "emailHeading": "Uitnodigen per e-mail",
       "dialogTitleNamed": "Uitnodigen voor {name}",
-      "pendingOnMembersTab": "Verstuurde uitnodigingen staan op het tabblad Leden."
+      "pendingOnMembersTab": "Verstuurde uitnodigingen staan op het tabblad Leden.",
+      "rateLimited": "Je hebt de laatste tijd veel uitnodigingen verstuurd. Probeer het later opnieuw."
     },
     "leave": {
       "action": "Huishouden verlaten",
@@ -2203,6 +2206,7 @@
       "decline": "Weigeren",
       "approved": "Verzoek goedgekeurd",
       "approvedFollowBackFailed": "Goedgekeurd — maar terugvolgen is niet gelukt, gebruik de Volgen-knop op hun tegel",
+      "approvedFollowBackRateLimited": "Goedgekeurd — maar je hebt vaak gevolgd en ontvolgd, dus terugvolgen moet even wachten. Probeer het later opnieuw.",
       "declined": "Verzoek geweigerd",
       "error": "Er ging iets mis. Probeer het opnieuw."
     },
@@ -2260,7 +2264,8 @@
     "toastUnfollowed": "Ontvolgd",
     "toastRequestCancelled": "Verzoek geannuleerd",
     "errorUpdate": "Kon de volgstatus niet bijwerken",
-    "errorCancel": "Kon het verzoek niet annuleren"
+    "errorCancel": "Kon het verzoek niet annuleren",
+    "errorRateLimited": "Je hebt vaak gevolgd en ontvolgd. Probeer het later opnieuw."
   },
   "members": {
     "memberSince": "Lid sinds {date}",
@@ -2612,11 +2617,13 @@
       "circle_deleted": "Wanneer de eigenaar een kring verwijdert waar je lid van bent.",
       "whats_new": "Wanneer een nieuwe functie of wijziging in JigSwap wordt aangekondigd.",
       "report_decided": "Wanneer een moderator een besluit neemt over een melding die je hebt gedaan.",
-      "content_removed": "Wanneer een moderator na een melding een bericht of foto van je verwijdert.",
+      "content_removed": "Wanneer een moderator na een melding een bericht, foto, reactie of reviewtekst van je verwijdert.",
       "member_warned": "Wanneer een moderator je na een melding waarschuwt.",
       "message_image_rejected": "Wanneer onze automatische controle een foto verwijdert die je in een bericht stuurde."
     },
+    "pushRateLimited": "Je hebt push net heel vaak ingeschakeld. Probeer het later opnieuw.",
     "pushServiceUnreachable": "Je browser kon zijn pushdienst niet bereiken. Sommige privacybrowsers blokkeren of verwijderen die — Brave schakelt het standaard uit (zet 'Google-services voor pushberichten gebruiken' aan in Instellingen), en de-Googled Chromium-browsers zoals Helium verwijderen het. Firefox, Chrome of Edge werkt wel.",
+    "pushServiceUnsupported": "JigSwap kan geen pushmeldingen versturen via de pushdienst van deze browser. Firefox, Chrome, Edge of Safari werkt wel.",
     "rich": {
       "deletedMember": "Verwijderd lid",
       "unread": "Ongelezen, ",
@@ -2795,7 +2802,7 @@
         "sentence": "{decision, select, dismissed {We hebben je melding beoordeeld en geen overtreding gevonden, dus er is niets veranderd.} content_removed {We hebben je melding beoordeeld en de inhoud verwijderd.} warned {We hebben je melding beoordeeld en het lid gewaarschuwd.} other {We hebben je melding beoordeeld.}}"
       },
       "content_removed": {
-        "sentence": "{restricted, select, photo {Een moderator heeft een foto van je verwijderd} other {Een moderator heeft een bericht van je verwijderd}} wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
+        "sentence": "{restricted, select, photo {Een moderator heeft een foto van je verwijderd} comment {Een moderator heeft een reactie van je verwijderd} review {Een moderator heeft de tekst van een review van je verwijderd} other {Een moderator heeft een bericht van je verwijderd}} wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
       },
       "member_warned": {
         "sentence": "Een moderator heeft je gewaarschuwd wegens {ground, select, spam_scam {spam of oplichting} harassment_hate {intimidatie of haat} sexual {seksuele of ongepaste inhoud} fake_trade {een nepruil of niet komen opdagen} illegal {illegale inhoud} other {het overtreden van de communityregels}}. Dit besluit is door een mens genomen, niet automatisch. Reageer via de contactpagina om een herbeoordeling te vragen."
@@ -2917,10 +2924,13 @@
       "submit": "Review opslaan",
       "saved": "Review opgeslagen",
       "saveError": "Kon de review niet opslaan. Probeer het opnieuw.",
+      "textTooLong": "Die review is te lang (maximaal 2.000 tekens).",
+      "rateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
       "ratingRequired": "Kies eerst een beoordeling.",
       "puzzleQuestion": "Wat vond je van deze puzzel?",
       "copyQuestion": "Wat vond je van dit exemplaar?",
-      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij."
+      "updatesExisting": "Opslaan werkt je bestaande beoordeling bij.",
+      "puzzleNotReviewable": "Je kunt alleen goedgekeurde puzzels beoordelen."
     },
     "followUp": {
       "title": "Puzzel voltooid!",
@@ -4011,6 +4021,7 @@
     "post": "Plaatsen",
     "noComments": "Nog geen reacties. Wees de eerste.",
     "commentFailed": "Kon reactie niet plaatsen",
+    "commentRateLimited": "Je hebt de laatste tijd veel reacties geplaatst. Probeer het later opnieuw.",
     "photoLightbox": {
       "uploadedBy": "Geüpload door {name}",
       "takenOn": "Gemaakt op {date}",
@@ -4018,11 +4029,14 @@
       "addComment": "Voeg een reactie toe…",
       "post": "Plaatsen",
       "noComments": "Nog geen reacties.",
+      "commentsAfterReview": "Reageren kan zodra deze foto is gecontroleerd.",
       "close": "Sluiten",
       "prev": "Vorige foto",
       "next": "Volgende foto",
       "counter": "{current} / {total}",
       "commentFailed": "Je reactie kon niet worden geplaatst. Probeer het opnieuw.",
+      "commentTooLong": "Die reactie is te lang (maximaal 1.000 tekens).",
+      "commentRateLimited": "Je hebt de laatste tijd veel reacties geplaatst. Probeer het later opnieuw.",
       "setAsCover": "Als omslag instellen",
       "currentCover": "Huidige omslag",
       "coverUpdated": "Omslag bijgewerkt",
@@ -4098,9 +4112,12 @@
     "reviewPlaceholder": "Beoordeel {title} (optioneel)…",
     "rateRequired": "Beoordeel deze puzzel",
     "reviewPublicNote": "Reviews verschijnen ook in de openbare puzzelcatalogus.",
+    "reviewNotOpen": "Je kunt alleen goedgekeurde puzzels beoordelen.",
     "post": "Plaatsen",
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
+    "reviewTooLong": "Die review is te lang (maximaal 2.000 tekens).",
+    "reviewRateLimited": "Je hebt de laatste tijd veel reviews opgeslagen. Probeer het later opnieuw.",
     "noReviews": "Nog geen reviews. Wees de eerste.",
     "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {
@@ -4416,7 +4433,9 @@
           "copy": "Puzzelexemplaar",
           "photo": "Foto",
           "exchange": "Ruil",
-          "attachment": "Foto in bericht"
+          "attachment": "Foto in bericht",
+          "photoComment": "Reactie op foto",
+          "puzzleReview": "Puzzelreview"
         },
         "reportedArrow": "meldde",
         "openCount": "{count, plural, one {# open melding tegen dit lid} other {# open meldingen tegen dit lid}}",
@@ -4434,6 +4453,7 @@
         "photo": "Gemelde foto",
         "photoGone": "Deze foto bestaat niet meer.",
         "evidence": "Gespreksfragment op het moment van melden",
+        "reportedText": "Gemelde tekst op het moment van melden",
         "reportedMessage": "Gemeld",
         "system": "Systeem",
         "deletedMember": "Verwijderd lid",
@@ -4452,7 +4472,7 @@
           "warned": "Lid waarschuwen",
           "content_removed": "Inhoud verwijderen"
         },
-        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten en foto's.",
+        "removeUnavailable": "Inhoud kan alleen worden verwijderd bij meldingen over berichten, foto's, reacties en reviews.",
         "statementLabel": "Motivering (wordt naar het lid gestuurd)",
         "statementHint": "{count}/{max} tekens. Verplicht: wat is beperkt, op welke grond, en hoe om herbeoordeling te vragen.",
         "templateNames": {
@@ -4466,7 +4486,9 @@
           "copy": "je puzzelexemplaar",
           "photo": "je foto",
           "exchange": "je gedrag bij een ruil",
-          "attachment": "je foto in een bericht"
+          "attachment": "je foto in een bericht",
+          "photoComment": "je reactie",
+          "puzzleReview": "de tekst van je review"
         },
         "grounds": {
           "spam_scam": "spam en oplichting",
@@ -5216,6 +5238,8 @@
       "description": "Vertel ons wat er mis is. Meldingen zijn privé: alleen onze moderators zien ze.",
       "reportingMember": "Je meldt {name}",
       "reportingPhoto": "Je meldt een foto van {name}",
+      "reportingComment": "Je meldt een reactie van {name}",
+      "reportingReview": "Je meldt een review van {name}",
       "reasonLegend": "Waarom meld je dit?",
       "reasons": {
         "spam_scam": "Spam of oplichting",
@@ -5254,6 +5278,10 @@
     "reportName": "{name} melden",
     "reportMember": "Lid melden",
     "reportPhoto": "Foto melden",
+    "reportComment": "Reactie melden",
+    "reportCommentFrom": "Reactie van {name} melden",
+    "reportReview": "Review melden",
+    "reportReviewFrom": "Review van {name} melden",
     "exchangeActions": "Ruilacties",
     "myReports": {
       "title": "Jouw meldingen",
@@ -5266,7 +5294,9 @@
         "copy": "Een puzzelexemplaar",
         "photo": "Een foto",
         "exchange": "Een ruil",
-        "attachment": "Een foto in een bericht"
+        "attachment": "Een foto in een bericht",
+        "photoComment": "Een reactie op een foto",
+        "puzzleReview": "Een puzzelreview"
       }
     }
   },

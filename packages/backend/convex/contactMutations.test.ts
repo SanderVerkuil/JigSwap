@@ -35,9 +35,41 @@ describe("contact/submitContactMessage", () => {
     expect(rows[0].createdAt).toBeGreaterThan(0);
   });
 
+  test("stores the address as typed, trimmed but not lowercased", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.mutation(api.contact.submitContactMessage.submitContactMessage, {
+      name: "Mara",
+      email: "  Mara.de-Vries+jig@Example.co.uk ",
+      subject: "other",
+      message: "A perfectly reasonable message.",
+    });
+
+    const rows = await t.run((ctx) =>
+      ctx.db.query("contactMessages").collect(),
+    );
+    expect(rows.map((r) => r.email)).toEqual([
+      "Mara.de-Vries+jig@Example.co.uk",
+    ]);
+  });
+
   test.each([
     ["empty name", { name: "   " }],
     ["bad email", { email: "not-an-email" }],
+    // IDENT-7: the old shape check let URL syntax into the domain, which the admin inbox put
+    // straight into a mailto: link.
+    [
+      "email with a query in the domain",
+      { email: "x@site.nl?bcc=v%40evil.com" },
+    ],
+    ["email with angle brackets", { email: "<mara@example.com>" }],
+    ["email with a quoted local part", { email: '"mara"@example.com' }],
+    [
+      "email longer than 254 characters",
+      {
+        email: `${"l".repeat(64)}@${"d".repeat(63)}.${"d".repeat(63)}.${"d".repeat(60)}.com`,
+      },
+    ],
     ["short message", { message: "too short" }],
     ["oversized message", { message: "x".repeat(5001) }],
   ])("rejects %s", async (_label, override) => {

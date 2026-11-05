@@ -721,6 +721,7 @@
       "duplicate": "You already have an open request for this puzzle.",
       "ownCopy": "You can't request your own puzzle.",
       "missingTerms": "Some details are missing. Check the form and try again.",
+      "rateLimited": "You've sent a lot of requests lately. Try again later.",
       "generic": "Couldn't send the request. Please try again."
     }
   },
@@ -1047,6 +1048,7 @@
     "usernameReverifyCancelled": "Username not changed — you cancelled the verification step.",
     "locationPlaceholder": "City, Country",
     "bioPlaceholder": "Tell other members about yourself…",
+    "bioCounter": "{count}/{max}",
     "slug": {
       "label": "Custom link",
       "placeholder": "your-handle",
@@ -1922,7 +1924,8 @@
       "searchHeading": "Find a member",
       "emailHeading": "Invite by email",
       "dialogTitleNamed": "Invite to {name}",
-      "pendingOnMembersTab": "Sent invitations are listed on the Members tab."
+      "pendingOnMembersTab": "Sent invitations are listed on the Members tab.",
+      "rateLimited": "You've sent a lot of invites lately. Try again later."
     },
     "leave": {
       "action": "Leave household",
@@ -2203,6 +2206,7 @@
       "decline": "Decline",
       "approved": "Request approved",
       "approvedFollowBackFailed": "Approved — but following them back failed, use the Follow button on their tile",
+      "approvedFollowBackRateLimited": "Approved — but you've followed and unfollowed a lot, so following them back has to wait. Try again later.",
       "declined": "Request declined",
       "error": "Something went wrong. Please try again."
     },
@@ -2260,7 +2264,8 @@
     "toastUnfollowed": "Unfollowed",
     "toastRequestCancelled": "Request cancelled",
     "errorUpdate": "Could not update follow status",
-    "errorCancel": "Could not cancel the request"
+    "errorCancel": "Could not cancel the request",
+    "errorRateLimited": "You've followed and unfollowed a lot. Try again later."
   },
   "members": {
     "memberSince": "Member since {date}",
@@ -2612,11 +2617,13 @@
       "circle_deleted": "When the owner deletes a circle you're in.",
       "whats_new": "When a new feature or change to JigSwap is announced.",
       "report_decided": "When a moderator decides on a report you filed.",
-      "content_removed": "When a moderator removes one of your messages or photos after a report.",
+      "content_removed": "When a moderator removes a message, photo, comment or review text of yours after a report.",
       "member_warned": "When a moderator warns you after a report.",
       "message_image_rejected": "When our automated check removes a photo you sent in a message."
     },
+    "pushRateLimited": "You've turned on push many times just now. Try again later.",
     "pushServiceUnreachable": "Your browser couldn't reach its push service. Some privacy browsers block or remove it — Brave disables it by default (enable 'Use Google services for push messaging' in Settings), and de-Googled Chromium builds like Helium strip it out. Firefox, Chrome, or Edge will work.",
+    "pushServiceUnsupported": "JigSwap can't send push notifications through this browser's push service. Firefox, Chrome, Edge, or Safari will work.",
     "rich": {
       "deletedMember": "Deleted member",
       "unread": "Unread, ",
@@ -2795,7 +2802,7 @@
         "sentence": "{decision, select, dismissed {We reviewed your report and found no violation, so no action was taken.} content_removed {We reviewed your report and removed the content.} warned {We reviewed your report and warned the member.} other {We reviewed your report.}}"
       },
       "content_removed": {
-        "sentence": "{restricted, select, photo {A moderator removed one of your photos} other {A moderator removed one of your messages}} for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
+        "sentence": "{restricted, select, photo {A moderator removed one of your photos} comment {A moderator removed one of your comments} review {A moderator removed the text of one of your reviews} other {A moderator removed one of your messages}} for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
       },
       "member_warned": {
         "sentence": "A moderator warned you for {ground, select, spam_scam {spam or scam} harassment_hate {harassment or hate} sexual {sexual or inappropriate content} fake_trade {a fake trade or no-show} illegal {illegal content} other {breaking the community rules}}. This was decided by a person, not automatically. Reply via the contact page to request a review."
@@ -2917,10 +2924,13 @@
       "submit": "Save review",
       "saved": "Review saved",
       "saveError": "Could not save the review. Please try again.",
+      "textTooLong": "That review is too long (2,000 characters max).",
+      "rateLimited": "You've saved a lot of reviews lately. Try again later.",
       "ratingRequired": "Please pick a rating first.",
       "puzzleQuestion": "What did you think of this puzzle?",
       "copyQuestion": "What did you think of this copy?",
-      "updatesExisting": "Saving updates your existing review."
+      "updatesExisting": "Saving updates your existing review.",
+      "puzzleNotReviewable": "Only approved puzzles can be reviewed."
     },
     "followUp": {
       "title": "Puzzle solved!",
@@ -4011,6 +4021,7 @@
     "post": "Post",
     "noComments": "No comments yet. Be the first.",
     "commentFailed": "Couldn't post comment",
+    "commentRateLimited": "You've posted a lot of comments lately. Try again later.",
     "photoLightbox": {
       "uploadedBy": "Uploaded by {name}",
       "takenOn": "Taken on {date}",
@@ -4018,11 +4029,14 @@
       "addComment": "Add a comment…",
       "post": "Post",
       "noComments": "No comments yet.",
+      "commentsAfterReview": "Comments open once this photo has been checked.",
       "close": "Close",
       "prev": "Previous photo",
       "next": "Next photo",
       "counter": "{current} / {total}",
       "commentFailed": "Couldn’t post your comment. Please try again.",
+      "commentTooLong": "That comment is too long (1,000 characters max).",
+      "commentRateLimited": "You've posted a lot of comments lately. Try again later.",
       "setAsCover": "Set as cover",
       "currentCover": "Current cover",
       "coverUpdated": "Cover updated",
@@ -4098,9 +4112,12 @@
     "reviewPlaceholder": "Review {title} (optional)…",
     "rateRequired": "Rate this puzzle",
     "reviewPublicNote": "Reviews also appear on the public puzzle catalogue.",
+    "reviewNotOpen": "Only approved puzzles can be reviewed.",
     "post": "Post",
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
+    "reviewTooLong": "That review is too long (2,000 characters max).",
+    "reviewRateLimited": "You've saved a lot of reviews lately. Try again later.",
     "noReviews": "No reviews yet. Be the first.",
     "anonymousReviewer": "Anonymous user",
     "swapType": {
@@ -4416,7 +4433,9 @@
           "copy": "Puzzle copy",
           "photo": "Photo",
           "exchange": "Trade",
-          "attachment": "Message photo"
+          "attachment": "Message photo",
+          "photoComment": "Photo comment",
+          "puzzleReview": "Puzzle review"
         },
         "reportedArrow": "reported",
         "openCount": "{count, plural, one {# open report against this member} other {# open reports against this member}}",
@@ -4434,6 +4453,7 @@
         "photo": "Reported photo",
         "photoGone": "This photo no longer exists.",
         "evidence": "Thread excerpt at filing time",
+        "reportedText": "Reported text at filing time",
         "reportedMessage": "Reported",
         "system": "System",
         "deletedMember": "Deleted member",
@@ -4452,7 +4472,7 @@
           "warned": "Warn member",
           "content_removed": "Remove content"
         },
-        "removeUnavailable": "Content can only be removed for message and photo reports.",
+        "removeUnavailable": "Content can only be removed for message, photo, comment and review reports.",
         "statementLabel": "Statement of reasons (sent to the member)",
         "statementHint": "{count}/{max} characters. Required: what was restricted, the ground, and how to ask for a review.",
         "templateNames": {
@@ -4466,7 +4486,9 @@
           "copy": "your puzzle copy",
           "photo": "your photo",
           "exchange": "your conduct in a trade",
-          "attachment": "your photo in a message"
+          "attachment": "your photo in a message",
+          "photoComment": "your comment",
+          "puzzleReview": "your review text"
         },
         "grounds": {
           "spam_scam": "spam and scams",
@@ -5216,6 +5238,8 @@
       "description": "Tell us what's wrong. Reports are private: only our moderators see them.",
       "reportingMember": "Reporting {name}",
       "reportingPhoto": "Reporting a photo from {name}",
+      "reportingComment": "Reporting a comment from {name}",
+      "reportingReview": "Reporting a review from {name}",
       "reasonLegend": "Why are you reporting this?",
       "reasons": {
         "spam_scam": "Spam or scam",
@@ -5254,6 +5278,10 @@
     "reportName": "Report {name}",
     "reportMember": "Report member",
     "reportPhoto": "Report photo",
+    "reportComment": "Report comment",
+    "reportCommentFrom": "Report comment from {name}",
+    "reportReview": "Report review",
+    "reportReviewFrom": "Report review from {name}",
     "exchangeActions": "Trade actions",
     "myReports": {
       "title": "Your reports",
@@ -5266,7 +5294,9 @@
         "copy": "A puzzle copy",
         "photo": "A photo",
         "exchange": "A trade",
-        "attachment": "A message photo"
+        "attachment": "A message photo",
+        "photoComment": "A comment on a photo",
+        "puzzleReview": "A puzzle review"
       }
     }
   },

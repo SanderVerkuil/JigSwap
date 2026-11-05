@@ -108,8 +108,8 @@ export interface NotificationViewContext {
   reason?: string;
   /** The moderator's decision on a report the viewer filed (report_decided). */
   reportDecision?: "dismissed" | "content_removed" | "warned";
-  /** What was removed (content_removed). */
-  restrictedContent?: "message" | "photo";
+  /** What was removed (content_removed); "review" is a review's text (its rating stays). */
+  restrictedContent?: "message" | "photo" | "comment" | "review";
   /** The report reason the decision rests on (content_removed, member_warned). */
   ground?:
     | "spam_scam"

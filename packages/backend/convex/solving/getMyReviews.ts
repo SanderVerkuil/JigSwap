@@ -1,11 +1,14 @@
+import { mayReviewDefinition } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { reviewedDefinitionOf } from "./adapters/convexReviewRepositories";
 
-// The caller's OWN reviews for the two-level review form, plus whether they may review the copy
+// The caller's OWN reviews for the two-level review form, plus whether they may review the puzzle
+// (an approved definition, or their own submission: the rule submitReviews enforces) and the copy
 // (owner or completion-holder). Deliberately leaks nothing about the copy itself — other
-// members' reviews and copy content never cross this boundary, only the boolean.
+// members' reviews and copy content never cross this boundary, only the booleans.
 export const getMyReviews = query({
   args: {
     puzzleId: v.id("puzzles"),
@@ -47,11 +50,17 @@ export const getMyReviews = query({
       }
     }
 
+    const puzzleReviewAllowed = mayReviewDefinition(
+      memberId,
+      await reviewedDefinitionOf(ctx, args.puzzleId),
+    );
+
     return {
       puzzle: puzzleRow
         ? { rating: puzzleRow.rating ?? null, text: puzzleRow.text ?? null }
         : null,
       copy: copyRow ? { rating: copyRow.rating } : null,
+      puzzleReviewAllowed,
       copyReviewAllowed,
     };
   },

@@ -1221,8 +1221,11 @@ export default defineSchema({
     // one per thread per member per PUSH_THROTTLE_MS). Absent = never pushed.
     lastPushedAt: v.optional(v.number()),
     // Circle thread email digest: a digest is scheduled to fire at emailPendingUntil (absent = none
-    // pending), and lastEmailedAt is when the member was last sent one (at most one per 6 h).
+    // pending).
     emailPendingUntil: v.optional(v.number()),
+    // When the member was last emailed about this thread: a circle digest (at most one per 6 h), or
+    // a DM or exchange message. Either way no second email while lastEmailedAt > lastReadAt (one
+    // per unread run). Absent = never emailed.
     lastEmailedAt: v.optional(v.number()),
   })
     .index("by_member", ["memberId"])
@@ -1618,14 +1621,18 @@ export default defineSchema({
 
   // Social: a text-only discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row),
   // surfaced in the photo lightbox. Keyed by the photo _id (not a puzzle definition); aggregateId is
-  // the PhotoCommentId. Append-only — the read side projects this table directly into view DTOs.
+  // the PhotoCommentId (the id the web holds, and a photoComment report's target). Append-only for
+  // members; a moderator deletes a reported one (admin/decideReport). The read side projects this
+  // table directly into view DTOs.
   photoComments: defineTable({
     aggregateId: v.optional(v.string()),
     photoId: v.id("ownedPuzzleImages"),
     authorId: v.id("users"),
     text: v.string(),
     createdAt: v.number(),
-  }).index("by_photo", ["photoId"]),
+  })
+    .index("by_photo", ["photoId"])
+    .index("by_aggregate_id", ["aggregateId"]),
 
   // Social: a directed follow edge (followerId -> followeeId). Indexed both ways so the read side
   // can list a member's followers and the people they follow; aggregateId is the FollowId.
@@ -2019,9 +2026,9 @@ export default defineSchema({
 
   // DSA notice-and-action (spec 2.5): a member's report about another member or their content.
   // Filing never changes the target; an admin decides it (admin/decideReport), which may tombstone
-  // a message or remove a photo. `targetId` is the target's canonical id string: users / copy /
-  // photo / attachment `_id`, the threadMessages `messageId`, or the exchange aggregateId (raw
-  // `_id` fallback).
+  // a message, remove a photo or a photo comment, or clear a review's text. `targetId` is the
+  // target's canonical id string: users / copy / photo / attachment / puzzleReviews `_id`, the
+  // threadMessages `messageId`, or the exchange or photo comment aggregateId (raw `_id` fallback).
   // `evidence` is snapshotted at filing time so later edits or removal can't destroy it.
   reports: defineTable({
     // Absent once the reporter is anonymised: they deleted their account, or the report reached
@@ -2036,6 +2043,10 @@ export default defineSchema({
       v.literal("exchange"),
       // A message photo (messageAttachments `_id`).
       v.literal("attachment"),
+      // A comment on a copy photo (photoComments aggregateId, raw `_id` for legacy rows).
+      v.literal("photoComment"),
+      // The text of a review on a catalogue puzzle (puzzleReviews `_id`).
+      v.literal("puzzleReview"),
     ),
     targetId: v.string(),
     reportedUserId: v.id("users"),
@@ -2081,6 +2092,9 @@ export default defineSchema({
           }),
         ),
       ),
+      // photoComment / puzzleReview target: the reported text as filed (a legacy over-long text
+      // cut to reports/fileReport EVIDENCE_TEXT_MAX_LENGTH). Cleared by the retention purge.
+      text: v.optional(v.string()),
     }),
     status: v.union(
       v.literal("open"),
@@ -2108,7 +2122,7 @@ export default defineSchema({
     decidedBy: v.optional(v.id("users")),
     decidedAt: v.optional(v.number()),
     // The retention purge ran (reports/retention, 12 months after the decision): the reporter is
-    // anonymised and the details and evidence message bodies are cleared.
+    // anonymised and the details, the evidence message bodies and the evidence text are cleared.
     retentionPurgedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
@@ -2120,13 +2134,24 @@ export default defineSchema({
     // The reports sharing one evidence copy (its purge; message-photo claims refuse it).
     .index("by_evidence_file", ["evidenceFileId"]),
 
-  // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>"),
-  // reset in place when its window has passed, so the table stays bounded without a cleanup job.
+  // Fixed-window rate limit counters (lib/rateLimits). One row per key ("<limit>:<memberId>", or
+  // "<limit>:<memberId>:<otherId>" for a per-pair limit such as followPair, or
+  // "householdInvitePair:<householdId>:<inviteeId>", or
+  // "followNotice:<channel>:<type>:<recipient>:<actor>"), reset in place when its window has
+  // passed. Member keys keep the table bounded by the member count; pair and notice keys only by
+  // what each member's own limits let them touch, and nothing prunes expired rows yet.
   rateLimits: defineTable({
     key: v.string(),
     windowStart: v.number(),
     count: v.number(),
-  }).index("by_key", ["key"]),
+    // The members a pair or notice key names, because account deletion can't look up an id in the
+    // middle of a key (conversation/purgeMemberMessagingData). Only those rows carry them.
+    pairActorId: v.optional(v.id("users")),
+    pairTargetId: v.optional(v.id("users")),
+  })
+    .index("by_key", ["key"])
+    .index("by_pair_actor", ["pairActorId"])
+    .index("by_pair_target", ["pairTargetId"]),
 
   // One-shot maintenance steps that other code waits for (lib/maintenanceMarkers). One row per
   // step name, written by the step itself when its run proves it done.

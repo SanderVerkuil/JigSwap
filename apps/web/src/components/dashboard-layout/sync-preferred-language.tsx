@@ -2,6 +2,7 @@
 
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
 import { gateway } from "@/gateway";
+import { isLocale } from "@/lib/i18n";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -33,12 +34,14 @@ export function SyncPreferredLanguage() {
 
   useEffect(() => {
     if (!member) return;
+    // The backend only stores a supported locale ("en" | "nl").
+    if (!isLocale(locale)) return;
     if (member.preferredLanguage === locale) return;
     if (lastSyncedLocale.current === locale) return;
     lastSyncedLocale.current = locale;
-    // Fire-and-forget: only preferredLanguage is sent (bio/location are
-    // optional args the backend patch leaves untouched when absent), and a
-    // sync failure must never surface to the user.
+    // Fire-and-forget: only preferredLanguage is sent (location is an
+    // optional arg the backend leaves untouched when absent), and a sync
+    // failure must never surface to the user.
     updateProfile({ preferredLanguage: locale }).catch(() => {});
   }, [locale, member, updateProfile]);
 

@@ -4,6 +4,7 @@
 // page (Phase 4 moves the count onto a tab badge). Approve creates the edge; the second
 // button also follows back in the same gesture (mutuality is what unlocks content for the
 // requester). Decline is silent for the requester. Renders nothing when there are none.
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -73,10 +74,17 @@ export function FollowRequestsStrip() {
         await followBack.mutateAsync({
           followeeId: result.requesterId as Id<"users">,
         });
-      } catch {
+      } catch (error) {
         // The approval succeeded; only the follow-back failed. Softer message with a
-        // recovery hint rather than a blanket error.
-        toast.warning(t("requests.approvedFollowBackFailed"));
+        // recovery hint rather than a blanket error; the Follow button can't help while the
+        // server's follow limit (RateLimited) is full, so that case says to wait.
+        toast.warning(
+          t(
+            convexErrorCode(error) === "RateLimited"
+              ? "requests.approvedFollowBackRateLimited"
+              : "requests.approvedFollowBackFailed",
+          ),
+        );
         return;
       }
     }

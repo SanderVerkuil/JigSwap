@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { deleteNotificationsAbout } from "../invitations/fallbacks";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { isBlockedEitherWay } from "../social/blocks";
 import { isRevealedByOrdinaryRules } from "../social/privacy";
 import { householdDeps } from "./adapters/deps";
@@ -22,6 +23,9 @@ export const inviteToHousehold = mutation({
   args: { inviteeId: v.id("users") },
   handler: async (ctx, args): Promise<string> => {
     const actorId = await requireMember(ctx);
+    // Rate limits (SEC-24): the member's daily bucket here, the per-invitee one below. A refusal
+    // further on throws and rolls the charge back, so only invites that are made are counted.
+    await enforceRateLimit(ctx, "householdInvite", actorId);
     // A pair blocked either way reads as a missing member (spec 2.6: generic, never block-specific),
     // and so does a member the inviter could not find in the picker (SEC-10). Inviting oneself is
     // left to the use case's own error.
@@ -47,6 +51,16 @@ export const inviteToHousehold = mutation({
     const deps = householdDeps(ctx);
     const household = await deps.households.findByMember(actorId);
     if (household?.isAdmin(actorId)) {
+      // The per-invitee cap, which is also the re-invite cooldown after a revoke (it deletes the
+      // invite) or a decline. Only after the MemberNotFound answer above, so a member who can't be
+      // invited never reads as RateLimited; only for the admin, so anyone else still gets the use
+      // case's own refusal.
+      await enforceRateLimit(
+        ctx,
+        "householdInvitePair",
+        `${household.id}:${args.inviteeId}`,
+        { pairTargetId: args.inviteeId },
+      );
       const viaEmail = (
         await ctx.db
           .query("householdInvites")

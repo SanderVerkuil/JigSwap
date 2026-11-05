@@ -146,6 +146,39 @@ describe("report retention", () => {
     ]);
   });
 
+  test("the purge clears a reported comment's or review's snapshotted text", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedReport(t);
+    const reportIds = await t.run(async (ctx) =>
+      Promise.all(
+        (["photoComment", "puzzleReview"] as const).map((targetKind) =>
+          ctx.db.insert("reports", {
+            reporterId: alice,
+            targetKind,
+            targetId: `${targetKind}-1`,
+            reportedUserId: bob,
+            reason: "harassment_hate",
+            evidence: { text: "Something insulting" },
+            status: "open",
+            createdAt: 1,
+          }),
+        ),
+      ),
+    );
+    vi.setSystemTime(DECIDED_AT);
+    for (const reportId of reportIds) await decide(t, reportId);
+    vi.setSystemTime(reportRetainUntil(DECIDED_AT));
+    for (const reportId of reportIds) {
+      await t.mutation(internal.reports.retention.purgeReport, { reportId });
+      const report = await t.run((ctx) => ctx.db.get(reportId));
+      expect(report!.evidence).toEqual({});
+      expect(report).toMatchObject({
+        retentionPurgedAt: expect.any(Number),
+        decision: "warned",
+      });
+    }
+  });
+
   test("before the window ends it only reschedules itself", async () => {
     const t = convexTest(schema, modules);
     const { alice, reportId } = await seedReport(t);

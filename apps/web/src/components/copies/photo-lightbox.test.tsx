@@ -1,18 +1,26 @@
 // @vitest-environment happy-dom
+import { ConvexError } from "convex/values";
 import type { ComponentProps } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PhotoLightbox } from "./photo-lightbox";
 
-// The lightbox's comments/cover/remove features talk to Convex; stub the data layer. Only the
-// photo's comment list (the one query keyed by `photoId`) returns data, set per test.
-const queryData = vi.hoisted(() => ({
+// What the stubbed data layer answers: the photo's comments (the only query keyed by `photoId`, set
+// per test) and the outcome of posting one.
+const stub = vi.hoisted(() => ({
   photoComments: undefined as unknown[] | undefined,
+  // identity.currentUser (the only other query with object args).
+  me: undefined as unknown,
+  mutateAsync: (_args: unknown): Promise<unknown> => Promise.resolve(null),
 }));
+
+// The lightbox's comments/cover/remove features talk to Convex; stub the data layer so the tests
+// cover the zoom surface and the comment composer without a backend.
 vi.mock("@/gateway", () => ({
   gateway: new Proxy({}, { get: () => new Proxy({}, { get: () => ({}) }) }),
 }));
@@ -21,11 +29,20 @@ vi.mock("@convex-dev/react-query", () => ({
   useConvexMutation: () => vi.fn(),
 }));
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: (options: { args?: { photoId?: string } }) => ({
-    data: options.args?.photoId ? queryData.photoComments : undefined,
+  useQuery: (options: { args?: { photoId?: string } | "skip" }) => ({
+    data:
+      options.args === "skip"
+        ? undefined
+        : options.args?.photoId
+          ? stub.photoComments
+          : stub.me,
   }),
-  useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useMutation: () => ({
+    mutateAsync: (args: unknown) => stub.mutateAsync(args),
+    isPending: false,
+  }),
 }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -57,7 +74,10 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   document.body.innerHTML = "";
-  queryData.photoComments = undefined;
+  stub.photoComments = undefined;
+  stub.me = undefined;
+  stub.mutateAsync = () => Promise.resolve(null);
+  vi.mocked(toast.error).mockClear();
 });
 
 const render = (props: Partial<Props> = {}, locale: "en" | "nl" = "en") =>
@@ -204,6 +224,11 @@ describe("PhotoLightbox remove", () => {
 // SEC-11: comment authors arrive privacy-projected. A hidden author shows the anonymous label and
 // a person icon (no avatar, no initial); a departed one "Deleted member".
 describe("PhotoLightbox comments", () => {
+  // Only a published photo has a discussion.
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
   type Comment = {
     id: string;
     author: unknown;
@@ -222,13 +247,13 @@ describe("PhotoLightbox comments", () => {
       .map((el) => el.parentElement!.parentElement!);
 
   it("names a revealed author, with their initial", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", {
         anonymous: false,
         member: { name: "Mara Jansen", avatar: "https://example.test/m.png" },
       }),
     ];
-    render();
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Mara Jansen");
     // The avatar fallback is the initial, not the anonymous person icon.
@@ -236,48 +261,247 @@ describe("PhotoLightbox comments", () => {
   });
 
   it("labels a hidden author 'Anonymous user' with the person icon", () => {
-    queryData.photoComments = [
-      comment("c1", { anonymous: true, anonRef: "abc" }),
-    ];
-    render();
+    stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Anonymous user");
     expect(row.querySelector("svg")).not.toBeNull();
   });
 
   it("labels a departed author 'Deleted member', in Dutch too", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", { anonymous: true, anonRef: "abc", departed: true }),
     ];
-    render();
+    render({ gallery: approved });
     expect(rows()[0].textContent).toContain("Deleted member");
-    render({}, "nl");
+    render({ gallery: approved }, "nl");
     expect(rows()[0].textContent).toContain("Verwijderd lid");
   });
 
   it("uses the Dutch anonymous label", () => {
-    queryData.photoComments = [
-      comment("c1", { anonymous: true, anonRef: "abc" }),
-    ];
-    render({}, "nl");
+    stub.photoComments = [comment("c1", { anonymous: true, anonRef: "abc" })];
+    render({ gallery: approved }, "nl");
     expect(rows()[0].textContent).toContain("Anonieme gebruiker");
   });
 
   // Deploy skew: the web ships before Convex, and a pre-SEC-11 backend still sends the author as a
   // plain MemberView. The row keeps the name that backend sent rather than the generic label.
   it("names a legacy MemberView author while the backend lags", () => {
-    queryData.photoComments = [
+    stub.photoComments = [
       comment("c1", { _id: "u1", name: "Mara Jansen", isActive: true }),
     ];
-    render();
+    render({ gallery: approved });
     const [row] = rows();
     expect(row.textContent).toContain("Mara Jansen");
     expect(row.querySelector("svg")).toBeNull();
   });
 
   it("labels a departed legacy author 'Deleted member'", () => {
-    queryData.photoComments = [comment("c1", { _id: "u1", isActive: false })];
-    render();
+    stub.photoComments = [comment("c1", { _id: "u1", isActive: false })];
+    render({ gallery: approved });
     expect(rows()[0].textContent).toContain("Deleted member");
+  });
+});
+
+describe("PhotoLightbox comment composer", () => {
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
+  const composer = () =>
+    document.querySelector<HTMLInputElement>(
+      'input[placeholder="Add a comment…"]',
+    );
+  const postButton = () =>
+    [...document.querySelectorAll("button")].find(
+      (el) => el.textContent === "Post",
+    )!;
+  const type = (input: HTMLInputElement, value: string) =>
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )!.set!;
+      setter.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  const post = async () => {
+    await act(async () => {
+      postButton().click();
+      await Promise.resolve();
+    });
+  };
+
+  it("limits the composer to the server's 1000 characters", () => {
+    render({ gallery: approved });
+    expect(composer()!.maxLength).toBe(1000);
+  });
+
+  it("explains a comment the server refuses as too long", async () => {
+    stub.mutateAsync = () =>
+      Promise.reject(
+        new ConvexError({ code: "CommentTextTooLong", message: "too long" }),
+      );
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "That comment is too long (1,000 characters max).",
+    );
+  });
+
+  it("offers no composer on a photo still being checked, and says why", () => {
+    render({
+      gallery: gallery.map((p) => ({
+        ...p,
+        moderationStatus: "pending" as const,
+      })),
+    });
+    expect(composer()).toBeNull();
+    expect(document.body.textContent).toContain(
+      "Comments open once this photo has been checked.",
+    );
+  });
+
+  it("shows 100+ when the server's newest-100 list is full", () => {
+    const comment = (i: number) => ({
+      id: `c${i}`,
+      author: { _id: "u1", isActive: true, name: "Sam" },
+      text: `comment ${i}`,
+      createdAt: 1,
+    });
+    stub.photoComments = Array.from({ length: 100 }, (_, i) => comment(i));
+    render({ gallery: approved });
+    const count = () =>
+      [...document.querySelectorAll("span.font-mono")].map(
+        (el) => el.textContent,
+      );
+    expect(count()).toContain("100+");
+
+    stub.photoComments = Array.from({ length: 99 }, (_, i) => comment(i));
+    render({ gallery: approved, index: 1 });
+    expect(count()).toContain("99");
+  });
+
+  it("explains the comment rate limit", async () => {
+    stub.mutateAsync = () =>
+      Promise.reject(
+        new ConvexError({ code: "RateLimited", retryAfterMs: 60_000 }),
+      );
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "You've posted a lot of comments lately. Try again later.",
+    );
+  });
+
+  it("keeps the generic message for other failures", async () => {
+    stub.mutateAsync = () => Promise.reject(new Error("offline"));
+    render({ gallery: approved });
+    type(composer()!, "Nice");
+    await post();
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn’t post your comment. Please try again.",
+    );
+  });
+});
+
+describe("PhotoLightbox comment reports", () => {
+  const approved = gallery.map((p) => ({
+    ...p,
+    moderationStatus: "approved" as const,
+  }));
+  const comment = (id: string, authorId: string, name: string) => ({
+    id,
+    author: {
+      anonymous: false,
+      member: { _id: authorId, isActive: true, name },
+    },
+    text: `${name} says hi`,
+    createdAt: 1,
+  });
+  const reportButtons = () =>
+    [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        'button[aria-label^="Report comment from"]',
+      ),
+    ].map((el) => el.getAttribute("aria-label"));
+
+  it("offers Report on other members' comments, never on your own", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      comment("c1", "u1", "Sam"),
+      comment("c2", "me", "Me"),
+      comment("c3", "u2", "Kim"),
+    ];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([
+      "Report comment from Sam",
+      "Report comment from Kim",
+    ]);
+  });
+
+  it("offers no Report until the viewer is known", () => {
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([]);
+  });
+
+  // SEC-11: a hidden author stays hidden through the report path. They can be reported, under the
+  // label the row shows, and with no id to offer "Also block" on.
+  it("offers Report on a hidden author's comment without identifying them", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      {
+        id: "c1",
+        author: { anonymous: true, anonRef: "abc" },
+        text: "Hidden says hi",
+        createdAt: 1,
+      },
+    ];
+    render({ gallery: approved });
+    click(button("Report comment from Anonymous user"));
+    expect(document.body.textContent).toContain(
+      "Reporting a comment from Anonymous user",
+    );
+    expect(document.querySelector("blockquote")?.textContent).toBe(
+      "Hidden says hi",
+    );
+    expect(document.body.textContent).not.toContain("Also block");
+  });
+
+  it("offers a block only for a revealed author", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    click(button("Report comment from Sam"));
+    expect(document.body.textContent).toContain("Also block Sam");
+  });
+
+  // Deploy skew: a pre-SEC-11 backend sends the author as a plain MemberView.
+  it("never offers Report on your own comment while the backend lags", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [
+      {
+        id: "c1",
+        author: { _id: "me", isActive: true, name: "Me" },
+        text: "Me says hi",
+        createdAt: 1,
+      },
+    ];
+    render({ gallery: approved });
+    expect(reportButtons()).toEqual([]);
+  });
+
+  it("opens the report dialog quoting the comment", () => {
+    stub.me = { _id: "me", isActive: true, name: "Me" };
+    stub.photoComments = [comment("c1", "u1", "Sam")];
+    render({ gallery: approved });
+    click(button("Report comment from Sam"));
+    expect(document.body.textContent).toContain("Reporting a comment from Sam");
+    expect(document.querySelector("blockquote")?.textContent).toBe(
+      "Sam says hi",
+    );
   });
 });

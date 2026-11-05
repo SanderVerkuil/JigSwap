@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
+import { mailtoHref } from "@/lib/mailto";
 import { pageTitle } from "@/lib/page-title";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -77,7 +78,9 @@ function ContactTriagePage() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              <a href={`mailto:${message.email}`} className="underline">
+              {/* The address is typed by an anonymous visitor: encoded, it can never add
+                  cc/bcc/body fields to the reply draft. */}
+              <a href={mailtoHref(message.email)} className="underline">
                 {message.email}
               </a>
               {" • "}

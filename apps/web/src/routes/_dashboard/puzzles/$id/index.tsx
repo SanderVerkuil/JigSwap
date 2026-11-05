@@ -2,6 +2,7 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { EmptyState } from "@/components/library/empty-state";
 import {
   difficultyClasses,
@@ -11,6 +12,7 @@ import {
   StarGlyph,
   Stat,
 } from "@/components/puzzles/catalog-detail-parts";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +22,13 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
+  authorMemberIdOf,
   projectedAuthorOf,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { REVIEW_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -37,6 +41,7 @@ import type { FunctionReturnType } from "convex/server";
 import {
   ArrowLeftRight,
   ChevronRight,
+  Flag,
   Heart,
   MessageCircle,
   Pencil,
@@ -147,6 +152,16 @@ function PuzzleDefinitionDetail({
   // breadcrumb becomes "Community › Puzzles catalogue › <name>" — the route's
   // pageKey "puzzles" matches the catalogue nav item, which renders the middle crumb).
   usePageHeader(() => ({ title: definition.title }), [definition.title]);
+
+  // Only an approved definition (or the viewer's own submission) takes reviews; the server
+  // refuses the rest, so neither the action nor the composer is offered there. Loading, or a
+  // backend that predates the flag, keeps them.
+  const { data: myReviews } = useQuery(
+    convexQuery(gateway.solving.getMyReviews, {
+      puzzleId: puzzleId as Id<"puzzles">,
+    }),
+  );
+  const canReview = myReviews?.puzzleReviewAllowed !== false;
 
   // The review composer is focused by the "Write a Review" action.
   const composerRef = useRef<HTMLInputElement>(null);
@@ -281,10 +296,12 @@ function PuzzleDefinitionDetail({
               <ArrowLeftRight className="h-4 w-4" />
               {t("findCopyToSwap")}
             </Button>
-            <Button variant="outline" onClick={focusComposer}>
-              <Star className="h-4 w-4" />
-              {t("writeReview")}
-            </Button>
+            {canReview && (
+              <Button variant="outline" onClick={focusComposer}>
+                <Star className="h-4 w-4" />
+                {t("writeReview")}
+              </Button>
+            )}
             <Button
               variant="outline"
               aria-pressed={favorited}
@@ -345,7 +362,11 @@ function PuzzleDefinitionDetail({
 
         {/* Right: reviews */}
         <div>
-          <ReviewsSection puzzleId={puzzleId} composerRef={composerRef} />
+          <ReviewsSection
+            puzzleId={puzzleId}
+            composerRef={composerRef}
+            canReview={canReview}
+          />
         </div>
       </div>
     </div>
@@ -478,9 +499,11 @@ function AvailableToSwap({
 function ReviewsSection({
   puzzleId,
   composerRef,
+  canReview,
 }: {
   puzzleId: string;
   composerRef: React.RefObject<HTMLInputElement | null>;
+  canReview: boolean;
 }) {
   const t = useTranslations("puzzleDefinition");
   const format = useFormatter();
@@ -509,6 +532,11 @@ function ReviewsSection({
   const [text, setText] = useState("");
   const [rating, setRating] = useState(0);
   const [now] = useState(() => Date.now());
+  // The review being reported stays set while the dialog animates closed.
+  const [reported, setReported] = useState<PuzzleReview | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const reportTriggerRef = useRef<HTMLElement | null>(null);
+  const projectedName = useProjectedMemberName();
 
   // Seed the composer once from the existing review, during render (the sanctioned "adjust
   // state when a value changes" pattern — an effect + setState would trip the
@@ -541,8 +569,16 @@ function ReviewsSection({
         rating,
         ...(trimmed ? { text: trimmed } : {}),
       });
-    } catch {
-      toast.error(t("reviewFailed"));
+    } catch (error) {
+      // A review stored before the length cap can be longer than the field allows: say why.
+      const code = convexErrorCode(error);
+      toast.error(
+        code === "RateLimited"
+          ? t("reviewRateLimited")
+          : code === "ReviewTextTooLong"
+            ? t("reviewTooLong")
+            : t("reviewFailed"),
+      );
     }
   };
 
@@ -555,42 +591,49 @@ function ReviewsSection({
       />
 
       {/* Composer */}
-      <div className="mb-4 flex gap-2.5">
-        <MemberAvatar source={me} avatar={me?.avatar} />
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              ref={composerRef}
-              placeholder={t("reviewPlaceholder", { title })}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void submit();
-                }
-              }}
-              className="flex-1"
+      {!canReview ? (
+        <p className="text-muted-foreground mb-4 text-sm">
+          {t("reviewNotOpen")}
+        </p>
+      ) : (
+        <div className="mb-4 flex gap-2.5">
+          <MemberAvatar source={me} avatar={me?.avatar} />
+          <div className="flex flex-1 flex-col gap-2">
+            <div className="flex gap-2">
+              <Input
+                ref={composerRef}
+                placeholder={t("reviewPlaceholder", { title })}
+                value={text}
+                maxLength={REVIEW_TEXT_MAX_LENGTH}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void submit();
+                  }
+                }}
+                className="flex-1"
+              />
+              <Button
+                variant="brand"
+                onClick={() => void submit()}
+                disabled={postReview.isPending || rating < 1}
+              >
+                {hasExistingReview ? t("updateReview") : t("post")}
+              </Button>
+            </div>
+            <StarRating
+              value={rating}
+              onChange={setRating}
+              size="sm"
+              label={t("rateRequired")}
             />
-            <Button
-              variant="brand"
-              onClick={() => void submit()}
-              disabled={postReview.isPending || rating < 1}
-            >
-              {hasExistingReview ? t("updateReview") : t("post")}
-            </Button>
+            <p className="text-muted-foreground text-xs">
+              {t("reviewPublicNote")}
+            </p>
           </div>
-          <StarRating
-            value={rating}
-            onChange={setRating}
-            size="sm"
-            label={t("rateRequired")}
-          />
-          <p className="text-muted-foreground text-xs">
-            {t("reviewPublicNote")}
-          </p>
         </div>
-      </div>
+      )}
 
       {/* List */}
       <div className="flex flex-col">
@@ -600,12 +643,45 @@ function ReviewsSection({
             review={review}
             relative={relative}
             last={i === list.length - 1}
+            // Other members' reviews with text (a rating alone has nothing to report; the server
+            // refuses it, and your own, too); not until we know who you are. A hidden author can be
+            // reported as well: the report names the review, not them.
+            onReport={
+              me &&
+              authorMemberIdOf(review.author) !== me._id &&
+              review.text != null
+                ? (trigger) => {
+                    reportTriggerRef.current = trigger;
+                    setReported(review);
+                    setReporting(true);
+                  }
+                : undefined
+            }
           />
         ))}
         {list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noReviews")}</p>
         )}
       </div>
+      {reported && (
+        <ReportDialog
+          target={{
+            kind: "puzzleReview",
+            id: reported.id,
+            snippet: reported.text ?? "",
+          }}
+          name={projectedName(
+            projectedAuthorOf(reported.author),
+            t("anonymousReviewer"),
+          )}
+          memberId={
+            authorMemberIdOf(reported.author) as Id<"users"> | undefined
+          }
+          open={reporting}
+          onOpenChange={setReporting}
+          returnFocusRef={reportTriggerRef}
+        />
+      )}
     </section>
   );
 }
@@ -614,11 +690,15 @@ function ReviewRow({
   review,
   relative,
   last,
+  onReport,
 }: {
   review: PuzzleReview;
   relative: (timestamp: number) => string;
   last: boolean;
+  /** Offered on other members' reviews with text: opens the report dialog. */
+  onReport?: (trigger: HTMLButtonElement) => void;
 }) {
+  const tSafety = useTranslations("safety");
   const t = useTranslations("puzzleDefinition");
   const projectedName = useProjectedMemberName();
   // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
@@ -645,6 +725,18 @@ function ReviewRow({
           </p>
         )}
       </div>
+      {onReport && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={tSafety("reportReviewFrom", { name })}
+          title={tSafety("reportReview")}
+          onClick={(event) => onReport(event.currentTarget)}
+          className="text-muted-foreground hover:text-destructive -my-1.5 size-11 shrink-0 md:size-8"
+        >
+          <Flag className="size-4" aria-hidden />
+        </Button>
+      )}
     </div>
   );
 }

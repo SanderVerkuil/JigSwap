@@ -138,21 +138,63 @@ describe("FollowRequest.markCancelledWhileDeclined", () => {
   });
 });
 
-describe("FollowRequest.reopenAfterCancel", () => {
+describe("FollowRequest.reissueAfterCancel", () => {
   const CANCELLED_AT = new Date("2026-07-13T10:00:00Z");
+  const REISSUED_AT = new Date("2026-07-14T10:00:00Z");
+  const freshId = toFollowRequestId("req-2");
 
-  it("clears cancelledAt, keeps the request declined, records no event", () => {
+  const cancelledDecline = () => {
     const request = declined();
     if (request.markCancelledWhileDeclined(CANCELLED_AT).isErr) {
       throw new Error("setup");
     }
-    expect(request.toState().cancelledAt).toBe(CANCELLED_AT);
+    return request;
+  };
 
-    request.reopenAfterCancel();
-    expect(request.toState().cancelledAt).toBeUndefined();
-    expect(request.status).toBe("declined");
-    expect(request.toState().respondedAt).toBe(LATER);
-    expect(request.pullEvents()).toHaveLength(0);
+  it("re-issues the decline under a fresh id, created now, still declined, no event", () => {
+    const original = cancelledDecline();
+
+    const result = original.reissueAfterCancel(freshId, REISSUED_AT);
+    expect(result.isOk).toBe(true);
+    if (!result.isOk) return;
+    const reissued = result.value;
+    // To the requester it must look exactly like a brand-new request: a new id and a new
+    // createdAt (the read side shows createdAt as "requested at").
+    expect(reissued.id).toBe(freshId);
+    expect(reissued.toState()).toEqual({
+      id: freshId,
+      requesterId: requester,
+      targetId: target,
+      status: "declined",
+      createdAt: REISSUED_AT,
+      respondedAt: LATER, // the cooldown still runs from the original decline
+    });
+    expect(reissued.isCancelled).toBe(false);
+    expect(reissued.pullEvents()).toHaveLength(0);
+  });
+
+  it("refuses a decline that was never cancelled (RequestNotPending)", () => {
+    const result = declined().reissueAfterCancel(freshId, REISSUED_AT);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("RequestNotPending");
+  });
+
+  it("refuses a pending request (RequestNotPending)", () => {
+    const result = pending().reissueAfterCancel(freshId, REISSUED_AT);
+    expect(result.isErr).toBe(true);
+    if (result.isErr) expect(result.error.code).toBe("RequestNotPending");
+  });
+});
+
+describe("FollowRequest.isCancelled", () => {
+  it("is true only once the requester cancelled a declined request", () => {
+    expect(pending().isCancelled).toBe(false);
+    const request = declined();
+    expect(request.isCancelled).toBe(false);
+    if (request.markCancelledWhileDeclined(LATER).isErr) {
+      throw new Error("setup");
+    }
+    expect(request.isCancelled).toBe(true);
   });
 });
 

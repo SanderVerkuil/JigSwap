@@ -16,6 +16,11 @@ export interface PuzzleReviewUpsert {
 
 export interface PuzzleReviewRepository {
   upsert(review: PuzzleReviewUpsert): Promise<void>;
+  // The text of the member's stored review of the puzzle, if any.
+  storedText(
+    userId: MemberId,
+    puzzleId: PuzzleDefinitionId,
+  ): Promise<string | undefined>;
 }
 
 // The already-normalised values a star-only copy-review upsert persists.

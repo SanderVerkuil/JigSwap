@@ -1,7 +1,11 @@
 import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import { mutation, type MutationCtx } from "../_generated/server";
+import {
+  mutation,
+  type MutationCtx,
+  type QueryCtx,
+} from "../_generated/server";
 import {
   isUnattachedMedia,
   participantsKeyOf,
@@ -12,6 +16,7 @@ import { requireMember } from "../identity/requireMember";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
+import { isPhotoOpenForComments } from "../library/listPhotoComments";
 import schema from "../schema";
 import {
   areMutualFollowers,
@@ -33,6 +38,12 @@ const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** How many messages before the reported one the evidence snapshot keeps. */
 export const EVIDENCE_PRECEDING_MESSAGES = 10;
 
+/**
+ * Max length of a reported comment's or review's snapshotted text: the longest text either takes
+ * today (a review, 2000). A legacy row from before the caps is cut, with an ellipsis.
+ */
+export const EVIDENCE_TEXT_MAX_LENGTH = 2000;
+
 type Evidence = Doc<"reports">["evidence"];
 type Target = {
   /** The canonical target id stored on the report (dedupe key). */
@@ -49,8 +60,9 @@ const notFound = () =>
 // File a DSA notice (spec 2.5) about a member or their content. The reporter must be able to see
 // the target; one OPEN report per reporter and target (a repeat returns the existing report
 // unchanged). Filing never changes the target itself: only an admin decision can
-// (admin/decideReport). A message report snapshots the message and its preceding context now,
-// so a later edit or removal can't destroy the evidence.
+// (admin/decideReport). A message report snapshots the message and its preceding context now, a
+// photo comment or puzzle review report its text, so a later edit or removal can't destroy the
+// evidence.
 export const fileReport = mutation({
   args: {
     targetKind: reportFields.targetKind,
@@ -209,6 +221,21 @@ const resolveTarget = async (
         evidence: {},
       };
     }
+    case "photoComment":
+      return photoCommentTarget(ctx, reporterId, targetId);
+    case "puzzleReview": {
+      // A review with text. Its id comes from listPuzzleReviews, so the reporter has read it,
+      // whatever the definition's status (a submitter sees reviews of their own pending one). A
+      // rating-only review has no content to report; its author can still be reported as a member.
+      const reviewId = ctx.db.normalizeId("puzzleReviews", targetId);
+      const review = reviewId ? await ctx.db.get(reviewId) : null;
+      if (!review?.text) return null;
+      return {
+        targetId: review._id,
+        reportedUserId: review.userId,
+        evidence: { text: evidenceTextOf(review.text) },
+      };
+    }
     case "exchange": {
       // The exchange aggregateId the web holds, raw `_id` fallback for pre-aggregateId rows.
       const byAggregate = await ctx.db
@@ -294,6 +321,53 @@ const attachmentTarget = async (
   const target = await messageTarget(ctx, reporterId, row.messageId);
   if (!target || target.reportedUserId !== row.uploaderId) return null;
   return { ...target, targetId: row._id };
+};
+
+/**
+ * A photo comment by the id the web holds (PhotoCommentView.id): its aggregateId, or the raw `_id`
+ * of a legacy row without one. Also a photoComment report's canonical targetId.
+ */
+export const photoCommentByTargetId = async (
+  ctx: QueryCtx,
+  targetId: string,
+): Promise<Doc<"photoComments"> | null> => {
+  const byAggregate = await ctx.db
+    .query("photoComments")
+    .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", targetId))
+    .first();
+  if (byAggregate) return byAggregate;
+  const rawId = ctx.db.normalizeId("photoComments", targetId);
+  return rawId ? ctx.db.get(rawId) : null;
+};
+
+// A comment on a copy photo that the reporter can read: the same gate as listPhotoComments (a
+// published photo on a copy the reporter can view). Its text is the evidence.
+const photoCommentTarget = async (
+  ctx: MutationCtx,
+  reporterId: Id<"users">,
+  targetId: string,
+): Promise<Target | null> => {
+  const comment = await photoCommentByTargetId(ctx, targetId);
+  if (!comment) return null;
+  const photo = await ctx.db.get(comment.photoId);
+  if (!photo || !isPhotoOpenForComments(photo)) return null;
+  const copy = await ctx.db.get(photo.ownedPuzzleId);
+  if (!copy || !(await canViewCopy(ctx, reporterId, copy))) return null;
+  return {
+    targetId: comment.aggregateId ?? comment._id,
+    reportedUserId: comment.authorId,
+    evidence: { text: evidenceTextOf(comment.text) },
+  };
+};
+
+// The reported text as stored, or a legacy over-long one cut to EVIDENCE_TEXT_MAX_LENGTH with an
+// ellipsis, never between the two halves of a surrogate pair.
+const evidenceTextOf = (text: string): string => {
+  if (text.length <= EVIDENCE_TEXT_MAX_LENGTH) return text;
+  const cut = text.slice(0, EVIDENCE_TEXT_MAX_LENGTH - 1);
+  const last = cut.charCodeAt(cut.length - 1);
+  const whole = last >= 0xd800 && last <= 0xdbff ? cut.slice(0, -1) : cut;
+  return `${whole}…`;
 };
 
 // Filing holds the reported photo (an attachment report, or a message report on an image message)

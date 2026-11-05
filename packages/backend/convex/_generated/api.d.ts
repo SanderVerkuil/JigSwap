@@ -368,6 +368,7 @@ import type * as library_updateCopySharing from "../library/updateCopySharing.js
 import type * as notifications_act from "../notifications/act.js";
 import type * as notifications_adapters_ahasendEmailSender from "../notifications/adapters/ahasendEmailSender.js";
 import type * as notifications_adapters_channels_emailChannel from "../notifications/adapters/channels/emailChannel.js";
+import type * as notifications_adapters_channels_followNoticeThrottle from "../notifications/adapters/channels/followNoticeThrottle.js";
 import type * as notifications_adapters_channels_inAppChannel from "../notifications/adapters/channels/inAppChannel.js";
 import type * as notifications_adapters_channels_pushChannel from "../notifications/adapters/channels/pushChannel.js";
 import type * as notifications_adapters_convexNotificationPreferenceRepository from "../notifications/adapters/convexNotificationPreferenceRepository.js";
@@ -400,6 +401,8 @@ import type * as notifications_setNotificationPreferences from "../notifications
 import type * as notifications_subscriber from "../notifications/subscriber.js";
 import type * as notifications_threadDigest from "../notifications/threadDigest.js";
 import type * as notifications_unreadCount from "../notifications/unreadCount.js";
+import type * as notifications_unsubscribe from "../notifications/unsubscribe.js";
+import type * as notifications_unsubscribeToken from "../notifications/unsubscribeToken.js";
 import type * as notifications_updateNotificationPreference from "../notifications/updateNotificationPreference.js";
 import type * as notifications_viewRules from "../notifications/viewRules.js";
 import type * as onboarding_activationReport from "../onboarding/activationReport.js";
@@ -933,6 +936,7 @@ declare const fullApi: ApiFromModules<{
   "notifications/act": typeof notifications_act;
   "notifications/adapters/ahasendEmailSender": typeof notifications_adapters_ahasendEmailSender;
   "notifications/adapters/channels/emailChannel": typeof notifications_adapters_channels_emailChannel;
+  "notifications/adapters/channels/followNoticeThrottle": typeof notifications_adapters_channels_followNoticeThrottle;
   "notifications/adapters/channels/inAppChannel": typeof notifications_adapters_channels_inAppChannel;
   "notifications/adapters/channels/pushChannel": typeof notifications_adapters_channels_pushChannel;
   "notifications/adapters/convexNotificationPreferenceRepository": typeof notifications_adapters_convexNotificationPreferenceRepository;
@@ -965,6 +969,8 @@ declare const fullApi: ApiFromModules<{
   "notifications/subscriber": typeof notifications_subscriber;
   "notifications/threadDigest": typeof notifications_threadDigest;
   "notifications/unreadCount": typeof notifications_unreadCount;
+  "notifications/unsubscribe": typeof notifications_unsubscribe;
+  "notifications/unsubscribeToken": typeof notifications_unsubscribeToken;
   "notifications/updateNotificationPreference": typeof notifications_updateNotificationPreference;
   "notifications/viewRules": typeof notifications_viewRules;
   "onboarding/activationReport": typeof onboarding_activationReport;

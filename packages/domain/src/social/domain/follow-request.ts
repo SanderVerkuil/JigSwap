@@ -31,7 +31,8 @@ export interface FollowRequestState {
   readonly respondedAt?: Date;
   // Set when the requester cancels a still-declined (in-cooldown) request. The row is kept so the
   // decline record survives, but the read side stops masking it as pending; a re-request inside
-  // the cooldown clears it again. Only ever set on a declined request.
+  // the cooldown re-issues the record without it (reissueAfterCancel). Only ever set on a declined
+  // request.
   readonly cancelledAt?: Date;
 }
 
@@ -131,10 +132,36 @@ export class FollowRequest {
     return ok(undefined);
   }
 
-  // Clears the cancelled mark so a re-request inside the cooldown silently resumes the pending
-  // mask. Records no event. The caller only ever invokes this on a cancelled declined request.
-  reopenAfterCancel(): void {
-    this.state = { ...this.state, cancelledAt: undefined };
+  // Whether the requester withdrew this request while it was a declined-in-cooldown record. To the
+  // requester such a row is gone, exactly like a cancelled pending request (which is removed).
+  get isCancelled(): boolean {
+    return this.state.cancelledAt !== undefined;
+  }
+
+  // A re-request inside the cooldown after a cancel: the same decline record, re-issued under a
+  // fresh id and created `now`, with the cancelled mark cleared so the read side masks it as
+  // pending again. A cancelled pending request is removed and its re-request is a brand-new request
+  // with a new id and createdAt; this mirrors that, so neither the id nor the "requested at" time
+  // can tell the requester that the target declined (SEC-39). respondedAt is kept, so the cooldown
+  // still runs from the original decline. Records no event: the target is not told again. Only a
+  // cancelled declined request can be re-issued; anything else is RequestNotPending.
+  reissueAfterCancel(
+    id: FollowRequestId,
+    now: Date,
+  ): Result<FollowRequest, SocialError> {
+    if (this.state.status !== "declined" || !this.isCancelled) {
+      return err(SocialError.requestNotPending());
+    }
+    return ok(
+      new FollowRequest({
+        id,
+        requesterId: this.state.requesterId,
+        targetId: this.state.targetId,
+        status: "declined",
+        createdAt: now,
+        respondedAt: this.state.respondedAt,
+      }),
+    );
   }
 
   // Drain recorded events for the publisher; clears the buffer so a save can't double-emit.

@@ -1,9 +1,11 @@
-import type {
-  CopyReviewRepository,
-  PuzzleReviewRepository,
+import {
+  toMemberId,
+  type CopyReviewRepository,
+  type PuzzleReviewRepository,
+  type ReviewedDefinition,
 } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
-import type { MutationCtx } from "../../_generated/server";
+import type { MutationCtx, QueryCtx } from "../../_generated/server";
 
 // Driven adapters for the two-level review model over `ctx.db`. Upsert-by-unique-key: the
 // one-row-per-(member, target) cardinality the domain ports promise lives HERE, via the
@@ -13,9 +15,34 @@ import type { MutationCtx } from "../../_generated/server";
 // back — no resolution. This mirrors the social-context branding, NOT
 // convexCompletionRepository (which resolves aggregateIds).
 
+// The facts makeUpsertPuzzleReview checks before a puzzle review (null: no such puzzle). Read
+// once per review by the composition roots (social/postPuzzleReview, solving/submitReviews).
+export const reviewedDefinitionOf = async (
+  ctx: QueryCtx,
+  puzzleId: Id<"puzzles">,
+): Promise<ReviewedDefinition | null> => {
+  const puzzle = await ctx.db.get(puzzleId);
+  if (!puzzle) return null;
+  return {
+    isApproved: puzzle.status === "approved",
+    submitterId: toMemberId(puzzle.submittedBy as unknown as string),
+  };
+};
+
 export const convexPuzzleReviewRepository = (
   ctx: MutationCtx,
 ): PuzzleReviewRepository => ({
+  async storedText(memberId, puzzleDefinitionId): Promise<string | undefined> {
+    const userId = memberId as unknown as Id<"users">;
+    const puzzleId = puzzleDefinitionId as unknown as Id<"puzzles">;
+    const existing = await ctx.db
+      .query("puzzleReviews")
+      .withIndex("by_user_puzzle", (q) =>
+        q.eq("userId", userId).eq("puzzleId", puzzleId),
+      )
+      .unique();
+    return existing?.text;
+  },
   async upsert(review): Promise<void> {
     const userId = review.userId as unknown as Id<"users">;
     const puzzleId = review.puzzleId as unknown as Id<"puzzles">;

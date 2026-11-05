@@ -4,6 +4,7 @@ import type { Id } from "../../../_generated/dataModel";
 import type { MutationCtx } from "../../../_generated/server";
 import { renderNotificationText } from "../../copy";
 import { deliveryRefsOf } from "../../deliveryContent";
+import { followNoticeAllowed } from "./followNoticeThrottle";
 
 // Web Push channel: schedules the out-of-band send (notifications/sendWebPush) after commit, which
 // fans the notification out to every active push subscription of the recipient via VAPID. The
@@ -15,6 +16,7 @@ import { deliveryRefsOf } from "../../deliveryContent";
 // A message (only messages: other thread notices are never held back) is pushed at most once per
 // thread per member per PUSH_THROTTLE_MS (the thread's participant row keeps lastPushedAt); the
 // OS replaces rather than stacks a thread's pushes via the payload's thread tag (sendWebPush).
+// A follow notice is pushed at most once a day per actor and type (followNoticeThrottle, SEC-23).
 export const PUSH_THROTTLE_MS = 2 * 60 * 1000;
 
 export const pushChannel =
@@ -55,6 +57,7 @@ export const pushChannel =
         await ctx.db.patch(seat._id, { lastPushedAt: now });
       }
     }
+    if (!(await followNoticeAllowed(ctx, "push", state))) return;
     const { title, message } = renderNotificationText(
       state.type,
       state.params ?? {},

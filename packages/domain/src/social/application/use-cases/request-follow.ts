@@ -5,7 +5,12 @@ import {
   ok,
   Result,
 } from "../../../shared-kernel";
-import { FollowRequest, FollowRequestId, SocialError } from "../../domain";
+import {
+  FollowRequest,
+  FollowRequestId,
+  FollowRequestStatus,
+  SocialError,
+} from "../../domain";
 import { SocialApplicationError } from "../errors";
 import {
   RequestFollow,
@@ -19,6 +24,25 @@ import { FollowRequestIdGenerator } from "../ports/out/id-generators";
 // spec: 7 days. Exported so the read side presents "declined but cooling down" as pending.
 export const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
+// The silent-decline mask: how a request reads to the member who SENT it. A decline inside its
+// cooldown that they haven't cancelled reads exactly like a pending request, so the requester
+// cannot tell a decline from no answer yet. Every read that shows a requester their own request
+// (the follow button's relation, notification views, quick start) uses this one rule. Times are
+// epoch millis, as stored on the followRequests row.
+export const readsAsPendingToRequester = (
+  request: {
+    readonly status: FollowRequestStatus;
+    readonly respondedAt?: number;
+    readonly cancelledAt?: number;
+  },
+  nowMs: number,
+): boolean =>
+  request.status === "pending" ||
+  (request.status === "declined" &&
+    request.cancelledAt === undefined &&
+    request.respondedAt !== undefined &&
+    nowMs - request.respondedAt < COOLDOWN_MS);
+
 export interface RequestFollowDeps {
   readonly requests: FollowRequestRepository;
   readonly follows: FollowRepository;
@@ -29,7 +53,8 @@ export interface RequestFollowDeps {
 
 // Transaction script: reject if already following; dedupe against the existing request for the
 // pair (pending → idempotent; declined inside cooldown → SILENT idempotent no-op so probing
-// cannot reveal a decline; anything older → replace with a fresh pending request).
+// cannot reveal a decline, or, after a cancel, the decline re-issued under a fresh id; anything
+// older → replace with a fresh pending request).
 export const makeRequestFollow =
   (deps: RequestFollowDeps): RequestFollow =>
   async (
@@ -57,11 +82,19 @@ export const makeRequestFollow =
       ) {
         // Silent decline: inside the cooldown a re-request is swallowed and the old id
         // returned, exactly as if the target simply hadn't answered yet.
-        if (state.cancelledAt !== undefined) {
-          // The requester had cancelled during the cooldown (which un-masked the row on the
-          // read side). Re-requesting resumes the mask: clear the cancel, no event, same id.
-          existing.reopenAfterCancel();
-          await deps.requests.save(existing);
+        if (existing.isCancelled) {
+          // The requester had cancelled during the cooldown, which reads to them as a removed
+          // request. A cancelled pending request IS removed, and re-requesting it mints a new
+          // id, so this path must too (SEC-39): re-issue the decline under a fresh id and
+          // createdAt, resuming the mask. No event: the target is not told again.
+          const reissued = existing.reissueAfterCancel(
+            deps.requestIds.next(),
+            now,
+          );
+          if (reissued.isErr) return err(reissued.error);
+          await deps.requests.remove(existing);
+          await deps.requests.save(reissued.value);
+          return ok(reissued.value.id);
         }
         return ok(existing.id);
       }

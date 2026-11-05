@@ -11,8 +11,10 @@ export type SolvingErrorCode =
   | "NotCompletionOwner"
   | "InvalidGoalTarget"
   | "InvalidRating"
+  | "ReviewTextTooLong"
   | "InvalidDuration"
   | "NotAllowedToReviewCopy"
+  | "PuzzleNotReviewable"
   | "InvalidDatePrecision"
   | "InvalidYear"
   | "DurationNotAllowed";
@@ -75,6 +77,14 @@ export class SolvingError extends DomainError {
     );
   }
 
+  // A puzzle review's text was longer than the cap once trimmed.
+  static reviewTextTooLong(max: number): SolvingError {
+    return new SolvingError(
+      "ReviewTextTooLong",
+      `A review's text must be at most ${max} characters`,
+    );
+  }
+
   // A solve duration that is not a positive number of minutes.
   static invalidDuration(): SolvingError {
     return new SolvingError(
@@ -88,6 +98,14 @@ export class SolvingError extends DomainError {
     return new SolvingError(
       "NotAllowedToReviewCopy",
       "Only the copy's owner or a member who completed it may review this copy",
+    );
+  }
+
+  // A puzzle review needs an existing, approved definition, unless the reviewer submitted it.
+  static puzzleNotReviewable(): SolvingError {
+    return new SolvingError(
+      "PuzzleNotReviewable",
+      "Only approved puzzles (or your own submissions) can be reviewed",
     );
   }
 

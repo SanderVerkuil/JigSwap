@@ -1,4 +1,4 @@
-import type { NotificationType } from "@jigswap/domain";
+import { inviterNameForEmail, type NotificationType } from "@jigswap/domain";
 import type { DeliveryContent } from "./deliveryContent";
 
 // English render table for notification copy, used ONLY where a server-side plain string is
@@ -26,7 +26,7 @@ import type { DeliveryContent } from "./deliveryContent";
 //   reason      — proposal_rejected (moderator-entered, may be absent)
 //   rating      — review_received (1-5, snapshotted)
 //   decision    — report_decided ("dismissed" | "content_removed" | "warned")
-//   restricted  — content_removed ("message" | "photo")
+//   restricted  — content_removed ("message" | "photo" | "comment" | "review"; a review's text)
 //   ground      — content_removed, member_warned (the report reason the decision rests on)
 //   reason      — also content_removed, member_warned: the moderator's statement of reasons
 //   automated   — content_removed, member_warned ("false": decided by a person)
@@ -273,12 +273,22 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
         ? "We reviewed your report and took no action"
         : "We reviewed your report and took action",
   }),
-  content_removed: (p) => ({
-    title: "Content removed",
-    message: p["reason"]
-      ? `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}: ${p["reason"]}`
-      : `A moderator removed your ${p["restricted"] === "photo" ? "photo" : "message"}`,
-  }),
+  content_removed: (p) => {
+    const what =
+      p["restricted"] === "photo"
+        ? "your photo"
+        : p["restricted"] === "comment"
+          ? "your comment"
+          : p["restricted"] === "review"
+            ? "the text of your review"
+            : "your message";
+    return {
+      title: "Content removed",
+      message: p["reason"]
+        ? `A moderator removed ${what}: ${p["reason"]}`
+        : `A moderator removed ${what}`,
+    };
+  },
   message_image_rejected: () => ({
     title: "Photo removed",
     message:
@@ -292,10 +302,22 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
   }),
 };
 
+// The actor's name is member-chosen text that reaches lock screens in the push title and body. It
+// follows the rule invitation emails apply to the inviter's name (domain inviterNameForEmail): line
+// breaks and control characters flattened, bidi and other invisible format characters dropped,
+// words that look like a link or an email address dropped, at most INVITER_NAME_MAX_LENGTH
+// characters. A name with nothing left counts as no name.
+const withSafeActorName = (params: Params): Params => {
+  const { actorName, ...rest } = params;
+  if (actorName === undefined) return params;
+  const name = inviterNameForEmail(actorName);
+  return name === undefined ? rest : { ...rest, actorName: name };
+};
+
 export const renderNotificationText = (
   type: NotificationType,
   params: Params = {},
-): NotificationText => COPY[type](params);
+): NotificationText => COPY[type](withSafeActorName(params));
 
 /** The push label for a deleted or deactivated actor (push is English-only). */
 export const FORMER_MEMBER = "Former member";

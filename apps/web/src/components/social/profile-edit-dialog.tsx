@@ -19,11 +19,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+// Mirrors the domain's DISPLAY_NAME_MAX_LENGTH; the server refuses a longer name.
+const DISPLAY_NAME_MAX_LENGTH = 50;
+
 // Dialog for editing the acting member's display name — the Social profile's
 // other editable field (bio) is edited from the main profile editor's Bio
 // field instead (that's the one that shows on the public profile). First-time
 // editors create the profile via the same mutation; the server enforces a
-// non-empty display name. editProfile always writes displayName + bio
+// non-empty display name of at most 50 characters. editProfile always writes displayName + bio
 // together (a full replace), so the currently loaded bio is sent through
 // unchanged here to avoid clobbering it.
 export function ProfileEditDialog() {
@@ -88,6 +91,7 @@ export function ProfileEditDialog() {
             </label>
             <Input
               value={displayName}
+              maxLength={DISPLAY_NAME_MAX_LENGTH}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("displayNamePlaceholder")}
             />

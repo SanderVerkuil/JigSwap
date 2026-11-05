@@ -1,3 +1,4 @@
+import { householdErrorKey } from "@/components/household/household-error";
 import { PersonRow } from "@/components/household/person-row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,13 @@ export function HouseholdMemberInvite({
       setSearch("");
       toast.success(t("invite.sent"));
     },
-    onError,
+    // A rate limit here is about invites (the daily cap, or the weekly cap per member), not the
+    // join requests the shared household RateLimited text describes. Everything else goes to the
+    // page's handler.
+    onError: (error) =>
+      householdErrorKey(error) === "errors.RateLimited"
+        ? toast.error(t("invite.rateLimited"))
+        : onError(error),
   });
 
   const candidates = (searchResults ?? []).filter(

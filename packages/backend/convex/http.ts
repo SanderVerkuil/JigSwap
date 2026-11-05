@@ -4,6 +4,11 @@ import { Webhook } from "svix";
 import { internal } from "./_generated/api";
 import { httpAction, type ActionCtx } from "./_generated/server";
 import { signupInviteOf } from "./invitations/applySignupInvite";
+import {
+  unsubscribeEmailLanding,
+  unsubscribeEmailOneClick,
+} from "./notifications/unsubscribe";
+import { EMAIL_UNSUBSCRIBE_PATH } from "./notifications/unsubscribeToken";
 
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   // Read the secret per-request (NOT at module scope) so a deployment without it — e.g. a preview
@@ -91,6 +96,18 @@ http.route({
   path: "/clerk-users-webhook",
   method: "POST",
   handler: handleClerkWebhook,
+});
+// The one-click List-Unsubscribe link in notification emails (SEC-84): a POST unsubscribes, a GET
+// only redirects to the preferences page.
+http.route({
+  path: EMAIL_UNSUBSCRIBE_PATH,
+  method: "POST",
+  handler: unsubscribeEmailOneClick,
+});
+http.route({
+  path: EMAIL_UNSUBSCRIBE_PATH,
+  method: "GET",
+  handler: unsubscribeEmailLanding,
 });
 
 async function validateRequest(

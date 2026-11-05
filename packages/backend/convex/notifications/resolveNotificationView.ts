@@ -3,7 +3,10 @@ import type {
   NotificationView,
   NotificationViewContext,
 } from "@jigswap/contracts";
-import { COOLDOWN_MS, type NotificationSubject } from "@jigswap/domain";
+import {
+  readsAsPendingToRequester,
+  type NotificationSubject,
+} from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { circleFloorOf } from "../conversation/readModelHelpers";
@@ -155,14 +158,7 @@ const requestPending = async (
   targetId: Id<"users">,
 ): Promise<boolean> => {
   const request = await latestRequest(ctx, cache, requesterId, targetId);
-  if (!request) return false;
-  if (request.status === "pending") return true;
-  return (
-    request.status === "declined" &&
-    request.cancelledAt === undefined &&
-    request.respondedAt !== undefined &&
-    Date.now() - request.respondedAt < COOLDOWN_MS
-  );
+  return request !== null && readsAsPendingToRequester(request, Date.now());
 };
 
 // The aggregate-id lookups the subjects need (exchange, thread, follow request, household invite,
@@ -732,7 +728,7 @@ const resolveSubject = async (
 // The report-outcome params (report_decided, content_removed, member_warned), narrowed to the
 // literals the contract allows; anything else is dropped.
 const REPORT_DECISIONS = ["dismissed", "content_removed", "warned"] as const;
-const RESTRICTED_CONTENT = ["message", "photo"] as const;
+const RESTRICTED_CONTENT = ["message", "photo", "comment", "review"] as const;
 const GROUNDS = [
   "spam_scam",
   "harassment_hate",

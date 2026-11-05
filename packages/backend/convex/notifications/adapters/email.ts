@@ -11,12 +11,17 @@ export interface EmailMessage {
   readonly subject: string;
   readonly html: string;
   readonly text: string;
-  // Per-message From display name (e.g. "Sander Verkuil | JigSwap"); falls back to the
-  // configured default.
+  // Per-message From display name: always the brand ("JigSwap", set by renderEmail), never
+  // member-chosen text; the actor appears only in the subject and body (SEC-14). Falls back to
+  // the configured default.
   readonly fromName?: string;
   // Stable per-notification key (the Notification aggregateId): a replayed send is deduplicated
   // by the provider instead of double-delivering.
   readonly idempotencyKey: string;
+  // The signed one-click unsubscribe URL for this email's notification type (SEC-84,
+  // notifications/unsubscribeToken). When set, the adapter adds the RFC 8058 List-Unsubscribe
+  // headers; when absent (an invitation, or no EMAIL_UNSUBSCRIBE_SECRET) it adds none.
+  readonly listUnsubscribeUrl?: string;
 }
 
 // Outbound port. An adapter MAY throw on failure — the sendEmail action is the single caller and

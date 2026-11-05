@@ -2,7 +2,8 @@
 
 // The report (DSA notice) dialog, spec 2.5: a Dialog on desktop, a bottom
 // Sheet on mobile. Controlled, so any trigger can open it (a message's "More"
-// menu, a member menu, the photo lightbox). Radix traps focus inside; because
+// menu, a member menu, the photo lightbox, a photo comment or puzzle review
+// row). Radix traps focus inside; because
 // a menu item that opened it is gone by the time it closes, `returnFocusRef`
 // names the element focus goes back to.
 //
@@ -56,9 +57,13 @@ const BLOCK_BY_DEFAULT: ReadonlySet<ReportReason> = new Set([
 
 export const MAX_REPORT_DETAILS = 1000;
 
-/** What is reported. A message carries its text so the dialog can quote it. */
+/** What is reported. A message, comment or review carries its text so the dialog can quote it. */
 export type ReportTarget =
-  | { kind: "message"; id: string; snippet: string }
+  | {
+      kind: "message" | "photoComment" | "puzzleReview";
+      id: string;
+      snippet: string;
+    }
   | { kind: "user" | "photo" | "exchange" | "attachment"; id: string };
 
 // Refusal codes from reports/fileReport → safety.report.errors.* keys.
@@ -262,10 +267,22 @@ function ReportForm({
       </div>
 
       {/* The reported context, read-only. */}
-      {target.kind === "message" ? (
-        <blockquote className="bg-muted text-muted-foreground line-clamp-4 rounded-md border-l-4 px-3 py-2 text-sm break-words whitespace-pre-wrap">
-          {target.snippet}
-        </blockquote>
+      {"snippet" in target ? (
+        <div className="flex flex-col gap-1.5">
+          {target.kind !== "message" && (
+            <p className="text-muted-foreground text-sm">
+              {t(
+                target.kind === "photoComment"
+                  ? "reportingComment"
+                  : "reportingReview",
+                { name },
+              )}
+            </p>
+          )}
+          <blockquote className="bg-muted text-muted-foreground line-clamp-4 rounded-md border-l-4 px-3 py-2 text-sm break-words whitespace-pre-wrap">
+            {target.snippet}
+          </blockquote>
+        </div>
       ) : (
         <p className="bg-muted rounded-md px-3 py-2 text-sm">
           {target.kind === "photo" || target.kind === "attachment"

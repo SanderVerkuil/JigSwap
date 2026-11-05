@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
+  authorMemberIdOf,
   projectedAuthorOf,
   useMemberDisplayName,
   usePartyDisplayName,
@@ -165,5 +166,31 @@ describe("MemberInitial", () => {
     const html = render(<MemberInitial source={{ name: "null null" }} />);
     expect(html).toContain("<svg");
     expect(html).not.toContain("N<");
+  });
+});
+
+describe("authorMemberIdOf", () => {
+  const legacy = {
+    _id: "u1",
+    _creationTime: 1,
+    name: "Mara Jansen",
+    isActive: true,
+    createdAt: 1,
+    updatedAt: 1,
+  };
+
+  it("gives a revealed author's id, also from a pre-projection MemberView", () => {
+    expect(authorMemberIdOf({ anonymous: false, member: legacy })).toBe("u1");
+    expect(authorMemberIdOf(legacy)).toBe("u1");
+  });
+
+  it("gives no id for a hidden, departed or inactive legacy author", () => {
+    expect(
+      authorMemberIdOf({ anonymous: true, anonRef: "abc" }),
+    ).toBeUndefined();
+    expect(
+      authorMemberIdOf({ anonymous: true, anonRef: "abc", departed: true }),
+    ).toBeUndefined();
+    expect(authorMemberIdOf({ ...legacy, isActive: false })).toBeUndefined();
   });
 });

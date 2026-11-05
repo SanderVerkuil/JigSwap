@@ -1,4 +1,5 @@
 import {
+  inviterNameForEmail,
   toMemberId,
   type Channel,
   type MemberId,
@@ -139,8 +140,11 @@ const memberName = async (
     .withIndex("by_member", (q) => q.eq("memberId", id as Id<"users">))
     .unique();
   // Profile display name first, then account name/username. Never the email: the recipient is
-  // another member.
-  const actorName = memberDisplayNameOf(user, profile);
+  // another member. The snapshot is copied into every recipient's row, so it is stored the way the
+  // out-of-band copy shows it (inviterNameForEmail: no control or bidi characters, no link or email
+  // address words, at most INVITER_NAME_MAX_LENGTH characters), never as an unbounded member-chosen
+  // string.
+  const actorName = inviterNameForEmail(memberDisplayNameOf(user, profile));
   return actorName ? { actorName } : {};
 };
 
@@ -565,6 +569,16 @@ const translate = async (
       ];
     }
     case "FollowRequested": {
+      // Only a request that is still pending is worth a notification. One cancelled before this
+      // event was dispatched is gone (a request/cancel loop would otherwise notify the target once
+      // per cycle, SEC-23), and one already approved or declined was acted on.
+      const request = await ctx.db
+        .query("followRequests")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", p.requestId as string),
+        )
+        .unique();
+      if (request?.status !== "pending") return [];
       return [
         cmd(
           p.targetId as string,

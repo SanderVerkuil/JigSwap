@@ -78,6 +78,109 @@ export const noopWebPushSender = (reason: string): WebPushSender => ({
   },
 });
 
+// What a member may register (notifications/pushSubscriptions). The push action POSTs to the stored
+// endpoint, so it must be a browser push service, never a host or port the member picked.
+export const MAX_PUSH_ENDPOINT_LENGTH = 2048;
+// Subscriptions kept per member: registering one more evicts the oldest.
+export const MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER = 10;
+
+// Chrome, Edge (Chromium), Brave, Opera, Samsung: FCM (android.googleapis.com is its legacy GCM
+// name). Firefox: Mozilla autopush. Safari: Apple. Legacy Edge: WNS. A refused registration logs
+// its host, so a missing service shows up in the logs.
+const PUSH_SERVICE_HOSTS: readonly string[] = [
+  "fcm.googleapis.com",
+  "android.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "web.push.apple.com",
+];
+const PUSH_SERVICE_HOST_SUFFIXES: readonly string[] = [
+  ".push.services.mozilla.com",
+  ".push.apple.com",
+  ".notify.windows.com",
+];
+
+const isPushServiceHost = (host: string): boolean =>
+  PUSH_SERVICE_HOSTS.includes(host) ||
+  PUSH_SERVICE_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix));
+
+// Printable ASCII, no spaces: what push services hand out.
+const PRINTABLE_ASCII = /^[\x21-\x7e]+$/;
+
+// True when `endpoint` is an https URL on a browser push service: no explicit port, no userinfo, at
+// most MAX_PUSH_ENDPOINT_LENGTH characters. The raw string must start with exactly
+// "https://<host>/", so web-push's legacy url.parse reads the same host the check approved.
+export const isAllowedPushEndpoint = (endpoint: string): boolean => {
+  if (
+    endpoint.length > MAX_PUSH_ENDPOINT_LENGTH ||
+    !PRINTABLE_ASCII.test(endpoint)
+  ) {
+    return false;
+  }
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  return (
+    url.protocol === "https:" &&
+    isPushServiceHost(url.hostname) &&
+    endpoint.startsWith(`https://${url.hostname}/`)
+  );
+};
+
+// The host of a refused endpoint, for the log line (never the path: it carries the device token).
+export const pushEndpointHost = (endpoint: string): string | null => {
+  try {
+    return new URL(endpoint).hostname.slice(0, 253) || null;
+  } catch {
+    return null;
+  }
+};
+
+const BASE64URL = /^[A-Za-z0-9_-]+={0,2}$/;
+
+// The bytes of a base64url string (padding optional) as a binary string, or null when it isn't one.
+const decodeBase64Url = (value: string): string | null => {
+  if (value.length > 128 || !BASE64URL.test(value)) return null;
+  const base64 = value.replace(/=+$/, "").replace(/-/g, "+").replace(/_/g, "/");
+  try {
+    return atob(base64 + "=".repeat((4 - (base64.length % 4)) % 4));
+  } catch {
+    return null;
+  }
+};
+
+// True when the keys are what RFC 8291 encryption needs: p256dh an uncompressed P-256 point (65
+// bytes, 0x04 first) and auth a 16-byte secret, both base64url.
+export const isValidPushKeys = (keys: {
+  readonly p256dh: string;
+  readonly auth: string;
+}): boolean => {
+  const p256dh = decodeBase64Url(keys.p256dh);
+  const auth = decodeBase64Url(keys.auth);
+  return (
+    p256dh !== null &&
+    p256dh.length === 65 &&
+    p256dh.charCodeAt(0) === 0x04 &&
+    auth !== null &&
+    auth.length === 16
+  );
+};
+
+// The subscriptions one push goes to: allowlisted endpoints only, newest first (createdAt), at most
+// MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER. Registration enforces both, but rows stored before it did may
+// point anywhere or number more; those are skipped here, not deleted.
+export const deliverablePushSubscriptions = <
+  S extends PushSubscriptionData & { readonly createdAt: number },
+>(
+  subs: readonly S[],
+): S[] =>
+  subs
+    .filter((sub) => isAllowedPushEndpoint(sub.endpoint))
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER);
+
 // The HTTP statuses a push service returns when a subscription is permanently invalid and should be
 // deleted rather than retried.
 export const isGoneStatus = (status: number): boolean =>

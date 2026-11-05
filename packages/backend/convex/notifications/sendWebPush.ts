@@ -8,6 +8,7 @@ import { internalAction } from "../_generated/server";
 import { ingestToAxiom } from "../lib/axiom";
 import { logEvent, type WideEvent } from "../lib/logEvent";
 import {
+  deliverablePushSubscriptions,
   isGoneStatus,
   toWebPushPayload,
   vapidConfigFromEnv,
@@ -20,10 +21,15 @@ import { deliveryRefsValidator } from "./deliveryContent";
 const errMsg = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
 
+// web-push's socket timeout: a push service that goes quiet fails the send (transient, the row is
+// kept) instead of holding the action open. It is an idle timeout, not a deadline for the response;
+// against a silent server a send fails after roughly one to two times this value.
+const SEND_TIMEOUT_MS = 10_000;
+
 // The REAL web-push adapter: signs the VAPID JWT and encrypts the payload via the `web-push` lib
 // (pure JS + Node crypto, so it bundles in the Convex Node runtime — unlike sharp's native binary).
 // Never throws: a send failure becomes a result, with `gone` set for the 404/410 statuses that mean
-// the subscription is permanently dead and should be pruned.
+// the subscription is permanently dead and should be pruned. Every send carries SEND_TIMEOUT_MS.
 const makeRealSender = (vapid: VapidConfig): WebPushSender => {
   webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
   return {
@@ -35,6 +41,7 @@ const makeRealSender = (vapid: VapidConfig): WebPushSender => {
             keys: { p256dh: sub.p256dh, auth: sub.auth },
           },
           JSON.stringify(payload),
+          { timeout: SEND_TIMEOUT_MS },
         );
         return { ok: true, gone: false, statusCode: res.statusCode ?? 201 };
       } catch (e) {
@@ -54,13 +61,15 @@ const makeRealSender = (vapid: VapidConfig): WebPushSender => {
 };
 
 // Out-of-band push delivery for ONE recipient, scheduled (runAfter 0) by the push channel after the
-// originating mutation commits. Fans the notification out to every active subscription, prunes the
-// dead ones, and emits ONE wide event so a missing push is diagnosable. Payloads carrying `params`
-// are resolved for the recipient first (notifications/resolveForDelivery): the text names the
-// resolved actor and context and the click URL is the in-app deep link; an admin-only type for a
-// recipient who lost the role is dropped. Older payloads send their snapshot title/message with the
-// legacy notificationUrl. FAIL-OPEN: with VAPID unset it logs and drops (the in-app row already
-// exists), so push is disabled-by-default.
+// originating mutation commits. Fans the notification out to the recipient's deliverable
+// subscriptions (adapters/webPush deliverablePushSubscriptions: allowlisted push services, the
+// newest MAX_PUSH_SUBSCRIPTIONS_PER_MEMBER) in parallel, prunes the dead ones, and emits ONE wide
+// event so a missing push is diagnosable. Payloads carrying `params` are resolved for the recipient
+// first (notifications/resolveForDelivery): the text names the resolved actor and context and the
+// click URL is the in-app deep link; an admin-only type for a recipient who lost the role is
+// dropped. Older payloads send their snapshot title/message with the legacy notificationUrl.
+// FAIL-OPEN: with VAPID unset it logs and drops (the in-app row already exists), so push is
+// disabled-by-default.
 export const send = internalAction({
   args: {
     userId: v.id("users"),
@@ -95,10 +104,16 @@ export const send = internalAction({
         { userId: args.userId },
       );
       event.subscription_count = subs.length;
+      const targets = deliverablePushSubscriptions(subs);
+      event.target_count = targets.length;
 
-      if (!vapid || subs.length === 0) {
+      if (!vapid || targets.length === 0) {
         event.skipped = true;
-        event.skip_reason = !vapid ? "unconfigured" : "no_subscriptions";
+        event.skip_reason = !vapid
+          ? "unconfigured"
+          : subs.length === 0
+            ? "no_subscriptions"
+            : "no_deliverable_subscriptions";
         await flush();
         return;
       }
@@ -131,14 +146,20 @@ export const send = internalAction({
 
       const sender = makeRealSender(vapid);
 
+      // In parallel, so one slow push service can't hold up the recipient's other devices.
+      const results = await Promise.all(
+        targets.map(async (sub) => ({
+          sub,
+          result: await sender.send(
+            { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+            payload,
+          ),
+        })),
+      );
       let sent = 0;
       let pruned = 0;
       let failed = 0;
-      for (const sub of subs) {
-        const result = await sender.send(
-          { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-          payload,
-        );
+      for (const { sub, result } of results) {
         if (result.ok) {
           sent += 1;
         } else if (result.gone) {

@@ -99,6 +99,7 @@ export function CompletionFollowUpProvider({
     puzzleRating: number;
     puzzleText: string;
     copyRating: number;
+    puzzleReviewAllowed: boolean;
     copyReviewAllowed: boolean;
     hasExisting: boolean;
   } | null>(null);
@@ -145,6 +146,8 @@ export function CompletionFollowUpProvider({
       puzzleRating: reviewsData.puzzle?.rating ?? 0,
       puzzleText: reviewsData.puzzle?.text ?? "",
       copyRating: reviewsData.copy?.rating ?? 0,
+      // Absent from a backend that predates it (deploy skew): offer the question, as before.
+      puzzleReviewAllowed: reviewsData.puzzleReviewAllowed !== false,
       copyReviewAllowed: reviewsData.copyReviewAllowed,
       hasExisting: reviewsData.puzzle !== null || reviewsData.copy !== null,
     };
@@ -257,6 +260,9 @@ export function CompletionFollowUpProvider({
     setSaving(true);
     // Whether the failure below came from the attach call (its RateLimited is the photo limit).
     let attaching = false;
+    // Set while the review is being saved, so a RateLimited refusal is explained as the review
+    // limit only when it came from submitReviews.
+    let savingReview = false;
     try {
       // 1. Upload in parallel — only photos without a storageId (Retry re-runs failures
       //    only; earlier successes keep their storageIds).
@@ -301,6 +307,7 @@ export function CompletionFollowUpProvider({
         !reviewDoneRef.current &&
         (puzzleDirty || copyDirty)
       ) {
+        savingReview = true;
         await submitReviews({
           puzzleId: target.puzzleId as Id<"puzzles">,
           copyId: (target.copyId ?? undefined) as
@@ -310,6 +317,7 @@ export function CompletionFollowUpProvider({
             : undefined,
           copy: copyDirty ? { rating: copyRating } : undefined,
         });
+        savingReview = false;
         reviewDoneRef.current = true;
       }
 
@@ -343,9 +351,13 @@ export function CompletionFollowUpProvider({
       toast.error(
         code === "TooManyPhotos"
           ? t("tooManyPhotos")
-          : retryAt !== undefined
-            ? t("photosRateLimited", { when: relativeTime(retryAt) })
-            : t("saveError"),
+          : code === "ReviewTextTooLong"
+            ? tReview("textTooLong")
+            : savingReview && code === "RateLimited"
+              ? tReview("rateLimited")
+              : retryAt !== undefined
+                ? t("photosRateLimited", { when: relativeTime(retryAt) })
+                : t("saveError"),
       );
     } finally {
       setSaving(false);
@@ -393,6 +405,7 @@ export function CompletionFollowUpProvider({
                   onPuzzleTextChange={setPuzzleText}
                   copyRating={copyRating}
                   onCopyRatingChange={setCopyRating}
+                  showPuzzleSection={seed.puzzleReviewAllowed}
                   showCopySection={showCopySection}
                   showUpdatesExisting={seed.hasExisting}
                   puzzleTextId="follow-up-review-text"

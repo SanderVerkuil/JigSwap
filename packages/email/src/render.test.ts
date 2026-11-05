@@ -64,14 +64,52 @@ describe("renderEmail", () => {
     expect(email.html).toContain(`${BASE}/notifications/preferences`);
   });
 
-  it("uses the actor in the from name when present", async () => {
+  it("uses the brand as the from name even when the event has an actor", async () => {
     const email = await renderEmail({
       type: "follow_request_received",
       params: { actorName: "Sander Verkuil" },
       locale: "en",
       baseUrl: BASE,
     });
-    expect(email.fromName).toBe("Sander Verkuil | JigSwap");
+    expect(email.fromName).toBe("JigSwap");
+    expect(email.subject).toBe("Sander Verkuil wants to follow you on JigSwap");
+  });
+
+  it("sanitises a member-chosen actor name before it reaches the subject and body", async () => {
+    // NOTIF-3: a display name posing as the brand, with a right-to-left override and padding.
+    const phish =
+      "JigSwap Security Team ‮ — your account will be suspended, verify now at https://jigswap-verify.example/login " +
+      "x".repeat(300);
+    const email = await renderEmail({
+      type: "new_follower",
+      params: { actorName: phish },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.fromName).toBe("JigSwap");
+    const suffix = " started following you on JigSwap";
+    expect(email.subject.endsWith(suffix)).toBe(true);
+    const shownName = email.subject.slice(0, -suffix.length);
+    expect(shownName.startsWith("JigSwap Security Team — your")).toBe(true);
+    expect(shownName.endsWith("…")).toBe(true);
+    expect(Array.from(shownName)).toHaveLength(60);
+    for (const output of [email.subject, email.html, email.text]) {
+      expect(output).not.toContain("‮");
+      expect(output).not.toContain("x".repeat(100));
+    }
+  });
+
+  it("flattens line breaks and drops an email address in the actor name", async () => {
+    const email = await renderEmail({
+      type: "message_received",
+      params: { actorName: "Anna\r\nBcc: x@evil.example" },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(email.subject).toBe("New message from Anna Bcc: on JigSwap");
+    for (const output of [email.subject, email.html, email.text]) {
+      expect(output).not.toContain("evil.example");
+    }
   });
 
   it("falls back to the plain brand from name without an actor (never the Someone placeholder)", async () => {
@@ -106,15 +144,19 @@ describe("renderEmail", () => {
     expect(email.subject).toBe("New message from Someone on JigSwap");
   });
 
-  it("treats an explicit empty-string param as present, not falling back to the default", async () => {
-    const email = await renderEmail({
-      type: "message_received",
-      params: { actorName: "" },
-      locale: "en",
-      baseUrl: BASE,
-    });
-    expect(email.subject).toBe("New message from  on JigSwap");
-  });
+  it.each(["", "  ", "‮⁦​"])(
+    "falls back to the default actor label for a name with nothing printable (%j)",
+    async (actorName) => {
+      const email = await renderEmail({
+        type: "message_received",
+        params: { actorName },
+        locale: "en",
+        baseUrl: BASE,
+      });
+      expect(email.subject).toBe("New message from Someone on JigSwap");
+      expect(email.fromName).toBe("JigSwap");
+    },
+  );
 
   it("pins the rendered HTML layout", async () => {
     const email = await renderEmail({
@@ -418,14 +460,30 @@ describe("renderEmail with resolved delivery content", () => {
     expect(email.text).toContain("View people");
   });
 
+  it("keeps a same-origin deep link with a query string", async () => {
+    const email = await renderEmail({
+      type: "trade_request",
+      params: {},
+      locale: "en",
+      baseUrl: BASE,
+      href: "/trades?x=1",
+    });
+    expect(email.html).toContain(`href="${BASE}/trades?x=1"`);
+  });
+
   it.each([
     null,
     undefined,
     "https://evil.example/x",
     "//evil.example/x",
+    // Root-relative by prefix, yet the WHATWG URL parser resolves each one off-site.
+    "/\\evil.example/x",
+    "/\\\\evil.example/x",
+    "/\t/evil.example/x",
+    "/\n/evil.example/x",
     "members/x",
     "",
-  ])("falls back to the legacy CTA path for href %s", async (href) => {
+  ])("falls back to the legacy CTA path for href %j", async (href) => {
     const email = await renderEmail({
       type: "new_follower",
       params: {},

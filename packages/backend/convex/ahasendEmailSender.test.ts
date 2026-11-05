@@ -100,6 +100,28 @@ describe("ahaSendEmailSender", () => {
     });
   });
 
+  it("sends no custom headers without an unsubscribe URL", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    await sender(fetchMock).send(MESSAGE);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.headers).toBeUndefined();
+  });
+
+  it("adds the RFC 8058 one-click unsubscribe headers when given a URL", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse());
+    const url = "https://x.convex.site/email/unsubscribe?token=v1.u.t.sig";
+    await sender(fetchMock).send({ ...MESSAGE, listUnsubscribeUrl: url });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.headers).toEqual({
+      "List-Unsubscribe": `<${url}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    });
+  });
+
   it("propagates a network-level fetch rejection", async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error("boom"));
     await expect(sender(fetchMock).send(MESSAGE)).rejects.toThrow("boom");

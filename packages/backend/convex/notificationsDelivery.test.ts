@@ -86,6 +86,23 @@ type ResolveArgs = {
 const resolve = (s: Setup, args: ResolveArgs) =>
   s.t.query(internal.notifications.resolveForDelivery.resolveForDelivery, args);
 
+// NOTIF-3: a display name posing as the brand, with a right-to-left override and padding.
+const PHISH =
+  "JigSwap Security Team \u202E — your account will be suspended, verify now at https://jigswap-verify.example/login " +
+  "x".repeat(300);
+
+const seedPhisher = (s: Setup) =>
+  s.t.run(async (ctx) => {
+    const phisher = await mkUser(ctx, "phisher");
+    await ctx.db.insert("profiles", {
+      memberId: phisher,
+      visibility: "public",
+      displayName: PHISH,
+      updatedAt: now,
+    });
+    return phisher;
+  });
+
 const seedThread = (s: Setup, participants: Id<"users">[]) =>
   s.t.run(async (ctx) => {
     await ctx.db.insert("threads", {
@@ -556,7 +573,8 @@ describe("sendEmail action", () => {
       subject: { kind: "exchange", exchangeId: "ex-1" },
     });
     const body = sentBody();
-    expect(body.from.name).toBe("Mara Display | JigSwap");
+    // The sender line is always the brand; the body names the actor.
+    expect(body.from.name).toBe("JigSwap");
     expect(body.text_content).toContain(
       "Mara Display wil ruilen voor “Starry Night”.",
     );
@@ -584,6 +602,32 @@ describe("sendEmail action", () => {
     expect(body.from.name).toBe("JigSwap");
     expect(body.html_content).not.toContain("gone name");
     expect(body.html_content).toContain("https://jigswap.site/people");
+  });
+
+  test("a member's display name never reaches the sender line, and the subject gets it sanitised", async () => {
+    const s = await setup();
+    const phisher = await seedPhisher(s);
+    await s.t.action(internal.notifications.sendEmail.send, {
+      to: "viewer@example.com",
+      toName: "viewer",
+      type: "new_follower",
+      params: { actorName: PHISH },
+      locale: "en",
+      idempotencyKey: "notif-phish",
+      userId: s.viewer,
+      actorId: phisher,
+    });
+    const body = sentBody();
+    expect(body.from.name).toBe("JigSwap");
+    const suffix = " started following you on JigSwap";
+    expect(body.subject.endsWith(suffix)).toBe(true);
+    const shownName = body.subject.slice(0, -suffix.length);
+    expect(shownName.startsWith("JigSwap Security Team — your")).toBe(true);
+    expect(Array.from(shownName)).toHaveLength(60);
+    for (const output of [body.subject, body.html_content, body.text_content]) {
+      expect(output).not.toContain("\u202E");
+      expect(output).not.toContain("x".repeat(100));
+    }
   });
 
   test("a payload scheduled before rich delivery renders its snapshot", async () => {
@@ -617,7 +661,8 @@ describe("sendWebPush action", () => {
     s.t.run((ctx) =>
       ctx.db.insert("pushSubscriptions", {
         userId,
-        endpoint: `https://push.example/${userId}`,
+        // The action only sends to allowlisted push services (SEC-16).
+        endpoint: `https://fcm.googleapis.com/fcm/send/${userId}`,
         p256dh: "p",
         auth: "a",
         createdAt: now,
@@ -691,6 +736,26 @@ describe("sendWebPush action", () => {
       body: "Former member started following you",
       url: "/people",
     });
+  });
+
+  test("sanitises a member's display name in the push title", async () => {
+    const s = await setup();
+    const phisher = await seedPhisher(s);
+    await subscribe(s, s.viewer);
+    await s.t.action(internal.notifications.sendWebPush.send, {
+      userId: s.viewer,
+      type: "new_follower",
+      title: "New follower",
+      message: "x",
+      params: { actorName: PHISH },
+      actorId: phisher,
+    });
+    const { body } = sentPayload();
+    expect(body).not.toContain("\u202E");
+    expect(body.startsWith("JigSwap Security Team — your")).toBe(true);
+    expect(
+      Array.from(body.slice(0, -" started following you".length)),
+    ).toHaveLength(60);
   });
 
   test("drops an admin type for a recipient who lost the role", async () => {

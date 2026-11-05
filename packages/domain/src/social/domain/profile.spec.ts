@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { toMemberId, toProfileId } from "../../shared-kernel";
+import { DisplayName } from "./display-name";
 import type { ProfileShelfArranged } from "./events";
 import { MemberId, ProfileId } from "./ids";
-import { EditProps, Profile } from "./profile";
+import { BIO_MAX_LENGTH, EditProps, Profile } from "./profile";
 
 const member = toMemberId("alice");
 const profileId = toProfileId("profile-1");
@@ -50,6 +51,34 @@ describe("Profile.create", () => {
     );
     expect(result.isErr).toBe(true);
     if (result.isErr) expect(result.error.code).toBe("InvalidDisplayName");
+  });
+
+  it("rejects an over-long display name or bio", () => {
+    const longName = Profile.create(
+      profileId,
+      member,
+      editProps({ displayName: "n".repeat(130_000) }),
+    );
+    expect(longName.isErr).toBe(true);
+    if (longName.isErr) expect(longName.error.code).toBe("InvalidDisplayName");
+
+    const longBio = Profile.create(
+      profileId,
+      member,
+      editProps({ bio: "b".repeat(BIO_MAX_LENGTH + 1) }),
+    );
+    expect(longBio.isErr).toBe(true);
+    if (longBio.isErr) expect(longBio.error.code).toBe("BioTooLong");
+  });
+
+  it("trims the bio it opens with", () => {
+    const result = Profile.create(
+      profileId,
+      member,
+      editProps({ bio: "  Hi  " }),
+    );
+    if (!result.isOk) throw new Error("setup");
+    expect(result.value.bio).toBe("Hi");
   });
 
   it("opens a profile without a display name when the member has none (it stays optional)", () => {
@@ -119,6 +148,78 @@ describe("Profile.edit", () => {
     if (edited.isErr) expect(edited.error.code).toBe("InvalidDisplayName");
     expect(profile.pullEvents()).toHaveLength(0);
     expect(profile.displayName?.value).toBe("Alice"); // unchanged
+  });
+
+  it("trims the bio and clears it when nothing is left", () => {
+    const profile = open();
+    expect(profile.edit({ bio: "  Hi there \n", now: NOW }).isOk).toBe(true);
+    expect(profile.bio).toBe("Hi there");
+    expect(profile.edit({ bio: "   ", now: NOW }).isOk).toBe(true);
+    expect(profile.bio).toBeUndefined();
+  });
+
+  it("accepts a bio of exactly BIO_MAX_LENGTH and rejects a longer one", () => {
+    const profile = open();
+    const atCap = "b".repeat(BIO_MAX_LENGTH);
+    expect(profile.edit({ bio: atCap, now: NOW }).isOk).toBe(true);
+    expect(profile.bio).toBe(atCap);
+
+    profile.pullEvents();
+    const edited = profile.edit({ bio: `${atCap}b`, now: NOW });
+    expect(edited.isErr).toBe(true);
+    if (edited.isErr) expect(edited.error.code).toBe("BioTooLong");
+    expect(profile.bio).toBe(atCap); // unchanged
+    expect(profile.pullEvents()).toHaveLength(0);
+  });
+
+  it("caps the bio at 500 characters", () => {
+    expect(BIO_MAX_LENGTH).toBe(500);
+  });
+
+  // A profile stored before the caps existed keeps working: resending the current values (the
+  // display-name dialog sends the loaded bio back unchanged) is not a new over-long write.
+  const legacy = (): Profile =>
+    Profile.rehydrate({
+      id: profileId,
+      memberId: member,
+      displayName: DisplayName.fromState("L".repeat(120)),
+      bio: "B".repeat(2000),
+      visibility: "public",
+      featuredCopyIds: [],
+      updatedAt: NOW,
+    });
+
+  it("accepts an unchanged over-long legacy bio and display name", () => {
+    const profile = legacy();
+    const edited = profile.edit({
+      displayName: "L".repeat(120),
+      bio: "B".repeat(2000),
+      now: NOW,
+    });
+    expect(edited.isOk).toBe(true);
+    expect(profile.displayName?.value).toBe("L".repeat(120));
+    expect(profile.bio).toBe("B".repeat(2000));
+  });
+
+  it("keeps a legacy over-long display name on a bio-only save", () => {
+    const profile = legacy();
+    expect(profile.edit({ bio: "Short now", now: NOW }).isOk).toBe(true);
+    expect(profile.displayName?.value).toBe("L".repeat(120));
+    expect(profile.bio).toBe("Short now");
+  });
+
+  it("refuses a changed bio that is still over the cap on a legacy profile", () => {
+    const profile = legacy();
+    const edited = profile.edit({ bio: "C".repeat(2000), now: NOW });
+    expect(edited.isErr).toBe(true);
+    if (edited.isErr) expect(edited.error.code).toBe("BioTooLong");
+  });
+
+  it("refuses a changed display name over the cap on a legacy profile", () => {
+    const profile = legacy();
+    const edited = profile.edit({ displayName: "M".repeat(120), now: NOW });
+    expect(edited.isErr).toBe(true);
+    if (edited.isErr) expect(edited.error.code).toBe("InvalidDisplayName");
   });
 
   it("round-trips through toState/rehydrate without re-emitting events", () => {

@@ -36,6 +36,19 @@ describe("renderNotificationText", () => {
       }).message,
     ).toBe("A moderator removed your photo: Nudity");
     expect(
+      renderNotificationText("content_removed", { restricted: "comment" })
+        .message,
+    ).toBe("A moderator removed your comment");
+    expect(
+      renderNotificationText("content_removed", {
+        restricted: "review",
+        reason: "Insults",
+      }).message,
+    ).toBe("A moderator removed the text of your review: Insults");
+    expect(renderNotificationText("content_removed", {}).message).toBe(
+      "A moderator removed your message",
+    );
+    expect(
       renderNotificationText("member_warned", { reason: "Rude" }).message,
     ).toBe("A moderator warned you: Rude");
   });
@@ -166,6 +179,60 @@ describe("renderNotificationText with resolved context", () => {
     expect(
       renderNotificationText("message_received", { messageKind: "image" }),
     ).toEqual({ title: "New message", message: "Someone sent a photo" });
+  });
+});
+
+describe("member-chosen actor names", () => {
+  // NOTIF-3: a display name posing as the brand, with a right-to-left override and padding.
+  const PHISH =
+    "JigSwap Security Team \u202E — your account will be suspended, verify now at https://jigswap-verify.example/login " +
+    "x".repeat(300);
+
+  it("drops control and bidi characters and caps the name at 60 characters", () => {
+    const { title } = renderNotificationText("message_received", {
+      actorName: PHISH,
+      messagePreview: "Hi",
+    });
+    const name = title.slice("New message from ".length);
+    expect(name.startsWith("JigSwap Security Team — your")).toBe(true);
+    expect(name.endsWith("…")).toBe(true);
+    expect(Array.from(name)).toHaveLength(60);
+    expect(
+      renderNotificationText("message_received", { actorName: PHISH }).message,
+    ).toBe(`${name} sent you a message`);
+    expect(title).not.toContain("\u202E");
+    expect(title).not.toContain("x".repeat(100));
+  });
+
+  it("flattens line breaks in the name", () => {
+    expect(
+      renderNotificationText("new_follower", { actorName: "Anna\r\nBo" })
+        .message,
+    ).toBe("Anna Bo started following you");
+  });
+
+  it.each(["", "  ", "\u202E\u2066\u200B"])(
+    "treats a name with nothing printable (%j) as no name",
+    (actorName) => {
+      expect(
+        renderNotificationText("trade_request", { actorName }).message,
+      ).toBe("Someone wants to trade for one of your puzzles");
+      expect(
+        renderNotificationText("new_follower", { actorName }).message,
+      ).toBe("Someone started following you");
+    },
+  );
+
+  it("sanitises the resolved name pushTextOf renders", () => {
+    const { message } = pushTextOf("new_follower", {
+      params: { actorName: PHISH },
+      actorAnonymous: false,
+      href: "/members/x",
+    });
+    expect(message).not.toContain("\u202E");
+    expect(
+      Array.from(message.replace(" started following you", "")),
+    ).toHaveLength(60);
   });
 });
 

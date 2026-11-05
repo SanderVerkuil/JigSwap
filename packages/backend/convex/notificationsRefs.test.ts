@@ -327,6 +327,14 @@ describe("subscriber refs: social and household", () => {
 
   test("follow_request_received: the requester is the actor, the request the subject", async () => {
     const { row, w } = await onlyRow(async (ctx, w) => {
+      // The subscriber only notifies about a request that is still pending at dispatch.
+      await ctx.db.insert("followRequests", {
+        aggregateId: "follow-request-agg-1",
+        requesterId: w.alice,
+        targetId: w.bob,
+        status: "pending",
+        createdAt: Date.now(),
+      });
       await dispatch(ctx, "FollowRequested", {
         requestId: "follow-request-agg-1",
         requesterId: w.alice,

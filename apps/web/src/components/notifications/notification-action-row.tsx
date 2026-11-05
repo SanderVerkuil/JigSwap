@@ -80,6 +80,7 @@ export function NotificationActions({
   surface: NotificationSurface;
 }) {
   const t = useTranslations("notifications.rich");
+  const tFollow = useTranslations("follow");
   const actorName = useActorName();
   const displayName = useMemberDisplayName();
   const convex = useConvex();
@@ -148,8 +149,12 @@ export function NotificationActions({
         await unfollow({ followeeId: memberId });
       }
       setOutcome(null);
-    } catch {
-      toast.error(t("undoError"));
+    } catch (error) {
+      toast.error(
+        actErrorOf(error)?.code === "RateLimited"
+          ? tFollow("errorRateLimited")
+          : t("undoError"),
+      );
     }
   };
 
@@ -184,10 +189,13 @@ export function NotificationActions({
         setOutcome({ resolvedAs: data.resolvedAs, focus: true });
       } else {
         refocus.current = kind;
+        // Only a follow back counts against the server's follow limit (RateLimited).
         toast.error(
-          t(`${view.type}.actions.${ACTION_META[kind].labelKey}Error`, {
-            actor: name,
-          }),
+          data?.code === "RateLimited"
+            ? tFollow("errorRateLimited")
+            : t(`${view.type}.actions.${ACTION_META[kind].labelKey}Error`, {
+                actor: name,
+              }),
         );
       }
     } finally {

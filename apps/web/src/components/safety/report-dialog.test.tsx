@@ -82,6 +82,27 @@ describe("ReportDialog", () => {
     expect(screen.getByText("Reporting Mara")).toBeTruthy();
   });
 
+  it.each([
+    ["photoComment", "Reporting a comment from Mara"],
+    ["puzzleReview", "Reporting a review from Mara"],
+  ] as const)(
+    "quotes a reported %s and files it under its kind",
+    async (kind, label) => {
+      renderDialog({ kind, id: `${kind}_1`, snippet: "You are an idiot" });
+      expect(screen.getByText(label)).toBeTruthy();
+      expect(screen.getByText("You are an idiot")).toBeTruthy();
+      fireEvent.click(screen.getByRole("radio", { name: "Spam or scam" }));
+      fireEvent.click(submitButton());
+      await screen.findByText("Report sent");
+      expect(mocks.mutation.mock.calls).toEqual([
+        [
+          FILE,
+          { targetKind: kind, targetId: `${kind}_1`, reason: "spam_scam" },
+        ],
+      ]);
+    },
+  );
+
   it("keeps submit disabled until a reason is chosen", () => {
     renderDialog();
     expect(submitButton().hasAttribute("disabled")).toBe(true);

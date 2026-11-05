@@ -1,4 +1,4 @@
-import { COOLDOWN_MS } from "@jigswap/domain";
+import { readsAsPendingToRequester } from "@jigswap/domain";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
@@ -59,17 +59,11 @@ export const getFollowRelation = query({
       )
       .first();
 
-    const now = Date.now();
+    // A declined request masks as pending ONLY while it is still in cooldown AND has not been
+    // cancelled. A cancel stamps cancelledAt: the requester withdrew, so the relation must read as
+    // no pending request (until a re-request inside the cooldown re-issues it).
     const pendingRequest =
-      request &&
-      (request.status === "pending" ||
-        // A declined request masks as pending ONLY while it is still in cooldown AND has not
-        // been cancelled. A cancel stamps cancelledAt: the requester withdrew, so the relation
-        // must read as no pending request (until a re-request inside the cooldown resumes it).
-        (request.status === "declined" &&
-          request.cancelledAt === undefined &&
-          request.respondedAt !== undefined &&
-          now - request.respondedAt < COOLDOWN_MS))
+      request && readsAsPendingToRequester(request, Date.now())
         ? { requestId: request.aggregateId, requestedAt: request.createdAt }
         : null;
 

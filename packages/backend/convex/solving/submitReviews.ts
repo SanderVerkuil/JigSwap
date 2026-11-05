@@ -9,9 +9,11 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import {
   convexCopyReviewRepository,
   convexPuzzleReviewRepository,
+  reviewedDefinitionOf,
 } from "./adapters/convexReviewRepositories";
 import { inProcessEventPublisher } from "./adapters/inProcessEventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -20,8 +22,8 @@ import { toConvexError } from "./errors";
 // Composition root for the two-level review form: upsert the caller's puzzle review and/or
 // star-only copy review in ONE mutation (one Convex transaction). The branded ids handed to the
 // domain CARRY Convex doc `_id`s (the postPuzzleReview.ts idiom — the adapters cast back, no
-// resolution). The copy-review permission facts (owner? completion on the copy?) are looked up
-// HERE and passed on the command; the domain decides.
+// resolution). The permission facts (copy: owner? completion on the copy?; puzzle: approved?
+// submitted by the caller?) are looked up HERE and passed on the commands; the domain decides.
 export const submitReviews = mutation({
   args: {
     puzzleId: v.id("puzzles"),
@@ -42,6 +44,11 @@ export const submitReviews = mutation({
     }
     if (args.copy !== undefined && args.copyId === undefined) {
       throw new ConvexError("A copy review requires a copyId");
+    }
+    // A puzzle review (new or edited) counts against the member's reviewPost limit, shared with
+    // social/postPuzzleReview; a copy-only star rating does not.
+    if (args.puzzle !== undefined) {
+      await enforceRateLimit(ctx, "reviewPost", memberId);
     }
 
     // Resolve the copy + permission facts once, before any write.
@@ -73,6 +80,7 @@ export const submitReviews = mutation({
       const result = await upsertPuzzleReviewUseCase({
         actingMemberId: memberId,
         puzzleId: toPuzzleDefinitionId(args.puzzleId as unknown as string),
+        definition: await reviewedDefinitionOf(ctx, args.puzzleId),
         rating: args.puzzle.rating,
         text: args.puzzle.text,
       });

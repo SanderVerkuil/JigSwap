@@ -11,6 +11,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { enforceRateLimit } from "../lib/rateLimits";
 import { canViewCopy } from "../library/canViewCopy";
 import { isBlockedEitherWay } from "../social/blocks";
 import { convexCopyPort } from "./adapters/convexCopyPort";
@@ -43,6 +44,10 @@ export const propose = mutation({
   },
   handler: async (ctx, args) => {
     const initiatorId = await requireMember(ctx); // initiator derived from auth, never the client
+    // Rate limits (SEC-24): the member's own buckets, whoever the owner is. Every refusal below
+    // throws and rolls the charge back, so only proposals that go through are counted.
+    await enforceRateLimit(ctx, "exchangePropose", initiatorId);
+    await enforceRateLimit(ctx, "exchangeProposeDaily", initiatorId);
 
     const requested = await ctx.db.get(args.requestedPuzzleId);
     if (requested === null) {
@@ -84,6 +89,22 @@ export const propose = mutation({
               kind,
             )
           : ApplicationError.copyNotReachable(toCopyId(args.requestedPuzzleId)),
+      );
+    }
+    // The per-owner cap, so a propose/cancel loop can't keep opening threads with one owner. Only
+    // after the block and reachability checks: a RateLimited answer on a copy the initiator can't
+    // see would tell them it belongs to an owner they have already reached. The member holding the
+    // copy isn't charged: the domain refuses them, so they open no thread, and a RateLimited here
+    // would differ from the CopyNotAvailable a blocked holder gets above, which shows the block.
+    if (requested.heldBy !== initiatorUserId) {
+      await enforceRateLimit(
+        ctx,
+        "exchangePair",
+        `${initiatorId}:${recipientId}`,
+        {
+          pairActorId: initiatorId as unknown as Id<"users">,
+          pairTargetId: recipientId,
+        },
       );
     }
 

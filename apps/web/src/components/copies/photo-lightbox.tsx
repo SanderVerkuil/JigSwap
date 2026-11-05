@@ -1,6 +1,7 @@
 "use client";
 
 import { PhotoZoom } from "@/components/copies/photo-zoom";
+import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,10 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
 import {
+  authorMemberIdOf,
   projectedAuthorOf,
   useMemberDisplayName,
   useProjectedMemberName,
 } from "@/lib/member-display-name";
+import { COMMENT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -44,6 +47,10 @@ type GalleryPhoto = CopyInstanceView["gallery"][number];
 type PhotoComment = FunctionReturnType<
   typeof gateway.library.listPhotoComments
 >[number];
+
+// Mirrors listPhotoComments' PHOTO_COMMENTS_LIMIT: the server returns at most the newest 100
+// comments, so a full list means there may be more.
+const PHOTO_COMMENTS_LIMIT = 100;
 
 // A modal gallery viewer: shows the active photo near-full-size (object-contain on a dark
 // backdrop), prev/next navigation across the copy's photos, the photo's metadata, and a
@@ -345,7 +352,10 @@ export function PhotoLightbox({
           </div>
 
           <div className="border-border border-t px-5 py-4">
-            <PhotoComments photoId={photo.id as Id<"ownedPuzzleImages">} />
+            <PhotoComments
+              photoId={photo.id as Id<"ownedPuzzleImages">}
+              open={photo.moderationStatus === "approved"}
+            />
           </div>
         </div>
         {/* Inside the content so Radix treats it as a nested layer: interacting
@@ -362,7 +372,16 @@ export function PhotoLightbox({
   );
 }
 
-function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
+// `open`: the photo is published (approved). Only then does it have a discussion; the server
+// refuses comments on, and lists none for, a photo still being checked (only its uploader sees
+// one here). Other members' comments can be reported; one ReportDialog serves the whole list.
+function PhotoComments({
+  photoId,
+  open,
+}: {
+  photoId: Id<"ownedPuzzleImages">;
+  open: boolean;
+}) {
   const t = useTranslations("copyInstance.photoLightbox");
   const displayName = useMemberDisplayName();
   const format = useFormatter();
@@ -370,7 +389,7 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
   // Keyed on the ACTIVE photo's id: navigating in the lightbox swaps `photoId`, which re-runs
   // this Convex query and re-renders the list for the newly shown photo.
   const { data: comments } = useQuery(
-    convexQuery(gateway.library.listPhotoComments, { photoId }),
+    convexQuery(gateway.library.listPhotoComments, open ? { photoId } : "skip"),
   );
   const { data: me } = useQuery(convexQuery(gateway.identity.currentUser, {}));
   const postComment = useMutation({
@@ -380,6 +399,12 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
   const [text, setText] = useState("");
   const posting = postComment.isPending;
   const [now] = useState(() => Date.now());
+  // The comment being reported stays set while the dialog animates closed.
+  const [reported, setReported] = useState<PhotoComment | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const reportTriggerRef = useRef<HTMLElement | null>(null);
+  const tCopy = useTranslations("copyInstance");
+  const projectedName = useProjectedMemberName();
 
   const list = comments ?? [];
   const relative = (timestamp: number) =>
@@ -391,17 +416,42 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
     try {
       await postComment.mutateAsync({ photoId, text: trimmed });
       setText("");
-    } catch {
-      toast.error(t("commentFailed"));
+    } catch (error) {
+      const code = convexErrorCode(error);
+      toast.error(
+        code === "RateLimited"
+          ? t("commentRateLimited")
+          : code === "CommentTextTooLong"
+            ? t("commentTooLong")
+            : t("commentFailed"),
+      );
     }
   };
+
+  if (!open) {
+    return (
+      <section>
+        <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
+          <MessageCircle className="h-4 w-4" />
+          {t("comments")}
+        </div>
+        <p className="text-muted-foreground text-sm">
+          {t("commentsAfterReview")}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section>
       <div className="text-muted-foreground mb-3 flex items-center gap-2 text-sm font-semibold">
         <MessageCircle className="h-4 w-4" />
         {t("comments")}
-        <span className="font-mono text-xs">{list.length}</span>
+        <span className="font-mono text-xs">
+          {list.length >= PHOTO_COMMENTS_LIMIT
+            ? `${PHOTO_COMMENTS_LIMIT}+`
+            : list.length}
+        </span>
       </div>
 
       {/* Composer */}
@@ -415,6 +465,7 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
         <Input
           placeholder={t("addComment")}
           value={text}
+          maxLength={COMMENT_TEXT_MAX_LENGTH}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -441,12 +492,42 @@ function PhotoComments({ photoId }: { photoId: Id<"ownedPuzzleImages"> }) {
             comment={comment}
             relative={relative}
             last={i === list.length - 1}
+            // Never your own (the server refuses that too); not until we know who you are. A hidden
+            // author can be reported as well: the report names the comment, not them.
+            onReport={
+              me && authorMemberIdOf(comment.author) !== me._id
+                ? (trigger) => {
+                    reportTriggerRef.current = trigger;
+                    setReported(comment);
+                    setReporting(true);
+                  }
+                : undefined
+            }
           />
         ))}
         {list.length === 0 && (
           <p className="text-muted-foreground text-sm">{t("noComments")}</p>
         )}
       </div>
+      {reported && (
+        <ReportDialog
+          target={{
+            kind: "photoComment",
+            id: reported.id,
+            snippet: reported.text,
+          }}
+          name={projectedName(
+            projectedAuthorOf(reported.author),
+            tCopy("anonymousUser"),
+          )}
+          memberId={
+            authorMemberIdOf(reported.author) as Id<"users"> | undefined
+          }
+          open={reporting}
+          onOpenChange={setReporting}
+          returnFocusRef={reportTriggerRef}
+        />
+      )}
     </section>
   );
 }
@@ -455,11 +536,15 @@ function PhotoCommentRow({
   comment,
   relative,
   last,
+  onReport,
 }: {
   comment: PhotoComment;
   relative: (timestamp: number) => string;
   last: boolean;
+  /** Offered on other members' comments: opens the report dialog. */
+  onReport?: (trigger: HTMLButtonElement) => void;
 }) {
+  const tSafety = useTranslations("safety");
   const t = useTranslations("copyInstance");
   const projectedName = useProjectedMemberName();
   // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
@@ -486,6 +571,18 @@ function PhotoCommentRow({
           {comment.text}
         </p>
       </div>
+      {onReport && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={tSafety("reportCommentFrom", { name })}
+          title={tSafety("reportComment")}
+          onClick={(event) => onReport(event.currentTarget)}
+          className="text-muted-foreground hover:text-destructive -my-1.5 size-11 shrink-0 md:size-8"
+        >
+          <Flag className="size-4" aria-hidden />
+        </Button>
+      )}
     </div>
   );
 }

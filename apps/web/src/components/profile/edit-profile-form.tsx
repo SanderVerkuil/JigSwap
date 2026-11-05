@@ -85,6 +85,12 @@ function isValidSlugFormat(value: string): boolean {
   );
 }
 
+// Mirrors the domain's BIO_MAX_LENGTH (Profile); the server refuses a longer bio (BioTooLong).
+const BIO_MAX_LENGTH = 500;
+
+// Mirrors identity/setLocation's cap; the server refuses a longer location (invalid_location).
+const LOCATION_MAX_LENGTH = 80;
+
 // The inline editor behind the header's Edit Profile toggle: username, the
 // shareable slug, location and bio as open labelled fields (no card).
 // Username's source of truth is Clerk (updated here; mirrored to Convex by
@@ -308,6 +314,7 @@ function EditProfileFormLoaded({
         <Input
           id="profile-location"
           value={location}
+          maxLength={LOCATION_MAX_LENGTH}
           onChange={(e) => setLocation(e.target.value)}
           placeholder={t("locationPlaceholder")}
         />
@@ -346,10 +353,18 @@ function EditProfileFormLoaded({
         <Textarea
           id="profile-bio"
           value={bio}
+          maxLength={BIO_MAX_LENGTH}
           onChange={(e) => setBio(e.target.value)}
           placeholder={t("bioPlaceholder")}
+          aria-describedby="profile-bio-counter"
           rows={3}
         />
+        <p
+          id="profile-bio-counter"
+          className="text-muted-foreground text-right text-xs"
+        >
+          {t("bioCounter", { count: bio.length, max: BIO_MAX_LENGTH })}
+        </p>
       </div>
       <div className="flex items-start justify-between gap-4 rounded-lg border p-4 sm:col-span-2">
         <div className="space-y-1">

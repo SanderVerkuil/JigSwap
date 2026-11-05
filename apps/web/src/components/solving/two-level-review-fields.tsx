@@ -3,6 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
+import { REVIEW_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { useTranslations } from "use-intl";
 
 interface TwoLevelReviewFieldsProps {
@@ -12,6 +13,10 @@ interface TwoLevelReviewFieldsProps {
   onPuzzleTextChange: (text: string) => void;
   copyRating: number;
   onCopyRatingChange: (rating: number) => void;
+  // Puzzle question is only rendered when the viewer may review the puzzle (getMyReviews'
+  // puzzleReviewAllowed: an approved definition, or their own submission); otherwise a short note
+  // says why it is missing.
+  showPuzzleSection: boolean;
   // Copy question is only rendered when the caller established the viewer may review the copy.
   showCopySection: boolean;
   // "Saving updates your existing review" hint, shown when either level already exists.
@@ -30,6 +35,7 @@ export function TwoLevelReviewFields({
   onPuzzleTextChange,
   copyRating,
   onCopyRatingChange,
+  showPuzzleSection,
   showCopySection,
   showUpdatesExisting,
   puzzleTextId = "review-text",
@@ -38,21 +44,28 @@ export function TwoLevelReviewFields({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor={puzzleTextId}>{t("puzzleQuestion")}</Label>
-        <StarRating
-          value={puzzleRating}
-          onChange={onPuzzleRatingChange}
-          size="lg"
-          label={t("rating")}
-        />
-        <Textarea
-          id={puzzleTextId}
-          placeholder={t("textPlaceholder")}
-          value={puzzleText}
-          onChange={(e) => onPuzzleTextChange(e.target.value)}
-        />
-      </div>
+      {showPuzzleSection ? (
+        <div className="space-y-2">
+          <Label htmlFor={puzzleTextId}>{t("puzzleQuestion")}</Label>
+          <StarRating
+            value={puzzleRating}
+            onChange={onPuzzleRatingChange}
+            size="lg"
+            label={t("rating")}
+          />
+          <Textarea
+            id={puzzleTextId}
+            placeholder={t("textPlaceholder")}
+            value={puzzleText}
+            maxLength={REVIEW_TEXT_MAX_LENGTH}
+            onChange={(e) => onPuzzleTextChange(e.target.value)}
+          />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          {t("puzzleNotReviewable")}
+        </p>
+      )}
       {showCopySection && (
         <div className="space-y-2">
           <Label>{t("copyQuestion")}</Label>
