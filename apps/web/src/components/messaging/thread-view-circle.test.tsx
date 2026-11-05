@@ -304,6 +304,14 @@ describe("ThreadView in a circle thread", () => {
     );
   });
 
+  // UX-02: a narrow thread pane shows the Circle link as its icon only; the
+  // label stays its accessible name and its tooltip.
+  it("keeps the Circle link named, with a tooltip, when it shows only its icon", () => {
+    renderThread(circleThread, CIRCLE_MESSAGES);
+    const link = screen.getByRole("link", { name: "Circle" });
+    expect(link.getAttribute("title")).toBe("Circle");
+  });
+
   it("says the member count in Dutch", () => {
     renderThread(circleThread, CIRCLE_MESSAGES, "nl");
     expect(screen.getByRole("button", { name: "6 leden" })).toBeTruthy();
@@ -537,7 +545,7 @@ describe("ThreadView in a DM stays as it was", () => {
     renderThread(dmThread, DM_MESSAGES);
     expect(screen.queryByRole("button", { name: /members/ })).toBeNull();
     expect(screen.queryByRole("link", { name: "Mara" })).toBeNull();
-    expect(screen.getByPlaceholderText("Type your message...")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Type your message…")).toBeTruthy();
     // One group for both messages, announced once as Mara's.
     const list = screen.getByRole("list", { name: "Mara" });
     expect(within(list).getAllByText("Mara:")).toHaveLength(1);

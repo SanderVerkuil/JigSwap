@@ -15,6 +15,7 @@ import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PHOTO_ACCEPT } from "@/lib/prepare-photo";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -32,6 +33,7 @@ import { AttachPicker } from "./attach-picker";
 import { COMPOSER_SLOT_CLASS, ComposerClosed } from "./composer-closed";
 import type { MessageCopy } from "./copy-card";
 import { EmojiButton } from "./emoji-button";
+import { enterKeyHintFor, shouldSendOnEnter } from "./enter-to-send";
 import { LocationPicker } from "./location-picker";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { sendState } from "./photo-staging";
@@ -111,6 +113,7 @@ export function MessageComposer({
   const staging = usePhotoStaging(threadId);
   const photosAvailable = usePhotosAvailable();
   const isMobile = useIsMobile();
+  const coarsePointer = useCoarsePointer();
   const typing = useTypingIndicator(threadId);
   // After picking or removing an attachment: the textarea on desktop; on
   // phones the attach button, so the keyboard doesn't pop up unasked.
@@ -229,8 +232,9 @@ export function MessageComposer({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) return;
-    // Enter sends; Shift+Enter inserts a newline.
-    if (event.key === "Enter" && !event.shiftKey) {
+    // Enter sends with a mouse or trackpad (Shift+Enter: new line); on a
+    // touch screen Enter is a new line. Never mid-IME composition.
+    if (shouldSendOnEnter(event.nativeEvent, coarsePointer)) {
       event.preventDefault();
       void send();
     }
@@ -285,6 +289,7 @@ export function MessageComposer({
           value={body}
           onChange={(event) => onValue(event.target.value)}
           onKeyDown={handleKeyDown}
+          enterKeyHint={enterKeyHintFor(coarsePointer)}
           aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
           placeholder={placeholder ?? t("typeMessage")}
           aria-label={
@@ -307,7 +312,9 @@ export function MessageComposer({
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
-          className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
+          // min-w-32 keeps it typeable beside the buttons in a narrow
+          // pane; 16px on touch screens so iPadOS doesn't zoom on focus.
+          className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 min-w-32 flex-1 resize-none rounded-[20px] px-4 py-2.5 pointer-coarse:text-base md:min-h-10"
         />
         {/* [ Message ] [ emoji (md+) ] [ paperclip ] [ Send ]: DOM order is the tab order. */}
         <EmojiButton

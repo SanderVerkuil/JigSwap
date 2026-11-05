@@ -149,6 +149,37 @@ export function threadSubjectTitle(
   });
 }
 
+// Text folded for a forgiving search: "Zoë" and "ZOE" both read "zoe".
+function foldForSearch(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
+// Whether `text` contains `query`, ignoring case, accents and the spaces
+// around the query. An empty query matches everything.
+export function matchesSearch(text: string, query: string): boolean {
+  const needle = foldForSearch(query.trim());
+  return needle === "" || foldForSearch(text).includes(needle);
+}
+
+// The inbox's kind chips: every thread, or one subject kind.
+export type InboxKindFilter = "all" | AnyInboxThread["subject"]["kind"];
+
+// The inbox rows the search and kind chips keep, in inbox order. `textOf`
+// is what a thread is found by (its title, plus the partner of an exchange).
+export function filterInbox<
+  T extends { subject: { kind: AnyInboxThread["subject"]["kind"] } },
+>(
+  threads: readonly T[],
+  { query, kind }: { query: string; kind: InboxKindFilter },
+  textOf: (thread: T) => string,
+): T[] {
+  return threads.filter(
+    (thread) =>
+      (kind === "all" || thread.subject.kind === kind) &&
+      matchesSearch(textOf(thread), query),
+  );
+}
+
 // A circle thread row's snippet (spec §6.1): the newest visible message with its
 // projected author ("Bas: …", "You: …"), a photo or location named by its
 // sender, a join/leave row as its system text, and a blocked author's message
@@ -291,6 +322,7 @@ function authorKey(message: GroupableMessage): string {
 
 export type ThreadItem<M extends GroupableMessage> =
   | { type: "day"; key: string; label: string }
+  | { type: "unread"; key: "unread" }
   | { type: "system"; key: string; message: M }
   | { type: "group"; key: string; own: boolean; messages: M[] };
 
@@ -301,11 +333,14 @@ const GROUP_GAP = 5 * MINUTE;
 // messages, and author groups: consecutive non-system messages by the same
 // author on the same local day, each ≤ 5 minutes after the previous one. In a
 // DM "the same author" is the same side; in a circle thread, the same member.
+// `unreadFromId` places the "New messages" divider right before that message
+// (after its day separator), so the unread run starts a group of its own.
 export function groupThreadMessages<M extends GroupableMessage>(
   messages: readonly M[],
   now: number,
   locale: string,
   t: Translator,
+  unreadFromId?: string,
 ): ThreadItem<M>[] {
   const items: ThreadItem<M>[] = [];
   let currentDay: number | undefined;
@@ -321,6 +356,10 @@ export function groupThreadMessages<M extends GroupableMessage>(
         key: `day-${message.id}`,
         label: formatDayLabel(message.sentAt, now, locale, t),
       });
+    }
+    if (message.id === unreadFromId) {
+      group = undefined;
+      items.push({ type: "unread", key: "unread" });
     }
     if (message.kind === "system") {
       group = undefined;
@@ -347,6 +386,96 @@ export function groupThreadMessages<M extends GroupableMessage>(
     items.push(group);
   }
   return items;
+}
+
+type ReadableMessage = { readonly id: string; readonly isMine: boolean };
+
+// The newest message the viewer didn't write (another member's, or a system
+// line): the inbox's unread count runs up to it, and a read receipt covers it.
+export function newestOtherId(
+  messages: readonly ReadableMessage[],
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i].isMine) return messages[i].id;
+  }
+  return undefined;
+}
+
+// Where the "New messages" divider goes: the oldest of the `unreadCount` newest
+// messages the viewer didn't write, counted back from `anchorId` (the newest of
+// them when the count was taken, so later arrivals don't move it). The inbox
+// counts the same way: every message after the reader's receipt that they
+// didn't write, system lines included. A run longer than the loaded messages
+// starts at the oldest loaded one, and moves up as older pages load (see
+// unreadRunLoaded). Undefined when nothing was unread or the anchor isn't
+// loaded.
+export function firstUnreadId(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): string | undefined {
+  const start = unreadRunStart(messages, unreadCount, anchorId);
+  return start === undefined ? undefined : messages[Math.max(start, 0)].id;
+}
+
+// Whether the loaded messages reach back to the start of that unread run, so
+// the divider is where it will stay: false while the run reaches past the
+// oldest loaded message. True when there's no divider to place.
+export function unreadRunLoaded(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): boolean {
+  return unreadRunStart(messages, unreadCount, anchorId) !== -1;
+}
+
+// The index of the unread run's first message, -1 when the run reaches past
+// the oldest loaded message, undefined when there's no run to place.
+function unreadRunStart(
+  messages: readonly ReadableMessage[],
+  unreadCount: number,
+  anchorId: string | undefined,
+): number | undefined {
+  if (unreadCount <= 0 || anchorId === undefined) return undefined;
+  const anchor = messages.findIndex((message) => message.id === anchorId);
+  if (anchor === -1) return undefined;
+  let counted = 0;
+  for (let i = anchor; i >= 0; i--) {
+    if (messages[i].isMine) continue;
+    counted += 1;
+    if (counted === unreadCount) return i;
+  }
+  return -1;
+}
+
+// The newest message the server has, skipping the reader's sends that are
+// still pending (their `pending-…` id gives way to the real one).
+export function newestSentId(
+  messages: readonly ReadableMessage[],
+): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i].id.startsWith("pending-")) return messages[i].id;
+  }
+  return undefined;
+}
+
+// How many messages the reader didn't write came after `seenId`: the thread's
+// "N new messages" pill. Every one of them when nothing was seen yet (an empty
+// thread), none when that message is gone.
+export function countOthersAfter(
+  messages: readonly ReadableMessage[],
+  seenId: string | undefined,
+): number {
+  const seen =
+    seenId === undefined
+      ? -1
+      : messages.findIndex((message) => message.id === seenId);
+  if (seenId !== undefined && seen === -1) return 0;
+  let count = 0;
+  for (let i = seen + 1; i < messages.length; i++) {
+    if (!messages[i].isMine) count += 1;
+  }
+  return count;
 }
 
 // Photos sent within this gap of each other (same author) share a gallery.

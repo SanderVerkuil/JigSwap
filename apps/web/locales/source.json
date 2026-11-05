@@ -1,8 +1,8 @@
 {
   "common": {
     "genericMember": "Puzzler",
-    "loading": "Loading...",
-    "saving": "Saving...",
+    "loading": "Loading…",
+    "saving": "Saving…",
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",
@@ -348,7 +348,7 @@
     "selectPuzzle": "Select Puzzle",
     "selectPuzzleDescription": "Search for an existing puzzle or create a new one",
     "searchPuzzle": "Search for a puzzle",
-    "searchPlaceholder": "Search puzzles...",
+    "searchPlaceholder": "Search puzzles…",
     "yourPendingSubmissions": "Your submissions (pending review)",
     "pendingReview": "Pending review",
     "noPuzzlesFound": "No puzzles found",
@@ -411,22 +411,22 @@
       "description": "Found similar puzzles in the database. Click to auto-fill details.",
       "searchExisting": "Search Existing Puzzles",
       "searchDescription": "Search for puzzles that already exist in the database to auto-fill details",
-      "searchPlaceholder": "Search by title, brand, or description...",
-      "placeholder": "Search for puzzles...",
+      "searchPlaceholder": "Search by title, brand, or description…",
+      "placeholder": "Search for puzzles…",
       "found": "Found Puzzles",
       "useThis": "Use This",
       "noResults": "No matching puzzles found",
-      "loading": "Loading suggestions...",
-      "typeToSearch": "Type to search for puzzles..."
+      "loading": "Loading suggestions…",
+      "typeToSearch": "Type to search for puzzles…"
     },
     "puzzleSelection": "Puzzle Selection",
     "puzzleSelectionDescription": "Choose whether to create a new puzzle or select an existing one",
     "selectExistingPuzzle": "Select Existing Puzzle",
     "searchExistingPuzzles": "Search Existing Puzzles",
     "searchPuzzles": "Search Puzzles",
-    "searchPuzzlesPlaceholder": "Search by title, brand, or piece count...",
-    "typeToSearch": "Type to search for puzzles...",
-    "loading": "Loading...",
+    "searchPuzzlesPlaceholder": "Search by title, brand, or piece count…",
+    "typeToSearch": "Type to search for puzzles…",
+    "loading": "Loading…",
     "noResults": "No matching puzzles found",
     "change": "Change",
     "fillInPuzzleDetails": "Fill in the details for your new puzzle",
@@ -518,7 +518,7 @@
     "deleteConfirmBody": "This permanently removes this puzzle from your library. This action cannot be undone.",
     "deleteConfirmAction": "Delete",
     "deleteReserved": "You can't delete this puzzle while it's part of an exchange in progress or out on loan. You can once the exchange is completed, declined or cancelled, or once the puzzle is back.",
-    "loadingPuzzles": "Loading puzzles...",
+    "loadingPuzzles": "Loading puzzles…",
     "new_sealed": "New (Sealed)",
     "like_new": "Like New",
     "importFromUrl": "Import from a store link",
@@ -736,7 +736,7 @@
     },
     "cancel": "Cancel",
     "submit": "Send request",
-    "submitting": "Sending...",
+    "submitting": "Sending…",
     "success": "Request sent",
     "errors": {
       "notAvailable": "This puzzle is no longer available for that exchange.",
@@ -804,10 +804,12 @@
     "anonymous": "Anonymous user",
     "deletedMember": "Deleted member",
     "attachPuzzle": "Attach a puzzle",
+    "attachPuzzleShort": "Puzzle",
     "attachTitle": "Attach a puzzle",
     "attached": "Attached: {title}",
     "backToInbox": "Back to messages",
     "conversationsLabel": "Conversations",
+    "conversationCount": "{count, plural, one {# conversation} other {# conversations}}",
     "copyOwnerNamed": "{name}'s copy",
     "copyOwnerOther": "The other member's copy",
     "copyOwnerYou": "Your copy",
@@ -817,8 +819,14 @@
     "dayToday": "Today",
     "dayYesterday": "Yesterday",
     "empty": "No conversations yet",
-    "emptyHint": "Start one with Message on a member's profile or a puzzle; every exchange gets its own chat too. Each of your circles has a group chat, under New.",
+    "emptyHint": "Start one under New, or with Message on a member's profile or a puzzle. Every exchange gets its own chat, and each of your circles has a group chat.",
     "exchangeThread": "{type}: {title}",
+    "filterKind": {
+      "all": "All",
+      "dm": "People",
+      "exchange": "Exchanges",
+      "circle": "Circles"
+    },
     "exchangeType": {
       "trade": "Trade",
       "sale": "Sale",
@@ -839,7 +847,7 @@
       "startTitle": "Start a conversation",
       "member": {
         "title": "Message a member",
-        "text": "Use Message on their profile, or on a puzzle they own."
+        "text": "Pick someone under New, or use Message on their profile or on a puzzle they own."
       },
       "exchange": {
         "title": "Exchange chats",
@@ -853,6 +861,17 @@
     "inboxError": "Couldn't load your conversations.",
     "loadEarlier": "Load earlier messages",
     "loadingEarlier": "Loading earlier messages…",
+    "memberPicker": {
+      "description": "Pick someone you're connected with.",
+      "searchLabel": "Search members",
+      "searchPlaceholder": "Search by name…",
+      "recent": "Recent",
+      "mutual": "You follow each other",
+      "noMatch": "No one matches \"{query}\"",
+      "empty": "People you've talked to and people who follow you back show up here.",
+      "findMembers": "Find members",
+      "findSomeoneElse": "Find someone else"
+    },
     "loadingOlderConversations": "Loading older conversations…",
     "showOlderConversations": "Show older conversations",
     "olderConversationsElsewhere": "These are your {count} most recent conversations. Open older ones from their exchange, member or circle page.",
@@ -860,8 +879,11 @@
     "messageName": "Message {name}",
     "moreCount": "{count} more",
     "newMessageAnnouncement": "New message from {name}: {body}",
+    "newMessagesPill": "{count, plural, one {# new message} other {# new messages}}",
     "noMessages": "No messages yet",
     "noMessagesHint": "Say hello to get the conversation going.",
+    "noConversationsMatch": "No conversations match",
+    "clearSearch": "Clear",
     "noPuzzleResults": "No puzzles match \"{query}\"",
     "noPuzzles": "No puzzles to show",
     "noThreadYet": "No conversation for this exchange yet.",
@@ -873,6 +895,8 @@
     "removeAttachment": "Remove {title}",
     "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
     "retry": "Try again",
+    "searchConversations": "Search conversations",
+    "searchConversationsPlaceholder": "Search conversations…",
     "searchPuzzles": "Search puzzles",
     "selectConversation": "Select a conversation",
     "sendError": "Your message couldn't be sent. Please try again.",
@@ -888,13 +912,14 @@
       "hours": "{count}h"
     },
     "tooLong": "That message is too long (4,000 characters max).",
-    "typeMessage": "Type your message...",
+    "typeMessage": "Type your message…",
     "typing": {
       "one": "{name} is typing…",
       "two": "{a} and {b} are typing…",
       "several": "Several people are typing…"
     },
     "unreadCount": "{count, plural, one {# unread message} other {# unread messages}}",
+    "unreadDivider": "New messages",
     "untitledPuzzle": "Untitled puzzle",
     "you": "You",
     "youPrefix": "You: {body}",
@@ -1036,7 +1061,7 @@
   "profile": {
     "title": "Profile",
     "subtitle": "Manage your account and preferences",
-    "loading": "Loading profile...",
+    "loading": "Loading profile…",
     "edit": "Edit Profile",
     "cancel": "Cancel",
     "editProfile": "Edit Profile",
@@ -1919,7 +1944,7 @@
     "deleteConfirmTitle": "Delete this collection?",
     "deleteConfirmBody": "This permanently deletes the collection. This action cannot be undone.",
     "deleteConfirmAction": "Delete",
-    "loadingCollections": "Loading collections...",
+    "loadingCollections": "Loading collections…",
     "piecesTotal": "Pieces Total",
     "avgDifficulty": "Avg. Difficulty",
     "upForTrade": "Up for Trade",
@@ -1946,7 +1971,7 @@
     "added": "Added"
   },
   "household": {
-    "loading": "Loading your household...",
+    "loading": "Loading your household…",
     "joined": "You joined the household",
     "explainer": "Everyone in your household sees each other's puzzles in My puzzles. Puzzles stay owned by whoever added them; owners choose per puzzle whether the household can manage it (edit, lend, swap) or only view it. Solves stay personal.",
     "empty": {
@@ -2141,7 +2166,7 @@
     "avatarStackMore": "{count, plural, one {# more member} other {# more members}}",
     "emptyTitle": "No circles yet",
     "emptySub": "Create a circle to swap puzzles with friends and family.",
-    "loading": "Loading circles...",
+    "loading": "Loading circles…",
     "leave": "Leave circle",
     "leaveConfirmTitle": "Leave {circle}?",
     "leaveConfirmBody": "You'll lose access to this circle and the puzzles shared in it. An admin can invite you again.",
@@ -2227,7 +2252,7 @@
       "title": "Manage {name}",
       "fallbackName": "circle",
       "description": "Invite or remove members, set permissions, and share copies.",
-      "loadingCircle": "Loading circle...",
+      "loadingCircle": "Loading circle…",
       "unavailable": "This circle is no longer available.",
       "members": "Members",
       "owner": "Owner",
@@ -2325,7 +2350,7 @@
   },
   "members": {
     "memberSince": "Member since {date}",
-    "loading": "Loading member...",
+    "loading": "Loading member…",
     "collects": "Collects ~{count, plural, one {# puzzle} other {# puzzles}} on JigSwap",
     "joinCta": "Join JigSwap to follow {name}",
     "logIn": "Log in",
@@ -3054,7 +3079,7 @@
     "title": "Insights",
     "subtitle": "Your puzzling and trading activity at a glance.",
     "nav": "Insights",
-    "loading": "Loading your insights...",
+    "loading": "Loading your insights…",
     "empty": "No data yet — log a solve to see your insights.",
     "stats": {
       "completions": "Completions",
@@ -3107,7 +3132,7 @@
       "title": "Export my data",
       "description": "Download a JSON file with your account, puzzles, photos, solves, reviews, exchanges, who you follow and the messages you sent.",
       "button": "Export my data",
-      "preparing": "Preparing... {percent}%",
+      "preparing": "Preparing… {percent}%",
       "success": "Your data has been downloaded.",
       "error": "Could not export your data. Please try again."
     },
@@ -3207,7 +3232,7 @@
       "step1": {
         "title": "Puzzle Selection",
         "searchLabel": "Search for existing puzzles",
-        "searchPlaceholder": "Search by title, brand, or piece count...",
+        "searchPlaceholder": "Search by title, brand, or piece count…",
         "createNew": "Create New Puzzle",
         "suggestions": "Found Puzzles",
         "pieces": "pieces",
@@ -3256,12 +3281,12 @@
       },
       "actions": {
         "submit": "Create Puzzle",
-        "submitting": "Creating...",
+        "submitting": "Creating…",
         "cancel": "Cancel"
       }
     },
     "puzzle-form": {
-      "loading": "Loading form...",
+      "loading": "Loading form…",
       "formTitle": "Puzzle Details",
       "image": {
         "label": "Image",
@@ -3355,7 +3380,7 @@
       },
       "actions": {
         "submit": "Save Puzzle",
-        "submitting": "Saving...",
+        "submitting": "Saving…",
         "cancel": "Cancel"
       },
       "errors": {
@@ -3365,7 +3390,7 @@
     },
     "file-upload": {
       "error": "Error compressing image. Please select a different file.",
-      "compressing": "Compressing..."
+      "compressing": "Compressing…"
     },
     "translatable-field": {
       "toggleLabel": "Language for {field}",
@@ -3385,7 +3410,7 @@
     "anonymous": "Anonymous user",
     "transferredVia": "Transferred via exchange {exchangeId}",
     "noTransfers": "This copy has never been transferred.",
-    "loading": "Loading custody timeline..."
+    "loading": "Loading custody timeline…"
   },
   "lending": {
     "borrowedTitle": "Borrowed",
@@ -3393,14 +3418,14 @@
     "borrowedFrom": "Borrowed from {name}",
     "openedRelative": "Borrowed {when}",
     "returnAction": "Return",
-    "returning": "Returning...",
+    "returning": "Returning…",
     "noBorrowed": "Nothing borrowed",
     "noBorrowedDescription": "When a member lends you a puzzle, it shows up here until you return it. Find one on Browse Puzzles and ask to borrow it.",
     "browseAction": "Browse puzzles",
-    "loading": "Loading loans...",
+    "loading": "Loading loans…",
     "onLoanTo": "On loan to {name}",
     "recallAction": "Recall",
-    "recalling": "Recalling...",
+    "recalling": "Recalling…",
     "historyTitle": "Loan history",
     "historyDescription": "Every time this copy has been lent out.",
     "noHistory": "This copy has never been lent out.",

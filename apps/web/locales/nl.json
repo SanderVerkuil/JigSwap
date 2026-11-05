@@ -1,8 +1,8 @@
 {
   "common": {
     "genericMember": "Puzzelaar",
-    "loading": "Laden...",
-    "saving": "Opslaan...",
+    "loading": "Laden…",
+    "saving": "Opslaan…",
     "error": "Fout",
     "success": "Succes",
     "cancel": "Annuleren",
@@ -348,7 +348,7 @@
     "selectPuzzle": "Puzzel Selecteren",
     "selectPuzzleDescription": "Zoek naar een bestaande puzzel of maak een nieuwe",
     "searchPuzzle": "Zoek naar een puzzel",
-    "searchPlaceholder": "Zoek puzzels...",
+    "searchPlaceholder": "Zoek puzzels…",
     "yourPendingSubmissions": "Jouw inzendingen (wachten op controle)",
     "pendingReview": "Wacht op controle",
     "noPuzzlesFound": "Geen puzzels gevonden",
@@ -411,22 +411,22 @@
       "description": "Vergelijkbare puzzels gevonden in de database. Klik om details automatisch in te vullen.",
       "searchExisting": "Zoek Bestaande Puzzels",
       "searchDescription": "Zoek naar puzzels die al bestaan in de database om details automatisch in te vullen",
-      "searchPlaceholder": "Zoek op titel, merk of beschrijving...",
-      "placeholder": "Zoek naar puzzels...",
+      "searchPlaceholder": "Zoek op titel, merk of beschrijving…",
+      "placeholder": "Zoek naar puzzels…",
       "found": "Gevonden Puzzels",
       "useThis": "Gebruik Deze",
       "noResults": "Geen overeenkomende puzzels gevonden",
-      "loading": "Voorstellen laden...",
-      "typeToSearch": "Type om naar puzzels te zoeken..."
+      "loading": "Voorstellen laden…",
+      "typeToSearch": "Type om naar puzzels te zoeken…"
     },
     "puzzleSelection": "Puzzelselectie",
     "puzzleSelectionDescription": "Kies of je een nieuwe puzzel wilt maken of een bestaande wilt selecteren",
     "selectExistingPuzzle": "Selecteer Bestaande Puzzel",
     "searchExistingPuzzles": "Zoek Bestaande Puzzels",
     "searchPuzzles": "Zoek Puzzels",
-    "searchPuzzlesPlaceholder": "Zoek op titel, merk of aantal stukken...",
-    "typeToSearch": "Type om naar puzzels te zoeken...",
-    "loading": "Laden...",
+    "searchPuzzlesPlaceholder": "Zoek op titel, merk of aantal stukken…",
+    "typeToSearch": "Type om naar puzzels te zoeken…",
+    "loading": "Laden…",
     "noResults": "Geen overeenkomende puzzels gevonden",
     "change": "Wijzigen",
     "fillInPuzzleDetails": "Vul de details in voor je nieuwe puzzel",
@@ -518,7 +518,7 @@
     "deleteConfirmBody": "Dit verwijdert deze puzzel permanent uit je bibliotheek. Deze actie kan niet ongedaan worden gemaakt.",
     "deleteConfirmAction": "Verwijderen",
     "deleteReserved": "Je kunt deze puzzel niet verwijderen zolang hij bij een lopende uitwisseling hoort of is uitgeleend. Dat kan wel zodra de uitwisseling is afgerond, afgewezen of geannuleerd, of zodra de puzzel terug is.",
-    "loadingPuzzles": "Puzzels laden...",
+    "loadingPuzzles": "Puzzels laden…",
     "new_sealed": "Nieuw (Verzegeld)",
     "like_new": "Zo Goed Als Nieuw",
     "importFromUrl": "Importeer via een winkellink",
@@ -736,7 +736,7 @@
     },
     "cancel": "Annuleren",
     "submit": "Aanvraag versturen",
-    "submitting": "Versturen...",
+    "submitting": "Versturen…",
     "success": "Aanvraag verstuurd",
     "errors": {
       "notAvailable": "Deze puzzel is niet meer beschikbaar voor die uitwisseling.",
@@ -804,10 +804,12 @@
     "anonymous": "Anonieme gebruiker",
     "deletedMember": "Verwijderd lid",
     "attachPuzzle": "Puzzel bijvoegen",
+    "attachPuzzleShort": "Puzzel",
     "attachTitle": "Puzzel bijvoegen",
     "attached": "Bijgevoegd: {title}",
     "backToInbox": "Terug naar berichten",
     "conversationsLabel": "Gesprekken",
+    "conversationCount": "{count, plural, one {# gesprek} other {# gesprekken}}",
     "copyOwnerNamed": "Exemplaar van {name}",
     "copyOwnerOther": "Exemplaar van de ander",
     "copyOwnerYou": "Jouw exemplaar",
@@ -817,8 +819,14 @@
     "dayToday": "Vandaag",
     "dayYesterday": "Gisteren",
     "empty": "Nog geen gesprekken",
-    "emptyHint": "Begin er een met Bericht op het profiel van een lid of bij een puzzel; elke uitwisseling krijgt ook een eigen chat. Elke kring heeft een groepschat, te vinden via Nieuw.",
+    "emptyHint": "Begin er een via Nieuw, of met Bericht op het profiel van een lid of bij een puzzel. Elke uitwisseling krijgt een eigen chat en elke kring heeft een groepschat.",
     "exchangeThread": "{type}: {title}",
+    "filterKind": {
+      "all": "Alle",
+      "dm": "Mensen",
+      "exchange": "Uitwisselingen",
+      "circle": "Kringen"
+    },
     "exchangeType": {
       "trade": "Ruil",
       "sale": "Verkoop",
@@ -839,7 +847,7 @@
       "startTitle": "Begin een gesprek",
       "member": {
         "title": "Bericht aan een lid",
-        "text": "Gebruik Bericht op iemands profiel of bij een puzzel van die persoon."
+        "text": "Kies iemand via Nieuw, of gebruik Bericht op iemands profiel of bij een puzzel van die persoon."
       },
       "exchange": {
         "title": "Chats bij uitwisselingen",
@@ -853,6 +861,17 @@
     "inboxError": "Je gesprekken konden niet worden geladen.",
     "loadEarlier": "Eerdere berichten laden",
     "loadingEarlier": "Eerdere berichten laden…",
+    "memberPicker": {
+      "description": "Kies iemand met wie je verbonden bent.",
+      "searchLabel": "Zoek leden",
+      "searchPlaceholder": "Zoek op naam…",
+      "recent": "Recent",
+      "mutual": "Jullie volgen elkaar",
+      "noMatch": "Niemand gevonden voor \"{query}\"",
+      "empty": "Hier zie je mensen met wie je hebt gechat en mensen die jou terugvolgen.",
+      "findMembers": "Leden zoeken",
+      "findSomeoneElse": "Iemand anders zoeken"
+    },
     "loadingOlderConversations": "Oudere gesprekken laden…",
     "showOlderConversations": "Oudere gesprekken tonen",
     "olderConversationsElsewhere": "Dit zijn je {count} meest recente gesprekken. Oudere open je vanaf de pagina van de uitwisseling, het lid of de kring.",
@@ -860,8 +879,11 @@
     "messageName": "Bericht sturen aan {name}",
     "moreCount": "nog {count}",
     "newMessageAnnouncement": "Nieuw bericht van {name}: {body}",
+    "newMessagesPill": "{count, plural, one {# nieuw bericht} other {# nieuwe berichten}}",
     "noMessages": "Nog geen berichten",
     "noMessagesHint": "Zeg hallo om het gesprek op gang te brengen.",
+    "noConversationsMatch": "Geen gesprekken gevonden",
+    "clearSearch": "Wissen",
     "noPuzzleResults": "Geen puzzels gevonden voor \"{query}\"",
     "noPuzzles": "Geen puzzels om te tonen",
     "noThreadYet": "Nog geen gesprek voor deze uitwisseling.",
@@ -873,6 +895,8 @@
     "removeAttachment": "{title} verwijderen",
     "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
     "retry": "Opnieuw proberen",
+    "searchConversations": "Zoek gesprekken",
+    "searchConversationsPlaceholder": "Zoek gesprekken…",
     "searchPuzzles": "Zoek puzzels",
     "selectConversation": "Selecteer een gesprek",
     "sendError": "Je bericht kon niet worden verzonden. Probeer het opnieuw.",
@@ -895,6 +919,7 @@
       "several": "Meerdere mensen typen…"
     },
     "unreadCount": "{count, plural, one {# ongelezen bericht} other {# ongelezen berichten}}",
+    "unreadDivider": "Nieuwe berichten",
     "untitledPuzzle": "Naamloze puzzel",
     "you": "Jij",
     "youPrefix": "Jij: {body}",
@@ -1036,7 +1061,7 @@
   "profile": {
     "title": "Profiel",
     "subtitle": "Beheer je account en voorkeuren",
-    "loading": "Profiel laden...",
+    "loading": "Profiel laden…",
     "edit": "Profiel Bewerken",
     "cancel": "Annuleren",
     "editProfile": "Profiel Bewerken",
@@ -1919,7 +1944,7 @@
     "deleteConfirmTitle": "Deze collectie verwijderen?",
     "deleteConfirmBody": "Dit verwijdert de collectie permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "deleteConfirmAction": "Verwijderen",
-    "loadingCollections": "Collecties laden...",
+    "loadingCollections": "Collecties laden…",
     "piecesTotal": "Stukjes Totaal",
     "avgDifficulty": "Gem. Moeilijkheid",
     "upForTrade": "Te Ruil",
@@ -1946,7 +1971,7 @@
     "added": "Toegevoegd"
   },
   "household": {
-    "loading": "Je huishouden laden...",
+    "loading": "Je huishouden laden…",
     "joined": "Je bent lid geworden van het huishouden",
     "explainer": "Iedereen in je huishouden ziet elkaars puzzels in Mijn puzzels. Puzzels blijven van wie ze heeft toegevoegd; eigenaren kiezen per puzzel of het huishouden hem mag beheren (bewerken, uitlenen, ruilen) of alleen mag bekijken. Oplossingen blijven persoonlijk.",
     "empty": {
@@ -2141,7 +2166,7 @@
     "avatarStackMore": "{count, plural, one {nog # lid} other {nog # leden}}",
     "emptyTitle": "Nog geen kringen",
     "emptySub": "Maak een kring aan om puzzels te ruilen met vrienden en familie.",
-    "loading": "Kringen laden...",
+    "loading": "Kringen laden…",
     "leave": "Kring verlaten",
     "leaveConfirmTitle": "{circle} verlaten?",
     "leaveConfirmBody": "Je verliest de toegang tot deze kring en de puzzels die erin gedeeld zijn. Een beheerder kan je opnieuw uitnodigen.",
@@ -2227,7 +2252,7 @@
       "title": "{name} beheren",
       "fallbackName": "kring",
       "description": "Leden uitnodigen of verwijderen, rechten instellen en exemplaren delen.",
-      "loadingCircle": "Kring laden...",
+      "loadingCircle": "Kring laden…",
       "unavailable": "Deze kring is niet langer beschikbaar.",
       "members": "Leden",
       "owner": "Eigenaar",
@@ -2325,7 +2350,7 @@
   },
   "members": {
     "memberSince": "Lid sinds {date}",
-    "loading": "Lid laden...",
+    "loading": "Lid laden…",
     "collects": "Verzamelt ~{count, plural, one {# puzzel} other {# puzzels}} op JigSwap",
     "joinCta": "Word lid van JigSwap om {name} te volgen",
     "logIn": "Inloggen",
@@ -3054,7 +3079,7 @@
     "title": "Inzichten",
     "subtitle": "Je puzzel- en ruilactiviteit in één oogopslag.",
     "nav": "Inzichten",
-    "loading": "Je inzichten laden...",
+    "loading": "Je inzichten laden…",
     "empty": "Nog geen gegevens — leg een voltooiing vast om inzichten te zien.",
     "stats": {
       "completions": "Voltooiingen",
@@ -3107,7 +3132,7 @@
       "title": "Mijn gegevens exporteren",
       "description": "Download een JSON-bestand met je account, puzzels, foto's, voltooiingen, beoordelingen, ruilen, wie je volgt en de berichten die je hebt gestuurd.",
       "button": "Mijn gegevens exporteren",
-      "preparing": "Voorbereiden... {percent}%",
+      "preparing": "Voorbereiden… {percent}%",
       "success": "Je gegevens zijn gedownload.",
       "error": "Kon je gegevens niet exporteren. Probeer het opnieuw."
     },
@@ -3207,7 +3232,7 @@
       "step1": {
         "title": "Puzzelselectie",
         "searchLabel": "Zoek naar bestaande puzzels",
-        "searchPlaceholder": "Zoek op titel, merk of aantal stukken...",
+        "searchPlaceholder": "Zoek op titel, merk of aantal stukken…",
         "createNew": "Nieuwe Puzzel Maken",
         "suggestions": "Gevonden Puzzels",
         "pieces": "stukken",
@@ -3256,12 +3281,12 @@
       },
       "actions": {
         "submit": "Puzzel Maken",
-        "submitting": "Maken...",
+        "submitting": "Maken…",
         "cancel": "Annuleren"
       }
     },
     "puzzle-form": {
-      "loading": "Formulier laden...",
+      "loading": "Formulier laden…",
       "formTitle": "Puzzeldetails",
       "image": {
         "label": "Afbeelding",
@@ -3355,7 +3380,7 @@
       },
       "actions": {
         "submit": "Puzzel Opslaan",
-        "submitting": "Opslaan...",
+        "submitting": "Opslaan…",
         "cancel": "Annuleren"
       },
       "errors": {
@@ -3365,7 +3390,7 @@
     },
     "file-upload": {
       "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
-      "compressing": "Comprimeren..."
+      "compressing": "Comprimeren…"
     },
     "translatable-field": {
       "toggleLabel": "Taal voor {field}",
@@ -3385,7 +3410,7 @@
     "anonymous": "Anonieme gebruiker",
     "transferredVia": "Overgedragen via ruil {exchangeId}",
     "noTransfers": "Dit exemplaar is nooit overgedragen.",
-    "loading": "Eigendomsketen laden..."
+    "loading": "Eigendomsketen laden…"
   },
   "lending": {
     "borrowedTitle": "Geleend",
@@ -3393,14 +3418,14 @@
     "borrowedFrom": "Geleend van {name}",
     "openedRelative": "Geleend {when}",
     "returnAction": "Teruggeven",
-    "returning": "Teruggeven...",
+    "returning": "Teruggeven…",
     "noBorrowed": "Niets geleend",
     "noBorrowedDescription": "Als een lid je een puzzel uitleent, staat die hier tot je hem teruggeeft. Zoek er een via Puzzels Ontdekken en vraag of je hem mag lenen.",
     "browseAction": "Puzzels ontdekken",
-    "loading": "Leningen laden...",
+    "loading": "Leningen laden…",
     "onLoanTo": "Uitgeleend aan {name}",
     "recallAction": "Terugvragen",
-    "recalling": "Terugvragen...",
+    "recalling": "Terugvragen…",
     "historyTitle": "Leengeschiedenis",
     "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
     "noHistory": "Dit exemplaar is nooit uitgeleend.",

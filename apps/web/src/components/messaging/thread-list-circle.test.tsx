@@ -31,7 +31,26 @@ vi.mock("@/components/dashboard-home/use-current-member", () => ({
   useCurrentMember: () => ({ member: { _id: "me" }, isMemberLoading: false }),
 }));
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+  Link: ({
+    to,
+    search,
+    children,
+    ...rest
+  }: {
+    to: string;
+    search?: Record<string, string>;
+    children?: ReactNode;
+  }) => (
+    <a
+      href={search ? `${to}?${new URLSearchParams(search).toString()}` : to}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
+}));
 
 // The one-time presence prompt has its own tests (presence-sharing.test.tsx).
 vi.mock("@/components/presence/presence-sharing", () => ({
@@ -287,12 +306,12 @@ describe("ThreadList empty inbox", () => {
     ["en", "No conversations yet", "Message a member"],
     ["nl", "Nog geen gesprekken", "Bericht aan een lid"],
   ] as const)(
-    "explains how conversations start and links to People (%s)",
+    "explains how conversations start and links to People's Find tab (%s)",
     (locale, title, action) => {
       renderList([], locale);
       expect(screen.getByText(title)).toBeTruthy();
       const link = screen.getByRole("link", { name: action });
-      expect(link.getAttribute("href")).toBe("/people");
+      expect(link.getAttribute("href")).toBe("/people?tab=find");
     },
   );
 

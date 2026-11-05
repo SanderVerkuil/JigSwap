@@ -9,15 +9,22 @@ import {
   contextCopyHref,
   conversationErrorCode,
   copyOwnerHint,
+  countOthersAfter,
   coverStackSummary,
+  filterInbox,
+  firstUnreadId,
   formatCompactTime,
   formatDayLabel,
   formatFullDateTime,
   formatUnreadCount,
   groupThreadMessages,
+  matchesSearch,
+  newestOtherId,
+  newestSentId,
   threadQuickLinks,
   threadSubjectTitle,
   tradeEventText,
+  unreadRunLoaded,
 } from "./format";
 
 // Deterministic translator stub: bare key when no values, key + values when
@@ -225,9 +232,11 @@ describe("groupThreadMessages", () => {
     items.map((item) =>
       item.type === "day"
         ? `day:${item.label}`
-        : item.type === "system"
-          ? `system:${item.message.id}`
-          : `${item.own ? "own" : "other"}:${item.messages.map((m) => m.id).join(",")}`,
+        : item.type === "unread"
+          ? "unread"
+          : item.type === "system"
+            ? `system:${item.message.id}`
+            : `${item.own ? "own" : "other"}:${item.messages.map((m) => m.id).join(",")}`,
     );
 
   it("returns nothing for an empty thread", () => {
@@ -324,6 +333,172 @@ describe("groupThreadMessages", () => {
       tFor("en"),
     );
     expect(shape(items)).toEqual(["day:Today", "own:a", "other:b", "own:c"]);
+  });
+
+  // UX-115: the "New messages" divider.
+  it("puts the unread divider before the first unread message, splitting its group", () => {
+    const items = groupThreadMessages(
+      [
+        msg("a", "her", at(10, 0)),
+        msg("b", "her", at(10, 1)),
+        msg("c", "her", at(10, 2)),
+      ],
+      NOW,
+      "en",
+      tFor("en"),
+      "b",
+    );
+    expect(shape(items)).toEqual([
+      "day:Today",
+      "other:a",
+      "unread",
+      "other:b,c",
+    ]);
+  });
+
+  it("puts the unread divider after the day separator of a day's first message", () => {
+    const items = groupThreadMessages(
+      [msg("a", "her", at(23, 58, 18)), msg("b", "her", at(0, 1, 19))],
+      NOW,
+      "en",
+      tFor("en"),
+      "b",
+    );
+    expect(shape(items)).toEqual([
+      "day:Yesterday",
+      "other:a",
+      "day:Today",
+      "unread",
+      "other:b",
+    ]);
+  });
+
+  it("puts the unread divider before a system message", () => {
+    const items = groupThreadMessages(
+      [msg("a", "me", at(10, 0)), msg("sys", "system", at(10, 1))],
+      NOW,
+      "en",
+      tFor("en"),
+      "sys",
+    );
+    expect(shape(items)).toEqual([
+      "day:Today",
+      "own:a",
+      "unread",
+      "system:sys",
+    ]);
+  });
+
+  it("adds no unread divider for an id that isn't in the list", () => {
+    const items = groupThreadMessages(
+      [msg("a", "her", at(10, 0))],
+      NOW,
+      "en",
+      tFor("en"),
+      "gone",
+    );
+    expect(shape(items)).toEqual(["day:Today", "other:a"]);
+  });
+});
+
+describe("newestOtherId", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+
+  it("is the newest message the viewer didn't write", () => {
+    expect(newestOtherId([m("a", false), m("b", true)])).toBe("a");
+    expect(newestOtherId([m("a", true), m("b", false)])).toBe("b");
+  });
+
+  it("is undefined when every message is the viewer's", () => {
+    expect(newestOtherId([m("a", true)])).toBeUndefined();
+    expect(newestOtherId([])).toBeUndefined();
+  });
+});
+
+describe("firstUnreadId", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  // Ascending: hers, mine, hers, hers.
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("is undefined when nothing was unread", () => {
+    expect(firstUnreadId(thread, 0, "d")).toBeUndefined();
+  });
+
+  it("counts back from the anchor over others' messages only", () => {
+    expect(firstUnreadId(thread, 1, "d")).toBe("d");
+    expect(firstUnreadId(thread, 2, "d")).toBe("c");
+    // The viewer's own reply in between isn't counted.
+    expect(firstUnreadId(thread, 3, "d")).toBe("a");
+  });
+
+  it("ignores messages that arrived after the count was taken", () => {
+    expect(firstUnreadId(thread, 1, "c")).toBe("c");
+  });
+
+  it("starts a run longer than the loaded messages at the oldest one", () => {
+    expect(firstUnreadId(thread, 50, "d")).toBe("a");
+    expect(firstUnreadId([m("x", true), m("y", false)], 5, "y")).toBe("x");
+  });
+
+  it("is undefined without a loaded anchor", () => {
+    expect(firstUnreadId(thread, 2, undefined)).toBeUndefined();
+    expect(firstUnreadId(thread, 2, "gone")).toBeUndefined();
+  });
+});
+
+describe("unreadRunLoaded", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  // Ascending: hers, mine, hers, hers.
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("is true once the loaded messages hold the whole run", () => {
+    expect(unreadRunLoaded(thread, 2, "d")).toBe(true);
+    // The run's first message is the oldest loaded one: still all there.
+    expect(unreadRunLoaded(thread, 3, "d")).toBe(true);
+  });
+
+  it("is false while the run reaches past the oldest loaded message", () => {
+    expect(unreadRunLoaded(thread, 4, "d")).toBe(false);
+    // Counted back from the anchor, not from the newest message.
+    expect(unreadRunLoaded(thread, 3, "c")).toBe(false);
+  });
+
+  it("is true when there's no divider to place", () => {
+    expect(unreadRunLoaded(thread, 0, "d")).toBe(true);
+    expect(unreadRunLoaded(thread, 2, undefined)).toBe(true);
+    expect(unreadRunLoaded(thread, 2, "gone")).toBe(true);
+  });
+});
+
+describe("newestSentId", () => {
+  const m = (id: string) => ({ id, isMine: true });
+
+  it("skips a send that is still pending", () => {
+    expect(newestSentId([m("a"), m("b"), m("pending-1")])).toBe("b");
+  });
+
+  it("is undefined when nothing has been sent yet", () => {
+    expect(newestSentId([m("pending-1")])).toBeUndefined();
+    expect(newestSentId([])).toBeUndefined();
+  });
+});
+
+describe("countOthersAfter", () => {
+  const m = (id: string, isMine: boolean) => ({ id, isMine });
+  const thread = [m("a", false), m("b", true), m("c", false), m("d", false)];
+
+  it("counts the messages after `seenId` that the reader didn't write", () => {
+    expect(countOthersAfter(thread, "a")).toBe(2);
+    expect(countOthersAfter(thread, "c")).toBe(1);
+    expect(countOthersAfter(thread, "d")).toBe(0);
+  });
+
+  it("counts every one of them when nothing was seen yet", () => {
+    expect(countOthersAfter(thread, undefined)).toBe(3);
+  });
+
+  it("counts nothing when the seen message is gone", () => {
+    expect(countOthersAfter(thread, "gone")).toBe(0);
   });
 });
 
@@ -471,6 +646,68 @@ describe("copyOwnerHint", () => {
     expect(
       copyOwnerHint("other", anonymised, translators.en, () => "Leaked Name"),
     ).not.toContain("Leaked");
+  });
+});
+
+// UX-116: the inbox's client-side search and kind chips.
+describe("matchesSearch", () => {
+  it.each([
+    ["Mara", "mara", true],
+    ["Mara", "  MAR ", true],
+    ["Zoë", "zoe", true],
+    ["Zoe", "Zoë", true],
+    ["Crème brûlée", "creme BRU", true],
+    ["Mara", "anna", false],
+    ["Mara", "", true],
+    ["Mara", "   ", true],
+  ])("%s with %j: %s", (text, query, expected) => {
+    expect(matchesSearch(text, query)).toBe(expected);
+  });
+});
+
+describe("filterInbox", () => {
+  const thread = (threadId: string, kind: "dm" | "exchange" | "circle") => ({
+    threadId,
+    subject: { kind },
+  });
+  const threads = [
+    thread("zoe", "dm"),
+    thread("harbour", "exchange"),
+    thread("club", "circle"),
+    thread("anna", "dm"),
+  ];
+  const text: Record<string, string> = {
+    zoe: "Zoë",
+    harbour: "Trade: Night Harbour Mara",
+    club: "Puzzle Club",
+    anna: "Anna",
+  };
+  const ids = (list: readonly { threadId: string }[]) =>
+    list.map((item) => item.threadId);
+  const filter = (
+    query: string,
+    kind: Parameters<typeof filterInbox>[1]["kind"],
+  ) =>
+    ids(filterInbox(threads, { query, kind }, (item) => text[item.threadId]));
+
+  it("keeps every thread, in inbox order, without a query or kind", () => {
+    expect(filter("", "all")).toEqual(["zoe", "harbour", "club", "anna"]);
+  });
+
+  it("keeps one kind of thread", () => {
+    expect(filter("", "dm")).toEqual(["zoe", "anna"]);
+    expect(filter("", "exchange")).toEqual(["harbour"]);
+    expect(filter("", "circle")).toEqual(["club"]);
+  });
+
+  it("matches the thread's text ignoring case and accents", () => {
+    expect(filter("ZOE", "all")).toEqual(["zoe"]);
+    expect(filter("mara", "all")).toEqual(["harbour"]);
+  });
+
+  it("combines the query with the kind", () => {
+    expect(filter("a", "dm")).toEqual(["anna"]);
+    expect(filter("club", "dm")).toEqual([]);
   });
 });
 

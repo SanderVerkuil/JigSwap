@@ -238,9 +238,10 @@ describe("ThreadView composer slot when blocked", () => {
     },
   );
 
-  it("offers Report and Block {name} in the header's one overflow menu, after the quick links", async () => {
+  it("offers Report and Block {name} in the header's one overflow menu, after Mute and the quick links", async () => {
     renderThread(dmThread());
     expect(await openThreadMenu()).toEqual([
+      "Mute conversation",
       "View profile",
       "Report Mara",
       "Block Mara",
@@ -253,12 +254,17 @@ describe("ThreadView composer slot when blocked", () => {
 
   it("byMe: the overflow menu keeps the quick links and Report but offers no Block", async () => {
     renderThread(dmThread({ blocked: "byMe" }));
-    expect(await openThreadMenu()).toEqual(["View profile", "Report Mara"]);
+    expect(await openThreadMenu()).toEqual([
+      "Mute conversation",
+      "View profile",
+      "Report Mara",
+    ]);
   });
 
   it("offers Report and Block {name} for an exchange thread's partner", async () => {
     renderThread(exchangeThread());
     expect(await openThreadMenu()).toEqual([
+      "Mute conversation",
       "View profile",
       "View exchange",
       "Report Mara",
@@ -274,7 +280,7 @@ describe("ThreadView composer slot when blocked", () => {
     expect(screen.getByRole("button", { name: "Unblock" })).toBeTruthy();
   });
 
-  it("byMe with an anonymised partner falls back to the unnamed banner", () => {
+  it("byMe with an anonymised partner falls back to the unnamed banner", async () => {
     renderThread(
       threadOf(
         {
@@ -288,8 +294,7 @@ describe("ThreadView composer slot when blocked", () => {
     expect(screen.getByRole("status").textContent).toBe(
       "You blocked this member. You can unblock them under Privacy & safety.",
     );
-    expect(
-      screen.queryByRole("button", { name: "Conversation options" }),
-    ).toBeNull();
+    // No one the viewer may name: no Report or Block, only Mute.
+    expect(await openThreadMenu()).toEqual(["Mute conversation"]);
   });
 });

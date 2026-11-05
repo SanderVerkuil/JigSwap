@@ -120,7 +120,7 @@ describe("ExportButton", () => {
 
     // "account" and "pushDevices" are read; "copies" is still loading.
     const busy = await screen.findByRole("button", {
-      name: `Preparing... ${Math.round((2 / EXPORT_SECTIONS.length) * 100)}%`,
+      name: `Preparing… ${Math.round((2 / EXPORT_SECTIONS.length) * 100)}%`,
     });
     expect((busy as HTMLButtonElement).disabled).toBe(true);
 

@@ -38,6 +38,14 @@ type AttachOption = {
   onSelect: () => void;
 };
 
+// One column per option, so the sheet never shows an empty slot. Literal
+// class names, so Tailwind generates them.
+const SHEET_COLUMNS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+};
+
 export function AttachMenu({
   triggerRef,
   photosAvailable,
@@ -64,7 +72,8 @@ export function AttachMenu({
       ? [
           {
             key: "puzzle" as const,
-            label: t("attachPuzzle"),
+            // A sheet tile fits one short word, like Photo and Location.
+            label: isMobile ? t("attachPuzzleShort") : t("attachPuzzle"),
             icon: Puzzle,
             onSelect: onPuzzle,
           },
@@ -128,7 +137,7 @@ export function AttachMenu({
             <SheetDescription className="sr-only">
               {t("attachDescription")}
             </SheetDescription>
-            <div className="grid grid-cols-4 gap-2">
+            <div className={cn("grid gap-2", SHEET_COLUMNS[options.length])}>
               {options.map(({ key, label, icon: Icon, onSelect }) => (
                 <button
                   key={key}

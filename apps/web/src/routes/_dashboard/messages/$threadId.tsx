@@ -36,9 +36,10 @@ export const Route = createFileRoute("/_dashboard/messages/$threadId")({
   component: MessageThreadPage,
 });
 
-// Active-thread route: list + thread in one frame on desktop; on mobile just
-// the thread, full-screen (the shell bars step aside — isImmersiveMobileRoute —
-// and the ThreadView header carries the back affordance to /messages).
+// Active-thread route: list + thread in one frame once the frame is wide
+// enough to split (frame.ts), otherwise just the thread with a back link to
+// /messages in its header. On phones the thread goes full-screen (the shell
+// bars step aside — isImmersiveMobileRoute).
 // Deliberately thin — all data access lives in the messaging components.
 function MessageThreadPage() {
   const { threadId } = Route.useParams();

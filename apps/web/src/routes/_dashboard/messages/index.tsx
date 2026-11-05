@@ -1,7 +1,12 @@
-import { MESSAGES_FRAME_CLASS } from "@/components/messaging/frame";
+import {
+  INBOX_LIST_PANE_CLASS,
+  MESSAGES_FRAME_CLASS,
+  SPLIT_ONLY_CLASS,
+} from "@/components/messaging/frame";
 import { InboxGuide } from "@/components/messaging/inbox-guide";
 import { ThreadList } from "@/components/messaging/thread-list";
 import { pageTitle } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_dashboard/messages/")({
@@ -11,16 +16,21 @@ export const Route = createFileRoute("/_dashboard/messages/")({
   component: MessagesIndexPage,
 });
 
-// Inbox route: the thread list (full width on mobile) plus, on desktop, a
-// pane saying what Messages is for, in one frame. Deliberately thin —
-// all data access lives in the messaging components.
+// Inbox route: the thread list (the whole frame without a split) plus, once
+// the frame is wide enough to split, a pane saying what Messages is for.
+// Deliberately thin — all data access lives in the messaging components.
 function MessagesIndexPage() {
   return (
     <div className={MESSAGES_FRAME_CLASS}>
-      <div className="flex flex-col md:w-[340px] md:shrink-0 md:border-r xl:w-[360px]">
+      <div className={INBOX_LIST_PANE_CLASS}>
         <ThreadList guideBeside />
       </div>
-      <div className="hidden min-w-0 flex-1 flex-col items-center justify-center px-6 md:flex">
+      <div
+        className={cn(
+          SPLIT_ONLY_CLASS,
+          "min-w-0 flex-1 flex-col items-center justify-center px-6",
+        )}
+      >
         <InboxGuide />
       </div>
     </div>

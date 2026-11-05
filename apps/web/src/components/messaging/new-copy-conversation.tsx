@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
+import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -19,7 +21,9 @@ import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { EmojiButton } from "./emoji-button";
+import { enterKeyHintFor, shouldSendOnEnter } from "./enter-to-send";
 import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { StagedCopyChip } from "./staged-copy-chip";
 import { ThreadSubjectAvatar } from "./thread-list";
@@ -35,6 +39,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   const navigate = useNavigate();
   // The shell top bar (and its h1) is hidden here on phones.
   const Heading = useIsMobile() ? "h1" : "h2";
+  const coarsePointer = useCoarsePointer();
   const { member } = useCurrentMember();
   const me = member?._id;
 
@@ -115,7 +120,12 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
   ) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex h-14 shrink-0 items-center px-2 md:hidden">
+        <div
+          className={cn(
+            "flex h-14 shrink-0 items-center px-2",
+            NO_SPLIT_ONLY_CLASS,
+          )}
+        >
           {backLink}
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
@@ -187,12 +197,13 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
               value={body}
               onChange={(event) => onValue(event.target.value)}
               aria-keyshortcuts={MARKUP_KEYSHORTCUTS}
+              enterKeyHint={enterKeyHintFor(coarsePointer)}
               onKeyDown={(event) => {
                 if (handleMarkupShortcut(event, MAX_MESSAGE_LENGTH, onValue)) {
                   return;
                 }
-                // Enter sends; Shift+Enter inserts a newline (same as the thread composer).
-                if (event.key === "Enter" && !event.shiftKey) {
+                // The thread composer's Enter rule (enter-to-send.ts).
+                if (shouldSendOnEnter(event.nativeEvent, coarsePointer)) {
                   event.preventDefault();
                   void send();
                 }
@@ -202,7 +213,9 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
               maxLength={MAX_MESSAGE_LENGTH}
               rows={1}
               // muted-foreground lifts the outline to ≥3:1 (--input is ~1.3:1).
-              className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 flex-1 resize-none rounded-[20px] px-4 py-2.5 md:min-h-10"
+              // min-w-32 keeps it typeable beside the buttons in a narrow
+              // pane; 16px on touch screens so iPadOS doesn't zoom on focus.
+              className="border-muted-foreground/80 dark:border-muted-foreground/60 max-h-40 min-h-11 min-w-32 flex-1 resize-none rounded-[20px] px-4 py-2.5 pointer-coarse:text-base md:min-h-10"
             />
             <EmojiButton
               textareaRef={textareaRef}
