@@ -5,9 +5,10 @@ import { canViewCopy } from "../library/canViewCopy";
 import { profileVisibilityOf } from "../social/privacy";
 
 // The request-flow notice. Sending a request ALWAYS shares the requester's trade card with the
-// copy's owner inside that trade (display name, handle, email, reviews received —
-// exchange/tradeParty, getTradePartner), so the web always shows the notice; this query only tells
-// it whether to add "your profile itself stays private" (`profilePrivate`).
+// copy's owner inside that trade (display name, handle, reviews received — exchange/tradeParty,
+// getTradePartner; never the email, which only the requester's own share reveals), so the web
+// always shows the notice; this query only tells it whether to add "your profile itself stays
+// private" (`profilePrivate`).
 //
 // Returns null when unauthenticated, the copy is missing, the caller owns it (no request to make),
 // or the caller may not view it (canViewCopy) — a missing and an unviewable copy answer the same,

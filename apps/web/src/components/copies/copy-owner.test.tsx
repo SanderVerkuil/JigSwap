@@ -104,19 +104,19 @@ const anchors = (html: string) =>
   elementsOf(html).filter((el) => el.tagName === "a");
 
 describe("CopyOwner", () => {
-  it("links a revealed owner's name to their profile by username", () => {
+  it("links a revealed owner's name to their profile by id, never by username (SEC-07)", () => {
     const html = render({
       owner: revealed({ name: "Olivia Owner", username: "olivia" }),
       viewerIsOwner: false,
     });
     const links = anchors(html);
     expect(links).toHaveLength(1);
-    expect(attr(links[0]!, "href")).toBe("/members/olivia");
+    expect(attr(links[0]!, "href")).toBe("/members/owner1");
     expect(textOf(links[0]!.childNodes)).toBe("Olivia Owner");
     expect(textOf(fallback(html).childNodes)).toBe("O");
   });
 
-  it("falls back to the member id as the handle when there is no username", () => {
+  it("links by the member id when there is no username either", () => {
     const html = render({
       owner: revealed({ name: "Olivia Owner" }),
       viewerIsOwner: false,

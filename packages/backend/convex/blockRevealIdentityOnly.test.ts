@@ -1,3 +1,4 @@
+import type { ProjectedMember } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -5,10 +6,13 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { projectMemberIdentity } from "./social/privacy";
 
-// #280: when the VIEWER blocked a member, that member is revealed so the viewer can recognise and
-// unblock them (#169), but identity only: name, handle, avatar. A block never unlocks profile
-// details (bio, location, preferred language, library, stats) the viewer could not see before.
-// When the TARGET blocked the viewer, the target stays anonymous / not found.
+// #280: when the VIEWER blocked a member they could already see (public profile or a shared
+// circle), that member stays named so the viewer can recognise and unblock them (#169), but
+// identity only: name, handle, avatar. A block never unlocks profile details (bio, location,
+// preferred language, library, stats) the viewer could not see before. SEC-40: a block never
+// names a member the viewer could NOT see either: a hidden member stays the same anonymous entry,
+// so blocking a candidate can't confirm who an anonymous entry is. When the TARGET blocked the
+// viewer, the target stays anonymous / not found.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -94,42 +98,121 @@ const expectNoProfileDetails = (value: object | undefined) => {
   for (const field of PROFILE_DETAILS) expect(value).not.toHaveProperty(field);
 };
 
-describe.each(["private", "public"] as const)(
-  "viewer blocked a %s member: identity only",
-  (visibility) => {
-    test("projectMemberIdentity reveals name, handle and avatar, no profile details", async () => {
-      const t = convexTest(schema, modules);
-      const u = await seed(t, visibility);
-      await block(t, u.alice, u.bob);
-      const projected = await t.run((ctx) =>
-        projectMemberIdentity(ctx, u.alice, u.bob, "salt"),
-      );
-      expect(projected.anonymous).toBe(false);
-      if (projected.anonymous) return;
-      expect(projected.member).toMatchObject({
-        _id: u.bob,
-        name: "bob",
-        username: "bob",
-        avatar: "https://example.com/bob.png",
-      });
-      expectNoProfileDetails(projected.member);
-    });
+const expectIdentityOnly = (
+  projected: ProjectedMember | undefined,
+  bob: Id<"users">,
+) => {
+  expect(projected?.anonymous).toBe(false);
+  if (!projected || projected.anonymous) return;
+  expect(projected.member).toMatchObject({
+    _id: bob,
+    name: "bob",
+    username: "bob",
+    avatar: "https://example.com/bob.png",
+  });
+  expectNoProfileDetails(projected.member);
+};
 
-    test("a caller (custody timeline) ships no profile details", async () => {
-      const t = convexTest(schema, modules);
-      const u = await seed(t, visibility);
-      await block(t, u.alice, u.bob);
-      const timeline = await asAlice(t).query(
-        api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+// Alice and bob share one circle (the circle rule names a private co-member, identity only).
+const seatInSharedCircle = (
+  t: T,
+  u: { alice: Id<"users">; bob: Id<"users"> },
+) =>
+  t.run(async (ctx) => {
+    for (const memberId of [u.alice, u.bob]) {
+      await ctx.db.insert("circleMembers", {
+        circleAggregateId: "circle-1",
+        memberId,
+      });
+    }
+  });
+
+describe("viewer blocked a public member: identity only", () => {
+  test("projectMemberIdentity reveals name, handle and avatar, no profile details", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "public");
+    await block(t, u.alice, u.bob);
+    const projected = await t.run((ctx) =>
+      projectMemberIdentity(ctx, u.alice, u.bob, "salt"),
+    );
+    expectIdentityOnly(projected, u.bob);
+  });
+
+  test("a caller (custody timeline) ships no profile details", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "public");
+    await block(t, u.alice, u.bob);
+    const timeline = await asAlice(t).query(
+      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      { copyId: u.aliceCopy },
+    );
+    expectIdentityOnly(timeline?.originalOwner, u.bob);
+  });
+});
+
+// SEC-40: blocking must not work as a de-anonymisation oracle. Before the fix, blocking a
+// candidate turned the anonymous entry into the candidate's name.
+describe("viewer blocked a private member they can't see: still anonymous", () => {
+  test("projectMemberIdentity returns the same anonymous ref as before the block", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "private");
+    const before = await t.run((ctx) =>
+      projectMemberIdentity(ctx, u.alice, u.bob, "salt"),
+    );
+    await block(t, u.alice, u.bob);
+    const after = await t.run((ctx) =>
+      projectMemberIdentity(ctx, u.alice, u.bob, "salt"),
+    );
+    // No `blocked` flag either: any marker that appears only after blocking is itself the oracle.
+    expect(Object.keys(after).sort()).toEqual(["anonRef", "anonymous"]);
+    expect(after).toEqual(before);
+  });
+
+  test("the custody timeline keeps the original owner anonymous", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "private");
+    await block(t, u.alice, u.bob);
+    const timeline = await asAlice(t).query(
+      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      { copyId: u.aliceCopy },
+    );
+    expect(timeline?.originalOwner.anonymous).toBe(true);
+    expect(JSON.stringify(timeline)).not.toContain(u.bob);
+  });
+
+  test("an anonymous transfer entry on the copy page keeps its anonRef after the block", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "private");
+    const alice = asAlice(t);
+    const transferFrom = async () => {
+      const view = await alice.query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
         { copyId: u.aliceCopy },
       );
-      const original = timeline?.originalOwner;
-      expect(original?.anonymous).toBe(false);
-      if (!original || original.anonymous) return;
-      expect(original.member).toMatchObject({ _id: u.bob, name: "bob" });
-      expectNoProfileDetails(original.member);
-    });
+      expect(view?.transfers).toHaveLength(1);
+      return view?.transfers[0]?.from;
+    };
+    const before = await transferFrom();
+    expect(before?.anonymous).toBe(true);
+    await block(t, u.alice, u.bob);
+    expect(await transferFrom()).toEqual(before);
+  });
 
+  test("a circle co-member stays named, identity only, through the circle rule", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t, "private");
+    await seatInSharedCircle(t, u);
+    await block(t, u.alice, u.bob);
+    const projected = await t.run((ctx) =>
+      projectMemberIdentity(ctx, u.alice, u.bob, "salt"),
+    );
+    expectIdentityOnly(projected, u.bob);
+  });
+});
+
+describe.each(["private", "public"] as const)(
+  "viewer blocked a %s member: identity stubs",
+  (visibility) => {
     test("profile and teaser reads return identity stubs only", async () => {
       const t = convexTest(schema, modules);
       const u = await seed(t, visibility);

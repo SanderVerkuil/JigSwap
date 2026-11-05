@@ -378,10 +378,11 @@ function MemberRow({
     : member.permission === "Admin"
       ? tCircles("permissions.Admin")
       : null;
+  // The id, never the username (SEC-07); the route redirects to the canonical handle.
   const profileHref =
     member.departed || memberId === undefined
       ? null
-      : `/members/${encodeURIComponent(member.username ?? memberId)}`;
+      : `/members/${encodeURIComponent(memberId)}`;
 
   return (
     <li className="flex min-h-12 items-center gap-3 rounded-lg px-2 py-1">

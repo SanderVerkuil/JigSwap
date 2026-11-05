@@ -2,10 +2,14 @@ import { MemberId } from "./ids";
 
 // Per-trade identity reveal. A reveal applies ONLY inside the one trade: its views, notifications and conversation. It never
 // unlocks the member's profile, collection or activity elsewhere, and exposes only a limited card
-// (name, handle, email, reviews received). The owner always sees the requester inside the trade
+// (name, handle, reviews received). The owner always sees the requester inside the trade
 // (derived: the requester asked); the requester sees the owner inside the trade once the OWNER
 // acted on it (recorded once per trade with the reason below). Requesting can therefore never
 // unmask a private owner: the owner is revealed only by their own action.
+//
+// A member's EMAIL is never part of a reveal: requesting, replying and accepting share none. Each
+// party's email reaches the other only after that party explicitly chose to share it in this trade,
+// and only while the trade is accepted, completed or disputed (tradeEmailVisible).
 
 /** A live event that may reveal the owner inside its trade. */
 export type ExchangeRevealTrigger =
@@ -108,10 +112,32 @@ export const tradePartyState = (facts: TradePartyFacts): TradePartyState => {
 };
 
 /**
- * May the viewer see the party's email inside this trade? Only through the trade itself, never via
- * profile visibility: the requester's email reaches the owner (the requester consented by sending
- * the request); the owner's email reaches the requester only once the owner acted — otherwise
- * proposing to public owners would harvest their emails.
+ * May a party share their email with the other party in this trade? Only once the owner accepted
+ * (accepted, completed, disputed): never before, never after a decline or cancel, and never while
+ * either party blocks the other.
  */
-export const tradeEmailVisible = (t: TradeParties): boolean =>
-  t.party !== t.viewer && revealedInTrade(t);
+export const tradeContactSharingOpen = (t: {
+  readonly status: string;
+  readonly blocked: boolean;
+}): boolean => !t.blocked && POST_ACCEPT_STATUSES.has(t.status);
+
+export interface TradeEmailFacts {
+  readonly viewer: MemberId;
+  /** The other party of the trade, whose email is in question. */
+  readonly party: MemberId;
+  /** The trade's current status. */
+  readonly status: string;
+  /** The party turned on sharing their email in THIS trade. */
+  readonly partyShared: boolean;
+  /** Either party blocks the other. */
+  readonly blocked: boolean;
+}
+
+/**
+ * May the viewer see the party's email inside this trade? Only by the party's own explicit share,
+ * and only while sharing is open (tradeContactSharingOpen). Never by requesting, replying or
+ * accepting, never through profile visibility, and hidden again once the trade is declined or
+ * cancelled; otherwise proposing (and any one-line reply) would harvest members' emails.
+ */
+export const tradeEmailVisible = (t: TradeEmailFacts): boolean =>
+  t.party !== t.viewer && t.partyShared && tradeContactSharingOpen(t);

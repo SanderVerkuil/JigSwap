@@ -20,8 +20,9 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useFavorites } from "@/hooks/use-favorites";
 import {
-  useAuthorDisplayName,
+  projectedAuthorOf,
   useMemberDisplayName,
+  useProjectedMemberName,
 } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
@@ -618,11 +619,16 @@ function ReviewRow({
   relative: (timestamp: number) => string;
   last: boolean;
 }) {
-  const authorName = useAuthorDisplayName();
-  const name = authorName(review.author);
+  const t = useTranslations("puzzleDefinition");
+  const projectedName = useProjectedMemberName();
+  // A private author the viewer isn't connected with arrives anonymous (SEC-11): label only, and
+  // the avatar and initial show only for a revealed author.
+  const author = projectedAuthorOf(review.author);
+  const name = projectedName(author, t("anonymousReviewer"));
+  const member = author.anonymous ? null : author.member;
   return (
     <div className={cn("flex gap-3 py-3.5", !last && "border-border border-b")}>
-      <MemberAvatar source={review.author} avatar={review.author.avatar} />
+      <MemberAvatar source={member} avatar={member?.avatar} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-sm font-semibold">{name}</span>

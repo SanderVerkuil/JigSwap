@@ -2,12 +2,17 @@ import type { ConnectionPolicy, MemberId } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { isBlockedEitherWay } from "../../social/blocks";
+import { projectMemberIdentity } from "../../social/privacy";
 import { participantsKeyOf } from "./threadMapper";
 
 // Driven adapter for the ConnectionPolicy port. "Connected" = mutual follow, shared circle, or
-// any existing thread between the pair (exchange threads are opened on proposal, so "we have an
-// exchange together" reduces to a pair lookup). The pair-thread clause also keeps an existing DM
-// reachable after an unfollow: the use case consults this policy BEFORE its idempotency lookup.
+// an existing thread between the pair (exchange threads are opened on proposal, so "we have an
+// exchange together" reduces to a pair lookup) with a recipient the initiator may see. The
+// pair-thread clause also keeps an existing DM reachable after an unfollow: the use case consults
+// this policy BEFORE its idempotency lookup. It counts only while projectMemberIdentity reveals
+// the recipient to the initiator (SEC-80): for a hidden or departed partner a yes would confirm
+// which member an anonymous exchange partner is, so they answer like a stranger. A per-trade
+// reveal does not count either; it applies inside that exchange only (exchange/tradeParty.ts).
 // The policy only READS, so it is typed over QueryCtx; mutation callers pass their MutationCtx
 // unchanged (structurally assignable) and the canMessage read model can share the adapter.
 export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
@@ -28,14 +33,21 @@ export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
         .first()) !== null;
     if ((await follows(a, b)) && (await follows(b, a))) return true;
 
-    // Any existing thread between the pair, regardless of subject kind.
+    // Any existing thread between the pair, regardless of subject kind, while the recipient is
+    // not anonymous to the initiator.
     const pairThread = await ctx.db
       .query("threads")
       .withIndex("by_participants_key", (q) =>
         q.eq("participantsKey", participantsKeyOf([initiator, recipient])),
       )
       .first();
-    if (pairThread) return true;
+    if (
+      pairThread &&
+      !(await projectMemberIdentity(ctx, a, b, pairThread.aggregateId))
+        .anonymous
+    ) {
+      return true;
+    }
 
     // Shared circle: any of the initiator's circles that also contains the recipient.
     const mine = await ctx.db

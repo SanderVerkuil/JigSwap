@@ -7,12 +7,16 @@ import { query } from "../_generated/server";
 import { computeMemberStats } from "../identity/getUserStats";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import {
+  canonicalHandleOf,
+  resolveMemberByHandle,
+} from "../identity/resolveMemberByHandle";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
   areMutualFollowers,
+  explicitVisibilityOf,
   profileVisibilityOf,
   seesFullLibrary,
 } from "./privacy";
@@ -22,7 +26,9 @@ import {
 // identity/resolveMemberByHandle — the SECURITY-critical precedence lives there, once.
 //
 // Unlocking rule: the deeper story/stats/records are shown when the profile is public, the viewer
-// IS the member (isSelf), or the viewer and member are mutual followers. Otherwise the payload is
+// IS the member (isSelf), or the viewer and member are mutual followers. Logged out, "public" means
+// the member explicitly chose it (explicitVisibilityOf, SEC-44): a member with no choice reads as
+// private, so the page is locked and the route emits noindex. Otherwise the payload is
 // LOCKED and carries only `hero` — an Instagram-style private-account header (name, avatar, follow
 // counts, rating) that is disclosed regardless of lock state. `location` is the one strict
 // exception inside `hero`: it is included ONLY when visibility === "public", in BOTH locked and
@@ -34,7 +40,8 @@ export const getPublicProfile = query({
     if (!user) return null;
 
     const memberId = user._id;
-    const [visibility, profile, viewerId] = await Promise.all([
+    const handle = await canonicalHandleOf(ctx, user);
+    const [signedInVisibility, profile, viewerId] = await Promise.all([
       profileVisibilityOf(ctx, memberId),
       ctx.db
         .query("profiles")
@@ -42,6 +49,9 @@ export const getPublicProfile = query({
         .unique(),
       optionalActingMember(ctx),
     ]);
+    // Logged out (indexable), only an explicit public choice counts (SEC-44).
+    const visibility =
+      viewerId === null ? explicitVisibilityOf(profile) : signedInVisibility;
 
     const isSelf = viewerId !== null && viewerId === memberId;
     // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets an identity stub.
@@ -59,6 +69,7 @@ export const getPublicProfile = query({
           displayName: memberDisplayNameOf(user, profile),
           username: user.username,
           slug: user.slug,
+          handle,
           avatar: user.avatar,
           memberSince: user.createdAt,
           rating: 0,
@@ -107,6 +118,7 @@ export const getPublicProfile = query({
       displayName: memberDisplayNameOf(user, profile),
       username: user.username,
       slug: user.slug,
+      handle,
       avatar,
       memberSince: user.createdAt,
       rating: averageRating,

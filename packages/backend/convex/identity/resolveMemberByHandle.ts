@@ -35,3 +35,28 @@ export const resolveMemberByHandle = async (
   if (!user || !user.isActive) return null;
   return user;
 };
+
+/**
+ * The /members/<handle> to hand out for `user`: always one that resolveMemberByHandle resolves
+ * back to this same member (SEC-07). The slug when they have one (unique, never id-shaped, and
+ * looked up before usernames). Else the username, but only when it is not shaped like a users id
+ * and no OTHER member holds it as a slug: setSlug refuses another member's existing username, but
+ * a username the Clerk webhook writes later is never checked, so a slug claimed first would
+ * otherwise capture every link built from it. Else the member id. Never clear or reassign the
+ * colliding slug instead: that would let a newcomer take over an established member's handle.
+ */
+export const canonicalHandleOf = async (
+  ctx: QueryCtx,
+  user: Doc<"users">,
+): Promise<string> => {
+  if (user.slug) return user.slug;
+  const username = user.username;
+  if (username && ctx.db.normalizeId("users", username) === null) {
+    const slugHolder = await ctx.db
+      .query("users")
+      .withIndex("by_slug", (q) => q.eq("slug", username))
+      .first();
+    if (slugHolder === null) return username;
+  }
+  return user._id;
+};

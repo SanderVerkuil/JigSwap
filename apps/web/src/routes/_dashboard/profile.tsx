@@ -41,6 +41,7 @@ function ProfilePage() {
           memberId={member._id}
           displayName={member.name}
           username={member.username}
+          handle={member.handle}
           avatarUrl={member.avatar}
         />
       ) : null,

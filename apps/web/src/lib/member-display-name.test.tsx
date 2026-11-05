@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import en from "../../locales/en.json";
 import nl from "../../locales/nl.json";
 import {
-  useAuthorDisplayName,
+  projectedAuthorOf,
   useMemberDisplayName,
   usePartyDisplayName,
   useProjectedMemberName,
@@ -121,29 +121,33 @@ describe("useProjectedMemberName", () => {
   });
 });
 
-function AuthorName({
-  author,
-}: {
-  author: MemberNameSource & { isActive?: boolean };
-}) {
-  const authorName = useAuthorDisplayName();
-  return <>{authorName(author)}</>;
-}
+describe("projectedAuthorOf", () => {
+  const legacy = {
+    _id: "u1",
+    _creationTime: 1,
+    name: "Mara Jansen",
+    isActive: true,
+    createdAt: 1,
+    updatedAt: 1,
+  };
 
-describe("useAuthorDisplayName", () => {
-  it("renders an active author's name", () => {
-    expect(
-      render(<AuthorName author={{ name: "Mara Jansen", isActive: true }} />),
-    ).toBe("Mara Jansen");
+  it("passes a projected author through unchanged", () => {
+    const hidden = { anonymous: true as const, anonRef: "abc" };
+    expect(projectedAuthorOf(hidden)).toBe(hidden);
+    const revealed = { anonymous: false as const, member: legacy };
+    expect(projectedAuthorOf(revealed)).toBe(revealed);
   });
 
-  it('renders "Deleted member" for a departed author (isActive: false)', () => {
-    expect(render(<AuthorName author={{ isActive: false }} />)).toBe(
-      "Deleted member",
-    );
-    expect(render(<AuthorName author={{ isActive: false }} />, "nl")).toBe(
-      "Verwijderd lid",
-    );
+  it("reads a pre-projection MemberView as revealed, or departed when inactive", () => {
+    expect(projectedAuthorOf(legacy)).toEqual({
+      anonymous: false,
+      member: legacy,
+    });
+    expect(projectedAuthorOf({ ...legacy, isActive: false })).toEqual({
+      anonymous: true,
+      anonRef: "",
+      departed: true,
+    });
   });
 });
 

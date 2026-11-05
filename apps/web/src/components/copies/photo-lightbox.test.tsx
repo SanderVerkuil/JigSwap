@@ -8,17 +8,22 @@ import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { PhotoLightbox } from "./photo-lightbox";
 
-// The lightbox's comments/cover/remove features talk to Convex; stub the data layer so the test
-// covers only the zoom surface.
+// The lightbox's comments/cover/remove features talk to Convex; stub the data layer. Only the
+// photo's comment list (the one query keyed by `photoId`) returns data, set per test.
+const queryData = vi.hoisted(() => ({
+  photoComments: undefined as unknown[] | undefined,
+}));
 vi.mock("@/gateway", () => ({
   gateway: new Proxy({}, { get: () => new Proxy({}, { get: () => ({}) }) }),
 }));
 vi.mock("@convex-dev/react-query", () => ({
-  convexQuery: () => ({ queryKey: ["stub"] }),
+  convexQuery: (_fn: unknown, args: unknown) => ({ queryKey: ["stub"], args }),
   useConvexMutation: () => vi.fn(),
 }));
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({ data: undefined }),
+  useQuery: (options: { args?: { photoId?: string } }) => ({
+    data: options.args?.photoId ? queryData.photoComments : undefined,
+  }),
   useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
@@ -52,6 +57,7 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   document.body.innerHTML = "";
+  queryData.photoComments = undefined;
 });
 
 const render = (props: Partial<Props> = {}, locale: "en" | "nl" = "en") =>
@@ -192,5 +198,86 @@ describe("PhotoLightbox remove", () => {
     expect(buttonWithText("Remove photo")).toBeTruthy();
     expect(buttonWithText("Set as cover")).toBeTruthy();
     expect(buttonWithText("Report photo")).toBeUndefined();
+  });
+});
+
+// SEC-11: comment authors arrive privacy-projected. A hidden author shows the anonymous label and
+// a person icon (no avatar, no initial); a departed one "Deleted member".
+describe("PhotoLightbox comments", () => {
+  type Comment = {
+    id: string;
+    author: unknown;
+    text: string;
+    createdAt: number;
+  };
+  const comment = (id: string, author: unknown): Comment => ({
+    id,
+    author,
+    text: `text ${id}`,
+    createdAt: 1,
+  });
+  const rows = () =>
+    [...document.querySelectorAll("p")]
+      .filter((el) => el.textContent?.startsWith("text "))
+      .map((el) => el.parentElement!.parentElement!);
+
+  it("names a revealed author, with their initial", () => {
+    queryData.photoComments = [
+      comment("c1", {
+        anonymous: false,
+        member: { name: "Mara Jansen", avatar: "https://example.test/m.png" },
+      }),
+    ];
+    render();
+    const [row] = rows();
+    expect(row.textContent).toContain("Mara Jansen");
+    // The avatar fallback is the initial, not the anonymous person icon.
+    expect(row.querySelector("svg")).toBeNull();
+  });
+
+  it("labels a hidden author 'Anonymous user' with the person icon", () => {
+    queryData.photoComments = [
+      comment("c1", { anonymous: true, anonRef: "abc" }),
+    ];
+    render();
+    const [row] = rows();
+    expect(row.textContent).toContain("Anonymous user");
+    expect(row.querySelector("svg")).not.toBeNull();
+  });
+
+  it("labels a departed author 'Deleted member', in Dutch too", () => {
+    queryData.photoComments = [
+      comment("c1", { anonymous: true, anonRef: "abc", departed: true }),
+    ];
+    render();
+    expect(rows()[0].textContent).toContain("Deleted member");
+    render({}, "nl");
+    expect(rows()[0].textContent).toContain("Verwijderd lid");
+  });
+
+  it("uses the Dutch anonymous label", () => {
+    queryData.photoComments = [
+      comment("c1", { anonymous: true, anonRef: "abc" }),
+    ];
+    render({}, "nl");
+    expect(rows()[0].textContent).toContain("Anonieme gebruiker");
+  });
+
+  // Deploy skew: the web ships before Convex, and a pre-SEC-11 backend still sends the author as a
+  // plain MemberView. The row keeps the name that backend sent rather than the generic label.
+  it("names a legacy MemberView author while the backend lags", () => {
+    queryData.photoComments = [
+      comment("c1", { _id: "u1", name: "Mara Jansen", isActive: true }),
+    ];
+    render();
+    const [row] = rows();
+    expect(row.textContent).toContain("Mara Jansen");
+    expect(row.querySelector("svg")).toBeNull();
+  });
+
+  it("labels a departed legacy author 'Deleted member'", () => {
+    queryData.photoComments = [comment("c1", { _id: "u1", isActive: false })];
+    render();
+    expect(rows()[0].textContent).toContain("Deleted member");
   });
 });

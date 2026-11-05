@@ -460,6 +460,126 @@ describe("getCopyInstanceView privacy gating", () => {
   });
 });
 
+// SEC-35 / LIB-7: an unfinished solve is live activity ("is solving this right now"). It follows
+// the same opt-in, friends-only rule as the feed's "started" entry and the profile's "Currently
+// solving": the solver themself, or a mutual follower when the solver turned shareInProgress on.
+describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
+  // The copy belongs to prevOwner (public, open copy) so any signed-in member can open the page.
+  // The PUBLIC solver has one finished and one unfinished solve on it.
+  const seedInProgress = async (
+    t: TestConvex<typeof schema>,
+    shareInProgress?: boolean,
+  ) => {
+    const seeded = await seedCopy(t);
+    const { now, prevOwner, solver, copy } = seeded;
+    await setVisibility(t, prevOwner, "public");
+    await setVisibility(t, solver, "public");
+    await t.run(async (ctx) => {
+      await ctx.db.patch(copy, {
+        ownerId: prevOwner,
+        availability: { forTrade: true, forSale: false, forLend: false },
+      });
+      await ctx.db.insert("completions", {
+        userId: solver,
+        ownedPuzzleId: copy,
+        startDate: now + 200,
+        endDate: now + 300,
+        completionTimeMinutes: 100,
+        photos: [],
+        isCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("completions", {
+        userId: solver,
+        ownedPuzzleId: copy,
+        startDate: now + 500,
+        photos: [],
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      if (shareInProgress !== undefined) {
+        await ctx.db.insert("solvingPreferences", {
+          memberId: solver,
+          shareInProgress,
+          updatedAt: now,
+        });
+      }
+    });
+    return seeded;
+  };
+
+  // The start dates of every completion entry in the timeline (since + before).
+  const completionStarts = (
+    view: {
+      before: { type: string; startDate?: number }[];
+      since: { type: string; startDate?: number }[];
+    } | null,
+  ): number[] =>
+    [...(view?.before ?? []), ...(view?.since ?? [])]
+      .filter((e) => e.type === "completion")
+      .map((e) => e.startDate ?? -1)
+      .sort((a, b) => a - b);
+
+  const viewAs = (
+    t: TestConvex<typeof schema>,
+    subject: string,
+    copy: Id<"ownedPuzzles">,
+  ) =>
+    t
+      .withIdentity({ subject })
+      .query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: copy,
+      });
+
+  test("a stranger sees the finished solve but not the unfinished one", async () => {
+    const t = convexTest(schema, modules);
+    const { now, copy } = await seedInProgress(t, true);
+
+    const view = await viewAs(t, "clerk_viewer", copy);
+    expect(view).not.toBeNull();
+    expect(completionStarts(view)).toEqual([now + 200]);
+    // The in-progress start date appears nowhere in the payload.
+    expect(JSON.stringify(view)).not.toContain(String(now + 500));
+  });
+
+  test("a one-way follower of an opted-in solver does not see the unfinished solve", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedInProgress(t, true);
+    await follow(t, viewer, solver);
+
+    const view = await viewAs(t, "clerk_viewer", copy);
+    expect(completionStarts(view)).toEqual([now + 200]);
+  });
+
+  test("a mutual follower sees it only when the solver opted in", async () => {
+    for (const share of [undefined, false] as const) {
+      const t = convexTest(schema, modules);
+      const { now, viewer, solver, copy } = await seedInProgress(t, share);
+      await follow(t, viewer, solver);
+      await follow(t, solver, viewer);
+      const view = await viewAs(t, "clerk_viewer", copy);
+      expect(completionStarts(view)).toEqual([now + 200]);
+    }
+
+    const t = convexTest(schema, modules);
+    const { now, viewer, solver, copy } = await seedInProgress(t, true);
+    await follow(t, viewer, solver);
+    await follow(t, solver, viewer);
+    const view = await viewAs(t, "clerk_viewer", copy);
+    expect(completionStarts(view)).toEqual([now + 200, now + 500]);
+  });
+
+  test("the solver always sees their own unfinished solve, opt-in or not", async () => {
+    const t = convexTest(schema, modules);
+    const { now, copy } = await seedInProgress(t);
+
+    const view = await viewAs(t, "clerk_solver", copy);
+    expect(completionStarts(view)).toEqual([now + 200, now + 500]);
+  });
+});
+
 const DAY = 86_400_000;
 
 describe("getCopyInstanceView rich detail", () => {

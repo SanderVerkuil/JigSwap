@@ -226,9 +226,11 @@ describe("account deletion: follow edges and follow requests", () => {
       followers: 2,
       following: 1,
     });
+    // Carol and private Alice follow each other, so Carol may see whom Alice follows (SEC-41):
+    // Alice is a follower of Bob that Carol knows.
     expect(
       (
-        await as(t, "dave").query(
+        await as(t, "carol").query(
           api.social.followersYouKnow.followersYouKnow,
           {
             memberId: s.bob,
@@ -287,7 +289,7 @@ describe("account deletion: follow edges and follow requests", () => {
     await deleteAlice(t);
 
     expect(
-      await as(t, "dave").query(api.social.followersYouKnow.followersYouKnow, {
+      await as(t, "carol").query(api.social.followersYouKnow.followersYouKnow, {
         memberId: s.bob,
       }),
     ).toEqual({ total: 0, members: [] });

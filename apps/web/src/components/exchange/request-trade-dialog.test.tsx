@@ -100,20 +100,26 @@ beforeEach(() => {
 afterEach(cleanup);
 
 const EN_NOTICE =
-  "Your name, handle, email address and the reviews you've received will be visible to the owner of this puzzle, for this trade only.";
+  "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.";
 const NL_NOTICE =
-  "Je naam, gebruikersnaam, e-mailadres en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.";
+  "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.";
+// Sending a request never shares the email (SEC-08): only the member's own later share does.
+const EN_EMAIL =
+  "Your email address stays private unless you choose to share it once the owner accepts.";
+const NL_EMAIL =
+  "Je e-mailadres blijft privé, tenzij je het zelf deelt nadat de eigenaar heeft geaccepteerd.";
 
 describe("RequestTradeDialog identity disclosure", () => {
   it.each([
-    ["en", EN_NOTICE, "Your profile itself stays private."],
-    ["nl", NL_NOTICE, "Je profiel zelf blijft privé."],
+    ["en", EN_NOTICE, EN_EMAIL, "Your profile itself stays private."],
+    ["nl", NL_NOTICE, NL_EMAIL, "Je profiel zelf blijft privé."],
   ] as const)(
-    "always shows the trade-card notice, plus the private line for a private profile (%s)",
-    (locale, notice, privateLine) => {
+    "always shows the trade-card notice and the private email line, plus the private line for a private profile (%s)",
+    (locale, notice, emailLine, privateLine) => {
       renderDialog(copy(), { locale, disclosure: { profilePrivate: true } });
       const note = screen.getByRole("note");
       expect(note.textContent).toContain(notice);
+      expect(note.textContent).toContain(emailLine);
       expect(note.textContent).toContain(privateLine);
     },
   );
@@ -127,6 +133,7 @@ describe("RequestTradeDialog identity disclosure", () => {
       renderDialog(copy(), { disclosure });
       const note = screen.getByRole("note");
       expect(note.textContent).toContain(EN_NOTICE);
+      expect(note.textContent).toContain(EN_EMAIL);
       expect(note.textContent).not.toContain(
         "Your profile itself stays private.",
       );

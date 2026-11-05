@@ -1,22 +1,22 @@
-import type { PhotoCommentView } from "@jigswap/contracts";
+import type { PhotoCommentView, ProjectedMember } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { toMemberView } from "../identity/toMemberView";
-import { blockedEitherWaySet } from "../social/blocks";
+import { droppedForBlock, viewerBlocksOf } from "../social/blocks";
+import { projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 
 // Read side: the discussion comments on a single shared PHOTO, newest first. Keyed by the
-// `ownedPuzzleImages` _id the lightbox shows. Each comment joins its REAL author (photo comments are
-// voluntary public posts — never anonymised). The author join falls back to a synthetic, nameless
-// view (`isActive: false`, the web's "Deleted member") if the user row vanished or is deactivated,
-// so an orphaned comment never breaks the list and a tombstone's leftover fields never show.
+// `ownedPuzzleImages` _id the lightbox shows.
 //
 // SECURITY: auth-gated, and the photo's parent copy is run through the SAME reachability gate as
 // getCopyInstanceView (canViewCopy) before any comment is returned — a missing photo, missing copy,
 // or a private/unreachable copy of another member yields [], so the photo discussion never leaks to
-// a viewer who cannot see the copy.
+// a viewer who cannot see the copy. Each author goes through the privacy chokepoint
+// (projectMemberIdentity, salt = the parent copy's _id, so a hidden member reads the same here as
+// everywhere else on the copy page) (SEC-11): a private author the viewer is not connected with is
+// anonymous, a circle mate sees identity only, and a departed author is anonymous + `departed`.
 export const listPhotoComments = query({
   args: { photoId: v.id("ownedPuzzleImages") },
   handler: async (ctx, args): Promise<PhotoCommentView[]> => {
@@ -32,29 +32,45 @@ export const listPhotoComments = query({
       .withIndex("by_photo", (q) => q.eq("photoId", args.photoId))
       .order("desc")
       .collect();
-    // Authors blocked either way with the viewer drop out (spec 2.6).
-    const blockedIds = await blockedEitherWaySet(ctx, viewerId);
+    // Authors who blocked the viewer drop out (spec 2.6), and so do authors the viewer blocked
+    // when the viewer can see who they are. One the viewer blocked but can't see keeps their
+    // anonymous entry unchanged, so a block never confirms who wrote it (SEC-40).
+    const blocks = await viewerBlocksOf(ctx, viewerId);
 
-    return Promise.all(
+    // One projection per author: a member who commented twice reads as one person.
+    const authors = new Map<Id<"users">, Promise<ProjectedMember>>();
+    const authorOf = (authorId: Id<"users">) => {
+      let projected = authors.get(authorId);
+      if (!projected) {
+        projected = projectMemberIdentity(
+          ctx,
+          viewerId,
+          authorId,
+          copy._id as string,
+        );
+        authors.set(authorId, projected);
+      }
+      return projected;
+    };
+
+    const views = await Promise.all(
       rows
-        .filter((row) => !blockedIds.has(row.authorId))
-        .map(async (row): Promise<PhotoCommentView> => {
-          const author = await ctx.db.get(row.authorId);
-          return {
+        .filter((row) => !blocks.byThem.has(row.authorId))
+        .map(async (row) => ({
+          authorId: row.authorId,
+          view: {
             id: row.aggregateId ?? row._id,
-            author: author?.isActive
-              ? toMemberView(author)
-              : {
-                  _id: row.authorId,
-                  _creationTime: 0,
-                  isActive: false,
-                  createdAt: 0,
-                  updatedAt: 0,
-                },
+            author: await authorOf(row.authorId),
             text: row.text,
             createdAt: row.createdAt,
-          };
-        }),
+          } satisfies PhotoCommentView,
+        })),
     );
+    return views
+      .filter(
+        ({ authorId, view }) =>
+          !droppedForBlock(blocks, authorId, !view.author.anonymous),
+      )
+      .map(({ view }) => view);
   },
 });

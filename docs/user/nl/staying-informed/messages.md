@@ -21,7 +21,8 @@ klopt:
 
 - Jullie volgen elkaar.
 - Jullie zitten allebei in dezelfde vriendenkring.
-- Jullie hebben al een gesprek of een uitwisseling samen.
+- Jullie hebben al een gesprek of een uitwisseling samen, en het profiel van
+  de ander is openbaar.
 
 Klopt geen van deze, dan is de knop **Bericht** uitgeschakeld met de uitleg
 "Je kunt alleen berichten sturen naar leden met wie je verbonden bent". Als een

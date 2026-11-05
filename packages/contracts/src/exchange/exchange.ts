@@ -105,9 +105,10 @@ export interface TradePartnerReviewView {
  *   received. `profileViewable` is true only when the member is visible by the ordinary rules —
  *   link their normal profile only then.
  *
- * EMAIL: the requester's email always reaches the owner (the requester consented by sending the
- * request). The owner's email reaches the requester only once the owner accepted or replied in THIS
- * exchange — even when the owner's profile is public, so proposing can't harvest emails.
+ * EMAIL: never part of a reveal. Each party's email reaches the other only after that party turned
+ * on sharing in THIS exchange (`exchange.setContactSharing`), and only while the exchange is
+ * accepted, completed or disputed with no block either way; it is hidden again after a cancel.
+ * Requesting, replying or a public profile never share it, so proposing can't harvest emails.
  */
 export type TradePartnerView =
   | { state: "hidden" }
@@ -118,7 +119,22 @@ export type TradePartnerView =
       /** Display name (profile display name, else account name, else username). */
       name?: string;
       username?: string;
+      /**
+       * The partner's canonical `/members/<handle>` (slug, else a username that resolves back to
+       * them, else their id; SEC-07): the handle to show on the card. Never show `username` as the
+       * handle: another member may hold that string as a slug.
+       */
+      handle: string;
+      /** Present only when the partner shared it with the viewer in this exchange (see above). */
       email?: string;
+      /** The viewer's OWN email sharing in this exchange, for the switch on the card. */
+      emailSharing: {
+        /** The viewer turned on sharing their email with this partner. */
+        youShare: boolean;
+        /** Sharing can be turned on now (and a share is in effect): accepted, completed or
+         * disputed, with no block either way. */
+        open: boolean;
+      };
       profileViewable: boolean;
       reviews: {
         averageRating: number;

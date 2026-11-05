@@ -674,7 +674,10 @@
     },
     "partner": {
       "hiddenNote": "Hun gegevens verschijnen zodra ze accepteren of reageren.",
-      "reviewsHeading": "Ontvangen reviews"
+      "reviewsHeading": "Ontvangen reviews",
+      "shareEmail": "Deel mijn e-mailadres met {name}",
+      "shareEmailHint": "Alleen voor deze ruil. Je kunt dit altijd weer uitzetten.",
+      "shareEmailError": "Kon het delen van je e-mailadres niet aanpassen. Probeer het opnieuw."
     }
   },
   "tradeRequest": {
@@ -696,7 +699,8 @@
     "pricePlaceholder": "bijv. 15,00",
     "priceInvalid": "Vul een bedrag boven nul in, zoals 15 of 15,50.",
     "revealNotice": {
-      "title": "Je naam, gebruikersnaam, e-mailadres en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.",
+      "title": "Je naam, gebruikersnaam en de reviews die je hebt gekregen worden zichtbaar voor de eigenaar van deze puzzel, alleen voor deze ruil.",
+      "emailPrivate": "Je e-mailadres blijft privé, tenzij je het zelf deelt nadat de eigenaar heeft geaccepteerd.",
       "profilePrivate": "Je profiel zelf blijft privé."
     },
     "cancel": "Annuleren",
@@ -832,6 +836,7 @@
     "puzzlesMenu": "Puzzels ({count})",
     "puzzleCount": "{count, plural, one {# puzzel} other {# puzzels}}",
     "removeAttachment": "{title} verwijderen",
+    "replyRevealHint": "Als je reageert, ziet {name} je naam, gebruikersnaam en de reviews die je hebt gekregen, alleen voor deze ruil. Je e-mailadres blijft privé.",
     "retry": "Opnieuw proberen",
     "searchPuzzles": "Zoek puzzels",
     "selectConversation": "Selecteer een gesprek",
@@ -4084,6 +4089,7 @@
     "updateReview": "Beoordeling bijwerken",
     "reviewFailed": "Kon review niet plaatsen",
     "noReviews": "Nog geen reviews. Wees de eerste.",
+    "anonymousReviewer": "Anonieme gebruiker",
     "swapType": {
       "swap": "Ruilen",
       "lend": "Lenen",

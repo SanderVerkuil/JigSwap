@@ -136,7 +136,12 @@ const MESSAGES = [
   },
 ];
 
-const renderThread = (thread: InboxThread, locale: "en" | "nl" = "en") => {
+const renderThread = (
+  thread: InboxThread,
+  locale: "en" | "nl" = "en",
+  // exchange.replyDisclosure for an exchange thread; unseeded = still loading.
+  replyDisclosure?: { revealsYou: boolean } | null,
+) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -155,6 +160,14 @@ const renderThread = (thread: InboxThread, locale: "en" | "nl" = "en") => {
     convexQuery(gateway.conversation.getMyInbox, {}).queryKey,
     [thread],
   );
+  if (replyDisclosure !== undefined && thread.subject.kind === "exchange") {
+    queryClient.setQueryData(
+      convexQuery(gateway.exchange.replyDisclosure, {
+        exchangeId: thread.subject.exchangeId,
+      }).queryKey,
+      replyDisclosure,
+    );
+  }
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider
@@ -441,5 +454,31 @@ describe("ThreadView trade lifecycle lines", () => {
     renderThread(exchangeThread());
     expect(screen.getByText("Exchange completed")).toBeTruthy();
     expect(screen.getByText("Trade accepted")).toBeTruthy();
+  });
+});
+
+describe("ThreadView reply reveal hint (SEC-08)", () => {
+  const HINT = /^Replying shows Mara your name, handle and the reviews/;
+
+  it("warns the exchange owner above the composer before their first reply", () => {
+    renderThread(exchangeThread(), "en", { revealsYou: true });
+    const hint = screen.getByText(HINT);
+    const composer = screen.getByRole("textbox", {
+      name: "Message Trade: Night Harbour",
+    });
+    expect(
+      hint.compareDocumentPosition(composer) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("says nothing once a reply reveals nothing new, to the requester, or in a DM", () => {
+    renderThread(exchangeThread(), "en", { revealsYou: false });
+    expect(screen.queryByText(HINT)).toBeNull();
+    cleanup();
+    renderThread(exchangeThread(), "en", null);
+    expect(screen.queryByText(HINT)).toBeNull();
+    cleanup();
+    renderThread(dmThread());
+    expect(screen.queryByText(HINT)).toBeNull();
   });
 });

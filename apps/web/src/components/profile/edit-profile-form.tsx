@@ -177,10 +177,13 @@ function EditProfileFormLoaded({
 
   const trimmedSlug = slug.trim();
   const slugFormatError = trimmedSlug !== "" && !isValidSlugFormat(trimmedSlug);
-  // What `/members/<handle>` would resolve to right now — mirrors the
-  // canonical-handle fallback (slug -> username -> id) so an empty slug still
-  // previews a real, working link instead of a dead one.
-  const slugPreviewHandle = trimmedSlug || username.trim() || member._id;
+  // What `/members/<handle>` would be right now: the slug being typed, else
+  // the username only when the server says it is this member's canonical
+  // handle (it resolves back to them), else the id. Never the bare username:
+  // another member may hold it as a slug (SEC-07).
+  const slugPreviewHandle =
+    trimmedSlug ||
+    (username.trim() === member.handle ? member.handle : member._id);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   // The WHOLE save — the Clerk username update, the slug write and the Convex

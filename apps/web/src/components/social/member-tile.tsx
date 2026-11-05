@@ -112,7 +112,8 @@ export function MemberTile({
           <h3 className="text-base leading-snug font-semibold">
             <Link
               to="/members/$handle"
-              params={{ handle: member.username ?? member._id }}
+              // The id, never the username (SEC-07); the route redirects to the canonical handle.
+              params={{ handle: member._id }}
               data-card-link=""
               title={name}
               aria-describedby={describedBy}

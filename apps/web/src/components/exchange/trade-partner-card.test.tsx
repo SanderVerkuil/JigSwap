@@ -3,14 +3,36 @@ import { gateway } from "@/gateway";
 import { convexQuery, ConvexQueryClient } from "@convex-dev/react-query";
 import type { TradePartnerView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ConvexReactClient } from "convex/react";
+import { getFunctionName } from "convex/server";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { TradePartnerCard } from "./trade-partner-card";
+
+const mocks = vi.hoisted(() => ({
+  mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
+}));
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@convex-dev/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@convex-dev/react-query")>()),
+  useConvexMutation:
+    (ref: Parameters<typeof getFunctionName>[0]) => (args: unknown) =>
+      mocks.mutation(getFunctionName(ref), args),
+}));
+
+const SET_SHARING = getFunctionName(gateway.exchange.setContactSharing);
 
 // Router-free links: the test asserts the card's DOM, not routing.
 vi.mock("@tanstack/react-router", () => ({
@@ -37,7 +59,9 @@ const revealed = (
   memberId: "user_mara",
   name: "Mara",
   username: "mara",
+  handle: "mara-puzzles",
   email: "mara@example.test",
+  emailSharing: { youShare: false, open: false },
   profileViewable: false,
   reviews: {
     averageRating: 4.5,
@@ -101,13 +125,18 @@ const renderCard = (
   );
 };
 
+beforeEach(() => {
+  mocks.mutation.mockReset();
+  mocks.mutation.mockResolvedValue(null);
+  vi.mocked(toast.error).mockClear();
+});
 afterEach(cleanup);
 
 describe("TradePartnerCard", () => {
   it("shows a revealed partner's trade card: name, handle, email, rating and reviews", () => {
     const { container } = renderCard(revealed());
     expect(screen.getByText("Mara")).toBeTruthy();
-    expect(screen.getByText("@mara")).toBeTruthy();
+    expect(screen.getByText("@mara-puzzles")).toBeTruthy();
     const mail = screen.getByRole("link", { name: "mara@example.test" });
     expect(mail.getAttribute("href")).toBe("mailto:mara@example.test");
     expect(screen.getByText("4.5")).toBeTruthy();
@@ -118,6 +147,19 @@ describe("TradePartnerCard", () => {
     expect(container.textContent).toContain("Puzzler ·");
   });
 
+  it("shows the canonical handle, never the username (SEC-07)", () => {
+    // The username may be another member's slug: the server then hands out the bare id.
+    const { container } = renderCard(revealed({ handle: "user_mara" }));
+    expect(container.textContent).not.toContain("@mara");
+    expect(container.textContent).not.toContain("@user_mara");
+    cleanup();
+    // A backend that predates `handle` (deploy skew): no handle line at all.
+    const { container: skewed } = renderCard(
+      revealed({ handle: undefined as unknown as string }),
+    );
+    expect(skewed.textContent).not.toContain("@mara");
+  });
+
   it("omits the email when the viewer may not see it", () => {
     renderCard(revealed({ email: undefined }));
     expect(screen.queryByText(/@example\.test/)).toBeNull();
@@ -126,9 +168,10 @@ describe("TradePartnerCard", () => {
 
   it("links the profile only when it is viewable", () => {
     renderCard(revealed({ profileViewable: true }));
+    // By id, never by username (SEC-07).
     expect(
       screen.getByRole("link", { name: "Mara" }).getAttribute("href"),
-    ).toBe("/members/mara");
+    ).toBe("/members/user_mara");
     cleanup();
     renderCard(revealed({ profileViewable: false }));
     expect(screen.queryByRole("link", { name: "Mara" })).toBeNull();
@@ -190,5 +233,62 @@ describe("TradePartnerCard", () => {
     cleanup();
     const empty = renderCard(null);
     expect(empty.container.textContent).toBe("");
+  });
+  it("offers no email switch while sharing is closed", () => {
+    renderCard(revealed({ emailSharing: { youShare: false, open: false } }));
+    expect(screen.queryByRole("switch")).toBeNull();
+  });
+
+  it.each([
+    ["en", "Share my email with Mara"],
+    ["nl", "Deel mijn e-mailadres met Mara"],
+  ] as const)(
+    "offers the email switch, reflecting the viewer's own choice, once sharing is open (%s)",
+    (locale, label) => {
+      renderCard(revealed({ emailSharing: { youShare: false, open: true } }), {
+        locale,
+      });
+      const toggle = screen.getByRole("switch", { name: label });
+      expect(toggle.getAttribute("aria-checked")).toBe("false");
+      cleanup();
+      renderCard(revealed({ emailSharing: { youShare: true, open: true } }), {
+        locale,
+      });
+      expect(
+        screen
+          .getByRole("switch", { name: label })
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+    },
+  );
+
+  it("turns sharing on and off for this exchange", async () => {
+    renderCard(revealed({ emailSharing: { youShare: false, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(SET_SHARING, {
+      exchangeId: "exchange_1",
+      share: true,
+    });
+    cleanup();
+    mocks.mutation.mockClear();
+    renderCard(revealed({ emailSharing: { youShare: true, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() => expect(mocks.mutation).toHaveBeenCalledOnce());
+    expect(mocks.mutation).toHaveBeenCalledWith(SET_SHARING, {
+      exchangeId: "exchange_1",
+      share: false,
+    });
+  });
+
+  it("says so when the change fails", async () => {
+    mocks.mutation.mockRejectedValue(new Error("ContactSharingClosed"));
+    renderCard(revealed({ emailSharing: { youShare: false, open: true } }));
+    fireEvent.click(screen.getByRole("switch"));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't change your email sharing. Please try again.",
+      ),
+    );
   });
 });

@@ -175,13 +175,13 @@ const projectedOther = async (
   };
 };
 
-// The other member's /members/<handle> handle, built like the web's links (slug ?? username ??
-// id; resolveMemberByHandle resolves all three back to them). Null when the privacy chokepoint
-// anonymised them, since the handle itself is identifying. A member revealed only by the
-// chokepoint's circle rule DOES get a handle, and their profile renders LOCKED to this viewer
-// (getPublicProfile's `unlocked` is self/public/mutual only): acceptable, since the circle reveal is
-// identity only. Null too for an inactive account (the chokepoint already anonymises it), which
-// the route resolves to "not found".
+// The other member's /members/<handle> handle: slug ?? id, never the username, which another
+// member may hold as a slug (SEC-07); the route then redirects to the canonical handle. Null when
+// the privacy chokepoint anonymised them, since the handle itself is identifying. A member
+// revealed only by the chokepoint's circle rule DOES get a handle, and their profile renders
+// LOCKED to this viewer (getPublicProfile's `unlocked` is self/public/mutual only): acceptable,
+// since the circle reveal is identity only. Null too for an inactive account (the chokepoint
+// already anonymises it), which the route resolves to "not found".
 const profileHandleOf = async (
   ctx: QueryCtx,
   otherMember: ProjectedMember,
@@ -190,7 +190,7 @@ const profileHandleOf = async (
   if (otherMember.anonymous) return null;
   const user = await ctx.db.get(otherId);
   if (!user || !user.isActive) return null;
-  return user.slug ?? user.username ?? (user._id as string);
+  return user.slug ?? (user._id as string);
 };
 
 // Mutable per-inbox-read count of distinct-copy probes still allowed.

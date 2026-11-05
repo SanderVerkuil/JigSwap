@@ -19,12 +19,13 @@ export const listMyBlocks = query({
     for (const row of rows) {
       const user = await ctx.db.get(row.blockedId);
       if (!user) continue;
-      const { _id, name, username, avatar } = toMemberView(user);
+      const { _id, name, avatar } = toMemberView(user);
       views.push({
         memberId: _id,
         name,
         avatar,
-        handle: user.slug ?? username ?? _id,
+        // Never the username, which another member may hold as a slug (SEC-07).
+        handle: user.slug ?? _id,
         blockedAt: row.createdAt,
       });
     }

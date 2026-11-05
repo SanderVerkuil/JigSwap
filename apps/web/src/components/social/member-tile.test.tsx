@@ -160,7 +160,8 @@ describe("MemberTile", () => {
     const anchors = elementsOf(html).filter((el) => el.tagName === "a");
     expect(anchors).toHaveLength(1);
     const link = anchors[0]!;
-    expect(attr(link, "href")).toBe("/members/hans");
+    // By id, never by username (SEC-07).
+    expect(attr(link, "href")).toBe("/members/member1");
     expect(attr(link, "title")).toBe("Hans-Peter van den Berg");
     expect(classes(link)).toContain("after:inset-0");
     // Only text inside the link: no nested elements (buttons, links, ...).

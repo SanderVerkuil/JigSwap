@@ -2,6 +2,7 @@ import type { CollectionView } from "@jigswap/contracts";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { canSeeProfileContent } from "../social/privacy";
 import {
   buildCopyViewContext,
   canViewCopyWithContext,
@@ -10,13 +11,14 @@ import {
 import { toCollectionView } from "./mappers";
 
 // Library read (collections are a Personal Library concern): a member's collections with their
-// derived member counts. Auth gating, the optional public-collection inclusion for OTHER members,
-// the count derivation, and the default-first/name ordering are preserved from legacy
-// collections.getUserCollections; rows map to typed collection DTOs.
+// derived member counts. Auth gating, the count derivation, and the default-first/name ordering are
+// preserved from legacy collections.getUserCollections; rows map to typed collection DTOs.
+// Another member's collections are profile content (SEC-37): only their PUBLIC collections, and
+// only when canSeeProfileContent holds (public profile or mutual followers, never across a block
+// either way). There is deliberately no platform-wide "every public collection" mode.
 export const getUserCollections = query({
   args: {
     userId: v.optional(v.id("users")),
-    includePublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<CollectionView[]> => {
     const identity = await ctx.auth.getUserIdentity();
@@ -30,6 +32,12 @@ export const getUserCollections = query({
 
     const targetUserId = args.userId || currentUser._id;
     const isOwner = targetUserId === currentUser._id;
+    if (
+      !isOwner &&
+      !(await canSeeProfileContent(ctx, currentUser._id, targetUserId))
+    ) {
+      return [];
+    }
 
     let collections = await ctx.db
       .query("collections")
@@ -40,24 +48,6 @@ export const getUserCollections = query({
     // wished definitions) must never leak — only the owner sees their own private collections.
     if (!isOwner) {
       collections = collections.filter((c) => c.visibility === "public");
-    }
-
-    if (args.includePublic && !isOwner) {
-      const publicCollections = await ctx.db
-        .query("collections")
-        .withIndex("by_visibility", (q) => q.eq("visibility", "public"))
-        .collect();
-      // De-duplicate by `_id` (keep first occurrence): the target's public collections were already
-      // fetched above and ALSO appear in this platform-wide public set, so a plain concat would
-      // surface each of the target's public collections twice.
-      const merged = [...collections, ...publicCollections];
-      const seen = new Set<string>();
-      collections = merged.filter((c) => {
-        const id = c._id as unknown as string;
-        if (seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
     }
 
     // A collection counts only its owner's OWN copies (the rule getCollectionById lists by: a member
@@ -96,8 +86,7 @@ export const getUserCollections = query({
       }
       views.push(
         toCollectionView(collection, count, {
-          // personalNotes is owner-only: surface it only on the acting member's OWN collections
-          // (the public-collection set may include OTHER members' collections under includePublic).
+          // personalNotes is owner-only: surface it only on the acting member's OWN collections.
           includeOwnerOnly: collection.userId === currentUser._id,
         }),
       );

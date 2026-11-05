@@ -185,7 +185,7 @@ describe("postPuzzleReview — upserts the member's puzzleReviews row", () => {
 // The list reads the member's `puzzleReviews` rows; extra rows are seeded directly so migrated
 // text-only shapes and backdated updatedAt values can be pinned.
 describe("listPuzzleReviews — sourced from puzzleReviews", () => {
-  test("returns a seeded review with the real author", async () => {
+  test("returns a seeded review with the projected author", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);
 
@@ -203,9 +203,11 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Stunning artwork");
     expect(list[0].rating).toBe(5);
-    // Real author identity — never anonymised.
-    expect(list[0].author._id).toBe(alice as string);
-    expect(list[0].author.name).toBe("Alice");
+    // The author is projected (SEC-11); the viewer is the author, so revealed.
+    expect(list[0].author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice, name: "Alice" },
+    });
   });
 
   test("a migrated text-only row serializes rating null", async () => {
@@ -283,7 +285,7 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     ]);
   });
 
-  test("a vanished author falls back to a synthetic, nameless view", async () => {
+  test("a vanished author is anonymous and departed", async () => {
     const t = convexTest(schema, modules);
     const { puzzleId } = await seed(t);
     const bob = await mkMember(t, "clerk_bob", "Bob");
@@ -299,10 +301,12 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     );
     expect(list).toHaveLength(1);
     expect(list[0].text).toBe("Orphaned");
-    expect(list[0].author._id).toBe(bob as string);
-    // No hardcoded English placeholder: the web renders its localized generic label.
-    expect(list[0].author.name).toBeUndefined();
-    expect(list[0].author.isActive).toBe(false);
+    // No id or placeholder name: the web renders its localized "Deleted member".
+    expect(list[0].author).toEqual({
+      anonymous: true,
+      anonRef: expect.any(String),
+      departed: true,
+    });
   });
 
   test("end-to-end: postPuzzleReview then listPuzzleReviews shows the review", async () => {
@@ -322,13 +326,15 @@ describe("listPuzzleReviews — sourced from puzzleReviews", () => {
     expect(list).toHaveLength(1);
     expect(list[0].rating).toBe(5);
     expect(list[0].text).toBe("Stunning artwork");
-    expect(list[0].author._id).toBe(alice as string);
-    expect(list[0].author.name).toBe("Alice");
+    expect(list[0].author).toMatchObject({
+      anonymous: false,
+      member: { _id: alice, name: "Alice" },
+    });
   });
 
-  // SECURITY: listPuzzleReviews projects each author through `toMemberView`, exposing member
-  // identity (name/username/bio/location) meant only for OTHER AUTHENTICATED MEMBERS. An
-  // unauthenticated caller must be rejected so that PII never leaks to anonymous clients.
+  // SECURITY: listPuzzleReviews reveals member identity (name/username/avatar) to OTHER
+  // AUTHENTICATED MEMBERS the privacy rules allow. An unauthenticated caller must be rejected (the
+  // public catalog has its own read, listPublicPuzzleReviews).
   test("auth is required to list reviews (no anonymous PII exposure)", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seed(t);

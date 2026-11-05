@@ -89,19 +89,36 @@ profiel blijft afgeschermd.
 
 Een ruil toont de gegevens van het andere lid alleen binnen die ene ruil.
 
-- **Als je een puzzel aanvraagt**, ziet de eigenaar je naam, gebruikersnaam,
-  e-mailadres en de reviews die je hebt gekregen, alleen voor die ruil. Het
-  aanvraagvenster vertelt je dit voordat je verstuurt. Is je profiel privé,
-  dan staat er ook "Je profiel zelf blijft privé."
+- **Als je een puzzel aanvraagt**, ziet de eigenaar je naam, gebruikersnaam en
+  de reviews die je hebt gekregen, alleen voor die ruil. Het aanvraagvenster
+  vertelt je dit voordat je verstuurt. Is je profiel privé, dan staat er ook
+  "Je profiel zelf blijft privé."
 - **De eigenaar blijft voor jou verborgen** tot diegene je aanvraag accepteert
   of reageert in het gesprek bij de ruil. Tot dan staat er bij de ruil "Hun
   gegevens verschijnen zodra ze accepteren of reageren."
 - Wijst de eigenaar af zonder te reageren, dan blijft diegene verborgen.
 
+Je e-mailadres wordt nooit gedeeld alleen doordat je iets aanvraagt, reageert
+of accepteert.
+
 Open op **Uitwisselingen** (`/trades`) een ruil met **Bekijken** om de
-**ruilpartnerkaart** te zien: naam, gebruikersnaam, e-mailadres, beoordeling en
-de reviews die diegene heeft gekregen. Een link naar het profiel verschijnt
-alleen als je dat profiel toch al kon zien.
+**ruilpartnerkaart** te zien: naam, gebruikersnaam, beoordeling en de reviews
+die diegene heeft gekregen. Een link naar het profiel verschijnt alleen als je
+dat profiel toch al kon zien.
+
+### Je e-mailadres delen
+
+Zodra een ruil is geaccepteerd, staat op de ruilpartnerkaart de schakelaar
+**Deel mijn e-mailadres met _naam_**. Zet je die aan, dan ziet het andere lid
+je e-mailadres, alleen voor die ruil. Je kunt het altijd weer uitzetten. Het
+e-mailadres van het andere lid verschijnt op jouw kaart alleen als diegene de
+eigen schakelaar heeft aangezet.
+
+Je kunt je e-mailadres delen zolang de ruil geaccepteerd, afgerond of in
+geschil is. Wordt de ruil afgewezen of geannuleerd, of blokkeert een van jullie de
+ander, dan is een gedeeld e-mailadres weer verborgen. Een blokkering zet de
+schakelaar bovendien voor jullie allebei uit, in elke ruil tussen jullie: na het
+deblokkeren blijft je e-mailadres verborgen tot je hem zelf weer aanzet.
 
 De gegevens die je in de ene ruil ziet, geven geen toegang tot het profiel, de
 bibliotheek of de activiteit van het andere lid. Een tweede ruil met hetzelfde

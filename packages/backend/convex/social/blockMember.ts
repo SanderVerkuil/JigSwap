@@ -12,6 +12,7 @@ import { dropUndeliveredPairAttachments } from "../conversation/messageAttachmen
 import { convexExchangeRepository } from "../exchange/adapters/convexExchangeRepository";
 import { inProcessEventPublisher as exchangeEventPublisher } from "../exchange/adapters/inProcessEventPublisher";
 import { toConvexError as toExchangeConvexError } from "../exchange/errors";
+import { withdrawContactSharesBetween } from "../exchange/tradeParty";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { convexFollowRepository } from "./adapters/convexFollowRepository";
@@ -30,7 +31,8 @@ export const MAX_BLOCKS = 1000;
 // so nothing is attributed to the blocked member: proposals the blocked member sent are DECLINED
 // (it reads as an ordinary decline), proposals the blocker sent are CANCELLED, through the
 // exchange use cases so the usual system message and notification flow. Accepted exchanges and
-// loans are left alone: they can still be completed, only their chat closes.
+// loans are left alone: they can still be completed, only their chat closes. Both members' email
+// shares on their trades are withdrawn (exchange/tradeParty withdrawContactSharesBetween).
 export const blockMember = mutation({
   args: { memberId: v.id("users") },
   handler: async (ctx, { memberId: blockedId }): Promise<void> => {
@@ -96,6 +98,9 @@ export const blockMember = mutation({
       makeDeclineExchange,
       blockerId,
     );
+    // Both members' email shares on their trades lapse with the block (SEC-08): an unblock
+    // doesn't bring an email back without a new share.
+    await withdrawContactSharesBetween(ctx, blockerId, blockedId);
     await dropUndeliveredPairAttachments(ctx, blockerId, blockedId);
   },
 });

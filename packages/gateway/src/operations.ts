@@ -119,8 +119,9 @@ export const gateway = {
     getPuzzleDefinitionView:
       api.library.getPuzzleDefinitionView.getPuzzleDefinitionView,
     // Per-photo discussion comments for the gallery lightbox, keyed by the `ownedPuzzleImages` _id.
-    // Text-only (no rating); anyone authenticated may post and authors are shown with their real
-    // identity. Photo metadata itself flows through getCopyInstanceView's gallery.
+    // Text-only (no rating); anyone authenticated may post. Authors are privacy-projected
+    // (ProjectedMember, SEC-11): a private author the viewer isn't connected with is anonymous.
+    // Photo metadata itself flows through getCopyInstanceView's gallery.
     postPhotoComment: api.library.postPhotoComment.postPhotoComment,
     listPhotoComments: api.library.listPhotoComments.listPhotoComments,
     // Image upload is storage infra, not a domain op; keep it on the legacy function. The URL is
@@ -217,8 +218,16 @@ export const gateway = {
     // The request-flow notice: whether the caller's own profile is private (the owner always gets
     // the requester's trade card). null = signed out / missing / own / unviewable copy.
     requestDisclosure: api.exchange.getRequestDisclosure.getRequestDisclosure,
-    // The counterparty card of one exchange (per-trade reveal: name, handle, email, reviews).
+    // The reply-flow notice for the OWNER of one exchange ({ exchangeId: the aggregateId }):
+    // whether their next message in its thread would reveal their trade card to the requester.
+    // null = not the owner / unknown exchange.
+    replyDisclosure: api.exchange.getReplyDisclosure.getReplyDisclosure,
+    // The counterparty card of one exchange (per-trade reveal: name, handle, reviews; the email
+    // only when the partner shared it, plus the viewer's own sharing switch state).
     tradePartner: api.exchange.getTradePartner.getTradePartner,
+    // A party turns sharing their email with the other party of one exchange on or off
+    // ({ exchangeId: the Convex _id, share }); turning it on only once the exchange is accepted.
+    setContactSharing: api.exchange.setContactSharing.setContactSharing,
   },
 
   // Conversation: threads, DMs, exchange chat, inbox.
@@ -453,6 +462,8 @@ export const gateway = {
     profileCopies: api.social.listProfileCopies.listProfileCopies,
     profileCompletions:
       api.social.listProfileCompletions.listProfileCompletions,
+    // The caller's OWN followers / following (no member id: another member's lists would name
+    // private members, SEC-13).
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
     isFollowing: api.social.isFollowing.isFollowing,
@@ -472,7 +483,8 @@ export const gateway = {
     // The feed is scoped server-side to the acting member + the people they follow.
     activityFeed: api.social.getActivityFeed.getActivityFeed,
     // Community comments on a puzzle definition, keyed by a copy id for the UI's convenience
-    // (resolved to the shared puzzle internally). Authors are shown with their real identity.
+    // (resolved to the shared puzzle internally). Authors are privacy-projected (ProjectedMember,
+    // SEC-11), as are the review authors below.
     postPuzzleComment: api.social.postPuzzleComment.postPuzzleComment,
     listPuzzleComments: api.social.listPuzzleComments.listPuzzleComments,
     // Community reviews keyed by the puzzle DEFINITION (the catalog detail page has no copy id).

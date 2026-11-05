@@ -10,6 +10,7 @@ import { Image } from "@/compat/image";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { contentWidthClass } from "@/components/dashboard-layout/content-width";
+import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
   ProfileCompletionsSection,
@@ -87,6 +88,7 @@ function ProfileBodyContent({
   invitedName,
   invitedKind = "network",
   inviteExpired = false,
+  requestedHandle,
 }: {
   profile: PublicProfileView;
   // The auth-gated featured shelf (fetched only for logged-in viewers of an
@@ -102,6 +104,9 @@ function ProfileBodyContent({
   invitedKind?: "network" | "household";
   // The visitor's household link has expired or was already used; the teaser still renders.
   inviteExpired?: boolean;
+  // The /members/$handle param the page was opened with (the server resolved it to this member):
+  // the hero's @handle fallback while the backend predates `handle` (deploy skew).
+  requestedHandle?: string;
 }) {
   const displayName = useMemberDisplayName();
   const hero = profile.hero;
@@ -127,6 +132,7 @@ function ProfileBodyContent({
         locked={profile.locked}
         blockedByMe={blockedByMe}
         returnToHref={returnToHref}
+        requestedHandle={requestedHandle}
       />
 
       {blockedByMe ? (
@@ -180,18 +186,24 @@ function HeroSection({
   locked,
   blockedByMe,
   returnToHref,
+  requestedHandle,
 }: {
   hero: Hero;
   viewer: ProfileViewer;
   locked: boolean;
   blockedByMe: boolean;
   returnToHref?: string;
+  requestedHandle?: string;
 }) {
   const t = useTranslations("members.profile");
   const displayName = useMemberDisplayName();
   const name = displayName({ name: hero.displayName });
   const memberSinceYear = new Date(hero.memberSince).getFullYear();
-  const handle = hero.slug ?? hero.username;
+  // The canonical handle, shown only when it reads as a name (not the bare id). Never rebuilt from
+  // `username`: another member may hold that string as a slug (SEC-07). The same rule as the
+  // route's redirect, so the hero names the URL the page settles on.
+  const canonical = canonicalHandleOf(hero, requestedHandle);
+  const handle = canonical !== hero.memberId ? canonical : undefined;
 
   return (
     <section className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -455,7 +467,8 @@ function FollowersYouKnowListItem({
     <li>
       <Link
         to="/members/$handle"
-        params={{ handle: member.slug ?? member.username ?? member.memberId }}
+        // Slug, else id: never the username (SEC-07); the route redirects to the canonical handle.
+        params={{ handle: member.slug ?? member.memberId }}
         onClick={onNavigate}
         className="flex items-center gap-3 hover:underline"
       >

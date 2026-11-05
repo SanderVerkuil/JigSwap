@@ -67,6 +67,7 @@ import { MessageText } from "./message-text";
 import { OlderMessagesSlot } from "./older-messages-slot";
 import { PhotoOutbox } from "./photo-outbox";
 import { RemovedMessage } from "./removed-message";
+import { ReplyRevealHint } from "./reply-reveal-hint";
 import { ThreadSubjectAvatar } from "./thread-list";
 import { threadPartner } from "./thread-partner";
 import { ThreadPuzzleStack } from "./thread-puzzle-stack";
@@ -528,6 +529,12 @@ export function ThreadView({
       ) : (
         <>
           <TypingLine threadId={threadId} />
+          {pairThread?.subject.kind === "exchange" && (
+            <ReplyRevealHint
+              exchangeId={pairThread.subject.exchangeId}
+              partnerName={otherAuthor}
+            />
+          )}
           <MessageComposer
             threadId={threadId}
             // A circle is never addressed like a person: it gets its own label.

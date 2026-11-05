@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -184,5 +185,45 @@ describe("followersYouKnow", () => {
 
     expect(result.total).toBe(2);
     expect(result.members.map((m) => m.memberId).sort()).toEqual([a, b].sort());
+  });
+
+  // SEC-41 (SOC-9): whom a private member follows is part of THEIR follow graph, which a one-way
+  // follower may not see. Listing them as a "follower you know" of a public target would disclose
+  // exactly that edge.
+  test("a private member the viewer only follows one way is never listed; once mutual, they are", async () => {
+    const t = convexTest(schema, modules);
+    const { viewer, a, b: priv, x } = await seed(t);
+    await makePrivate(t, priv);
+    const edge = (followerId: Id<"users">, followeeId: Id<"users">) =>
+      t.run((ctx) =>
+        ctx.db.insert("follows", {
+          followerId,
+          followeeId,
+          createdAt: Date.now(),
+        }),
+      );
+    // The viewer follows public A and (one way) private P; both follow public X.
+    await edge(viewer, a);
+    await edge(viewer, priv);
+    await edge(a, x);
+    await edge(priv, x);
+
+    const knownOnX = () =>
+      asClerk(t, "clerk_viewer").query(
+        api.social.followersYouKnow.followersYouKnow,
+        { memberId: x },
+      );
+    const oneWay = await knownOnX();
+    expect(oneWay.total).toBe(1);
+    expect(oneWay.members.map((m) => m.memberId)).toEqual([a]);
+    expect(JSON.stringify(oneWay)).not.toContain(priv);
+
+    // P follows the viewer back: mutual followers see each other's graph.
+    await edge(priv, viewer);
+    const mutual = await knownOnX();
+    expect(mutual.total).toBe(2);
+    expect(mutual.members.map((m) => m.memberId).sort()).toEqual(
+      [a, priv].sort(),
+    );
   });
 });

@@ -674,7 +674,10 @@
     },
     "partner": {
       "hiddenNote": "Their details appear once they accept or reply.",
-      "reviewsHeading": "Reviews received"
+      "reviewsHeading": "Reviews received",
+      "shareEmail": "Share my email with {name}",
+      "shareEmailHint": "Only for this trade. You can turn this off at any time.",
+      "shareEmailError": "Couldn't change your email sharing. Please try again."
     }
   },
   "tradeRequest": {
@@ -696,7 +699,8 @@
     "pricePlaceholder": "e.g. 15.00",
     "priceInvalid": "Enter an amount above zero, like 15 or 15.50.",
     "revealNotice": {
-      "title": "Your name, handle, email address and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
+      "title": "Your name, handle and the reviews you've received will be visible to the owner of this puzzle, for this trade only.",
+      "emailPrivate": "Your email address stays private unless you choose to share it once the owner accepts.",
       "profilePrivate": "Your profile itself stays private."
     },
     "cancel": "Cancel",
@@ -832,6 +836,7 @@
     "puzzlesMenu": "Puzzles ({count})",
     "puzzleCount": "{count, plural, one {# puzzle} other {# puzzles}}",
     "removeAttachment": "Remove {title}",
+    "replyRevealHint": "Replying shows {name} your name, handle and the reviews you've received, for this trade only. Your email address stays private.",
     "retry": "Try again",
     "searchPuzzles": "Search puzzles",
     "selectConversation": "Select a conversation",
@@ -4084,6 +4089,7 @@
     "updateReview": "Update review",
     "reviewFailed": "Couldn't post review",
     "noReviews": "No reviews yet. Be the first.",
+    "anonymousReviewer": "Anonymous user",
     "swapType": {
       "swap": "Swap",
       "lend": "Lend",

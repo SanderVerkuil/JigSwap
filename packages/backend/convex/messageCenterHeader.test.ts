@@ -455,7 +455,8 @@ describe("getMyInbox exchange counterparty", () => {
     expect(forAlice.otherMember.anonymous).toBe(false);
     if (!forAlice.otherMember.anonymous)
       expect(forAlice.otherMember.member._id).toBe(bob);
-    expect(forAlice.profileHandle).toBe("bobby");
+    // Slug, else id; never the username (SEC-07).
+    expect(forAlice.profileHandle).toBe(bob);
 
     const forBob = await exchangeSubjectOf(asBob(t));
     if (forBob.otherMember.anonymous) throw new Error("expected revealed");
@@ -495,7 +496,7 @@ describe("getMyInbox DM profileHandle", () => {
       recipientId: bob,
     });
 
-  test("slug, then username, then member id — the web's /members/<handle> order", async () => {
+  test("slug, else member id — never the username (SEC-07)", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
     await followMutually(t, alice, bob);
@@ -503,7 +504,7 @@ describe("getMyInbox DM profileHandle", () => {
 
     expect((await dmSubjectOf(asAlice(t))).profileHandle).toBe(bob);
     await t.run((ctx) => ctx.db.patch(bob, { username: "bobby" }));
-    expect((await dmSubjectOf(asAlice(t))).profileHandle).toBe("bobby");
+    expect((await dmSubjectOf(asAlice(t))).profileHandle).toBe(bob);
     await t.run((ctx) => ctx.db.patch(bob, { slug: "bob-puzzles" }));
     expect((await dmSubjectOf(asAlice(t))).profileHandle).toBe("bob-puzzles");
   });

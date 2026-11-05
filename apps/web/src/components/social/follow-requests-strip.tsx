@@ -13,16 +13,37 @@ import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { FunctionReturnType } from "convex/server";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
+type Requester = FunctionReturnType<
+  typeof gateway.social.incomingFollowRequests
+>[number]["requester"];
+
+// A backend that predates the teaser view (the web deploys before Convex) still sends the
+// requester as a MemberView: `_id` and `name` in place of `memberId` and `displayName`. Reading
+// those only as a fallback keeps each row's link and name working until Convex catches up,
+// instead of linking /members/undefined.
+const withLegacyFallback = (
+  requester: Requester & { _id?: string; name?: string },
+): Requester => ({
+  ...requester,
+  memberId: requester.memberId ?? requester._id,
+  displayName: requester.displayName ?? requester.name,
+});
+
 export function FollowRequestsStrip() {
   const t = useTranslations("people");
   const displayName = useMemberDisplayName();
-  const { data: requests } = useQuery(
+  const { data } = useQuery(
     convexQuery(gateway.social.incomingFollowRequests, {}),
   );
+  const requests = data?.map((request) => ({
+    ...request,
+    requester: withLegacyFallback(request.requester),
+  }));
   const approve = useMutation({
     mutationFn: useConvexMutation(gateway.social.approveFollowRequest),
   });
@@ -92,21 +113,28 @@ export function FollowRequestsStrip() {
                   {request.requester.avatar && (
                     <AvatarImage
                       src={request.requester.avatar}
-                      alt={displayName(request.requester)}
+                      alt={displayName({ name: request.requester.displayName })}
                     />
                   )}
                   <AvatarFallback>
-                    <MemberInitial source={request.requester} />
+                    <MemberInitial
+                      source={{ name: request.requester.displayName }}
+                    />
                   </AvatarFallback>
                 </Avatar>
                 <Link
                   to="/members/$handle"
+                  // Slug, else the id, never the username (SEC-07); the route redirects to the
+                  // canonical handle.
                   params={{
-                    handle: request.requester.username ?? request.requester._id,
+                    handle:
+                      request.requester.slug ?? request.requester.memberId,
                   }}
                   className="truncate font-medium hover:underline"
                 >
-                  {displayName(request.requester)}
+                  {/* Teaser identity (SEC-11): displayName is resolved server-side; absent
+                      renders the generic member label. */}
+                  {displayName({ name: request.requester.displayName })}
                 </Link>
               </div>
               <span className="flex gap-2">

@@ -9,6 +9,7 @@ export * from "./lending";
 export * from "./library";
 export * from "./notifications";
 export * from "./onboarding";
+export * from "./reputation";
 export * from "./search";
 export * from "./shared";
 export * from "./sharing";

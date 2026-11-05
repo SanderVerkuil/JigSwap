@@ -2,6 +2,7 @@ import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { DashboardShell } from "@/components/dashboard-layout/shell";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
+import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import {
   ProfileBody,
   ProfileCtaBand,
@@ -65,10 +66,14 @@ export const Route = createFileRoute("/members/$handle")({
     const profile =
       fullProfile ?? (teaser ? lockedProfileFromTeaser(teaser) : null);
     if (!profile) throw notFound();
-    // Canonical display URL prefers the slug, then username; id URLs (QR/share
-    // links) redirect. When neither exists the id URL is already canonical.
-    const canonical =
-      profile.hero.slug ?? profile.hero.username ?? profile.hero.memberId;
+    // The server's canonical handle (slug, else a username that resolves back
+    // to this member, else the id); id URLs (QR/share links) redirect to it.
+    // Never rebuild it from `username`: another member may hold that string as
+    // a slug (SEC-07). A backend that predates `handle` falls back to the slug,
+    // else keeps the requested handle (it just resolved to this member), so
+    // slug and username URLs keep working and the redirect never targets
+    // undefined.
+    const canonical = canonicalHandleOf(profile.hero, params.handle);
     if (canonical !== params.handle) {
       throw redirect({
         to: "/members/$handle",
@@ -180,6 +185,7 @@ function MemberPage() {
             }
             invitedKind={inviteKind}
             inviteExpired={inviteExpired}
+            requestedHandle={handle}
           />
           {!profile.locked && <ProfileCtaBand returnToHref={returnToHref} />}
         </main>
@@ -213,6 +219,7 @@ function AuthedMemberPage({
 }) {
   const tShell = useTranslations("shell");
   const displayName = useMemberDisplayName();
+  const { handle } = Route.useParams();
   const name = displayName({ name: profile.hero.displayName });
   const memberId = profile.hero.memberId as Id<"users">;
 
@@ -285,6 +292,7 @@ function AuthedMemberPage({
         profile={profile}
         shelf={shelf}
         viewer={isSelf ? "owner" : "member"}
+        requestedHandle={handle}
       />
     </>
   );

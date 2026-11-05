@@ -1,7 +1,10 @@
+import type { FollowEdgeView } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -136,25 +139,82 @@ describe("follow / unfollow", () => {
   });
 });
 
-describe("listFollowers / listFollowees auth + visibility gating", () => {
-  test("passing a memberId while unauthenticated is rejected (no ?? auth bypass)", async () => {
-    const t = convexTest(schema, modules);
-    const { bob } = await seed(t);
+describe("listFollowers / listFollowees: the caller's own lists only (SEC-13)", () => {
+  // A stale or hostile client still calling with the old `memberId` argument.
+  const followersOf = makeFunctionReference<
+    "query",
+    { memberId: Id<"users"> },
+    FollowEdgeView[]
+  >("social/listFollowers:listFollowers");
+  const followeesOf = makeFunctionReference<
+    "query",
+    { memberId: Id<"users"> },
+    FollowEdgeView[]
+  >("social/listFollowees:listFollowees");
 
-    // Supplying a memberId must NOT short-circuit requireMember.
+  test("an unauthenticated caller is rejected", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
     await expect(
-      t.query(api.social.listFollowers.listFollowers, { memberId: bob }),
+      t.query(api.social.listFollowers.listFollowers, {}),
     ).rejects.toThrow(ConvexError);
     await expect(
-      t.query(api.social.listFollowees.listFollowees, { memberId: bob }),
+      t.query(api.social.listFollowees.listFollowees, {}),
     ).rejects.toThrow(ConvexError);
   });
 
-  test("a private member's follow graph is hidden from non-mutual viewers", async () => {
+  test("another member's lists can't be asked for: a memberId is refused by the validator", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob, carol } = await seed(t);
+    // Bob is public and carol (who follows him and whom he follows) is private: listing bob's
+    // graph used to name carol to any signed-in caller.
+    await t.run(async (ctx) => {
+      const now = Date.now();
+      await ctx.db.insert("profiles", {
+        memberId: carol,
+        visibility: "private",
+        updatedAt: now,
+      });
+      await ctx.db.insert("follows", {
+        followerId: carol,
+        followeeId: bob,
+        createdAt: now,
+      });
+      await ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: carol,
+        createdAt: now,
+      });
+    });
+
+    await expect(
+      asAlice(t).query(followersOf, { memberId: bob }),
+    ).rejects.toThrow(/Validator/);
+    await expect(
+      asAlice(t).query(followeesOf, { memberId: bob }),
+    ).rejects.toThrow(/Validator/);
+    // Not even for the caller's own id.
+    await expect(
+      asAlice(t).query(followersOf, { memberId: alice }),
+    ).rejects.toThrow(/Validator/);
+
+    // Bob reads his own lists, private members included (they chose to follow him or he them).
+    const followers = await asBob(t).query(
+      api.social.listFollowers.listFollowers,
+      {},
+    );
+    expect(followers.map((f) => f.memberId)).toEqual([carol]);
+    const followees = await asBob(t).query(
+      api.social.listFollowees.listFollowees,
+      {},
+    );
+    expect(followees.map((f) => f.memberId)).toEqual([carol]);
+  });
+
+  test("a private member always reads their own lists", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
 
-    // Alice follows Bob (one-directional), and Bob marks his profile private.
     await asAlice(t).mutation(api.social.followMember.followMember, {
       followeeId: bob,
     });
@@ -163,52 +223,16 @@ describe("listFollowers / listFollowees auth + visibility gating", () => {
       { visibility: "private" },
     );
 
-    // Alice is not a mutual follower of Bob, so Bob's graph is hidden.
-    expect(
-      await asAlice(t).query(api.social.listFollowers.listFollowers, {
-        memberId: bob,
-      }),
-    ).toEqual([]);
-    expect(
-      await asAlice(t).query(api.social.listFollowees.listFollowees, {
-        memberId: bob,
-      }),
-    ).toEqual([]);
-
-    // Bob himself always sees his own graph.
     const ownFollowers = await asBob(t).query(
       api.social.listFollowers.listFollowers,
-      { memberId: bob },
+      {},
     );
-    expect(ownFollowers.map((f) => f.memberId)).toContain(alice as string);
-  });
-
-  test("mutual followers may see a private member's follow graph", async () => {
-    const t = convexTest(schema, modules);
-    const { alice, bob } = await seed(t);
-
-    // Mutual follow, then Bob goes private.
-    await asAlice(t).mutation(api.social.followMember.followMember, {
-      followeeId: bob,
-    });
-    await asBob(t).mutation(api.social.followMember.followMember, {
-      followeeId: alice,
-    });
-    await asBob(t).mutation(
-      api.social.setProfileVisibility.setProfileVisibility,
-      { visibility: "private" },
-    );
-
-    const followers = await asAlice(t).query(
-      api.social.listFollowers.listFollowers,
-      { memberId: bob },
-    );
-    expect(followers.map((f) => f.memberId)).toContain(alice as string);
-    const followees = await asAlice(t).query(
+    expect(ownFollowers.map((f) => f.memberId)).toEqual([alice]);
+    const aliceFollowees = await asAlice(t).query(
       api.social.listFollowees.listFollowees,
-      { memberId: bob },
+      {},
     );
-    expect(followees.map((f) => f.memberId)).toContain(alice as string);
+    expect(aliceFollowees.map((f) => f.memberId)).toEqual([bob]);
   });
 });
 

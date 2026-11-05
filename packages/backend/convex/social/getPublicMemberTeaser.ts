@@ -2,10 +2,14 @@ import type { PublicMemberTeaserView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { optionalActingMember } from "../identity/optionalActingMember";
-import { resolveMemberByHandle } from "../identity/resolveMemberByHandle";
+import {
+  canonicalHandleOf,
+  resolveMemberByHandle,
+} from "../identity/resolveMemberByHandle";
 import { isCopyPrivate, seesPrivateCopiesOf } from "../library/copyVisibility";
 import { blockStateBetween } from "./blocks";
 import {
+  explicitVisibilityOf,
   memberTeaserIdentityOf,
   profileVisibilityOf,
   shareACircle,
@@ -25,7 +29,8 @@ export const getPublicMemberTeaser = query({
     if (!user) return null;
 
     const memberId = user._id;
-    const [visibility, profile, viewer] = await Promise.all([
+    const handle = await canonicalHandleOf(ctx, user);
+    const [signedInVisibility, profile, viewer] = await Promise.all([
       profileVisibilityOf(ctx, memberId),
       ctx.db
         .query("profiles")
@@ -33,6 +38,10 @@ export const getPublicMemberTeaser = query({
         .unique(),
       optionalActingMember(ctx),
     ]);
+    // Logged out (indexable), only an explicit public choice counts (SEC-44): no puzzleCount and
+    // a private label (the route's noindex) for a member who never chose.
+    const visibility =
+      viewer === null ? explicitVisibilityOf(profile) : signedInVisibility;
 
     // Blocked (spec 2.6): the blocked side reads not-found; the blocker gets the identity only.
     // Except inside a shared circle: the circle names its members to each other even across a
@@ -48,6 +57,7 @@ export const getPublicMemberTeaser = query({
       }
       return {
         ...memberTeaserIdentityOf(user, profile, true),
+        handle,
         memberSince: user.createdAt,
         visibility,
         puzzleCount: null,
@@ -56,6 +66,7 @@ export const getPublicMemberTeaser = query({
     if (block === "byMe") {
       return {
         ...memberTeaserIdentityOf(user, profile, true),
+        handle,
         memberSince: user.createdAt,
         visibility,
         puzzleCount: null,
@@ -83,6 +94,7 @@ export const getPublicMemberTeaser = query({
 
     return {
       ...memberTeaserIdentityOf(user, profile, viewer !== null),
+      handle,
       memberSince: user.createdAt,
       visibility,
       puzzleCount,

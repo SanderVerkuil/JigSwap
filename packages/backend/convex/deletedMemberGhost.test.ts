@@ -1,4 +1,4 @@
-import type { MemberView } from "@jigswap/contracts";
+import type { ProjectedMember } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -181,7 +181,7 @@ const departures = {
 };
 
 // Nothing that identifies Dora: no name (account or profile), username, avatar, bio, location or
-// language. `_id` is part of the MemberView contract for every author, so it is not checked here.
+// language. Surfaces that carry no member id for a departed member check `_id` themselves.
 const expectNoIdentity = (value: unknown) => {
   const json = JSON.stringify(value);
   for (const leak of [
@@ -196,19 +196,13 @@ const expectNoIdentity = (value: unknown) => {
   }
 };
 
-// The departed MemberView shape the review/comment lists emit.
-const expectDepartedAuthor = (author: MemberView) => {
-  expect(author.isActive).toBe(false);
-  for (const field of [
-    "name",
-    "username",
-    "avatar",
-    "bio",
-    "location",
-    "preferredLanguage",
-  ] as const) {
-    expect(author[field]).toBeUndefined();
-  }
+// The departed projection the review/comment lists emit: anonymous, no id, marked departed.
+const expectDepartedAuthor = (author: ProjectedMember) => {
+  expect(author).toEqual({
+    anonymous: true,
+    anonRef: expect.any(String),
+    departed: true,
+  });
 };
 
 describe.each(Object.keys(departures) as (keyof typeof departures)[])(
@@ -226,35 +220,38 @@ describe.each(Object.keys(departures) as (keyof typeof departures)[])(
     };
 
     test("puzzle reviews", async () => {
-      const { asViewer, puzzleId } = await setup();
+      const { asViewer, puzzleId, dora } = await setup();
       const reviews = await asViewer.query(
         api.social.listPuzzleReviews.listPuzzleReviews,
         { puzzleId },
       );
       expect(reviews).toHaveLength(1);
       expectDepartedAuthor(reviews[0].author);
+      expect(JSON.stringify(reviews)).not.toContain(dora);
       expectNoIdentity(reviews);
     });
 
     test("copy comments", async () => {
-      const { asViewer, copy } = await setup();
+      const { asViewer, copy, dora } = await setup();
       const comments = await asViewer.query(
         api.social.listPuzzleComments.listPuzzleComments,
         { copyId: copy },
       );
       expect(comments).toHaveLength(1);
       expectDepartedAuthor(comments[0].author);
+      expect(JSON.stringify(comments)).not.toContain(dora);
       expectNoIdentity(comments);
     });
 
     test("photo comments", async () => {
-      const { asViewer, photoId } = await setup();
+      const { asViewer, photoId, dora } = await setup();
       const comments = await asViewer.query(
         api.library.listPhotoComments.listPhotoComments,
         { photoId },
       );
       expect(comments).toHaveLength(1);
       expectDepartedAuthor(comments[0].author);
+      expect(JSON.stringify(comments)).not.toContain(dora);
       expectNoIdentity(comments);
     });
 

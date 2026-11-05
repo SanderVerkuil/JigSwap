@@ -126,7 +126,19 @@ describe("projectMemberIdentity", () => {
     });
   });
 
-  test("the blocker still sees who they blocked, even when that profile is private", async () => {
+  test("the blocker still sees who they blocked when that profile is public", async () => {
+    const t = convexTest(schema, modules);
+    const u = await seed(t);
+    await insertBlock(t, u.alice, u.bob);
+    await t.run(async (ctx) => {
+      const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
+      expect(other.anonymous).toBe(false);
+    });
+  });
+
+  // SEC-40: a block never names a member the viewer could not see, or blocking a candidate would
+  // confirm who an anonymous entry is. listMyBlocks still names them.
+  test("a private member the blocker can't see stays anonymous", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
     await t.run(async (ctx) => {
@@ -139,7 +151,8 @@ describe("projectMemberIdentity", () => {
     await insertBlock(t, u.alice, u.bob);
     await t.run(async (ctx) => {
       const other = await projectMemberIdentity(ctx, u.alice, u.bob, "salt");
-      expect(other.anonymous).toBe(false);
+      expect(other.anonymous).toBe(true);
+      expect(other).not.toHaveProperty("member");
     });
   });
 
@@ -487,11 +500,12 @@ describe("follow lists", () => {
     async (_, pair) => {
       const t = convexTest(schema, modules);
       const u = await seed(t);
-      // Both follow carol and carol follows both; bob has a pending request to alice.
+      // Alice and carol follow each other, alice and bob follow each other (the block is inserted
+      // directly, so the edges stay); bob also has a pending request to alice.
       await follow(t, u.alice, u.carol);
-      await follow(t, u.bob, u.carol);
       await follow(t, u.carol, u.alice);
-      await follow(t, u.carol, u.bob);
+      await follow(t, u.alice, u.bob);
+      await follow(t, u.bob, u.alice);
       await t.run((ctx) =>
         ctx.db.insert("followRequests", {
           aggregateId: "req-1",
@@ -503,22 +517,24 @@ describe("follow lists", () => {
       );
       await insertBlock(t, ...pair(u));
       const alice = as(t, "alice");
+      const bob = as(t, "bob");
 
+      // Each member reads only their own lists (SEC-13); the other side of the block drops out.
       const followers = await alice.query(
         api.social.listFollowers.listFollowers,
-        { memberId: u.carol },
+        {},
       );
-      expect(followers.map((f) => f.memberId)).toEqual([u.alice]);
+      expect(followers.map((f) => f.memberId)).toEqual([u.carol]);
       const followees = await alice.query(
         api.social.listFollowees.listFollowees,
-        { memberId: u.carol },
+        {},
       );
-      expect(followees.map((f) => f.memberId)).toEqual([u.alice]);
-      // The blocked member's own lists read as empty.
+      expect(followees.map((f) => f.memberId)).toEqual([u.carol]);
       expect(
-        await alice.query(api.social.listFollowers.listFollowers, {
-          memberId: u.bob,
-        }),
+        await bob.query(api.social.listFollowers.listFollowers, {}),
+      ).toEqual([]);
+      expect(
+        await bob.query(api.social.listFollowees.listFollowees, {}),
       ).toEqual([]);
       expect(
         await alice.query(
@@ -730,17 +746,23 @@ describe("comments and reviews", () => {
         api.social.listPuzzleComments.listPuzzleComments,
         { copyId: copy },
       );
-      expect(comments.map((c) => c.author._id)).toEqual([u.carol]);
+      expect(comments.map((c) => c.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       const photoComments = await alice.query(
         api.library.listPhotoComments.listPhotoComments,
         { photoId },
       );
-      expect(photoComments.map((c) => c.author._id)).toEqual([u.carol]);
+      expect(photoComments.map((c) => c.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       const reviews = await alice.query(
         api.social.listPuzzleReviews.listPuzzleReviews,
         { puzzleId },
       );
-      expect(reviews.map((r) => r.author._id)).toEqual([u.carol]);
+      expect(reviews.map((r) => r.author)).toMatchObject([
+        { anonymous: false, member: { _id: u.carol } },
+      ]);
       // Public reviews: filtered when signed in, untouched for an anonymous visitor.
       expect(
         await alice.query(

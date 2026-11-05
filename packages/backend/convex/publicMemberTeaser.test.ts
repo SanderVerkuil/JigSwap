@@ -1,6 +1,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -8,8 +9,8 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 const NO_AVAILABILITY = { forTrade: false, forSale: false, forLend: false };
 
-// Four members: public-with-username (2 copies, consented avatar), public-without-username,
-// private-with-username (avatar NOT consented), and an inactive member.
+// Four members: explicitly public with username (2 copies, consented avatar), no profile row and
+// no username, private-with-username (avatar NOT consented), and an inactive member.
 const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -42,7 +43,7 @@ const seed = async (t: TestConvex<typeof schema>) =>
       location: "Utrecht",
       shareAvatarPublicly: true,
     });
-    const bob = await mkUser("clerk_bob", "Bob"); // public by default, no username
+    const bob = await mkUser("clerk_bob", "Bob"); // no profile row, no username
     const carol = await mkUser("clerk_carol", "Carol", {
       username: "carol",
       avatar: "https://img.example/carol.png",
@@ -59,6 +60,13 @@ const seed = async (t: TestConvex<typeof schema>) =>
       memberId: carol,
       displayName: "Carol de Puzzelaar",
       visibility: "private",
+      updatedAt: now,
+    });
+    // Alice chose a public profile; Bob never chose (no row), which counts as public only for
+    // signed-in callers (SEC-44).
+    await ctx.db.insert("profiles", {
+      memberId: alice,
+      visibility: "public",
       updatedAt: now,
     });
 
@@ -292,5 +300,55 @@ describe("getPublicMemberTeaser", () => {
     );
     expect(teaser).not.toBeNull();
     expect(teaser!.slug).toBeUndefined();
+  });
+});
+
+// SEC-44: logged out, a member with no profile row reads as private (no puzzleCount); signed in,
+// the absent row still means public.
+describe("getPublicMemberTeaser — no visibility chosen (SEC-44)", () => {
+  const giveBobACopy = (t: TestConvex<typeof schema>, bob: Id<"users">) =>
+    t.run(async (ctx) => {
+      const puzzle = await ctx.db.insert("puzzles", {
+        title: "Bob's Puzzle",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: bob,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("ownedPuzzles", {
+        puzzleId: puzzle,
+        ownerId: bob,
+        condition: "good",
+        availability: NO_AVAILABILITY,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    });
+
+  test("anonymous: private, no puzzleCount", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    await giveBobACopy(t, bob);
+    const teaser = await t.query(
+      api.social.getPublicMemberTeaser.getPublicMemberTeaser,
+      { handle: bob },
+    );
+    expect(teaser?.memberId).toBe(bob);
+    expect(teaser?.visibility).toBe("private");
+    expect(teaser?.puzzleCount).toBeNull();
+  });
+
+  test("signed in: public, with the puzzleCount", async () => {
+    const t = convexTest(schema, modules);
+    const { bob } = await seed(t);
+    await giveBobACopy(t, bob);
+    const teaser = await t
+      .withIdentity({ subject: "clerk_alice" })
+      .query(api.social.getPublicMemberTeaser.getPublicMemberTeaser, {
+        handle: bob,
+      });
+    expect(teaser?.visibility).toBe("public");
+    expect(teaser?.puzzleCount).toBe(1);
   });
 });

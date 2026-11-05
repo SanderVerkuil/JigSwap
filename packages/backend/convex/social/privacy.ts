@@ -32,6 +32,16 @@ export const memberTeaserIdentityOf = (
   avatar: viewerSignedIn || user.shareAvatarPublicly ? user.avatar : undefined,
 });
 
+/**
+ * A member's visibility as they explicitly chose it: "public" only when their profile row says so,
+ * else "private" (no row, or a row opened lazily without a choice). For LOGGED-OUT surfaces, which
+ * fail closed like projectPublicAuthor (SEC-44); in-app reads keep profileVisibilityOf's
+ * absent-is-public default.
+ */
+export const explicitVisibilityOf = (
+  profile: Doc<"profiles"> | null,
+): "public" | "private" => profile?.visibility ?? "private";
+
 /** A member's profile visibility, defaulting to "public" when they have no profile row. */
 export const profileVisibilityOf = async (
   ctx: QueryCtx,
@@ -254,6 +264,17 @@ export const anonymousMemberOf = async (
   anonRef: await anonRefOf(ctx, targetId, salt),
 });
 
+/** A revealed member's name, username and avatar, without `bio`, `location` or `preferredLanguage`. */
+const identityOnlyView = (target: Doc<"users">) => {
+  const {
+    bio: _bio,
+    location: _location,
+    preferredLanguage: _preferredLanguage,
+    ...identity
+  } = toMemberView(target);
+  return identity;
+};
+
 /**
  * THE privacy chokepoint. Project `targetId`'s identity for `viewerId`, salting any anonymisation
  * with `salt` (pass the copyId so the same hidden member is stable within a timeline but
@@ -263,9 +284,13 @@ export const anonymousMemberOf = async (
  *      Checked before every reveal rule, so a departed member is never named (matching
  *      notifications, which render them "Deleted member"). Then: the target blocked the viewer ->
  *      anonymous, also before every reveal rule below (a block vetoes the circle reveal too). When
- *      the VIEWER blocked the target they are revealed, IDENTITY ONLY (as rule 5): the blocker
- *      needs the name to unblock, and a block never unlocks `bio`, `location` or
- *      `preferredLanguage` (#280).
+ *      the VIEWER blocked the target, the block never changes WHETHER they are revealed (rules
+ *      3-6 decide that exactly as without the block), only WHAT: a revealed member the viewer
+ *      blocked is IDENTITY ONLY (as rule 5), so the blocker can recognise and unblock them but a
+ *      block never unlocks `bio`, `location` or `preferredLanguage` (#280). A member hidden by
+ *      rules 3-6 stays the same anonymous entry, with no flag (SEC-40): otherwise blocking a
+ *      candidate would confirm who an anonymous entry is. listMyBlocks and the profile/teaser
+ *      stubs still name them, since those are reached by an id or handle the viewer already has.
  *   3. target's profile is public -> revealed.
  *   4. viewer and target are mutual followers -> revealed.
  *   5. viewer and target are currently in the same circle -> revealed, IDENTITY ONLY: name,
@@ -300,28 +325,17 @@ export const projectMemberIdentity = async (
   if (block === "byThem") {
     return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };
   }
-  if (block === "byMe") {
-    const {
-      bio: _bio,
-      location: _location,
-      preferredLanguage: _preferredLanguage,
-      ...identity
-    } = toMemberView(target);
-    return { anonymous: false, member: identity };
-  }
 
   if (await isRevealedByOrdinaryRules(ctx, viewerId, targetId)) {
-    return { anonymous: false, member: toMemberView(target) };
+    return {
+      anonymous: false,
+      member:
+        block === "byMe" ? identityOnlyView(target) : toMemberView(target),
+    };
   }
 
   if (await shareACircle(ctx, viewerId, targetId)) {
-    const {
-      bio: _bio,
-      location: _location,
-      preferredLanguage: _preferredLanguage,
-      ...identity
-    } = toMemberView(target);
-    return { anonymous: false, member: identity };
+    return { anonymous: false, member: identityOnlyView(target) };
   }
 
   return { anonymous: true, anonRef: await anonRefOf(ctx, targetId, salt) };

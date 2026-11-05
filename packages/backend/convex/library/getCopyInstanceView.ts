@@ -19,7 +19,7 @@ import { householdDefaultOf, membershipOf } from "../household/memberships";
 import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
-import { projectMemberIdentity } from "../social/privacy";
+import { areMutualFollowers, projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import { effectiveCopyVisibility } from "./copyVisibility";
 import { ratingBreakdownOf } from "./definitionAggregates";
@@ -156,8 +156,37 @@ export const getCopyInstanceView = query({
       })),
     );
 
+    // An UNFINISHED solve is live activity ("is solving this now"), so it follows the opt-in,
+    // friends-only rule of the feed's "started" entry and the profile's "Currently solving" (SEC-35):
+    // shown to the solver themself, or to a mutual follower when the solver set
+    // shareInProgress === true (tri-state; absent = off). Being able to open the copy is not enough.
+    // Finished solves stay visible to every copy viewer. Memoised per solver.
+    const inProgressShared = new Map<string, Promise<boolean>>();
+    const sharesInProgress = (solverId: Id<"users">): Promise<boolean> => {
+      if (solverId === viewerId) return Promise.resolve(true);
+      const existing = inProgressShared.get(solverId);
+      if (existing) return existing;
+      const p = (async () => {
+        const prefs = await ctx.db
+          .query("solvingPreferences")
+          .withIndex("by_member", (q) => q.eq("memberId", solverId))
+          .unique();
+        if (prefs?.shareInProgress !== true) return false;
+        return areMutualFollowers(ctx, viewerId, solverId);
+      })();
+      inProgressShared.set(solverId, p);
+      return p;
+    };
+    const timelineCompletions = (
+      await Promise.all(
+        completions.map(async (c) =>
+          c.isCompleted || (await sharesInProgress(c.userId)) ? c : null,
+        ),
+      )
+    ).filter((c) => c !== null);
+
     const completionEntries: CopyInstanceTimelineEntry[] = await Promise.all(
-      completions.map(async (c) => ({
+      timelineCompletions.map(async (c) => ({
         type: "completion" as const,
         solver: await project(c.userId),
         startDate: c.startDate,

@@ -93,9 +93,9 @@ export const global = query({
         id: u._id,
         name: memberDisplayNameOf(u),
         image: u.avatar ?? null,
-        // Canonical member page; username-first, id fallback (matches the
-        // /members/$handle resolution rules).
-        href: `/members/${u.username ?? u._id}`,
+        // Slug, else id: never the username, which another member may hold
+        // as a slug (SEC-07). The route redirects to the canonical handle.
+        href: `/members/${u.slug ?? u._id}`,
       });
     }
 

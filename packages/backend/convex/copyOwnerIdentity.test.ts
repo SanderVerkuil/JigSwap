@@ -168,10 +168,11 @@ describe("getCopyInstanceView owner identity", () => {
 
     // The profile projection stays anonymous (private, not mutual followers) ...
     expect(result?.owner.anonymous).toBe(true);
-    // ... but the household shows who the copy belongs to, like the library badge.
+    // ... but the household shows who the copy belongs to, like the library badge, by the
+    // display name the owner chose (makePrivate sets "X"), never the account name (SEC-10).
     expect(result?.household?.owner).toEqual({
       memberId: owner,
-      name: "Olivia Owner",
+      name: "X",
       avatar: "https://avatars/owner.png",
     });
     expect(JSON.stringify(result)).not.toContain("@example.com");

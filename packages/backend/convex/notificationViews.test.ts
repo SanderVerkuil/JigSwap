@@ -153,10 +153,11 @@ describe("actor privacy", () => {
         memberId: s.mara,
         name: "Mara Display",
         avatar: "https://img/mara.png",
-        handle: "mara_u",
+        // Slug, else id; never the username (SEC-07).
+        handle: s.mara,
       },
     ]);
-    expect(view.href).toBe("/members/mara_u");
+    expect(view.href).toBe(`/members/${s.mara}`);
   });
 
   test("a private, non-mutual initiator is still named (slug handle)", async () => {

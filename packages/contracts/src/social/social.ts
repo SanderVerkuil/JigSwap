@@ -39,9 +39,10 @@ export type BlockedProfileStub = Pick<
 };
 
 /**
- * One party of a follow relationship as surfaced in a followers/following list: the other member's
- * id, their display name (from their profile, falling back to their account name), and when the
- * edge formed. `followId` is the Follow aggregateId so the UI can act on the specific edge.
+ * One party of a follow relationship as surfaced in the CALLER's own followers/following list (the
+ * lists take no member id, SEC-13): the other member's id, their display name (from their profile,
+ * falling back to their account name), and when the edge formed. `followId` is the Follow
+ * aggregateId so the UI can act on the specific edge.
  */
 export interface FollowEdgeView {
   followId?: string;
@@ -58,6 +59,8 @@ export interface FollowEdgeView {
  * the actor's display name (their Social profile displayName, falling back to their account name) —
  * resolved server-side so the UI can render "You"/"{name}" without an extra per-row lookup; the
  * feed's audience is always self + followees, so every actor here is already visible to the viewer.
+ * A followee's entries appear only while the viewer may see their profile content (public profile
+ * or mutual followers, SEC-43): following a private member one way shows none of their activity.
  */
 export interface ActivityEntryView {
   memberId: string;
@@ -116,12 +119,13 @@ export interface ActivityBatchCoverView {
 /**
  * One PLAIN-TEXT comment on an owned copy, as surfaced on the copy view. Comments carry no rating —
  * copy-level star opinions live in `copyReviews`, and definition-level opinions are
- * PuzzleReviewView. The `author` is the real member identity (comments are voluntary public posts —
- * never anonymised); `id` is the CommentId aggregateId. Newest comments are returned first.
+ * PuzzleReviewView. The `author` is privacy-projected like every member on the copy page (salt =
+ * the copy's _id): a private author the viewer is not connected with is anonymous (SEC-11); `id` is
+ * the CommentId aggregateId. Newest comments are returned first.
  */
 export interface PuzzleCommentView {
   id: string;
-  author: MemberView;
+  author: ProjectedMember;
   text: string;
   createdAt: number;
 }
@@ -129,13 +133,14 @@ export interface PuzzleCommentView {
 /**
  * One community review of a puzzle DEFINITION, as surfaced on the catalog detail page. A review is
  * the author's single upserted opinion: `rating` is their 1–5 star score (null when they left only
- * text) and `text` their optional write-up (null when they left only stars). The `author` is the
- * real member identity (reviews are voluntary public posts — never anonymised); `updatedAt` is when
- * the review was last written. Newest reviews are returned first.
+ * text) and `text` their optional write-up (null when they left only stars). The `author` is
+ * privacy-projected (salt = the puzzle id): a private author the viewer is not connected with is
+ * anonymous (SEC-11), as on the public catalog; `updatedAt` is when the review was last written.
+ * Newest reviews are returned first.
  */
 export interface PuzzleReviewView {
   id: string;
-  author: MemberView;
+  author: ProjectedMember;
   rating: number | null;
   text: string | null;
   updatedAt: number;
@@ -144,12 +149,13 @@ export interface PuzzleReviewView {
 /**
  * One discussion comment on a single shared PHOTO (an `ownedPuzzleImages` row), as surfaced in the
  * photo lightbox. Unlike a PuzzleCommentView there is no rating — photo comments are plain text. The
- * `author` is the real member identity (these are voluntary public posts — never anonymised); `id`
- * is the PhotoCommentId aggregateId. Newest comments are returned first.
+ * `author` is privacy-projected exactly like a PuzzleCommentView's (salt = the photo's copy _id, so
+ * one hidden member reads the same across the copy page); `id` is the PhotoCommentId aggregateId.
+ * Newest comments are returned first.
  */
 export interface PhotoCommentView {
   id: string;
-  author: MemberView;
+  author: ProjectedMember;
   text: string;
   createdAt: number;
 }
@@ -210,10 +216,12 @@ export interface EmailInviteView {
 /**
  * "Followers you know" social proof for a member profile: accounts the VIEWER follows who also
  * follow the target member (viewer's following ∩ target's followers) — deliberately NOT plain
- * mutual followers. Personalized (the read is requireMember-gated) and one direction only.
- * `total` is the full intersection size; `members` is a short preview (capped, currently 8) with
- * just enough identity to render an avatar stack + name and link to /members/$handle
- * (slug ?? username ?? memberId).
+ * mutual followers. Personalized (the read is requireMember-gated) and one direction only. Only
+ * members whose own follow graph the viewer may see count (a public profile, or a mutual follower
+ * of the viewer), since each entry discloses that they follow the target (SEC-41). `total` is the
+ * size of that filtered intersection; `members` is a short preview (capped, currently 8) with just
+ * enough identity to render an avatar stack + name and link to /members/$handle (slug ?? memberId,
+ * never the username: see PublicProfileHero.handle).
  */
 export interface FollowersYouKnowView {
   total: number;
@@ -246,7 +254,7 @@ export interface BlockedMemberView {
   /** Raw account name; may be absent. Render via resolveMemberDisplayName / useMemberDisplayName. */
   name?: string;
   avatar?: string;
-  /** The /members/$handle param (slug, else username, else the member id). */
+  /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */
   handle: string;
   /** When the block was made (ms). */
   blockedAt: number;
@@ -267,9 +275,12 @@ export interface PublicMemberTeaserView {
   username?: string;
   /** The member's Convex-owned profile handle (identity/setSlug), if they've chosen one. */
   slug?: string;
+  /** The canonical /members/$handle param; see PublicProfileHero.handle. */
+  handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;
+  /** Logged out, "public" only when the member explicitly chose it; no choice reads "private" (SEC-44). */
   visibility: "public" | "private";
   /** Owned-copy count; null for private profiles. */
   puzzleCount: number | null;
@@ -278,6 +289,19 @@ export interface PublicMemberTeaserView {
    * Unblock. A member who blocked the viewer reads as null instead.
    */
   blockedByMe?: true;
+}
+
+/**
+ * One of the viewer's pending incoming follow requests (social.listIncomingFollowRequests), newest
+ * first. The requester is shown with exactly what their own link (/members/$handle) discloses:
+ * name, handle and avatar, never bio, location or counts (SEC-11). `alreadyFollowing` drives the
+ * "Approve & follow back" affordance.
+ */
+export interface IncomingFollowRequestView {
+  requestId: string;
+  requestedAt: number;
+  requester: MemberTeaserIdentity;
+  alreadyFollowing: boolean;
 }
 
 /**
@@ -290,7 +314,7 @@ export interface FollowRequesterPreviewView {
   memberId: string;
   /** Resolved server-side (profile displayName → account name → username, never email); absent = render the generic member label. */
   displayName?: string;
-  /** The /members/$handle param (slug, else username, else the member id). */
+  /** The /members/$handle param: the slug, else the member id (never the username, SEC-07). */
   handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
@@ -315,6 +339,12 @@ export interface PublicProfileHero {
   displayName?: string;
   username?: string;
   slug?: string;
+  /**
+   * The canonical /members/$handle param, server-computed (identity/canonicalHandleOf): the slug,
+   * else the username when it resolves back to this member, else the member id. Always resolves
+   * back to `memberId`, so the route may redirect to it; never rebuild it from `username`.
+   */
+  handle: string;
   avatar?: string;
   /** users.createdAt (ms). */
   memberSince: number;
@@ -322,6 +352,7 @@ export interface PublicProfileHero {
   reviewCount: number;
   followerCount: number;
   followingCount: number;
+  /** Logged out, "public" only when the member explicitly chose it; no choice reads "private" (SEC-44). */
   visibility: "public" | "private";
   /** Only present when visibility === "public" — see class doc. */
   location?: string;

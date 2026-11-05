@@ -203,6 +203,7 @@ import type * as exchange_getExchangesByOwner from "../exchange/getExchangesByOw
 import type * as exchange_getExchangesByRequester from "../exchange/getExchangesByRequester.js";
 import type * as exchange_getExchangeStats from "../exchange/getExchangeStats.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
+import type * as exchange_getReplyDisclosure from "../exchange/getReplyDisclosure.js";
 import type * as exchange_getRequestDisclosure from "../exchange/getRequestDisclosure.js";
 import type * as exchange_getTradePartner from "../exchange/getTradePartner.js";
 import type * as exchange_getUserExchanges from "../exchange/getUserExchanges.js";
@@ -210,6 +211,7 @@ import type * as exchange_propose from "../exchange/propose.js";
 import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
 import type * as exchange_readViews from "../exchange/readViews.js";
 import type * as exchange_runAction from "../exchange/runAction.js";
+import type * as exchange_setContactSharing from "../exchange/setContactSharing.js";
 import type * as exchange_tradeParty from "../exchange/tradeParty.js";
 import type * as exchange_tradeRevealSubscriber from "../exchange/tradeRevealSubscriber.js";
 import type * as household_acceptHouseholdInvite from "../household/acceptHouseholdInvite.js";
@@ -764,6 +766,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/getExchangesByOwner": typeof exchange_getExchangesByOwner;
   "exchange/getExchangesByRequester": typeof exchange_getExchangesByRequester;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
+  "exchange/getReplyDisclosure": typeof exchange_getReplyDisclosure;
   "exchange/getRequestDisclosure": typeof exchange_getRequestDisclosure;
   "exchange/getTradePartner": typeof exchange_getTradePartner;
   "exchange/getUserExchanges": typeof exchange_getUserExchanges;
@@ -771,6 +774,7 @@ declare const fullApi: ApiFromModules<{
   "exchange/raiseDispute": typeof exchange_raiseDispute;
   "exchange/readViews": typeof exchange_readViews;
   "exchange/runAction": typeof exchange_runAction;
+  "exchange/setContactSharing": typeof exchange_setContactSharing;
   "exchange/tradeParty": typeof exchange_tradeParty;
   "exchange/tradeRevealSubscriber": typeof exchange_tradeRevealSubscriber;
   "household/acceptHouseholdInvite": typeof household_acceptHouseholdInvite;

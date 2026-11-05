@@ -21,6 +21,16 @@ export interface MemberView extends ConvexSystemFields {
 }
 
 /**
+ * A member's identity only: name, username and avatar, without `bio`, `location` or
+ * `preferredLanguage`. For surfaces that must name a member whatever their profile visibility (a
+ * loan party), where the profile details stay behind that visibility (SEC-11).
+ */
+export type MemberIdentityView = Omit<
+  MemberView,
+  "bio" | "location" | "preferredLanguage"
+>;
+
+/**
  * The signed-in member's own view (the `getCurrentUser` query only). Superset of {@link MemberView}
  * that re-adds the member's own `email` and `clerkId`, plus the raw `slug` (the profile editor needs
  * the caller's own current value to pre-fill the slug editor) — safe because it is only ever
@@ -31,6 +41,8 @@ export interface CurrentMemberView extends MemberView {
   /** Verified primary Clerk email; absent until the member has one. */
   email?: string;
   slug?: string;
+  /** The member's own canonical /members/$handle param; see PublicProfileHero.handle. */
+  handle: string;
 }
 
 /**

@@ -288,7 +288,8 @@ const revealedActor = (
   profile: Doc<"profiles"> | null,
   tradeRevealed: boolean,
 ): ResolvedActor => {
-  const handle = user.slug ?? user.username ?? user._id;
+  // Slug, else id: never the username, which another member may hold as a slug (SEC-07).
+  const handle = user.slug ?? user._id;
   const name = memberDisplayNameOf(user, profile);
   return {
     view: {

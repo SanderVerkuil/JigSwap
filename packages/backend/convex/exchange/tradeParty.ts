@@ -42,6 +42,61 @@ export const recordTradeReveal = async (
   return true;
 };
 
+export type TradeSide = "initiator" | "recipient";
+
+/** The member's side of the exchange, or null when they are not a party to it. */
+export const tradeSideOf = (
+  exchange: Doc<"exchanges">,
+  memberId: Id<"users">,
+): TradeSide | null =>
+  memberId === exchange.initiatorId
+    ? "initiator"
+    : memberId === exchange.recipientId
+      ? "recipient"
+      : null;
+
+/** One side's email-sharing consent row for this exchange, if they turned sharing on. */
+export const contactShareOf = (
+  ctx: QueryCtx,
+  exchangeId: Id<"exchanges">,
+  side: TradeSide,
+): Promise<Doc<"tradeContactShares"> | null> =>
+  ctx.db
+    .query("tradeContactShares")
+    .withIndex("by_exchange_side", (q) =>
+      q.eq("exchangeId", exchangeId).eq("side", side),
+    )
+    .first();
+
+/**
+ * Withdraw both parties' email-sharing consent on every exchange between `a` and `b`, whatever its
+ * status: called when either blocks the other (social/blockMember). Consent given before a block
+ * never outlives it, so an unblock reveals no email until a party turns sharing on again.
+ */
+export const withdrawContactSharesBetween = async (
+  ctx: MutationCtx,
+  a: Id<"users">,
+  b: Id<"users">,
+): Promise<void> => {
+  for (const [initiatorId, recipientId] of [
+    [a, b],
+    [b, a],
+  ] as const) {
+    const exchanges = await ctx.db
+      .query("exchanges")
+      .withIndex("by_initiator", (q) => q.eq("initiatorId", initiatorId))
+      .filter((q) => q.eq(q.field("recipientId"), recipientId))
+      .collect();
+    for (const exchange of exchanges) {
+      const shares = await ctx.db
+        .query("tradeContactShares")
+        .withIndex("by_exchange_side", (q) => q.eq("exchangeId", exchange._id))
+        .collect();
+      for (const share of shares) await ctx.db.delete(share._id);
+    }
+  }
+};
+
 export type ProjectedTradeParty = {
   readonly state: TradePartyState;
   /** Present for self / visible / tradeRevealed; absent for hidden / departed. */
