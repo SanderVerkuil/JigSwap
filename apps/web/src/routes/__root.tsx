@@ -32,8 +32,8 @@ import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
 // Self-hosted font files to preload (see head below).
-import balooLatinWoff2 from "@fontsource-variable/baloo-2/files/baloo-2-latin-wght-normal.woff2?url";
-import poppinsLatin400Woff2 from "@fontsource/poppins/files/poppins-latin-400-normal.woff2?url";
+import hankenLatinWoff2 from "@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url";
+import youngSerifLatinWoff2 from "@fontsource/young-serif/files/young-serif-latin-400-normal.woff2?url";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
@@ -126,20 +126,20 @@ export const Route = createRootRouteWithContext<{
       ...catalogPreloadLinks(contextLocale(match.context)),
       { rel: "stylesheet", href: appCss },
       // The fonts are self-hosted: globals.css imports their @font-face rules.
-      // Preload the latin files of the faces every page shows (Baloo 2
-      // headings, Poppins 400 body text) so they load alongside the CSS
+      // Preload the latin files of the faces every page shows (Young Serif
+      // headings, Hanken Grotesk body text) so they load alongside the CSS
       // instead of after it. Same hashed URL as the CSS url(), so nothing
       // downloads twice; font preloads must be CORS-mode to be reused.
       {
         rel: "preload",
-        href: balooLatinWoff2,
+        href: youngSerifLatinWoff2,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
       {
         rel: "preload",
-        href: poppinsLatin400Woff2,
+        href: hankenLatinWoff2,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
@@ -304,17 +304,17 @@ function RootDocument({
           dangerouslySetInnerHTML={{ __html: ZOD_JITLESS_SCRIPT }}
         />
         {/* Tints the browser / installed-app status bar to the mobile top
-            bar's surface (bg-card) per OS colour scheme; the manifest carries
-            the light value. */}
+            bar's sky surface per OS colour scheme; the manifest carries the
+            light value. */}
         <meta
           name="theme-color"
           media="(prefers-color-scheme: light)"
-          content="#ffffff"
+          content="#e3f1fa"
         />
         <meta
           name="theme-color"
           media="(prefers-color-scheme: dark)"
-          content="#282642"
+          content="#0f2a33"
         />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">

@@ -9,8 +9,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#fdfdff",
-  "theme_color": "#ffffff",
+  "background_color": "#e3f1fa",
+  "theme_color": "#e3f1fa",
   "categories": ["entertainment", "lifestyle", "social"],
   "related_applications": [
     { "platform": "webapp", "url": "/manifest.webmanifest" }
