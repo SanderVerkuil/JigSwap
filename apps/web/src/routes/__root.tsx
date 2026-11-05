@@ -1,4 +1,4 @@
-import { enUS, nlNL } from "@clerk/localizations";
+import { enUS } from "@clerk/localizations";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { ConvexQueryClient } from "@convex-dev/react-query";
@@ -19,7 +19,9 @@ import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
 import { Providers } from "../components/providers";
 import { ErrorBoundary } from "../components/ui/error-boundary";
+import { nlNLLocalization } from "../lib/clerk-localization";
 import { getIntlCached, seedIntlCache } from "../lib/i18n";
+import { defaultDocumentTitle } from "../lib/page-title";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
@@ -68,12 +70,19 @@ const getSsrConvexToken = createServerOnlyFn(async () => {
 type AuthPayload = { userId: string | null };
 let clientAuthCache: AuthPayload | null = null;
 
+type RootHeadContext = {
+  match: { context: unknown };
+  matches: ReadonlyArray<{ _notFound?: boolean }>;
+};
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexClient: ConvexReactClient;
   convexQueryClient: ConvexQueryClient;
 }>()({
-  head: () => ({
+  // The annotation matters: an unannotated parameter here makes TypeScript settle the route's
+  // context before it has seen beforeLoad below, and every route loses userId and intl.
+  head: ({ match, matches }: RootHeadContext) => ({
     meta: [
       { charSet: "utf-8" },
       // viewport-fit=cover lets the mobile shell extend under the notch /
@@ -86,7 +95,7 @@ export const Route = createRootRouteWithContext<{
         content:
           "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
       },
-      { title: "JigSwap" },
+      { title: defaultDocumentTitle(match.context, matches) },
       // Installed-app ("Add to Home Screen") chrome. theme-color lives in
       // RootDocument: HeadContent dedupes metas by name, which would drop the
       // light/dark pair down to one.
@@ -204,7 +213,7 @@ function RootComponent() {
   // app locale. Reactive to intl.locale so a language switch re-localizes Clerk.
   return (
     <ClerkProvider
-      localization={intl.locale === "nl" ? nlNL : enUS}
+      localization={intl.locale === "nl" ? nlNLLocalization : enUS}
       appearance={clerkAppearance}
       nonce={cspNonce}
     >

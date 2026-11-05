@@ -31,12 +31,14 @@
     "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later."
   },
   "notFound": {
-    "title": "Page Not Found",
+    "title": "Page not found",
     "description": "Oops! The page you're looking for doesn't exist.",
     "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
-    "backToHome": "Back to Home",
-    "browsePuzzles": "Browse Puzzles",
-    "backToDashboard": "Back to Dashboard"
+    "backToHome": "Back to home",
+    "browsePuzzles": "Browse puzzles",
+    "backToDashboard": "Back to dashboard",
+    "browseCatalogue": "Browse the catalogue",
+    "helpLinks": "Need a hand? Read the <docs>docs</docs> or <contact>get in touch</contact>."
   },
   "navigation": {
     "home": "Home",
@@ -1785,15 +1787,19 @@
         "A cookie that remembers that you have seen the cookie notice",
         "Analytics identifiers from PostHog, stored in cookies and local storage — only after you accept the cookie notice"
       ],
-      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset."
+      "control": "Analytics is opt-in: it only runs after you accept the cookie notice, and declining means it is never loaded. You can also block or delete cookies in your browser settings; JigSwap keeps working, though you will need to sign in again and your preferences may reset.",
+      "settingsButton": "Change cookie settings"
     },
     "cookieConsent": {
-      "title": "We use cookies",
-      "description": "We use cookies to ensure you get the best experience on our website. For more information on how we use cookies, please see our cookie policy.",
-      "acceptText": "Accept",
-      "declineText": "Decline",
+      "title": "Cookie settings",
+      "description": "We'd like to use analytics: PostHog, hosted in the EU, shows us how JigSwap is used and which errors occur. It only runs if you allow it, and you can change your mind at any time. More in our <link>cookie policy</link>.",
+      "acceptText": "Allow analytics",
+      "declineText": "No thanks",
       "learnMoreText": "Learn more",
-      "acceptanceText": "By clicking \"Accept\", you agree to our use of cookies."
+      "acceptanceText": "By choosing \"Allow analytics\", you agree to analytics cookies from PostHog.",
+      "currentGranted": "You currently allow analytics.",
+      "currentDenied": "You currently don't allow analytics.",
+      "closeSettings": "Close cookie settings"
     },
     "children": {
       "title": "Children",
@@ -3824,7 +3830,10 @@
       "dashboard": "Dashboard",
       "openMenu": "Open menu",
       "closeMenu": "Close menu",
-      "switchLanguage": "Switch language"
+      "switchLanguage": "Switch language",
+      "toggleTheme": "Toggle dark mode",
+      "menuLabel": "Menu",
+      "primaryNav": "Main"
     },
     "footer": {
       "tagline": "Swap, lend and share jigsaw puzzles — accessible and sustainable, for the whole community.",
@@ -3834,15 +3843,17 @@
       "privacy": "Privacy policy",
       "terms": "Terms of service",
       "cookies": "Cookie policy",
+      "cookieSettings": "Cookie settings",
       "madeBy": "Made with 🧩 by a family of puzzlers.",
       "country": "The Netherlands"
     },
     "home": {
       "eyebrow": "Lend • Swap • Share",
       "heroTitle": "Share jigsaw puzzles with fellow enthusiasts",
-      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the country.",
+      "heroLead": "Build your own puzzle library, lend or swap puzzles, and always see who has your lent-out boxes. Connect with puzzlers across the Netherlands.",
       "seeFeatures": "See the features",
       "trustRow": "{count} puzzlers are already swapping",
+      "trustRowEarly": "Be one of our first puzzlers",
       "stats": {
         "puzzlers": "Puzzlers signed up",
         "catalog": "Puzzles in the catalog",
@@ -3858,7 +3869,7 @@
         "step2Body": "Browse the community, filter by difficulty and piece count, and request a puzzle to borrow or swap.",
         "step3Title": "Lend & track",
         "step3Body": "Lend out for a while or indefinitely, and always see who has your puzzle.",
-        "link": "See how it works"
+        "link": "See the full five-step tour"
       },
       "rows": {
         "libraryEyebrow": "Your library",
@@ -4013,7 +4024,7 @@
       "tl2Body": "The tactile puzzle plank was born — a digital shelf that feels like home.",
       "tl3Year": "2026",
       "tl3Title": "A growing community",
-      "tl3Body": "Puzzlers now share, lend and swap across the country.",
+      "tl3Body": "Puzzlers now share, lend and swap across the Netherlands.",
       "cta": "Get in touch"
     },
     "contactPage": {
@@ -4048,7 +4059,7 @@
       "errorSubmit": "Something went wrong while sending — please try again.",
       "errorBusy": "We're receiving a lot of messages right now. Try again later, or email us at <mail>{email}</mail>.",
       "submit": "Send message",
-      "privacyNote": "By sending, you agree to our privacy policy.",
+      "privacyNote": "By sending, you agree to our <link>privacy policy</link>.",
       "sentTitle": "Message sent!",
       "sentBody": "Thanks for reaching out. We'll get back to you as soon as we can.",
       "sentAgain": "Send another message"
@@ -4071,8 +4082,8 @@
       "breadcrumbRoot": "Docs",
       "pagerPrevious": "Previous",
       "pagerNext": "Next",
-      "mobileDocs": "Docs",
-      "mobileOpenNav": "Open documentation navigation",
+      "pagerLabel": "Previous and next page",
+      "mobileNavButton": "Docs<sr> (open navigation)</sr>",
       "mobileSearch": "Search documentation",
       "helpfulQuestion": "Was this page helpful?",
       "helpfulYes": "Yes",
@@ -4098,7 +4109,21 @@
       "about": "About — JigSwap",
       "contact": "Contact — JigSwap",
       "privacy": "Privacy Policy — JigSwap",
-      "terms": "Terms of Service — JigSwap"
+      "terms": "Terms of Service — JigSwap",
+      "catalog": "Puzzle catalogue — JigSwap",
+      "docs": "Docs — JigSwap",
+      "notFound": "Page not found — JigSwap"
+    },
+    "meta": {
+      "home": "Build your own jigsaw puzzle library, lend and swap puzzles with fellow puzzlers, and always know who has your lent-out boxes. Free to join.",
+      "howItWorks": "How JigSwap works in five steps: create your profile, fill your shelf, find a puzzle, agree a loan or swap, and always see who has your boxes.",
+      "features": "A digital puzzle shelf, collections, completions, lending with tracking and a community you trust: everything JigSwap offers for puzzling together.",
+      "about": "JigSwap started at the kitchen table, as a family project to easily see and swap puzzles with friends and family. Read how it grew.",
+      "contact": "Have a question, an idea or feedback about JigSwap? Get in touch with us.",
+      "privacy": "How JigSwap handles your personal data: what we collect, why we use it, and the choices and rights you have.",
+      "terms": "The terms for using JigSwap: your account, lending and swapping puzzles, and the ground rules that keep the community fair and pleasant.",
+      "catalog": "Browse the JigSwap community puzzle catalogue: ratings, reviews and swap availability for jigsaw puzzles.",
+      "docs": "Guides to everything in JigSwap: your account, your puzzle library, lending and swapping, discovering puzzles and staying informed."
     }
   },
   "titles": {
@@ -5284,6 +5309,10 @@
     "title": "Puzzle catalogue",
     "subtitle": "Every puzzle the JigSwap community collects, swaps and lends.",
     "searchPlaceholder": "Search puzzles…",
+    "searchLabel": "Search puzzles",
+    "brandLabel": "Brand",
+    "piecesLabel": "Piece count",
+    "resultsHeading": "Results",
     "allBrands": "All brands",
     "allPieces": "Any piece count",
     "piecesLt500": "Under 500 pieces",
@@ -5291,10 +5320,14 @@
     "pieces1000": "1,000 – 1,499 pieces",
     "pieces1500": "1,500+ pieces",
     "toSwap": "{count} to swap",
+    "piecesCount": "{count, plural, one {<num>#</num> piece} other {<num>#</num> pieces}}",
     "loadMore": "Load more",
     "noResults": "No puzzles match \"{query}\"",
     "noResultsSub": "Try a brand name or fewer words",
+    "noResultsFiltered": "No puzzles match these filters",
+    "noResultsFilteredSub": "Try another brand or piece count",
     "clearSearch": "Clear search",
+    "clearFilters": "Clear filters",
     "empty": "The catalogue is just getting started",
     "emptySub": "Members add puzzles every day — check back soon.",
     "joinCta": "Join JigSwap to request a swap",
@@ -5311,13 +5344,17 @@
     "statCompletions": "Times completed",
     "statAvgDays": "Avg. days to finish",
     "communityRating": "Community rating",
-    "ratingsCount": "{count} ratings",
+    "ratingsCount": "{count, plural, one {# rating} other {# ratings}}",
+    "noRatings": "No ratings yet.",
     "reviews": "Reviews",
     "noReviews": "No reviews yet.",
     "anonymousReviewer": "A JigSwap member",
     "logInToReview": "Log in to write a review",
     "notFound": "Puzzle not found",
-    "notFoundSub": "This puzzle may have been removed from the catalogue."
+    "notFoundSub": "This puzzle may have been removed from the catalogue.",
+    "loadErrorTitle": "We couldn't load this puzzle",
+    "loadErrorSub": "Something went wrong on our side. Please try again in a moment.",
+    "metaDescription": "{hasMaker, select, yes {{title} by {maker}} other {{title}}} — {count, number}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap."
   },
   "whatsNew": {
     "menuLabel": "What's new",

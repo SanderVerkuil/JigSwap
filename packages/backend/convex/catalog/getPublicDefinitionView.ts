@@ -18,10 +18,16 @@ import { definitionTotalsOrLive } from "../library/definitionStats";
 // publicAvailabilityOf. Members never see this page — the web route redirects them to /puzzles/$id.
 // The aggregates come from the definition's definitionStats row (library/definitionStats), so the
 // page reads a fixed handful of documents however many reviews, copies and solves it has.
+//
+// The id comes straight from the URL, so it takes any string: one that names no puzzle answers null
+// like a missing puzzle does. That leaves a rejection meaning a real failure, which the web route
+// must not turn into a 404.
 export const getPublicDefinitionView = query({
-  args: { puzzleId: v.id("puzzles") },
+  args: { puzzleId: v.string() },
   handler: async (ctx, args): Promise<PublicDefinitionDetailView | null> => {
-    const puzzle = await ctx.db.get(args.puzzleId);
+    const puzzleId = ctx.db.normalizeId("puzzles", args.puzzleId);
+    if (!puzzleId) return null;
+    const puzzle = await ctx.db.get(puzzleId);
     if (!puzzle || puzzle.status !== "approved") return null;
 
     const image = puzzle.image
@@ -32,7 +38,7 @@ export const getPublicDefinitionView = query({
       : null;
 
     // No viewer: private copies never count (they never do in the stored totals).
-    const totals = await definitionTotalsOrLive(ctx, args.puzzleId);
+    const totals = await definitionTotalsOrLive(ctx, puzzleId);
     const rating = ratingBreakdownFromTotals(totals);
     const communityOwners = totals.communityOwners;
     const availability = publicAvailabilityFromByType(totals.publicAvailable);

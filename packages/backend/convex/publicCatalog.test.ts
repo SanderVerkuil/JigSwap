@@ -218,6 +218,22 @@ describe("getPublicDefinitionView", () => {
     ).toBeNull();
   });
 
+  test("returns null for a string that names no puzzle, instead of rejecting", async () => {
+    const t = convexTest(schema, modules);
+    const memberId = await t.run((ctx) => mkUser(ctx, "clerk_pia", "Pia"));
+
+    // Not an id at all, a mangled one, and a real id from another table: the /catalog/$id URL
+    // takes whatever was typed, and all of these simply name no puzzle.
+    for (const puzzleId of ["nope", `${memberId}x`, memberId]) {
+      expect(
+        await t.query(
+          api.catalog.getPublicDefinitionView.getPublicDefinitionView,
+          { puzzleId },
+        ),
+      ).toBeNull();
+    }
+  });
+
   test("payload leaks no member identity or copy-level data", async () => {
     const t = convexTest(schema, modules);
     const { approved } = await seed(t);

@@ -6,19 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { gateway } from "@/gateway";
 import { convexErrorCode } from "@/lib/convex-error-code";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { LifeBuoy, Mail, MapPin, Shield } from "lucide-react";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/contact")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "contact") }],
-  }),
+  head: ({ match }) => seoHead(match, "contact"),
   component: ContactPage,
 });
 
@@ -28,7 +27,7 @@ const CHANNELS = [
   { icon: Shield, key: "privacy" },
 ] as const;
 
-// Contact: channel list + the form. Submissions persist via the public
+// Contact: the form + channel list. Submissions persist via the public
 // gateway.contact.submit mutation (admin triage), not a fake success state.
 function ContactPage() {
   const t = useTranslations("marketing.contactPage");
@@ -42,8 +41,17 @@ function ContactPage() {
 
       <Section>
         <Container>
+          {/* The form comes first in the DOM, so on phones (one column) it
+              starts right under the hero and is reached first. From 861px the
+              grid puts the channel list back in the left column. */}
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] max-[860px]:grid-cols-1 gap-[clamp(32px,5vw,64px)] items-start">
-            <Reveal>
+            <Reveal
+              delay={120}
+              className="min-[861px]:col-start-2 min-[861px]:row-start-1"
+            >
+              <ContactForm />
+            </Reveal>
+            <Reveal className="min-[861px]:col-start-1 min-[861px]:row-start-1">
               <div className="flex flex-col gap-2">
                 {CHANNELS.map(({ icon: Icon, key }, i) => (
                   <div
@@ -81,9 +89,6 @@ function ContactPage() {
                 </div>
               </div>
             </Reveal>
-            <Reveal delay={120}>
-              <ContactForm />
-            </Reveal>
           </div>
         </Container>
       </Section>
@@ -120,6 +125,10 @@ function ContactForm() {
     submit?: React.ReactNode;
   }>({});
   const [sent, setSent] = React.useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const messageRef = React.useRef<HTMLTextAreaElement>(null);
+  const sentHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
   const set =
     (k: "name" | "email" | "message") =>
@@ -135,8 +144,20 @@ function ContactForm() {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email))
       er.email = t("errorEmail");
     if (form.message.trim().length < 10) er.message = t("errorMessage");
-    setErrors(er);
-    if (Object.keys(er).length > 0) return;
+    // Commit the errors before moving focus, so the field a screen reader
+    // announces already points at its error through aria-describedby.
+    flushSync(() => setErrors(er));
+    const firstInvalid = er.name
+      ? nameRef
+      : er.email
+        ? emailRef
+        : er.message
+          ? messageRef
+          : null;
+    if (firstInvalid) {
+      firstInvalid.current?.focus();
+      return;
+    }
 
     try {
       await submitMessage.mutateAsync({
@@ -146,13 +167,16 @@ function ContactForm() {
         message: form.message,
         locale: locale === "nl" ? "nl" : "en",
       });
-      setSent(true);
+      // The form (and the focused button) unmounts: land on the confirmation.
+      flushSync(() => setSent(true));
+      sentHeadingRef.current?.focus();
     } catch (error) {
       const code = convexErrorCode(error);
       // The server's address rule is stricter than the shape check above; name the field it
-      // refused rather than suggesting a retry.
+      // refused rather than suggesting a retry, the same way that check does.
       if (code === "invalid_email") {
-        setErrors({ email: t("errorEmail") });
+        flushSync(() => setErrors({ email: t("errorEmail") }));
+        emailRef.current?.focus();
         return;
       }
       // The deployment-wide budget is spent: point at the inbox the form feeds.
@@ -180,10 +204,16 @@ function ContactForm() {
   if (sent) {
     return (
       <div className="px-9 py-11 rounded-[20px] bg-mk-card border border-mk-border text-center shadow-mk-sm">
-        <div className="text-[44px]">🧩</div>
-        <h3 className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3">
+        <div aria-hidden="true" className="text-[44px]">
+          🧩
+        </div>
+        <h2
+          ref={sentHeadingRef}
+          tabIndex={-1}
+          className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mt-3 outline-none"
+        >
           {t("sentTitle")}
-        </h3>
+        </h2>
         <p className="text-[15.5px] text-mk-text-muted mt-2.5 leading-relaxed">
           {t("sentBody")}
         </p>
@@ -191,8 +221,11 @@ function ContactForm() {
           variant="outline"
           className="mt-[22px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
           onClick={() => {
-            setSent(false);
-            setForm({ name: "", email: "", subject: "swap", message: "" });
+            flushSync(() => {
+              setSent(false);
+              setForm({ name: "", email: "", subject: "swap", message: "" });
+            });
+            nameRef.current?.focus();
           }}
         >
           {t("sentAgain")}
@@ -213,71 +246,106 @@ function ContactForm() {
             {t("formName")}
           </label>
           <Input
+            ref={nameRef}
             id="contact-name"
+            autoComplete="name"
             placeholder={t("formNamePlaceholder")}
             value={form.name}
             onChange={set("name")}
             aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "contact-name-error" : undefined}
             className={errors.name ? "border-mk-danger" : ""}
           />
-          {errors.name && <div className={errCls}>{errors.name}</div>}
+          {errors.name && (
+            <div id="contact-name-error" className={errCls}>
+              {errors.name}
+            </div>
+          )}
         </div>
         <div>
           <label htmlFor="contact-email" className={labelCls}>
             {t("formEmail")}
           </label>
           <Input
+            ref={emailRef}
             id="contact-email"
             type="email"
+            autoComplete="email"
             placeholder={t("formEmailPlaceholder")}
             value={form.email}
             onChange={set("email")}
             aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "contact-email-error" : undefined}
             className={errors.email ? "border-mk-danger" : ""}
           />
-          {errors.email && <div className={errCls}>{errors.email}</div>}
+          {errors.email && (
+            <div id="contact-email-error" className={errCls}>
+              {errors.email}
+            </div>
+          )}
         </div>
       </div>
-      <div className="mt-[18px]">
-        <span className={labelCls}>{t("formSubject")}</span>
+      {/* Native radios (visually hidden, chips are their labels) give the
+          subject a checked state, the "Subject" group name and arrow keys. */}
+      <fieldset className="mt-[18px]">
+        <legend className={labelCls}>{t("formSubject")}</legend>
         <div className="flex flex-wrap gap-2">
           {SUBJECTS.map((k) => (
-            <button
+            <label
               key={k}
-              type="button"
-              onClick={() => setForm((f) => ({ ...f, subject: k }))}
               className={cn(
-                "cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
+                "relative cursor-pointer px-3.5 py-2 rounded-full text-[13.5px] font-medium border transition-colors",
+                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-mk-ring",
                 form.subject === k
                   ? "border-mk-violet-400 bg-mk-violet-50 text-mk-violet-600"
                   : "border-mk-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
               )}
             >
+              <input
+                type="radio"
+                name="contact-subject"
+                value={k}
+                checked={form.subject === k}
+                onChange={() => setForm((f) => ({ ...f, subject: k }))}
+                className="sr-only"
+              />
               {t(SUBJECT_KEY[k])}
-            </button>
+            </label>
           ))}
         </div>
-      </div>
+      </fieldset>
       <div className="mt-[18px]">
         <label htmlFor="contact-message" className={labelCls}>
           {t("formMessage")}
         </label>
         <textarea
+          ref={messageRef}
           id="contact-message"
           rows={5}
           value={form.message}
           onChange={set("message")}
           placeholder={t("formMessagePlaceholder")}
           aria-invalid={!!errors.message}
+          aria-describedby={
+            errors.message ? "contact-message-error" : undefined
+          }
           className={cn(
-            "w-full resize-y text-[15px] px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
+            "w-full resize-y text-base px-[13px] py-[11px] rounded-[10px] border bg-mk-card text-mk-text-body outline-none",
             "focus:[box-shadow:0_0_0_3px_rgb(96_72_232_/_.18)]",
             errors.message ? "border-mk-danger" : "border-mk-input-border",
           )}
         />
-        {errors.message && <div className={errCls}>{errors.message}</div>}
+        {errors.message && (
+          <div id="contact-message-error" className={errCls}>
+            {errors.message}
+          </div>
+        )}
       </div>
-      {errors.submit && <div className={errCls}>{errors.submit}</div>}
+      {errors.submit && (
+        <div role="alert" className={errCls}>
+          {errors.submit}
+        </div>
+      )}
       <Button
         type="submit"
         variant="brand"
@@ -287,7 +355,16 @@ function ContactForm() {
         {t("submit")}
       </Button>
       <p className="text-[12.5px] text-mk-text-muted mt-3.5 text-center leading-normal">
-        {t("privacyNote")}
+        {t.rich("privacyNote", {
+          link: (chunks) => (
+            <Link
+              to="/privacy"
+              className="font-medium text-mk-violet-600 underline underline-offset-2 hover:no-underline"
+            >
+              {chunks}
+            </Link>
+          ),
+        })}
       </p>
     </form>
   );

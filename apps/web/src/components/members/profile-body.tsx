@@ -64,7 +64,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ComponentProps } from "react";
 import { useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
@@ -864,15 +864,20 @@ export function InviteExpiredNotice() {
 }
 
 // ── Shared: sign-up link + bottom CTA band ───────────────────────────────────
+// Always rendered through `<Button asChild>`: Slot hands its className,
+// data-slot and ref to this component, so they must reach the <a> (React 19
+// passes ref as a plain prop) or the CTA renders as bare text.
 function SignUpLink({
   returnToHref,
   children,
-}: {
+  ...rest
+}: Omit<ComponentProps<"a">, "href"> & {
   returnToHref?: string;
   children: React.ReactNode;
 }) {
   return (
     <Link
+      {...rest}
       to="/sign-up/$"
       params={{ _splat: "" }}
       search={returnToHref ? { redirect_url: returnToHref } : {}}

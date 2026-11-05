@@ -10,14 +10,14 @@ JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account 
 
 ## Create an account
 
-1. Visit the JigSwap landing page.
-2. Click **Sign Up**.
+1. Go to any public JigSwap page, such as the [home page](/).
+2. Click **Start trading** at the top of the page.
 3. Follow the prompts to register (email/password or any sign-in option offered).
 4. Once registered, you'll be taken into the app's **Dashboard**.
 
 ## Sign in
 
-1. Click **Sign In**.
+1. Click **Log in** at the top of any public page. On a phone or tablet, it's in the menu (☰).
 2. Enter your credentials.
 3. You'll land on your personal dashboard.
 
@@ -25,7 +25,16 @@ JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account 
 
 ## Public pages (no account needed)
 
-Anyone can read the **landing page**, plus **About**, **Features**, **How It Works**, **Contact**, **Privacy Policy**, and **Terms** without signing in.
+Anyone can read these pages without signing in:
+
+- The [home page](/), [How it works](/how-it-works), [Features](/features) and [About](/about).
+- [Browse puzzles](/catalog): the shared puzzle catalogue.
+- This user guide ([Docs](/docs)).
+- **Member profiles** (`/members/…`). How much a profile shows depends on
+  the member's settings; see
+  [Visibility & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+- [Contact](/contact), the [Privacy policy](/privacy) and the
+  [Terms of service](/terms).
 
 ## When you delete your account
 
@@ -48,4 +57,4 @@ Some things stay, because they are part of other members' history: your
 reviews and comments, your trade history, your catalogue contributions, and
 puzzles you sold, traded or gave away, with your completions and loans in
 their history (without photos). They show as **Deleted member**, without your
-name, picture or profile. The **Privacy Policy** lists the details.
+name, picture or profile. The [Privacy policy](/privacy) lists the details.

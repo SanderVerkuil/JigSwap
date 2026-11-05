@@ -12,6 +12,19 @@ export function pagesForLocale(pages: DocPage[], locale: string): DocPage[] {
   return [...bySlug.values()];
 }
 
+// The page a /docs/<splat> URL shows: a leaf page first, else a group index page with that slug.
+// A trailing slash is ignored; undefined means the URL names no page (a real 404).
+export function findDocPage(
+  pages: DocPage[],
+  splat: string | undefined,
+): DocPage | undefined {
+  const slug = (splat ?? "").replace(/\/$/, "");
+  return (
+    pages.find((p) => p.slug === slug && !p.isIndex) ??
+    pages.find((p) => p.slug === slug)
+  );
+}
+
 // Group leaf pages by their group dir. The group's title/order come from the
 // group's index page; leaves are sorted by frontmatter.order then title.
 export function buildNavTree(pages: DocPage[]): NavTree {

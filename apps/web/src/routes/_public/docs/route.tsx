@@ -1,6 +1,8 @@
 import { DocsMobileBar } from "@/components/docs/docs-mobile-bar";
 import { DocsSearch } from "@/components/docs/docs-search";
+import { DocsSearchProvider } from "@/components/docs/docs-search-context";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
+import { useOverlayFocusReturn } from "@/components/docs/use-overlay-focus-return";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +21,8 @@ function DocsLayout() {
   const t = useTranslations("marketing.docs");
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
+  const openSearch = React.useCallback(() => setSearchOpen(true), []);
+  const overlayFocus = useOverlayFocusReturn();
 
   // The /docs landing page renders a full-bleed marketing hero, which looks
   // cramped inside the 280px sidebar grid. Detect the exact index route via the
@@ -40,7 +44,7 @@ function DocsLayout() {
   }, []);
 
   return (
-    <>
+    <DocsSearchProvider value={openSearch}>
       <a
         href="#docs-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-mk-card focus:px-3 focus:py-2 focus:ring-2 focus:ring-mk-ring"
@@ -64,7 +68,10 @@ function DocsLayout() {
         // folded into its burger by then (below 1200px), so the Docs bar never
         // shows under a full header nav.
         <div className="mx-auto w-full max-w-[1400px] px-6 grid grid-cols-[280px_minmax(0,1fr)] max-[861px]:grid-cols-1 gap-x-[clamp(32px,4vw,64px)] items-start">
-          <aside className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[861px]:hidden">
+          <aside
+            aria-label={t("navSheetTitle")}
+            className="sticky top-[86px] self-start max-h-[calc(100dvh-86px)] overflow-y-auto pr-6 border-r border-mk-border py-8 max-[861px]:hidden"
+          >
             <DocsSidebar onOpenSearch={() => setSearchOpen(true)} />
           </aside>
           <main id="docs-content" className="py-8 min-w-0">
@@ -77,6 +84,7 @@ function DocsLayout() {
         <SheetContent
           side="left"
           className="w-[300px] overflow-y-auto bg-mk-card"
+          {...overlayFocus}
         >
           <SheetTitle className="sr-only">{t("navSheetTitle")}</SheetTitle>
           <SheetDescription className="sr-only">
@@ -93,7 +101,11 @@ function DocsLayout() {
         </SheetContent>
       </Sheet>
 
-      <DocsSearch open={searchOpen} onOpenChange={setSearchOpen} />
-    </>
+      <DocsSearch
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        {...overlayFocus}
+      />
+    </DocsSearchProvider>
   );
 }

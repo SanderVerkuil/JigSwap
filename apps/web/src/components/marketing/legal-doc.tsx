@@ -1,7 +1,7 @@
 import { Container } from "@/components/marketing/container";
 import { Section } from "@/components/marketing/section";
 import { cn } from "@/lib/utils";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import * as React from "react";
 import { useTranslations } from "use-intl";
 
@@ -16,10 +16,12 @@ export interface LegalSection {
   id: string;
   heading: string;
   blocks: LegalBlock[];
+  action?: React.ReactNode; // a control shown after the text (e.g. Cookie settings)
 }
 
 // Shared legal document layout: sticky table of contents with scroll-spy
-// beside a 720px reading column. Ported from the design handoff's LegalDoc.
+// beside a 720px reading column (a collapsible Contents block below 900px).
+// Ported from the design handoff's LegalDoc.
 export function LegalDoc({
   updated,
   intro,
@@ -50,15 +52,6 @@ export function LegalDoc({
     return () => obs.disconnect();
   }, [sections]);
 
-  const jump = (id: string) => {
-    const el = document.getElementById(id);
-    if (el)
-      window.scrollTo({
-        top: el.getBoundingClientRect().top + window.scrollY - 90,
-        behavior: "smooth",
-      });
-  };
-
   return (
     <Section>
       <Container>
@@ -67,23 +60,7 @@ export function LegalDoc({
             <div className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5">
               {t("contents")}
             </div>
-            <nav className="flex flex-col gap-0.5 border-l border-mk-border">
-              {sections.map((s, i) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => jump(s.id)}
-                  className={cn(
-                    "text-left cursor-pointer py-[7px] px-3.5 -ml-px border-l-2 text-[13.5px] leading-snug transition-colors",
-                    active === s.id
-                      ? "border-mk-violet-400 text-mk-violet-600 font-semibold"
-                      : "border-transparent text-mk-text-muted font-medium hover:text-mk-text-body",
-                  )}
-                >
-                  {i + 1}. {s.heading}
-                </button>
-              ))}
-            </nav>
+            <LegalToc sections={sections} active={active} />
           </aside>
           <div className="max-w-[720px]">
             <div className="flex items-center gap-2.5 text-[13.5px] text-mk-text-muted mb-6">
@@ -93,6 +70,21 @@ export function LegalDoc({
             <p className="text-[16.5px] leading-[1.7] text-mk-text-body mb-2">
               {intro}
             </p>
+            {/* Below 900px the sticky list above is hidden; the same links
+                fold into a Contents block at the top of the text. */}
+            <details className="group min-[901px]:hidden mt-6 rounded-[14px] border border-mk-border bg-mk-card">
+              <summary className="flex items-center justify-between gap-3 min-h-12 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden font-mono text-[12px] font-bold tracking-[.1em] uppercase text-mk-text-muted rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring">
+                {t("contents")}
+                <ChevronDown
+                  size={18}
+                  aria-hidden="true"
+                  className="transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                />
+              </summary>
+              <div className="px-4 pb-3">
+                <LegalToc sections={sections} active={active} />
+              </div>
+            </details>
             {sections.map((s, i) => (
               <section key={s.id} id={s.id} className="scroll-mt-[90px] pt-9">
                 <h2 className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mb-3.5">
@@ -118,7 +110,7 @@ export function LegalDoc({
                           {b.items.map((li) => (
                             <li
                               key={li}
-                              className="text-[15.5px] leading-relaxed text-mk-text-muted"
+                              className="text-[15.5px] leading-relaxed text-mk-text-body"
                             >
                               {li}
                             </li>
@@ -138,13 +130,14 @@ export function LegalDoc({
                       return (
                         <p
                           key={j}
-                          className="text-[15.5px] leading-[1.7] text-mk-text-muted mb-3.5"
+                          className="text-[15.5px] leading-[1.7] text-mk-text-body mb-3.5"
                         >
                           {b.text}
                         </p>
                       );
                   }
                 })}
+                {s.action && <div className="mb-3.5">{s.action}</div>}
               </section>
             ))}
             {children && (
@@ -156,5 +149,39 @@ export function LegalDoc({
         </div>
       </Container>
     </Section>
+  );
+}
+
+// The contents list: plain #hash links, so every section has a URL to share
+// and the browser does the jump (sections carry scroll-mt for the header).
+function LegalToc({
+  sections,
+  active,
+}: {
+  sections: LegalSection[];
+  active: string | undefined;
+}) {
+  const t = useTranslations("marketing.legal");
+  return (
+    <nav
+      aria-label={t("contents")}
+      className="flex flex-col gap-0.5 border-l border-mk-border"
+    >
+      {sections.map((s, i) => (
+        <a
+          key={s.id}
+          href={`#${s.id}`}
+          aria-current={active === s.id ? "true" : undefined}
+          className={cn(
+            "py-[7px] px-3.5 -ml-px border-l-2 text-[13.5px] leading-snug transition-colors",
+            active === s.id
+              ? "border-mk-violet-400 text-mk-violet-600 font-semibold"
+              : "border-transparent text-mk-text-muted font-medium hover:text-mk-text-body",
+          )}
+        >
+          {i + 1}. {s.heading}
+        </a>
+      ))}
+    </nav>
   );
 }

@@ -9,7 +9,7 @@ import { Sustain } from "@/components/marketing/home/sustain";
 import { Testimonial } from "@/components/marketing/home/testimonial";
 import { shouldRedirectHomeToDashboard } from "@/lib/home-redirect";
 import { globalStatsQuery } from "@/lib/marketing-queries";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -27,9 +27,7 @@ export const Route = createFileRoute("/")({
       throw redirect({ to: "/dashboard" });
     }
   },
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "home") }],
-  }),
+  head: ({ match }) => seoHead(match, "home"),
   // Prefetch the platform counts (hero trust-row + stats strip) so they're SSR'd and present on
   // first paint rather than flashing in after a client round-trip.
   loader: async ({ context }) => {

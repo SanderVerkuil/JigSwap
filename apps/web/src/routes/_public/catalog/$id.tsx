@@ -1,6 +1,6 @@
 import { Link } from "@/compat/link";
 import { ImageZoom } from "@/components/common/image-zoom";
-import { EmptyState } from "@/components/library/empty-state";
+import { MarketingNotFoundContent } from "@/components/NotFound";
 import {
   difficultyClasses,
   MemberAvatar,
@@ -14,10 +14,12 @@ import { Button } from "@/components/ui/button";
 import { StarRating } from "@/components/ui/star-rating";
 import { gateway, Id } from "@/gateway";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { pageTitle } from "@/lib/page-title";
+import { headMessage, seoHead } from "@/lib/seo-head";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftRight, MessageCircle, UserRound } from "lucide-react";
 import { useState } from "react";
@@ -31,9 +33,7 @@ type PublicReview = FunctionReturnType<
 >[number];
 
 const viewQuery = (id: string) =>
-  convexQuery(gateway.catalog.publicDefinitionView, {
-    puzzleId: id as Id<"puzzles">,
-  });
+  convexQuery(gateway.catalog.publicDefinitionView, { puzzleId: id });
 const reviewsQuery = (id: string) =>
   convexQuery(gateway.social.listPublicPuzzleReviews, {
     puzzleId: id as Id<"puzzles">,
@@ -49,53 +49,80 @@ export const Route = createFileRoute("/_public/catalog/$id")({
     }
   },
   loader: async ({ context, params }) => {
-    // A malformed id fails `v.id("puzzles")` arg validation and rejects here. Rather than crash to
-    // the root error boundary, swallow it and let the component render the same friendly not-found
-    // a well-formed-but-nonexistent id shows (which resolves to `null`).
-    try {
-      const [view] = await Promise.all([
-        context.queryClient.ensureQueryData(viewQuery(params.id)),
-        context.queryClient.ensureQueryData(reviewsQuery(params.id)),
-      ]);
-      return { view };
-    } catch {
-      return { view: null };
+    // Both reads settle before deciding, so neither is still pending when the page is dehydrated.
+    const [view] = await Promise.allSettled([
+      context.queryClient.ensureQueryData(viewQuery(params.id)),
+      context.queryClient.ensureQueryData(reviewsQuery(params.id)),
+    ]);
+    // A URL that names no puzzle reads as null, malformed ids included (the query takes any string):
+    // a real 404 with the friendly not-found below, not a 200. A rejection is a failed read, so it
+    // goes to the error view with a 500: these URLs are the whole sitemap, and an outage must not
+    // tell crawlers the puzzles are gone.
+    if (view.status === "rejected") throw view.reason;
+    if (!view.value) throw notFound();
+    return { view: view.value };
+  },
+  // loaderData is resolved before head() runs on the SSR pass, which is what crawlers and link
+  // previews read; the description is the visitor's language via the root intl payload.
+  head: ({ loaderData, match }) => {
+    const d = loaderData?.view.definition;
+    if (!d) {
+      return match.status === "error"
+        ? {}
+        : { meta: [{ title: pageTitle(match.context, "notFound") }] };
     }
+    const maker = d.brand || d.publisher;
+    return seoHead(match, "catalog", {
+      title: `${d.title} — JigSwap`,
+      description: headMessage(match.context, "publicCatalog.metaDescription", {
+        title: d.title,
+        hasMaker: maker ? "yes" : "no",
+        maker: maker ?? "",
+        count: d.pieceCount,
+      }),
+      image: d.image,
+    });
   },
-  head: ({ loaderData }) => {
-    const d = loaderData?.view?.definition;
-    if (!d) return { meta: [{ title: "JigSwap" }] };
-    const title = `${d.title} — JigSwap`;
-    // English-only meta template: head() runs outside the intl render tree; acceptable for SEO.
-    const description = `${d.title}${d.brand || d.publisher ? ` by ${d.brand || d.publisher}` : ""} — ${d.pieceCount.toLocaleString("en")}-piece jigsaw puzzle. Community rating, reviews and swap availability on JigSwap.`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        ...(d.image ? [{ property: "og:image", content: d.image }] : []),
-      ],
-    };
-  },
+  notFoundComponent: PuzzleNotFound,
+  errorComponent: PuzzleLoadError,
   component: PublicPuzzlePage,
 });
 
+// The public 404, naming what's missing; a way back to the catalogue is among its actions.
+function PuzzleNotFound() {
+  const t = useTranslations("publicCatalog");
+  return (
+    <main>
+      <MarketingNotFoundContent
+        title={t("notFound")}
+        message={t("notFoundSub")}
+      />
+    </main>
+  );
+}
+
+// A failed read (see the loader): the puzzle may well exist, so no "404", and no raw error text.
+function PuzzleLoadError() {
+  const t = useTranslations("publicCatalog");
+  return (
+    <main>
+      <MarketingNotFoundContent
+        kicker={null}
+        title={t("loadErrorTitle")}
+        message={t("loadErrorSub")}
+      />
+    </main>
+  );
+}
+
 function PublicPuzzlePage() {
   const { id } = Route.useParams();
-  const t = useTranslations("publicCatalog");
   const { data: view, isError } = useQuery(viewQuery(id));
 
-  // A malformed id makes the query error (arg validation); treat it exactly like a nonexistent id.
+  // The loader already 404s a missing puzzle; this covers one removed (or a read failing) while
+  // the page is open, treated exactly like a nonexistent id.
   if (view === undefined && !isError) return null; // loader-prefetched; only a hard refetch passes here
-  if (view === null || isError) {
-    return (
-      <main className="mx-auto w-full max-w-[1200px] px-6 py-10">
-        <EmptyState title={t("notFound")} sub={t("notFoundSub")} />
-      </main>
-    );
-  }
+  if (view === null || isError) return <PuzzleNotFound />;
   return <PublicPuzzleDetail view={view} puzzleId={id} />;
 }
 
@@ -118,6 +145,7 @@ function PublicPuzzleDetail({
   puzzleId: string;
 }) {
   const t = useTranslations("publicCatalog");
+  const tDifficulty = useTranslations("puzzles.puzzles.difficulty");
   const { definition, rating, stats, availability } = view;
   const topics = [
     ...(definition.categoryName ? [definition.categoryName] : []),
@@ -133,9 +161,10 @@ function PublicPuzzleDetail({
 
   return (
     <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-10">
-      {/* Hero — mirrors the dashboard detail skeleton, minus member actions. */}
-      <section className="grid items-start gap-7 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm lg:max-w-[300px]">
+      {/* Hero — mirrors the dashboard detail skeleton, minus member actions. Two columns from md
+          and a shorter 4:3 cover on phones, so the cover never fills the first screen on its own. */}
+      <section className="grid items-start gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="bg-muted relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm md:aspect-square lg:max-w-[300px]">
           {definition.image ? (
             <ImageZoom src={definition.image} alt={definition.title} fill />
           ) : (
@@ -154,10 +183,10 @@ function PublicPuzzleDetail({
               .filter(Boolean)
               .map((part) => `${part} · `)
               .join("")}
-            <span className="font-mono">
-              {definition.pieceCount.toLocaleString()}
-            </span>{" "}
-            pieces
+            {t.rich("piecesCount", {
+              count: definition.pieceCount,
+              num: (chunks) => <span className="font-mono">{chunks}</span>,
+            })}
           </p>
           <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
             {rating.count > 0 && (
@@ -175,7 +204,7 @@ function PublicPuzzleDetail({
                   difficultyClasses(definition.difficulty),
                 )}
               >
-                {definition.difficulty}
+                {tDifficulty(definition.difficulty)}
               </Badge>
             )}
             {topics.map((topic, i) => (
@@ -253,7 +282,9 @@ function PublicPuzzleDetail({
             <div className="font-heading text-4xl font-bold leading-none">
               {availability.total}
             </div>
-            <div className="min-w-0 flex-1">
+            {/* A 12rem flex basis makes the avatars and CTA wrap to their own line on phones instead
+                of squeezing this text to one word per line. */}
+            <div className="min-w-0 flex-[1_1_12rem]">
               <div className="text-sm font-medium">
                 {t("copiesAvailableNow", { count: availability.total })}
               </div>
@@ -310,35 +341,42 @@ function PublicPuzzleDetail({
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <section>
           <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
-          <div className="mb-3.5 flex items-end gap-3.5">
-            <div className="font-heading text-foreground text-4xl font-bold leading-none">
-              {rating.rating}
-            </div>
-            <div className="pb-0.5">
-              <StarRating value={Math.round(rating.rating)} size="sm" />
-              <div className="text-muted-foreground mt-1 text-xs">
-                {t("ratingsCount", { count: rating.count })}
+          {rating.count === 0 ? (
+            // Unrated: say so rather than show a 0 score, empty stars and 0% bars.
+            <p className="text-muted-foreground text-sm">{t("noRatings")}</p>
+          ) : (
+            <>
+              <div className="mb-3.5 flex items-end gap-3.5">
+                <div className="font-heading text-foreground text-4xl font-bold leading-none">
+                  {rating.rating}
+                </div>
+                <div className="pb-0.5">
+                  <StarRating value={Math.round(rating.rating)} size="sm" />
+                  <div className="text-muted-foreground mt-1 text-xs">
+                    {t("ratingsCount", { count: rating.count })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {[5, 4, 3, 2, 1].map((star, i) => (
-              <div key={star} className="flex items-center gap-2.5">
-                <span className="text-muted-foreground inline-flex w-7 items-center justify-end gap-0.5 text-xs">
-                  {star}★
-                </span>
-                <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
-                  <span
-                    className="block h-full rounded-full bg-amber-400"
-                    style={{ width: `${rating.percentages[i]}%` }}
-                  />
-                </span>
-                <span className="text-muted-foreground w-9 text-right font-mono text-xs">
-                  {rating.percentages[i]}%
-                </span>
+              <div className="flex flex-col gap-1.5">
+                {[5, 4, 3, 2, 1].map((star, i) => (
+                  <div key={star} className="flex items-center gap-2.5">
+                    <span className="text-muted-foreground inline-flex w-7 items-center justify-end gap-0.5 text-xs">
+                      {star}★
+                    </span>
+                    <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+                      <span
+                        className="block h-full rounded-full bg-amber-400"
+                        style={{ width: `${rating.percentages[i]}%` }}
+                      />
+                    </span>
+                    <span className="text-muted-foreground w-9 text-right font-mono text-xs">
+                      {rating.percentages[i]}%
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </section>
         <PublicReviews puzzleId={puzzleId} />
       </div>

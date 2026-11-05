@@ -31,12 +31,14 @@
     "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw."
   },
   "notFound": {
-    "title": "Pagina Niet Gevonden",
+    "title": "Pagina niet gevonden",
     "description": "Oeps! De pagina die je zoekt bestaat niet.",
     "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
-    "backToHome": "Terug naar Home",
-    "browsePuzzles": "Puzzels Bladeren",
-    "backToDashboard": "Terug naar dashboard"
+    "backToHome": "Terug naar de homepage",
+    "browsePuzzles": "Puzzels bladeren",
+    "backToDashboard": "Terug naar dashboard",
+    "browseCatalogue": "Bekijk de catalogus",
+    "helpLinks": "Hulp nodig? Lees de <docs>documentatie</docs> of <contact>neem contact met ons op</contact>."
   },
   "navigation": {
     "home": "Home",
@@ -1785,15 +1787,19 @@
         "Een cookie die onthoudt dat je de cookiemelding hebt gezien",
         "Analyse-identifiers van PostHog, opgeslagen in cookies en local storage — alleen nadat je de cookiemelding hebt geaccepteerd"
       ],
-      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset."
+      "control": "Analyse is opt-in: die draait alleen nadat je de cookiemelding hebt geaccepteerd, en weiger je, dan wordt die nooit geladen. Je kunt cookies ook blokkeren of verwijderen via je browserinstellingen; JigSwap blijft werken, al moet je dan opnieuw inloggen en kunnen je voorkeuren worden gereset.",
+      "settingsButton": "Cookie-instellingen wijzigen"
     },
     "cookieConsent": {
-      "title": "We gebruiken cookies",
-      "description": "We gebruiken cookies om je de beste ervaring op onze website te geven. Lees ons cookiebeleid voor meer informatie over hoe we cookies gebruiken.",
-      "acceptText": "Accepteren",
-      "declineText": "Weigeren",
+      "title": "Cookie-instellingen",
+      "description": "We willen graag analyse gebruiken: PostHog, gehost in de EU, laat ons zien hoe JigSwap wordt gebruikt en welke fouten er optreden. Het draait alleen als je dat toestaat, en je kunt je keuze altijd wijzigen. Meer hierover in ons <link>cookiebeleid</link>.",
+      "acceptText": "Analyse toestaan",
+      "declineText": "Nee, bedankt",
       "learnMoreText": "Meer informatie",
-      "acceptanceText": "Door op \"Accepteren\" te klikken ga je akkoord met ons gebruik van cookies."
+      "acceptanceText": "Kies je \"Analyse toestaan\", dan ga je akkoord met analysecookies van PostHog.",
+      "currentGranted": "Je staat analyse nu toe.",
+      "currentDenied": "Je staat analyse nu niet toe.",
+      "closeSettings": "Cookie-instellingen sluiten"
     },
     "children": {
       "title": "Kinderen",
@@ -3824,7 +3830,10 @@
       "dashboard": "Dashboard",
       "openMenu": "Menu openen",
       "closeMenu": "Menu sluiten",
-      "switchLanguage": "Taal wijzigen"
+      "switchLanguage": "Taal wijzigen",
+      "toggleTheme": "Donkere modus aan/uit",
+      "menuLabel": "Menu",
+      "primaryNav": "Hoofdmenu"
     },
     "footer": {
       "tagline": "Legpuzzels ruilen, lenen en delen — toegankelijk en duurzaam, voor de hele gemeenschap.",
@@ -3834,6 +3843,7 @@
       "privacy": "Privacybeleid",
       "terms": "Algemene voorwaarden",
       "cookies": "Cookiebeleid",
+      "cookieSettings": "Cookie-instellingen",
       "madeBy": "Met 🧩 gemaakt door een familie van puzzelaars.",
       "country": "Nederland"
     },
@@ -3843,6 +3853,7 @@
       "heroLead": "Bouw je eigen puzzelbibliotheek, leen puzzels uit of ruil ze, en zie altijd bij wie je uitgeleende dozen zijn. Verbind met puzzelaars in heel Nederland.",
       "seeFeatures": "Bekijk de functies",
       "trustRow": "{count} puzzelaars ruilen al mee",
+      "trustRowEarly": "Word een van onze eerste puzzelaars",
       "stats": {
         "puzzlers": "Aangemelde puzzelaars",
         "catalog": "Puzzels in de catalogus",
@@ -3858,7 +3869,7 @@
         "step2Body": "Blader door de community, filter op moeilijkheid en stukjes, en vraag een puzzel te leen of in ruil.",
         "step3Title": "Leen uit & volg",
         "step3Body": "Leen uit voor even of voor onbepaalde tijd, en zie altijd bij wie je puzzel is.",
-        "link": "Lees hoe het werkt"
+        "link": "Bekijk alle vijf de stappen"
       },
       "rows": {
         "libraryEyebrow": "Jouw bibliotheek",
@@ -4048,7 +4059,7 @@
       "errorSubmit": "Er ging iets mis bij het versturen — probeer het opnieuw.",
       "errorBusy": "Er komen nu veel berichten binnen. Probeer het later opnieuw, of mail ons op <mail>{email}</mail>.",
       "submit": "Verstuur bericht",
-      "privacyNote": "Door te versturen ga je akkoord met ons privacybeleid.",
+      "privacyNote": "Door te versturen ga je akkoord met ons <link>privacybeleid</link>.",
       "sentTitle": "Bericht verstuurd!",
       "sentBody": "Bedankt voor je bericht. We nemen zo snel mogelijk contact met je op.",
       "sentAgain": "Nog een bericht sturen"
@@ -4071,8 +4082,8 @@
       "breadcrumbRoot": "Documentatie",
       "pagerPrevious": "Vorige",
       "pagerNext": "Volgende",
-      "mobileDocs": "Documentatie",
-      "mobileOpenNav": "Documentatienavigatie openen",
+      "pagerLabel": "Vorige en volgende pagina",
+      "mobileNavButton": "Documentatie<sr> (navigatie openen)</sr>",
       "mobileSearch": "Documentatie zoeken",
       "helpfulQuestion": "Was deze pagina nuttig?",
       "helpfulYes": "Ja",
@@ -4098,7 +4109,21 @@
       "about": "Over ons — JigSwap",
       "contact": "Contact — JigSwap",
       "privacy": "Privacybeleid — JigSwap",
-      "terms": "Algemene voorwaarden — JigSwap"
+      "terms": "Algemene voorwaarden — JigSwap",
+      "catalog": "Puzzelcatalogus — JigSwap",
+      "docs": "Documentatie — JigSwap",
+      "notFound": "Pagina niet gevonden — JigSwap"
+    },
+    "meta": {
+      "home": "Bouw je eigen puzzelbibliotheek, leen en ruil legpuzzels met andere puzzelaars en zie altijd bij wie je uitgeleende dozen zijn. Gratis aanmelden.",
+      "howItWorks": "Zo werkt JigSwap in vijf stappen: maak je profiel aan, vul je plank, vind een puzzel, spreek een lening of ruil af en zie altijd bij wie je dozen zijn.",
+      "features": "Een digitale puzzelplank, collecties, voltooiingen, uitlenen met overzicht en een community die je vertrouwt: alles wat JigSwap biedt om samen te puzzelen.",
+      "about": "JigSwap begon aan de keukentafel, als familieproject om makkelijk puzzels te zien en te ruilen met vrienden en familie. Lees hoe het is gegroeid.",
+      "contact": "Heb je een vraag, een idee of feedback over JigSwap? Neem contact met ons op.",
+      "privacy": "Hoe JigSwap met je persoonsgegevens omgaat: wat we verzamelen, waarvoor we het gebruiken en welke keuzes en rechten je hebt.",
+      "terms": "De voorwaarden voor het gebruik van JigSwap: je account, puzzels uitlenen en ruilen, en de spelregels die de community eerlijk en prettig houden.",
+      "catalog": "Blader door de puzzelcatalogus van de JigSwap-community: beoordelingen, reviews en ruilbeschikbaarheid van legpuzzels.",
+      "docs": "Handleidingen voor alles in JigSwap: je account, je puzzelbibliotheek, uitlenen en ruilen, puzzels ontdekken en op de hoogte blijven."
     }
   },
   "titles": {
@@ -5284,6 +5309,10 @@
     "title": "Puzzelcatalogus",
     "subtitle": "Elke puzzel die de JigSwap-community verzamelt, ruilt en uitleent.",
     "searchPlaceholder": "Zoek puzzels…",
+    "searchLabel": "Puzzels zoeken",
+    "brandLabel": "Merk",
+    "piecesLabel": "Aantal stukjes",
+    "resultsHeading": "Resultaten",
     "allBrands": "Alle merken",
     "allPieces": "Elk aantal stukjes",
     "piecesLt500": "Minder dan 500 stukjes",
@@ -5291,10 +5320,14 @@
     "pieces1000": "1.000 – 1.499 stukjes",
     "pieces1500": "1.500+ stukjes",
     "toSwap": "{count} te ruilen",
+    "piecesCount": "{count, plural, one {<num>#</num> stukje} other {<num>#</num> stukjes}}",
     "loadMore": "Meer laden",
     "noResults": "Geen puzzels gevonden voor \"{query}\"",
     "noResultsSub": "Probeer een merknaam of minder woorden",
+    "noResultsFiltered": "Geen puzzels gevonden met deze filters",
+    "noResultsFilteredSub": "Probeer een ander merk of aantal stukjes",
     "clearSearch": "Zoekopdracht wissen",
+    "clearFilters": "Filters wissen",
     "empty": "De catalogus is net begonnen",
     "emptySub": "Leden voegen dagelijks puzzels toe — kom snel terug.",
     "joinCta": "Word lid van JigSwap om te ruilen",
@@ -5311,13 +5344,17 @@
     "statCompletions": "Keer gelegd",
     "statAvgDays": "Gem. dagen om te leggen",
     "communityRating": "Communitybeoordeling",
-    "ratingsCount": "{count} beoordelingen",
+    "ratingsCount": "{count, plural, one {# beoordeling} other {# beoordelingen}}",
+    "noRatings": "Nog geen beoordelingen.",
     "reviews": "Reviews",
     "noReviews": "Nog geen reviews.",
     "anonymousReviewer": "Een JigSwap-lid",
     "logInToReview": "Log in om een review te schrijven",
     "notFound": "Puzzel niet gevonden",
-    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd."
+    "notFoundSub": "Deze puzzel is mogelijk uit de catalogus verwijderd.",
+    "loadErrorTitle": "We konden deze puzzel niet laden",
+    "loadErrorSub": "Er ging iets mis aan onze kant. Probeer het zo nog eens.",
+    "metaDescription": "{hasMaker, select, yes {{title} van {maker}} other {{title}}} — legpuzzel van {count, plural, one {# stukje} other {# stukjes}}. Beoordelingen, reviews en ruilbeschikbaarheid in de JigSwap-community."
   },
   "whatsNew": {
     "menuLabel": "Wat is er nieuw",

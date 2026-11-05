@@ -1,6 +1,6 @@
 import type { CaptureResult, PostHog } from "posthog-js";
 import {
-  readAnalyticsConsent,
+  currentAnalyticsConsent,
   writeAnalyticsConsent,
 } from "./analytics-consent";
 import { sanitizeAnalyticsEvent } from "./analytics-privacy";
@@ -16,10 +16,10 @@ let client: PostHog | null = null;
 let loading: Promise<PostHog | null> | null = null;
 const listeners = new Set<() => void>();
 
-// Called when consent is granted (the cookie banner's accept callback, or on
-// load when the consent cookie already says "granted"). Idempotent: the module
-// is imported and initialised at most once; granting again after a withdrawal
-// opts the same client back in.
+// Called only through lib/analytics-consent once consent is granted (the
+// cookie banner's "Allow analytics", or on load when the consent cookie already
+// says "granted"). Idempotent: the module is imported and initialised at most
+// once; granting again after a withdrawal opts the same client back in.
 export function initPostHog(): Promise<PostHog | null> {
   const key = import.meta.env.VITE_POSTHOG_KEY;
   if (!key || typeof window === "undefined") return Promise.resolve(null);
@@ -31,7 +31,8 @@ export function initPostHog(): Promise<PostHog | null> {
         defaults: "2025-05-24",
         capture_exceptions: true,
         debug: import.meta.env.DEV,
-        // Opting out also deletes PostHog's cookie and localStorage entry.
+        // Withdrawing consent (opt_out_capturing) also deletes PostHog's
+        // cookie and localStorage identifiers instead of leaving them behind.
         opt_out_persistence_by_default: true,
         // Runs on every event before it leaves the browser: drop it without
         // consent, then strip query strings from its URLs (SEC-59) and drop
@@ -66,9 +67,10 @@ function activate(posthog: PostHog | null): PostHog | null {
 
 // Withdraws analytics consent (GDPR Art. 7(3)). Records the refusal, so
 // PostHog is never loaded on later visits, then shuts down a PostHog running
-// in this page and deletes what it stored on the device. Declining in the
-// cookie banner goes through here too, so any control that reopens the banner
-// doubles as the withdrawal.
+// in this page and deletes what it stored on the device. The one shutdown path:
+// declining in the cookie banner reaches it through the consent store
+// (lib/analytics-consent), so any control that reopens the banner doubles as
+// the withdrawal.
 export async function withdrawAnalyticsConsent(): Promise<void> {
   writeAnalyticsConsent("denied");
   const posthog = loading ? await loading : null;
@@ -88,9 +90,10 @@ export async function withdrawAnalyticsConsent(): Promise<void> {
 }
 
 // Every event re-reads the consent cookie, so withdrawing in one tab also
-// silences PostHog in the member's other open tabs.
+// silences PostHog in the member's other open tabs. A browser that blocks
+// cookies has only this tab's own choice to go by.
 function requireAnalyticsConsent(event: CaptureResult): CaptureResult | null {
-  return readAnalyticsConsent(document.cookie) === "granted" ? event : null;
+  return currentAnalyticsConsent() === "granted" ? event : null;
 }
 
 function setClient(next: PostHog | null) {

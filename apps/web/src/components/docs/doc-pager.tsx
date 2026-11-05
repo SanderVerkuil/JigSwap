@@ -6,7 +6,10 @@ import { useTranslations } from "use-intl";
 export function DocPager({ pager }: { pager: Pager }) {
   const t = useTranslations("marketing.docs");
   return (
-    <nav className="grid grid-cols-2 gap-4 mt-14 pt-8 border-t border-mk-border max-[560px]:grid-cols-1">
+    <nav
+      aria-label={t("pagerLabel")}
+      className="grid grid-cols-2 gap-4 mt-14 pt-8 border-t border-mk-border max-[560px]:grid-cols-1"
+    >
       {pager.prev ? (
         <Link
           to="/docs/$"

@@ -10,14 +10,14 @@ JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt 
 
 ## Een account aanmaken
 
-1. Ga naar de JigSwap-landingspagina.
-2. Klik op **Registreren**.
+1. Ga naar een openbare JigSwap-pagina, zoals de [startpagina](/).
+2. Klik bovenaan de pagina op **Begin met ruilen**.
 3. Volg de stappen om je te registreren (e-mail/wachtwoord of een andere aangeboden inlogoptie).
 4. Zodra je geregistreerd bent, kom je terecht op het **Dashboard** van de app.
 
 ## Inloggen
 
-1. Klik op **Inloggen**.
+1. Klik bovenaan een openbare pagina op **Inloggen**. Op een telefoon of tablet staat die knop in het menu (☰).
 2. Voer je gegevens in.
 3. Je komt terecht op je persoonlijke dashboard.
 
@@ -25,7 +25,16 @@ JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt 
 
 ## Openbare pagina's (geen account nodig)
 
-Iedereen kan de **landingspagina** lezen, plus **Over**, **Functies**, **Hoe Het Werkt**, **Contact**, **Privacybeleid** en **Voorwaarden**, zonder in te loggen.
+Deze pagina's kan iedereen lezen zonder in te loggen:
+
+- De [startpagina](/), [Hoe het werkt](/how-it-works), [Functies](/features) en [Over ons](/about).
+- [Puzzels bekijken](/catalog): de gedeelde puzzelcatalogus.
+- Deze handleiding ([Documentatie](/docs)).
+- **Profielen van leden** (`/members/…`). Hoeveel een profiel laat zien,
+  hangt af van de instellingen van het lid; zie
+  [Zichtbaarheid & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
+- [Contact](/contact), het [Privacybeleid](/privacy) en de
+  [Algemene voorwaarden](/terms).
 
 ## Als je je account verwijdert
 
@@ -49,4 +58,4 @@ je beoordelingen en reacties, je ruilgeschiedenis, je bijdragen aan de
 catalogus en de puzzels die je verkocht, ruilde of weggaf, met je voltooiingen
 en uitleningen in hun geschiedenis (zonder foto's). Ze staan er als
 **Verwijderd lid**, zonder je naam, foto of profiel. In het
-**Privacybeleid** staan de details.
+[Privacybeleid](/privacy) staan de details.

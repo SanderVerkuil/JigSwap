@@ -27,10 +27,15 @@ import { pages } from "virtual:docs";
 export function DocsSearch({
   open,
   onOpenChange,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-}) {
+} & Pick<
+  React.ComponentProps<typeof DialogContent>,
+  "onOpenAutoFocus" | "onCloseAutoFocus"
+>) {
   const t = useTranslations("marketing.docs");
   const locale = useLocale();
   const navigate = useNavigate();
@@ -50,7 +55,11 @@ export function DocsSearch({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="overflow-hidden p-0">
+      <DialogContent
+        className="overflow-hidden p-0"
+        onOpenAutoFocus={onOpenAutoFocus}
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("searchTitle")}</DialogTitle>
           <DialogDescription>{t("searchDescription")}</DialogDescription>
@@ -59,7 +68,10 @@ export function DocsSearch({
           shouldFilter={false}
           className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3"
         >
+          {/* 16px on phones so iOS doesn't zoom the page when the input takes
+              focus; the shared CommandInput stays text-sm elsewhere. */}
           <CommandInput
+            className="text-base md:text-sm"
             placeholder={t("searchPlaceholder")}
             value={query}
             onValueChange={setQuery}

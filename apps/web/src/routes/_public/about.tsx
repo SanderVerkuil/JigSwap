@@ -7,15 +7,13 @@ import { JigPlank } from "@/components/marketing/plank";
 import { Reveal } from "@/components/marketing/reveal";
 import { Eyebrow, Section, SectionHead } from "@/components/marketing/section";
 import { Button } from "@/components/ui/button";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/about")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "about") }],
-  }),
+  head: ({ match }) => seoHead(match, "about"),
   component: AboutPage,
 });
 

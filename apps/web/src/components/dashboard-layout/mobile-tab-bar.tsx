@@ -84,6 +84,8 @@ export function MobileTabBar() {
     <>
       <nav
         ref={measureRef}
+        // The cookie banner lifts itself above the bar while this is on the page.
+        data-mobile-tab-bar=""
         aria-label={t("tabsLabel")}
         // position:sticky (not fixed) — it's the last flex child of the shell
         // column with the content row (flex-1) above it, so it lands at the

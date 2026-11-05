@@ -208,6 +208,41 @@ describe("withdrawAnalyticsConsent", () => {
     expect(getPostHog()).toBeNull();
   });
 
+  // The consent store is what the UI calls; these run the real pair of modules.
+  it("shuts down once when the consent store withdraws a grant that is still loading", async () => {
+    const { getPostHog } = await freshLoader();
+    const { grantAnalyticsConsent, withdrawAnalyticsConsent } =
+      await import("./analytics-consent");
+
+    const granting = grantAnalyticsConsent();
+    withdrawAnalyticsConsent();
+    await granting;
+
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
+    expect(readAnalyticsConsent(document.cookie)).toBe("denied");
+    expect(getPostHog()).toBeNull();
+  });
+
+  it("shuts down when another tab withdrew while posthog-js was loading", async () => {
+    const { getPostHog } = await freshLoader();
+    const { grantAnalyticsConsent } = await import("./analytics-consent");
+
+    const granting = grantAnalyticsConsent();
+    document.cookie = "cookieConsent=false; path=/";
+    await granting;
+
+    expect(consentCalls).toEqual([
+      "flags off",
+      "reset with new device id",
+      "opt_out_capturing",
+    ]);
+    expect(getPostHog()).toBeNull();
+  });
+
   it("opts back in, without an extra event, when consent is granted again", async () => {
     const { initPostHog, getPostHog, withdrawAnalyticsConsent } =
       await freshLoader();
@@ -225,6 +260,37 @@ describe("withdrawAnalyticsConsent", () => {
       captureEventName: false,
     });
     expect(getPostHog()).toBe(posthog);
+  });
+
+  it("lets events through on this tab's own choice when the browser blocks cookies", async () => {
+    clearCookies();
+    const cookie = vi
+      .spyOn(document, "cookie", "set")
+      .mockImplementation(() => {});
+    try {
+      await freshLoader();
+      const { grantAnalyticsConsent, withdrawAnalyticsConsent } =
+        await import("./analytics-consent");
+      await grantAnalyticsConsent();
+      const [, config] = init.mock.calls[0] as [
+        string,
+        { before_send: ((event: CaptureResult) => CaptureResult | null)[] },
+      ];
+      const requireConsent = config.before_send[0];
+      const event: CaptureResult = {
+        uuid: "u1",
+        event: "$pageview",
+        properties: {},
+      };
+
+      expect(consentCalls).toEqual([]);
+      expect(requireConsent?.(event)).toBe(event);
+
+      withdrawAnalyticsConsent();
+      expect(requireConsent?.(event)).toBeNull();
+    } finally {
+      cookie.mockRestore();
+    }
   });
 
   it("drops every event once consent is gone, even if withdrawn in another tab", async () => {

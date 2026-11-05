@@ -1,4 +1,5 @@
 import { SignUp } from "@/compat/clerk";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { pageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -13,15 +14,17 @@ export const Route = createFileRoute("/sign-up/$")({
 
 function SignUpPage() {
   return (
-    <div className="flex items-center justify-center bg-background min-h-svh">
-      <div className="w-full max-w-md">
-        {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
-            win; this only changes the no-param fallback from / to /dashboard. */}
-        <SignUp
-          appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
-          fallbackRedirectUrl="/dashboard"
-        />
-      </div>
-    </div>
+    <AuthShell>
+      {/* Explicit redirect_url query params (set by lib/require-auth.ts) still
+          win; this only changes the no-param fallback from / to /dashboard.
+          signInUrl keeps the card's footer link on our own sign-in page;
+          without it Clerk links to the instance's hosted Account Portal,
+          which has no way back to JigSwap. */}
+      <SignUp
+        appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
+        fallbackRedirectUrl="/dashboard"
+        signInUrl="/sign-in"
+      />
+    </AuthShell>
   );
 }

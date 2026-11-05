@@ -6,15 +6,13 @@ import { Reveal } from "@/components/marketing/reveal";
 import { Section, SectionHead } from "@/components/marketing/section";
 import { useStartHref } from "@/components/marketing/use-start-href";
 import { Button } from "@/components/ui/button";
-import { pageTitle } from "@/lib/page-title";
+import { seoHead } from "@/lib/seo-head";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_public/how-it-works")({
-  head: ({ match }) => ({
-    meta: [{ title: pageTitle(match.context, "howItWorks") }],
-  }),
+  head: ({ match }) => seoHead(match, "howItWorks"),
   component: HowItWorksPage,
 });
 
@@ -58,9 +56,9 @@ function HowItWorksPage() {
                     {n}
                   </span>
                   <div>
-                    <h3 className="font-mk-heading font-bold tracking-tight text-[22px] text-mk-text-strong">
+                    <h2 className="font-mk-heading font-bold tracking-tight text-[22px] text-mk-text-strong">
                       {t(`step${n}Title`)}
-                    </h3>
+                    </h2>
                     <p className="text-base leading-relaxed text-mk-text-muted mt-2 text-pretty">
                       {t(`step${n}Body`)}
                     </p>
