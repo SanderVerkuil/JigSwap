@@ -642,6 +642,35 @@ describe("sharing.acceptCircleInvite", () => {
     }
   });
 
+  // SEC-45: Alice's invite must not seat Carol next to a member she blocked or who blocked her.
+  test("a block either way with any other current member refuses generically", async () => {
+    for (const [blocker, blocked] of [
+      ["carol", "dave"],
+      ["dave", "carol"],
+      ["bob", "carol"],
+    ] as const) {
+      const t = convexTest(schema, modules);
+      const ids = await invited(t);
+      await block(t, ids[blocker], ids[blocked]);
+
+      await expectConvexCode(
+        accept(t, "carol", ids.inviteId),
+        "InviteNotFound",
+      );
+      expect((await isSeated(t, ids.circleId, ids.carol)).seat).toBeNull();
+      expect((await inviteRow(t, ids.inviteId))?.status).toBe("pending");
+    }
+  });
+
+  test("a block with someone outside the circle doesn't stand in the way", async () => {
+    const t = convexTest(schema, modules);
+    const { carol, eve, circleId, inviteId } = await invited(t);
+    await block(t, carol, eve);
+
+    expect(await accept(t, "carol", inviteId)).toBe(circleId);
+    expect((await isSeated(t, circleId, carol)).seat).not.toBeNull();
+  });
+
   test("an inviter who is no longer an Admin can't bring anyone in (even if the invite survived)", async () => {
     const t = convexTest(schema, modules);
     const { bob, carol, circleId, inviteId } = await invited(t, "bob");
@@ -804,8 +833,9 @@ describe("an inviter who leaves, is removed or loses Admin", () => {
   });
 });
 
-// The web shows a non-owner Admin the same manage controls as the owner, except Delete; these pin
-// that the server still refuses what only the owner's seat allows.
+// The web shows a non-owner Admin the owner's manage controls for seats below Admin and for their
+// own seat, but not Delete and not other Admins' seats; these pin that the server refuses what only
+// the owner's seat allows.
 describe("a non-owner Admin", () => {
   test("can't remove the owner, demote the owner or delete the circle", async () => {
     const t = convexTest(schema, modules);
@@ -844,24 +874,99 @@ describe("a non-owner Admin", () => {
     );
   });
 
-  test("demotes another Admin, whose pending invites are then withdrawn", async () => {
+  // SEC-86: Admins below the owner are peers; only the owner removes or demotes an Admin.
+  test("can't remove or demote another Admin, whose invites then stay pending", async () => {
     const t = convexTest(schema, modules);
     const { carol, dave, circleId } = await seed(t);
-    await as(t, "alice").mutation(
-      api.sharing.changePermission.changePermission,
-      { circleId, memberId: dave, permission: "Admin" },
-    );
+    await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+      circleId,
+      memberId: dave,
+      permission: "Admin",
+    });
     await mutualFollow(t, dave, carol);
     const fromDave = await invite(t, "dave", circleId, carol);
+
+    for (const permission of ["Exchange", "ViewOnly"] as const) {
+      await expectConvexCode(
+        as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+          circleId,
+          memberId: dave,
+          permission,
+        }),
+        "NotCircleOwner",
+      );
+    }
+    await expectConvexCode(
+      as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+        circleId,
+        memberId: dave,
+      }),
+      "NotCircleOwner",
+    );
+
+    expect((await isSeated(t, circleId, dave)).seat?.permission).toBe("Admin");
+    expect((await isSeated(t, circleId, dave)).link).toBe(true);
+    expect((await inviteRow(t, fromDave))?.status).toBe("pending");
+  });
+
+  test("still changes and removes members below Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { dave, circleId } = await seed(t);
 
     await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
       circleId,
       memberId: dave,
       permission: "Exchange",
     });
+    expect((await isSeated(t, circleId, dave)).seat?.permission).toBe(
+      "Exchange",
+    );
+    await as(t, "bob").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: dave,
+    });
+    expect(await isSeated(t, circleId, dave)).toEqual({
+      seat: null,
+      link: false,
+    });
+  });
 
-    expect((await inviteRow(t, fromDave))?.status).toBe("revoked");
-    await expectConvexCode(accept(t, "carol", fromDave), "InviteNotPending");
+  test("steps down themselves, whose pending invites are then withdrawn", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, carol, circleId } = await seed(t);
+    await mutualFollow(t, bob, carol);
+    const fromBob = await invite(t, "bob", circleId, carol);
+
+    await as(t, "bob").mutation(api.sharing.changePermission.changePermission, {
+      circleId,
+      memberId: bob,
+      permission: "Exchange",
+    });
+
+    expect((await isSeated(t, circleId, bob)).seat?.permission).toBe(
+      "Exchange",
+    );
+    expect((await inviteRow(t, fromBob))?.status).toBe("revoked");
+    await expectConvexCode(accept(t, "carol", fromBob), "InviteNotPending");
+  });
+
+  test("the owner demotes and removes an Admin", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      { circleId, memberId: bob, permission: "ViewOnly" },
+    );
+    await as(t, "alice").mutation(
+      api.sharing.changePermission.changePermission,
+      { circleId, memberId: bob, permission: "Admin" },
+    );
+    await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
+      circleId,
+      memberId: bob,
+    });
+    expect((await isSeated(t, circleId, bob)).seat).toBeNull();
   });
 });
 
@@ -1422,6 +1527,100 @@ describe("circle invite notifications", () => {
     expect(await notificationsOf(t, carol)).toEqual([]);
   });
 
+  // SEC-45: accept refuses a block either way between the invitee and ANY current member, so
+  // every surface that offers the invite must agree: her list, the bell, email and push.
+  for (const [blocker, blocked, label] of [
+    ["carol", "dave", "the invitee blocked another member"],
+    ["dave", "carol", "another member blocked the invitee"],
+    ["bob", "carol", "a co-Admin blocked the invitee"],
+  ] as const) {
+    test(`once ${label}, the invite is no longer on offer anywhere`, async () => {
+      const t = convexTest(schema, modules);
+      const ids = await seed(t);
+      await mutualFollow(t, ids.alice, ids.carol);
+      const inviteId = await invite(t, "alice", ids.circleId, ids.carol);
+      await flushScheduled(t);
+      await block(t, ids[blocker], ids[blocked]);
+
+      expect(
+        await as(t, "carol").query(
+          api.sharing.listMyCircleInvites.listMyCircleInvites,
+          {},
+        ),
+      ).toEqual([]);
+      const [view] = await viewsOf(t, "carol");
+      expect(view.state).toBe("unavailable");
+      expect(view.context.circleName).toBeUndefined();
+      expect(view.href).toBe("/circles");
+      expect(
+        await t.query(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: ids.carol,
+            type: "circle_invite_received",
+            relatedId: inviteId,
+            actorId: ids.alice,
+            subject: { kind: "circleInvite", inviteId },
+          },
+        ),
+      ).toBeNull();
+    });
+
+    test(`when ${label} before dispatch, no notification is created`, async () => {
+      const t = convexTest(schema, modules);
+      const ids = await seed(t);
+      await mutualFollow(t, ids.alice, ids.carol);
+      await invite(t, "alice", ids.circleId, ids.carol);
+      await block(t, ids[blocker], ids[blocked]);
+      await flushScheduled(t);
+
+      expect(await notificationsOf(t, ids.carol)).toEqual([]);
+    });
+  }
+
+  test("an invite revoked before dispatch notifies nobody", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await revoke(t, "alice", inviteId);
+    await flushScheduled(t);
+
+    expect(await notificationsOf(t, carol)).toEqual([]);
+  });
+
+  test("a block with someone outside the circle leaves the invite on offer", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, carol, eve, circleId } = await seed(t);
+    await mutualFollow(t, alice, carol);
+    const inviteId = await invite(t, "alice", circleId, carol);
+    await block(t, carol, eve);
+    await flushScheduled(t);
+
+    const listed = await as(t, "carol").query(
+      api.sharing.listMyCircleInvites.listMyCircleInvites,
+      {},
+    );
+    expect(listed.map((v) => v.inviteId)).toEqual([inviteId]);
+    const [view] = await viewsOf(t, "carol");
+    expect(view.context.circleName).toBe("Saturday Puzzlers");
+    expect(view.href).toBe(`/circles?invite=${inviteId}`);
+    expect(
+      (
+        await t.query(
+          internal.notifications.resolveForDelivery.resolveForDelivery,
+          {
+            recipientId: carol,
+            type: "circle_invite_received",
+            relatedId: inviteId,
+            actorId: alice,
+            subject: { kind: "circleInvite", inviteId },
+          },
+        )
+      )?.params.circleName,
+    ).toBe("Saturday Puzzlers");
+  });
+
   test("circle_invite_received is email-eligible; circle_invite_accepted is in-app/push only", async () => {
     expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_received")).toBe(true);
     expect(EMAIL_ELIGIBLE_TYPES.has("circle_invite_accepted")).toBe(false);
@@ -1440,6 +1639,8 @@ describe("circle invite notifications", () => {
       { type: "circle_invite_accepted", channel: "email", enabled: true },
     );
     const inviteId = await invite(t, "alice", circleId, carol);
+    // Dispatched while still on offer (an invite answered before dispatch notifies nobody).
+    await flushScheduled(t);
     await accept(t, "carol", inviteId);
     await flushScheduled(t);
 

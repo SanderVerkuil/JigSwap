@@ -27,6 +27,18 @@ const toDomain = (row: Doc<"householdInvites">): HouseholdInvite =>
 export const convexHouseholdInviteRepository = (
   ctx: MutationCtx,
 ): HouseholdInviteRepository => {
+  const pendingRowsOf = async (
+    householdId: HouseholdId,
+  ): Promise<Doc<"householdInvites">[]> =>
+    (
+      await ctx.db
+        .query("householdInvites")
+        .withIndex("by_household", (q) =>
+          q.eq("householdId", householdId as string),
+        )
+        .collect()
+    ).filter((row) => row.status === "pending");
+
   const rowById = (
     id: HouseholdInviteId,
   ): Promise<Doc<"householdInvites"> | null> =>
@@ -54,6 +66,10 @@ export const convexHouseholdInviteRepository = (
       return row ? toDomain(row) : null;
     },
 
+    async listPendingForHousehold(householdId: HouseholdId) {
+      return (await pendingRowsOf(householdId)).map(toDomain);
+    },
+
     async save(invite: HouseholdInvite) {
       const state = invite.toState();
       const row = {
@@ -76,14 +92,8 @@ export const convexHouseholdInviteRepository = (
     },
 
     async removePendingForHousehold(householdId: HouseholdId) {
-      const rows = await ctx.db
-        .query("householdInvites")
-        .withIndex("by_household", (q) =>
-          q.eq("householdId", householdId as string),
-        )
-        .collect();
-      for (const row of rows) {
-        if (row.status === "pending") await ctx.db.delete(row._id);
+      for (const row of await pendingRowsOf(householdId)) {
+        await ctx.db.delete(row._id);
       }
     },
   };

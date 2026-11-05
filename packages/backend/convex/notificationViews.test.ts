@@ -468,6 +468,13 @@ describe("household_invite_received live state", () => {
     invitee?: Id<"users">,
   ) =>
     s.t.run(async (ctx) => {
+      // The inviter runs hh-1: a pending invite is live only while its inviter is the admin.
+      await ctx.db.insert("householdMembers", {
+        householdId: "hh-1",
+        memberId: s.priv,
+        role: "admin",
+        joinedAt: now,
+      });
       if (status) {
         await ctx.db.insert("householdInvites", {
           aggregateId: "inv-1",

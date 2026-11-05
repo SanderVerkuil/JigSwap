@@ -153,11 +153,12 @@ export class SharingError extends DomainError {
     );
   }
 
-  // Only the circle's owner may delete it; an Admin seat is not enough.
+  // Only the circle's owner may delete it, or remove or demote another Admin; an Admin seat is not
+  // enough.
   static notCircleOwner(): SharingError {
     return new SharingError(
       "NotCircleOwner",
-      "Only the circle owner may delete the circle",
+      "Only the circle owner may do this",
     );
   }
 

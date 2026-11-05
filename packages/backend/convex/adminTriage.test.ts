@@ -168,4 +168,24 @@ describe("identity/isCurrentUserAdmin", () => {
       ),
     ).toBe(true);
   });
+
+  // Only the versioned template's `metadata` claim (Clerk public_metadata) counts. A flat `role`
+  // claim could come from a template that maps something else, so it never grants admin.
+  test("false for a flat role claim outside metadata", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    const asFlatRole = t.withIdentity({
+      subject: "clerk_alice",
+      role: "admin",
+    });
+    expect(
+      await asFlatRole.query(
+        api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
+        {},
+      ),
+    ).toBe(false);
+    await expect(
+      asFlatRole.query(api.contact.listContactMessages.listContactMessages, {}),
+    ).rejects.toThrow(/Forbidden/);
+  });
 });

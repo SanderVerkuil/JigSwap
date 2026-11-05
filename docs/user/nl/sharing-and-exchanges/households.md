@@ -52,8 +52,9 @@ e-mail sturen.
 2. Klik op **Uitnodigen** naast de persoon.
 
 Diegene staat onder **Wacht op antwoord** op het tabblad **Leden** tot er een
-antwoord is. Wil je de uitnodiging intrekken, klik dan ernaast op
-**Intrekken** en bevestig.
+antwoord is. Een uitnodiging zonder antwoord vervalt na 14 dagen; daarna kun
+je diegene opnieuw uitnodigen. Wil je de uitnodiging intrekken, klik dan
+ernaast op **Intrekken** en bevestig.
 
 ### Openstaande uitnodigingen bekijken en intrekken
 
@@ -256,8 +257,9 @@ naast diegene, kies **Uit het huishouden verwijderen** en bevestig. Diens puzzel
 met diegene mee.
 
 Vertrekt de beheerder, dan wordt het lid dat het langst in het huishouden zit
-de nieuwe beheerder. Ben je het laatste lid, dan wordt het huishouden opgeheven
-en vervallen openstaande uitnodigingen.
+de nieuwe beheerder. Uitnodigingen die de vertrokken beheerder heeft verstuurd
+en waarop nog geen antwoord is, vervallen. Ben je het laatste lid, dan wordt
+het huishouden opgeheven en vervallen openstaande uitnodigingen.
 
 Een lid dat zijn account verwijdert, verlaat het huishouden op dezelfde manier:
 was het de beheerder, dan neemt het lid dat er het langst in zit het over.

@@ -17,6 +17,7 @@ import {
 } from ".";
 import { toMemberId } from "../../../shared-kernel";
 import {
+  HOUSEHOLD_INVITE_TTL_MS,
   HOUSEHOLD_JOIN_REQUEST_TTL_MS,
   HouseholdId,
   HouseholdInviteId,
@@ -91,6 +92,21 @@ const invite = async (
 const accept = (actorId: typeof ann, inviteId: HouseholdInviteId) =>
   makeAcceptHouseholdInvite(deps)({ actorId, inviteId });
 
+// Move the clock to the moment every invite sent so far has lapsed.
+const lapseInvites = () =>
+  clock.set(new Date(clock.now().getTime() + HOUSEHOLD_INVITE_TTL_MS));
+
+// Put an invite back as it was read before a departure withdrew it: a leftover stored before
+// invites were withdrawn on leave or removal.
+const keepLeftover = async (
+  inviteId: HouseholdInviteId,
+  depart: () => Promise<unknown>,
+) => {
+  const leftover = await invites.findById(inviteId);
+  await depart();
+  if (leftover) await invites.save(leftover);
+};
+
 describe("createHousehold", () => {
   it("founds a household with the actor as admin", async () => {
     const id = await create();
@@ -159,6 +175,33 @@ describe("inviteToHousehold", () => {
     expect(result.isErr && result.error.code).toBe("DuplicateInvite");
   });
 
+  it("replaces a lapsed pending invite instead of answering DuplicateInvite", async () => {
+    await create();
+    const lapsed = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const fresh = await invite();
+    expect(fresh).not.toBe(lapsed);
+    expect(await invites.findById(lapsed)).toBeNull();
+    expect((await invites.findById(fresh))?.status).toBe("pending");
+    expect(events.names()).toEqual(["HouseholdInviteSent"]);
+    expect((await accept(bob, fresh)).isOk).toBe(true);
+  });
+
+  it("replaces a leftover invite from a former admin instead of answering DuplicateInvite", async () => {
+    await create();
+    await accept(bob, await invite());
+    const leftover = await invite(ann, cat);
+    await keepLeftover(leftover, () =>
+      makeLeaveHousehold(deps)({ actorId: ann }),
+    );
+
+    const fresh = await invite(bob, cat);
+    expect(await invites.findById(leftover)).toBeNull();
+    expect((await invites.findById(fresh))?.inviterId).toBe(bob);
+  });
+
   it("rejects inviting yourself (you are already in your household)", async () => {
     await create();
     const result = await makeInviteToHousehold(deps)({
@@ -195,6 +238,52 @@ describe("acceptHouseholdInvite", () => {
   it("rejects an unknown invite", async () => {
     const result = await accept(bob, "nope" as HouseholdInviteId);
     expect(result.isErr && result.error.code).toBe("InviteNotFound");
+  });
+
+  it("refuses a lapsed invite as missing, changing nothing", async () => {
+    const householdId = await create();
+    const inviteId = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const result = await accept(bob, inviteId);
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+    expect((await invites.findById(inviteId))?.status).toBe("pending");
+    expect((await households.findById(householdId))?.isMember(bob)).toBe(false);
+    expect(events.published).toEqual([]);
+  });
+
+  it("refuses as missing a leftover invite whose inviter is no longer the admin, changing nothing", async () => {
+    // Bob invites Cat, then leaves; Ann takes over. Bob's invite no longer speaks for the household.
+    const householdId = await create(bob);
+    await accept(ann, await invite(bob, ann));
+    const toCat = await invite(bob, cat);
+    await keepLeftover(toCat, () => makeLeaveHousehold(deps)({ actorId: bob }));
+    events.published.length = 0;
+
+    const result = await accept(cat, toCat);
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+    expect((await invites.findById(toCat))?.status).toBe("pending");
+    expect((await households.findById(householdId))?.isMember(cat)).toBe(false);
+    expect(events.published).toEqual([]);
+  });
+
+  it("refuses such an invite before asking an invitee in another household to leave theirs", async () => {
+    await create(bob);
+    await accept(ann, await invite(bob, ann));
+    const toCat = await invite(bob, cat);
+    await keepLeftover(toCat, () => makeLeaveHousehold(deps)({ actorId: bob }));
+    await create(cat);
+
+    const result = await accept(cat, toCat);
+    expect(result.isErr && result.error.code).toBe("InviteNotFound");
+  });
+
+  it("still accepts an invite just before it lapses", async () => {
+    await create();
+    const inviteId = await invite();
+    clock.set(new Date(clock.now().getTime() + HOUSEHOLD_INVITE_TTL_MS - 1));
+    expect((await accept(bob, inviteId)).isOk).toBe(true);
   });
 
   it("rejects when the invitee joined another household meanwhile", async () => {
@@ -268,6 +357,20 @@ describe("acceptHouseholdInvite", () => {
       expect((await households.findById(annHousehold))?.isMember(bob)).toBe(
         true,
       );
+    });
+
+    it("an admin who switches withdraws the invites they sent from the household they leave", async () => {
+      await create();
+      const bobHousehold = await create(bob);
+      await accept(cat, await invite(bob, cat));
+      const toDan = await invite(bob, dan);
+      const inviteId = await invite();
+
+      expect((await switchTo(bob, inviteId)).isOk).toBe(true);
+      expect((await households.findById(bobHousehold))?.isAdmin(cat)).toBe(
+        true,
+      );
+      expect(await invites.findById(toDan)).toBeNull();
     });
 
     it("without the flag nothing changes", async () => {
@@ -372,12 +475,12 @@ describe("revokeHouseholdInvite", () => {
     expect((await households.findById(householdId))?.isMember(bob)).toBe(false);
   });
 
-  it("lets the current admin revoke an invite sent before a handover", async () => {
+  it("lets the current admin revoke a leftover invite sent before a handover", async () => {
     await create();
     const toBob = await invite();
     expect((await accept(bob, toBob)).isOk).toBe(true);
     const toCat = await invite(ann, cat);
-    await makeLeaveHousehold(deps)({ actorId: ann });
+    await keepLeftover(toCat, () => makeLeaveHousehold(deps)({ actorId: ann }));
     const result = await makeRevokeHouseholdInvite(deps)({
       actorId: bob,
       inviteId: toCat,
@@ -429,6 +532,36 @@ describe("leaveHousehold", () => {
     expect(await households.findByMember(bob)).toBeNull();
   });
 
+  it("withdraws the invites a leaving admin sent; the invitee is refused", async () => {
+    // The SEC-31 repro: Bob invites Cat, then leaves; Cat must not get into Ann's household.
+    const householdId = await create(bob);
+    await accept(ann, await invite(bob, ann));
+    const toCat = await invite(bob, cat);
+
+    const result = await makeLeaveHousehold(deps)({ actorId: bob });
+    expect(result.isOk && result.value).toEqual({ dissolved: false });
+    expect(await invites.findById(toCat)).toBeNull();
+    const accepted = await accept(cat, toCat);
+    expect(accepted.isErr && accepted.error.code).toBe("InviteNotFound");
+    expect((await households.findById(householdId))?.isMember(cat)).toBe(false);
+  });
+
+  it("keeps the invites of the admin who stays when a member leaves", async () => {
+    await create();
+    await accept(bob, await invite());
+    const toCat = await invite(ann, cat);
+    await makeLeaveHousehold(deps)({ actorId: bob });
+    expect((await invites.findById(toCat))?.status).toBe("pending");
+  });
+
+  it("withdraws a leftover invite to the member who leaves", async () => {
+    await create();
+    const toBob = await invite();
+    await keepLeftover(toBob, () => accept(bob, toBob));
+    await makeLeaveHousehold(deps)({ actorId: bob });
+    expect(await invites.findById(toBob)).toBeNull();
+  });
+
   it("dissolves on last leave and drops pending invites", async () => {
     const householdId = await create();
     const inviteId = await invite();
@@ -472,6 +605,26 @@ describe("removeHouseholdMember", () => {
     });
     expect(result.isOk).toBe(true);
     expect(await households.findByMember(bob)).toBeNull();
+  });
+
+  it("withdraws a leftover invite to the removed member, so they can't rejoin with it", async () => {
+    const householdId = await create();
+    const toBob = await invite();
+    await keepLeftover(toBob, () => accept(bob, toBob));
+
+    await makeRemoveHouseholdMember(deps)({ actorId: ann, memberId: bob });
+    expect(await invites.findById(toBob)).toBeNull();
+    const rejoined = await accept(bob, toBob);
+    expect(rejoined.isErr && rejoined.error.code).toBe("InviteNotFound");
+    expect((await households.findById(householdId))?.isMember(bob)).toBe(false);
+  });
+
+  it("keeps the admin's other pending invites", async () => {
+    await create();
+    await accept(bob, await invite());
+    const toCat = await invite(ann, cat);
+    await makeRemoveHouseholdMember(deps)({ actorId: ann, memberId: bob });
+    expect((await invites.findById(toCat))?.status).toBe("pending");
   });
 
   it("rejects a non-admin", async () => {
@@ -616,6 +769,43 @@ describe("joinHouseholdByLink", () => {
       "HouseholdInviteAccepted",
       "HouseholdMemberJoined",
     ]);
+  });
+
+  it("does not reuse a lapsed pending invite: a fresh one is made and accepted", async () => {
+    const householdId = await create();
+    const lapsed = await invite();
+    lapseInvites();
+    events.published.length = 0;
+
+    const result = await join(bob);
+    expect(result.isOk && result.value).toBe(householdId);
+    expect(await invites.findById(lapsed)).toBeNull();
+    expect(
+      (await invites.findById("household-invite-2" as HouseholdInviteId))
+        ?.status,
+    ).toBe("accepted");
+    expect(events.names()).toEqual([
+      "HouseholdInviteAccepted",
+      "HouseholdMemberJoined",
+    ]);
+  });
+
+  it("does not reuse a leftover invite from a former admin: the link's owner invites afresh", async () => {
+    const householdId = await create();
+    await accept(bob, await invite());
+    const leftover = await invite(ann, cat);
+    await keepLeftover(leftover, () =>
+      makeLeaveHousehold(deps)({ actorId: ann }),
+    );
+
+    const result = await join(cat, bob);
+    expect(result.isOk && result.value).toBe(householdId);
+    expect(await invites.findById(leftover)).toBeNull();
+    const fresh = await invites.findById(
+      "household-invite-3" as HouseholdInviteId,
+    );
+    expect(fresh?.inviterId).toBe(bob);
+    expect(fresh?.status).toBe("accepted");
   });
 
   it("rejects a member who is already in a household, publishing nothing", async () => {
@@ -800,6 +990,20 @@ describe("household join requests", () => {
         },
         { name: "HouseholdMemberJoined", memberId: bob },
       ]);
+    });
+
+    it("uses up the requester's pending invite from that household, so a later removal is final", async () => {
+      const household = await create();
+      const toBob = await invite();
+      const id = await asked(bob, household);
+
+      expect(await outcome(ann, id)).toBe("joined");
+      expect(await invites.findById(toBob)).toBeNull();
+
+      await makeRemoveHouseholdMember(deps)({ actorId: ann, memberId: bob });
+      const rejoined = await accept(bob, toBob);
+      expect(rejoined.isErr && rejoined.error.code).toBe("InviteNotFound");
+      expect(await households.findByMember(bob)).toBeNull();
     });
 
     it("switches a sole member: their household is dissolved with its pending invites", async () => {

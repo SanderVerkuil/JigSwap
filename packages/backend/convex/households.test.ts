@@ -382,6 +382,130 @@ describe("leaving, removal and dissolution", () => {
     ).toBeNull();
   });
 
+  // SEC-31: an invite speaks for the household only while the admin who sent it runs it.
+  test("the admin leaving withdraws the invites they sent; the invitee is refused", async () => {
+    const t = convexTest(schema, modules);
+    const { cat } = await twoMemberHousehold(t);
+    const toCat = await as(t, "ann").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: cat },
+    );
+    await flushScheduled(t);
+
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+
+    expect(
+      await as(t, "cat").query(
+        api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+        {},
+      ),
+    ).toEqual([]);
+    expect(
+      (
+        await as(t, "bob").query(
+          api.household.getMyHousehold.getMyHousehold,
+          {},
+        )
+      )?.pendingInvites,
+    ).toEqual([]);
+    await expectConvexCode(
+      as(t, "cat").mutation(
+        api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+        { inviteId: toCat },
+      ),
+      "InviteNotFound",
+    );
+    expect(
+      await as(t, "cat").query(api.household.getMyHousehold.getMyHousehold, {}),
+    ).toBeNull();
+  });
+
+  test("a leftover invite from a former admin is hidden everywhere and refused; the new admin may invite again", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, cat } = await twoMemberHousehold(t);
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    // A pending invite from Ann stored before invites were withdrawn on leave, with its
+    // notification.
+    await t.run(async (ctx) => {
+      const [membership] = await ctx.db.query("householdMembers").collect();
+      const now = Date.now();
+      await ctx.db.insert("householdInvites", {
+        aggregateId: "leftover",
+        householdId: membership!.householdId,
+        inviterId: ann,
+        inviteeId: cat,
+        status: "pending",
+        createdAt: now,
+      });
+      await ctx.db.insert("notifications", {
+        aggregateId: "notif-leftover",
+        userId: cat,
+        type: "household_invite_received",
+        channel: "inApp",
+        isRead: false,
+        createdAt: now,
+        actorIds: [ann],
+        actorCount: 1,
+        subject: { kind: "householdInvite", inviteId: "leftover" },
+      });
+    });
+
+    expect(
+      await as(t, "cat").query(
+        api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+        {},
+      ),
+    ).toEqual([]);
+    expect(
+      (
+        await as(t, "bob").query(
+          api.household.getMyHousehold.getMyHousehold,
+          {},
+        )
+      )?.pendingInvites,
+    ).toEqual([]);
+    expect(
+      (
+        await as(t, "cat").query(api.onboarding.getQuickStart.getQuickStart, {})
+      ).steps.find((s) => s.id === "household"),
+    ).toMatchObject({ pendingInvite: false });
+    const { page } = await as(t, "cat").query(
+      api.notifications.listMyNotificationViews.listMyNotificationViews,
+      { paginationOpts: { numItems: 10, cursor: null } },
+    );
+    expect(page[0]).toMatchObject({
+      availableActions: [],
+      resolvedAs: "expired",
+    });
+    await expectConvexCode(
+      as(t, "cat").mutation(
+        api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+        { inviteId: "leftover" },
+      ),
+      "InviteNotFound",
+    );
+
+    // Bob, the admin now, invites Cat himself: no DuplicateInvite, the leftover gives way.
+    const fresh = await as(t, "bob").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: cat },
+    );
+    expect(
+      (
+        await as(t, "cat").query(
+          api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+          {},
+        )
+      ).map((i) => i.inviteId),
+    ).toEqual([fresh]);
+  });
+
   test("leaving without a household is rejected", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

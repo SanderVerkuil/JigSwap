@@ -6,9 +6,13 @@ import { switchHousehold } from "./switch-household";
 
 // The invitee accepts: the authoritative at-most-one-household check happens here (they may have
 // joined or founded another household since the invite was sent), and the household must still
-// exist. An invitee in another household is refused (AlreadyInHousehold) unless they asked to
-// leave it (leaveCurrentHousehold): then they leave it (the last member dissolves it and its
-// pending invites; an admin hands over to the longest-standing member) and join, in one step.
+// exist. A lapsed invite (HOUSEHOLD_INVITE_TTL_MS after it was sent), or one whose inviter is no
+// longer the household's admin, answers InviteNotFound, as if it had never been sent: an invite
+// speaks for the household only while the admin who sent it runs it. Both are refused before the
+// invitee is asked to leave another household. An invitee in another household is refused
+// (AlreadyInHousehold) unless they asked to leave it (leaveCurrentHousehold): then they leave it
+// (the last member dissolves it and its pending invites; an admin hands over to the
+// longest-standing member) and join, in one step.
 // Every check runs before anything is persisted, so a refusal changes nothing; the composition
 // root throws on any error, so the transaction never ends in zero or two households.
 export const makeAcceptHouseholdInvite =
@@ -16,12 +20,20 @@ export const makeAcceptHouseholdInvite =
     deps: Pick<HouseholdDeps, "households" | "invites" | "events" | "clock">,
   ): AcceptHouseholdInvite =>
   async (cmd) => {
-    const invite = await deps.invites.findById(cmd.inviteId);
-    if (!invite) return err(HouseholdApplicationError.inviteNotFound());
-
     const now = deps.clock.now();
+    const invite = await deps.invites.findById(cmd.inviteId);
+    if (!invite || invite.isExpired(now)) {
+      return err(HouseholdApplicationError.inviteNotFound());
+    }
+
     const accepted = invite.accept(cmd.actorId, now);
     if (accepted.isErr) return err(accepted.error);
+
+    const household = await deps.households.findById(invite.householdId);
+    if (!household) return err(HouseholdApplicationError.householdNotFound());
+    if (!household.isAdmin(invite.inviterId)) {
+      return err(HouseholdApplicationError.inviteNotFound());
+    }
 
     // The household the invitee is in now, when it is another one than the invite's.
     const found = await deps.households.findByMember(cmd.actorId);
@@ -29,8 +41,6 @@ export const makeAcceptHouseholdInvite =
     if (current && !cmd.leaveCurrentHousehold) {
       return err(HouseholdApplicationError.alreadyInHousehold());
     }
-    const household = await deps.households.findById(invite.householdId);
-    if (!household) return err(HouseholdApplicationError.householdNotFound());
 
     const switched = await switchHousehold(deps, {
       memberId: cmd.actorId,

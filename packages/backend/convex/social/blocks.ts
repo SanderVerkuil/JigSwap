@@ -2,6 +2,7 @@ import { ConversationApplicationError, type MemberId } from "@jigswap/domain";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { cannotReplyError, toConvexError } from "../conversation/errors";
+import { isActiveMember } from "../identity/requireActiveMember";
 
 // Member blocks (spec 2.6): the read-side helpers every gate shares. A block is silent and works
 // both ways, so gates ask "blocked either way" and refuse with the SAME generic error a lost
@@ -102,12 +103,16 @@ export const assertPairNotBlocked = async (
 };
 
 /**
- * Refuse posting to a thread whose other participant is blocked either way, with the generic
- * CannotReply (NotConnected never otherwise comes out of posting to an existing thread, so it
- * would single out a block). Unknown threads and non-participants pass through untouched, so
- * the caller's own ThreadNotFound / NotParticipant errors stay what they were. Exchange and DM
- * threads only: a circle thread is shared context, and a block between two of its members
- * removes neither from it (spec 5.3); the blocker sees the blocked member's messages collapsed.
+ * Refuse posting to a thread that can't take replies, with the generic CannotReply: its other
+ * participant is blocked either way (NotConnected never otherwise comes out of posting to an
+ * existing thread, so it would single out a block), or no other participant is an active member
+ * any more (their account was deleted or deactivated; account deletion leaves their id in a DM
+ * or exchange thread's participants, and a post would notify it). The single gate every send
+ * path shares (postMessage, sendLocation, the message-photo paths). Unknown threads and
+ * non-participants pass through untouched, so the caller's own ThreadNotFound / NotParticipant
+ * errors stay what they were. Exchange and DM threads only: a circle thread is shared context,
+ * and a block between two of its members, or a member who left, removes nobody else from it
+ * (spec 5.3); the blocker sees the blocked member's messages collapsed.
  */
 export const assertThreadNotBlocked = async (
   ctx: QueryCtx,
@@ -128,6 +133,12 @@ export const assertThreadNotBlocked = async (
       throw cannotReplyError();
     }
   }
+  for (const other of thread.participants) {
+    if (other !== asUserId(memberId) && (await isActiveMember(ctx, other))) {
+      return;
+    }
+  }
+  throw cannotReplyError();
 };
 
 /**

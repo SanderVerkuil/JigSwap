@@ -10,7 +10,8 @@ import { switchHousehold } from "./switch-household";
 // requester already a member, or their household situation no longer matching their consent), so
 // the admin never learns the requester's household status. A consent mismatch voids the request
 // for good. Otherwise the requester switches exactly like accepting an invite (switchHousehold):
-// every check runs before any write.
+// every check runs before any write. Joining uses up an invite still pending to the requester from
+// this household, so it can't let them back in after they leave or are removed.
 export const makeApproveHouseholdJoinRequest =
   (
     deps: Pick<
@@ -46,6 +47,11 @@ export const makeApproveHouseholdJoinRequest =
       now,
     });
     if (switched.isErr) return err(switched.error);
+    const leftover = await deps.invites.findPending(
+      household.id,
+      request.requesterId,
+    );
+    if (leftover) await deps.invites.remove(leftover.id);
     await deps.joinRequests.save(request);
     await deps.events.publish([
       ...(current?.pullEvents() ?? []),

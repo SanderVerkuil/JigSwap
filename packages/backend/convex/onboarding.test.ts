@@ -370,6 +370,8 @@ describe("onboarding.getQuickStart: derived steps", () => {
     const t = convexTest(schema, modules);
     const ann = await insertUser(t, "ann");
     const bob = await insertUser(t, "bob");
+    // Bob runs hh-1: an invite counts only while its inviter is the household's admin.
+    await insertHouseholdMember(t, bob);
     await insertHouseholdInvite(t, bob, ann, "declined");
     expect(await stepOf(t, "ann", "household")).toMatchObject({
       status: "todo",

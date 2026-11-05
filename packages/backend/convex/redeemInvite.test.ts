@@ -316,7 +316,8 @@ describe("redeemInvite", () => {
     );
 
     // 1. New member taps QrFollowPrompt on the return landing → acceptQrFollow creates the edges
-    //    and bumps the counter to 1.
+    //    and bumps the counter to 1. Alice has no profiles row, so she is public; a private
+    //    inviter's scan would only send a follow request (SEC-42, qrFollow.test.ts).
     const accepted = await asNewbie(t).mutation(
       api.social.acceptQrFollow.acceptQrFollow,
       { token },

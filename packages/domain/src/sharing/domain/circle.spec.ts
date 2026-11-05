@@ -371,6 +371,38 @@ describe("Circle", () => {
       if (result.isErr) expect(result.error.code).toBe("NotAMember");
       expect(circle.pullEvents()).toHaveLength(0);
     });
+
+    // Admins below the owner are peers: none may push another out.
+    it("refuses a non-owner Admin removing another Admin with NotCircleOwner", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "Admin", NOW);
+      circle.pullEvents();
+
+      const result = circle.removeMember(alice, bob, NOW);
+
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("NotCircleOwner");
+      expect(circle.isMember(bob)).toBe(true);
+      expect(circle.pullEvents()).toHaveLength(0);
+    });
+
+    it("lets the owner remove an Admin", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+
+      expect(circle.removeMember(owner, alice, NOW).isOk).toBe(true);
+      expect(circle.isMember(alice)).toBe(false);
+    });
+
+    it("lets a non-owner Admin remove a member who isn't an Admin", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "Exchange", NOW);
+
+      expect(circle.removeMember(alice, bob, NOW).isOk).toBe(true);
+      expect(circle.isMember(bob)).toBe(false);
+    });
   });
 
   describe("leave", () => {
@@ -548,6 +580,53 @@ describe("Circle", () => {
       const result = circle.changePermission(owner, alice, "ViewOnly");
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("DuplicatePermission");
+    });
+
+    it("refuses a non-owner Admin demoting another Admin with NotCircleOwner", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "Admin", NOW);
+
+      for (const level of ["Exchange", "ViewOnly"] as const) {
+        const result = circle.changePermission(alice, bob, level);
+        expect(result.isErr).toBe(true);
+        if (result.isErr) expect(result.error.code).toBe("NotCircleOwner");
+      }
+      expect(circle.members.find((m) => m.memberId === bob)?.permission).toBe(
+        "Admin",
+      );
+    });
+
+    it("lets the owner demote an Admin", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+
+      expect(circle.changePermission(owner, alice, "Exchange").isOk).toBe(true);
+      expect(circle.members.find((m) => m.memberId === alice)?.permission).toBe(
+        "Exchange",
+      );
+    });
+
+    it("lets a non-owner Admin step down themselves", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+
+      expect(circle.changePermission(alice, alice, "ViewOnly").isOk).toBe(true);
+      expect(circle.isAdmin(alice)).toBe(false);
+    });
+
+    it("lets a non-owner Admin change a non-Admin's level and promote them to Admin", () => {
+      const circle = newCircle();
+      circle.addMember(owner, membershipId(), alice, "Admin", NOW);
+      circle.addMember(owner, membershipId(), bob, "ViewOnly", NOW);
+
+      expect(circle.changePermission(alice, bob, "Exchange").isOk).toBe(true);
+      expect(circle.changePermission(alice, bob, "Admin").isOk).toBe(true);
+      expect(circle.isAdmin(bob)).toBe(true);
+      // Once Bob holds Admin, only the owner may take it back.
+      const back = circle.changePermission(alice, bob, "Exchange");
+      if (back.isErr) expect(back.error.code).toBe("NotCircleOwner");
+      expect(back.isErr).toBe(true);
     });
   });
 

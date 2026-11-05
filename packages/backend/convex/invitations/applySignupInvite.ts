@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
 import { offerConnection } from "../social/connectionOffers";
+import { userQuery } from "../users";
 import { emailInviteKindValidator } from "./config";
 import { inviteIntoEmailInviteHousehold } from "./fallbacks";
 
@@ -34,7 +35,7 @@ export const signupInviteOf = (
  * Apply the invitation the new member signed up through: a connection offer from the inviter
  * (follow; nothing is followed until they accept) or a pending household invite (household; only
  * while the inviter still admins that household). A missing, lapsed or mismatched row (revoked,
- * expired, purged) or the inviter's own account does nothing. The row is deleted once applied,
+ * expired, purged), the inviter's own account or a deactivated member does nothing. The row is deleted once applied,
  * and the ref is cleared from the Clerk user's metadata either way (best-effort).
  */
 export const applySignupInvite = internalMutation({
@@ -45,11 +46,10 @@ export const applySignupInvite = internalMutation({
   },
   handler: async (ctx, { clerkUserId, kind, ref }): Promise<void> => {
     const outcome = await (async (): Promise<string> => {
-      const member = await ctx.db
-        .query("users")
-        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
-        .unique();
-      if (member === null) return "no_member";
+      const member = await userQuery(ctx, clerkUserId);
+      // A deactivated row (a CSAM tombstone keeps its clerkId) is no member to invite: a
+      // redelivered user.created must not touch it, as updateOrCreateUser doesn't (SEC-32).
+      if (member === null || !member.isActive) return "no_member";
       await ctx.scheduler.runAfter(
         0,
         internal.invitations.clearInviteMetadata.clearSignupInviteMetadata,

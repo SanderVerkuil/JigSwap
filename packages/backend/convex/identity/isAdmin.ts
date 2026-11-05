@@ -1,20 +1,17 @@
 import type { QueryCtx } from "../_generated/server";
 
-// Whether the acting caller is an admin. The role lives in the Clerk JWT (publicMetadata.role,
-// surfaced as the `metadata.role` claim — the same source the web admin guard reads). Convex
-// exposes JWT claims on the identity object; we read it defensively (nested `metadata.role` or a
-// flat `role` claim) and fail CLOSED — an unauthenticated caller or a missing claim is NOT admin.
+// Whether the acting caller is an admin. The role lives in Clerk publicMetadata.role, surfaced as
+// the `metadata.role` claim by the Clerk "convex" JWT template. The web /admin guard asks this same
+// check (identity/isCurrentUserAdmin). Only that nested claim counts: a flat `role` claim is
+// ignored, so nothing but the template's `metadata` mapping can grant admin. Fails CLOSED: an
+// unauthenticated caller or a missing claim is NOT admin.
 //
-// NOTE: for this to be true on the server, the Clerk "convex" JWT template must include the
-// metadata claim (e.g. `"metadata": "{{user.public_metadata}}"`). Without it, admins are simply
-// treated as regular members (submissions stay pending) — safe, never an over-grant.
+// The expected template is versioned in packages/backend/clerk/convex-jwt-template.json (checked by
+// clerkTemplates.test.ts). It must map `metadata` to {{user.public_metadata}}, never to
+// unsafe_metadata, which the browser can write.
 export const isAdmin = async (ctx: QueryCtx): Promise<boolean> => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return false;
-  const claims = identity as {
-    metadata?: { role?: string };
-    role?: string;
-  };
-  const role = claims.metadata?.role ?? claims.role;
-  return role === "admin";
+  const claims = identity as { metadata?: { role?: string } };
+  return claims.metadata?.role === "admin";
 };

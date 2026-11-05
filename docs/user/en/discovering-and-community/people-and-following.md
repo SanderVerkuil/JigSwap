@@ -51,7 +51,10 @@ details, see
 1. Open **Show my QR** (on **People** or your **Profile**).
 2. Your friend scans the code with their phone.
 3. If they already have an account, they tap **Follow each other** and you
-   follow each other right away.
+   follow each other right away. If your profile is private and you don't
+   follow them yet, the button reads **Request to follow** instead. It sends
+   you a follow request, which you approve as usual (see
+   [Notifications](/docs/staying-informed/notifications)).
 
 ### With an invite link
 

@@ -524,10 +524,46 @@ describe("expiry", () => {
   });
 });
 
-describe("QR scan (unchanged)", () => {
-  test("acceptQrFollow still creates the mutual follow at once, with no offer", async () => {
+describe("QR scan", () => {
+  // SEC-42: Alice is private in this seed, so a scan of her code asks her first (a follow
+  // request), exactly like her Follow button; it neither follows nor makes an offer.
+  test("acceptQrFollow on a private inviter sends a follow request, with no offer", async () => {
     const t = convexTest(schema, modules);
     const { alice, newbie } = await seed(t);
+    const { token } = await as(t, "alice").mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+
+    expect(
+      await as(t, "newbie").mutation(api.social.acceptQrFollow.acceptQrFollow, {
+        token,
+      }),
+    ).toEqual({ established: false, requested: true });
+    expect(await mutualEdges(t, alice, newbie)).toEqual({
+      ab: false,
+      ba: false,
+    });
+    expect(
+      (await t.run((ctx) => ctx.db.query("followRequests").collect())).map(
+        (r) => [r.requesterId, r.targetId, r.status],
+      ),
+    ).toEqual([[newbie, alice, "pending"]]);
+    expect(
+      await t.run((ctx) => ctx.db.query("connectionOffers").collect()),
+    ).toEqual([]);
+  });
+
+  test("acceptQrFollow on a public inviter still creates the mutual follow at once, with no offer", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, newbie } = await seed(t);
+    await t.run(async (ctx) => {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_member", (q) => q.eq("memberId", alice))
+        .unique();
+      await ctx.db.patch(profile!._id, { visibility: "public" });
+    });
     const { token } = await as(t, "alice").mutation(
       api.social.getMyInviteLink.getMyInviteLink,
       {},

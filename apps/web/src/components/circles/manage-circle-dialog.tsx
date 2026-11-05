@@ -150,6 +150,7 @@ export function ManageCircleDialog({
                           detail.viewerPermission,
                           member,
                           convexUser?._id,
+                          detail.isOwnedByViewer,
                         ).canChangePermission
                       }
                       onValueChange={(value: CirclePermissionLevel) =>
@@ -175,6 +176,7 @@ export function ManageCircleDialog({
                       detail.viewerPermission,
                       member,
                       convexUser?._id,
+                      detail.isOwnedByViewer,
                     ).canRemove && (
                       <Button
                         variant="ghost"

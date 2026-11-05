@@ -2,6 +2,7 @@ import type { ExchangeSummaryView } from "@jigswap/contracts";
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+import { optionalActingMember } from "../identity/optionalActingMember";
 import { enrichExchangeSummary } from "./readViews";
 
 type Roled = Doc<"exchanges"> & { userRole: "requester" | "owner" };
@@ -26,21 +27,17 @@ export const getUserExchanges = query({
   },
   handler: async (ctx, args): Promise<ExchangeSummaryView[]> => {
     // Scope to the authenticated member; never trust a client-supplied id (would leak any user's
-    // exchange history + partner emails). Mirror getExchangesByOwner: [] when unauthenticated.
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .unique();
-    if (!user) return [];
+    // exchange history + partner emails). Mirror getExchangesByOwner: [] when unauthenticated,
+    // unknown or deactivated.
+    const me = await optionalActingMember(ctx);
+    if (!me) return [];
 
     let exchanges: Roled[] = [];
 
     if (args.asRequester !== false) {
       const requesterExchanges = await ctx.db
         .query("exchanges")
-        .withIndex("by_initiator", (q) => q.eq("initiatorId", user._id))
+        .withIndex("by_initiator", (q) => q.eq("initiatorId", me))
         .collect();
       exchanges.push(
         ...requesterExchanges.map((tr) => ({
@@ -53,7 +50,7 @@ export const getUserExchanges = query({
     if (args.asOwner !== false) {
       const ownerExchanges = await ctx.db
         .query("exchanges")
-        .withIndex("by_recipient", (q) => q.eq("recipientId", user._id))
+        .withIndex("by_recipient", (q) => q.eq("recipientId", me))
         .collect();
       exchanges.push(
         ...ownerExchanges.map((tr) => ({ ...tr, userRole: "owner" as const })),
@@ -67,9 +64,7 @@ export const getUserExchanges = query({
     exchanges.sort((a, b) => b.createdAt - a.createdAt);
 
     return Promise.all(
-      exchanges.map((tr) =>
-        enrichExchangeSummary(ctx, tr, user._id, tr.userRole),
-      ),
+      exchanges.map((tr) => enrichExchangeSummary(ctx, tr, me, tr.userRole)),
     );
   },
 });

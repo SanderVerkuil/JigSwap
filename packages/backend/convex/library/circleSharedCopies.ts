@@ -50,9 +50,9 @@ const isMemberOf = async (
 // the VIEWER's own memberships instead (circleMembers.by_member), each probed with a
 // circleCopyShares.by_circle_copy point lookup. Both routes yield the same set of qualifying circles,
 // so the decision is identical to the uncapped rule (no false negatives) as long as the viewer is in
-// at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not circle-shared):
-// today any circle admin can seat a member without consent, so this list is attacker-inflatable too.
-// The root fix is consent-based circle invitations plus a per-member circle cap.
+// at most MAX_VIEWER_CIRCLES_READ circles. Beyond that the fallback FAILS CLOSED (not circle-shared).
+// The viewer's own consent bounds that list: a member is only in circles they created or whose
+// invite they accepted (no admin can seat anyone directly), so nobody else can inflate it.
 export const isCircleSharedWithViewer = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,

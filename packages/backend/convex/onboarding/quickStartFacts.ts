@@ -4,9 +4,35 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { isOpenHouseholdInvite } from "../household/memberships";
 
 // Counts are read with a cap so the query stays bounded; the UI shows 51 as "50+".
 const COUNT_CAP = 51;
+
+// Pending household invites the quick start looks at, newest first. Lapsed ones stay pending
+// (lapsing is computed, never stored), so the read is capped; an open invite is under 14 days old,
+// so newest first it sits ahead of every lapsed one.
+const PENDING_INVITE_SCAN_CAP = 20;
+
+// Whether the member has a household invite they can still accept (isOpenHouseholdInvite: not
+// lapsed, its inviter still the admin), among their newest PENDING_INVITE_SCAN_CAP pending ones.
+const hasPendingHouseholdInvite = async (
+  ctx: QueryCtx,
+  me: Id<"users">,
+): Promise<boolean> => {
+  const now = Date.now();
+  const pending = await ctx.db
+    .query("householdInvites")
+    .withIndex("by_invitee_status", (q) =>
+      q.eq("inviteeId", me).eq("status", "pending"),
+    )
+    .order("desc")
+    .take(PENDING_INVITE_SCAN_CAP);
+  for (const invite of pending) {
+    if (await isOpenHouseholdInvite(ctx, invite, now)) return true;
+  }
+  return false;
+};
 
 // The member's quick start facts (spec §2.4) from their own rows, with bounded index reads. Shared
 // by getQuickStart (the member's own view) and the internal activation report.
@@ -15,7 +41,7 @@ export const quickStartFactsOf = async (
   member: Doc<"users">,
 ): Promise<QuickStartFacts> => {
   const me = member._id;
-  const [copies, completions, follows, household, invite, profile] =
+  const [copies, completions, follows, household, pendingInvite, profile] =
     await Promise.all([
       ctx.db
         .query("ownedPuzzles")
@@ -35,12 +61,7 @@ export const quickStartFactsOf = async (
         .query("householdMembers")
         .withIndex("by_member", (q) => q.eq("memberId", me))
         .first(),
-      ctx.db
-        .query("householdInvites")
-        .withIndex("by_invitee_status", (q) =>
-          q.eq("inviteeId", me).eq("status", "pending"),
-        )
-        .first(),
+      hasPendingHouseholdInvite(ctx, me),
       ctx.db
         .query("profiles")
         .withIndex("by_member", (q) => q.eq("memberId", me))
@@ -58,7 +79,7 @@ export const quickStartFactsOf = async (
     follows: follows.length,
     pendingFollowRequests: pendingRequest ? 1 : 0,
     inHousehold: household !== null,
-    pendingHouseholdInvite: invite !== null,
+    pendingHouseholdInvite: pendingInvite,
     hasLocation: (member.location ?? "").trim() !== "",
     visibilitySet: profile?.visibility !== undefined,
   };

@@ -46,10 +46,10 @@ export const resolveForDelivery = internalQuery({
       cache,
     );
     if (!view) return null;
-    // A circle invite that is no longer on offer (answered, revoked, expired, its inviter blocked
-    // or no longer an Admin) is not emailed or pushed at all. Nor is a connection offer that is no
-    // longer open (answered, expired, or gone with its inviter's account), nor a circle message
-    // for a member who is no longer in the thread.
+    // A circle invite that is no longer on offer (answered, revoked, expired, its inviter no longer
+    // an Admin, or a block either way between the invitee and any member) is not emailed or pushed
+    // at all. Nor is a connection offer that is no longer open (answered, expired, or gone with its
+    // inviter's account), nor a circle message for a member who is no longer in the thread.
     if (
       (args.type === "circle_invite_received" ||
         args.type === "connection_offer_received" ||

@@ -100,7 +100,9 @@ In het beheervenster kan elke beheerder:
 - leden uitnodigen en openstaande uitnodigingen intrekken;
 - eigen exemplaren in de kring delen.
 
-De plek van de eigenaar kan niet worden gewijzigd of verwijderd.
+De plek van de eigenaar kan niet worden gewijzigd of verwijderd. Alleen de
+eigenaar kan de rechten van een andere beheerder wijzigen of die beheerder
+verwijderen; een beheerder kan zijn eigen rechten wel verlagen.
 
 ## Het pictogram van de kring
 

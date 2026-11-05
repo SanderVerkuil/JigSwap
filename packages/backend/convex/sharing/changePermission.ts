@@ -16,8 +16,9 @@ import { seatMemberId } from "./circleAccess";
 import { toConvexError } from "./errors";
 
 // Composition root for changing a member's permission within a circle. The actor is derived from
-// auth; the aggregate gates the change on Admin and refuses the owner / no-op changes. The seat is
-// named by `memberId` or by `membershipId` (a departed seat's view has no user id).
+// auth; the aggregate gates the change on Admin, refuses the owner / no-op changes, and leaves
+// another Admin's level to the owner alone (an Admin may still step down). The seat is named by
+// `memberId` or by `membershipId` (a departed seat's view has no user id).
 export const changePermission = mutation({
   args: {
     circleId: v.string(),
