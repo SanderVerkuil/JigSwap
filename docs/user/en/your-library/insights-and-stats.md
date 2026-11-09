@@ -17,7 +17,7 @@ Your personal analytics dashboard shows:
   the **average ratings** you gave and received.
 - **Completions / month**: a bar per month over the past 12 months, with the
   number above each bar. Switch between **Completions** and **Solve hours**
-  with the pills next to the title. Solve hours and your total solve time only
+  with the buttons next to the title. Solve hours and your total solve time only
   add up the times you entered; a solve with only dates has no time.
 - **Swaps / month**: the swaps you started in each of the past 12 months,
   quiet months included.

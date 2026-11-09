@@ -11,11 +11,20 @@
   text-wrap: pretty;
 }
 
+/* An anchored heading lands 16px below what covers the top of the page: the page's own
+   scroll-padding clears the header (80px, marketing.css) and, on phones, the Docs bar (below). */
 .docs-prose :is(h1, h2, h3, h4) {
   font-family: var(--font-mk-heading);
   color: var(--mk-text-strong);
   letter-spacing: -0.01em;
-  scroll-margin-top: 96px;
+  scroll-margin-top: 16px;
+}
+/* Where the sticky Docs bar shows (docs-mobile-bar.tsx), anchors and focus also clear its 48px:
+   64px header + 48px bar. The doubled :has() outranks marketing.css's 80px whatever the order. */
+@media (width < 861px) {
+  html:has(.mk-root):has([data-docs-bar]) {
+    scroll-padding-top: 112px;
+  }
 }
 .docs-prose h2 {
   font-size: clamp(24px, 2.6vw, 30px);
@@ -215,6 +224,12 @@
 }
 .docs-prose summary::-webkit-details-marker {
   display: none;
+}
+/* The details clip their corners (overflow: hidden), which would cut off an outline drawn
+   outside the summary, so its focus outline sits just inside. */
+.docs-prose summary:focus-visible {
+  outline-offset: -3px;
+  border-radius: 6px;
 }
 /* chevron affordance that rotates when open */
 .docs-prose summary::before {

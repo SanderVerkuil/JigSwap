@@ -8,7 +8,7 @@ summary: "Leer de indeling van het dashboard en de navigatie op desktop en mobie
 
 Zodra je bent ingelogd, toont JigSwap een **dashboard** met een paar vaste navigatie-onderdelen:
 
-- **Op desktop:** een bovenbalk (met een zoekpil) en een gegroepeerde zijbalk aan de linkerkant met links naar al je onderdelen (Bibliotheek, Community, enz.). Je inhoud verschijnt in een kaart in het midden.
+- **Op desktop:** een bovenbalk (met een zoekvak) en een gegroepeerde zijbalk aan de linkerkant met links naar al je onderdelen (Bibliotheek, Community, enz.). Je inhoud verschijnt in een kaart in het midden.
 - **Op mobiel (telefoons/kleine schermen):** een smalle bovenbalk plus een **tabbalk onderaan**. Een **snelle-actieknop** in het midden opent een paneel met veelgebruikte acties.
 
 De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel toevoegen_) en eventuele relevante aantallen in de paginakop.
@@ -18,7 +18,8 @@ De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel to
 Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 **Voorkeuren**, **Meldingen** en **Privacy en veiligheid** vind je daar:
 
-- **Wat is er nieuw**: recente functies en oplossingen (zie hieronder).
+- **Wat is er nieuw**, op een telefoon: recente functies en oplossingen (zie
+  hieronder). Op desktop staat het onderaan de zijbalk, net boven je account.
 - **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
   **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
@@ -26,7 +27,8 @@ Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
 
 ## Wat is er nieuw
 
-**Waar:** **Wat is er nieuw** in je accountmenu (`/whats-new`).
+**Waar:** **Wat is er nieuw** onderaan de zijbalk, net boven je account (op je
+telefoon in je accountmenu) (`/whats-new`).
 
 De pagina Wat is er nieuw toont recente functies, verbeteringen en oplossingen,
 de nieuwste eerst. Bij elke update staat een korte samenvatting: kies
@@ -34,7 +36,8 @@ de nieuwste eerst. Bij elke update staat een korte samenvatting: kies
 knop onderaan, bijvoorbeeld **32 oudere updates tonen**, toont de rest. Kies
 bovenaan **Functie**, **Verbetering** of **Oplossing** om één soort update te
 zien, of **Alle**. Updates die je nog niet hebt gezien, zijn gemarkeerd met
-**Nieuw** en staan helemaal open, en het menu-item toont hoeveel het er zijn,
+**Nieuw** en staan helemaal open, en **Wat is er nieuw** toont hoeveel het er
+zijn: met een getal in de zijbalk of, in je accountmenu op een telefoon,
 bijvoorbeeld **Wat is er nieuw (2)**.
 
 Is er iets nieuws, dan kan JigSwap het ook in een kort venster tonen. Klik op

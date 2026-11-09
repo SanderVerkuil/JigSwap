@@ -11,7 +11,7 @@ JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account 
 ## Create an account
 
 1. Go to any public JigSwap page, such as the [home page](/).
-2. Click **Start trading** at the top of the page.
+2. Click **Start your shelf** at the top of the page.
 3. Follow the prompts to register (email/password or any sign-in option offered).
 4. Once registered, you'll be taken into the app's **Dashboard**.
 

@@ -73,13 +73,14 @@ function DocsIndex() {
                 <p className="text-mk-text-body mt-2 max-w-[56ch] text-[17px] leading-relaxed">
                   {summaryFor(group.slug)}
                 </p>
-                <ul className="mt-3 flex flex-col gap-1">
+                {/* On touch screens each link is a 44px row. */}
+                <ul className="mt-3 flex flex-col gap-1 pointer-coarse:gap-0">
                   {group.links.map((link) => (
                     <li key={link.slug}>
                       <Link
                         to="/docs/$"
                         params={{ _splat: link.slug }}
-                        className="text-mk-text-strong text-[16px] underline decoration-mk-input-border underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong"
+                        className="text-mk-text-strong inline-flex items-center text-[16px] underline decoration-mk-input-border underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong pointer-coarse:min-h-11"
                       >
                         {link.title}
                       </Link>

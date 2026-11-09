@@ -1,5 +1,7 @@
 import { Container } from "@/components/marketing/container";
+import { TEXT_LINK } from "@/components/marketing/home/classes";
 import { Section } from "@/components/marketing/section";
+import { isPlainClick, useActiveHeading } from "@/hooks/use-active-heading";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
@@ -34,33 +36,20 @@ export function LegalDoc({
   children?: React.ReactNode; // trailing contact note
 }) {
   const t = useTranslations("marketing.legal");
-  const [active, setActive] = React.useState(sections[0]?.id);
-
-  React.useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) setActive(e.target.id);
-        }
-      },
-      { rootMargin: "-30% 0px -60% 0px" },
-    );
-    for (const s of sections) {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    }
-    return () => obs.disconnect();
-  }, [sections]);
+  const [active, pick] = useActiveHeading(sections);
+  const contentsRef = React.useRef<HTMLDetailsElement>(null);
 
   return (
     <Section>
       <Container>
         <div className="grid grid-cols-[240px_minmax(0,1fr)] items-start gap-[clamp(32px,5vw,72px)] max-[900px]:grid-cols-1">
-          <aside className="sticky top-24 self-start max-[900px]:hidden">
+          {/* Scrolls on its own where the list is taller than the window (a laptop, in Dutch),
+              ending above the cookie banner while that is open. */}
+          <aside className="sticky top-24 -mx-1 max-h-[calc(100dvh-96px-var(--consent-banner-height,0px))] self-start overflow-y-auto overscroll-contain px-1 pb-6 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin] max-[900px]:hidden">
             <div className="font-mk-heading text-mk-text-strong mb-3 text-[18px]">
               {t("contents")}
             </div>
-            <LegalToc sections={sections} active={active} />
+            <LegalToc sections={sections} active={active} onPick={pick} />
           </aside>
           <div className="max-w-[70ch]">
             <p className="text-mk-text-muted mb-5 text-[15px]">{updated}</p>
@@ -69,7 +58,11 @@ export function LegalDoc({
             </p>
             {/* Below 900px the sticky list above is hidden; the same links
                 fold into a Contents block at the top of the text. */}
-            <details className="group bg-mk-muted dark:bg-mk-card mt-6 rounded-md min-[901px]:hidden">
+            <details
+              id="contents"
+              ref={contentsRef}
+              className="group bg-mk-muted dark:bg-mk-card mt-6 scroll-mt-2.5 rounded-md min-[901px]:hidden"
+            >
               <summary className="font-mk-heading text-mk-text-strong focus-visible:ring-mk-ring flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-md px-4 text-[18px] font-normal focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                 {t("contents")}
                 <ChevronDown
@@ -79,12 +72,14 @@ export function LegalDoc({
                 />
               </summary>
               <div className="px-4 pb-3">
-                <LegalToc sections={sections} active={active} />
+                <LegalToc sections={sections} active={active} onPick={pick} />
               </div>
             </details>
             {sections.map((s, i) => (
-              <section key={s.id} id={s.id} className="scroll-mt-[90px] pt-11">
-                <h2 className="font-mk-heading text-mk-text-strong mb-3.5 text-[clamp(24px,2.4vw,30px)] leading-[1.2] font-normal">
+              // Lands 90px down: the page's scroll-padding clears the header (80px) and this adds 10.
+              <section key={s.id} id={s.id} className="scroll-mt-2.5 pt-11">
+                {/* Lining figures: Young Serif's old-style 11 reads as II. */}
+                <h2 className="font-mk-heading text-mk-text-strong mb-3.5 text-[clamp(24px,2.4vw,30px)] leading-[1.2] font-normal lining-nums">
                   {i + 1}. {s.heading}
                 </h2>
                 {s.blocks.map((b, j) => {
@@ -135,6 +130,19 @@ export function LegalDoc({
                   }
                 })}
                 {s.action && <div className="mb-3.5">{s.action}</div>}
+                {/* On phones the contents sit only at the top of a very long page. */}
+                <a
+                  href="#contents"
+                  onClick={() => {
+                    if (contentsRef.current) contentsRef.current.open = true;
+                  }}
+                  className={cn(
+                    TEXT_LINK,
+                    "text-mk-text-muted hover:text-mk-text-strong inline-flex min-h-11 items-center text-[15px] min-[901px]:hidden",
+                  )}
+                >
+                  {t("backToContents")}
+                </a>
               </section>
             ))}
             {children && (
@@ -150,13 +158,16 @@ export function LegalDoc({
 }
 
 // The contents list: plain #hash links, so every section has a URL to share
-// and the browser does the jump (sections carry scroll-mt for the header).
+// and the browser does the jump (the page's scroll-padding clears the header).
+// A picked section is marked current straight away.
 function LegalToc({
   sections,
   active,
+  onPick,
 }: {
   sections: LegalSection[];
   active: string | undefined;
+  onPick: (id: string) => void;
 }) {
   const t = useTranslations("marketing.legal");
   return (
@@ -165,6 +176,9 @@ function LegalToc({
         <a
           key={s.id}
           href={`#${s.id}`}
+          onClick={(e) => {
+            if (isPlainClick(e)) onPick(s.id);
+          }}
           aria-current={active === s.id ? "true" : undefined}
           className={cn(
             "rounded-sm px-2.5 py-[6px] text-[14px] leading-snug transition-colors duration-150",

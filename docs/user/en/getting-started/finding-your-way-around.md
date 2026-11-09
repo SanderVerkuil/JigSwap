@@ -8,7 +8,7 @@ summary: "Learn the dashboard layout and navigation on desktop and mobile, insta
 
 Once signed in, JigSwap presents a **dashboard** with a few consistent navigation pieces:
 
-- **On desktop:** a top bar (with a search pill) and a grouped sidebar on the left holding links to all your areas (Library, Community, etc.). Your content appears in a card in the middle.
+- **On desktop:** a top bar (with a search box) and a grouped sidebar on the left holding links to all your areas (Library, Community, etc.). Your content appears in a card in the middle.
 - **On mobile (phones/small screens):** a slim top bar plus a **bottom tab bar**. A center **quick-action button** opens a sheet with common actions.
 
 Most pages also show a **primary action button** (for example, _Add Puzzle_) and any relevant counts in the page header.
@@ -18,7 +18,8 @@ Most pages also show a **primary action button** (for example, _Add Puzzle_) and
 Click your avatar to open the account menu. Besides **Profile**,
 **Preferences**, **Notifications** and **Privacy & safety**, it has:
 
-- **What's new**: recent features and fixes (see below).
+- **What's new**, on a phone: recent features and fixes (see below). On
+  desktop it's at the foot of the sidebar instead, just above your account.
 - **Help & guides**: every guided tour, on the **Guides** tab of What's new
   (see [Guides](#guides)).
 - **Quick setup**: reopens the guided setup for your shelf. See
@@ -26,15 +27,17 @@ Click your avatar to open the account menu. Besides **Profile**,
 
 ## What's new
 
-**Where:** **What's new** in your account menu (`/whats-new`).
+**Where:** **What's new** at the foot of the sidebar, just above your account
+(on a phone, in your account menu) (`/whats-new`).
 
 The What's new page lists recent features, improvements and fixes, newest
 first. Each update shows a short summary: choose **Read more** for the details.
 The page starts with the latest updates, and a button at the bottom, for
 example **Show 32 older updates**, lists the rest. Choose **Feature**,
 **Improvement** or **Fix** at the top to see one kind of update, or **All**.
-Updates you haven't seen yet are marked **New** and shown in full, and the menu
-item shows how many there are, for example **What's new (2)**.
+Updates you haven't seen yet are marked **New** and shown in full, and
+**What's new** shows how many there are: a count in the sidebar or, in your
+account menu on a phone, for example **What's new (2)**.
 
 When there's something new, JigSwap may also show it in a short dialog. Click
 **Read more** to open the full entry, or **Maybe later** to close it.

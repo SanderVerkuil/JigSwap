@@ -51,7 +51,7 @@ Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 - **Tags** en **notities**.
 - **Geavanceerde velden** (uitklapbaar): EAN, UPC, modelnummer, kunstenaar, serie, vorm, afmetingen.
 
-Op een groot scherm staan een **live voorbeeldkaart** en een **gereedheidschecklist** naast het formulier, zodat je kunt zien hoe je puzzel eruit komt te zien. Op een telefoon of tablet staat in plaats daarvan een korte samenvatting boven de knop om toe te voegen.
+Op een breed scherm staan een **live voorbeeldkaart** en een **gereedheidschecklist** naast het formulier, zodat je kunt zien hoe je puzzel eruit komt te zien. Op een telefoon, tablet of kleiner laptopscherm staat in plaats daarvan een korte samenvatting boven de knop om toe te voegen.
 
 > **Een kopie van een bestaande puzzel toevoegen:** Wanneer je vanuit de catalogus toevoegt (kopieermodus), is de catalogusdefinitie van de puzzel vergrendeld als alleen-lezen, en vul je alleen de kopie-specifieke velden in (jouw conditie, beschikbaarheid en notities). Foto's van je eigen kopie voeg je daarna toe op de pagina van die kopie.
 
@@ -87,3 +87,15 @@ proberen.
 ## Een gloednieuwe puzzel aan de catalogus bijdragen
 
 Staat een puzzel nog niet in de catalogus, dan kun je zijn definitie voor iedereen bijdragen. Gebruik **Puzzels → Toevoegen** (`/puzzles/add`). Dit gebruikt hetzelfde formulier (zonder de kopie-specifieke velden) en stuurt je inzending naar de **moderatiewachtrij** zodat een beheerder hem kan goedkeuren.
+
+De **EAN** en **UPC** onder **Meer details (optioneel)** worden gecontroleerd
+zodra je het veld verlaat: een EAN heeft 13 cijfers en een UPC 12, en het
+laatste cijfer moet kloppen met de rest. Een code die niet klopt, wordt onder
+het veld genoemd. Druk je met een verkeerde code op **Een puzzel bijdragen**,
+dan gaat **Meer details** open bij dat veld in plaats van dat de puzzel wordt
+verstuurd.
+
+Ga je weg uit het formulier nadat je iets hebt ingevuld of een puzzel hebt
+geïmporteerd, dan vraagt JigSwap eerst **Weggaan zonder op te slaan?**: kies
+**Verder bewerken** om te blijven, of **Niet opslaan** om weg te gaan zonder de
+puzzel bij te dragen.

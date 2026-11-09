@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import type { ComponentProps, ComponentType } from "react";
 import { IntlProvider } from "use-intl";
@@ -150,5 +151,34 @@ describe("docs overlays hand focus back", () => {
 
     await waitFor(() => expect(dialog()).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+});
+
+// F20: from 861 to 1279px neither the rail beside the article nor the phone Docs bar shows, so a
+// long article's contents, folded in under its title, were out of reach from further down.
+describe("docs sidebar", () => {
+  it("keeps the way back to the folded contents in reach where the Docs bar is hidden", () => {
+    const contents = document.createElement("details");
+    contents.id = "on-this-page";
+    document.body.append(contents);
+    renderLayout();
+
+    const sidebar = screen.getByRole("navigation", {
+      name: en.marketing.docs.navLabel,
+    });
+    const link = within(sidebar).getByRole("link", { name: "On this page" });
+    expect(link.getAttribute("href")).toBe("#on-this-page");
+    // Only between the Docs bar (below 861px) and the rail (from 1280px), and only on a page
+    // that has contents to jump to.
+    expect(link.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "hidden",
+        "min-[861px]:max-[1280px]:flex",
+        "[body:not(:has(#on-this-page))_&]:hidden",
+      ]),
+    );
+    fireEvent.click(link);
+    expect(contents.open).toBe(true);
+    contents.remove();
   });
 });

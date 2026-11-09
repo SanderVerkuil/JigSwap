@@ -19,7 +19,7 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
    type a tag with or without its **#**.
 4. Pick an order in the **sort** menu: **Recently added** (the default),
    **Title A–Z** or **Fewest pieces first**.
-5. Use the **status filter pills** to narrow what you see:
+5. Use the **status filters** to narrow what you see:
    - **All**
    - **Available**
    - **For Trade**
@@ -29,7 +29,7 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
 6. In a household with someone else in it, the **Whose** menu shows everyone's
    puzzles, only yours, or only your housemates'.
 
-On a phone, the status pills, **Whose** and the sort order are behind the
+On a phone, the status filters, **Whose** and the sort order are behind the
 **Filters** button next to the search box. Filters that are on show as chips
 under it: tap one to remove it.
 
