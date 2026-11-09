@@ -9,8 +9,9 @@
 //     becomes a middle crumb linking back to the listing).
 // A page whose content already shows its title as an h1 (titleInContent) gets
 // only the breadcrumb (and actions) here, never a second title heading.
-// No crumbs on Dashboard, Profile or the landings themselves, but the crumb row
-// is reserved everywhere so the h1 sits at the same height on every page.
+// No crumbs on Dashboard, Profile or the landings themselves, nor under a page
+// that publishes an empty trail (a not-found names no place in the app), but the
+// crumb row is reserved everywhere so the h1 sits at the same height on every page.
 // The title row wraps: when the actions don't fit beside the title they move
 // to their own line rather than squeezing the title or running off the sheet.
 // Desktop-only: below md the mobile top bar shows the title and the back
@@ -88,7 +89,7 @@ export function PageHead() {
         ))}
         <span className="text-foreground">{title}</span>
       </nav>
-    ) : group ? (
+    ) : group && !crumbs ? (
       <nav
         aria-label={t("breadcrumbLabel")}
         className="flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground"

@@ -286,6 +286,20 @@ describe("PageHead published title", () => {
     ).toBe("/puzzles");
   });
 
+  // A not-found publishes an empty trail: no Community › Puzzles › above "Page not found".
+  it("renders no breadcrumb for an explicitly empty trail", () => {
+    const { container } = renderHead({ title: "Page not found", crumbs: [] });
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
+      "Page not found",
+    );
+    expect(screen.queryByRole("navigation")).toBeNull();
+    // The row is still reserved, so the h1 stays at its height.
+    const crumbs = slot(container, "page-head-crumbs");
+    expect(crumbs?.className).toContain("min-h-4");
+    expect(crumbs?.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("still renders published actions when the title is in the content", () => {
     renderHead({
       title: "Café",

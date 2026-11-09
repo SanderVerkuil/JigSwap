@@ -29,9 +29,9 @@ import {
   conditionDotClass,
   useConditionLabel,
 } from "@/components/library/condition";
-import { EmptyState } from "@/components/library/empty-state";
 import { MemberInitial } from "@/components/members/member-initial";
 import { copyMessageRoute } from "@/components/messaging/copy-conversation";
+import { ShellNotFound } from "@/components/NotFound";
 import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
 import { difficultyClasses } from "@/components/puzzles/difficulty-classes";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
@@ -159,7 +159,7 @@ export function CopyInstanceScreen({
   // `isError` with `copy` stuck at `undefined`. Treat both as not-found so an unresolvable copy
   // never hangs on the loading skeleton.
   if (copy === null || isError) {
-    return <CopyInstanceNotFound />;
+    return <CopyInstanceNotFound owned={owned} />;
   }
 
   if (copyPending || copy === undefined || notOwner || inLibraryElsewhere) {
@@ -192,9 +192,23 @@ function CopyInstanceSkeleton() {
   );
 }
 
-function CopyInstanceNotFound() {
+// Publishes its title into the page head: the page's own header is published by the detail below,
+// which isn't rendered here. The way back is the list the copy was opened under: the member's own
+// puzzles, or Browse.
+function CopyInstanceNotFound({ owned }: { owned: boolean }) {
   const t = useTranslations("copyInstance");
-  return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
+  const tNotFound = useTranslations("notFound");
+  const tShell = useTranslations("shell");
+  return (
+    <ShellNotFound
+      title={t("notFound")}
+      description={t("notFoundSub")}
+      backHref={owned ? "/my-puzzles" : "/browse"}
+      backLabel={tNotFound("backTo", {
+        page: tShell(owned ? "pages.myPuzzles.title" : "pages.browse.title"),
+      })}
+    />
+  );
 }
 
 function CopyInstanceDetail({

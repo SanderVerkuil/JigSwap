@@ -1,16 +1,23 @@
 import { Link } from "@/compat/link";
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
+import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import {
+  isFullBleedRoute,
+  isImmersiveMobileRoute,
+} from "@/components/dashboard-layout/route-meta";
 import { Container } from "@/components/marketing/container";
 import { MarketingFooter } from "@/components/marketing/footer";
 import { MarketingHeader } from "@/components/marketing/header";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useLocation, type NotFoundRouteProps } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 
-// The in-app 404 card — chrome-free. TanStack renders a route's notFoundComponent
-// inside that route's layout <Outlet />, so the app shell supplies the chrome;
-// the public site uses MarketingNotFound below instead.
-export function NotFoundContent({ actions }: { actions?: ReactNode }) {
+// The router's default 404 (router.tsx), chrome-free with its own display headline: TanStack drops
+// it into the Outlet of the layout it falls under. The app shell has its own (AppNotFound below,
+// titled in the page head) and the public site MarketingNotFound.
+export function NotFoundContent() {
   const t = useTranslations("notFound");
 
   return (
@@ -22,20 +29,16 @@ export function NotFoundContent({ actions }: { actions?: ReactNode }) {
         {t("description")}
       </p>
       <div className="mt-7 flex flex-wrap items-center gap-3">
-        {actions ?? (
-          <>
-            <Button variant="brand" className="h-11 px-6 text-[16px]" asChild>
-              <Link href="/">{t("backToHome")}</Link>
-            </Button>
-            <Button
-              variant="link"
-              className="h-11 px-2 text-[16px] underline underline-offset-3"
-              asChild
-            >
-              <Link href="/browse">{t("browsePuzzles")}</Link>
-            </Button>
-          </>
-        )}
+        <Button variant="brand" className="h-11 px-6 text-[16px]" asChild>
+          <Link href="/">{t("backToHome")}</Link>
+        </Button>
+        <Button
+          variant="link"
+          className="h-11 px-2 text-[16px] underline underline-offset-3"
+          asChild
+        >
+          <Link href="/browse">{t("browsePuzzles")}</Link>
+        </Button>
       </div>
     </div>
   );
@@ -68,12 +71,13 @@ export function MarketingNotFoundContent({
         {message ?? t("message")}
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Button variant="brand" className="h-11 px-6 text-[15px]" asChild>
+        <Button variant="brand" size="public" asChild>
           <Link href="/">{t("backToHome")}</Link>
         </Button>
         <Button
           variant="outline"
-          className="h-11 px-6 text-[15px] bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
+          size="public"
+          className="bg-mk-card border-mk-border text-mk-text-strong hover:bg-mk-muted"
           asChild
         >
           <Link href="/catalog">{t("browseCatalogue")}</Link>
@@ -120,21 +124,106 @@ export function NotFound() {
   );
 }
 
-// App 404 — rendered inside the dashboard shell (the _dashboard layout's Outlet),
-// so it needs no chrome of its own; just app-appropriate actions. Covers the
-// /admin subtree too, which lives inside the same shell.
-export function AppNotFound() {
+// A not-found inside the app shell. Its title goes to the page head, which already holds the
+// page's h1 (and ShellHeading's below md), so the body is only a line of explanation and the ways
+// back, at the app's body size and on the content's own edge. `publish` puts the title in the head
+// (with no breadcrumb). The page head is one slot and a parent's publish runs after, and overwrites,
+// its child's: a page that publishes its own header passes `publish={false}` and returns
+// `{ title, crumbs: [] }` (with no actions) from its own usePageHeader while it shows this.
+// On a phone an open thread's path (/messages/<id>) hides the top bar, so there the title shows
+// here, as the page's h1 below md.
+export function ShellNotFound({
+  title,
+  description,
+  backHref,
+  backLabel,
+  actions,
+  publish = true,
+}: {
+  title: string;
+  description?: ReactNode;
+  backHref?: string;
+  backLabel?: string;
+  actions?: ReactNode;
+  publish?: boolean;
+}) {
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const phoneHeading = publish && isImmersiveMobileRoute(pathname);
+  const actionRow =
+    actions ??
+    (backHref && backLabel ? (
+      <Button variant="outline" asChild>
+        <Link href={backHref}>{backLabel}</Link>
+      </Button>
+    ) : null);
+  return (
+    // A full-bleed page (/messages) drops the shell's content padding, so this pads itself there.
+    <div
+      data-slot="shell-not-found"
+      className={cn(
+        "flex flex-col items-start gap-4",
+        isFullBleedRoute(pathname) && "md:p-6",
+      )}
+    >
+      {publish && (
+        <PublishNotFoundTitle title={title} phoneHeading={phoneHeading} />
+      )}
+      {phoneHeading && (
+        <h1 className="font-heading -mb-2 text-2xl md:hidden">{title}</h1>
+      )}
+      {description && (
+        <p className="text-muted-foreground max-w-prose text-sm text-pretty">
+          {description}
+        </p>
+      )}
+      {actionRow && (
+        <div className="flex flex-wrap items-center gap-3">{actionRow}</div>
+      )}
+    </div>
+  );
+}
+
+// Its own component so ShellNotFound publishes only when asked: a publish that isn't wanted would
+// still clear the host's header when it unmounts. With `phoneHeading` the body shows the h1 below
+// md, so ShellHeading steps aside there; the head keeps its h1 from md.
+function PublishNotFoundTitle({
+  title,
+  phoneHeading,
+}: {
+  title: string;
+  phoneHeading: boolean;
+}) {
+  usePageHeader(
+    () => ({
+      title,
+      crumbs: [],
+      ownsHeading: phoneHeading ? "phone" : undefined,
+    }),
+    [title, phoneHeading],
+  );
+  return null;
+}
+
+// The shell's 404: unknown paths under the _dashboard layout (its notFoundComponent, which covers
+// /admin too and gets the router's not-found props) and the circle and thread pages that turn a
+// refused read into one.
+export function AppNotFound({
+  publish,
+}: { publish?: boolean } & Partial<NotFoundRouteProps>) {
   const t = useTranslations("notFound");
   return (
-    <NotFoundContent
+    <ShellNotFound
+      publish={publish}
+      title={t("title")}
+      description={t("description")}
       actions={
         <>
-          <Button className="h-11 px-6 text-[16px]" asChild>
+          <Button asChild>
             <Link href="/dashboard">{t("backToDashboard")}</Link>
           </Button>
           <Button
             variant="link"
-            className="h-11 px-2 text-[16px] underline underline-offset-3"
+            className="px-2 underline underline-offset-3"
             asChild
           >
             <Link href="/browse">{t("browsePuzzles")}</Link>

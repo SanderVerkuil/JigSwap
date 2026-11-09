@@ -57,6 +57,7 @@ export const CHAT_PREVIEW_SIZE = 5;
 
 export function CirclePage({ circleId }: { circleId: string }) {
   const t = useTranslations("circles");
+  const tNotFound = useTranslations("notFound");
   const navigate = useNavigate();
   const { user } = useUser();
   const seatName = useCircleSeatName();
@@ -67,13 +68,20 @@ export function CirclePage({ circleId }: { circleId: string }) {
     convexQuery(gateway.sharing.circle, { circleId }),
   );
 
-  // The shell page head reads Community › Circles › <name>.
-  usePageHeader(() => ({ title: detail?.name }), [detail?.name]);
+  // The shell page head reads Community › Circles › <name>, or just the not-found title. This
+  // publish runs after, and would overwrite, one from the 404 below, so it carries that title.
+  const missing = detail === null;
+  const notFoundTitle = tNotFound("title");
+  usePageHeader(
+    () =>
+      missing ? { title: notFoundTitle, crumbs: [] } : { title: detail?.name },
+    [missing, notFoundTitle, detail?.name],
+  );
 
   if (isPending || detail === undefined) {
     return <PageLoading message={t("manage.loadingCircle")} />;
   }
-  if (detail === null) return <AppNotFound />;
+  if (detail === null) return <AppNotFound publish={false} />;
 
   const backToList = () => void navigate({ to: "/circles" });
 
