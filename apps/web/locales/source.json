@@ -35,7 +35,9 @@
       "title": "Something went wrong",
       "description": "An unexpected error occurred. Please try again, or contact us if the problem persists.",
       "tryAgain": "Try again",
-      "reload": "Reload page"
+      "reload": "Reload page",
+      "offlineTitle": "You're offline",
+      "offlineDescription": "This page hasn't loaded yet. It will try again when you're back online."
     },
     "photoUploadRateLimited": "You've uploaded a lot of photos. Try again later.",
     "photoUploadRateLimitedUntil": "You've uploaded the most photos allowed for now. Try again {when}."
@@ -48,7 +50,8 @@
     "backToDashboard": "Back to dashboard",
     "browseCatalogue": "Browse the catalogue",
     "helpLinks": "Need a hand? Read the <docs>docs</docs> or <contact>get in touch</contact>.",
-    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL."
+    "message": "The page you're trying to access might have been moved, deleted, or you entered the wrong URL.",
+    "backTo": "Back to {page}"
   },
   "navigation": {
     "home": "Home",
@@ -533,7 +536,9 @@
       "addToFavorites": "Add to Favorites",
       "removeFromFavorites": "Remove from Favorites",
       "favoritesOnly": "Favorites",
-      "notFound": "Puzzle not found"
+      "notFound": "Puzzle not found",
+      "noPuzzlesMatch": "No puzzles match “{query}”",
+      "noPuzzlesMatchHint": "Try a brand name or fewer words."
     },
     "filters": {
       "all": "All",
@@ -739,7 +744,9 @@
         "failed": "{count, plural, one {# couldn't be shared. Try again.} other {# couldn't be shared. Try again.}}",
         "nothingShared": "Nothing new was shared with {name}"
       }
-    }
+    },
+    "pieceCountExample": "e.g. 1000",
+    "invalidBarcode": "One of the barcodes isn't valid. Check the EAN and UPC, then try again."
   },
   "trades": {
     "title": "Exchanges",
@@ -1283,7 +1290,9 @@
       "pickCircleDescription": "Pick a circle to open its group chat.",
       "noCircles": "You're not in any circles yet.",
       "goToCircles": "Go to circles"
-    }
+    },
+    "sending": "Sending…",
+    "waitingForConnection": "Waiting for connection"
   },
   "profile": {
     "title": "Profile",
@@ -1438,8 +1447,8 @@
       "swapsOnly": "You have <swapsLink>{swapsCount, plural, one {# swap in motion} other {# swaps in motion}}</swapsLink> — keep those pieces moving.",
       "pendingOnly": "You have {pendingCount, plural, one {one request waiting for your reply} other {# requests waiting for your reply}}.",
       "goalOnly": "All quiet on the swap front — and you're <goalLink>{pct}% of the way</goalLink> to your goal of {target, plural, one {# puzzle} other {# puzzles}}.",
-      "shelfOffered": "You have <shelfLink>{offeredCount, plural, one {# puzzle up for swap} other {# puzzles up for swap}}</shelfLink> — <browseLink>browse what others have</browseLink> and find your next one. 🧩",
-      "shelfOnly": "You have <shelfLink>{ownedCount, plural, one {# puzzle on your shelf} other {# puzzles on your shelf}}</shelfLink> — {ownedCount, plural, one {offer it for swap} other {offer a few for swap}} and get things moving. 🧩",
+      "shelfOffered": "You have <shelfLink>{offeredCount, plural, one {# puzzle up for swap} other {# puzzles up for swap}}</shelfLink> — <browseLink>browse what others have</browseLink> and find your next one.",
+      "shelfOnly": "You have <shelfLink>{ownedCount, plural, one {# puzzle on your shelf} other {# puzzles on your shelf}}</shelfLink> — {ownedCount, plural, one {offer it for swap} other {offer a few for swap}} and get things moving.",
       "empty": "Your shelf is ready when you are — add a puzzle or browse the community to get things moving."
     },
     "pendingBanner": {
@@ -1511,7 +1520,7 @@
         "all": "All<sr> goals</sr>",
         "done": "{current}/{target} done",
         "empty": "No goals yet — set yourself a target and watch the ring fill up.",
-        "noCurrent": "No current goals — set a new target and watch the ring fill up. 🧩",
+        "noCurrent": "No current goals — set a new target and watch the ring fill up.",
         "setGoal": "Set a Goal"
       },
       "latest": {
@@ -1578,7 +1587,9 @@
       "noOffersTitle": "No members are offering puzzles yet",
       "noOffersHint": "Look through the catalogue, or find people to follow.",
       "openCatalogue": "Open the catalogue",
-      "findPeople": "Find people"
+      "findPeople": "Find people",
+      "searchedTitle": "Nobody offers a copy matching “{query}” right now",
+      "searchedHint": "The catalogue has every puzzle, offered or not."
     }
   },
   "browsePuzzleFilter": {
@@ -2247,7 +2258,8 @@
     "removed": "Removed “{title}” from this collection",
     "undo": "Undo",
     "removeError": "Couldn't take the puzzle out of this collection. Please try again.",
-    "undoRemoveError": "Couldn't put the puzzle back. Please try again."
+    "undoRemoveError": "Couldn't put the puzzle back. Please try again.",
+    "notFoundSub": "This collection may have been deleted, or it's private."
   },
   "household": {
     "loading": "Loading your household…",
@@ -3787,11 +3799,13 @@
       },
       "ean": {
         "label": "EAN",
-        "placeholder": "Enter 13-digit EAN"
+        "placeholder": "Enter 13-digit EAN",
+        "invalid": "This isn't a valid EAN. Check the 13 digits under the barcode on the box."
       },
       "upc": {
         "label": "UPC",
-        "placeholder": "Enter 12-digit UPC"
+        "placeholder": "Enter 12-digit UPC",
+        "invalid": "This isn't a valid UPC. Check the 12 digits under the barcode on the box."
       },
       "modelNumber": {
         "label": "Model Number",
@@ -3969,7 +3983,7 @@
         "handRow1": "Lend it for a while or indefinitely",
         "handRow2": "Keep track of who has the box",
         "result": "Nobody has to ask who has it.",
-        "link": "See the full five-step tour"
+        "link": "Follow one box, stop by stop"
       },
       "rows": {
         "libraryTitle": "Your library",
@@ -4045,34 +4059,34 @@
       "faq3A": "Every puzzle appears in your 'My puzzles' overview with its status and who has it. Want it back? Message the borrower to arrange it, and choose Recall once you have the puzzle again: that closes the loan.",
       "faq4Q": "How do I hand the puzzle over?",
       "faq4A": "In person. You agree a place and time to hand the puzzle over, which is easy and free of shipping costs. For now we don't arrange shipping.",
-      "heroArtAlt": "Two children carry stacks of puzzle boxes across a wooden bridge.",
+      "heroArtAlt": "Two children carry stacks of puzzle boxes across a wooden bridge in the park, towards a woman with a wheelbarrow full of boxes.",
       "stopsTitle": "One box, four stops",
       "step1Where": "Available, on your shelf",
-      "step1Alt": "An attic full of stacked puzzle boxes, with a striped cat walking past.",
+      "step1Alt": "A girl in a pink cardigan slides the Dorpsstraat puzzle onto her bookcase while her cat watches from the windowsill.",
       "step2Where": "Available, one request waiting",
-      "step2Alt": "Friends pass puzzle boxes to each other beside a full wheelbarrow.",
+      "step2Alt": "Seen over her shoulder, a woman at her kitchen table smiles at the Dorpsstraat puzzle on her tablet.",
       "step3Where": "Lent out, and you can see to whom",
-      "step3Alt": "A man leans out of his window and hands a puzzle box to the woman next door.",
+      "step3Alt": "At a green front door, the girl hands the Dorpsstraat puzzle to the woman while a cat looks up at them.",
       "step4Where": "Back on the shelf",
-      "step4Alt": "A girl reads on her bed with the dog beside her, and the puzzle boxes back in their rows underneath."
+      "step4Alt": "The girl sits on the rug and smiles up at the Dorpsstraat puzzle, back on her shelf, with her cat asleep beside her."
     },
     "features": {
       "heroTitle": "A shelf that knows who has what",
       "heroLead": "A library of your own, lending you can keep track of, and people you trust. Here's what's in the box.",
       "g1Title": "Your whole collection, in one place",
-      "g1i1Body": "Every puzzle with its brand, piece count, condition and notes, in one tidy overview.",
-      "g1i2Body": "Group by brand, theme or mood. Private or public, with your own name, colour and icon.",
-      "g1i3Body": "Keep dates, solve times and ratings, and set goals for your puzzle year.",
+      "g1i1Body": "Your shelf holds every puzzle with its brand, piece count, condition and notes, in one tidy overview.",
+      "g1i2Body": "Sort them into collections by brand, theme or mood. Each gets its own name, colour and icon, and is private or public.",
+      "g1i3Body": "Log each puzzle you finish with its date, solve time and rating, and set goals for your puzzle year.",
       "g2Title": "Always know who has your puzzles",
-      "g2i1Body": "Everything you've lent out in one place: who has it and since when.",
-      "g2i2Body": "Available, lent out or recalled. You see where every box stands at a glance.",
-      "g2i3Body": "Lend for a while or forever, and ask for it back when it suits you.",
+      "g2i1Body": "Your lending overview shows everything you've lent out: who has it and since when.",
+      "g2i2Body": "Each box shows whether it's available, lent out or recalled, so you see where it stands at a glance.",
+      "g2i3Body": "Lend a puzzle for a while or forever, and ask for it back when it suits you.",
       "g3Title": "Find your next puzzle",
-      "g3i1Body": "Narrow it down by piece count, difficulty, condition and category.",
+      "g3i1Body": "Narrow your search by piece count, difficulty, condition and category.",
       "g3i2Body": "See the newest puzzles in the catalogue as the community adds them.",
       "g3i3Body": "Propose, accept and complete swaps, with a clear status at every step.",
       "g4Title": "With people you trust",
-      "g4i1Body": "Share your shelf with family and friend groups. You decide who may see and exchange.",
+      "g4i1Body": "Share your shelf in circles of family and friends. You decide who may see and exchange.",
       "g4i2Body": "Rate exchanges afterwards. Honest reviews and trust levels keep swapping pleasant.",
       "g4i3Body": "Follow fellow puzzlers, see their activity and share your public profile.",
       "ctaTitle": "Start with one shelf",
@@ -4177,7 +4191,8 @@
     "legal": {
       "contents": "Contents",
       "privacyLead": "How we handle your data, carefully and openly.",
-      "termsLead": "The ground rules that keep swapping fair and pleasant for everyone."
+      "termsLead": "The ground rules that keep swapping fair and pleasant for everyone.",
+      "backToContents": "Back to contents"
     },
     "docs": {
       "searchTrigger": "Search docs…",
@@ -4224,7 +4239,7 @@
     },
     "meta": {
       "home": "Build your own jigsaw puzzle library, lend and swap puzzles with fellow puzzlers, and always know who has your lent-out boxes. Free to join.",
-      "howItWorks": "How JigSwap works in five steps: create your profile, fill your shelf, find a puzzle, agree a loan or swap, and always see who has your boxes.",
+      "howItWorks": "How JigSwap works: follow one box from your shelf to a neighbour's and back, and always see who has it.",
       "features": "A digital puzzle shelf, collections, completions, lending with tracking and a community you trust: everything JigSwap offers for puzzling together.",
       "about": "JigSwap started at the kitchen table, as a family project to easily see and swap puzzles with friends and family. Read how it grew.",
       "contact": "Have a question, an idea or feedback about JigSwap? Get in touch with us.",
@@ -4491,6 +4506,10 @@
       "quickSetup": {
         "title": "Quick setup",
         "subtitle": "Set up your shelf in a few steps. You can stop at any time."
+      },
+      "suggestEdit": {
+        "title": "Suggest an edit",
+        "subtitle": "Your changes are checked before they reach the catalogue."
       }
     },
     "user": {
@@ -4552,7 +4571,10 @@
     "waitingCount": "{capped, select, yes {{count} or more waiting} other {{count} waiting}}",
     "plankReset": "Reset",
     "plankPlayLabel": "Play with the shelf",
-    "plankResetLabel": "Reset the shelf"
+    "plankResetLabel": "Reset the shelf",
+    "connection": {
+      "offline": "You're offline. We'll reconnect when your connection is back."
+    }
   },
   "copyInstance": {
     "notFound": "Copy not found",
@@ -4870,7 +4892,8 @@
     "title": "My suggestions",
     "empty": {
       "title": "No suggestions yet",
-      "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction."
+      "description": "Use “Suggest an edit” on any catalogue puzzle to propose a correction.",
+      "browseCatalogue": "Browse the catalogue"
     },
     "status": {
       "pending": "Pending",
@@ -6069,7 +6092,8 @@
         "addForm": "The puzzle you filled in hasn't been added yet.",
         "profile": "Your new location hasn't been saved yet.",
         "keep": "Keep editing",
-        "discard": "Discard"
+        "discard": "Discard",
+        "suggestEdit": "The changes you suggested haven't been sent yet."
       },
       "finishLater": "Finish later"
     },

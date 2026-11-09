@@ -35,7 +35,9 @@
       "title": "Er ging iets mis",
       "description": "Er is een onverwachte fout opgetreden. Probeer het opnieuw, of neem contact met ons op als het probleem blijft.",
       "tryAgain": "Opnieuw proberen",
-      "reload": "Pagina opnieuw laden"
+      "reload": "Pagina opnieuw laden",
+      "offlineTitle": "Je bent offline",
+      "offlineDescription": "Deze pagina is nog niet geladen. We proberen het opnieuw zodra je weer online bent."
     },
     "photoUploadRateLimited": "Je hebt veel foto's geüpload. Probeer het later opnieuw.",
     "photoUploadRateLimitedUntil": "Je hebt voorlopig het maximale aantal foto's geüpload. Probeer het {when} opnieuw."
@@ -48,7 +50,8 @@
     "backToDashboard": "Terug naar dashboard",
     "browseCatalogue": "Bekijk de catalogus",
     "helpLinks": "Hulp nodig? Lees de <docs>documentatie</docs> of <contact>neem contact met ons op</contact>.",
-    "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd."
+    "message": "De pagina die je probeert te openen is mogelijk verplaatst, verwijderd, of je hebt een verkeerde URL ingevoerd.",
+    "backTo": "Terug naar {page}"
   },
   "navigation": {
     "home": "Home",
@@ -533,7 +536,9 @@
       "addToFavorites": "Toevoegen aan favorieten",
       "removeFromFavorites": "Verwijderen uit favorieten",
       "favoritesOnly": "Favorieten",
-      "notFound": "Puzzel niet gevonden"
+      "notFound": "Puzzel niet gevonden",
+      "noPuzzlesMatch": "Geen puzzels gevonden voor “{query}”",
+      "noPuzzlesMatchHint": "Probeer een merknaam of minder woorden."
     },
     "filters": {
       "all": "Alles",
@@ -739,7 +744,9 @@
         "failed": "{count, plural, one {# kon niet worden gedeeld. Probeer het opnieuw.} other {# konden niet worden gedeeld. Probeer het opnieuw.}}",
         "nothingShared": "Er is niets nieuws gedeeld met {name}"
       }
-    }
+    },
+    "pieceCountExample": "bijv. 1000",
+    "invalidBarcode": "Een van de barcodes klopt niet. Controleer de EAN en UPC en probeer het opnieuw."
   },
   "trades": {
     "title": "Uitwisselingen",
@@ -1283,7 +1290,9 @@
       "pickCircleDescription": "Kies een kring om de groepschat te openen.",
       "noCircles": "Je zit nog niet in een kring.",
       "goToCircles": "Naar kringen"
-    }
+    },
+    "sending": "Versturen…",
+    "waitingForConnection": "Wachten op verbinding"
   },
   "profile": {
     "title": "Profiel",
@@ -1438,8 +1447,8 @@
       "swapsOnly": "Je hebt <swapsLink>{swapsCount, plural, one {# lopende ruil} other {# lopende ruilen}}</swapsLink> — houd die stukjes in beweging.",
       "pendingOnly": "Je hebt {pendingCount, plural, one {één verzoek dat op je antwoord wacht} other {# verzoeken die op je antwoord wachten}}.",
       "goalOnly": "Alles rustig aan het ruilfront — en je bent <goalLink>{pct}% op weg</goalLink> naar je doel van {target, plural, one {# puzzel} other {# puzzels}}.",
-      "shelfOffered": "Je hebt <shelfLink>{offeredCount, plural, one {# puzzel te ruil} other {# puzzels te ruil}}</shelfLink> — <browseLink>kijk wat anderen hebben</browseLink> en vind je volgende puzzel. 🧩",
-      "shelfOnly": "Je hebt <shelfLink>{ownedCount, plural, one {# puzzel op je plank} other {# puzzels op je plank}}</shelfLink> — {ownedCount, plural, one {zet hem te ruil} other {zet er een paar te ruil}} en breng de boel in beweging. 🧩",
+      "shelfOffered": "Je hebt <shelfLink>{offeredCount, plural, one {# puzzel te ruil} other {# puzzels te ruil}}</shelfLink> — <browseLink>kijk wat anderen hebben</browseLink> en vind je volgende puzzel.",
+      "shelfOnly": "Je hebt <shelfLink>{ownedCount, plural, one {# puzzel op je plank} other {# puzzels op je plank}}</shelfLink> — {ownedCount, plural, one {zet hem te ruil} other {zet er een paar te ruil}} en breng de boel in beweging.",
       "empty": "Je plank is er klaar voor — voeg een puzzel toe of neus rond in de community om de boel in beweging te krijgen."
     },
     "pendingBanner": {
@@ -1511,7 +1520,7 @@
         "all": "Alle<sr> doelen</sr>",
         "done": "{current}/{target} gedaan",
         "empty": "Nog geen doelen — stel jezelf een doel en zie de ring vollopen.",
-        "noCurrent": "Geen lopende doelen — stel een nieuw doel en zie de ring vollopen. 🧩",
+        "noCurrent": "Geen lopende doelen — stel een nieuw doel en zie de ring vollopen.",
         "setGoal": "Stel een doel"
       },
       "latest": {
@@ -1578,7 +1587,9 @@
       "noOffersTitle": "Nog geen leden bieden puzzels aan",
       "noOffersHint": "Kijk rond in de catalogus, of zoek mensen om te volgen.",
       "openCatalogue": "Naar de catalogus",
-      "findPeople": "Mensen vinden"
+      "findPeople": "Mensen vinden",
+      "searchedTitle": "Niemand biedt nu een exemplaar aan dat past bij “{query}”",
+      "searchedHint": "In de catalogus staat elke puzzel, aangeboden of niet."
     }
   },
   "browsePuzzleFilter": {
@@ -2247,7 +2258,8 @@
     "removed": "“{title}” is uit deze collectie gehaald",
     "undo": "Ongedaan maken",
     "removeError": "Kon de puzzel niet uit deze collectie halen. Probeer het opnieuw.",
-    "undoRemoveError": "Kon de puzzel niet terugzetten. Probeer het opnieuw."
+    "undoRemoveError": "Kon de puzzel niet terugzetten. Probeer het opnieuw.",
+    "notFoundSub": "Deze collectie is mogelijk verwijderd, of ze is privé."
   },
   "household": {
     "loading": "Je huishouden laden…",
@@ -3787,11 +3799,13 @@
       },
       "ean": {
         "label": "EAN",
-        "placeholder": "Voer 13-cijferige EAN in"
+        "placeholder": "Voer 13-cijferige EAN in",
+        "invalid": "Dit is geen geldige EAN. Controleer de 13 cijfers onder de barcode op de doos."
       },
       "upc": {
         "label": "UPC",
-        "placeholder": "Voer 12-cijferige UPC in"
+        "placeholder": "Voer 12-cijferige UPC in",
+        "invalid": "Dit is geen geldige UPC. Controleer de 12 cijfers onder de barcode op de doos."
       },
       "modelNumber": {
         "label": "Modelnummer",
@@ -3969,7 +3983,7 @@
         "handRow1": "Leen ’m uit voor even of voor onbepaalde tijd",
         "handRow2": "Houd bij wie de doos heeft",
         "result": "Niemand hoeft te vragen wie ’m heeft.",
-        "link": "Bekijk alle vijf de stappen"
+        "link": "Volg één doos langs alle haltes"
       },
       "rows": {
         "libraryTitle": "Jouw bibliotheek",
@@ -4045,34 +4059,34 @@
       "faq3A": "Elke puzzel staat in je overzicht 'Mijn puzzels', met de status en bij wie 'm is. Wil je 'm terug? Stuur de lener een bericht om het af te spreken en kies Terugvragen zodra je de puzzel weer hebt: daarmee sluit je de uitlening.",
       "faq4Q": "Hoe geef ik de puzzel door?",
       "faq4A": "In persoon. Jullie spreken een plek en tijd af om de puzzel over te dragen, makkelijk en zonder verzendkosten. Voorlopig regelen we geen verzending.",
-      "heroArtAlt": "Twee kinderen dragen stapels puzzeldozen over een houten brug.",
+      "heroArtAlt": "Twee kinderen dragen stapels puzzeldozen over een houten brug in het park, naar een vrouw met een kruiwagen vol dozen.",
       "stopsTitle": "Eén doos, vier haltes",
       "step1Where": "Beschikbaar, op jouw plank",
-      "step1Alt": "Een zolder vol gestapelde puzzeldozen, met een gestreepte kat die langsloopt.",
+      "step1Alt": "Een meisje in een roze vest schuift de Dorpsstraat-puzzel in haar boekenkast, terwijl haar kat vanaf de vensterbank toekijkt.",
       "step2Where": "Beschikbaar, er ligt één verzoek",
-      "step2Alt": "Vrienden geven elkaar puzzeldozen aan naast een volle kruiwagen.",
+      "step2Alt": "Over haar schouder gezien: een vrouw aan haar keukentafel glimlacht naar de Dorpsstraat-puzzel op haar tablet.",
       "step3Where": "Uitgeleend, en je ziet aan wie",
-      "step3Alt": "Een man leunt uit zijn raam en geeft een puzzeldoos aan de buurvrouw.",
+      "step3Alt": "Bij een groene voordeur geeft het meisje de Dorpsstraat-puzzel aan de vrouw, terwijl een kat naar ze opkijkt.",
       "step4Where": "Weer terug op de plank",
-      "step4Alt": "Een meisje leest op bed met de hond naast zich, en de puzzeldozen liggen weer op een rij onder het bed."
+      "step4Alt": "Het meisje zit op het kleed en lacht naar de Dorpsstraat-puzzel, weer terug op haar plank, met haar kat slapend naast zich."
     },
     "features": {
       "heroTitle": "Een plank die weet wie wat heeft",
       "heroLead": "Een eigen bibliotheek, uitlenen waarbij je het overzicht houdt en mensen die je vertrouwt. Dit zit er allemaal in.",
       "g1Title": "Je hele verzameling op één plek",
-      "g1i1Body": "Elke puzzel met merk, stukjes, conditie en notities, in één overzichtelijk geheel.",
-      "g1i2Body": "Groepeer op merk, thema of stemming. Privé of openbaar, met eigen naam, kleur en icoon.",
-      "g1i3Body": "Houd datums, puzzeltijden en beoordelingen bij, en stel doelen voor je puzzeljaar.",
+      "g1i1Body": "Op je plank staat elke puzzel met merk, stukjes, conditie en notities, in één overzichtelijk geheel.",
+      "g1i2Body": "Orden ze in collecties op merk, thema of stemming. Elke collectie krijgt een eigen naam, kleur en icoon, en is privé of openbaar.",
+      "g1i3Body": "Leg elke puzzel die je af hebt vast met datum, puzzeltijd en beoordeling, en stel doelen voor je puzzeljaar.",
       "g2Title": "Weet altijd bij wie je puzzels zijn",
-      "g2i1Body": "Alles wat je hebt uitgeleend op één plek: wie hem heeft en sinds wanneer.",
-      "g2i2Body": "Beschikbaar, uitgeleend of teruggevraagd. Je ziet in één oogopslag hoe elke doos ervoor staat.",
-      "g2i3Body": "Leen uit voor even of voor altijd, en vraag hem terug wanneer het jou uitkomt.",
+      "g2i1Body": "Je uitleenoverzicht laat alles zien wat je hebt uitgeleend: wie het heeft en sinds wanneer.",
+      "g2i2Body": "Bij elke doos zie je of hij beschikbaar, uitgeleend of teruggevraagd is, zodat je in één oogopslag weet hoe hij ervoor staat.",
+      "g2i3Body": "Leen een puzzel uit voor even of voor altijd, en vraag hem terug wanneer het jou uitkomt.",
       "g3Title": "Vind je volgende puzzel",
-      "g3i1Body": "Filter op stukjes, moeilijkheid, conditie en categorie.",
+      "g3i1Body": "Verfijn je zoekopdracht op stukjes, moeilijkheid, conditie en categorie.",
       "g3i2Body": "Zie de nieuwste puzzels in de catalogus zodra de community ze toevoegt.",
-      "g3i3Body": "Stel voor, accepteer en rond af, met een duidelijke status bij elke stap.",
+      "g3i3Body": "Stel een ruil voor, accepteer hem en rond hem af, met een duidelijke status bij elke stap.",
       "g4Title": "Met mensen die je vertrouwt",
-      "g4i1Body": "Deel je plank met familie en vriendengroepen. Jij bepaalt wie mag meekijken en ruilen.",
+      "g4i1Body": "Deel je plank in kringen met familie en vrienden. Jij bepaalt wie mag meekijken en ruilen.",
       "g4i2Body": "Beoordeel uitwisselingen achteraf. Eerlijke reviews en vertrouwensniveaus houden het ruilen prettig.",
       "g4i3Body": "Volg andere puzzelaars, zie hun activiteit en deel je openbare profiel.",
       "ctaTitle": "Begin met één plank",
@@ -4177,7 +4191,8 @@
     "legal": {
       "contents": "Inhoud",
       "privacyLead": "Zo gaan we zorgvuldig en open om met je gegevens.",
-      "termsLead": "De spelregels die het ruilen voor iedereen eerlijk en prettig houden."
+      "termsLead": "De spelregels die het ruilen voor iedereen eerlijk en prettig houden.",
+      "backToContents": "Terug naar de inhoud"
     },
     "docs": {
       "searchTrigger": "Documentatie zoeken…",
@@ -4224,7 +4239,7 @@
     },
     "meta": {
       "home": "Bouw je eigen puzzelbibliotheek, leen en ruil legpuzzels met andere puzzelaars en zie altijd bij wie je uitgeleende dozen zijn. Gratis aanmelden.",
-      "howItWorks": "Zo werkt JigSwap in vijf stappen: maak je profiel aan, vul je plank, vind een puzzel, spreek een lening of ruil af en zie altijd bij wie je dozen zijn.",
+      "howItWorks": "Zo werkt JigSwap: volg één doos van jouw plank naar die van een buur en terug, en zie altijd bij wie hij is.",
       "features": "Een digitale puzzelplank, collecties, voltooiingen, uitlenen met overzicht en een community die je vertrouwt: alles wat JigSwap biedt om samen te puzzelen.",
       "about": "JigSwap begon aan de keukentafel, als familieproject om makkelijk puzzels te zien en te ruilen met vrienden en familie. Lees hoe het is gegroeid.",
       "contact": "Heb je een vraag, een idee of feedback over JigSwap? Neem contact met ons op.",
@@ -4491,6 +4506,10 @@
       "quickSetup": {
         "title": "Snel instellen",
         "subtitle": "Richt je plank in met een paar stappen. Je kunt altijd stoppen."
+      },
+      "suggestEdit": {
+        "title": "Wijziging voorstellen",
+        "subtitle": "Je wijzigingen worden nagekeken voordat ze in de catalogus komen."
       }
     },
     "user": {
@@ -4552,7 +4571,10 @@
     "waitingCount": "{capped, select, yes {{count} of meer te behandelen} other {{count} te behandelen}}",
     "plankReset": "Herstellen",
     "plankPlayLabel": "Spelen met de plank",
-    "plankResetLabel": "Plank herstellen"
+    "plankResetLabel": "Plank herstellen",
+    "connection": {
+      "offline": "Je bent offline. We maken weer verbinding zodra je internet terug is."
+    }
   },
   "copyInstance": {
     "notFound": "Exemplaar niet gevonden",
@@ -4870,7 +4892,8 @@
     "title": "Mijn voorstellen",
     "empty": {
       "title": "Nog geen voorstellen",
-      "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen."
+      "description": "Gebruik “Wijziging voorstellen” bij een cataloguspuzzel om een correctie voor te stellen.",
+      "browseCatalogue": "Bekijk de catalogus"
     },
     "status": {
       "pending": "In behandeling",
@@ -6069,7 +6092,8 @@
         "addForm": "De gegevens die je hebt ingevuld, zijn nog niet opgeslagen.",
         "profile": "Je nieuwe locatie is nog niet opgeslagen.",
         "keep": "Verder bewerken",
-        "discard": "Niet opslaan"
+        "discard": "Niet opslaan",
+        "suggestEdit": "De wijzigingen die je voorstelt, zijn nog niet verstuurd."
       },
       "finishLater": "Later afmaken"
     },

@@ -41,13 +41,14 @@ colors:
   night-ink-muted: "#a9c6cc"
   night-primary: "#1f7a63"
   night-link: "#8fdcc6"
+  night-destructive-text: "#ffb0ab"
   night-plank: "#8a6a3b"
   night-logo-jig: "#a79cf7"
   night-logo-swap: "#4fd14c"
 typography:
   display-hero:
     fontFamily: "Young Serif, Georgia, Times New Roman, serif"
-    fontSize: "min(calc((100cqw - 80px) / 10.2), 15svh)"
+    fontSize: "min(calc((100cqw - 80px) / 10.2), 15svh)" # 15svh cap; 13svh and 11svh on short screens, see Display Hero
     fontWeight: 400
     lineHeight: 1
     letterSpacing: "-0.012em"
@@ -242,6 +243,7 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 - **Canal Primary** (#134a3c): the everyday action in the shell: default buttons, tooltips, primary badges.
 - **Canal Ink** (#0f3b30): all text on light grounds, ink on marigold, the canal storey and the public floor pins.
 - **Canal Link** (#146350): primary as text on page surfaces (links, chips, icons) and the focus ring colour of inputs.
+- **Primary Tint** (`color-mix(in oklab, Canal Link 12%, Sky Frame)`, about #cbdfe4): the picked and selected fill, a canal-sky step below the hover sky and never a grey. Canal Link text on it is 5.2:1 and Ink Muted 4.6:1. After dark it is Night Primary at 22% in Night Card.
 
 ### Secondary
 
@@ -252,8 +254,8 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 
 ### Tertiary
 
-- **Plank** (#e4c79a): ledges that boxes stand on, and the legal footer tile.
-- **Tulip** (#c8321f): unread dots and counts. Chart colours reuse it, Canal Link and three chart-only tones.
+- **Plank** (#e4c79a): ledges that boxes stand on, the 3D shelf's board (flat, matte, no grain) and the legal footer tile.
+- **Tulip** (#c8321f): unread dots and counts. An unread notification carries its dot in the row's left gutter, level with the avatar, and its hover is the full Sky Frame accent step, past the unread tint. Chart colours reuse it, Canal Link and three chart-only tones.
 - **Leaf** (#1e7b34), **Amber** (#a86400), **Danger** (#c62828), **Destructive** (`oklch(0.577 0.245 27.325)`): status only.
 
 ### Neutral
@@ -268,12 +270,13 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 - **Night Frame** (#0f2a33) and **Night Sheet** (#15343d): sky and sheet after dark, the frame slightly deeper than the sheet. **Night Card** (#1b3f49), **Night Raised** (#234a54) and **Night Accent** (#2a5561) step upward from there.
 - **Night Canal** (#0b2028): the deepest colour in the system, used for the canal storey and footer board.
 - **Night Ink** (#eaf4f7), **Night Ink Muted** (#a9c6cc), **Night Link** (#8fdcc6), **Night Primary** (#1f7a63) and **Night Plank** (#8a6a3b) carry their daytime roles. Marigold does not change at night; only its ink does (#0f2a33).
+- **Night Destructive Text** (#ffb0ab, `--destructive-text`): destructive as text only, at least 4.5:1 on the card, the accent and a focused destructive menu row. Every `text-destructive` reads it through `--text-color-destructive`; fills, borders and rings keep `--destructive`, and white on `bg-destructive/60` stays 4.67:1. By day it equals Destructive.
 
 ### Named Rules
 
 **The Reserved Marigold Rule.** In the shell, marigold is an action colour for Add Puzzle in the top bar and the phone add button, and for nothing else that can be pressed. Everyday primaries are canal green. Its only other shell appearances are non-action marks: rating stars, text selection, and the night skyline's windows.
 
-**The Public Marigold Rule.** On public pages marigold marks the main action. The hero extends it to the things that act on that same promise: each "ask to borrow" button in the docked shelf, and the chosen floor pin. A long page may also carry one full marigold storey (Discover on home, its counterpart on Features). The closing call to action stays a marigold button on sky, not a marigold band.
+**The Public Marigold Rule.** On public pages marigold marks the main action. The hero extends it to the things that act on that same promise: each "ask to borrow" button in the docked shelf, and the chosen floor pin. A long page may also carry one full marigold storey (Discover on home, its counterpart on Features). The closing call to action stays a marigold button on sky, not a marigold band. Two recorded exceptions: the public header's **Start your shelf** is canal, because the page's marigold copy sits in the hero (the bar's copy steps aside while the hero's is in view; see Navigation), and About's main action, **Get in touch**, is canal.
 
 **The Logo's Own Colours Rule.** The wordmark takes `logo-jig` and `logo-swap`, and the violet raster mark stays as drawn, whatever the theme's primary does. The pair has a lifted night version for legibility. The single exception is the footer's giant name, knocked out in one light colour because the two-tone logo turns garish at that size on ink.
 
@@ -289,12 +292,12 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 
 ### Hierarchy
 
-- **Display Hero** (400, scaled so the line fills the measure and capped at 15svh, 1): the home h1, on one line from 760px, in the sky.
+- **Display Hero** (400, scaled so the line fills the measure, 1): the home h1, on one line from 760px, in the sky, balanced over two lines only when a reader's text spacing needs it. Capped at 15svh, and at 13svh on screens up to 800px tall; from 1180px wide the cap is 13svh up to 880px tall and 11svh up to 800px tall, so the lowest floor name stays on the first screen.
 - **Display Page** (400, `clamp(38px, 6vw, 104px)`, 1.03): public sub-page titles.
 - **Headline Section** (400, `clamp(32px, 4.4vw, 68px)`, 1.06): public section statements. The How preview starts at 40px; Sustain runs `clamp(30px, 3.6vw, 52px)`.
 - **Title Storey** (400, `clamp(28px, 3vw, 44px)`, 1; 22px on phones): the band title of a feature storey.
 - **Statement** (400, `clamp(24px, 2.5vw, 36px)`, 1.3): the family's quote and the live-count sentence.
-- **Title Page** (400, 1.5rem): page titles in the sheet head; 1.25rem in the phone top bar.
+- **Title Page** (400, 1.5rem): page titles in the sheet head; 1.25rem in the phone top bar, 0.875rem below 640px, on up to two lines, hyphenated by the page language so one long Dutch word breaks rather than cuts off.
 - **Title Section** (400, 1.25rem): dashboard section heads and the briefing sentence.
 - **Label Group** (400, 15px): sidebar group names, in the serif.
 - **Body Public** (400, 18px, 1.5; leads `clamp(18px, 1.5vw, 21px)`, measure 46ch): reading text on public pages.
@@ -307,19 +310,23 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 
 **The One Weight Rule.** Young Serif has one weight, 400. `font-synthesis-weight: none` on the root means a bold on it renders as regular, never as a browser-faked bold. Build hierarchy through size. Do not write a weight on the display face.
 
-**The Figures Rule.** Figures that are data in the app use Hanken Grotesk with tabular numerals. Young Serif's old-style figures misread as data. The home page's live-count sentence is the recorded exception: there the figures are words in a public sentence, not a readout.
+**The Figures Rule.** Figures that are data in the app use Hanken Grotesk with tabular numerals, through the `figures` utility (Hanken Grotesk, lining tabular numerals). Young Serif's old-style figures misread as data. The home page's live-count sentence is the recorded exception: there the figures are words in a public sentence, not a readout.
 
 **The Logo Lettering Rule.** Baloo 2 at 700 sets the wordmark and nothing else.
 
 ## Layout
 
-**Shell, from 768px.** A sky L-frame of a 48px top bar and a 16rem sidebar, with no rule between them. The white sheet butts both and is inset 8px from the window's right and bottom. The page head sticks to the sheet's top on a solid ground with one quiet edge; content pads 24px and scrolls inside the sheet, passing under the head. Frame, sheet and card are the only three levels. Content is full width by default, or a centred 1180px column by preference; `/messages` is full-bleed.
+**Shell, from 768px.** A sky L-frame of a 48px top bar (56px on touch screens, where its controls are 44px targets) and a 16rem sidebar, with no rule between them. The sidebar starts below that bar and ends above the open cookie banner. The white sheet butts both and is inset 8px from the window's right and bottom. The page head sticks to the sheet's top on a solid ground with one quiet edge; content pads 24px and scrolls inside the sheet, passing under the head. Frame, sheet and card are the only three levels. Content is full width by default, or a centred 1180px column by preference; `/messages` is full-bleed.
 
 **Shell, below 768px.** A dedicated phone layout rather than a squeezed one: the document scrolls, under a 56px sticky sky top bar and above a five-slot bottom tab bar of at least 56px. Content pads 16px at the sides and 18px on top. There is no sidebar, no page head and no skyline.
 
-**Public.** Full-width bands that meet edge to edge, with text on a 16px margin that becomes 40px at 760px. Section rhythm is fluid (`clamp(56px, 8vw, 120px)` is typical). Grids are asymmetric: 5/7, 1/2 and a 12-column split. Text holds to 30 to 46ch inside the wide bands. The footer is a tile board with 6 to 8px gutters on a 12-column grid.
+**Public.** Full-width bands that meet edge to edge, with text on a 16px margin that becomes 40px at 760px. Section rhythm is fluid (`clamp(56px, 8vw, 120px)` is typical). Grids are asymmetric: 5/7, 1/2 and a 12-column split. Text holds to 30 to 46ch inside the wide bands. The footer is a tile board with 6 to 8px gutters on a 12-column grid. The sticky 64px header's offset lives in one place, `html:has(.mk-root) { scroll-padding-top: 80px }`, so focus and anchor jumps stop 16px below it; targets don't add their own header margin, and docs adds its 48px bar on phones (112px).
 
-**Storeys.** From 860px wide and 720px tall, feature storeys fill the viewport below the header and stick, with 40svh of empty scroll between them so each one holds before the next slides over. Below that they stack as normal sections.
+**Public member page.** It follows the street: the hero sits on a full-bleed sky band and the closing call to action is on sky, as on home. A visitor sees only the figures that aren't zero. On the sky band, tinted chips become the street's opaque status chips (soft fill, strong text), because a 10% tint over sky drops under 4.5:1.
+
+**Long documents.** A legal page's or docs article's contents rail is sticky, scrolls on its own and ends above the cookie banner. Below the rail's breakpoint the list folds into a details block under the title: at 900px for legal, with a **Back to contents** link after each section; at 1280px for docs. Docs gets an **On this page** jump in the phone Docs bar below 861px, and at the top of the sticky sidebar from 861 to 1279px. The highlighted entry is the last section whose top is within 140px of the top of the window; a section picked from the list stays highlighted until the reader scrolls back up or it leaves the window. Anchors land 16px below the sticky chrome through the page's scroll padding.
+
+**Storeys.** From 860px wide and 720px tall, feature storeys fill the viewport below the header and stick, with 12svh of empty scroll between them so each one holds before the next slides over. Below that they stack as normal sections.
 
 **Dutch first.** Layouts have to survive the longer Dutch strings; the page head moves actions onto their own row rather than wrap the title.
 
@@ -329,12 +336,16 @@ Flat by default, with tonal layering doing the work: sky behind white behind a s
 
 ### Shadow Vocabulary
 
-- **Popover float** (`box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`): popovers and menus.
+- **Popover float** (`box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`): popovers and menus. Turned upward (`0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1)`) on the cookie banner.
 - **Dialog float** (`box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)`): dialogs and sheets.
+
+### Cookie Banner
+
+A floating bar over the page's foot: a 1px Line top edge (`border-t border-border`) and the upward Popover float, with its text on the 40px margin from 640px and its buttons at the right edge. While it is open it publishes the strip of the window it covers above the phone tab bar as `--consent-banner-height` (its height, plus its gap over the bar on phones; unset when closed). Public pages pad the document's end by it, and `html` scroll padding keeps focus clear of it and the phone tab bar. The shell pads the end of its own scroll region instead, at every width, so the phone tab bar stays at the bottom; from 768px that is also scroll padding, and the desktop sidebar ends above the banner.
 
 ### Named Rules
 
-**The Things That Float Rule.** A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row. Nothing at rest in the page carries one.
+**The Things That Float Rule.** A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row, the cookie banner. Nothing at rest in the page carries one.
 
 **The Solid Head Rule.** The sticky page head and the public header stand on solid colour. Do not frost them. Blur exists only to obscure a flagged image in moderation.
 
@@ -352,8 +363,9 @@ Silhouettes come from the street: the gable skyline, the small triangular pointe
 
 Flat and direct; every pressable thing answers the finger.
 
-- **Shape:** gently squared (4px); public actions (10px) at 42 to 54px tall.
+- **Shape:** gently squared (4px); public actions (10px) at 42 to 54px tall. A public action whose label is wider than a narrow phone wraps to two lines instead of running off the screen, and stays at least 50px tall, on touch too.
 - **Primary:** Canal Primary with white text, 36px tall, 14px at 500. Small is 32px and large 40px. On phones, default, small and icon sizes keep their look and reach 44px through an invisible hit area.
+- **Public size** (`size="public"`): 50px tall, 10px radius, 18px at 700, 22px side padding (20px with an icon), still reaching 44px on touch. Public page actions use it: Features, How it works, the public catalogue and member pages, the Contact submit, About's **Get in touch** and the marketing 404.
 - **Marigold:** flat marigold with Canal Ink text; the `brand` variant. Public uses set it larger at 700.
 - **Hover / Focus:** primary fades to 90%; marigold moves to Marigold Press. Focus is a solid 3px outline in the ink colour, offset 2px. No glow, gradient or inner highlight.
 - **Secondary / Outline / Ghost / Link:** a sky-tinted fill; a white fill with a 1px edge; a hover-only sky fill; underlined Canal Link text.
@@ -361,7 +373,14 @@ Flat and direct; every pressable thing answers the finger.
 ### Chips
 
 - **Style:** removable filter chips are fully round with a 1px input edge on the card colour, holding a small tinted field name. Badges are 4 to 6px with a soft status fill and strong status text.
-- **State:** difficulty has a four-step fill and text scale (easy, medium, hard, expert) in both themes.
+- **State:** difficulty has a four-step fill and text scale (easy, medium, hard, expert) in both themes. The Insights By difficulty chart uses the same scale, with each step's strong tone as the fill and an Ink Muted tint (muted-foreground at 60%) for Unknown; every fill is at least 2:1 against the page in both themes.
+- **Chosen:** the contact subject chip is a Canal fill with white text by day, and a Night Link fill with Night Canal text after dark.
+
+### Selection
+
+- **Filters:** single-choice filters (FilterBar on Trades, My Puzzles, Messages, Household and the member page, the household owner filter, and the /notifications and /whats-new categories) sit in the tab track: Surface Muted, 6px corners and 3px padding. The options are flat 4px items, and the chosen one is a white window at 600 with a 1px inset Canal Link edge (Night Link after dark), inset so it never thins the 2px focus ring; white on the track alone is too faint to show the choice. A filter's chosen option is never a canal fill, which would read as an action.
+- **Form choices:** radio groups in forms (SegmentedPills) keep the canal fill, with 4px corners and a 1px Night Link ring after dark (Night Primary alone is under 3:1 on the sheet).
+- **Picked:** a picked or selected choice (piece-count presets, picked catalogue rows) carries the Primary Tint plus a 1px Canal Link edge, and toggles expose `aria-pressed`: never a fill alone.
 
 ### Cards / Containers
 
@@ -375,15 +394,37 @@ Flat and direct; every pressable thing answers the finger.
 
 - **Style:** 36px tall, 1px Line Input, 4px radius, transparent fill.
 - **Focus:** border moves to the ring colour with a 3px ring at 50%.
-- **Error / Disabled:** a destructive border and soft ring; 50% opacity.
+- **Error / Disabled:** a destructive border and soft ring; 50% opacity. A field check runs when the member leaves the field and shows one 14px destructive line under it, linked with `aria-describedby`. By day destructive text is only 3.46:1 on the Primary Tint, so an error on that tint (the import zone) is a destructive icon with the words in the foreground colour.
+- **Tag field:** drawn like Input (36px, 4px radius, Line Input edge, transparent fill, the same focus); its tags are removable chips inside it.
 - **Search trigger:** a flat 32px field in the top bar, centred on the window, that opens the command palette.
+- **Switch:** the unchecked track has a 1px Ink Muted edge by day (6.3:1 on white) and none at night; on keyboard focus the edge takes the ring colour.
 
 ### Navigation
 
 - **Sidebar:** serif group names that link to their landing, underlined when current. Items are 14px with an icon. Hover is Frame Step. The active item is a white window in the frame, at 600: not a tinted pill.
-- **Top bar:** sidebar toggle and logo, centred search, then bell, theme and language, then Add Puzzle in marigold. No avatar; identity sits at the foot of the sidebar.
+- **Top bar:** sidebar toggle and logo, centred search, then bell, theme and language, then Add Puzzle in marigold. No avatar; identity sits at the foot of the sidebar. 48px, or 56px on a touch screen so its 44px targets and the bell's badge fit inside it.
 - **Tab bar:** four tabs on the card colour with a raised 52px marigold button in the centre that opens the quick-action sheet. The current tab fills its icon and turns its label to 600.
-- **Public header:** sticky on sky, 64px; text links at 16px, underlined when current or hovered; collapses into a white menu below 1200px, where the longest bar (Dutch, signed out) still fits on one line.
+- **Public header:** sticky on sky, 64px; text links at 16px, underlined on the current section and the pages under it (a docs article underlines Docs), or when hovered; collapses into a white menu below 1200px, where the longest bar (Dutch, signed out) still fits on one line. Tabbing past the open menu closes it.
+- **Public header action:** the bar's canal **Start your shelf** keeps its place at all times. On home, Features and How it works it fades out and drops 4px while the hero's own marigold copy is in view (opacity, visibility and translate over 200ms; under reduced motion it swaps at once with no drop), and its slot stays empty, so the links never move. In view means between the bar and the open cookie banner: on a phone the banner covers home's hero action, so there the bar keeps its action until the hero's shows above the banner. Moving to one of these pages starts with the bar's action away, as a fresh load does.
+- **Tabs:** underline tabs mark the active tab with a 2px Canal Primary underline, Night Link after dark.
+
+### Menus, Palette and Toasts
+
+- **Keyboard row:** in menus, selects and the command palette, the row the keyboard is on carries a 2px inset `--ring` outline as well as the accent tint (the tint alone is 1.15:1). In the palette it follows cmdk's selection, so hover shows it too.
+- **Command palette:** anchored 12vh from the top (16px below 768px and in windows under 500px tall), not centred, so only its list grows as results change.
+- **Toasts:** the action is a primary button and the cancel a secondary one, the description is muted text, the buttons take the app's 2px focus ring with a 2px offset, and the toast has the 6px card radius.
+- **Account menu:** Clerk's menu rows are opaque Ink Muted, 36px for a mouse and 44px on touch, and the menu scrolls inside itself when it is taller than the window minus 140px. What's new is in the phone's menu only; on desktop it is the sidebar row above the account. Without a photo, the menu header shows the same canal initial disc as the trigger.
+
+### Avatars
+
+A member without a photo shows their initial, white on Canal Primary, on every surface; Clerk's generated default picture is never drawn. The profile header's large tinted initial is the one exception.
+
+### System States
+
+- **Offline notice:** after 3 seconds without a connection, a slim Surface Muted strip with 14px Ink Muted text and a wifi-off icon says the member is offline. It sits at the top of the sheet from 768px and inside the sticky phone top bar, and goes as soon as the connection is back. A message still on its way shows **Sending…** (or **Waiting for connection** while offline) in its time's place, and the member's own presence dot hides while offline.
+- **Error card:** the route error card offers Try again, Reload page and a link back to the dashboard (home for visitors). Offline, it says "You're offline" and loads the page by itself once the browser is back online; a page whose code didn't arrive offline shows this card instead of the browser's offline screen, and no "new version" prompt appears.
+- **Not found in the shell:** the page head carries "Page not found" (or the name of what's missing) as the page title, with no subtitle and no breadcrumb. The content shows one muted body-app line and the ways back: an outline **Back to …** button, or, for the generic 404, the primary **Back to dashboard** plus a **Browse puzzles** link. No display headline and no second h1; the display-size headline belongs only to the public 404 and the router default. One exception: on an open thread's path (`/messages/<id>`) the phone has no top bar, so below 768px the not-found shows its title as a 24px serif h1 above the line. Known limitation: an unknown shell path's server HTML shows the route's own head title until hydration publishes "Page not found".
+- **No results:** a no-results state names a search by its words only when the text is all that narrows the results ("No puzzles match “…”", "Nobody offers a copy matching “…” right now"). Text searched within favourites, or within one puzzle's copies, is blamed like a filter. A title that carries the member's own text wraps anywhere, so one long word can't push it off a phone screen.
 
 ### Gable Skyline
 
@@ -392,6 +433,8 @@ The signature that signs the app and the public footer, and closes the Features 
 ### Floor Pins and Shelf Drawer
 
 The hero's interaction. Each of three floors of the cutaway house is one button, carrying a name pin with a triangular pointer, Canal Ink at rest and marigold when chosen. The floors meet mid-beam, so no click falls between them. The chosen floor stays clear while a flat canal dim, masked to the art's own edge, falls over the rest; the dim on a floor half lifts while it is pointed at or focused. The chosen floor's shelf docks beside the house in a white drawer. Each box stands on a 9px plank, its width following its piece count.
+
+From 1180px the hero's actions stand in a column that starts right of the main gable (57% of the width), so the roof never reaches them: the marigold action, the catalogue link, then the trust line where the column is wide enough, which wraps above the action where it isn't. From 1180 to 1239px wide, and on screens up to 880px tall, the lead is 18px with a 560px measure, so it ends before the main gable's apex. Below 1180px the shelf sits under the house, and choosing a floor scrolls it into view, but never so far that the chosen name goes under the header.
 
 ### Lending Slip
 
@@ -407,7 +450,7 @@ The back of the street: a board of filled tiles (sky, sky soft, plank), then the
 - **Easing:** strong ease-out, `cubic-bezier(0.23, 1, 0.32, 1)`, everywhere motion is used.
 - **Keyboard:** no animation on keyboard-driven actions. The command palette and its backdrop open and close instantly, the sidebar toggle has no transition, and an instant tooltip does not animate.
 - **Overlays:** popovers, menus, selects and tooltips scale from 95% at their trigger's origin. Dialogs scale from their centre over 200ms; sheets take 280ms in and 200ms out. Everything in the shell stays under 300ms, and overlay animation is removed for reduced motion.
-- **Public entrances:** once per section part, a rise of 16 to 32px over 500 to 560ms, staggered by 60 to 70ms. Content is visible by default, so nothing can get stuck hidden; reduced motion keeps the fade and drops the rise.
+- **Public entrances:** Reveal runs on section headings and their intro text only, never on cards, art, list rows, FAQ answers, nested rows or a closing call-to-action button: a rise of 16 to 32px over 500 to 560ms, with a stagger of at most 70ms. On the first screen, hero text and the hero action enter with ENTER at 60 and 130ms. No public picture moves on its own: no drift and no art entrance (PageHero's picture is simply there). Content is visible by default, so nothing can get stuck hidden; reduced motion keeps the fade and drops the rise.
 - **The loud moment:** the curtain footer, once per page.
 
 ## Do's and Don'ts
@@ -415,14 +458,15 @@ The back of the street: a board of filled tiles (sky, sky soft, plank), then the
 ### Do:
 
 - **Do** use Canal Primary for the shell's everyday primary, and marigold only for Add Puzzle in the top bar and the phone add button.
-- **Do** keep marigold's text in Canal Ink, and give every Persuade page one clear marigold action.
+- **Do** keep marigold's text in Canal Ink, and give every Persuade page one clear marigold action (About, whose main action is a canal **Get in touch**, is the recorded exception).
 - **Do** set figures in the app in Hanken Grotesk with tabular numerals.
 - **Do** build hierarchy on Young Serif by size alone, at its one weight.
 - **Do** stand boxes on a plank ledge, and let bands and tiles meet with colour rather than borders or shadows.
 - **Do** use the wordmark's own colour tokens, with the night pair after dark.
 - **Do** give every pressable thing the 0.97 press under `motion-safe`, and keep shell motion under 300ms.
 - **Do** make dark mode the same street at night, above black, with lit windows.
-- **Do** ship new marketing rasters with a provenance record beside the file.
+- **Do** ship new marketing rasters with a provenance record beside the file, and with smaller renditions made by resizing, not only by lowering quality, offered through `srcSet` and a `sizes` that matches the slot. Art on the first screen uses Art's `priority`, and all other art loads lazily.
+- **Do** mask an effect to a picture's edge with an alpha-only file (such as `house-cut-mask.webp`), never with the picture itself.
 
 ### Don't:
 
