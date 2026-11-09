@@ -1,0 +1,4 @@
+{
+  "prompt": "Owner-generated on t3.chat from the house prompt on PR #393, using a layout guide with a whole roof (render house-wide.png). Sky keyed to transparent and trimmed to the ridge; nothing else changed. Alpha mask of house-cut.webp for the hero's dim: its alpha unchanged at 2400w over black, lossless WebP; nothing else changed.",
+  "createdAt": "2026-11-05T23:45:09.307Z"
+}
