@@ -316,7 +316,7 @@ function ExchangesPage() {
                     ),
                   })
                 }
-                className="bg-card focus:ring-primary h-8 rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:not-pointer-coarse:text-sm pointer-coarse:h-11"
+                className="bg-card focus-visible:ring-ring h-8 rounded-md border px-2 text-base focus-visible:ring-2 focus-visible:outline-none md:not-pointer-coarse:text-sm pointer-coarse:h-11"
                 aria-label={t("statusFilter")}
               >
                 <option value="all">{t("allStatuses")}</option>
@@ -387,9 +387,11 @@ function ExchangeGroupHeading({
   count: number | string;
 }) {
   return (
-    <h2 className="font-heading flex items-baseline gap-2 text-lg font-bold not-first:mt-[18px]">
+    <h2 className="font-heading flex items-baseline gap-2 text-lg not-first:mt-[18px]">
       {title}
-      <span className="text-muted-foreground text-sm font-medium">{count}</span>
+      <span className="figures text-muted-foreground text-sm font-medium">
+        {count}
+      </span>
     </h2>
   );
 }

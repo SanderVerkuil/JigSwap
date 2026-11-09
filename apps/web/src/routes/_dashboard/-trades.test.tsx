@@ -299,3 +299,17 @@ describe("exchange actions", () => {
     },
   );
 });
+
+// The Figures Rule: in the heading's Young Serif a "0" reads as the letter "o" and a "1" as "I".
+describe("exchange group headings", () => {
+  it("sets the group's count as a figure, not in the heading face", async () => {
+    await openExchange("incoming", "proposed");
+    const heading = Array.from(document.querySelectorAll("h2")).find((h2) =>
+      h2.textContent?.startsWith(en.trades.groups.needsYou),
+    );
+    const count = heading?.querySelector("span");
+    expect(count?.textContent).toBe("1");
+    expect(count?.classList).toContain("figures");
+    expect(heading?.classList).not.toContain("font-bold");
+  });
+});

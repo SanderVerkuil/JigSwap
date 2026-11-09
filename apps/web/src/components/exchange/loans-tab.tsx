@@ -72,11 +72,11 @@ function LoanSection({
     <section aria-labelledby={headingId}>
       <h2
         id={headingId}
-        className="font-heading flex items-baseline gap-2 text-lg font-bold"
+        className="font-heading flex items-baseline gap-2 text-lg"
       >
         {title}
         {loans && (
-          <span className="text-muted-foreground text-sm font-medium">
+          <span className="figures text-muted-foreground text-sm font-medium">
             {loans.length}
           </span>
         )}

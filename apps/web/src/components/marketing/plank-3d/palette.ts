@@ -54,6 +54,8 @@ export interface LightingPreset {
   /** Violet rim light: 0 in light mode, visible in dark mode. */
   rimIntensity: number;
   shadowOpacity: number;
+  /** The board's flat colour: the street's plank token (--mk-plank), so the 3D shelf is the
+   *  same plain board as the CSS plank it replaces. */
   shelfColor: string;
   /** Gallery spotlight intensity per box. */
   spotIntensity: number;
@@ -73,7 +75,7 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     hemiIntensity: 0.35,
     rimIntensity: 0,
     shadowOpacity: 0.45,
-    shelfColor: "#c98f4d",
+    shelfColor: "#e4c79a",
     spotIntensity: 0.9,
     spotColor: "#fff1d8",
     fogColor: "#eef5f9", // near the light page background
@@ -86,7 +88,7 @@ export const LIGHTING: Record<"light" | "dark", LightingPreset> = {
     hemiIntensity: 0.18,
     rimIntensity: 0.9, // rim light so silhouettes read on dark bg
     shadowOpacity: 0.28, // strong shadows read as holes on dark pages
-    shelfColor: "#8a5f33",
+    shelfColor: "#8a6a3b",
     spotIntensity: 2.6,
     spotColor: "#ffe3b3",
     fogColor: "#15343d", // near the dark page background

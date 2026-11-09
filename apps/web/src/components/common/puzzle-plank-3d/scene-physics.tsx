@@ -36,7 +36,6 @@ import { reconcileBodyRefs } from "./body-refs";
 import { clampThrowVelocity } from "./drag-math";
 import { framedContentHeight, layoutRow } from "./layout";
 import type { PlankSceneProps } from "./scene";
-import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // @dimforge/rapier3d-compat is a transitive peer; we reference its enum
 // values via numeric constants to avoid a direct (unresolvable) import.
@@ -47,6 +46,7 @@ const RB_KINEMATIC_POS = 2 as Parameters<RapierRigidBody["setBodyType"]>[0];
 // ——— shelf constants (mirrors scene.tsx) ———
 const SHELF_THICKNESS = 0.14;
 const SHELF_DEPTH = 0.6;
+const SHELF_ROUGHNESS = 0.9;
 
 // ——— camera constants (mirrors scene.tsx) ———
 const FOV = 38;
@@ -388,9 +388,6 @@ function PhysicsArrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
-  // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
-
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
   // Live per-box world heights: covers aspect-correct after the image loads, so
@@ -512,9 +509,10 @@ function PhysicsArrangement({
           ]}
         >
           <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
+          {/* The flat plank token, as in scene.tsx: no grain, so the board matches the CSS plank. */}
           <meshStandardMaterial
-            map={woodTexture}
-            roughness={DEFAULT_WOOD_PARAMS.roughness}
+            color={lightingPreset.shelfColor}
+            roughness={SHELF_ROUGHNESS}
           />
         </mesh>
       </RigidBody>

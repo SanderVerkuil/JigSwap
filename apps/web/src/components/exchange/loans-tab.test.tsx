@@ -343,6 +343,22 @@ describe("LoansTab", () => {
     ).toBe("/my-puzzles");
   });
 
+  // The Figures Rule: in the heading's Young Serif a "0" reads as the letter "o".
+  it("sets each section's count as a figure, not in the heading face", () => {
+    renderTab({ borrowed: [], lentOut: [lentLoan] });
+    const heading = within(section("Borrowed by you 0")).getByRole("heading", {
+      level: 2,
+    });
+    const count = within(heading).getByText("0");
+    expect(count.classList).toContain("figures");
+    expect(heading.classList).not.toContain("font-bold");
+    expect(
+      within(
+        within(section("Lent out 1")).getByRole("heading", { level: 2 }),
+      ).getByText("1").classList,
+    ).toContain("figures");
+  });
+
   it("shows each section loading on its own", () => {
     renderTab({ borrowed: undefined, lentOut: [lentLoan] });
     expect(

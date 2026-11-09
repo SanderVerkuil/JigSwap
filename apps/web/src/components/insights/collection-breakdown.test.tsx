@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { cloneElement, type ReactElement } from "react";
 import { IntlProvider } from "use-intl";
@@ -208,7 +210,84 @@ describe("CollectionBreakdown: by difficulty", () => {
     );
     expect(legendRows()).toEqual(["Easy250%", "Unknown250%"]);
   });
+
+  // The chart uses the product's difficulty scale (the chips' --mk-diff-* tones), not a ramp of
+  // its own, and every fill stands at least 2:1 off the page in both themes.
+  it("fills each difficulty from the product's difficulty scale", () => {
+    const { container } = renderBreakdown(
+      breakdown({
+        byDifficulty: [
+          { label: "easy", value: 1 },
+          { label: "medium", value: 1 },
+          { label: "hard", value: 1 },
+          { label: "expert", value: 1 },
+          { label: UNKNOWN_BUCKET, value: 1 },
+        ],
+      }),
+    );
+    for (const level of ["easy", "medium", "hard", "expert"]) {
+      expect(swatchOf(container, level)).toContain(`bg-mk-diff-${level}-fg`);
+    }
+    expect(swatchOf(container, "unknown")).toContain("bg-muted-foreground/60");
+  });
+
+  it("keeps every difficulty fill at 2:1 or more against the page in both themes", () => {
+    for (const theme of ["light", "dark"] as const) {
+      const page = token("globals.css", theme, "--background");
+      for (const level of ["easy", "medium", "hard", "expert"]) {
+        const fill = token("marketing.css", theme, `--mk-diff-${level}-fg`);
+        expect(contrast(fill, page), `${theme} ${level}`).toBeGreaterThan(2);
+      }
+      const unknown = over(
+        token("globals.css", theme, "--muted-foreground"),
+        0.6,
+        page,
+      );
+      expect(contrast(unknown, page), `${theme} unknown`).toBeGreaterThan(2);
+    }
+  });
 });
+
+// A token's hex value from the light (:root) or dark (.dark) block of a stylesheet.
+const token = (file: string, theme: "light" | "dark", name: string) => {
+  const css = readFileSync(
+    join(__dirname, "../../styles", file),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+  const open = css.indexOf(theme === "light" ? ":root {" : ".dark {");
+  const body = css.slice(open, css.indexOf("}", open));
+  const value = new RegExp(`${name}:\\s*(#[0-9a-f]{6});`, "i").exec(body)?.[1];
+  if (!value) throw new Error(`${file} has no hex ${name} for ${theme}`);
+  return value;
+};
+
+const rgb = (hex: string) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [
+    number,
+    number,
+    number,
+  ];
+
+const over = (hex: string, alpha: number, ground: string) => {
+  const [fg, bg] = [rgb(hex), rgb(ground)];
+  return `#${fg
+    .map((c, i) => Math.round(alpha * c + (1 - alpha) * bg[i]!))
+    .map((c) => c.toString(16).padStart(2, "0"))
+    .join("")}`;
+};
+
+const luminance = (hex: string) => {
+  const [r, g, b] = rgb(hex).map((c) => {
+    const s = c / 255;
+    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+};
+
+const contrast = (a: string, b: string) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+};
 
 describe("CollectionBreakdown: buckets and brands", () => {
   it("mirrors the domain's sentinel strings", () => {
