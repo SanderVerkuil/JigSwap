@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import kitchenTable from "@/components/marketing/assets/art/kitchen-table.webp";
+import { kitchenTableSrcSet } from "@/components/marketing/assets/art/renditions";
 import { EDGE, TEXT_LINK } from "@/components/marketing/home/classes";
 import { Reveal } from "@/components/marketing/reveal";
 import { cn } from "@/lib/utils";
@@ -12,18 +13,20 @@ export function Sustain() {
   const t = useTranslations("marketing.home");
   return (
     <section className="bg-mk-sky-soft pb-[clamp(56px,8vw,120px)] text-mk-text-strong">
-      <Reveal rise={24}>
-        <img
-          src={kitchenTable}
-          alt={t("sustain.tableAlt")}
-          width={2400}
-          height={903}
-          loading="lazy"
-          decoding="async"
-          className="block aspect-[16/9] h-auto w-full object-cover object-[38%_50%] min-[760px]:aspect-auto min-[760px]:max-h-[85svh]"
-        />
-        <div className="h-3.5 bg-mk-plank" />
-      </Reveal>
+      {/* On a phone the 16:9 crop shows the table at about 150vw wide. Wider, the box keeps the
+          picture's own shape before it loads, so the page doesn't grow under the reader. */}
+      <img
+        src={kitchenTable}
+        srcSet={kitchenTableSrcSet}
+        sizes="(max-width: 759px) 150vw, 100vw"
+        alt={t("sustain.tableAlt")}
+        width={2400}
+        height={903}
+        loading="lazy"
+        decoding="async"
+        className="block aspect-[16/9] h-auto w-full object-cover object-[38%_50%] min-[760px]:aspect-[2400/903] min-[760px]:max-h-[85svh]"
+      />
+      <div className="h-3.5 bg-mk-plank" />
       <div
         className={cn(
           EDGE,
@@ -38,7 +41,7 @@ export function Sustain() {
             {t("sustain.body")}
           </p>
         </Reveal>
-        <Reveal rise={20} delay={70} className="min-[860px]:col-span-7">
+        <div className="min-[860px]:col-span-7">
           <blockquote className="font-mk-heading text-[clamp(24px,2.5vw,36px)] leading-[1.28]">
             {t("quote.text")}
           </blockquote>
@@ -53,7 +56,7 @@ export function Sustain() {
           >
             {t("sustain.contact")}
           </Link>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

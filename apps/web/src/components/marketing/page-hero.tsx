@@ -6,7 +6,8 @@ import * as React from "react";
 // Sub-page header band: flat sky continuous with the header. The title runs the full measure at the
 // home page's scale; under it the lead and action stand on the left, and an `aside` picture, when the
 // page has one, stands on the band's bottom edge on the right. `below` lays a page's own content across
-// the foot of the band, and `children` sits under the lead (the docs search box).
+// the foot of the band, and `children` sits under the lead (the docs search box). Only the lead and
+// action enter; the picture is simply there.
 export function PageHero({
   title,
   lead,
@@ -49,20 +50,15 @@ export function PageHero({
               {lead}
             </p>
           )}
-          {action && <div className="mt-6">{action}</div>}
+          {/* With hideActionNearHero the header hides its copy of this action while this one is in view. */}
+          {action && (
+            <div data-hero-action="" className="mt-6">
+              {action}
+            </div>
+          )}
           {children && <div className="mt-6">{children}</div>}
         </Container>
-        {aside && (
-          <div
-            className={cn(
-              "min-w-0 lg:self-end",
-              ENTER,
-              "motion-safe:delay-[130ms]",
-            )}
-          >
-            {aside}
-          </div>
-        )}
+        {aside && <div className="min-w-0 lg:self-end">{aside}</div>}
       </div>
       {below}
     </div>

@@ -43,7 +43,12 @@ export function MarketingFooter({ curtain = false }: { curtain?: boolean }) {
       <ul className="mt-3 flex flex-col">
         {links.map((lk) => (
           <li key={lk.href + lk.label}>
-            <Link href={lk.href} className={LINK}>
+            {/* Current on its own page only: Docs isn't the page on every docs article. */}
+            <Link
+              href={lk.href}
+              activeOptions={{ exact: true }}
+              className={LINK}
+            >
               {lk.label}
             </Link>
           </li>
@@ -86,7 +91,13 @@ export function MarketingFooter({ curtain = false }: { curtain?: boolean }) {
           "col-span-2 bg-mk-plank min-[1024px]:col-span-3 min-[1024px]:col-start-10 min-[1024px]:row-start-1",
           <>
             <li>
-              <RouterLink to="/privacy" hash="p-cookies" className={LINK}>
+              {/* Current only at the cookie section, not anywhere on the privacy policy. */}
+              <RouterLink
+                to="/privacy"
+                hash="p-cookies"
+                activeOptions={{ exact: true, includeHash: true }}
+                className={LINK}
+              >
                 {t("footer.cookies")}
               </RouterLink>
             </li>

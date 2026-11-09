@@ -42,18 +42,19 @@ function ContactPage() {
               {/* The form comes first in the DOM, so on phones (one column) it starts right under
                   the lead and is reached first. From lg the grid puts the street back on its left. */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8">
-                <Reveal className="lg:col-start-2 lg:row-start-1">
+                <div className="lg:col-start-2 lg:row-start-1">
                   <ContactForm />
-                </Reveal>
-                <Reveal delay={100} className="lg:col-start-1 lg:row-start-1">
+                </div>
+                <div className="lg:col-start-1 lg:row-start-1">
                   <Art
                     src={streetTall}
                     width={650}
                     height={864}
                     alt={t("artAlt")}
+                    priority
                     className="rounded-t-md object-cover object-top max-lg:aspect-[4/3] lg:h-full"
                   />
-                </Reveal>
+                </div>
               </div>
             </Container>
             <div className="bg-mk-plank h-3" />
@@ -79,28 +80,26 @@ function ContactPage() {
                 </p>
               </Reveal>
               <ul className="mt-8 flex flex-col gap-7">
-                {CHANNELS.map((key, i) => (
+                {CHANNELS.map((key) => (
                   <li key={key}>
-                    <Reveal delay={i * 70}>
-                      <h3 className="font-mk-heading text-mk-text-strong text-[22px] leading-[1.25] font-normal">
-                        {t(`${key}Title`)}
-                      </h3>
-                      <a
-                        href={`mailto:${t(`${key}Value`)}`}
-                        className="text-mk-text-strong mt-1 inline-block text-[17px] font-semibold underline underline-offset-3"
-                      >
-                        {t(`${key}Value`)}
-                      </a>
-                      <p className="text-mk-text-body mt-1 text-[17px] leading-normal">
-                        {t(`${key}Sub`)}
-                      </p>
-                    </Reveal>
+                    <h3 className="font-mk-heading text-mk-text-strong text-[22px] leading-[1.25] font-normal">
+                      {t(`${key}Title`)}
+                    </h3>
+                    <a
+                      href={`mailto:${t(`${key}Value`)}`}
+                      className="text-mk-text-strong mt-1 inline-block text-[17px] font-semibold underline underline-offset-3"
+                    >
+                      {t(`${key}Value`)}
+                    </a>
+                    <p className="text-mk-text-body mt-1 text-[17px] leading-normal">
+                      {t(`${key}Sub`)}
+                    </p>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <Reveal delay={70}>
+              <div>
                 <Art
                   src={canalBoat}
                   width={480}
@@ -108,8 +107,8 @@ function ContactPage() {
                   alt={t("channelsArtAlt")}
                   className="max-w-[480px] rounded-md"
                 />
-              </Reveal>
-              <Reveal className="mt-[clamp(32px,4vw,56px)]">
+              </div>
+              <div className="mt-[clamp(32px,4vw,56px)]">
                 <Art
                   src={floorLiving}
                   width={1129}
@@ -117,7 +116,7 @@ function ContactPage() {
                   alt={t("livingArtAlt")}
                   className="min-h-[170px] max-w-[1129px] rounded-md object-cover"
                 />
-              </Reveal>
+              </div>
             </div>
           </div>
         </Container>
@@ -326,7 +325,7 @@ function ContactForm() {
                 "relative cursor-pointer rounded-md border px-3.5 py-2 text-[16px] font-medium transition-[background-color,color,transform] duration-150 ease-mk-out motion-safe:active:scale-[0.97]",
                 "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-mk-ring",
                 form.subject === k
-                  ? "border-mk-canal bg-mk-canal text-mk-on-canal"
+                  ? "border-mk-canal bg-mk-canal text-mk-on-canal dark:border-mk-ring dark:bg-mk-ring dark:text-mk-canal"
                   : "border-mk-input-border bg-mk-card text-mk-text-body hover:bg-mk-muted",
               )}
             >
@@ -378,8 +377,9 @@ function ContactForm() {
       <Button
         type="submit"
         variant="brand"
+        size="public"
         disabled={submitMessage.isPending}
-        className="mt-[22px] h-11 w-full text-[16px]"
+        className="mt-[22px] w-full"
       >
         {t("submit")}
       </Button>

@@ -7,6 +7,11 @@ import coverMolen from "@/components/marketing/assets/art/covers/molen.webp";
 import coverTheekoepel from "@/components/marketing/assets/art/covers/theekoepel.webp";
 import coverTulpen from "@/components/marketing/assets/art/covers/tulpen.webp";
 import houseCut from "@/components/marketing/assets/art/house-cut.webp";
+import {
+  coverSrcSet,
+  houseCutMask,
+  houseCutSrcSet,
+} from "@/components/marketing/assets/art/renditions";
 import { ENTER, TEXT_LINK } from "@/components/marketing/home/classes";
 import { useStartLink } from "@/components/marketing/use-start-link";
 import { Button } from "@/components/ui/button";
@@ -142,6 +147,8 @@ function ShelfRow({
     <li className="grid grid-cols-[minmax(0,min(42%,136px))_minmax(0,1fr)] items-end gap-x-3.5 pt-3">
       <img
         src={puzzle.cover}
+        srcSet={coverSrcSet(puzzle.cover)}
+        sizes="136px"
         alt=""
         width={480}
         height={360}
@@ -190,15 +197,20 @@ export function Hero() {
   const artRef = React.useRef<HTMLImageElement>(null);
   const drawerRef = React.useRef<HTMLElement>(null);
 
-  // On a phone the shelf starts below the fold, so choosing a floor scrolls just far enough to show its
-  // first box, which keeps the house and its other floors in view.
-  const choose = (next: Person) => {
+  // Until the shelf docks beside the house at 1180px it sits under the art, often below the fold, so
+  // choosing a floor scrolls just far enough to show its first box, which keeps the house and its other
+  // floors in view. It never scrolls so far that the chosen name (the floor's last child) slips under the
+  // 64px sticky header.
+  const choose = (next: Person, floor: HTMLElement) => {
     setPerson(next);
-    if (!window.matchMedia("(max-width: 759px)").matches) return;
+    if (!window.matchMedia("(max-width: 1179px)").matches) return;
     const firstBox = drawerRef.current?.querySelector("img");
-    if (!firstBox) return;
-    const overshoot =
-      firstBox.getBoundingClientRect().bottom + 16 - window.innerHeight;
+    const pin = floor.lastElementChild;
+    if (!firstBox || !pin) return;
+    const overshoot = Math.min(
+      firstBox.getBoundingClientRect().bottom + 16 - window.innerHeight,
+      pin.getBoundingClientRect().top - 64 - 16,
+    );
     if (overshoot <= 0) return;
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
@@ -231,17 +243,21 @@ export function Hero() {
   }, [person]);
 
   return (
-    // --hero-pull is how far the art rises into the text row: the height of the neighbours' tops, which
-    // stops them reaching the text. Short laptops pull further and cap the title lower, to keep all three
-    // names on the first screen.
-    <section className="@container relative flex flex-col bg-mk-sky text-mk-text-strong [--hero-h1-cap:15svh] [--hero-pull:calc(100cqw/2000*54)] [--m:16px] min-[760px]:block min-[760px]:[--m:40px] [@media(max-height:800px)]:[--hero-h1-cap:13svh] [@media(max-height:800px)]:[--hero-pull:calc(100cqw/2000*69)]">
-      <div className="contents min-[760px]:relative min-[760px]:z-[3] min-[760px]:grid min-[760px]:grid-cols-1 min-[760px]:px-(--m) min-[1180px]:grid-cols-[minmax(0,1fr)_auto] min-[1180px]:items-start min-[1180px]:gap-x-6">
-        <h1 className="order-1 mt-0.5 mb-2.5 px-(--m) font-mk-heading text-[length:calc((100cqw-2*var(--m))/7.25)] leading-[1.04] font-normal tracking-[-0.012em] min-[760px]:col-span-full min-[760px]:mt-[-2px] min-[760px]:mb-0 min-[760px]:px-0 min-[760px]:text-[length:min(calc((100cqw-2*var(--m))/10.2),var(--hero-h1-cap))] min-[760px]:leading-none min-[760px]:whitespace-nowrap">
+    // --hero-pull is how far the art rises into the text row from 1180px: as far as the main gable's
+    // chimney and the church tower allow under the actions. The actions stand in a column that starts
+    // right of the main gable (57cqw), so the roof never reaches them; the trust line follows the link
+    // where it fits and wraps above the button where it doesn't. Where the lead is the row's tallest, it
+    // keeps 14 units under itself, so the art there rises only as far as the roofs on the left allow. Up
+    // to 1239px wide, and on short screens, the lead runs smaller and narrower so it ends before the main
+    // gable's apex. Shorter screens cap the title lower, to keep all three names on the first screen.
+    <section className="@container relative flex flex-col bg-mk-sky text-mk-text-strong [--hero-h1-cap:15svh] [--hero-pull:calc(100cqw/2000*64)] [--m:16px] min-[760px]:block min-[760px]:[--m:40px] [@media(max-height:800px)]:[--hero-h1-cap:13svh] min-[1180px]:[@media(800px<height<=880px)]:[--hero-h1-cap:13svh] min-[1180px]:[@media(max-height:800px)]:[--hero-h1-cap:11svh]">
+      <div className="contents min-[760px]:relative min-[760px]:z-[3] min-[760px]:grid min-[760px]:grid-cols-1 min-[760px]:px-(--m) min-[1180px]:grid-cols-[minmax(0,1fr)_calc(43cqw-var(--m))] min-[1180px]:items-start min-[1180px]:gap-x-6">
+        <h1 className="order-1 mt-0.5 mb-2.5 px-(--m) font-mk-heading text-[length:calc((100cqw-2*var(--m))/7.25)] leading-[1.04] font-normal tracking-[-0.012em] min-[760px]:col-span-full min-[760px]:mt-[-2px] min-[760px]:mb-0 min-[760px]:px-0 min-[760px]:text-[length:min(calc((100cqw-2*var(--m))/10.2),var(--hero-h1-cap))] min-[760px]:leading-none min-[760px]:text-balance">
           {t("home.heroTitle")}
         </h1>
         <p
           className={cn(
-            "order-4 mt-3 px-(--m) text-[18px] leading-[1.36] text-pretty min-[760px]:mt-1.5 min-[760px]:max-w-[640px] min-[760px]:px-0 min-[760px]:text-[20px] min-[1180px]:[@media(max-height:880px)]:max-w-[560px] min-[1180px]:[@media(max-height:880px)]:text-[18px]",
+            "order-4 mt-3 px-(--m) text-[18px] leading-[1.36] text-pretty min-[760px]:mt-1.5 min-[760px]:max-w-[640px] min-[760px]:px-0 min-[760px]:text-[20px] min-[1180px]:mb-[calc(100cqw/2000*14)] min-[1180px]:max-[1240px]:max-w-[560px] min-[1180px]:max-[1240px]:text-[18px] min-[1180px]:[@media(max-height:880px)]:max-w-[560px] min-[1180px]:[@media(max-height:880px)]:text-[18px]",
             ENTER,
             "motion-safe:delay-[60ms]",
           )}
@@ -251,7 +267,7 @@ export function Hero() {
         <div
           data-hero-action=""
           className={cn(
-            "order-5 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-(--m) min-[760px]:mt-2 min-[760px]:flex-nowrap min-[760px]:gap-x-[22px] min-[760px]:px-0 min-[1180px]:mt-1.5",
+            "order-5 mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-(--m) min-[760px]:mt-2 min-[760px]:flex-nowrap min-[760px]:gap-x-[22px] min-[760px]:px-0 min-[1180px]:mt-1.5 min-[1180px]:flex-wrap-reverse min-[1180px]:gap-y-1",
             ENTER,
             "motion-safe:delay-[130ms]",
           )}
@@ -282,6 +298,8 @@ export function Hero() {
             <img
               ref={artRef}
               src={houseCut}
+              srcSet={houseCutSrcSet}
+              sizes="(max-width: 759px) 200vw, 100vw"
               alt={t("home.heroAlt")}
               width={2400}
               height={1578}
@@ -294,8 +312,8 @@ export function Hero() {
               aria-hidden="true"
               className="absolute inset-0 bg-mk-canal/45"
               style={{
-                maskImage: `url("${houseCut}")`,
-                WebkitMaskImage: `url("${houseCut}")`,
+                maskImage: `url("${houseCutMask}")`,
+                WebkitMaskImage: `url("${houseCutMask}")`,
                 maskSize: "100% 100%",
                 WebkitMaskSize: "100% 100%",
                 clipPath: AROUND_FLOORS,
@@ -314,7 +332,7 @@ export function Hero() {
                     key={p.id}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => choose(p)}
+                    onClick={(event) => choose(p, event.currentTarget)}
                     style={floorStyle(p)}
                     className="group pointer-events-auto absolute cursor-pointer outline-none [-webkit-tap-highlight-color:transparent]"
                   >

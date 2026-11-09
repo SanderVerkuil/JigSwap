@@ -8,6 +8,7 @@ import grachtje from "@/components/marketing/assets/art/covers/grachtje.webp";
 import molen from "@/components/marketing/assets/art/covers/molen.webp";
 import tulpen from "@/components/marketing/assets/art/covers/tulpen.webp";
 import floorBedroom from "@/components/marketing/assets/art/floor-bedroom.webp";
+import { coverSrcSet } from "@/components/marketing/assets/art/renditions";
 import windowsHandover from "@/components/marketing/assets/art/windows-handover.webp";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -86,14 +87,17 @@ function FeaturesPage() {
         title={t("heroTitle")}
         lead={t("heroLead")}
         action={
-          <Button variant="brand" className="h-11 px-6 text-[16px]" asChild>
+          <Button variant="brand" size="public" asChild>
             <Link href={start.href}>{start.label}</Link>
           </Button>
         }
       />
 
       <section
-        className={cn("bg-mk-sky-soft text-mk-text-strong", BAND_PADDING)}
+        className={cn(
+          "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong",
+          BAND_PADDING,
+        )}
       >
         <Container>
           <div className="grid grid-cols-1 items-center gap-x-[clamp(24px,5vw,72px)] gap-y-9 md:grid-cols-2">
@@ -101,7 +105,7 @@ function FeaturesPage() {
               <h2 className={BAND_TITLE}>{t("g1Title")}</h2>
               {sentences(1, "mt-5")}
             </Reveal>
-            <Reveal delay={100}>
+            <div>
               <Art
                 src={floorBedroom}
                 width={704}
@@ -109,7 +113,7 @@ function FeaturesPage() {
                 alt={t("g1ArtAlt")}
                 className="ml-auto max-w-[704px] rounded-md"
               />
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
@@ -121,50 +125,51 @@ function FeaturesPage() {
               <h2 className={BAND_TITLE}>{t("g2Title")}</h2>
               {sentences(2, "mt-5")}
             </Reveal>
-            <Reveal delay={80}>
+            <div>
               <div className="bg-mk-card text-mk-text-strong rounded-t-md pt-[clamp(16px,2.4vw,28px)]">
                 <p className="font-mk-heading px-[clamp(16px,2.4vw,28px)] text-[clamp(24px,2.2vw,32px)] leading-[1.2]">
                   {t("uiTitle")}
                 </p>
                 <ul className="mt-2 flex flex-col">
-                  {LENDING_ROWS.map(({ n, cover, tone }, i) => (
+                  {LENDING_ROWS.map(({ n, cover, tone }) => (
                     <li key={n} className="pt-4">
-                      <Reveal rise={16} delay={100 + i * 70}>
-                        <div className="flex items-end gap-[clamp(12px,2vw,28px)] px-[clamp(16px,2.4vw,28px)]">
-                          <img
-                            src={cover}
-                            width={480}
-                            height={360}
-                            alt={t("uiCoverAlt", { title: t(`ui${n}Title`) })}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-auto w-[clamp(84px,14vw,208px)] shrink-0 rounded-t-[2px]"
-                          />
-                          <div className="min-w-0 flex-1 self-center">
-                            <div className="text-[clamp(17px,1.6vw,22px)] leading-snug font-bold">
-                              {t(`ui${n}Title`)}
-                            </div>
-                            <div className="text-mk-text-muted text-[16px] leading-snug min-[860px]:text-[18px]">
-                              {t(`ui${n}Who`)}
-                            </div>
+                      <div className="flex items-end gap-[clamp(12px,2vw,28px)] px-[clamp(16px,2.4vw,28px)]">
+                        {/* `sizes` follows the width's clamp: 14vw is 84px at 600px and 208px at 1486px. */}
+                        <img
+                          src={cover}
+                          srcSet={coverSrcSet(cover)}
+                          sizes="(min-width: 1486px) 208px, (max-width: 600px) 84px, 14vw"
+                          width={480}
+                          height={360}
+                          alt={t("uiCoverAlt", { title: t(`ui${n}Title`) })}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-auto w-[clamp(84px,14vw,208px)] shrink-0 rounded-t-[2px]"
+                        />
+                        <div className="min-w-0 flex-1 self-center">
+                          <div className="text-[clamp(17px,1.6vw,22px)] leading-snug font-bold">
+                            {t(`ui${n}Title`)}
                           </div>
-                          <span
-                            className={cn(
-                              "shrink-0 self-center rounded-sm px-2.5 py-1 text-[14px] font-semibold min-[860px]:text-[16px]",
-                              tone,
-                            )}
-                          >
-                            {t(`ui${n}Status`)}
-                          </span>
+                          <div className="text-mk-text-muted text-[16px] leading-snug min-[860px]:text-[18px]">
+                            {t(`ui${n}Who`)}
+                          </div>
                         </div>
-                        <div className="bg-mk-plank h-[9px]" />
-                      </Reveal>
+                        <span
+                          className={cn(
+                            "shrink-0 self-center rounded-sm px-2.5 py-1 text-[14px] font-semibold min-[860px]:text-[16px]",
+                            tone,
+                          )}
+                        >
+                          {t(`ui${n}Status`)}
+                        </span>
+                      </div>
+                      <div className="bg-mk-plank h-[9px]" />
                     </li>
                   ))}
                 </ul>
                 <div className="h-4" />
               </div>
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
@@ -176,7 +181,7 @@ function FeaturesPage() {
               <h2 className={BAND_TITLE}>{t("g3Title")}</h2>
               {sentences(3, "mt-5")}
             </Reveal>
-            <Reveal delay={80} className="lg:order-1">
+            <div className="lg:order-1">
               <div className="bg-mk-card text-mk-text-strong rounded-md p-[clamp(16px,2.4vw,28px)] pb-0">
                 <p className="text-mk-text-muted text-[16px]">
                   {t("sampleLabel")}
@@ -195,8 +200,11 @@ function FeaturesPage() {
                   {SAMPLE_RESULTS.map((r) => (
                     <li key={r.title} className="flex flex-col">
                       <div className="flex flex-1 items-end px-[clamp(16px,2.4vw,28px)]">
+                        {/* `sizes` follows the width's clamp: 14vw is 120px at 857px and 208px at 1486px. */}
                         <img
                           src={r.cover}
+                          srcSet={coverSrcSet(r.cover)}
+                          sizes="(min-width: 1486px) 208px, (max-width: 857px) 120px, 14vw"
                           width={480}
                           height={360}
                           alt=""
@@ -216,7 +224,7 @@ function FeaturesPage() {
                   ))}
                 </ul>
               </div>
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
@@ -224,7 +232,7 @@ function FeaturesPage() {
       <section className={cn("bg-mk-bg text-mk-text-strong", BAND_PADDING)}>
         <Container>
           <div className="grid grid-cols-1 items-center gap-x-[clamp(24px,5vw,72px)] gap-y-7 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-            <Reveal>
+            <div>
               <Art
                 src={windowsHandover}
                 width={840}
@@ -232,8 +240,8 @@ function FeaturesPage() {
                 alt={t("g4ArtAlt")}
                 className="max-w-[840px] rounded-md"
               />
-            </Reveal>
-            <Reveal delay={80}>
+            </div>
+            <Reveal>
               <h2 className={BAND_TITLE}>{t("g4Title")}</h2>
               {sentences(4, "mt-5")}
             </Reveal>
@@ -245,10 +253,10 @@ function FeaturesPage() {
         <Container className="relative py-[clamp(56px,7vw,96px)]">
           <h2 className={BAND_TITLE}>{t("ctaTitle")}</h2>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button variant="brand" className="h-11 px-6 text-[16px]" asChild>
+            <Button variant="brand" size="public" asChild>
               <Link href={start.href}>{start.label}</Link>
             </Button>
-            <Button variant="default" className="h-11 px-6 text-[16px]" asChild>
+            <Button variant="default" size="public" asChild>
               <Link href="/about">{t("ctaAbout")}</Link>
             </Button>
           </div>

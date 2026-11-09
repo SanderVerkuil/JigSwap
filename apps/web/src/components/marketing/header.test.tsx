@@ -9,11 +9,12 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
 import { MarketingHeader } from "./header";
@@ -48,8 +49,20 @@ vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "light", setTheme: vi.fn() }),
 }));
 
+// The page the header stands on, and the one rendered so far: the same one, unless a move to the
+// next page is still under way.
+const page = vi.hoisted(() => ({
+  pathname: "/",
+  rendered: undefined as string | undefined,
+}));
 vi.mock("@tanstack/react-router", () => ({
-  useLocation: () => ({ pathname: "/" }),
+  useLocation: () => ({ pathname: page.pathname }),
+  useRouterState: ({
+    select,
+  }: {
+    select: (state: { resolvedLocation: { pathname: string } }) => unknown;
+  }) =>
+    select({ resolvedLocation: { pathname: page.rendered ?? page.pathname } }),
   useRouter: () => ({ invalidate: vi.fn() }),
 }));
 vi.mock("@/lib/i18n", () => ({
@@ -57,7 +70,14 @@ vi.mock("@/lib/i18n", () => ({
   clearIntlCache: vi.fn(),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  page.pathname = "/";
+  page.rendered = undefined;
+  document.documentElement.style.removeProperty("--consent-banner-height");
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const renderHeader = (locale: "en" | "nl" = "en") =>
   render(
@@ -328,5 +348,269 @@ describe("MarketingHeader translations", () => {
     expect(
       screen.queryByRole("button", { name: "Toggle dark mode" }),
     ).toBeNull();
+  });
+});
+
+// F10: Tab from the menu's last link went on to the page under the open panel, out of sight.
+describe("MarketingHeader menu and focus", () => {
+  const renderWithNextStop = () =>
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <MarketingHeader />
+        <button type="button">Next stop</button>
+      </IntlProvider>,
+    );
+
+  it("closes when Tab moves focus on past the menu", () => {
+    renderWithNextStop();
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    const last = within(panel).getByRole("button", {
+      name: "Toggle dark mode",
+    });
+
+    fireEvent.focusOut(last, {
+      relatedTarget: screen.getByRole("button", { name: "Next stop" }),
+    });
+
+    expect(screen.queryByRole("navigation", { name: "Menu" })).toBeNull();
+  });
+
+  it("stays open while focus moves within the header, or nowhere in the page", () => {
+    renderWithNextStop();
+    fireEvent.click(menuToggle());
+    const panel = screen.getByRole("navigation", { name: "Menu" });
+    const first = within(panel).getByRole("link", { name: "How it works" });
+
+    fireEvent.focusOut(first, {
+      relatedTarget: within(panel).getByRole("link", { name: "Features" }),
+    });
+    // A press on a blank part of the panel moves focus to no element at all.
+    fireEvent.focusOut(first, { relatedTarget: null });
+
+    expect(screen.getByRole("navigation", { name: "Menu" })).toBeTruthy();
+  });
+});
+
+// F19: the header underlined a section only on its own page, not on a docs article under it.
+describe("MarketingHeader current section", () => {
+  it("marks a section current on its own page and the pages under it", () => {
+    page.pathname = "/docs/getting-started/accounts-and-sign-in";
+    renderHeader();
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    const docs = within(nav).getByRole("link", { name: "Docs" });
+    expect(docs.getAttribute("aria-current")).toBe("page");
+    expect(docs.className.split(/\s+/)).toContain("underline");
+
+    const contact = within(nav).getByRole("link", { name: "Contact" });
+    expect(contact.getAttribute("aria-current")).toBeNull();
+    expect(contact.className.split(/\s+/)).not.toContain("underline");
+  });
+});
+
+// F01, F02 and F06: the bar's action and the hero's own copy of it.
+describe("MarketingHeader action near the hero", () => {
+  type Observed = {
+    callback: IntersectionObserverCallback;
+    options?: IntersectionObserverInit;
+    target?: Element;
+  };
+  let observers: Observed[];
+
+  // A phone: nothing in the header may lean on the width to decide.
+  const onPhone = () =>
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (query: string) =>
+        ({
+          matches: false,
+          media: query,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList,
+    );
+  // The open consent banner publishes the strip of the screen it covers.
+  const openBanner = (height: string) =>
+    document.documentElement.style.setProperty(
+      "--consent-banner-height",
+      height,
+    );
+
+  const hero = (label = "hero") => (
+    <div data-hero-action="" data-testid={label} />
+  );
+  const shell = (content: ReactNode, hideActionNearHero = true) => (
+    <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+      <MarketingHeader hideActionNearHero={hideActionNearHero} />
+      {content}
+    </IntlProvider>
+  );
+  const renderNearHero = (heroAction: ReactNode = hero()) =>
+    render(shell(heroAction));
+  // While it steps aside it is hidden from assistive technology too.
+  const barAction = () =>
+    screen.getByRole("link", { name: "Start your shelf", hidden: true });
+  const classesOf = (element: Element) => element.className.split(/\s+/);
+  const scrollHero = (inView: boolean) =>
+    act(() => {
+      const { callback, target } = observers.at(-1)!;
+      callback(
+        [{ isIntersecting: inView, target } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      );
+    });
+  const aFewFrames = () =>
+    act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+  beforeEach(() => {
+    observers = [];
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        private observed: Observed;
+        constructor(
+          callback: IntersectionObserverCallback,
+          options?: IntersectionObserverInit,
+        ) {
+          this.observed = { callback, options };
+          observers.push(this.observed);
+        }
+        observe(target: Element) {
+          this.observed.target = target;
+        }
+        disconnect() {}
+      },
+    );
+  });
+
+  it("steps aside while the hero's action is in view, below the bar", () => {
+    renderNearHero();
+    expect(classesOf(barAction())).toContain("invisible");
+    expect(observers.at(-1)?.options?.rootMargin).toBe("-64px 0px 0px 0px");
+
+    scrollHero(false);
+    expect(classesOf(barAction())).not.toContain("invisible");
+  });
+
+  // F01: on a phone the open banner covers home's hero action, so the bar keeps its own.
+  it("counts a hero action under the open consent banner as out of sight", () => {
+    onPhone();
+    openBanner("183.4px");
+    renderNearHero();
+    expect(observers.at(-1)?.options?.rootMargin).toBe("-64px 0px -183px 0px");
+
+    scrollHero(false);
+    expect(classesOf(barAction())).not.toContain("invisible");
+  });
+
+  // F06: on Features and How it works the hero's action sits well above the open banner, even on a
+  // phone, so the bar's copy stays away.
+  it("stays away on a phone with the banner open while the hero's action shows above it", () => {
+    onPhone();
+    openBanner("183px");
+    page.pathname = "/features";
+    renderNearHero();
+    expect(classesOf(barAction())).toContain("invisible");
+
+    scrollHero(true);
+    expect(classesOf(barAction())).toContain("invisible");
+  });
+
+  it("looks again as the banner opens and closes", async () => {
+    renderNearHero();
+    expect(observers.at(-1)?.options?.rootMargin).toBe("-64px 0px 0px 0px");
+
+    act(() => openBanner("183px"));
+    await waitFor(() =>
+      expect(observers.at(-1)?.options?.rootMargin).toBe(
+        "-64px 0px -183px 0px",
+      ),
+    );
+
+    act(() => {
+      document.documentElement.style.removeProperty("--consent-banner-height");
+    });
+    await waitFor(() =>
+      expect(observers.at(-1)?.options?.rootMargin).toBe("-64px 0px 0px 0px"),
+    );
+  });
+
+  // F02: collapsing its width slid the whole nav about 147px, even under reduced motion.
+  it("keeps its room while hidden and only fades, not at all under reduced motion", () => {
+    renderNearHero();
+    const classes = classesOf(barAction());
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "invisible",
+        "opacity-0",
+        "motion-safe:translate-y-1",
+        "motion-reduce:transition-none",
+        "px-3.5",
+      ]),
+    );
+    expect(classes).not.toContain("max-w-0");
+    expect(classes).not.toContain("px-0");
+    expect(classes.find((c) => c.startsWith("transition-["))).not.toMatch(
+      /max-width|padding/,
+    );
+  });
+
+  // F06: the header stays mounted from page to page, and the location changes before the next page
+  // has rendered.
+  it("watches the next page's hero action once that page has rendered", () => {
+    page.pathname = "/features";
+    const { rerender } = renderNearHero(hero("features"));
+    expect(observers.at(-1)?.target).toBe(screen.getByTestId("features"));
+    const watched = observers.length;
+
+    page.pathname = "/how-it-works";
+    page.rendered = "/features";
+    rerender(shell(hero("features")));
+    expect(observers).toHaveLength(watched);
+
+    page.rendered = undefined;
+    rerender(shell(hero("how")));
+    expect(observers.at(-1)?.target).toBe(screen.getByTestId("how"));
+  });
+
+  // F06: arriving from a page without the hero action, the bar's copy showed and then faded away.
+  it("arrives hidden from a page without the hero action, as a fresh load does", async () => {
+    page.pathname = "/about";
+    const { rerender } = render(shell(null, false));
+    expect(classesOf(barAction())).not.toContain("invisible");
+
+    page.pathname = "/features";
+    page.rendered = "/about";
+    rerender(shell(null));
+    expect(classesOf(barAction())).toContain("invisible");
+    await aFewFrames();
+    expect(classesOf(barAction())).toContain("invisible");
+
+    page.rendered = undefined;
+    rerender(shell(hero("features")));
+    expect(observers.at(-1)?.target).toBe(screen.getByTestId("features"));
+    expect(classesOf(barAction())).toContain("invisible");
+  });
+
+  it("arrives hidden from a page scrolled past its hero action", () => {
+    page.pathname = "/features";
+    const { rerender } = renderNearHero(hero("features"));
+    scrollHero(false);
+    expect(classesOf(barAction())).not.toContain("invisible");
+
+    page.pathname = "/how-it-works";
+    rerender(shell(hero("how")));
+    expect(classesOf(barAction())).toContain("invisible");
+  });
+
+  it("shows its action on a page whose hero has none", async () => {
+    const { rerender } = renderNearHero();
+    expect(classesOf(barAction())).toContain("invisible");
+
+    page.pathname = "/features/missing";
+    rerender(shell(null));
+
+    await waitFor(() =>
+      expect(classesOf(barAction())).not.toContain("invisible"),
+    );
   });
 });

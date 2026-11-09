@@ -53,24 +53,18 @@ export function HowPreview() {
               {t("lead")}
             </p>
           </Reveal>
-          <Reveal rise={20} delay={140}>
-            <Link
-              href="/how-it-works"
-              className={cn(
-                TEXT_LINK,
-                "mt-5 inline-flex min-h-11 items-center text-[18px]",
-              )}
-            >
-              {t("link")}
-            </Link>
-          </Reveal>
+          <Link
+            href="/how-it-works"
+            className={cn(
+              TEXT_LINK,
+              "mt-5 inline-flex min-h-11 items-center text-[18px]",
+            )}
+          >
+            {t("link")}
+          </Link>
         </div>
 
-        <Reveal
-          rise={32}
-          delay={90}
-          className="w-full shrink-0 min-[860px]:w-[420px] min-[1180px]:w-[480px]"
-        >
+        <div className="w-full shrink-0 min-[860px]:w-[420px] min-[1180px]:w-[480px]">
           <div className="bg-mk-card px-5 py-7 text-[16px] leading-[1.4] text-mk-text-strong tabular-nums min-[760px]:px-7">
             {groups.map((group) => (
               <div key={group.title} className="mt-7 first:mt-0">
@@ -95,7 +89,7 @@ export function HowPreview() {
               {t("result")}
             </p>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

@@ -5,6 +5,7 @@ import floorLiving from "@/components/marketing/assets/art/floor-living.webp";
 import kitchenTable from "@/components/marketing/assets/art/kitchen-table.webp";
 import partyGrandma from "@/components/marketing/assets/art/party-grandma.webp";
 import partyHandover from "@/components/marketing/assets/art/party-handover.webp";
+import { kitchenTableSrcSet } from "@/components/marketing/assets/art/renditions";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { Reveal } from "@/components/marketing/reveal";
@@ -36,11 +37,15 @@ function AboutPage() {
         title={t("heroTitle")}
         lead={t("heroLead")}
         aside={
+          // From lg the picture takes 7/12 of the band; below 452px its 170px floor widens the crop.
           <Art
             src={kitchenTable}
+            srcSet={kitchenTableSrcSet}
+            sizes="(min-width: 1024px) 58vw, (max-width: 452px) 452px, 100vw"
             width={2400}
             height={903}
             alt={t("heroArtAlt")}
+            priority
             className="min-h-[170px] object-cover"
           />
         }
@@ -55,7 +60,7 @@ function AboutPage() {
                 {t("missionBody")}
               </p>
             </Reveal>
-            <Reveal delay={100}>
+            <div>
               <Art
                 src={partyGrandma}
                 width={784}
@@ -63,33 +68,32 @@ function AboutPage() {
                 alt={t("missionArtAlt")}
                 className="rounded-md"
               />
-            </Reveal>
+            </div>
           </div>
         </Container>
       </Section>
 
-      <section className="bg-mk-sky-soft pt-[clamp(56px,8vw,104px)]">
+      <section className="bg-mk-sky-soft dark:bg-mk-muted pt-[clamp(56px,8vw,104px)]">
         <Container>
           <Reveal>
             <h2 className={SECTION_TITLE}>{t("valuesTitle")}</h2>
           </Reveal>
           <dl className="mt-[clamp(28px,4vw,48px)] flex flex-col gap-[clamp(24px,3vw,36px)]">
-            {values.map((n, i) => (
-              <Reveal
+            {values.map((n) => (
+              <div
                 key={n}
-                delay={i * 60}
-                className="grid grid-cols-1 items-baseline gap-x-[clamp(32px,5vw,72px)] gap-y-1.5 md:grid-cols-[minmax(0,6fr)_minmax(0,6fr)]"
+                className="grid grid-cols-1 items-baseline gap-x-[clamp(32px,5vw,72px)] gap-y-1.5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
               >
-                <dt className="font-mk-heading text-mk-text-strong text-[clamp(26px,3.2vw,40px)] leading-[1.15]">
+                <dt className="font-mk-heading text-mk-text-strong text-[clamp(22px,2.4vw,30px)] leading-[1.15]">
                   {t(`value${n}Title`)}
                 </dt>
                 <dd className="text-mk-text-body max-w-[52ch] text-[17px] leading-relaxed text-pretty">
                   {t(`value${n}Body`)}
                 </dd>
-              </Reveal>
+              </div>
             ))}
           </dl>
-          <Reveal className="mt-[clamp(40px,6vw,72px)]">
+          <div className="mt-[clamp(40px,6vw,72px)]">
             <Art
               src={floorLiving}
               width={1129}
@@ -97,15 +101,17 @@ function AboutPage() {
               alt={t("valuesArtAlt")}
               className="ml-auto min-h-[170px] max-w-[1129px] rounded-t-md object-cover"
             />
-          </Reveal>
+          </div>
         </Container>
       </section>
 
       <section className="bg-mk-plank py-[clamp(56px,8vw,104px)]">
         <Container>
           <div className="grid grid-cols-1 items-center gap-x-[clamp(32px,5vw,72px)] gap-y-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
-            <Reveal>
-              <h2 className={SECTION_TITLE}>{t("storyTitle")}</h2>
+            <div>
+              <Reveal>
+                <h2 className={SECTION_TITLE}>{t("storyTitle")}</h2>
+              </Reveal>
               <div className="bg-mk-card mt-7 rounded-md px-[clamp(16px,3vw,32px)] pt-[clamp(16px,3vw,28px)] pb-[clamp(16px,3vw,28px)]">
                 <table className="w-full border-collapse text-left">
                   <caption className="sr-only">{t("storyTitle")}</caption>
@@ -149,18 +155,14 @@ function AboutPage() {
                   </tbody>
                 </table>
               </div>
-              <Button
-                variant="default"
-                className="mt-7 h-11 px-6 text-[16px]"
-                asChild
-              >
+              <Button variant="default" size="public" className="mt-7" asChild>
                 <Link href="/contact">
                   {t("cta")}
                   <ArrowRight size={17} />
                 </Link>
               </Button>
-            </Reveal>
-            <Reveal delay={100}>
+            </div>
+            <div>
               <Art
                 src={partyHandover}
                 width={900}
@@ -168,7 +170,7 @@ function AboutPage() {
                 alt={t("storyArtAlt")}
                 className="rounded-md"
               />
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>

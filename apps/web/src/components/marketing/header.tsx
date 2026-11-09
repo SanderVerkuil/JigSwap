@@ -1,5 +1,6 @@
 import { Link } from "@/compat/link";
 import { SkipLink } from "@/components/a11y/skip-link";
+import { CONSENT_BANNER_HEIGHT_VAR } from "@/components/dashboard-layout/sticky-offset";
 import { FOCUS, PRESS } from "@/components/marketing/home/classes";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import {
   LanguageRadioItems,
 } from "@/components/ui/language-switcher";
 import { cn } from "@/lib/utils";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useRouterState } from "@tanstack/react-router";
 // sanctioned convex/react exception: Authenticated/Unauthenticated auth-state components (see tanstack-query migration spec)
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Menu, Moon, Sun, X } from "lucide-react";
@@ -43,6 +44,25 @@ const ICON_BUTTON = cn(BAR_CONTROL, "w-10 min-[760px]:w-11");
 const BAR_CTA =
   "h-11 max-w-60 overflow-hidden rounded-[10px] px-3.5 text-[16px] font-bold min-[1200px]:px-4";
 
+// The open consent banner floats over the bottom of the page and publishes the strip it covers on
+// <html> (sticky-offset.ts). A hero action under it is out of sight: on a phone it covers home's.
+const subscribeRootStyle = (onChange: () => void) => {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["style"],
+  });
+  return () => observer.disconnect();
+};
+const bannerCover = () =>
+  Math.round(
+    Number.parseFloat(
+      document.documentElement.style.getPropertyValue(
+        CONSENT_BANNER_HEIGHT_VAR,
+      ),
+    ) || 0,
+  );
+
 // Sticky marketing header: a plain 64px bar on the sky, solid, with no border or shadow. Nav, language,
 // mode, and one action. Its height is what the home page's stacking sheets offset from. The full nav
 // only shows from 1200px, where the longest bar (Dutch, signed out) fits on one line; the page clips
@@ -55,25 +75,49 @@ const BAR_CTA =
 export function MarketingHeader({
   hideActionNearHero = false,
 }: {
-  // The home hero has the same action in marigold; the header's stays away until that one has gone.
+  // The page's hero has the same action in marigold (home, Features, How it works); the header's stays
+  // away until that one has gone.
   hideActionNearHero?: boolean;
 }) {
   const t = useTranslations("marketing.nav");
+  const { pathname } = useLocation();
   const [heroActionInView, setHeroActionInView] =
     React.useState(hideActionNearHero);
+  // The header outlives a move between pages. Each page starts as a fresh load of it does: where
+  // the hero has the action, the bar's stays away until that one has been looked for.
+  const [page, setPage] = React.useState(pathname);
+  if (page !== pathname) {
+    setPage(pathname);
+    setHeroActionInView(hideActionNearHero);
+  }
+  const hideAction = hideActionNearHero && heroActionInView;
+  const bannerHeight = React.useSyncExternalStore(
+    subscribeRootStyle,
+    bannerCover,
+    () => 0,
+  );
+  // The location changes before the next page has rendered: look for its hero action once it has.
+  const renderedPath = useRouterState({
+    select: (state) => state.resolvedLocation?.pathname,
+  });
 
   React.useEffect(() => {
-    if (!hideActionNearHero) return;
+    if (!hideActionNearHero || renderedPath !== pathname) return;
     const action = document.querySelector("[data-hero-action]");
-    if (!action) return;
+    if (!action) {
+      // Nothing to wait for on this page: the bar shows its action on the next frame, when an
+      // observer would first have reported.
+      const frame = requestAnimationFrame(() => setHeroActionInView(false));
+      return () => cancelAnimationFrame(frame);
+    }
+    // In view is between the bar and the consent banner, while it's open.
     const observer = new IntersectionObserver(
       ([entry]) => setHeroActionInView(entry.isIntersecting),
-      { rootMargin: "-64px 0px 0px 0px" },
+      { rootMargin: `-64px 0px ${-bannerHeight}px 0px` },
     );
     observer.observe(action);
     return () => observer.disconnect();
-  }, [hideActionNearHero]);
-  const { pathname } = useLocation();
+  }, [hideActionNearHero, renderedPath, pathname, bannerHeight]);
   const [open, setOpen] = React.useState(false);
   const headerRef = React.useRef<HTMLElement>(null);
   const toggleRef = React.useRef<HTMLButtonElement>(null);
@@ -111,31 +155,46 @@ export function MarketingHeader({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
-  const navLink = (item: (typeof NAV)[number], mobile = false) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      onClick={() => setOpen(false)}
-      aria-current={pathname === item.href ? "page" : undefined}
-      className={cn(
-        FOCUS,
-        mobile
-          ? "flex min-h-12 items-center text-[17px] font-semibold"
-          : cn(
-              PRESS,
-              "inline-flex min-h-11 items-center text-[16px] whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px]",
-              pathname === item.href &&
-                "underline decoration-2 underline-offset-[5px]",
-            ),
-      )}
-    >
-      {t(item.key)}
-    </Link>
-  );
+  // Tabbing on past the menu's last link closes it, so the next stop isn't hidden under the panel. Focus
+  // moving within the header, or into the language dropdown's portal, leaves it open.
+  const onBlur = (event: React.FocusEvent<HTMLElement>) => {
+    const next = event.relatedTarget;
+    if (!open || !(next instanceof Node)) return;
+    if (headerRef.current?.contains(next)) return;
+    if (document.querySelector("[data-radix-popper-content-wrapper]")) return;
+    setOpen(false);
+  };
+
+  const navLink = (item: (typeof NAV)[number], mobile = false) => {
+    // A section is current on its own page and on every page under it (a docs article).
+    const current =
+      pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={() => setOpen(false)}
+        aria-current={current ? "page" : undefined}
+        className={cn(
+          FOCUS,
+          mobile
+            ? "flex min-h-12 items-center text-[17px] font-semibold"
+            : cn(
+                PRESS,
+                "inline-flex min-h-11 items-center text-[16px] whitespace-nowrap hover:underline hover:decoration-2 hover:underline-offset-[5px]",
+                current && "underline decoration-2 underline-offset-[5px]",
+              ),
+        )}
+      >
+        {t(item.key)}
+      </Link>
+    );
+  };
 
   return (
     <header
       ref={headerRef}
+      onBlur={onBlur}
       className="sticky top-0 z-50 bg-mk-sky text-mk-text-strong"
     >
       {/* First Tab stop on every marketing page: jumps to the page's <main>. */}
@@ -171,10 +230,9 @@ export function MarketingHeader({
             <Button
               className={cn(
                 BAR_CTA,
-                "transition-[max-width,padding,opacity,scale] duration-200 ease-mk-out",
-                // Under a finger the button keeps a 44px minimum width, which would hold the room open.
-                heroActionInView &&
-                  "invisible max-w-0 px-0 opacity-0 pointer-coarse:min-w-0 min-[1200px]:px-0",
+                "transition-[opacity,translate,visibility,scale] duration-200 ease-mk-out motion-reduce:transition-none",
+                // It keeps its room while hidden, so the links beside it never move.
+                hideAction && "invisible opacity-0 motion-safe:translate-y-1",
               )}
               asChild
             >

@@ -283,6 +283,12 @@
 }
 
 /* ---- Marketing page ground ------------------------------------------------ */
+/* The sticky 64px header covers the top of the page: a focused control or an anchor scrolls into view
+   16px below it. The one place this offset lives; targets don't add their own margin for the header. */
+html:has(.mk-root) {
+  scroll-padding-top: 80px;
+}
+
 .mk-root {
   background: var(--mk-bg);
   color: var(--mk-text-body);

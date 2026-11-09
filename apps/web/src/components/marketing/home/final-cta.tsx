@@ -23,10 +23,8 @@ export function FinalCTA() {
     <section>
       <div className="grid grid-cols-2 gap-1.5 bg-mk-sky min-[760px]:h-[40svh] min-[760px]:grid-cols-3">
         {crops.map((crop, i) => (
-          <Reveal
+          <div
             key={crop.src}
-            rise={24}
-            delay={i * 70}
             className={cn(
               "min-h-0",
               i === 0 && "col-span-2 min-[760px]:col-span-1",
@@ -41,7 +39,7 @@ export function FinalCTA() {
               decoding="async"
               className="block aspect-[4/3] h-auto w-full object-cover min-[760px]:aspect-auto min-[760px]:h-full"
             />
-          </Reveal>
+          </div>
         ))}
       </div>
       <div className="bg-mk-sky text-mk-text-strong">
@@ -56,7 +54,7 @@ export function FinalCTA() {
               {t("home.cta.body")}
             </p>
           </Reveal>
-          <Reveal rise={20} delay={140} className="mt-7">
+          <div className="mt-7">
             <Button
               variant="brand"
               asChild
@@ -64,7 +62,7 @@ export function FinalCTA() {
             >
               <Link href={start.href}>{start.label}</Link>
             </Button>
-          </Reveal>
+          </div>
         </div>
       </div>
     </section>

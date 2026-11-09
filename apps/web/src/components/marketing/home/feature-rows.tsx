@@ -13,6 +13,10 @@ import puzzelmiddag from "@/components/marketing/assets/art/covers/puzzelmiddag.
 import theekoepel from "@/components/marketing/assets/art/covers/theekoepel.webp";
 import tulpen from "@/components/marketing/assets/art/covers/tulpen.webp";
 import bridge from "@/components/marketing/assets/art/crops/bridge.webp";
+import {
+  bridgeSrcSet,
+  coverSrcSet,
+} from "@/components/marketing/assets/art/renditions";
 import { MkBadge, type MkBadgeTone } from "@/components/marketing/badge";
 import { Reveal } from "@/components/marketing/reveal";
 import { cn } from "@/lib/utils";
@@ -23,7 +27,7 @@ import { useTranslations } from "use-intl";
 // sliding over the last and leaving its title band in view. The sticky header is 64px tall, so every
 // offset starts there. Each sheet's bottom edge sits on the viewport's, so the stack leaves as one and
 // the last sheet never rides up over the earlier bands. The copy stands directly under the title, and a
-// hold of 40svh below each sheet keeps it pinned for that long before the next one arrives. A stuck
+// short hold of 12svh below each sheet keeps it pinned for a moment before the next one arrives. A stuck
 // sheet needs the room, so the stack waits for 860px of width and 720px of height; below that the
 // storeys simply follow each other at their natural height.
 //
@@ -41,7 +45,7 @@ const STOREY_CLASS =
 const HOLD = (
   <div
     aria-hidden="true"
-    className="hidden h-[40svh] min-[860px]:[@media(min-height:720px)]:block"
+    className="hidden h-[12svh] min-[860px]:[@media(min-height:720px)]:block"
   />
 );
 
@@ -90,9 +94,9 @@ export function FeatureRows() {
           <Reveal rise={20} delay={70}>
             <p className={COPY}>{t("rows.lendBody")}</p>
           </Reveal>
-          <Reveal rise={16} delay={140} className="max-[859px]:flex-1">
+          <div className="max-[859px]:flex-1">
             <LendTrackVisual />
-          </Reveal>
+          </div>
         </div>
       </article>
       {HOLD}
@@ -112,6 +116,7 @@ export function FeatureRows() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <BridgePicture alt={t("pictures.bridge")} />
         </div>
+        <div aria-hidden="true" className="h-3 shrink-0 bg-mk-plank" />
       </article>
       {HOLD}
     </section>
@@ -176,6 +181,8 @@ function WallBoxes({
         <img
           key={box.title}
           src={box.cover}
+          srcSet={coverSrcSet(box.cover)}
+          sizes="(min-width: 860px) 18vw, 31vw"
           alt={box.title}
           width={480}
           height={360}
@@ -218,42 +225,13 @@ function ShelfWall({ intro }: { intro: React.ReactNode }) {
   );
 }
 
-// The park bridge, drifting very slowly while it is on screen so the children seem to keep walking.
+// The park bridge, standing still: no public picture moves on its own.
 function BridgePicture({ alt }: { alt: string }) {
-  const ref = React.useRef<HTMLImageElement>(null);
-
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const drift = el.animate(
-      [
-        { transform: "scale(1.06) translateX(1.2%)" },
-        { transform: "scale(1.06) translateX(-1.2%)" },
-      ],
-      {
-        duration: 22000,
-        direction: "alternate",
-        iterations: Infinity,
-        easing: "ease-in-out",
-      },
-    );
-    drift.pause();
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) drift.play();
-      else drift.pause();
-    });
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      drift.cancel();
-    };
-  }, []);
-
   return (
     <img
-      ref={ref}
       src={bridge}
+      srcSet={bridgeSrcSet}
+      sizes="100vw"
       alt={alt}
       width={1536}
       height={558}
@@ -313,6 +291,8 @@ function LendTrackVisual() {
             <div className="flex items-end gap-3 px-4 min-[760px]:px-10 min-[860px]:gap-6">
               <img
                 src={r.cover}
+                srcSet={coverSrcSet(r.cover)}
+                sizes="(min-width: 860px) 200px, 72px"
                 alt=""
                 width={480}
                 height={360}
