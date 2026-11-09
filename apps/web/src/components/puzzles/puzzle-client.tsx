@@ -1,9 +1,9 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { EmptyState } from "@/components/community/primitives";
 import { usePageHeaderActions } from "@/components/dashboard-layout/page-header-slot";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import { useUrlTextDraft } from "@/hooks/use-url-text-draft";
@@ -23,7 +23,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 // sanctioned convex/react exception: usePaginatedQuery (see tanstack-query migration spec)
 import { usePaginatedQuery } from "convex/react";
-import { Filter, Heart, Plus, Search, X } from "lucide-react";
+import { Filter, Heart, Plus, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -201,11 +201,8 @@ export function PuzzlesClient({
     favoritesOnly ||
     searchDraft.trim() !== "" ||
     hasActiveCatalogueFilters(filters);
-  // What an exhausted, empty result says: only a term or filter is worth blaming.
-  const emptyState = catalogueEmptyState({
-    favoritesOnly,
-    hasFilters: hasActiveCatalogueFilters(filters),
-  });
+  // What an exhausted, empty result says: a term is named as a search, and only a filter is blamed.
+  const emptyState = catalogueEmptyState({ favoritesOnly, filters });
 
   // The title/subtitle live in the shared shell page head (via route-meta); publish only the
   // "contribute to catalogue" action there so the body carries no own header. The result count
@@ -361,65 +358,54 @@ export function PuzzlesClient({
           </PuzzleViewProvider>
         </div>
       ) : listState === "complete" ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                {emptyState === "noFavourites" ? (
-                  <Heart className="h-8 w-8" />
-                ) : (
-                  <Search className="h-8 w-8" />
-                )}
-              </div>
-              {/* Level with the h2 card titles it stands in for. */}
-              {emptyState === "filtered" ? (
-                <>
-                  <h2 className="text-lg font-medium mb-2">
-                    {t("noPuzzlesFound")}
-                  </h2>
-                  <p className="text-sm">{t("tryDifferentFilters")}</p>
-                  <Button
-                    variant="outline"
-                    onClick={clearFilters}
-                    className="mt-4 text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                    {t("clearFilters")}
-                  </Button>
-                </>
-              ) : emptyState === "noFavourites" ? (
-                <>
-                  <h2 className="text-lg font-medium mb-2">
-                    {t("noFavoritesTitle")}
-                  </h2>
-                  <p className="text-sm">{t("noFavoritesHint")}</p>
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      onSearchChange((prev) => ({ ...prev, fav: undefined }))
-                    }
-                    className="mt-4 text-foreground"
-                  >
-                    {t("showAllPuzzles")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-lg font-medium mb-2">
-                    {t("emptyCatalogueTitle")}
-                  </h2>
-                  <p className="text-sm">{t("emptyCatalogueHint")}</p>
-                  <Button asChild className="mt-4">
-                    <Link href="/puzzles/add">
-                      <Plus className="h-4 w-4" />
-                      {tPuzzles("contributePuzzle")}
-                    </Link>
-                  </Button>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        // The empty state Browse uses too. A search or filter is cleared from the toolbar's Clear
+        // Filters, on screen whenever one is set, so it isn't repeated here.
+        emptyState === "searched" ? (
+          <EmptyState
+            // The member's own text may be one long word: let it wrap inside the column.
+            className="wrap-anywhere"
+            titleAs="h2"
+            title={t("noPuzzlesMatch", { query: filters.searchTerm.trim() })}
+            sub={t("noPuzzlesMatchHint")}
+          />
+        ) : emptyState === "filtered" ? (
+          <EmptyState
+            titleAs="h2"
+            title={t("noPuzzlesFound")}
+            sub={t("tryDifferentFilters")}
+          />
+        ) : emptyState === "noFavourites" ? (
+          <EmptyState
+            titleAs="h2"
+            title={t("noFavoritesTitle")}
+            sub={t("noFavoritesHint")}
+            action={
+              <Button
+                variant="outline"
+                onClick={() =>
+                  onSearchChange((prev) => ({ ...prev, fav: undefined }))
+                }
+                className="text-foreground"
+              >
+                {t("showAllPuzzles")}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            titleAs="h2"
+            title={t("emptyCatalogueTitle")}
+            sub={t("emptyCatalogueHint")}
+            action={
+              <Button asChild>
+                <Link href="/puzzles/add">
+                  <Plus className="h-4 w-4" />
+                  {tPuzzles("contributePuzzle")}
+                </Link>
+              </Button>
+            }
+          />
+        )
       ) : null}
 
       {/* Infinite Scroll Observer: above the placeholders, so it is in view (and keeps loading)

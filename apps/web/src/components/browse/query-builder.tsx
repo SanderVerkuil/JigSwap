@@ -238,7 +238,6 @@ export function QueryBuilder({
                 ref={addFilterRef}
                 type="button"
                 variant="outline"
-                className="rounded-full"
                 aria-label={tBrowse("addFilter")}
               >
                 <Plus className="h-4 w-4" />

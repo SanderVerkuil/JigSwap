@@ -112,6 +112,8 @@ const renderClient = (
 };
 
 const copy = en.puzzles.puzzles;
+const noMatch = (query: string) =>
+  copy.noPuzzlesMatch.replace("{query}", query);
 const url = () =>
   JSON.parse(screen.getByTestId("url").textContent) as PuzzlesSearch;
 const placeholders = () => screen.queryAllByTestId("placeholder").length;
@@ -151,33 +153,48 @@ describe("PuzzlesClient results", () => {
     renderClient({ q: "lake" });
     expect(placeholders()).toBeGreaterThan(0);
     expect(screen.getByText("0 puzzles found so far")).toBeTruthy();
+    expect(screen.queryByText(noMatch("lake"))).toBeNull();
     expect(screen.queryByText(copy.noPuzzlesFound)).toBeNull();
   });
 
-  it("says nothing matched only once the search is exhausted, with a way to clear", () => {
+  it("names a term that matched nothing as a search, once the search is exhausted", () => {
     paginated.current = NOTHING;
     renderClient({ q: "lake", view: "list" });
-    expect(screen.getByText(copy.noPuzzlesFound)).toBeTruthy();
+    // The member's text may be one long word: it wraps inside the column instead of overflowing.
+    expect(
+      screen.getByText(noMatch("lake")).closest(".wrap-anywhere"),
+    ).not.toBeNull();
+    expect(screen.queryByText(copy.noPuzzlesFound)).toBeNull();
     expect(screen.getByText("0 puzzles found")).toBeTruthy();
     expect(placeholders()).toBe(0);
 
-    // Two ways to clear: the toolbar's and the empty state's. The view mode survives both.
-    fireEvent.click(
-      screen.getAllByRole("button", { name: copy.clearFilters })[1],
-    );
+    // One way to clear: the toolbar's. The view mode survives it.
+    const clear = screen.getAllByRole("button", { name: copy.clearFilters });
+    expect(clear).toHaveLength(1);
+    fireEvent.click(clear[0]);
     expect(url()).toEqual({ view: "list" });
   });
 
-  it("blames a filter that is set, not only a term", () => {
+  it("blames a filter that is set, with the toolbar's one way to clear", () => {
     paginated.current = NOTHING;
-    renderClient({ brand: "Jumbo" });
+    renderClient({ q: "lake", brand: "Jumbo" });
     expect(screen.getByText(copy.noPuzzlesFound)).toBeTruthy();
+    expect(screen.queryByText(noMatch("lake"))).toBeNull();
+    expect(
+      screen.getAllByRole("button", { name: copy.clearFilters }),
+    ).toHaveLength(1);
   });
 
   it("says the catalogue itself is empty when nothing narrows it", () => {
     paginated.current = NOTHING;
     renderClient();
     expect(screen.getByText(copy.emptyCatalogueTitle)).toBeTruthy();
+    // It stands in for the h2 card titles, so it is one too (UX-66).
+    expect(
+      screen.getByRole("heading", { level: 2, name: copy.emptyCatalogueTitle }),
+    ).toBeTruthy();
+    // Browse's open empty state, not a boxed card.
+    expect(document.querySelector("[data-slot='card']")).toBeNull();
     expect(screen.queryByText(copy.noPuzzlesFound)).toBeNull();
     expect(
       screen.queryByRole("button", { name: copy.clearFilters }),
@@ -369,6 +386,16 @@ describe("PuzzlesClient favourites", () => {
     expect(screen.getByText(copy.noFavoritesTitle)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: copy.showAllPuzzles }));
     expect(url().fav).toBeUndefined();
+  });
+
+  // Only the favourites were searched: "No puzzles match" would deny the catalogue's lake puzzles.
+  it("blames a term that searched the favourites alone, not naming it a search", () => {
+    renderClient(
+      { fav: true, q: "lake" },
+      { favourites: [favourite("f1", "Harbour", "Jumbo")] },
+    );
+    expect(screen.getByText(copy.noPuzzlesFound)).toBeTruthy();
+    expect(screen.queryByText(noMatch("lake"))).toBeNull();
   });
 
   it("toggles through the URL and reports its state", () => {
@@ -566,7 +593,7 @@ describe("PuzzlesClient while a new search loads", () => {
     change(LOADING, client);
     change(NOTHING, client);
     expect(cards()).toEqual([]);
-    expect(screen.getByText(copy.noPuzzlesFound)).toBeTruthy();
+    expect(screen.getByText(noMatch("lake"))).toBeTruthy();
   });
 
   it("shows placeholders on a first visit, with no rows to keep", () => {

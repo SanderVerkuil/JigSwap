@@ -194,6 +194,16 @@ describe("PuzzleFilters", () => {
         maxPieces: "",
       });
     });
+
+    // The tint alone sits close to the hover fill: the picked preset also gets an edge.
+    it("marks the picked preset with an edge as well as the tint", () => {
+      renderFilters({
+        brands: [],
+        filters: { ...emptyFilters, minPieces: "1000", maxPieces: "1000" },
+      });
+      expect(preset("1,000 pieces").className).toContain("ring-primary-text");
+      expect(preset("500 pieces").className).not.toContain("ring-");
+    });
   });
 
   it("clears a filter when its 'all' choice is picked", () => {

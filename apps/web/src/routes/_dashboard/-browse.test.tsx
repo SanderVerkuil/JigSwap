@@ -24,6 +24,8 @@ import { Route as BrowseRoute } from "./browse";
 const browse = vi.hoisted(() => ({
   current: {} as Record<string, unknown>,
   lastArgs: undefined as unknown,
+  // The member read: undefined while it loads.
+  member: { _id: "me" } as unknown,
 }));
 vi.mock("@/components/browse/use-browse-pages", async (importOriginal) => ({
   ...(await importOriginal<
@@ -37,7 +39,7 @@ vi.mock("@/components/browse/use-browse-pages", async (importOriginal) => ({
 vi.mock("@tanstack/react-query", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-query")>()),
   useQuery: (read: string) => ({
-    data: read === "member" ? { _id: "me" } : [],
+    data: read === "member" ? browse.member : [],
   }),
 }));
 vi.mock("@convex-dev/react-query", () => ({
@@ -141,6 +143,7 @@ describe("Browse page", () => {
   beforeEach(() => {
     browse.current = BASE;
     browse.lastArgs = undefined;
+    browse.member = { _id: "me" };
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -154,7 +157,25 @@ describe("Browse page", () => {
     await open("/browse?q=1000");
     expect(text()).toContain('text condition: "1000"');
     expect(browse.lastArgs).toMatchObject({ searchTerm: "1000" });
-    expect(text()).toContain(copy.empty.filteredTitle);
+    expect(text()).toContain(
+      copy.empty.searchedTitle.replace("{query}", "1000"),
+    );
+    expect(text()).not.toContain(copy.empty.filteredTitle);
+  });
+
+  it("shows the toolbar at once, holding the cards until the member is known", async () => {
+    browse.member = undefined;
+    browse.current = { ...BASE, rows: [ROW], hasMore: true };
+    await open("/browse?q=lake");
+    // The toolbar and the browse read don't wait for the member.
+    expect(text()).toContain('text condition: "lake"');
+    expect(browse.lastArgs).toMatchObject({ searchTerm: "lake" });
+    expect(text()).not.toContain(en.common.loading);
+    // A card needs the member (can it be requested, messaged?): placeholders until then.
+    expect(text()).toContain("placeholder");
+    expect(text()).not.toContain("a copy");
+    expect(text()).not.toContain("1+ copies found");
+    expect(button(copy.loadMore)).toBeFalsy();
   });
 
   it("ignores a value Browse can't filter by", async () => {

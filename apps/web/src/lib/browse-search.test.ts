@@ -5,7 +5,6 @@ import {
   browseFiltersFromSearch,
   browseSearchFromFilters,
   validateBrowseSearch,
-  withoutBrowseConditions,
 } from "./browse-search";
 
 describe("validateBrowseSearch", () => {
@@ -170,13 +169,20 @@ describe("browse filters and the URL", () => {
 });
 
 describe("browseEmptyState", () => {
-  it("blames the text or filters only when one is set", () => {
-    expect(browseEmptyState({ q: "café" })).toBe("filtered");
+  it("names a plain search as one, not as filters", () => {
+    expect(browseEmptyState({ q: "café" })).toBe("searched");
+    expect(browseEmptyState({ q: "café", view: "list" })).toBe("searched");
+  });
+
+  it("blames the filters when one is set, or the text searched one puzzle's copies", () => {
     expect(browseEmptyState({ avail: ["forLend"] })).toBe("filtered");
     expect(browseEmptyState({ minPieces: 0 })).toBe("filtered");
+    expect(browseEmptyState({ q: "café", condition: "good" })).toBe("filtered");
     expect(browseEmptyState({ puzzle: "p1", condition: "good" })).toBe(
       "filtered",
     );
+    // Only the copies of p1 were searched: other puzzles' copies may match.
+    expect(browseEmptyState({ puzzle: "p1", q: "café" })).toBe("filtered");
   });
 
   it("says nobody offers the puzzle when only ?puzzle narrows Browse", () => {
@@ -192,29 +198,6 @@ describe("browseEmptyState", () => {
     // A cleared condition left behind as undefined by a merge is not a condition.
     expect(browseEmptyState({ q: undefined, avail: undefined })).toBe(
       "noOffers",
-    );
-  });
-});
-
-describe("withoutBrowseConditions", () => {
-  it("clears the text and every filter but keeps ?puzzle and the view", () => {
-    const search = validateBrowseSearch({
-      puzzle: "p1",
-      q: "café",
-      category: "cat-1",
-      condition: "good",
-      difficulty: "hard",
-      minPieces: 500,
-      maxPieces: 1000,
-      avail: ["forTrade"],
-      view: "list",
-    });
-    expect(withoutBrowseConditions(search)).toEqual({
-      puzzle: "p1",
-      view: "list",
-    });
-    expect(browseEmptyState(withoutBrowseConditions(search))).toBe(
-      "puzzleNotOffered",
     );
   });
 });

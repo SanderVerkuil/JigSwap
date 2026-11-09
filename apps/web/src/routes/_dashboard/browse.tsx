@@ -34,7 +34,6 @@ import {
   browseFiltersFromSearch,
   browseSearchFromFilters,
   validateBrowseSearch,
-  withoutBrowseConditions,
   type BrowseSearch,
 } from "@/lib/browse-search";
 import type { Locale } from "@/lib/i18n";
@@ -139,11 +138,12 @@ function BrowsePage() {
     [categoriesRaw, locale],
   );
 
-  // Only the member lookup gates the page. Results load inside it, so the query builder stays
+  // The toolbar shows at once: neither it nor the browse read needs the member. The results keep
+  // their placeholders until the member is known, since whether a card's copy can be requested or
+  // messaged depends on whose it is. Results load below the toolbar, so the query builder stays
   // mounted (and the search box keeps focus) while a new filter's results arrive.
-  if (!user || convexUser === undefined) {
-    return <PageLoading message={tCommon("loading")} />;
-  }
+  const memberPending = !user || convexUser === undefined;
+  const resultsPending = browse.loading || memberPending;
 
   const shownPuzzles = browse.rows;
 
@@ -186,7 +186,7 @@ function BrowsePage() {
           />
           {/* How many offers are on screen, with a + while more may follow: counting them all would
               mean reading them all. */}
-          {browse.loading ? (
+          {resultsPending ? (
             <Skeleton className="h-4 w-28" />
           ) : (
             shownPuzzles.length > 0 && (
@@ -206,7 +206,7 @@ function BrowsePage() {
           title={tBrowse("loadFailed")}
           sub={tBrowse("loadFailedHint")}
         />
-      ) : browse.loading ? (
+      ) : resultsPending ? (
         <PuzzleViewProvider viewMode={viewMode}>
           {Array.from({ length: 8 }, (_, i) => (
             <PuzzleCardSkeleton key={i} />
@@ -217,11 +217,7 @@ function BrowsePage() {
         // on from there when asked.
         <EmptyState title={tBrowse("noMatchesYet")} />
       ) : shownPuzzles.length === 0 && !browse.stale && !browse.loadingMore ? (
-        <BrowseEmptyState
-          search={search}
-          // Clearing the conditions keeps the ?puzzle chip and the view mode.
-          onClearConditions={() => updateSearch(withoutBrowseConditions)}
-        />
+        <BrowseEmptyState search={search} />
       ) : (
         // While a new filter's results load, the previous ones stay, dimmed and marked busy.
         <div
@@ -295,7 +291,7 @@ function BrowsePage() {
       )}
 
       {/* aria-disabled, not disabled, while the next page loads: a disabled button drops focus. */}
-      {(browse.hasMore || browse.loadingMore) && (
+      {!resultsPending && (browse.hasMore || browse.loadingMore) && (
         <Button
           variant="outline"
           className="h-11 self-center md:h-9"

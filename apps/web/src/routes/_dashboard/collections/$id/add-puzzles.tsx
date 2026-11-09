@@ -4,6 +4,7 @@ import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { EmptyState } from "@/components/library/empty-state";
 import { PickerCapNote } from "@/components/library/picker-cap-note";
+import { ShellNotFound } from "@/components/NotFound";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLoading } from "@/components/ui/loading";
@@ -53,11 +54,18 @@ function AddPuzzlesToCollectionPage() {
     ),
   );
 
-  const { data: collection, isPending: collectionPending } = useQuery(
+  const {
+    data: collection,
+    isPending: collectionPending,
+    isError,
+  } = useQuery(
     convexQuery(gateway.collections.byId, {
       collectionId: id as Id<"collections">,
     }),
   );
+  // A missing or private collection reads as `null`; a malformed id fails the read instead. Both
+  // are not found, so an unreadable id never hangs on the loading screen.
+  const notFound = isError || collection === null;
 
   // The member's WHOLE library: a collection organises any copy, not only the ones on offer
   // (kept-for-yourself, private and lent-out copies belong on a shelf too).
@@ -128,40 +136,48 @@ function AddPuzzlesToCollectionPage() {
   // (Cancel + the count-aware confirm) into the page head. On a phone that row scrolls away from
   // whoever is ticking far down the list, so there the confirm docks above the tab bar instead,
   // once something is picked (and the install tip, which docks there too, steps aside).
+  // Not found, the head says so with no trail and nothing to confirm (ShellNotFound below doesn't
+  // publish: this would overwrite it).
   const selectedCount = selectedPuzzles.size;
   useReportSurfaceBusy("collectionPicker", selectedCount > 0);
   usePageHeader(
-    () => ({
-      title: t("addPuzzles"),
-      crumbs: [
-        { label: tShell("groups.library.label"), href: "/library" },
-        { label: tShell("pages.collections.title"), href: "/collections" },
-        ...(collection
-          ? [{ label: collection.name, href: `/collections/${id}` }]
-          : []),
-      ],
-      actions: (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/collections/${id}`)}
-          >
-            {tCommon("cancel")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => addSelected.mutate()}
-            disabled={selectedCount === 0 || addSelected.isPending}
-            className="max-sm:hidden"
-          >
-            <Plus className="h-4 w-4" />
-            {t("addSelected", { count: selectedCount })}
-          </Button>
-        </>
-      ),
-    }),
-    [collection?.name, id, selectedCount, addSelected.isPending],
+    () =>
+      notFound
+        ? { title: t("notFound"), crumbs: [] }
+        : {
+            title: t("addPuzzles"),
+            crumbs: [
+              { label: tShell("groups.library.label"), href: "/library" },
+              {
+                label: tShell("pages.collections.title"),
+                href: "/collections",
+              },
+              ...(collection
+                ? [{ label: collection.name, href: `/collections/${id}` }]
+                : []),
+            ],
+            actions: (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/collections/${id}`)}
+                >
+                  {tCommon("cancel")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => addSelected.mutate()}
+                  disabled={selectedCount === 0 || addSelected.isPending}
+                  className="max-sm:hidden"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("addSelected", { count: selectedCount })}
+                </Button>
+              </>
+            ),
+          },
+    [collection?.name, id, selectedCount, addSelected.isPending, notFound],
   );
 
   // The library minus what's already in the collection, then narrowed by the search term.
@@ -176,6 +192,18 @@ function AddPuzzlesToCollectionPage() {
         puzzle.puzzle.brand.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
+  if (notFound) {
+    return (
+      <ShellNotFound
+        publish={false}
+        title={t("notFound")}
+        description={t("notFoundSub")}
+        backHref="/collections"
+        backLabel={t("backToCollections")}
+      />
+    );
+  }
+
   if (
     collectionPending ||
     collection === undefined ||
@@ -185,10 +213,6 @@ function AddPuzzlesToCollectionPage() {
     convexUser === undefined
   ) {
     return <PageLoading message={tCommon("loading")} />;
-  }
-
-  if (collection === null) {
-    return <div className="text-muted-foreground">{t("notFound")}</div>;
   }
 
   return (
