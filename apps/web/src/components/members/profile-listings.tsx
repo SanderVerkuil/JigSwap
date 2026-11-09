@@ -2,8 +2,8 @@
 
 import { Image } from "@/compat/image";
 import { Link } from "@/compat/link";
-import { SegmentedPills } from "@/components/add-puzzle/segmented-pills";
 import { SectionHead } from "@/components/dashboard-home/section-head";
+import { FilterBar } from "@/components/library/filter-bar";
 import { PendingPhotoPlaceholder } from "@/components/photos/pending-photo-placeholder";
 import { Button } from "@/components/ui/button";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
@@ -86,14 +86,15 @@ export function ProfilePuzzlesSection({
       <SectionHead title={t("title", { name: firstName })} icon={Puzzle} />
       {scope === "all" && (
         <div className="mb-4">
-          <SegmentedPills
+          {/* A list filter, so the tab track like every other one, not a canal fill. */}
+          <FilterBar
             options={[
               { value: "all", label: t("filterAll") },
               { value: "available", label: t("filterAvailable") },
             ]}
             value={filter}
             onChange={setFilter}
-            ariaLabel={t("filterLabel", { name: firstName })}
+            label={t("filterLabel", { name: firstName })}
           />
         </div>
       )}

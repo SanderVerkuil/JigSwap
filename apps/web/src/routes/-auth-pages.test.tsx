@@ -112,3 +112,52 @@ describe("auth pages", () => {
     });
   });
 });
+
+// WCAG 2.4.7 on the only way in. The card's shadow-none! removes the box-shadow Clerk draws its
+// focus ring with, so these classes are the card's only focus state. Clerk's unlayered styles beat
+// Tailwind's layers, hence the `!` on each. The real render was checked in a browser, both themes.
+describe("auth card keyboard focus", () => {
+  const elementsOf = (Route: unknown, testId: string) => {
+    const Page = pageOf(Route);
+    render(<Page />);
+    const { appearance } = propsOf(testId) as {
+      appearance: { elements: Record<string, string> };
+    };
+    return appearance.elements;
+  };
+  const classesOf = (elements: Record<string, string>, key: string) =>
+    elements[key]?.split(/\s+/) ?? [];
+
+  it.each([
+    ["sign-in", SignInRoute, "clerk-sign-in"],
+    ["sign-up", SignUpRoute, "clerk-sign-up"],
+  ] as const)("outlines the %s buttons in the ring ink", (_, Route, testId) => {
+    const elements = elementsOf(Route, testId);
+    for (const key of ["socialButtonsIconButton", "formButtonPrimary"]) {
+      expect(classesOf(elements, key)).toEqual(
+        expect.arrayContaining([
+          "focus-visible:outline-solid!",
+          "focus-visible:outline-3!",
+          "focus-visible:outline-offset-2!",
+          "focus-visible:outline-mk-ring!",
+        ]),
+      );
+    }
+  });
+
+  it.each([
+    ["sign-in", SignInRoute, "clerk-sign-in"],
+    ["sign-up", SignUpRoute, "clerk-sign-up"],
+  ] as const)(
+    "rings the %s fields with the ring-coloured border",
+    (_, Route, testId) => {
+      expect(classesOf(elementsOf(Route, testId), "formFieldInput")).toEqual(
+        expect.arrayContaining([
+          "focus:border-mk-ring!",
+          "focus:ring-3!",
+          "focus:ring-mk-ring/50!",
+        ]),
+      );
+    },
+  );
+});

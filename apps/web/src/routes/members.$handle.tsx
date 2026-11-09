@@ -10,7 +10,7 @@ import {
   type PublicProfileView,
 } from "@/components/members/profile-body";
 import { lockedProfileFromTeaser } from "@/components/members/teaser-profile";
-import { MarketingNotFoundContent } from "@/components/NotFound";
+import { MarketingNotFoundContent, ShellNotFound } from "@/components/NotFound";
 import { HouseholdLinkInvite } from "@/components/social/household-link-invite";
 import {
   INVITE_KEY,
@@ -363,17 +363,17 @@ function MemberNotFound() {
   const sidebar = Route.useRouteContext({ select: (c) => c.sidebar });
   const t = useTranslations("members");
   // App convention: 404 inside the authed app renders within the dashboard
-  // shell (see _dashboard/route.tsx's notFoundComponent).
+  // shell (see _dashboard/route.tsx's notFoundComponent), as the shell's one
+  // not-found: the title goes to the page head, which holds the page's h1.
   if (userId) {
     return (
       <DashboardShell sidebar={sidebar}>
-        <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-          <h1 className="font-heading text-2xl">{t("notFoundTitle")}</h1>
-          <p className="text-muted-foreground">{t("notFoundSub")}</p>
-          <Button asChild>
-            <Link to="/people">{t("findPeople")}</Link>
-          </Button>
-        </div>
+        <ShellNotFound
+          title={t("notFoundTitle")}
+          description={t("notFoundSub")}
+          backHref="/people"
+          backLabel={t("findPeople")}
+        />
       </DashboardShell>
     );
   }

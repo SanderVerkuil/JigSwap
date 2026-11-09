@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { FOCUS } from "@/components/marketing/home/classes";
 import {
   cleanup,
   fireEvent,
@@ -100,6 +101,40 @@ describe("AuthShell", () => {
       }),
     );
     expect(consent.openCookieSettings).toHaveBeenCalledTimes(1);
+  });
+
+  // On the canal band the global ring measures 1.74:1; FOCUS outlines in the link's own ink.
+  it("rings its footer links in their own ink on the canal band", () => {
+    renderShell();
+    const footer = screen.getByRole("contentinfo");
+    const controls = [
+      ...within(footer).getAllByRole("link"),
+      within(footer).getByRole("button", { name: "Cookie settings" }),
+    ];
+    expect(controls).toHaveLength(4);
+    for (const control of controls) {
+      expect(control.className.split(/\s+/)).toEqual(
+        expect.arrayContaining(FOCUS.split(" ")),
+      );
+    }
+  });
+
+  // The street's public edge (DESIGN.md Layout: 16px, 40px from 760px), as on the marketing header,
+  // so the wordmark doesn't jump between /catalog and /sign-in.
+  it("puts its header and footer row on the public 40px edge", () => {
+    renderShell();
+    const rows = [
+      screen.getByRole("banner"),
+      screen.getByRole("contentinfo").firstElementChild as HTMLElement,
+    ];
+    for (const row of rows) {
+      const classes = row.className.split(/\s+/);
+      expect(classes).toEqual(
+        expect.arrayContaining(["w-full", "px-4", "min-[760px]:px-10"]),
+      );
+      expect(classes).not.toContain("mx-auto");
+      expect(classes).not.toContain("max-w-[1200px]");
+    }
   });
 
   it("speaks the visitor's language", () => {

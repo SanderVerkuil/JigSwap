@@ -35,6 +35,8 @@ vi.mock("@tanstack/react-router", () => ({
   notFound: () => NOT_FOUND,
   redirect: (to: object) => ({ redirect: to }),
   useRouteContext: () => ({ userId: viewer.userId }),
+  useLocation: ({ select }: { select: (l: { pathname: string }) => unknown }) =>
+    select({ pathname: "/members/anna" }),
   useNavigate: () => vi.fn(),
   Link: ({ children }: { children?: ReactNode }) => <a>{children}</a>,
 }));
@@ -184,17 +186,19 @@ describe("the member page itself", () => {
     viewer.userId = "user_1";
     const html = paint(browserClient());
     expect(html).toContain(en.members.loading);
-    expect(html).not.toContain(en.members.notFoundTitle);
+    expect(html).not.toContain(en.members.notFoundSub);
   });
 
-  // The loader's 404 never ran for this load, so without this the wait above would never end.
+  // The loader's 404 never ran for this load, so without this the wait above would never end. The
+  // title goes to the shell's page head; the body says why and offers the way back.
   it("says not found when the browser's own reads find nobody", () => {
     viewer.userId = "user_1";
     const queryClient = browserClient();
     queryClient.setQueryData(profileKey, null);
     queryClient.setQueryData(teaserKey, null);
     const html = paint(queryClient);
-    expect(html).toContain(en.members.notFoundTitle);
+    expect(html).toContain(en.members.notFoundSub);
+    expect(html).toContain(en.members.findPeople);
     expect(html).not.toContain(en.members.loading);
   });
 

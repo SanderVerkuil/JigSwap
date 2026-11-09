@@ -374,7 +374,14 @@ function CatalogListPage() {
         {/* Conversion tail for logged-out visitors. */}
         <Unauthenticated>
           <div className="mt-12 flex justify-center">
-            <Button variant="brand" asChild>
+            {/* The label is wider than a 320px phone at the public size, so it may wrap. It stays
+                50px on touch too, over the base's 44px coarse-pointer floor. */}
+            <Button
+              variant="brand"
+              size="public"
+              className="h-auto min-h-[50px] max-w-full py-2.5 text-center whitespace-normal pointer-coarse:min-h-[50px]"
+              asChild
+            >
               <Link href="/sign-up">{t("joinCta")}</Link>
             </Button>
           </div>

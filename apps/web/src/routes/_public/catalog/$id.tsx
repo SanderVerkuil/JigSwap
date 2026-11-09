@@ -173,17 +173,21 @@ function PublicPuzzleDetail({
     <main id={MAIN_CONTENT_ID}>
       {/* Hero: mirrors the dashboard detail skeleton, minus member actions. Two columns from md
           and a shorter 4:3 cover on phones, so the cover never fills the first screen on its own. */}
-      <div className="bg-mk-sky">
-        <section className="mx-auto grid w-full max-w-[1200px] items-start gap-7 px-6 py-[clamp(24px,4vw,48px)] md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
-          {/* The box stands on its plank; together they keep the cover's footprint. */}
-          <div className="flex aspect-[4/3] w-full flex-col md:aspect-square lg:max-w-[300px]">
-            <div className="bg-muted relative min-h-0 flex-1 overflow-hidden rounded-t-[2px]">
+      <div className="bg-mk-sky px-4 min-[760px]:px-10">
+        <section className="grid w-full max-w-[1200px] items-start gap-7 py-[clamp(24px,4vw,48px)] md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
+          {/* The box stands on its plank at its own size, so the plank is never under empty mat.
+              From md the slot and plank keep the column's square footprint (251 + 9 = 260). The
+              zoom's box hugs the picture, as its lens and pinch maths need, and its column flex
+              lets a tall cover shrink to the slot's height. */}
+          <div className="flex w-full flex-col lg:max-w-[300px]">
+            <div className="relative flex aspect-[4/3] items-end justify-center overflow-hidden rounded-t-[2px] md:aspect-auto md:h-[251px] lg:h-[291px]">
               {definition.image ? (
                 <ImageZoom
                   src={definition.image}
                   alt={definition.title}
-                  fill
                   priority
+                  wrapperClassName="flex max-h-full max-w-full flex-col items-center"
+                  className="min-h-0 max-w-full rounded-t-[2px]"
                 />
               ) : (
                 <PuzzleCoverFallback />
@@ -239,8 +243,15 @@ function PublicPuzzleDetail({
               </p>
             )}
             {/* ONE primary CTA (spec): join, with returnTo back to this page. */}
-            <div className="mt-5 flex flex-wrap gap-2.5">
-              <Button variant="brand" asChild>
+            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+              {/* The label is wider than a 320px phone at the public size, so it may wrap. It stays
+                  50px on touch too, over the base's 44px coarse-pointer floor. */}
+              <Button
+                variant="brand"
+                size="public"
+                className="h-auto min-h-[50px] max-w-full py-2.5 text-center whitespace-normal pointer-coarse:min-h-[50px]"
+                asChild
+              >
                 <Link
                   href={`/sign-up?redirect_url=${encodeURIComponent(`/catalog/${puzzleId}`)}`}
                 >
@@ -263,7 +274,7 @@ function PublicPuzzleDetail({
         </section>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-[clamp(32px,5vw,56px)]">
+      <div className="flex w-full max-w-[1280px] flex-col gap-10 px-4 py-[clamp(32px,5vw,56px)] min-[760px]:px-10">
         {/* Stats strip — Available-to-swap FIRST (the hook); zero/absent stats are hidden, never
           rendered as dashes (spec). */}
         <div className="grid max-w-[760px] grid-cols-2 gap-y-6 sm:grid-cols-4">
@@ -301,8 +312,8 @@ function PublicPuzzleDetail({
               icon={<ArrowLeftRight className="h-4 w-4" />}
               title={t("availabilityTitle")}
             />
-            <div className="bg-mk-sky-soft flex flex-wrap items-center gap-5 rounded-md px-5 py-4">
-              <div className="font-heading text-4xl font-normal leading-none tabular-nums">
+            <div className="bg-mk-sky-soft dark:bg-mk-muted flex flex-wrap items-center gap-5 rounded-md px-5 py-4">
+              <div className="figures text-4xl leading-none font-semibold">
                 {availability.total}
               </div>
               {/* A 12rem flex basis makes the avatars and CTA wrap to their own line on phones instead
@@ -343,7 +354,11 @@ function PublicPuzzleDetail({
                   </span>
                 ))}
               </div>
-              <Button variant="brand" size="sm" asChild>
+              <Button
+                variant="link"
+                className="text-mk-text-strong underline underline-offset-3"
+                asChild
+              >
                 <Link
                   href={`/sign-up?redirect_url=${encodeURIComponent(`/browse?puzzle=${puzzleId}`)}`}
                 >
@@ -364,7 +379,7 @@ function PublicPuzzleDetail({
             ) : (
               <>
                 <div className="mb-3.5 flex items-end gap-3.5">
-                  <div className="font-heading text-foreground text-4xl font-normal leading-none tabular-nums">
+                  <div className="figures text-foreground text-4xl leading-none font-semibold">
                     {rating.rating}
                   </div>
                   <div className="pb-0.5">

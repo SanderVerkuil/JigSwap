@@ -323,6 +323,9 @@ describe("public catalogue detail copy", () => {
   });
 });
 
+const classesOf = (el: Element | null | undefined) =>
+  el?.getAttribute("class")?.split(/\s+/) ?? [];
+
 describe("public catalogue detail layout", () => {
   // Layout can't be measured here; the first-screen fit was checked in a browser at 390, 820 and
   // 1440px. These classes are what keep the cover from filling a tablet's or phone's first screen.
@@ -332,9 +335,116 @@ describe("public catalogue detail layout", () => {
     const section = title.closest("section") as HTMLElement;
     expect(section.className).toContain("md:grid-cols-[260px_minmax(0,1fr)]");
 
-    const cover = section.firstElementChild as HTMLElement;
-    expect(cover.className).toContain("aspect-[4/3]");
-    expect(cover.className).toContain("md:aspect-square");
+    const slot = section.firstElementChild?.firstElementChild;
+    expect(classesOf(slot)).toEqual(
+      expect.arrayContaining([
+        "aspect-[4/3]",
+        "md:aspect-auto",
+        "md:h-[251px]",
+        "lg:h-[291px]",
+      ]),
+    );
+  });
+
+  // The box stands on its plank at its own size: no mat around it, the plank right under it. The
+  // zoom's box hugs the picture (its lens and pinch maths assume a centred image), so it is not
+  // the fill variant. Checked in a browser with landscape, portrait, panorama and tiny covers.
+  it("stands the cover on its plank at the picture's own size", () => {
+    renderDetail({
+      ...viewWith(unrated),
+      definition: {
+        ...viewWith(unrated).definition,
+        image: "https://cdn.test/cover.jpg",
+      },
+    } as View);
+    const img = screen.getByRole("img", { name: "De Kattenshow" });
+    const zoom = img.parentElement;
+    const slot = zoom?.parentElement;
+    expect(classesOf(slot)).toEqual(
+      expect.arrayContaining(["flex", "items-end", "justify-center"]),
+    );
+    expect(classesOf(slot)).not.toContain("bg-muted");
+    expect(classesOf(zoom)).not.toContain("absolute");
+    expect(classesOf(img)).not.toContain("object-contain");
+    expect(classesOf(img)).toEqual(
+      expect.arrayContaining(["max-w-full", "rounded-t-[2px]"]),
+    );
+    expect(classesOf(slot?.nextElementSibling)).toContain("bg-mk-plank");
+  });
+
+  // DESIGN.md Layout: public text on a 16px margin that becomes 40px at 760px, like the header.
+  it("puts the hero and the sections on the public 40px edge", () => {
+    renderDetail(viewWith(unrated));
+    const band = screen
+      .getByRole("heading", { level: 1 })
+      .closest("section")?.parentElement;
+    const sections = band?.nextElementSibling;
+    for (const row of [band, sections]) {
+      expect(classesOf(row)).toEqual(
+        expect.arrayContaining(["px-4", "min-[760px]:px-10"]),
+      );
+      expect(classesOf(row)).not.toContain("mx-auto");
+    }
+  });
+});
+
+describe("public catalogue detail actions", () => {
+  const available = {
+    ...viewWith(ratingOf([1, 0, 0, 0, 0])),
+    availability: { total: 1, byType: { swap: 1, lend: 0, sale: 0 } },
+  } as View;
+
+  // DESIGN.md: one clear marigold action per Persuade page, at the public size.
+  it("has one marigold action, at the public size", () => {
+    const { container } = renderDetail(available);
+    const marigold = [...container.querySelectorAll("a, button")].filter((el) =>
+      classesOf(el).includes("bg-jigsaw-gold"),
+    );
+    expect(marigold).toHaveLength(1);
+    expect(marigold[0].textContent).toBe("Join JigSwap to request a swap");
+    // At least 50px, on touch too; the label may take two lines on a 320px phone.
+    expect(classesOf(marigold[0])).toEqual(
+      expect.arrayContaining([
+        "min-h-[50px]",
+        "pointer-coarse:min-h-[50px]",
+        "rounded-[10px]",
+        "text-[18px]",
+        "font-bold",
+        "whitespace-normal",
+      ]),
+    );
+    expect(classesOf(marigold[0])).not.toContain("pointer-coarse:min-h-11");
+  });
+
+  it("makes 'Join to see who' an underlined link", () => {
+    renderDetail(available);
+    const link = screen.getByRole("link", { name: "Join to see who" });
+    expect(classesOf(link)).toEqual(
+      expect.arrayContaining(["underline", "text-mk-text-strong"]),
+    );
+    expect(classesOf(link)).not.toContain("bg-jigsaw-gold");
+  });
+
+  // At night the light-sky surface equals the page ground, so the panel steps up to Muted.
+  it("keeps the availability panel visible at night", () => {
+    renderDetail(available);
+    const panel = screen.getByRole("link", {
+      name: "Join to see who",
+    }).parentElement;
+    expect(classesOf(panel)).toEqual(
+      expect.arrayContaining(["bg-mk-sky-soft", "dark:bg-mk-muted"]),
+    );
+  });
+
+  // The Figures Rule: Young Serif's old-style 1 reads as an I.
+  it("sets the availability count and rating average as figures", () => {
+    renderDetail(available);
+    const figures = [...document.querySelectorAll(".text-4xl")];
+    expect(figures.map((el) => el.textContent)).toEqual(["1", "5"]);
+    for (const el of figures) {
+      expect(classesOf(el)).toContain("figures");
+      expect(classesOf(el)).not.toContain("font-heading");
+    }
   });
 });
 

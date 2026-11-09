@@ -2,13 +2,14 @@ import { Link } from "@/compat/link";
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { StreetSkyline } from "@/components/common/street-skyline";
 import { LangToggle, ModeToggle } from "@/components/marketing/header";
+import { FOCUS } from "@/components/marketing/home/classes";
 import { Wordmark } from "@/components/marketing/wordmark";
 import { openCookieSettings } from "@/lib/analytics-consent";
 import type * as React from "react";
 import { useTranslations } from "use-intl";
 
-const footerLinkCls =
-  "inline-flex min-h-10 items-center text-[14px] text-mk-on-canal underline-offset-4 hover:underline";
+// FOCUS draws the ring in the link's own ink: the global ring is too dark to see on the canal band.
+const footerLinkCls = `inline-flex min-h-10 items-center text-[14px] text-mk-on-canal underline-offset-4 hover:underline ${FOCUS}`;
 
 // The field behind the Clerk sign-in / sign-up cards, on the street's flat sky: a slim bar with the
 // wordmark (the way back home) and the language + theme switches, the card in
@@ -22,7 +23,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations("marketing");
   return (
     <div className="mk-root bg-mk-sky! min-h-svh flex flex-col overflow-x-clip">
-      <header className="font-mk-sans w-full max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+      <header className="font-mk-sans w-full px-4 min-[760px]:px-10 h-16 flex items-center gap-3">
         <Link href="/" aria-label="JigSwap">
           <Wordmark />
         </Link>
@@ -51,7 +52,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <footer className="font-mk-sans bg-mk-canal">
-        <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center justify-center gap-x-6">
+        <div className="w-full px-4 min-[760px]:px-10 py-2 flex flex-wrap items-center justify-center gap-x-6">
           <Link href="/privacy" className={footerLinkCls}>
             {t("footer.privacy")}
           </Link>

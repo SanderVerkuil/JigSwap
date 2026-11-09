@@ -228,6 +228,31 @@ describe("public catalogue controls", () => {
     ).toBeNull();
   });
 
+  // The page's one marigold action, at the public size (DESIGN.md Buttons); its label is wider
+  // than a 320px phone, so it may take two lines rather than run off the screen.
+  it("asks at the public size, wrapping on a narrow phone", () => {
+    renderAt({});
+    const join = screen.getByRole("link", {
+      name: "Join JigSwap to request a swap",
+    });
+    expect(join.className.split(/\s+/)).toEqual(
+      expect.arrayContaining([
+        "bg-jigsaw-gold",
+        "min-h-[50px]",
+        "pointer-coarse:min-h-[50px]",
+        "rounded-[10px]",
+        "text-[18px]",
+        "font-bold",
+        "max-w-full",
+        "whitespace-normal",
+      ]),
+    );
+    // On touch the base's 44px floor would win over min-h-[50px]; the 50px one replaces it.
+    expect(join.className.split(/\s+/)).not.toContain(
+      "pointer-coarse:min-h-11",
+    );
+  });
+
   it("shows the URL's filters", () => {
     renderAt({ q: "castle", brand: "Jumbo", pieces: "b1000" });
     expect(searchBox().value).toBe("castle");

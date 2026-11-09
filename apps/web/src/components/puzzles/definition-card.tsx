@@ -66,7 +66,10 @@ export function DefinitionCard({
       </div>
       <div aria-hidden="true" className="bg-mk-plank h-[9px] shrink-0" />
       <div className="text-mk-text-strong flex flex-1 flex-col items-start px-[clamp(8px,1.4vw,20px)] pt-3">
-        <Title className="text-[17px] leading-snug font-bold">
+        {/* The columns meet so the planks run on: a long Dutch compound must break inside its own
+            card, not run into the next one. It hyphenates at a syllable by <html lang>; anywhere is
+            the fallback for a word the dictionary can't split. */}
+        <Title className="line-clamp-3 text-[17px] leading-snug font-bold hyphens-auto [overflow-wrap:anywhere]">
           {/* The whole box is the link: the ::after spans the article. */}
           <Link
             href={`/catalog/${card._id}`}

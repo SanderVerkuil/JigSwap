@@ -1,4 +1,8 @@
 // @vitest-environment happy-dom
+import {
+  PageHeaderSlotProvider,
+  usePageHeaderContent,
+} from "@/components/dashboard-layout/page-header-slot";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ComponentProps, ComponentType } from "react";
 import { IntlProvider } from "use-intl";
@@ -20,6 +24,8 @@ vi.mock("@tanstack/react-router", () => ({
     useRouteContext: () => ({ sidebar: {} }),
   }),
   useRouteContext: () => viewer,
+  useLocation: ({ select }: { select: (l: { pathname: string }) => unknown }) =>
+    select({ pathname: "/members/nobody" }),
   notFound: vi.fn(),
   redirect: vi.fn(),
   useNavigate: () => vi.fn(),
@@ -201,5 +207,33 @@ describe("member not found", () => {
     expect(
       screen.getByRole("link", { name: "Find people" }).getAttribute("href"),
     ).toBe("/people");
+  });
+
+  // The shell's one not-found (ShellNotFound): the page head holds the page's h1, so the title is
+  // published there, not printed as a second, centred h1 under it.
+  it("titles a member's not-found in the page head, without a second h1", () => {
+    viewer.userId = "user_1";
+    const HeadTitle = () => <output>{usePageHeaderContent().title}</output>;
+    const NotFound = options.notFoundComponent;
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <PageHeaderSlotProvider>
+          <HeadTitle />
+          <NotFound />
+        </PageHeaderSlotProvider>
+      </IntlProvider>,
+    );
+    expect(screen.getByRole("status").textContent).toBe("Member not found");
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(
+      screen.getByText(
+        "This link may be outdated, or the member may have changed their username.",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByTestId("shell")
+        .querySelector("[data-slot='shell-not-found']"),
+    ).toBeTruthy();
   });
 });
