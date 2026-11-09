@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  CONSENT_BANNER_HEIGHT_VAR,
+  MOBILE_TAB_BAR_HEIGHT_VAR,
+} from "@/components/dashboard-layout/sticky-offset";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -73,6 +77,48 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
       },
       [ref],
     );
+
+    // While it shows, publish the strip of the viewport it covers above the tab bar
+    // (sticky-offset.ts) so the page can reserve it: its height plus its `bottom` offset, less the
+    // bar. Read from layout rather than its on-screen position, so the entrance slide doesn't
+    // count. Measured again when it wraps, and when <html>'s inline style changes: the tab bar
+    // publishes its height there as it comes and goes with the route (an open thread hides it),
+    // and the banner's lift above the bar comes and goes with it. That lift glides (its
+    // duration-200 transitions `bottom` too), so it is measured once more where it lands.
+    React.useLayoutEffect(() => {
+      const node = regionRef.current;
+      if (!visible || !node) return;
+      const root = document.documentElement;
+      const publish = () => {
+        const bottom = Number.parseFloat(getComputedStyle(node).bottom) || 0;
+        const tabBar =
+          Number.parseFloat(
+            root.style.getPropertyValue(MOBILE_TAB_BAR_HEIGHT_VAR),
+          ) || 0;
+        const covered = `${Math.max(0, node.getBoundingClientRect().height + bottom - tabBar)}px`;
+        // Unchanged values aren't rewritten, or the observer below would wake itself forever.
+        if (
+          root.style.getPropertyValue(CONSENT_BANNER_HEIGHT_VAR) !== covered
+        ) {
+          root.style.setProperty(CONSENT_BANNER_HEIGHT_VAR, covered);
+        }
+      };
+      publish();
+      const resize =
+        typeof ResizeObserver === "undefined"
+          ? undefined
+          : new ResizeObserver(publish);
+      resize?.observe(node);
+      const rootStyle = new MutationObserver(publish);
+      rootStyle.observe(root, { attributes: true, attributeFilter: ["style"] });
+      node.addEventListener("transitionend", publish);
+      return () => {
+        resize?.disconnect();
+        rootStyle.disconnect();
+        node.removeEventListener("transitionend", publish);
+        root.style.removeProperty(CONSENT_BANNER_HEIGHT_VAR);
+      };
+    }, [visible]);
 
     // Reopened from "Cookie settings": move focus onto the banner so keyboard
     // and screen-reader users land on the choice, and remember the control
@@ -248,8 +294,10 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "mini") {
       return (
         <div {...commonWrapperProps}>
+          {/* A 1px Line edge and an upward Popover float, so on a white page it reads as a bar
+              over the page rather than its next paragraph. */}
           <div
-            className="bg-card text-card-foreground relative flex flex-col gap-2 px-4 py-2.5 shadow-lg sm:flex-row sm:items-center sm:gap-6 sm:px-6" // taste-skill-ignore: a real overlay.
+            className="bg-card text-card-foreground border-border relative flex flex-col gap-2 border-t px-4 py-2.5 shadow-[0_-4px_6px_-1px_rgb(0_0_0/0.1),0_-2px_4px_-2px_rgb(0_0_0/0.1)] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-10" // taste-skill-ignore: a real overlay.
           >
             <p
               className={cn(
@@ -268,13 +316,13 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
               <Button
                 onClick={handleDecline}
                 variant="secondary"
-                className="max-sm:h-11 max-sm:flex-1"
+                className="h-10 max-sm:h-11 max-sm:flex-1"
               >
                 {t("declineText")}
               </Button>
               <Button
                 onClick={handleAccept}
-                className="max-sm:h-11 max-sm:flex-1"
+                className="h-10 max-sm:h-11 max-sm:flex-1"
               >
                 {t("acceptText")}
               </Button>

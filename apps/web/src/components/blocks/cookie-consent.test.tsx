@@ -136,6 +136,17 @@ describe("CookieConsent (mini)", () => {
     expect(actions?.className.split(/\s+/)).toContain("flex-wrap");
   });
 
+  // UX-74 (#416): 40px choices on wider screens, 44px on phones, never the 36px default.
+  it("keeps both choices at least 40px tall", () => {
+    render(banner("en"));
+    for (const name of ["No thanks", "Allow analytics"]) {
+      const classes = screen
+        .getByRole("button", { name })
+        .className.split(/\s+/);
+      expect(classes).toEqual(expect.arrayContaining(["h-10", "max-sm:h-11"]));
+    }
+  });
+
   it("speaks Dutch to Dutch visitors", () => {
     render(banner("nl"));
 
@@ -210,6 +221,24 @@ describe("CookieConsent (mini)", () => {
     expect(region()?.className).toContain(
       "max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)]",
     );
+  });
+
+  it("has a visible top edge and floats upward, so it doesn't read as the page's next paragraph", () => {
+    render(banner());
+    const classes = region()?.firstElementChild?.className.split(/\s+/);
+
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "border-t",
+        "border-border",
+        "sm:px-10",
+        "sm:justify-between",
+      ]),
+    );
+    expect(classes?.some((name) => name.startsWith("shadow-[0_-4px"))).toBe(
+      true,
+    );
+    expect(classes).not.toContain("shadow-lg");
   });
 
   it("goes away when the browser discards the cookie, instead of staying for the session", () => {
@@ -321,5 +350,95 @@ describe("CookieConsent (mini)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Allow analytics" }));
     expect(region()).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+});
+
+// The page reserves --consent-banner-height at its end (the shell's scroll region, the document),
+// so the composer and a page's last controls aren't left under the banner.
+describe("CookieConsent (mini) reserving the strip it covers", () => {
+  let height = 86;
+  let resized: ResizeObserverCallback | undefined;
+
+  beforeEach(() => {
+    height = 86;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      () => DOMRect.fromRect({ x: 0, y: 0, width: 1440, height }),
+    );
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {
+          resized = undefined;
+        }
+      },
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    document.documentElement.style.removeProperty("--mobile-tab-bar-height");
+  });
+
+  const reserved = () =>
+    document.documentElement.style.getPropertyValue("--consent-banner-height");
+
+  it("publishes its height while it shows, follows it, and clears it once the visitor allows", () => {
+    render(banner());
+    expect(reserved()).toBe("86px");
+
+    // A narrower window wraps the text to another line.
+    height = 120;
+    act(() => resized?.([], {} as ResizeObserver));
+    expect(reserved()).toBe("120px");
+
+    fireEvent.click(screen.getByRole("button", { name: "Allow analytics" }));
+    expect(region()).toBeNull();
+    expect(reserved()).toBe("");
+    expect(resized).toBeUndefined();
+  });
+
+  it("clears it after No thanks and the close button, and publishes it again when reopened", () => {
+    render(banner());
+    fireEvent.click(screen.getByRole("button", { name: "No thanks" }));
+    expect(reserved()).toBe("");
+
+    act(() => openCookieSettings());
+    expect(reserved()).toBe("86px");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close cookie settings" }),
+    );
+    expect(reserved()).toBe("");
+  });
+
+  it("counts its lift above the phone's tab bar, and measures again as the bar comes and goes", async () => {
+    height = 120;
+    const root = document.documentElement;
+    root.style.setProperty("--mobile-tab-bar-height", "57px");
+    // No stylesheet here: the inline bottom stands in for the rule that docks the banner over
+    // the tab bar (57px, its 12px "+" and an 8px gap).
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <CookieConsent variant="mini" style={{ bottom: "77px" }} />
+      </IntlProvider>,
+    );
+    expect(reserved()).toBe("140px");
+
+    // An open thread: the bar goes, and the banner glides down to the bottom (200ms), so the
+    // first measure catches it on the way and the one where it lands sets it right.
+    const bar = screen.getByRole("region", { name: "Cookie settings" });
+    bar.style.bottom = "40px";
+    root.style.removeProperty("--mobile-tab-bar-height");
+    await vi.waitFor(() => expect(reserved()).toBe("160px"));
+
+    bar.style.bottom = "0px";
+    fireEvent.transitionEnd(bar);
+    expect(reserved()).toBe("120px");
   });
 });
