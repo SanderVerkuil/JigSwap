@@ -47,6 +47,19 @@ describe("ImportZone", () => {
     );
   });
 
+  // F43: the failure used to be muted 12px text, easy to read past. The destructive colour is on
+  // its icon: as text it falls under 4.5:1 on the zone's tint in the light theme.
+  it("marks a failed import as an error, in readable text", () => {
+    renderZone({ status: "error", reason: "failed" });
+    const failure = screen.getByText(en.puzzles.importFailed);
+    expect(failure.className).toContain("text-sm");
+    expect(failure.className).toContain("text-foreground");
+    expect(failure.className).not.toContain("text-muted-foreground");
+    expect(failure.querySelector("svg")?.getAttribute("class")).toContain(
+      "text-destructive",
+    );
+  });
+
   it("announces imported details in the live region", () => {
     renderZone({
       status: "ready",

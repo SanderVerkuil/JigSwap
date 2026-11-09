@@ -67,6 +67,36 @@ describe("LeaveStepDialog", () => {
     expect(screen.getByRole("button", { name: "Niet opslaan" })).toBeTruthy();
   });
 
+  it("names an unsent suggested edit, in English and Dutch", () => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <LeaveStepDialog
+          open
+          work={{ kind: "suggestEdit", count: 1 }}
+          onKeep={() => {}}
+          onDiscard={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(screen.getByRole("alertdialog").textContent).toContain(
+      "The changes you suggested haven't been sent yet.",
+    );
+    cleanup();
+    render(
+      <IntlProvider locale="nl" messages={nl} timeZone="Europe/Amsterdam">
+        <LeaveStepDialog
+          open
+          work={{ kind: "suggestEdit", count: 1 }}
+          onKeep={() => {}}
+          onDiscard={() => {}}
+        />
+      </IntlProvider>,
+    );
+    expect(screen.getByRole("alertdialog").textContent).toContain(
+      "De wijzigingen die je voorstelt, zijn nog niet verstuurd.",
+    );
+  });
+
   it("keeps editing on Keep editing and on Escape", () => {
     const first = open({ kind: "puzzles", count: 2, ready: true });
     act(() => {

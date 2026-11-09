@@ -33,7 +33,8 @@ export class CopyStepError extends Error {
 // form's copy step): the member's limit on submissions (rateLimited) or on cover photos
 // (coverRateLimited), each with when they can try again; the daily copy budget (addRateLimited,
 // which says when by itself); a field the catalogue refuses as too long (textTooLong); a width or
-// height it refuses (invalidDimensions); else the generic failure.
+// height it refuses (invalidDimensions); an EAN or UPC it refuses (invalidBarcode); else the
+// generic failure.
 export type ContributeError =
   | { key: "rateLimited" | "coverRateLimited"; retryAt: number }
   | {
@@ -41,6 +42,7 @@ export type ContributeError =
         | "addRateLimited"
         | "textTooLong"
         | "invalidDimensions"
+        | "invalidBarcode"
         | "puzzleCreationFailed";
     };
 
@@ -60,6 +62,8 @@ export function contributeError(error: unknown, now: number): ContributeError {
       return { key: "textTooLong" };
     case "InvalidDimensions":
       return { key: "invalidDimensions" };
+    case "InvalidBarcode":
+      return { key: "invalidBarcode" };
     default:
       return { key: "puzzleCreationFailed" };
   }

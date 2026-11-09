@@ -7,7 +7,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRelativeTime } from "@/hooks/use-relative-time";
-import { CircleCheck, Link, Link2, Loader2, Sparkles } from "lucide-react";
+import {
+  CircleAlert,
+  CircleCheck,
+  Link,
+  Link2,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 
@@ -105,8 +112,14 @@ export function ImportZone({
             <CircleCheck className="size-3.5" /> {t("importImported")}
           </span>
         )}
+        {/* The destructive mark is the icon: as text, destructive falls under 4.5:1 on this
+            tint in the light theme, so the words stay in the foreground colour. */}
         {state.status === "error" && (
-          <span className="text-xs text-muted-foreground">
+          <span className="inline-flex items-start gap-1.5 text-sm text-foreground">
+            <CircleAlert
+              aria-hidden
+              className="mt-0.5 size-4 shrink-0 text-destructive"
+            />
             {state.reason === "rateLimited"
               ? t("importRateLimited", { when: relativeTime(state.retryAt) })
               : t("importFailed")}

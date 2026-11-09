@@ -44,7 +44,9 @@ export function TagInput({
   };
   return (
     <>
-      <div className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-border bg-card p-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring">
+      {/* Drawn like Input: 36px, 4px radius, the Line Input edge and fill, and the same focus (the
+          full-alpha border carries the indicator; the 3px half-alpha ring is the field halo). */}
+      <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-transparent px-3 py-1 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/30 pointer-coarse:min-h-11">
         {value.map((tag) => (
           <span
             key={tag}
@@ -86,8 +88,8 @@ export function TagInput({
           placeholder={
             value.length ? "" : (placeholder ?? t("tagsPlaceholder"))
           }
-          // On touch the field reaches into the box's padding: a 44px target at the box's height.
-          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none md:not-pointer-coarse:text-sm pointer-coarse:-my-2 pointer-coarse:py-2.5"
+          // On touch the field reaches through the box's padding: a 44px target at the box's height.
+          className="min-w-[120px] flex-1 border-none bg-transparent px-0.5 py-0.5 text-base text-foreground outline-none placeholder:text-muted-foreground md:not-pointer-coarse:text-sm pointer-coarse:-my-1.5 pointer-coarse:py-2.5"
         />
       </div>
       <p

@@ -156,6 +156,27 @@ describe("CataloguePickerView", () => {
     expect(attr(removeB, "aria-pressed")).toBe("true");
   });
 
+  // The tint alone is a faint fill: a picked row also carries a Canal Link edge.
+  it("edges a picked row as well as tinting it", () => {
+    const els = render({
+      term: "puzzle",
+      rows: [row("a"), row("b")],
+      picks: [pick("b")],
+    });
+    const classes = (el: Element) => attr(el, "class")?.split(" ") ?? [];
+    const [addA] = byLabel(els, "Add Puzzle a");
+    const [removeB] = byLabel(buttons(els), "Remove Puzzle b");
+    expect(classes(removeB)).toEqual(
+      expect.arrayContaining([
+        "bg-jigsaw-primary-tint",
+        "ring-1",
+        "ring-inset",
+        "ring-primary-text",
+      ]),
+    );
+    expect(classes(addA)).not.toContain("ring-primary-text");
+  });
+
   it("marks own pending submissions and copies already on the shelf", () => {
     const els = render({
       term: "puzzle",

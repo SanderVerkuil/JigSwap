@@ -23,8 +23,10 @@ import {
   TagInput,
   type SegmentedOption,
 } from "@/components/add-puzzle";
+import { BarcodeInput } from "@/components/add-puzzle/barcode-input";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
+import { LeaveGuard } from "@/components/quick-start/leave-guard";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -46,6 +48,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
+import { barcodeFieldOk } from "@/lib/barcode-check";
 import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
@@ -55,11 +58,12 @@ import {
   useConvexMutation,
 } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
 
@@ -115,6 +119,11 @@ const DEFAULT_FORM: FormState = {
   dimensions: { width: "", height: "", unit: "cm" },
 };
 
+// The fields as comparable text, a chosen file by its name (as in my-puzzles/add/new.tsx). Every
+// key keeps DEFAULT_FORM's order, since the form is only ever changed by spreading it.
+const formFingerprint = ({ coverFile, ...fields }: FormState) =>
+  JSON.stringify({ ...fields, coverFile: coverFile?.name });
+
 // How long typing in the title or barcode fields pauses before the catalogue is checked.
 const DUPLICATE_CHECK_DEBOUNCE_MS = 300;
 // Title search results fetched per check; only those whose title overlaps are offered.
@@ -135,6 +144,7 @@ const toImportedMatch = (p: CatalogueMatch): ImportedMatch => ({
 
 function ContributePuzzlePage() {
   const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslations("puzzles");
   const tf = useTranslations("forms.puzzle-form");
   const uploadLimitMessage = useUploadLimitMessage();
@@ -143,6 +153,8 @@ function ContributePuzzlePage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  // Set by a submit held back for a barcode the catalogue would refuse: shows why on the field.
+  const [revealBarcodes, setRevealBarcodes] = useState(false);
   // Catalogue puzzles the member said are a different puzzle; never offered again on this form.
   const [dismissedMatches, setDismissedMatches] = useState<ReadonlySet<string>>(
     new Set(),
@@ -202,8 +214,12 @@ function ContributePuzzlePage() {
     barcodeMatch,
     dismissed: dismissedMatches,
   });
+  // Choosing the catalogue's puzzle over this form is a deliberate exit, so it never asks first.
   const addCopyOf = (puzzleId: string) =>
-    router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`);
+    void navigate({
+      href: `/my-puzzles/add/new?puzzleId=${puzzleId}`,
+      ignoreBlocker: true,
+    });
   const duplicateBanners = (matches: ReadonlyArray<CatalogueMatch>) => (
     // Always rendered (hidden while empty) so screen readers announce a match as it appears.
     <div aria-live="polite" className="flex flex-col gap-2 empty:hidden">
@@ -290,8 +306,8 @@ function ContributePuzzlePage() {
         pieceCount: form.pieceCount!,
         difficulty: form.difficulty || undefined,
         tags: form.tags,
-        ean: form.ean || undefined,
-        upc: form.upc || undefined,
+        ean: form.ean.trim() || undefined,
+        upc: form.upc.trim() || undefined,
         modelNumber: form.modelNumber || undefined,
         artist: form.artist || undefined,
         series: form.series || undefined,
@@ -341,6 +357,21 @@ function ContributePuzzlePage() {
 
   const handleContribute = () => {
     if (!form.title.trim() || !form.pieceCount) return;
+    // An EAN or UPC the catalogue would refuse (often an imported one, in the closed details) is
+    // shown on its field before any cover upload, not as a toast once the server refused it.
+    const badBarcode = !barcodeFieldOk("ean", form.ean)
+      ? "cp-ean"
+      : !barcodeFieldOk("upc", form.upc)
+        ? "cp-upc"
+        : null;
+    if (badBarcode) {
+      flushSync(() => {
+        setAdvancedOpen(true);
+        setRevealBarcodes(true);
+      });
+      document.getElementById(badBarcode)?.focus();
+      return;
+    }
     contribute.mutate();
   };
 
@@ -349,8 +380,16 @@ function ContributePuzzlePage() {
     setForm(DEFAULT_FORM);
     setPendingMatch(null);
     setAdvancedOpen(false);
+    setRevealBarcodes(false);
     setDismissedMatches(new Set());
   };
+
+  // Anything filled in or imported is work a nav tap would lose. Not while the submit is on its
+  // way, nor once it went through (the success links lead on).
+  const unsaved =
+    !contribute.isPending &&
+    !contribute.data &&
+    formFingerprint(form) !== formFingerprint(DEFAULT_FORM);
 
   const isReady = !!form.title.trim() && !!form.pieceCount;
 
@@ -555,7 +594,9 @@ function ContributePuzzlePage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cp-ean">{tf("ean.label")}</Label>
-                <Input
+                <BarcodeInput
+                  kind="ean"
+                  reveal={revealBarcodes}
                   id="cp-ean"
                   value={form.ean}
                   onChange={(e) =>
@@ -567,7 +608,9 @@ function ContributePuzzlePage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cp-upc">{tf("upc.label")}</Label>
-                <Input
+                <BarcodeInput
+                  kind="upc"
+                  reveal={revealBarcodes}
                   id="cp-upc"
                   value={form.upc}
                   onChange={(e) =>
@@ -766,6 +809,7 @@ function ContributePuzzlePage() {
       ) : (
         <AddPuzzleLayout form={formColumn} preview={previewColumn} />
       )}
+      <LeaveGuard work={unsaved ? { kind: "addForm", count: 1 } : null} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { useConditionLabel } from "@/components/library/condition";
-import { EmptyState } from "@/components/library/empty-state";
+import { ShellNotFound } from "@/components/NotFound";
 import {
   difficultyClasses,
   MemberAvatar,
@@ -128,9 +128,22 @@ function PuzzleDefinitionSkeleton() {
   );
 }
 
+// Publishes its title into the page head: the page's own header is published by the detail below,
+// which isn't rendered here.
 function PuzzleDefinitionNotFound() {
   const t = useTranslations("puzzleDefinition");
-  return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
+  const tNotFound = useTranslations("notFound");
+  const tShell = useTranslations("shell");
+  return (
+    <ShellNotFound
+      title={t("notFound")}
+      description={t("notFoundSub")}
+      backHref="/puzzles"
+      backLabel={tNotFound("backTo", {
+        page: tShell("pages.puzzles.title"),
+      })}
+    />
+  );
 }
 
 function PuzzleDefinitionDetail({

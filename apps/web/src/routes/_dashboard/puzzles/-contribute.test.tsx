@@ -19,6 +19,9 @@ const mocks = vi.hoisted(() => ({
   // Live query results, keyed by Convex function name; called with the query's args.
   data: new Map<string, (args: unknown) => unknown>(),
   push: vi.fn<(href: string) => void>(),
+  navigate: vi.fn(),
+  // The leave guard's useBlocker options on the latest render.
+  blocker: { disabled: true } as { disabled?: boolean },
   createPuzzle: vi.fn<(args: Record<string, unknown>) => Promise<string>>(),
   // One-shot convex.query reads (the member's own pending submissions after submitting).
   oneShot: vi.fn<(ref: unknown, args: unknown) => Promise<unknown>>(),
@@ -28,6 +31,11 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute:
     () =>
     <T,>(options: T) => ({ options }),
+  useNavigate: () => mocks.navigate,
+  useBlocker: (options: { disabled?: boolean }) => {
+    mocks.blocker = options;
+    return { status: "idle" };
+  },
 }));
 vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -113,6 +121,8 @@ const fillRequired = (title: string) => {
 beforeEach(() => {
   mocks.data.clear();
   mocks.push.mockReset();
+  mocks.navigate.mockReset();
+  mocks.blocker = { disabled: true };
   mocks.createPuzzle.mockReset();
   mocks.createPuzzle.mockResolvedValue("aggregate-1");
   mocks.oneShot.mockReset();
@@ -228,9 +238,11 @@ describe("checking the catalogue for the puzzle being contributed", () => {
         (b) => b.textContent === "Use this one",
       )!,
     );
-    expect(mocks.push).toHaveBeenCalledWith(
-      "/my-puzzles/add/new?puzzleId=p_cafe",
-    );
+    // Choosing the catalogue's puzzle is a deliberate exit: the leave guard doesn't ask.
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      href: "/my-puzzles/add/new?puzzleId=p_cafe",
+      ignoreBlocker: true,
+    });
   });
 
   it("lets the member say a suggested puzzle is a different one", async () => {
@@ -271,7 +283,8 @@ describe("after the puzzle is submitted", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Contribute a Puzzle" }),
     );
-    return screen.findByRole("heading", { level: 2 });
+    // The confirmation quotes the title; the live preview's card heading shows it bare.
+    return screen.findByRole("heading", { level: 2, name: /“Café”/ });
   };
 
   it("says it is waiting for review and offers adding it to the member's puzzles", async () => {
@@ -345,10 +358,106 @@ describe("after the puzzle is submitted", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Een puzzel bijdragen" }),
     );
-    const heading = await screen.findByRole("heading", { level: 2 });
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: /“Café”/,
+    });
     expect(heading.textContent).toBe("“Café” wacht op controle");
     expect(
       screen.getByRole("link", { name: "Toevoegen aan mijn puzzels" }),
     ).toBeTruthy();
+  });
+});
+
+describe("leaving with unsaved work", () => {
+  const asks = () => mocks.blocker.disabled === false;
+
+  it("doesn't ask about an untouched form", () => {
+    renderPage();
+    expect(asks()).toBe(false);
+  });
+
+  it("asks once a field differs, and not after it is put back", () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText("Puzzle Title"), {
+      target: { value: "Café" },
+    });
+    expect(asks()).toBe(true);
+    fireEvent.change(screen.getByLabelText("Puzzle Title"), {
+      target: { value: "" },
+    });
+    expect(asks()).toBe(false);
+  });
+
+  it("stops asking once the puzzle is submitted, so the next steps lead on", async () => {
+    renderPage();
+    fillRequired("Café");
+    expect(asks()).toBe(true);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Contribute a Puzzle" }),
+    );
+    await screen.findByRole("heading", { level: 2, name: /“Café”/ });
+    expect(asks()).toBe(false);
+  });
+});
+
+describe("barcodes", () => {
+  const toggleDetails = () =>
+    fireEvent.click(
+      screen.getByRole("button", { name: "More details (optional)" }),
+    );
+  const ean = () => screen.getByLabelText("EAN");
+
+  it("says an EAN is wrong once the member leaves the field, and clears it when fixed", () => {
+    renderPage();
+    toggleDetails();
+    fireEvent.change(ean(), { target: { value: "4006381333930" } });
+    expect(ean().getAttribute("aria-invalid")).toBeNull();
+
+    fireEvent.blur(ean());
+    expect(ean().getAttribute("aria-invalid")).toBe("true");
+    const message = document.getElementById(
+      ean().getAttribute("aria-describedby")!,
+    );
+    expect(message?.textContent).toBe(en.forms["puzzle-form"].ean.invalid);
+
+    fireEvent.change(ean(), { target: { value: "4006381333931" } });
+    expect(ean().getAttribute("aria-invalid")).toBeNull();
+    expect(ean().getAttribute("aria-describedby")).toBeNull();
+  });
+
+  it("holds the submit back for a barcode the catalogue would refuse, and shows it on the field", () => {
+    renderPage();
+    toggleDetails();
+    fireEvent.change(screen.getByLabelText("UPC"), {
+      target: { value: "036000291451" },
+    });
+    // Closed again, the way an imported code sits there unseen.
+    toggleDetails();
+    expect(screen.queryByLabelText("UPC")).toBeNull();
+
+    fillRequired("Café");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Contribute a Puzzle" }),
+    );
+
+    const upc = screen.getByLabelText("UPC");
+    expect(upc.getAttribute("aria-invalid")).toBe("true");
+    expect(document.activeElement).toBe(upc);
+    expect(screen.getByText(en.forms["puzzle-form"].upc.invalid)).toBeTruthy();
+    expect(mocks.createPuzzle).not.toHaveBeenCalled();
+  });
+
+  it("sends a valid code without the spaces around it", async () => {
+    renderPage();
+    toggleDetails();
+    fireEvent.change(ean(), { target: { value: " 4006381333931 " } });
+    fillRequired("Café");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Contribute a Puzzle" }),
+    );
+
+    await waitFor(() => expect(mocks.createPuzzle).toHaveBeenCalledTimes(1));
+    expect(mocks.createPuzzle.mock.calls[0][0].ean).toBe("4006381333931");
   });
 });

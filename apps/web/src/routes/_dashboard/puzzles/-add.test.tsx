@@ -85,6 +85,8 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
   }),
+  useNavigate: () => () => {},
+  useBlocker: () => ({ status: "idle" }),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
