@@ -6,7 +6,8 @@
 // and language switchers and the frame's single marigold action, "Add to my
 // puzzles". No user avatar here: user identity lives bottom-left in the sidebar.
 // Desktop-only (md+): below the breakpoint the MobileTopBar replaces it. On a
-// touch screen (a tablet at md+) every control is a 44px target.
+// touch screen (a tablet at md+) every control is a 44px target, so the bar is
+// 56px tall there, like the phone's, and the bell's badge stays inside it.
 import { Link } from "@/compat/link";
 import { HeaderLogo } from "@/components/common/header-logo";
 import { NotificationBell } from "@/components/notifications/notification-bell";
@@ -30,7 +31,7 @@ export function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
     // clusters, whether or not a page shows the CTA. Below lg the CTA's short label can outgrow its
     // column, so the left column hugs the logo there: the search keeps its left edge on every page
     // and gives way on its right.
-    <header className="hidden h-12 shrink-0 grid-cols-[1fr_minmax(0,520px)_1fr] items-center gap-x-3 px-2 max-lg:grid-cols-[auto_minmax(0,520px)_1fr] md:grid xl:gap-x-6">
+    <header className="hidden h-12 shrink-0 pointer-coarse:h-14 grid-cols-[1fr_minmax(0,520px)_1fr] items-center gap-x-3 px-2 max-lg:grid-cols-[auto_minmax(0,520px)_1fr] md:grid xl:gap-x-6">
       <div className="flex items-center gap-2 pl-2">
         <SidebarTrigger
           aria-label={t("toggleSidebar")}

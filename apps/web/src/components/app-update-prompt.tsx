@@ -12,7 +12,8 @@ import { useTranslations } from "use-intl";
 
 // Offers a reload when a newer build is deployed while JigSwap is open: checks /version.json when
 // the tab becomes visible again and every few minutes while it's visible, and treats a failed
-// chunk load (stale chunks after a deploy) as the same signal. Never reloads by itself, so nothing
+// chunk load (stale chunks after a deploy) as the same signal, unless the browser is offline,
+// when a failed chunk says nothing about deploys. Never reloads by itself, so nothing
 // half-typed is lost. Off on the dev server, which has no version.json. Mounted in the dashboard
 // layout only; the marketing and docs pages don't need it.
 //
@@ -55,7 +56,40 @@ export function AppUpdatePrompt() {
         // Offline or mid-deploy; the next check tries again.
         .catch(() => {});
     };
-    const onPreloadError = () => offer(STALE_BUILD);
+    // TanStack's lazyRouteComponent (@tanstack/react-router 1.170) reloads the page the first time
+    // a route's code fails to load, unless sessionStorage already holds its marker for that error.
+    // Offline that reload lands on the browser's offline screen, so the markers set below hold it;
+    // they go once the browser is back online, so a later failure reloads into a new build again.
+    // app-update-prompt.test.tsx pins this against the installed router.
+    const heldReloads = new Set<string>();
+    const releaseReloads = () => {
+      for (const key of heldReloads) sessionStorage.removeItem(key);
+      heldReloads.clear();
+    };
+    const backOnline = () => {
+      releaseReloads();
+      check();
+    };
+    const onPreloadError = (event: Event) => {
+      if (navigator.onLine) {
+        offer(STALE_BUILD);
+        return;
+      }
+      // Offline, a chunk that hasn't loaded yet fails for that reason, not because a newer build
+      // replaced it: no prompt, and whether a newer build is out is checked once back online.
+      // The error still reaches the router (never preventDefault: the import would then resolve
+      // to nothing, which lazyRouteComponent never retries), so the route's error card says the
+      // member is offline and loads the page once they're back.
+      const { payload } = event as Event & { payload?: unknown };
+      if (payload instanceof Error) {
+        const key = `tanstack_router_reload:${payload.message}`;
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          heldReloads.add(key);
+        }
+      }
+      window.addEventListener("online", backOnline, { once: true });
+    };
 
     const interval = window.setInterval(check, VERSION_CHECK_INTERVAL_MS);
     document.addEventListener("visibilitychange", check);
@@ -64,6 +98,8 @@ export function AppUpdatePrompt() {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", check);
       window.removeEventListener("vite:preloadError", onPreloadError);
+      window.removeEventListener("online", backOnline);
+      releaseReloads();
     };
   }, [t]);
 

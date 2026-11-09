@@ -30,6 +30,7 @@ import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPalette } from "./command-palette";
+import { ConnectionNotice } from "./connection-notice";
 import { contentWidthClass } from "./content-width";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileTopBar } from "./mobile-top-bar";
@@ -120,6 +121,8 @@ export function DashboardShell({
               tabIndex={-1}
               className="md:min-h-0 md:overflow-hidden"
             >
+              {/* Above the scroll region, so it stays in view; phones show it in the top bar. */}
+              <ConnectionNotice className="hidden md:block" />
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
                   head (sticky top-0). Clipped to the sheet's rounded corners by SidebarInset's
                   overflow-hidden. */}
@@ -128,10 +131,15 @@ export function DashboardShell({
                   top in a window too short for the head to stick. Phones clip rather than hide
                   x-overflow: `hidden` would make this a scroll container that never scrolls (the
                   document does), and sticky children would never stick. */}
+              {/* While the cookie banner is open, the strip it covers is reserved at the end
+                  (sticky-offset.ts): here, not on <body>, so on phones the sticky tab bar after
+                  this region stays at the bottom. From md, where this region scrolls, it is also
+                  scroll padding, so focus lands above the banner; on /messages the padding lifts
+                  the composer. */}
               <div
                 data-scroll-restoration-id={APP_SCROLL_REGION_ID}
                 className={cn(
-                  "flex-1 overflow-x-clip [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] md:[scrollbar-width:thin] md:[--app-sticky-top:var(--page-head-height,0px)] [@media(max-height:500px)]:md:[--app-sticky-top:0px]",
+                  "flex-1 overflow-x-clip pb-[var(--consent-banner-height,0px)] md:scroll-pb-[var(--consent-banner-height,0px)] [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] md:[scrollbar-width:thin] md:[--app-sticky-top:var(--page-head-height,0px)] [@media(max-height:500px)]:md:[--app-sticky-top:0px]",
                   // Full-bleed: a column whose content area takes the rest of the sheet. It only
                   // scrolls (with no reserved gutter) when the window is shorter than the page's
                   // minimum height, so the composer is never clipped out of reach.

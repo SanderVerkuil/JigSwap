@@ -24,6 +24,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Bell, ChevronLeft, MessageSquare, Search } from "lucide-react";
 import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
+import { ConnectionNotice } from "./connection-notice";
 import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
 import { usePageHeaderContent } from "./page-header-slot";
@@ -167,8 +168,10 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           {title && (
             <p
               className={cn(
-                // The controls leave a phone about 126px: two smaller lines before an ellipsis.
-                "font-heading truncate text-xl leading-7 max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
+                // The controls leave a phone about 126px: two 14px lines before an ellipsis, which
+                // fit the long Dutch titles in the wide serif. Phone browsers hyphenate by <html
+                // lang>, so a single long word ("Meldingsvoorkeuren") breaks instead of cutting off.
+                "font-heading truncate text-xl leading-7 max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-sm max-sm:leading-snug max-sm:hyphens-auto",
                 !up && "pl-2",
               )}
             >
@@ -228,6 +231,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           <ShellUserButton tapTarget />
         </span>
       </div>
+      {/* Inside the sticky bar, so it stays in view and sticky page content clears it. */}
+      <ConnectionNotice />
     </header>
   );
 }

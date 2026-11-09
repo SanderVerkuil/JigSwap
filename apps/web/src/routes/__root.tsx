@@ -216,6 +216,15 @@ const clerkAppearance = {
     formFieldInputShowPasswordButton: {
       "@media (pointer: coarse)": { minHeight: "44px", minWidth: "44px" },
     },
+    // Clerk draws the account menu's rows in the text colour at 62% alpha, under 4.5:1 on white
+    // with Canal Ink. Muted text is opaque and passes in both themes. Our rows are custom items;
+    // Manage account is Clerk's own action.
+    userButtonPopoverCustomItemButton: { color: "var(--muted-foreground)" },
+    userButtonPopoverCustomItemButtonIconBox: {
+      color: "var(--muted-foreground)",
+    },
+    userButtonPopoverActionButton: { color: "var(--muted-foreground)" },
+    userButtonPopoverActionButtonIcon: { color: "var(--muted-foreground)" },
   },
 } as const;
 

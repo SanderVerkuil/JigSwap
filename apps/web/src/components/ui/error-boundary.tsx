@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -70,9 +71,17 @@ class ErrorBoundary extends React.Component<
 function DefaultErrorFallback({
   error,
   resetError,
+  title,
+  description,
+  homeLink,
 }: {
   error?: Error;
   resetError: () => void;
+  /** Replace the generic copy, e.g. when the page failed because the member is offline. */
+  title?: string;
+  description?: string;
+  /** A way out of the failed page, below the two retry actions. */
+  homeLink?: { href: string; label: string };
 }) {
   // A function component so the fallback can read the catalogue; the boundary sits inside
   // Providers (__root.tsx), so IntlProvider is always above it.
@@ -84,8 +93,8 @@ function DefaultErrorFallback({
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardTitle>{title ?? t("title")}</CardTitle>
+          <CardDescription>{description ?? t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && process.env.NODE_ENV === "development" && (
@@ -108,6 +117,11 @@ function DefaultErrorFallback({
               {t("reload")}
             </Button>
           </div>
+          {homeLink && (
+            <Button variant="link" asChild className="w-full">
+              <Link href={homeLink.href}>{homeLink.label}</Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

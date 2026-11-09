@@ -5,9 +5,9 @@
 // Group names are serif links to their landing pages (/library, /community and
 // /admin; the admin group renders only for backend-confirmed admins), the hubs the
 // phone tabs open; they show a row background and a chevron on hover and focus so they
-// read as links. Messages carries the unread count; Moderation, Puzzles and Contact
-// carry the work waiting in their admin queues. A gable skyline stands at the foot,
-// behind What's new and the account row.
+// read as links, and the current hub is underlined. Messages carries the unread count;
+// Moderation, Puzzles and Contact carry the work waiting in their admin queues. A gable
+// skyline stands at the foot, behind What's new and the account row.
 import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { usePathname } from "@/compat/navigation";
@@ -66,8 +66,9 @@ export function AppSidebar() {
     <Sidebar
       variant="inset"
       collapsible="icon"
-      // Slot the fixed desktop sidebar below the 48px global top bar.
-      className="top-12 h-[calc(100svh-3rem)]"
+      // Slot the fixed desktop sidebar below the global top bar (48px, 56px on touch), and end it
+      // above the cookie banner while that is open, so the account row stays in reach.
+      className="top-12 h-[calc(100svh-3rem-var(--consent-banner-height,0px))] pointer-coarse:top-14 pointer-coarse:h-[calc(100svh-3.5rem-var(--consent-banner-height,0px))]"
     >
       <SidebarSkyline />
       {/* One navigation landmark for the whole sidebar (groups, What's new, account), so
@@ -141,9 +142,9 @@ function NavGroup({ group }: { group: ShellNavGroup }) {
           aria-current={groupActive ? "page" : undefined}
           // Like the rows: a tap closes the overlay, also on the page it links to.
           onClick={() => setOpenMobile(false)}
-          // Slot concatenates these after the primitive's classes without merging them, so the
-          // active look is an aria-current variant, which wins over the base text colour.
-          className="group/hub gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:text-sidebar-accent-foreground"
+          // The current hub is underlined, not a tinted pill. The look keys off aria-current, so it
+          // cannot drift from the semantics.
+          className="group/hub gap-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:bg-sidebar-accent focus-visible:text-sidebar-accent-foreground aria-[current=page]:underline aria-[current=page]:decoration-1 aria-[current=page]:underline-offset-4"
         >
           <span className="min-w-0 flex-1 truncate">
             {t(`groups.${group.key}.label`)}
