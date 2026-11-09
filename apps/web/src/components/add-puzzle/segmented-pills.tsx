@@ -56,9 +56,10 @@ export function SegmentedPills<T extends string>({
               }
             }}
             className={[
-              "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors pointer-coarse:min-h-11",
+              "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold cursor-pointer border transition-colors pointer-coarse:min-h-11",
+              // Night Primary alone is under 3:1 on the sheet: a Night Link ring marks it after dark.
               on
-                ? "bg-primary text-primary-foreground border-transparent"
+                ? "bg-primary text-primary-foreground border-transparent dark:ring-1 dark:ring-primary-text"
                 : "bg-card text-foreground border-border hover:bg-accent",
             ].join(" ")}
           >

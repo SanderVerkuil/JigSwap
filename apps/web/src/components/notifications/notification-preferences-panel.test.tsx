@@ -50,13 +50,20 @@ describe("NotificationPreferencesPanel on touch", () => {
     expect(classes).toContain("@4xl/prefs:pointer-coarse:flex-wrap");
   });
 
-  it("makes each jump link a 44px pill that reads as tappable on coarse pointers", () => {
+  // Square-ish like every other chip that isn't removable (4px, DESIGN.md Shapes), and flat: no
+  // shadow on touch.
+  it("makes each jump link a flat 44px chip with the 4px corner that reads as tappable on coarse pointers", () => {
     renderPanel();
     const classes = within(jumpNav()).getAllByRole("link")[0].classList;
     expect(classes).toContain("pointer-coarse:min-h-11");
-    expect(classes).toContain("pointer-coarse:rounded-full");
+    expect(classes).toContain("rounded-md");
+    expect(classes).toContain("pointer-coarse:rounded-md");
     expect(classes).toContain("pointer-coarse:border");
     expect(classes).toContain("pointer-coarse:text-foreground");
+    expect([...classes].some((name) => name.includes("rounded-full"))).toBe(
+      false,
+    );
+    expect([...classes].some((name) => name.includes("shadow"))).toBe(false);
   });
 });
 

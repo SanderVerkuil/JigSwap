@@ -6,6 +6,7 @@
 // and flat icon cover chips.
 // Open, card-free building blocks — cards stay reserved for genuinely
 // self-contained tiles.
+import { TOGGLE_TRACK, toggleOption } from "@/components/library/filter-bar";
 import { chipColor } from "@/components/library/palette";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,9 +15,9 @@ import type { ReactNode } from "react";
 
 /* ------------------------------------------------------------ FilterBar */
 
-// A row of filter buttons (active one in the primary color) with an
+// A row of single-choice filters in the tab track (see library/filter-bar), with an
 // optional muted count on the right and an extra slot for secondary controls.
-// A pill may carry its own tour anchor (`data-tour`) for a guide step about it.
+// An option may carry its own tour anchor (`data-tour`) for a guide step about it.
 export function FilterBar<T extends string>({
   filters,
   value,
@@ -43,7 +44,7 @@ export function FilterBar<T extends string>({
       )}
       data-tour={dataTour}
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={TOGGLE_TRACK}>
         {filters.map((filter) => {
           const active = filter.value === value;
           return (
@@ -51,8 +52,9 @@ export function FilterBar<T extends string>({
               key={filter.value}
               type="button"
               size="sm"
-              variant={active ? "default" : "outline"}
+              variant="ghost"
               aria-pressed={active}
+              className={toggleOption(active)}
               data-tour={filter["data-tour"]}
               onClick={() => onChange(filter.value)}
             >
@@ -73,17 +75,20 @@ export function FilterBar<T extends string>({
 
 /* ------------------------------------------------------------ EmptyState */
 
-// The warm empty state: puzzle piece, heading-font title, muted one-liner.
+// The warm empty state: puzzle piece, heading-font title, muted one-liner. `titleAs="h2"` where the
+// title stands in for a list of h2 card titles (the catalogue, UX-66).
 export function EmptyState({
   title,
   sub,
   action,
   className,
+  titleAs: Title = "div",
 }: {
   title: string;
   sub?: string;
   action?: ReactNode;
   className?: string;
+  titleAs?: "div" | "h2";
 }) {
   return (
     <div
@@ -93,7 +98,7 @@ export function EmptyState({
       )}
     >
       <Puzzle aria-hidden className="text-primary-text mb-2 size-8" />
-      <div className="font-heading text-foreground text-lg">{title}</div>
+      <Title className="font-heading text-foreground text-lg">{title}</Title>
       {sub && <p className="mt-0.5 text-sm">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>

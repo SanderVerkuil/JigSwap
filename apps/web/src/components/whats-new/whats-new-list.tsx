@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { TOGGLE_TRACK, toggleOption } from "@/components/library/filter-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,7 @@ export function WhatsNewList({
         <div
           role="group"
           aria-label={t("filter.label")}
-          className="-mb-4 flex flex-wrap gap-2"
+          className={cn(TOGGLE_TRACK, "-mb-4")}
         >
           {(["all", ...categories] as const).map((value) => {
             const pressed = value === category;
@@ -99,15 +100,10 @@ export function WhatsNewList({
                 key={value}
                 type="button"
                 size="sm"
-                variant={pressed ? "default" : "outline"}
+                variant="ghost"
                 aria-pressed={pressed}
                 onClick={() => setCategory(value)}
-                className={cn(
-                  "rounded-full",
-                  TOUCH_TARGET,
-                  pressed &&
-                    "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
-                )}
+                className={cn(TOUCH_TARGET, toggleOption(pressed))}
               >
                 {Icon && <Icon aria-hidden />}
                 {value === "all" ? t("filter.all") : t(`category.${value}`)}

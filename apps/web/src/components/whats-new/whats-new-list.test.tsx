@@ -471,6 +471,29 @@ describe("WhatsNewList is readable on a phone (UX-90)", () => {
     ).toBe(false);
   });
 
+  // The same selection look as /notifications and every FilterBar: the tab track with a white
+  // window, not a canal-filled pill.
+  it("draws the category filter as a tab track whose chosen option is a white window", () => {
+    const els = parse(render({ entries: MANY, unreadIds: [] }));
+    const group = els.find((el) => attr(el, "role") === "group")!;
+    expect(classes(group)).toEqual(
+      expect.arrayContaining(["bg-muted", "rounded-lg", "p-[3px]"]),
+    );
+    const chips = elementsOf(group).filter((el) => el.tagName === "button");
+    for (const chip of chips) {
+      expect(classes(chip)).not.toContain("rounded-full");
+      expect(classes(chip)).not.toContain("bg-jigsaw-primary");
+      expect(classes(chip)).toContain("pointer-coarse:min-h-11");
+    }
+    const [all, ...rest] = chips;
+    expect(classes(all!)).toEqual(
+      expect.arrayContaining(["bg-background", "font-semibold"]),
+    );
+    for (const chip of rest) {
+      expect(classes(chip)).not.toContain("bg-background");
+    }
+  });
+
   it("filters by category and reveals older updates, moving focus to the first one shown", () => {
     renderDom(list({ entries: MANY, unreadIds: [] }));
     const shown = () =>

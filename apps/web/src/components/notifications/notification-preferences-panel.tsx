@@ -161,8 +161,8 @@ export function NotificationPreferencesPanel() {
 
 // Links to the table's categories: one scrolling row of chips on a single column (a list of six
 // took a phone's whole first screen), a plain list that sticks beside the table on two. On touch
-// they are the same 44px pills as the /notifications filter throughout; beside the table they wrap,
-// which stays shorter than a stack of 44px links.
+// they are 44px outlined chips with the 4px corner throughout; beside the table they wrap, which
+// stays shorter than a stack of 44px links.
 function JumpToNav({
   categories,
 }: {
@@ -187,7 +187,7 @@ function JumpToNav({
           <li key={category.key} className="shrink-0">
             <a
               href={`#category-${category.key}`}
-              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-9 items-center rounded-full border px-3 text-sm whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-inset @4xl/prefs:min-h-0 @4xl/prefs:rounded-none @4xl/prefs:border-0 @4xl/prefs:px-0 @4xl/prefs:hover:underline pointer-coarse:bg-background pointer-coarse:text-foreground pointer-coarse:min-h-11 pointer-coarse:rounded-full pointer-coarse:border pointer-coarse:px-3.5 pointer-coarse:font-medium pointer-coarse:shadow-xs pointer-coarse:hover:no-underline"
+              className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-9 items-center rounded-md border px-3 text-sm whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-inset @4xl/prefs:min-h-0 @4xl/prefs:rounded-none @4xl/prefs:border-0 @4xl/prefs:px-0 @4xl/prefs:hover:underline pointer-coarse:bg-background pointer-coarse:text-foreground pointer-coarse:min-h-11 pointer-coarse:rounded-md pointer-coarse:border pointer-coarse:px-3.5 pointer-coarse:font-medium pointer-coarse:hover:no-underline"
             >
               {t(`categories.${category.key}.title`)}
             </a>

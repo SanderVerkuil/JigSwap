@@ -3,17 +3,19 @@
 // UX-158: no surface states a keyboard shortcut the member's platform doesn't use. My Puzzles' own
 // search box (UX-22) replaced its "Press ⌘K" hint, so it names none at all, on any platform.
 // UX-157: the puzzle count shows once.
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { IntlProvider } from "use-intl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { Route } from "./index";
 
 const mocks = vi.hoisted(() => ({
   header: undefined as { meta?: unknown; actions?: unknown } | undefined,
+  // The library's size: 0 shows the empty state.
+  total: 1,
 }));
 
 // The list state lives in the URL; a bare /my-puzzles has none of it.
@@ -34,8 +36,17 @@ vi.mock("@/compat/clerk", () => ({
   useAuth: () => ({ isSignedIn: true }),
 }));
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 vi.mock("@/gateway", () => ({
@@ -69,7 +80,7 @@ vi.mock("@tanstack/react-query", () => ({
         : name === "householdMine"
           ? null
           : name === "myLibraryWindow"
-            ? { rows: [], hasMore: false, matched: 0, total: 1 }
+            ? { rows: [], hasMore: false, matched: 0, total: mocks.total }
             : [],
     isPending: false,
     isPlaceholderData: false,
@@ -88,6 +99,8 @@ vi.mock("@/lib/member-display-name", () => ({
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  mocks.total = 1;
+  localStorage.clear();
 });
 
 const page = (locale: "en" | "nl" = "en") => {
@@ -147,5 +160,76 @@ describe("My Puzzles head", () => {
     expect(screen.getByText("0 of 1 puzzles")).toBeTruthy();
     expect(mocks.header?.meta).toBeUndefined();
     expect(mocks.header?.actions).toBeTruthy();
+  });
+});
+
+// Below md the tab bar's raised + is the screen's one marigold control (DESIGN.md), so the page's
+// own Add Puzzle turns canal there; from md it is the marigold `brand` the top bar leaves out here.
+describe("My Puzzles Add Puzzle on a phone", () => {
+  const PHONE_CANAL = [
+    "max-md:bg-primary",
+    "max-md:text-primary-foreground",
+    "max-md:hover:bg-primary/90",
+  ];
+
+  it("turns the head's Add Puzzle canal below md", () => {
+    stubPlatform("Win32");
+    render(page());
+    render(<>{mocks.header?.actions as ReactNode}</>);
+    const add = screen.getByRole("link", { name: "Add Puzzle" });
+    expect([...add.classList]).toEqual(
+      expect.arrayContaining(["bg-jigsaw-gold", ...PHONE_CANAL]),
+    );
+  });
+
+  it("turns the empty library's Add Puzzle canal below md", () => {
+    mocks.total = 0;
+    stubPlatform("Win32");
+    render(page());
+    const add = screen.getByRole("link", { name: "Add Puzzle" });
+    expect(add.getAttribute("data-tour")).toBe("my-puzzles-add");
+    expect([...add.classList]).toEqual(
+      expect.arrayContaining(["bg-jigsaw-gold", ...PHONE_CANAL]),
+    );
+  });
+});
+
+// The hint's dismissal is a cookie the server reads, so the hint never appears after hydration
+// and pushes the list down. The cookie is scoped to /my-puzzles, where the page lives.
+describe("My Puzzles coachmark in the browser", () => {
+  const body = en.puzzles.coachmark.body;
+
+  beforeEach(() => {
+    window.history.pushState({}, "", "/my-puzzles");
+  });
+  afterEach(() => {
+    document.cookie =
+      "puzzles_coachmark_dismissed=; path=/my-puzzles; max-age=0";
+    window.history.pushState({}, "", "/");
+  });
+
+  it("is dismissed into a cookie on /my-puzzles, and stays dismissed", () => {
+    stubPlatform("Win32");
+    render(page());
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss hint" }));
+    expect(screen.queryByText(body)).toBeNull();
+    expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
+
+    cleanup();
+    localStorage.clear();
+    render(page());
+    expect(screen.queryByText(body)).toBeNull();
+
+    // Scoped: no other page's requests carry it.
+    window.history.pushState({}, "", "/dashboard");
+    expect(document.cookie).not.toContain("puzzles_coachmark_dismissed");
+  });
+
+  it("honours a dismissal from before the cookie and copies it over", () => {
+    localStorage.setItem("jigswap.coachmark.myPuzzlesActions", "1");
+    stubPlatform("Win32");
+    render(page());
+    expect(screen.queryByText(body)).toBeNull();
+    expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
   });
 });
