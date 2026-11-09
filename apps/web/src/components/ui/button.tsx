@@ -31,6 +31,9 @@ const buttonVariants = cva(
         sm: "relative h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "relative size-9 max-md:after:absolute max-md:after:-inset-1",
+        // Public pages (Persuade): the large action, 50px with the 10px public radius at 18px/700.
+        public:
+          "h-[50px] rounded-[10px] px-[22px] text-[18px] font-bold has-[>svg]:px-5",
       },
     },
     defaultVariants: {

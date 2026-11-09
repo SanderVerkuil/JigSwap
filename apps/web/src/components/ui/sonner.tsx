@@ -27,8 +27,18 @@ const MOBILE_OFFSET = {
   bottom: `calc(${BOTTOM_CHROME} + 16px)`,
 };
 
-// sonner styles its buttons 24px tall at 12px; these are real targets (44px on touch).
-const BUTTON = "!h-9 !px-3 !text-sm pointer-coarse:!h-11";
+// sonner styles its buttons 24px tall at 12px; these are real targets (44px on touch). Its focus
+// ring is a 40% black shadow, lost on the night popover: they take the app's ring instead.
+const BUTTON =
+  "!h-9 !px-3 !text-sm pointer-coarse:!h-11 focus-visible:!ring-2 focus-visible:!ring-ring focus-visible:!ring-offset-2 focus-visible:!ring-offset-popover";
+// The app's own buttons instead of sonner's inverted text colour and translucent grey: the
+// action is a primary button, the cancel a secondary one (sonner's night "Not now" was 4.1:1),
+// and the description is muted text.
+const CLASS_NAMES = {
+  actionButton: `${BUTTON} !bg-primary !text-primary-foreground hover:!bg-primary/90`,
+  cancelButton: `${BUTTON} !bg-secondary !text-secondary-foreground hover:!bg-secondary/80`,
+  description: "!text-muted-foreground",
+};
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
@@ -39,14 +49,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       offset={OFFSET}
       mobileOffset={MOBILE_OFFSET}
-      toastOptions={{
-        classNames: { actionButton: BUTTON, cancelButton: BUTTON },
-      }}
+      toastOptions={{ classNames: CLASS_NAMES }}
       style={
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
+          // The app's card radius (lg), not sonner's 8px.
+          "--border-radius": "6px",
           // sonner sets a system-ui stack on the list; toasts read in the app's font.
           fontFamily: "var(--font-sans)",
         } as React.CSSProperties

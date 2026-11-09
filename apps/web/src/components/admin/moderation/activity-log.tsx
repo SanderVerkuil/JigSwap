@@ -181,7 +181,7 @@ function ActivityFeed({
                 : undefined,
             )
           }
-          className="h-11 max-w-full rounded-md border bg-card px-2 text-base focus:ring-2 focus:ring-primary focus:outline-none md:h-9 md:not-pointer-coarse:text-sm"
+          className="h-11 max-w-full rounded-md border bg-card px-2 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:h-9 md:not-pointer-coarse:text-sm"
         >
           <option value="">{t("activity.allKinds")}</option>
           {(Object.keys(KIND_META) as ActivityKind[]).map((value) => (

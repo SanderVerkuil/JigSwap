@@ -19,6 +19,7 @@ async function raise() {
   act(() => {
     toast("A new version of JigSwap is available", {
       id: "probe",
+      description: "Reload to get it.",
       duration: Infinity,
       action: { label: "Reload", onClick: () => {} },
       cancel: { label: "Not now", onClick: () => {} },
@@ -74,5 +75,34 @@ describe("Toaster", () => {
       expect(button?.className).toContain("!h-9");
       expect(button?.className).toContain("pointer-coarse:!h-11");
     }
+  });
+
+  // Not sonner's stock anatomy (inverted text colour, a translucent grey cancel that was 4.1:1
+  // at night, a 40% black focus shadow, 8px corners): the app's buttons, muted text, card radius.
+  it("dresses the toast in the app's buttons, muted text and card radius", async () => {
+    render(<Toaster />);
+    const list = await raise();
+    expect(list.style.getPropertyValue("--border-radius")).toBe("6px");
+    const button = (label: string) =>
+      [...list.querySelectorAll("button")]
+        .find((b) => b.textContent === label)
+        ?.className.split(/\s+/) ?? [];
+    expect(button("Reload")).toEqual(
+      expect.arrayContaining(["!bg-primary", "!text-primary-foreground"]),
+    );
+    expect(button("Not now")).toEqual(
+      expect.arrayContaining(["!bg-secondary", "!text-secondary-foreground"]),
+    );
+    for (const label of ["Reload", "Not now"]) {
+      expect(button(label)).toEqual(
+        expect.arrayContaining([
+          "focus-visible:!ring-2",
+          "focus-visible:!ring-ring",
+        ]),
+      );
+    }
+    expect(
+      list.querySelector("[data-description]")?.className.split(/\s+/),
+    ).toContain("!text-muted-foreground");
   });
 });

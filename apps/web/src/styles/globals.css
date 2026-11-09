@@ -109,6 +109,8 @@
   --accent: #e3f1fa;
   --accent-foreground: #0f3b30;
   --destructive: oklch(0.577 0.245 27.325);
+  /* Destructive as TEXT (text-destructive and its variants, through --text-color-destructive). */
+  --destructive-text: var(--destructive);
   --destructive-foreground: #f8fafc;
   --border: #d8e5eb;
   --input: #c6d6dd;
@@ -133,8 +135,13 @@
   /* The logo keeps its own colours, whatever the theme's primary does. */
   --logo-jig: #4a37b8;
   --logo-swap: #128a10;
-  /* Brand tint surfaces for forms/chips (Add-Puzzle redesign) */
-  --jigsaw-primary-tint: color-mix(in oklab, var(--jigsaw-primary) 9%, white);
+  /* Brand tint surfaces for forms/chips (Add-Puzzle redesign). The primary tint is the picked
+     and selected fill: a canal-sky step below the hover sky (--accent), never a grey. */
+  --jigsaw-primary-tint: color-mix(
+    in oklab,
+    var(--primary-text) 12%,
+    var(--accent)
+  );
   --jigsaw-secondary-tint: color-mix(
     in oklab,
     var(--jigsaw-secondary) 14%,
@@ -179,9 +186,12 @@
   --muted-foreground: #a9c6cc;
   --accent: #2a5561;
   --accent-foreground: #eaf4f7;
-  /* Text on an outline button (input/30 over the card) stays over 4.5:1, and white on
-     bg-destructive/60 still does too. */
+  /* For fills: white on bg-destructive/60 stays over 4.5:1. As text it falls under 4.5:1 on
+     the night card, so text uses the lighter --destructive-text, which stays over 4.5:1 on the
+     card, the accent, an outline button (input/30 over the card) and a focused destructive menu
+     row (destructive/20 over the popover). */
   --destructive: oklch(0.74 0.17 22.2);
+  --destructive-text: #ffb0ab;
   --destructive-foreground: #f8fafc;
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
@@ -248,6 +258,10 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  /* text-* reads --text-color-* before --color-*, so every text-destructive (hover:, focus:,
+     data-*:, the *:[svg] form) is set in the text token while bg-, border- and ring-destructive
+     keep the fill. */
+  --text-color-destructive: var(--destructive-text);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -334,6 +348,13 @@ body {
     "calt" 1;
 }
 
+/* The Figures Rule: figures that are data are set in Hanken Grotesk with lining, tabular
+   numerals, never in Young Serif's old-style ones (a 0 reads as o, 11 as II). */
+@utility figures {
+  font-family: var(--font-sans);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring;
@@ -355,6 +376,21 @@ body {
     /* Young Serif has one weight; a font-bold on it must not be faked by the browser. */
     font-synthesis-weight: none;
     scrollbar-color: var(--muted-foreground) transparent;
+    /* Focus and anchors scroll clear of what floats over the page's foot: the open cookie
+       banner (--consent-banner-height, sticky-offset.ts) and the phone tab bar. Both are unset
+       when absent. */
+    scroll-padding-bottom: calc(
+      var(--consent-banner-height, 0px) + var(--mobile-tab-bar-height, 0px)
+    );
+  }
+  /* While the cookie banner is open, the page's end is reserved so nothing stays under it. The
+     shell reserves it on its own scroll region instead, so its phone tab bar stays at the
+     bottom. */
+  body {
+    padding-bottom: var(--consent-banner-height, 0px);
+  }
+  body:has([data-scroll-restoration-id]) {
+    padding-bottom: 0;
   }
 
   ::selection {

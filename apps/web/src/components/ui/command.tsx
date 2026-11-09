@@ -45,9 +45,11 @@ function CommandDialog({
 }) {
   return (
     <Dialog {...props}>
+      {/* Anchored near the top rather than centred: the list changes height with every
+          keystroke, and a centred dialog moved the input with it. Now only the list grows. */}
       <DialogContent
         className={cn(
-          "overflow-hidden p-0 data-[state=closed]:animate-none data-[state=open]:animate-none",
+          "top-[12vh] translate-y-0 max-md:top-4 [@media(max-height:500px)]:top-4 overflow-hidden p-0 data-[state=closed]:animate-none data-[state=open]:animate-none",
           className,
         )}
         showCloseButton={showCloseButton}
@@ -155,8 +157,10 @@ function CommandItem({
   return (
     <CommandPrimitive.Item
       data-slot="command-item"
+      // The item Enter would run is outlined in --ring as well as tinted: the tint alone is 1.15:1.
+      // Focus stays in the input, so this follows cmdk's selection (mouse hover selects too).
       className={cn(
-        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground data-[selected=true]:outline-solid data-[selected=true]:outline-2 data-[selected=true]:outline-ring data-[selected=true]:-outline-offset-2 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

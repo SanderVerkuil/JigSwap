@@ -45,9 +45,11 @@ export function QuickStartProgress({
           aria-hidden
           className={cn(
             "h-1.5 flex-1 rounded-full transition-colors motion-reduce:transition-none",
-            on ? "bg-primary" : "bg-muted",
+            // At night Canal Primary is 2.5:1 on the card: the done segments and the current
+            // ring use the lifted primary text colour there.
+            on ? "bg-primary dark:bg-primary-text" : "bg-muted",
             i === current &&
-              "ring-primary ring-offset-background ring-2 ring-offset-1",
+              "ring-primary dark:ring-primary-text ring-offset-background ring-2 ring-offset-1",
           )}
         />
       ))}

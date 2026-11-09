@@ -2,7 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { StickyTabsBar, TabCount } from "./underline-tabs";
+import { StickyTabsBar, TAB_TRIGGER_CLASS, TabCount } from "./underline-tabs";
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -36,6 +36,16 @@ describe("TabCount", () => {
   it("shows a count that stopped at its cap as N+", () => {
     act(() => root.render(<TabCount count={50} capped />));
     expect(container.textContent).toBe("50+");
+  });
+});
+
+describe("TAB_TRIGGER_CLASS", () => {
+  // Night Primary (#1f7a63) is 2.5:1 on the night sheet; the underline is the only mark of the
+  // current tab, so at night it takes the lifted primary text colour (8.3:1).
+  it("underlines the active tab at night in the primary text colour", () => {
+    const list = TAB_TRIGGER_CLASS.split(/\s+/);
+    expect(list).toContain("dark:data-[state=active]:border-primary-text");
+    expect(list).not.toContain("dark:data-[state=active]:border-primary");
   });
 });
 
