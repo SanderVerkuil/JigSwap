@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/12</span>
+                <span class='fraction'>10/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -131,7 +131,8 @@
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -149,35 +150,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -205,11 +207,11 @@ import { query } from "../_generated/server";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import {
   categoryNameOf,
-  communityOwnersOf,
-  completionStatsOf,
-  publicAvailabilityOf,
-  ratingBreakdownOf,
+  completionStatsFromTotals,
+  publicAvailabilityFromByType,
+  ratingBreakdownFromTotals,
 } from "../library/definitionAggregates";
+import { definitionTotalsOrLive } from "../library/definitionStats";
 &nbsp;
 // UNAUTHENTICATED catalog detail for the public /catalog/$id page. Approved-only (the standard
 // catalog leak gate) and strictly member-free: catalog facts, the community rating breakdown,
@@ -217,10 +219,18 @@ import {
 // prices, or locations. The availability number intentionally differs from the member-facing
 // getPuzzleDefinitionView (no circle reachability, no viewer-own exclusion); see
 // publicAvailabilityOf. Members never see this page — the web route redirects them to /puzzles/$id.
+// The aggregates come from the definition's definitionStats row (library/definitionStats), so the
+// page reads a fixed handful of documents however many reviews, copies and solves it has.
+//
+// The id comes straight from the URL, so it takes any string: one that names no puzzle answers null
+// like a missing puzzle does. That leaves a rejection meaning a real failure, which the web route
+// must not turn into a 404.
 export const getPublicDefinitionView = query({
-  args: { puzzleId: v.id("puzzles") },
+  args: { puzzleId: v.string() },
   handler: async (ctx, args): Promise&lt;PublicDefinitionDetailView | null&gt; =&gt; {
-    const puzzle = await ctx.db.get(args.puzzleId);
+    const puzzleId = ctx.db.normalizeId("puzzles", args.puzzleId);
+    if (!puzzleId) return null;
+    const puzzle = await ctx.db.get(puzzleId);
     if (!puzzle || puzzle.status !== "approved") return null;
 &nbsp;
     const image = puzzle.image
@@ -230,20 +240,13 @@ export const getPublicDefinitionView = query({
       ? <span class="branch-0 cbranch-no" title="branch not covered" >await ctx.db.get(puzzle.category)</span>
       : null;
 &nbsp;
-    const rating = await ratingBreakdownOf(ctx, args.puzzleId);
-&nbsp;
-    const owned = await ctx.db
-      .query("ownedPuzzles")
-      .withIndex("by_puzzle", (q) =&gt; q.eq("puzzleId", args.puzzleId))
-      .collect();
-    // No viewer: private copies never count.
-    const communityOwners = communityOwnersOf(owned);
-    const availability = await publicAvailabilityOf(ctx, owned);
-    const { totalCompletions, avgCompletionDays } = await completionStatsOf(
-      ctx,
-      args.puzzleId,
-      owned,
-    );
+    // No viewer: private copies never count (they never do in the stored totals).
+    const totals = await definitionTotalsOrLive(ctx, puzzleId);
+    const rating = ratingBreakdownFromTotals(totals);
+    const communityOwners = totals.communityOwners;
+    const availability = publicAvailabilityFromByType(totals.publicAvailable);
+    const { totalCompletions, avgCompletionDays } =
+      completionStatsFromTotals(totals);
 &nbsp;
     return {
       definition: {
@@ -274,7 +277,7 @@ export const getPublicDefinitionView = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>19/19</span>
+                <span class='fraction'>17/17</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
@@ -115,10 +115,7 @@
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -140,31 +137,28 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
@@ -189,25 +183,24 @@ export const getAllSeries = query({
     publisher: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise&lt;SeriesView[]&gt; =&gt; {
-    // Scoped path: collect + dedupe in JS. A brand's puzzles are few; a big publisher's
-    // catalog is larger but still fine at this app's scale — revisit if that changes.
+    // Scoped path: collect + dedupe in JS. A brand or publisher reads only its APPROVED puzzles,
+    // through by_status_brand or by_status_publisher.
     if (args.brand || args.publisher) {
       const rows = args.brand
         ? await ctx.db
             .query("puzzles")
-            .withIndex("by_brand", (q) =&gt; q.eq("brand", args.brand))
+            .withIndex("by_status_brand", (q) =&gt;
+              q.eq("status", "approved").eq("brand", args.brand),
+            )
             .collect()
         : await ctx.db
             .query("puzzles")
-            .withIndex("by_publisher", (q) =&gt; q.eq("publisher", args.publisher))
+            .withIndex("by_status_publisher", (q) =&gt;
+              q.eq("status", "approved").eq("publisher", args.publisher),
+            )
             .collect();
       const scoped = [
-        ...new Set(
-          rows
-            .filter((p) =&gt; p.status === "approved")
-            .map((p) =&gt; p.series)
-            .filter((s): s is string =&gt; !!s),
-        ),
+        ...new Set(rows.map((p) =&gt; p.series).filter((s): s is string =&gt; !!s)),
       ].sort((a, b) =&gt; a.localeCompare(b));
       if (scoped.length &gt; 0) return scoped;
       // Unknown maker (or no series recorded for it yet): fall through to the global list.
@@ -217,9 +210,7 @@ export const getAllSeries = query({
 &nbsp;
     const rows = await stream(ctx.db, schema)
       .query("puzzles")
-      .withIndex("by_series", (q) =&gt; q)
-      // filterWith (not .filter, which streams reject) is applied before distinct.
-      .filterWith(async (p) =&gt; p.status === "approved")
+      .withIndex("by_status_series", (q) =&gt; q.eq("status", "approved"))
       .distinct(["series"])
       .collect();
     return rows
@@ -235,7 +226,7 @@ export const getAllSeries = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

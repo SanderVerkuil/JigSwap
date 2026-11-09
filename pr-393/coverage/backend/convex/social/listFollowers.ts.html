@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
@@ -108,8 +108,7 @@
 <a name='L43'></a><a href='#L43'>43</a>
 <a name='L44'></a><a href='#L44'>44</a>
 <a name='L45'></a><a href='#L45'>45</a>
-<a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L46'></a><a href='#L46'>46</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -125,79 +124,77 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">512x</span>
+<span class="cline-any cline-yes">508x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { FollowEdgeView } from "@jigswap/contracts";
-import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { blockedEitherWaySet } from "./blocks";
-import { areMutualFollowers, profileVisibilityOf } from "./privacy";
-import { toFollowEdgeView } from "./readViews";
+import { FOLLOW_LIST_CAP, followExists, toFollowEdgeView } from "./readViews";
 &nbsp;
-// Read side: the members who follow the target (defaults to the acting member). Each entry resolves
-// the FOLLOWER's display name. Returns typed FollowEdgeView DTOs.
+// Read side: the members who follow the CALLER, for quick start's suggestions. The People page pages
+// its network instead (social/listMyNetwork). Each entry resolves the FOLLOWER's display name and says
+// whether the caller follows them (from the pair itself, so it is right however many the caller
+// follows). Returns typed FollowEdgeView DTOs.
 //
-// SECURITY: always auth-gated — the acting member is resolved UNCONDITIONALLY (passing a `memberId`
-// must not bypass authentication via `??` short-circuit). The follow graph follows the SAME
-// visibility model as getProfile: a member whose profile is "private" exposes their follower list
-// only to themselves and to mutual followers; everyone else gets [].
+// SECURITY (SEC-13): a member reads only their own followers, so the query takes no member id.
+// Another member's list would name every member who follows them, private members included, to any
+// signed-in caller (the edge view projects no counterparty). Members blocked either way are left
+// out (spec 2.6).
 export const listFollowers = query({
-  args: { memberId: v.optional(v.id("users")) },
-  handler: async (ctx, args): Promise&lt;FollowEdgeView[]&gt; =&gt; {
+  args: {},
+  handler: async (ctx): Promise&lt;FollowEdgeView[]&gt; =&gt; {
     const viewer = (await requireMember(ctx)) as unknown as Id&lt;"users"&gt;;
-    const target = args.memberId ?? viewer;
-    // Blocked either way (spec 2.6): neither side sees the other, nor the other's follow graph.
     const blockedIds = await blockedEitherWaySet(ctx, viewer);
-    if (blockedIds.has(target)) return [];
 &nbsp;
-    if (
-      target !== viewer &amp;&amp;
-      (await profileVisibilityOf(ctx, target)) === "private" &amp;&amp;
-      !(await areMutualFollowers(ctx, viewer, target))
-    ) {
-      return [];
-    }
-&nbsp;
-    const rows = await ctx.db
-      .query("follows")
-      .withIndex("by_followee", (q) =&gt; q.eq("followeeId", target))
-      .collect();
+    // Bounded read: only the newest FOLLOW_LIST_CAP edges, handed back oldest-first as before.
+    const rows = (
+      await ctx.db
+        .query("follows")
+        .withIndex("by_followee", (q) =&gt; q.eq("followeeId", viewer))
+        .order("desc")
+        .take(FOLLOW_LIST_CAP)
+    ).reverse();
     return Promise.all(
       rows
         .filter((r) =&gt; !blockedIds.has(r.followerId))
-        .map((r) =&gt;
-          toFollowEdgeView(ctx, r.aggregateId, r.followerId, r.createdAt),
-        ),
+        .map(async (r) =&gt; ({
+          ...(await toFollowEdgeView(
+            ctx,
+            r.aggregateId,
+            r.followerId,
+            r.createdAt,
+          )),
+          youFollow: await followExists(ctx, viewer, r.followerId),
+        })),
     );
   },
 });
@@ -208,7 +205,7 @@ export const listFollowers = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -114,7 +114,12 @@
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -136,34 +141,39 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">268x</span>
-<span class="cline-any cline-yes">177x</span>
-<span class="cline-any cline-yes">180x</span>
+<span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">93x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">674x</span>
+<span class="cline-any cline-yes">376x</span>
+<span class="cline-any cline-yes">376x</span>
+<span class="cline-any cline-yes">380x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">230x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">93x</span>
+<span class="cline-any cline-yes">376x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">93x</span>
+<span class="cline-any cline-yes">30x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">230x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">230x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import {
   makeRecomputeGoalProgress,
@@ -182,26 +192,31 @@ import { systemClock } from "./systemClock";
 // subscriber) while KEEPING the one CRITICAL reaction inline.
 //
 // WHY the goal-progress reaction stays SYNC: a Goal's progress is DERIVED from the member's
-// completion count, so recording a completion must immediately recompute their goals in the SAME
-// transaction (no stale progress, no extra round-trip). It reacts ONLY to CompletionRecorded, so
-// the GoalProgressed/GoalAchieved events the recompute itself publishes never re-trigger it (no
-// recursion) — and because those events flow through this same publisher, they are recorded +
-// scheduled too, finally landing the goal-achievement notification.
+// finished solves inside the goal's period, so recording, editing (a changed end date can move a
+// solve into or out of a period) or deleting a completion must immediately recompute their goals
+// in the SAME transaction (no stale progress, no extra round-trip). Each member is recomputed once
+// per published batch. It reacts ONLY to completion events, so the GoalProgressed/GoalAchieved
+// events the recompute itself publishes never re-trigger it (no recursion) — and because those
+// events flow through this same publisher, they are recorded + scheduled too, finally landing the
+// goal-achievement notification.
 export const inProcessEventPublisher = (
   ctx: MutationCtx,
 ): DomainEventPublisher =&gt;
   makeEventPublisher(ctx, "solving", async (events) =&gt; {
+    const members = new Set&lt;MemberId&gt;();
     for (const event of events as readonly SolvingDomainEvent[]) {
       if (
         event.name === "CompletionRecorded" ||
+        event.name === "CompletionEdited" ||
         event.name === "CompletionDeleted"
       ) {
-        await recomputeGoals(ctx, event.userId);
+        members.add(event.userId);
       }
     }
+    for (const userId of members) await recomputeGoals(ctx, userId);
   });
 &nbsp;
-// Recompute the member's derived goal progress from their authoritative completion count. Reuses
+// Recompute the member's derived goal progress from their finished solves. Reuses
 // THIS publisher so the recompute's own events (GoalProgressed/GoalAchieved) are durably recorded
 // + scheduled; the sync handler ignores those names, so the recompute can never recurse.
 const recomputeGoals = async (
@@ -223,7 +238,7 @@ const recomputeGoals = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

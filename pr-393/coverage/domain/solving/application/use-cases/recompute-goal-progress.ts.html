@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>14/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>14/14</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -101,8 +101,7 @@
 <a name='L36'></a><a href='#L36'>36</a>
 <a name='L37'></a><a href='#L37'>37</a>
 <a name='L38'></a><a href='#L38'>38</a>
-<a name='L39'></a><a href='#L39'>39</a>
-<a name='L40'></a><a href='#L40'>40</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L39'></a><a href='#L39'>39</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -123,25 +122,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Clock, DomainEventPublisher, err, ok } from "../../../shared-kernel";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Clock, DomainEventPublisher, ok } from "../../../shared-kernel";
 import {
   RecomputeGoalProgress,
   RecomputeGoalProgressCommand,
@@ -156,21 +154,20 @@ export interface RecomputeGoalProgressDeps {
   readonly clock: Clock;
 }
 &nbsp;
-// Transaction script driven by CompletionRecorded: read the AUTHORITATIVE completion count for
-// the member and push it into each of their active goals (the count is never hand-set — it is
-// always derived here). Each goal emits GoalProgressed on a change and GoalAchieved once on the
-// crossing. Publishes the union of every touched goal's events.
+// Transaction script driven by a completion being recorded, edited or deleted: read the member's
+// finished solves once and let each ACTIVE goal count the ones inside its own period (the count is
+// never hand-set — it is always derived here). Each goal emits GoalProgressed on a change and
+// GoalAchieved once on the crossing. Publishes the union of every touched goal's events.
 export const makeRecomputeGoalProgress =
   (deps: RecomputeGoalProgressDeps): RecomputeGoalProgress =&gt;
   async (cmd: RecomputeGoalProgressCommand) =&gt; {
-    const count = await deps.completions.countCompletedByUser(cmd.userId);
+    const solves = await deps.completions.listGoalSolves(cmd.userId);
     const goals = await deps.goals.listByUser(cmd.userId);
 &nbsp;
     const now = deps.clock.now();
     for (const goal of goals) {
       if (!goal.isActive) continue;
-      const outcome = goal.progressTo(count, now);
-      if (outcome.isErr) return err(outcome.error);
+      goal.progressFrom(solves, now);
 &nbsp;
       const events = goal.pullEvents();
       if (events.length &gt; 0) {
@@ -187,7 +184,7 @@ export const makeRecomputeGoalProgress =
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:03:44.170Z
+                at 2026-11-09T19:59:45.052Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

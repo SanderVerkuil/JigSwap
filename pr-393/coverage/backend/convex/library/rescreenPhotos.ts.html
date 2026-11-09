@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.4% </span>
+                <span class="strong">84.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>92/109</span>
+                <span class='fraction'>96/113</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.92% </span>
+                <span class="strong">77.31% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>70/91</span>
+                <span class='fraction'>75/97</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.76% </span>
+                <span class="strong">85.32% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>89/105</span>
+                <span class='fraction'>93/109</span>
             </div>
         
             
@@ -447,7 +447,16 @@
 <a name='L382'></a><a href='#L382'>382</a>
 <a name='L383'></a><a href='#L383'>383</a>
 <a name='L384'></a><a href='#L384'>384</a>
-<a name='L385'></a><a href='#L385'>385</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<a name='L385'></a><a href='#L385'>385</a>
+<a name='L386'></a><a href='#L386'>386</a>
+<a name='L387'></a><a href='#L387'>387</a>
+<a name='L388'></a><a href='#L388'>388</a>
+<a name='L389'></a><a href='#L389'>389</a>
+<a name='L390'></a><a href='#L390'>390</a>
+<a name='L391'></a><a href='#L391'>391</a>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -723,6 +732,9 @@
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -732,10 +744,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -756,6 +769,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
@@ -841,6 +857,7 @@ import {
   checkAllHashes,
   makeCsamHashCheckPortFromEnv,
   readCsamHashCheckConfig,
+  skipsHashCheck,
 } from "../lib/imageModeration/csamHashCheck";
 import {
   hashImageBytes,
@@ -1103,7 +1120,10 @@ export const rescreenPhotos = internalAction({
       const port = makeModerationPortFromEnv(process.env);
       // Legacy and unscored photos never went through the CSAM hash check: check them first.
       const hashPort = makeCsamHashCheckPortFromEnv(process.env);
-      const hashProvider = readCsamHashCheckConfig(process.env).provider;
+      const hashConfig = readCsamHashCheckConfig(process.env);
+      const hashProvider = hashConfig.provider;
+      // No hash matching configured: there is nothing to check against, so it is not asked.
+      const hashSkipped = skipsHashCheck(hashConfig);
       const quarantine = quarantineStep(args.table);
 &nbsp;
       for (const candidate of page.candidates) {
@@ -1114,11 +1134,12 @@ export const rescreenPhotos = internalAction({
         }
         const bytes = new Uint8Array(await blob.arrayBuffer());
         // Hash check BEFORE classifying. A match quarantines (re-stored as a new blob, always
-        // escalated, never classified). Unavailable is counted and the row is classified anyway:
-        // these photos are already published, and holding them back is the live pipeline's job.
-        const hashCheck = await checkAllHashes(hashPort, [
-          hashImageBytes(bytes),
-        ]);
+        // escalated, never classified). Unavailable (or skipped: none configured) is counted and
+        // the row is classified anyway: these photos are already published, and holding them back
+        // is the live pipeline's job.
+        const hashCheck = hashSkipped
+          ? ({ status: "skipped" } as const)
+          : await checkAllHashes(hashPort, [hashImageBytes(bytes)]);
         if (hashCheck.status === "match" &amp;&amp; hashCheck.matched) {
           await preserveAndQuarantine(
             ctx,
@@ -1141,6 +1162,9 @@ export const rescreenPhotos = internalAction({
         if (hashCheck.status === "unavailable") {
           event.hash_check_unavailable =
             ((event.hash_check_unavailable as number | undefined) ?? 0) + 1;
+        } else <span class="missing-if-branch" title="else path not taken" >E</span>if (hashCheck.status === "skipped") {
+          event.hash_check_skipped =
+            ((event.hash_check_skipped as number | undefined) ?? 0) + 1;
         }
         const result = await port.classify(bytes, blob.type || <span class="branch-1 cbranch-no" title="branch not covered" >undefined)</span>;
         if (result.status === "unscored") {
@@ -1222,7 +1246,7 @@ export const rescreenPhotos = internalAction({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.85% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/14</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>11/11</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -88,64 +88,52 @@
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a>
-<a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-yes">13x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">1027x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1010x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { ExchangeSummaryView } from "@jigswap/contracts";
 import { query } from "../_generated/server";
-import { enrichExchangeSummary } from "./readViews";
+import { optionalActingMember } from "../identity/optionalActingMember";
+import { enrichExchangeSummary, readMemberExchanges } from "./readViews";
 &nbsp;
 // Exchange read (thin adapter): exchanges where the signed-in member is the recipient (incoming).
-// Returns [] when unauthenticated/unknown, newest-first — matching legacy exchanges.getExchangesByOwner.
+// Returns [] when unauthenticated, unknown or deactivated, newest-first — matching legacy
+// exchanges.getExchangesByOwner.
+// Kept for web builds from before the Exchanges page moved to listMyLiveExchanges and
+// listMyExchangeHistory: this build no longer calls it. Remove once those have aged out.
 export const getExchangesByOwner = query({
   args: {},
   handler: async (ctx): Promise&lt;ExchangeSummaryView[]&gt; =&gt; {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const me = await optionalActingMember(ctx);
+    if (!me) return [];
 &nbsp;
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) =&gt; q.eq("clerkId", identity.subject))
-      .unique();
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (!user) <span class="cstat-no" title="statement not covered" >return [];</span>
-&nbsp;
-    const exchanges = await ctx.db
-      .query("exchanges")
-      .withIndex("by_recipient", (q) =&gt; q.eq("recipientId", user._id))
-      .collect();
+    // Bounded: the newest EXCHANGE_LIST_CAP plus the newest EXCHANGE_LIST_CAP still-open ones.
+    const exchanges = await readMemberExchanges(ctx, me, "recipient");
 &nbsp;
     const enriched = await Promise.all(
-      exchanges.map((tr) =&gt; enrichExchangeSummary(ctx, tr, user._id)),
+      exchanges.map((tr) =&gt; enrichExchangeSummary(ctx, tr, me)),
     );
     return enriched.sort((a, b) =&gt; b.createdAt - a.createdAt);
   },
@@ -157,7 +145,7 @@ export const getExchangesByOwner = query({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-11-02T13:06:21.934Z
+                at 2026-11-09T20:07:14.179Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
