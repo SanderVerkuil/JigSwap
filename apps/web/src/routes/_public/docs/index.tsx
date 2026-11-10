@@ -80,7 +80,7 @@ function DocsIndex() {
                       <Link
                         to="/docs/$"
                         params={{ _splat: link.slug }}
-                        className="text-mk-text-strong inline-flex items-center text-[16px] underline decoration-mk-input-border underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong pointer-coarse:min-h-11"
+                        className="text-mk-text-strong inline-flex items-center text-[16px] underline decoration-mk-text-muted underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong pointer-coarse:min-h-11"
                       >
                         {link.title}
                       </Link>

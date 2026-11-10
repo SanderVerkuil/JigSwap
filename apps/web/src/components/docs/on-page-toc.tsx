@@ -36,7 +36,13 @@ export function OnPageToc({
         "py-[5px] px-2.5 rounded-sm text-[14px] leading-snug transition-colors duration-150",
         h.depth === 3 && "pl-5",
         active === h.id
-          ? "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong font-semibold"
+          ? cn(
+              // On the folded block's Sky Soft fill the current entry is a white window instead.
+              variant === "details"
+                ? "bg-mk-card"
+                : "bg-mk-sky-soft dark:bg-mk-muted",
+              "text-mk-text-strong font-semibold",
+            )
           : "text-mk-text-muted hover:text-mk-text-strong",
       )}
     >
@@ -49,7 +55,7 @@ export function OnPageToc({
       <details
         id={ON_THIS_PAGE_ID}
         className={cn(
-          "group bg-mk-muted dark:bg-mk-card scroll-mt-4 rounded-md",
+          "group bg-mk-sky-soft dark:bg-mk-muted scroll-mt-4 rounded-md",
           className,
         )}
       >

@@ -133,6 +133,26 @@ describe("LegalDoc contents", () => {
     expect(hrefs(details as HTMLElement)).toEqual(["#p-who", "#p-cookies"]);
   });
 
+  // The rail sits on the white page, the folded block is Sky Soft: each marks its current entry so
+  // it stands off its own ground.
+  it("marks the current entry with a Sky Soft pill in the rail and a white window in the folded block", () => {
+    const { container } = renderDoc();
+    const [sideNav, foldNav] = screen.getAllByRole("navigation", {
+      name: "Contents",
+    });
+    expect(container.querySelector("details")?.className).toContain(
+      "bg-mk-sky-soft",
+    );
+    // happy-dom has no layout, so every top is 0 and the last section is the current one.
+    const railCurrent = within(sideNav).getAllByRole("link")[1];
+    const foldCurrent = within(foldNav).getAllByRole("link")[1];
+    expect(railCurrent.getAttribute("aria-current")).toBe("true");
+    expect(foldCurrent.getAttribute("aria-current")).toBe("true");
+    expect(railCurrent.className).toContain("bg-mk-sky-soft");
+    expect(foldCurrent.className).toContain("bg-mk-card");
+    expect(foldCurrent.className).not.toContain("bg-mk-sky-soft");
+  });
+
   // F20: on a phone the Contents block is only at the top of a page some 19,000px long.
   it("ends each section with a way back to the contents on narrow screens, opening them", () => {
     const { container } = renderDoc();

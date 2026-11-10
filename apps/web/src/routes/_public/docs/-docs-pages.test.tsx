@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import type { ComponentProps, ComponentType } from "react";
@@ -256,6 +257,27 @@ describe("docs page landmarks", () => {
       (details as Element).compareDocumentPosition(prose) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  // As on the legal pages: the rail sits on the white page, the folded block is Sky Soft, and
+  // each marks its current entry so it stands off its own ground.
+  it("marks the current entry with a Sky Soft pill in the rail and a white window in the fold", async () => {
+    const { container } = render(withIntl(<docPage.component />));
+    const details = container.querySelector(
+      "details#on-this-page",
+    ) as HTMLElement;
+    expect(details.className).toContain("bg-mk-sky-soft");
+    const rail = screen.getByRole("complementary", { name: "On this page" });
+    const railCurrent = within(rail).getByRole("link", { name: "One" });
+    const foldCurrent = within(details).getByRole("link", { name: "One" });
+    // happy-dom has no layout, so every top is 0 and the last heading is the current one.
+    await waitFor(() =>
+      expect(railCurrent.getAttribute("aria-current")).toBe("true"),
+    );
+    expect(foldCurrent.getAttribute("aria-current")).toBe("true");
+    expect(railCurrent.className).toContain("bg-mk-sky-soft");
+    expect(foldCurrent.className).toContain("bg-mk-card");
+    expect(foldCurrent.className).not.toContain("bg-mk-sky-soft");
   });
 });
 

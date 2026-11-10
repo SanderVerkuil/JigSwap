@@ -61,7 +61,7 @@ export function LegalDoc({
             <details
               id="contents"
               ref={contentsRef}
-              className="group bg-mk-muted dark:bg-mk-card mt-6 scroll-mt-2.5 rounded-md min-[901px]:hidden"
+              className="group bg-mk-sky-soft dark:bg-mk-muted mt-6 scroll-mt-2.5 rounded-md min-[901px]:hidden"
             >
               <summary className="font-mk-heading text-mk-text-strong focus-visible:ring-mk-ring flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-md px-4 text-[18px] font-normal focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                 {t("contents")}
@@ -72,7 +72,12 @@ export function LegalDoc({
                 />
               </summary>
               <div className="px-4 pb-3">
-                <LegalToc sections={sections} active={active} onPick={pick} />
+                <LegalToc
+                  sections={sections}
+                  active={active}
+                  onPick={pick}
+                  variant="fold"
+                />
               </div>
             </details>
             {sections.map((s, i) => (
@@ -159,15 +164,18 @@ export function LegalDoc({
 
 // The contents list: plain #hash links, so every section has a URL to share
 // and the browser does the jump (the page's scroll-padding clears the header).
-// A picked section is marked current straight away.
+// A picked section is marked current straight away. The current entry is a Sky Soft
+// pill on the white page ("rail"), or a white window inside the Sky Soft Contents block ("fold").
 function LegalToc({
   sections,
   active,
   onPick,
+  variant = "rail",
 }: {
   sections: LegalSection[];
   active: string | undefined;
   onPick: (id: string) => void;
+  variant?: "rail" | "fold";
 }) {
   const t = useTranslations("marketing.legal");
   return (
@@ -183,7 +191,9 @@ function LegalToc({
           className={cn(
             "rounded-sm px-2.5 py-[6px] text-[14px] leading-snug transition-colors duration-150",
             active === s.id
-              ? "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong font-semibold"
+              ? variant === "fold"
+                ? "bg-mk-card text-mk-text-strong font-semibold"
+                : "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong font-semibold"
               : "text-mk-text-muted hover:text-mk-text-strong font-medium",
           )}
         >

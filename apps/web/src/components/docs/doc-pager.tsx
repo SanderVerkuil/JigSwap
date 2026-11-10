@@ -14,7 +14,7 @@ export function DocPager({ pager }: { pager: Pager }) {
         <Link
           to="/docs/$"
           params={{ _splat: pager.prev.slug }}
-          className="group flex flex-col gap-1 rounded-md bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky-soft dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+          className="group flex flex-col gap-1 rounded-md bg-mk-sky-soft dark:bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
         >
           <span className="flex items-center gap-1 text-[14px] text-mk-text-muted">
             <ArrowLeft className="size-3.5" /> {t("pagerPrevious")}
@@ -30,7 +30,7 @@ export function DocPager({ pager }: { pager: Pager }) {
         <Link
           to="/docs/$"
           params={{ _splat: pager.next.slug }}
-          className="group flex flex-col gap-1 items-end text-right rounded-md bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky-soft dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+          className="group flex flex-col gap-1 items-end text-right rounded-md bg-mk-sky-soft dark:bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
         >
           <span className="flex items-center gap-1 text-[14px] text-mk-text-muted">
             {t("pagerNext")} <ArrowRight className="size-3.5" />

@@ -150,7 +150,7 @@
 }
 
 .docs-prose pre {
-  background: var(--mk-muted);
+  background: var(--mk-sky-soft);
   border-radius: 6px;
   padding: 18px 20px;
   overflow-x: auto;
@@ -181,7 +181,7 @@
   font-weight: 600;
   font-size: 14px;
   color: var(--mk-text-strong);
-  background: var(--mk-muted);
+  background: var(--mk-sky-soft);
   padding: 10px 14px;
   border-bottom: 1px solid var(--mk-border);
 }
@@ -205,7 +205,7 @@
 .docs-prose details {
   margin: 10px 0;
   border-radius: 6px;
-  background: var(--mk-muted);
+  background: var(--mk-sky-soft);
   overflow: hidden;
 }
 .docs-prose details + details {
@@ -315,7 +315,10 @@
 }
 /* The sky-soft step is the page ground at night, so it needs the next step up. */
 .dark .docs-callout[data-tone="info"],
-.dark .docs-prose ol > li::before {
+.dark .docs-prose ol > li::before,
+.dark .docs-prose pre,
+.dark .docs-prose thead th,
+.dark .docs-prose details {
   background: var(--mk-muted);
 }
 .docs-callout[data-tone="tip"] {
