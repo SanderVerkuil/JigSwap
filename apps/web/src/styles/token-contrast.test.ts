@@ -211,6 +211,31 @@ describe("light primary tint", () => {
   });
 });
 
+describe("light destructive", () => {
+  const c = (name: string) => resolve(`var(--${name})`, themes.light);
+
+  // Text uses its own deeper token: --destructive as text was 4.01:1 on a focused destructive
+  // menu row.
+  it("keeps destructive text at AA where it sits by day", () => {
+    const text = c("destructive-text");
+    const surfaces: Record<string, Rgb> = {
+      accent: c("accent"),
+      muted: c("muted"),
+      secondary: c("secondary"),
+      "primary tint": c("jigsaw-primary-tint"),
+      "focused destructive menu row (destructive/10 on popover)": over(
+        c("destructive"),
+        0.1,
+        c("popover"),
+      ),
+      "destructive/15 on card": over(c("destructive"), 0.15, c("card")),
+    };
+    for (const [surface, bg] of Object.entries(surfaces)) {
+      expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
 describe("night destructive", () => {
   const vars = themes.dark;
   const c = (name: string) => resolve(`var(--${name})`, vars);

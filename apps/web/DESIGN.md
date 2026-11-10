@@ -26,6 +26,7 @@ colors:
   amber: "#a86400"
   danger: "#c62828"
   destructive: "oklch(0.577 0.245 27.325)"
+  destructive-text: "#c10007"
   logo-jig: "#4a37b8"
   logo-swap: "#128a10"
   chart-2: "#e09a00"
@@ -270,7 +271,7 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 - **Night Frame** (#0f2a33) and **Night Sheet** (#15343d): sky and sheet after dark, the frame slightly deeper than the sheet. **Night Card** (#1b3f49), **Night Raised** (#234a54) and **Night Accent** (#2a5561) step upward from there.
 - **Night Canal** (#0b2028): the deepest colour in the system, used for the canal storey and footer board.
 - **Night Ink** (#eaf4f7), **Night Ink Muted** (#a9c6cc), **Night Link** (#8fdcc6), **Night Primary** (#1f7a63) and **Night Plank** (#8a6a3b) carry their daytime roles. Marigold does not change at night; only its ink does (#0f2a33).
-- **Night Destructive Text** (#ffb0ab, `--destructive-text`): destructive as text only, at least 4.5:1 on the card, the accent and a focused destructive menu row. Every `text-destructive` reads it through `--text-color-destructive`; fills, borders and rings keep `--destructive`, and white on `bg-destructive/60` stays 4.67:1. By day it equals Destructive.
+- **Night Destructive Text** (#ffb0ab, `--destructive-text`): destructive as text only, at least 4.5:1 on the card, the accent and a focused destructive menu row. Every `text-destructive` reads it through `--text-color-destructive`; fills, borders and rings keep `--destructive`, and white on `bg-destructive/60` stays 4.67:1. By day it is **Destructive Text** (#c10007), deeper than the fill: 6.42:1 on the sheet, 5.40:1 on a focused destructive menu row, and at least 4.5:1 on the accent, muted, secondary and Primary Tint fills.
 
 ### Named Rules
 
@@ -394,7 +395,7 @@ Flat and direct; every pressable thing answers the finger.
 
 - **Style:** 36px tall, 1px Line Input, 4px radius, transparent fill.
 - **Focus:** border moves to the ring colour with a 3px ring at 50%.
-- **Error / Disabled:** a destructive border and soft ring; 50% opacity. A field check runs when the member leaves the field and shows one 14px destructive line under it, linked with `aria-describedby`. By day destructive text is only 3.46:1 on the Primary Tint, so an error on that tint (the import zone) is a destructive icon with the words in the foreground colour.
+- **Error / Disabled:** a destructive border and soft ring; 50% opacity. A field check runs when the member leaves the field and shows one 14px destructive line under it, linked with `aria-describedby`. An error on the Primary Tint (the import zone) is a destructive icon with the words in the foreground colour.
 - **Tag field:** drawn like Input (36px, 4px radius, Line Input edge, transparent fill, the same focus); its tags are removable chips inside it.
 - **Search trigger:** a flat 32px field in the top bar, centred on the window, that opens the command palette.
 - **Switch:** the unchecked track has a 1px Ink Muted edge by day (6.3:1 on white) and none at night; on keyboard focus the edge takes the ring colour.

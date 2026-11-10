@@ -109,8 +109,10 @@
   --accent: #e3f1fa;
   --accent-foreground: #0f3b30;
   --destructive: oklch(0.577 0.245 27.325);
-  /* Destructive as TEXT (text-destructive and its variants, through --text-color-destructive). */
-  --destructive-text: var(--destructive);
+  /* Destructive as TEXT (text-destructive and its variants, through --text-color-destructive).
+     Deeper than the fill: --destructive as text was 4.01:1 on a focused destructive menu row
+     (destructive/10 over the popover). This red stays over 4.5:1 on every tint it sits on. */
+  --destructive-text: #c10007;
   --destructive-foreground: #f8fafc;
   --border: #d8e5eb;
   --input: #c6d6dd;
