@@ -46,20 +46,21 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
 // exchanges", "All goals") gives each its own accessible name.
 const srOnly = (chunks: ReactNode) => <span className="sr-only">{chunks}</span>;
 
-// Soft status chip tones: Pending and Disputed amber, Accepted canal,
-// Completed green — everything else muted.
+// Opaque street status chips, a soft fill under strong text: Pending and
+// Disputed amber, Accepted canal, Completed green — everything else muted.
 const PILL_TONES: Record<string, string> = {
-  proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-primary-text",
-  disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  completed: "bg-green-500/15 text-green-700 dark:text-green-400",
+  proposed: "bg-mk-warning-soft text-mk-warning-strong",
+  accepted: "bg-jigsaw-primary-tint text-primary-text",
+  disputed: "bg-mk-warning-soft text-mk-warning-strong",
+  completed: "bg-mk-success-soft text-mk-success-strong",
 };
 
-// Solid circle colors for the timeline markers, matching the pill hues.
+// Solid circle colors for the timeline markers, matching the pill hues. The
+// night amber is light, so its icon takes the dark on-gold ink after dark.
 const DOT_TONES: Record<string, string> = {
-  proposed: "bg-jigsaw-warning",
+  proposed: "bg-jigsaw-warning dark:text-jigsaw-on-gold",
   accepted: "bg-jigsaw-primary",
-  disputed: "bg-jigsaw-warning",
+  disputed: "bg-jigsaw-warning dark:text-jigsaw-on-gold",
   completed: "bg-jigsaw-secondary-strong",
 };
 
@@ -112,7 +113,8 @@ function ExchangeTimelineRow({
         <span
           className={cn(
             "inline-flex size-[34px] items-center justify-center rounded-full text-white",
-            DOT_TONES[exchange.status] ?? "bg-muted-foreground",
+            DOT_TONES[exchange.status] ??
+              "bg-muted-foreground dark:text-jigsaw-on-gold",
           )}
         >
           <KindIcon className="size-[15px]" />
@@ -120,7 +122,7 @@ function ExchangeTimelineRow({
         {!isLast && <span className="bg-border mt-1.5 w-0.5 flex-1" />}
       </div>
       <div className={cn("min-w-0 pt-px", !isLast && "pb-5")}>
-        <div className="text-sm font-semibold">
+        <div className="text-primary-text text-sm font-semibold">
           {primary}
           {secondary && (
             <span className="text-muted-foreground font-medium">
@@ -419,8 +421,16 @@ function ActivityRow({
           name: displayName(actor),
           count,
           title: entry.title ?? "",
+          // Canal Link only when the row is a link to the puzzle.
           puzzle: (chunks) => (
-            <span className="text-foreground font-medium">{chunks}</span>
+            <span
+              className={cn(
+                "font-medium",
+                entry.target ? "text-primary-text" : "text-foreground",
+              )}
+            >
+              {chunks}
+            </span>
           ),
           strong: (chunks) =>
             entry.actor ? (

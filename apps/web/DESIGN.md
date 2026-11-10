@@ -242,7 +242,7 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 ### Primary
 
 - **Canal Primary** (#134a3c): the everyday action in the shell: default buttons, tooltips, primary badges.
-- **Canal Ink** (#0f3b30): all text on light grounds, ink on marigold, the canal storey and the public floor pins.
+- **Canal Ink** (#0f3b30): all text on light grounds, ink on marigold, the canal storey (public, and the app home's briefing band) and the public floor pins.
 - **Canal Link** (#146350): primary as text on page surfaces (links, chips, icons) and the focus ring colour of inputs.
 - **Primary Tint** (`color-mix(in oklab, Canal Link 12%, Sky Frame)`, about #cbdfe4): the picked and selected fill, a canal-sky step below the hover sky and never a grey. Canal Link text on it is 5.2:1 and Ink Muted 4.6:1. After dark it is Night Primary at 22% in Night Card.
 
@@ -318,6 +318,15 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 ## Layout
 
 **Shell, from 768px.** A sky L-frame of a 48px top bar (56px on touch screens, where its controls are 44px targets) and a 16rem sidebar, with no rule between them. The sidebar starts below that bar and ends above the open cookie banner. The white sheet butts both and is inset 8px from the window's right and bottom. The page head sticks to the sheet's top on a solid ground with one quiet edge; content pads 24px and scrolls inside the sheet, passing under the head. Frame, sheet and card are the only three levels. Content is full width by default, or a centred 1180px column by preference; `/messages` is full-bleed.
+
+**The canal storey.** The app home's briefing (the summary sentence, a waiting request and the quick actions) stands on one Canal Ink band, Night Canal after dark. It is the shell's only canal band and the recorded exception to "Frame, sheet and card are the only three levels". It starts at the page head's edge (the top bar's on phones) and its fill runs out past the content padding to the sheet's edges (up to a classic scrollbar), also with the centred column, while its text keeps the content margin. It has 24px of band above and below its text (18px on phones), so the blocks under it start that much lower. At night on phones it meets the top bar with no visible edge, so the two read as one dark storey. In forced colours it falls back to the page ground, like the public bands. On the band:
+
+- text is On Canal;
+- a link is marked by an On Canal underline at 45%;
+- focus is drawn in On Canal, because Canal Link and the default ring measure 1.74:1 on canal and marigold stays reserved;
+- the quick-action chips' ring sits after a 2px canal gap.
+
+It holds only white things, like the lending slip on the public canal storey: the request slip and the quick-action chips, both Night Card after dark. Below it the sheet stays white. The rest of the home keeps the shell's quiet tones: status chips are opaque soft fills with strong text, and puzzle names that link to the puzzle are Canal Link.
 
 **Shell, below 768px.** A dedicated phone layout rather than a squeezed one: the document scrolls, under a 56px sticky sky top bar and above a five-slot bottom tab bar of at least 56px. Content pads 16px at the sides and 18px on top. There is no sidebar, no page head and no skyline.
 
