@@ -195,7 +195,9 @@ const clerkAppearance = {
     colorInputText: "var(--foreground)",
     colorInputBackground: "var(--background)",
     colorNeutral: "var(--foreground)",
-    colorDanger: "var(--destructive)",
+    // The text token, like the app's own destructive text: the fill colour was 4.45:1 as error
+    // text on the night card.
+    colorDanger: "var(--destructive-text)",
     colorSuccess: "var(--jigsaw-success)",
     colorWarning: "var(--jigsaw-warning)",
   },
@@ -206,7 +208,12 @@ const clerkAppearance = {
     formFieldInput: {
       "@media (pointer: coarse)": { fontSize: "16px", minHeight: "44px" },
     },
-    formButtonPrimary: { "@media (pointer: coarse)": { minHeight: "44px" } },
+    // Clerk writes white on its solid danger button, and the text token is pale at night, so that
+    // label takes the sheet colour: white on the day red, dark ink on the night rose.
+    formButtonPrimary: {
+      "@media (pointer: coarse)": { minHeight: "44px" },
+      '&[data-color="danger"]': { color: "var(--background)" },
+    },
     socialButtonsIconButton: {
       "@media (pointer: coarse)": { minHeight: "44px" },
     },
