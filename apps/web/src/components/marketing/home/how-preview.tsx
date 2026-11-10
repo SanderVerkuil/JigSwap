@@ -72,14 +72,26 @@ export function HowPreview() {
                   {group.title}
                 </h3>
                 <ul className="mt-2.5 flex flex-col gap-2">
+                  {/* The leader runs under the whole row and the words mask it, so when the
+                      left side wraps the dots still start right after its last line instead of
+                      leaving a gap. The pr-5 keeps at least 20px of dots before the who. */}
                   {group.rows.map(([what, who]) => (
-                    <li key={what} className="flex items-end gap-2">
-                      <span className="min-w-0">{what}</span>
+                    <li
+                      key={what}
+                      className="relative flex items-end justify-between gap-2"
+                    >
+                      <span className="min-w-0 pr-5">
+                        <span className="relative z-[1] bg-mk-card box-decoration-clone pr-1.5">
+                          {what}
+                        </span>
+                      </span>
                       <span
                         aria-hidden="true"
-                        className="mb-[5px] min-w-5 flex-1 border-b-[3px] border-dotted border-mk-text-muted/60"
+                        className="absolute inset-x-0 bottom-[5px] border-b-[3px] border-dotted border-mk-text-muted/60"
                       />
-                      <span className="shrink-0 whitespace-nowrap">{who}</span>
+                      <span className="relative z-[1] shrink-0 bg-mk-card pl-1.5 whitespace-nowrap">
+                        {who}
+                      </span>
                     </li>
                   ))}
                 </ul>
