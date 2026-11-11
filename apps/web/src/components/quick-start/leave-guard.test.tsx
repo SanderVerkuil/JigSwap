@@ -10,6 +10,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -24,7 +25,10 @@ import { LeaveGuard } from "./leave-guard";
 
 afterEach(cleanup);
 
-function setup({ onDiscard = vi.fn() }: { onDiscard?: () => void } = {}) {
+function setup({
+  onDiscard = vi.fn(),
+  save = new Promise<void>(() => {}),
+}: { onDiscard?: () => void; save?: Promise<void> } = {}) {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   function Form() {
     const [dirty, setDirty] = useState(false);
@@ -33,6 +37,12 @@ function setup({ onDiscard = vi.fn() }: { onDiscard?: () => void } = {}) {
       <>
         <button type="button" onClick={() => setDirty(true)}>
           type something
+        </button>
+        <button
+          type="button"
+          onClick={() => void save.then(() => setDirty(false))}
+        >
+          save
         </button>
         <button
           type="button"
@@ -105,6 +115,28 @@ describe("LeaveGuard", () => {
     await waitFor(() => expect(leaveDialog()).toBeNull());
     expect(router.state.location.pathname).toBe("/form");
     expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  // A save on its way when the member tapped out may land while the dialog asks. Then there is
+  // nothing left to lose: the question closes as Keep editing would, so the page shows what the
+  // save led to, and the next tap leads on.
+  it("closes once a save lands while it asks, and stays", async () => {
+    let landSave!: () => void;
+    const { router, onDiscard } = setup({
+      save: new Promise((resolve) => (landSave = resolve)),
+    });
+    await dirty();
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    fireEvent.click(screen.getByRole("link", { name: "elsewhere" }));
+    expect(await screen.findByRole("alertdialog")).toBeTruthy();
+
+    await act(async () => landSave());
+    await waitFor(() => expect(leaveDialog()).toBeNull());
+    expect(router.state.location.pathname).toBe("/form");
+    expect(onDiscard).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("link", { name: "elsewhere" }));
+    await screen.findByText("landed elsewhere");
   });
 
   it("Discard drops the work and goes where the member was heading", async () => {

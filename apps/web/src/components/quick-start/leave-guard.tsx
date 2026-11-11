@@ -1,7 +1,7 @@
 "use client";
 
 import { useBlocker } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { LeaveStepDialog, type LeaveWork } from "./leave-step-dialog";
 
 /**
@@ -30,6 +30,11 @@ export function LeaveGuard({
     disabled: work === null,
     withResolver: true,
   });
+  // A save on its way when the member tapped out can land while the dialog asks. With nothing left
+  // to lose, it closes as Keep editing would: the page shows what the save led to.
+  useEffect(() => {
+    if (work === null && blocker.status === "blocked") blocker.reset?.();
+  }, [work, blocker]);
   return (
     <LeaveStepDialog
       open={blocker.status === "blocked"}
