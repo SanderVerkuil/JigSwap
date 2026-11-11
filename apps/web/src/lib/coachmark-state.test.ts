@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   COACHMARK_COOKIE_NAME,
+  COACHMARK_PREPAINT_SCRIPT,
+  COACHMARK_STORAGE_KEY,
   parseCoachmarkDismissed,
   readCoachmarkDismissed,
   writeCoachmarkDismissed,
@@ -62,5 +64,42 @@ describe("writeCoachmarkDismissed", () => {
     expect(document.cookie).toBe(
       `${COACHMARK_COOKIE_NAME}=1; path=/my-puzzles; max-age=31536000; samesite=lax`,
     );
+  });
+});
+
+describe("COACHMARK_PREPAINT_SCRIPT", () => {
+  // What the inline script sees on the page: the member's storage and the <html> element.
+  const run = (getItem: (key: string) => string | null) => {
+    const marks: string[] = [];
+    vi.stubGlobal("localStorage", { getItem });
+    vi.stubGlobal("document", {
+      cookie: "",
+      documentElement: { setAttribute: (name: string) => marks.push(name) },
+    });
+    new Function(COACHMARK_PREPAINT_SCRIPT)();
+    return { marks, cookie: document.cookie };
+  };
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("marks the document for a dismissal from before the cookie, and leaves the cookie alone", () => {
+    expect(run((key) => (key === COACHMARK_STORAGE_KEY ? "1" : null))).toEqual({
+      marks: ["data-coachmark-dismissed"],
+      cookie: "",
+    });
+  });
+
+  it("leaves the document unmarked when the hint was never dismissed", () => {
+    expect(run(() => null).marks).toEqual([]);
+    expect(run(() => "0").marks).toEqual([]);
+  });
+
+  it("leaves the hint to the page when storage is blocked", () => {
+    const blocked = () => {
+      throw new DOMException("The operation is insecure.", "SecurityError");
+    };
+    expect(() => run(blocked)).not.toThrow();
+    expect(run(blocked).marks).toEqual([]);
   });
 });

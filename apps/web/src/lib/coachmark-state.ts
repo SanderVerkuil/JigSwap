@@ -30,6 +30,14 @@ export const readCoachmarkDismissed = createIsomorphicFn()
   })
   .client((): boolean => parseCoachmarkDismissed(document.cookie));
 
+// A dismissal from before the cookie is in localStorage alone, which the server can't read, so
+// that member's first My Puzzles after the cookie arrived still has the hint in its HTML. My
+// Puzzles runs this in its head, before the browser parses the body: it marks the document, and
+// the hint hides under the mark (`in-data-coachmark-dismissed:hidden`), so the first paint has no
+// hint and hydration taking it out moves nothing. It leaves the cookie to the page: written before
+// hydration, the browser's first render would differ from the server's.
+export const COACHMARK_PREPAINT_SCRIPT = `try{if(localStorage.getItem(${JSON.stringify(COACHMARK_STORAGE_KEY)})==="1")document.documentElement.setAttribute("data-coachmark-dismissed","")}catch(e){}`;
+
 // Scoped to My Puzzles, the one page that reads it, so it rides along with no other request.
 export function writeCoachmarkDismissed() {
   document.cookie = `${COACHMARK_COOKIE_NAME}=1; path=/my-puzzles; max-age=${COACHMARK_COOKIE_MAX_AGE}; samesite=lax`;

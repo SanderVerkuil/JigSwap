@@ -60,6 +60,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
 import {
+  COACHMARK_PREPAINT_SCRIPT,
   COACHMARK_STORAGE_KEY,
   parseCoachmarkDismissed,
   readCoachmarkDismissed,
@@ -102,6 +103,9 @@ export const Route = createFileRoute("/_dashboard/my-puzzles/")({
     }),
   head: ({ match }) => ({
     meta: [{ title: pageTitle(match.context, "myPuzzles") }],
+    // Before the first paint: hides a hint dismissed before the cookie (lib/coachmark-state.ts).
+    // The router gives it this page's CSP nonce.
+    scripts: [{ children: COACHMARK_PREPAINT_SCRIPT }],
   }),
   pendingComponent: () => <PuzzlesPending />,
   component: PuzzlesPage,
@@ -178,9 +182,10 @@ function ActionsCoachmark() {
   };
 
   // A static hint, not a live region: it is on screen from the first paint, so announcing it would
-  // only interrupt. The dismiss is a full-size icon button so it is easy to hit on a phone.
+  // only interrupt. The dismiss is a full-size icon button so it is easy to hit on a phone. The
+  // head script's mark hides it before that paint for a dismissal from before the cookie.
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
+    <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground in-data-coachmark-dismissed:hidden">
       <span className="flex-1 py-1">{t("body")}</span>
       <Button
         type="button"
