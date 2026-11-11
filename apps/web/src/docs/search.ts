@@ -44,7 +44,8 @@ export function buildSearchDocs(pages: readonly DocPage[]): SearchDoc[] {
 
 // Words that match nearly every page, so in a question ("how do I…", "ik wil geen…") they made
 // the longest pages win. "who" / "wie" stay: "Who sees a copy" is a heading. MiniSearch splits
-// words at an apostrophe, so "can't" arrives as "can" and "t".
+// words at an apostrophe, so "can't" arrives as "can" and "t". "meer" is the "no longer" of
+// "niet meer".
 const STOP_WORDS: Readonly<Record<string, ReadonlySet<string>>> = {
   en: new Set(
     "a an the i im my me we our you your do does did how to of in on at for is are was be can cant could what why when where which with and or it its this that from as by not no if so get got".split(
@@ -52,7 +53,7 @@ const STOP_WORDS: Readonly<Record<string, ReadonlySet<string>>> = {
     ),
   ),
   nl: new Set(
-    "de het een ik je jij jou mijn me mij we wij ons hoe wat waarom wanneer waar kan kun kunnen niet geen in op aan van voor met en of te is er dat die dit zijn word wordt ben bij om naar dan als ook nog".split(
+    "de het een ik je jij jou mijn me mij we wij ons hoe wat waarom wanneer waar kan kun kunnen niet geen in op aan van voor met en of te is er dat die dit zijn word wordt ben bij om naar dan als ook nog meer".split(
       " ",
     ),
   ),

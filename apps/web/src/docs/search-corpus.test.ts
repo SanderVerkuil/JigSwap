@@ -44,9 +44,13 @@ describe("docs search over the real guides", () => {
     ).toContain("sharing-and-exchanges/lend-swap-trade");
   });
 
+  // In the two rows a phone shows: "meer" once matched a FAQ question about a partner who no
+  // longer answers.
   it("finds Meldingen for a member who wants no more mail", () => {
     expect(
-      top3("nl", "ik wil geen mails meer krijgen").map((hit) => hit.slug),
+      top3("nl", "ik wil geen mails meer krijgen")
+        .slice(0, 2)
+        .map((hit) => hit.slug),
     ).toContain("staying-informed/notifications");
   });
 
