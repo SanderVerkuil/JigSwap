@@ -12,6 +12,10 @@ Je profiel is je openbare gezicht op JigSwap. Het toont:
 
 - Een **identiteitskop**: avatar, naam, een meta-rij en je vertrouwens-/reputatiebadge.
 - Een **bewerkknop** die een inline formulier opent om je **weergavenaam**, **bio**, **locatie** en andere identiteitsvelden bij te werken.
+  In hetzelfde formulier stel je je **Gebruikersnaam** en **Eigen link** in. Je
+  profieladres gebruikt een van de twee, en **Toon mijn QR** heeft dat nodig
+  (zie
+  [Vrienden uitnodigen](/docs/discovering-and-community/people-and-following#vrienden-uitnodigen)).
 - **"De plank van {jouw naam}"** — een **3D-plank op basis van fysica** die je recente exemplaren als objecten op een plank toont.
 - Vier **statistiekkolommen**.
 - Een sectie **ontvangen reputatie** met beoordelingen die anderen je hebben gegeven.

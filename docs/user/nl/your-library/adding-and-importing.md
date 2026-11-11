@@ -61,6 +61,9 @@ Op een breed scherm staan een **live voorbeeldkaart** en een **gereedheidscheckl
 (`/my-puzzles/add/quick`).
 
 Gebruik dit om je plank snel te vullen, bijvoorbeeld als je net lid bent.
+Importeren uit een spreadsheet kan niet: JigSwap kan geen CSV- of
+Excel-bestand inlezen. Hier je puzzels kiezen is dus de snelste manier om een
+lange lijst toe te voegen.
 
 1. Klik bovenaan de keuzepagina op **Meerdere toevoegen**.
 2. Zoek in de catalogus op titel, merk of barcode.

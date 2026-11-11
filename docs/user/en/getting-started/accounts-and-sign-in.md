@@ -23,6 +23,16 @@ JigSwap uses a secure sign-in system (powered by Clerk). You'll need an account 
 
 > **Tip:** If you try to open any private page (your library, trades, profile, etc.) while signed out, JigSwap automatically sends you to the sign-in screen and brings you back to where you were headed after you log in.
 
+### Forgot your password?
+
+1. Click **Log in**, enter your email address or username and click
+   **Continue**.
+2. Click **Forgot password?** and follow the steps: you enter a code sent to
+   your email address, then choose a new password.
+
+If you signed up with Google, there's no JigSwap password: use
+**Continue with Google** instead.
+
 ## Public pages (no account needed)
 
 Anyone can read these pages without signing in:
@@ -35,6 +45,16 @@ Anyone can read these pages without signing in:
   [Visibility & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 - [Contact](/contact), the [Privacy policy](/privacy) and the
   [Terms of service](/terms).
+
+## Delete your account
+
+1. Click your avatar to open the account menu and choose **Manage account**.
+2. Open **Security**.
+3. Click **Delete account**, type "Delete account" to confirm, and click
+   **Delete account** again.
+
+Deleting your account can't be undone. Below is what it removes and what
+stays.
 
 ## When you delete your account
 

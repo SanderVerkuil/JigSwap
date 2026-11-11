@@ -30,3 +30,24 @@ De catalogus is de door de community samengestelde lijst met goedgekeurde puzzel
 - Open een definitie (`/puzzles/<id>`) om de omslag te zien, de beoordeling met opbouw, de moeilijkheid, chips voor categorie/tags, communitystatistieken (eigenaren, voltooiingen, gemiddeld aantal oplosdagen, exemplaren beschikbaar om te ruilen) en een lijst met beschikbare exemplaren en hun eigenaren. Op een telefoon of tablet knijp je in de omslag om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te zoomen.
 - Bezit je hem, dan zie je een eigendomsbanner met een link naar je exemplaar.
 - Je kunt hem vanaf deze pagina **toevoegen aan je bibliotheek**, een **beoordeling schrijven** of een **nieuwe definitie bijdragen**.
+
+## Onjuiste gegevens van een catalogus-puzzel verbeteren
+
+Klopt het aantal stukjes, de barcode of de foto niet? Stel een correctie voor:
+
+1. Open de puzzel in de **Puzzelcatalogus** en klik op
+   **Wijziging voorstellen**.
+2. Pas aan wat er niet klopt. Bij **Waarom deze wijziging?** kun je zeggen hoe
+   je het weet, bijvoorbeeld dat er op de doos 500 stukjes staat.
+3. Klik op **Voorstel indienen**.
+
+Een beheerder controleert je voorstel voordat de catalogus verandert. Je kunt
+per puzzel één open voorstel hebben.
+
+Wil je je voorstellen volgen, open dan **Mijn puzzels**, klik op **⋯**
+(**Meer acties**) en kies **Mijn voorstellen**. Bij elk voorstel zie je of het
+**In behandeling**, **Goedgekeurd** of **Afgewezen** is, met de reden van de
+beheerder. Zolang het in behandeling is, kun je het **Bewerken** of
+**Intrekken**. Je krijgt ook een melding als het is goedgekeurd of afgewezen;
+die meldingen staan onder **Mijn inzendingen** in je
+[meldingsvoorkeuren](/docs/staying-informed/notifications#meldingsvoorkeuren).

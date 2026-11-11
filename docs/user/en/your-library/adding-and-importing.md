@@ -57,7 +57,9 @@ On a wide screen, a **live preview card** and a **readiness checklist** sit alon
 
 **Where:** **My Puzzles → Add Puzzle → Add several** (`/my-puzzles/add/quick`).
 
-Use this to fill your shelf quickly, for example when you first join.
+Use this to fill your shelf quickly, for example when you first join. There's
+no spreadsheet import: JigSwap can't read a CSV or Excel file, so picking your
+puzzles here is the quickest way to add a long list.
 
 1. Click **Add several** at the top of the chooser page.
 2. Search the catalogue by title, brand or barcode.
