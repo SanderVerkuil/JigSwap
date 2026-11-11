@@ -96,7 +96,9 @@ function DocPageView() {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_220px] max-[1280px]:grid-cols-1 gap-x-[clamp(24px,3vw,56px)] items-start">
-      <article className="max-w-[620px] min-w-0">
+      {/* About 74 characters a line: 620px at 18px where the sidebar shows (docs.css), 576px at
+          17px below 861px, where 620px ran 79. */}
+      <article className="max-w-[620px] max-[861px]:max-w-[36rem] min-w-0">
         <DocBreadcrumb trail={trail} />
         <h1 className="font-mk-heading font-normal tracking-[-0.01em] text-mk-text-strong text-[clamp(30px,4vw,44px)] leading-[1.1] mb-5 text-balance">
           {page.frontmatter.title}

@@ -235,6 +235,18 @@ describe("docs page landmarks", () => {
     expect(within(toc).getByRole("link", { name: "One" })).toBeTruthy();
   });
 
+  // Item 9: 620px holds about 74 characters at the 18px the text takes from 861px, but at 17px
+  // below that a tablet's lines ran 79. 36rem brings them back to about 72.
+  it("narrows the article to 36rem below 861px, where the text is 17px", () => {
+    render(withIntl(<docPage.component />));
+    const article = screen
+      .getByRole("heading", { level: 1 })
+      .closest("article") as HTMLElement;
+    expect(article.className.split(" ")).toEqual(
+      expect.arrayContaining(["max-w-[620px]", "max-[861px]:max-w-[36rem]"]),
+    );
+  });
+
   it("starts at one h1, the page's own title", () => {
     render(withIntl(<docPage.component />));
     expect(

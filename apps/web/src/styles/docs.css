@@ -11,7 +11,7 @@
   text-wrap: pretty;
 }
 /* Where the sidebar shows, the text steps up to 18px in the article's 620px column ($.tsx),
-   about 74 characters a line, with the same 29.7px line spacing. */
+   about 74 characters a line, with the same 29.7px line spacing. Below it the column is 576px. */
 @media (width >= 861px) {
   .docs-prose {
     font-size: 18px;
