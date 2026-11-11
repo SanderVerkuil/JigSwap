@@ -5,23 +5,52 @@ import {
 } from "@/components/ui/collapsible";
 import { buildNavTree, pagesForLocale } from "@/docs/nav";
 import { cn } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 import { DocsSearchPill } from "./docs-search-pill";
 import { OnThisPageLink } from "./on-page-toc";
 
+// The box the sidebar scrolls in: the sticky aside beside the article, or the phone sheet.
+function scrollParent(node: HTMLElement): HTMLElement | null {
+  for (let el = node.parentElement; el; el = el.parentElement) {
+    if (/auto|scroll/.test(getComputedStyle(el).overflowY)) return el;
+  }
+  return null;
+}
+
 export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const t = useTranslations("marketing.docs");
   const locale = useLocale();
+  const { pathname } = useLocation();
   const navTree = useMemo(
     () => buildNavTree(pagesForLocale(pages, locale)),
     [locale],
   );
+  // The current page's link starts in view, about a third of the way down, when it would be off
+  // screen (a page far down the list, opened from a link or a search). Only the sidebar's own box
+  // scrolls: scrollIntoView would move the page too. A link already in view stays put, so the one
+  // just clicked doesn't move under the pointer.
+  const navRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const link = navRef.current?.querySelector<HTMLElement>(
+      'a[aria-current="page"]',
+    );
+    const box = link && scrollParent(link);
+    if (!link || !box) return;
+    const view = box.getBoundingClientRect();
+    const { top, bottom } = link.getBoundingClientRect();
+    if (top >= view.top && bottom <= view.bottom) return;
+    box.scrollTop += top - view.top - view.height / 3;
+  }, [pathname]);
   return (
-    <nav aria-label={t("navLabel")} className="flex flex-col gap-1">
+    <nav
+      ref={navRef}
+      aria-label={t("navLabel")}
+      className="flex flex-col gap-1"
+    >
       <DocsSearchPill onOpenSearch={onOpenSearch} />
       {/* From 861 to 1279px neither the rail beside the article nor the phone Docs bar shows; the
           sticky sidebar keeps the way back to the contents folded in under the title in reach. */}

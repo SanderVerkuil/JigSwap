@@ -187,6 +187,39 @@ describe("LegalDoc contents", () => {
     expect(scrollTo).not.toHaveBeenCalled();
     scrollTo.mockRestore();
   });
+
+  // F14: where the rail is taller than the window it scrolls on its own, and the current entry
+  // could sit below its fold.
+  it("scrolls the rail, not the page, to keep the current entry in view", () => {
+    // A 100px rail with its entries 200px apart. happy-dom has no layout, so every section's top
+    // is 0 and the last one is current.
+    const rect = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        const rail = this.closest("aside");
+        if (this === rail)
+          return { top: 0, bottom: 100, height: 100 } as DOMRect;
+        if (!rail || this.tagName !== "A") return { top: 0 } as DOMRect;
+        const top =
+          40 +
+          200 *
+            Array.from(rail.querySelectorAll("a")).indexOf(
+              this as HTMLAnchorElement,
+            ) -
+          rail.scrollTop;
+        return { top, bottom: top + 30, height: 30 } as DOMRect;
+      });
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    const { container } = renderDoc();
+    const rail = container.querySelector("aside") as HTMLElement;
+    const current = within(rail).getByRole("link", { current: true });
+
+    expect(current.textContent).toBe("2. Cookies");
+    expect(current.getBoundingClientRect().bottom).toBe(100 - 24);
+    expect(scrollTo).not.toHaveBeenCalled();
+    rect.mockRestore();
+    scrollTo.mockRestore();
+  });
 });
 
 describe("LegalDoc sections", () => {

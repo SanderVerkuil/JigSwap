@@ -1,5 +1,9 @@
 import type { DocHeading } from "@/docs/types";
-import { isPlainClick, useActiveHeading } from "@/hooks/use-active-heading";
+import {
+  isPlainClick,
+  useActiveHeading,
+  useRailFollowsActive,
+} from "@/hooks/use-active-heading";
 import { cn } from "@/lib/utils";
 import { ChevronDown, TableOfContents } from "lucide-react";
 import * as React from "react";
@@ -22,6 +26,8 @@ export function OnPageToc({
   const t = useTranslations("marketing.docs");
   const labelId = React.useId();
   const [active, pick] = useActiveHeading(headings);
+  const railRef = React.useRef<HTMLElement>(null);
+  useRailFollowsActive(railRef, active);
 
   if (headings.length === 0) return null;
   const links = headings.map((h) => (
@@ -78,7 +84,11 @@ export function OnPageToc({
   }
 
   return (
-    <aside aria-labelledby={labelId} className={cn("self-start", className)}>
+    <aside
+      ref={railRef}
+      aria-labelledby={labelId}
+      className={cn("self-start", className)}
+    >
       <div
         id={labelId}
         className="font-mk-heading text-[17px] text-mk-text-strong mb-3"

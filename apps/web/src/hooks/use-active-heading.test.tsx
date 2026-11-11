@@ -6,8 +6,9 @@ import {
   render,
   screen,
 } from "@testing-library/react";
+import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useActiveHeading } from "./use-active-heading";
+import { useActiveHeading, useRailFollowsActive } from "./use-active-heading";
 
 const items = [{ id: "a" }, { id: "b" }, { id: "c" }];
 
@@ -111,5 +112,76 @@ describe("useActiveHeading", () => {
     // A pixel of rounding is not a scroll back up.
     scrollTo({ a: -719, b: 77, c: 113 });
     expect(current()).toBe("b");
+  });
+});
+
+// F14: a long article's rail scrolls on its own, and its current entry used to slip out of view.
+describe("useRailFollowsActive", () => {
+  // A 300px rail at y=100 with 30px entries at 40, 400 and 800px down its list.
+  const offsets: Record<string, number> = { a: 40, b: 400, c: 800 };
+  let railHeight = 300;
+
+  function Rail({ active }: { active: string }) {
+    const ref = React.useRef<HTMLElement>(null);
+    useRailFollowsActive(ref, active);
+    return (
+      <nav ref={ref} id="rail">
+        {Object.keys(offsets).map((id) => (
+          <a
+            key={id}
+            id={`entry-${id}`}
+            aria-current={active === id ? "true" : undefined}
+          >
+            {id}
+          </a>
+        ))}
+      </nav>
+    );
+  }
+
+  beforeEach(() => {
+    railHeight = 300;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        if (this.id === "rail") {
+          return {
+            top: 100,
+            bottom: 100 + railHeight,
+            height: railHeight,
+          } as DOMRect;
+        }
+        const scrolled = document.getElementById("rail")?.scrollTop ?? 0;
+        const top = 100 + offsets[this.id.replace("entry-", "")] - scrolled;
+        return { top, bottom: top + 30, height: 30 } as DOMRect;
+      },
+    );
+  });
+
+  const rail = () => document.getElementById("rail") as HTMLElement;
+
+  it("scrolls the rail just far enough to show the current entry 24px from its edge", () => {
+    const { rerender } = render(<Rail active="a" />);
+    expect(rail().scrollTop).toBe(0);
+
+    // c's bottom sits at 930, 554px past the rail's bottom less its margin (376).
+    rerender(<Rail active="c" />);
+    expect(rail().scrollTop).toBe(554);
+
+    // Back up: b's top (500 - 554 = -54) comes down to 124.
+    rerender(<Rail active="b" />);
+    expect(rail().scrollTop).toBe(376);
+  });
+
+  it("leaves the rail alone while the current entry is in view", () => {
+    const { rerender } = render(<Rail active="a" />);
+    rail().scrollTop = 300;
+    rerender(<Rail active="b" />);
+    expect(rail().scrollTop).toBe(300);
+  });
+
+  it("leaves a hidden rail alone", () => {
+    railHeight = 0;
+    render(<Rail active="c" />);
+    expect(rail().scrollTop).toBe(0);
   });
 });

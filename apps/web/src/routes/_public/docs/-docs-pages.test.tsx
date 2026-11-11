@@ -34,6 +34,7 @@ vi.mock("@tanstack/react-router", () => ({
   notFound: () => NOT_FOUND,
   useLocation: (opts?: { select?: (l: typeof location) => unknown }) =>
     opts?.select ? opts.select(location) : location,
+  useRouter: () => ({ navigate: vi.fn() }),
   Link: ({
     to,
     params: _params,
