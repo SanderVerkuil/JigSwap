@@ -6,5 +6,4 @@ summary: "Fixes for exchanges that won't complete, messages you can't send, noti
 
 # Help
 
-Something not working? Start with
-[FAQ & troubleshooting](/docs/help/faq-and-troubleshooting).
+Something not working? Start here.

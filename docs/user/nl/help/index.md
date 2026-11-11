@@ -6,5 +6,4 @@ summary: "Oplossingen voor uitwisselingen die niet worden afgerond, berichten di
 
 # Hulp
 
-Werkt er iets niet? Begin bij
-[Veelgestelde vragen en problemen oplossen](/docs/help/faq-and-troubleshooting).
+Werkt er iets niet? Begin hier.
