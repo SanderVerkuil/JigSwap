@@ -245,6 +245,17 @@ describe("My Puzzles coachmark in the browser", () => {
     expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
   });
 
+  // With storage switched off (Firefox's dom.storage.enabled) localStorage is null, while cookies,
+  // and so signing in, still work: the page still opens, and X still dismisses into the cookie.
+  it("opens and dismisses with storage switched off", () => {
+    vi.stubGlobal("localStorage", null);
+    stubPlatform("Win32");
+    render(page());
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss hint" }));
+    expect(screen.queryByText(body)).toBeNull();
+    expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
+  });
+
   // Every dismissal from before the cookie is in localStorage alone, which the server can't read,
   // so that member's first My Puzzles after it still has the hint in its HTML. The page's head
   // script hides it before the first paint, so hydration taking it out moves nothing.

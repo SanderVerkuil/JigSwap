@@ -68,6 +68,7 @@ import {
 } from "@/lib/coachmark-state";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
+import { safeStorage } from "@/lib/safe-storage";
 import { loadMemberDataOnServer } from "@/lib/ssr-member-data";
 import { convexQuery } from "@convex-dev/react-query";
 import type { HouseholdCopyPermission, LoanView } from "@jigswap/contracts";
@@ -150,10 +151,11 @@ function subscribeCoachmark(listener: () => void) {
 }
 
 // The browser's answer: the cookie, or a dismissal from before it that only localStorage holds.
+// Through safeStorage: with storage blocked, a bare read throws and takes the page down with it.
 function coachmarkDismissedInBrowser() {
   return (
     parseCoachmarkDismissed(document.cookie) ||
-    localStorage.getItem(COACHMARK_STORAGE_KEY) === "1"
+    safeStorage.getItem("local", COACHMARK_STORAGE_KEY) === "1"
   );
 }
 
@@ -177,7 +179,7 @@ function ActionsCoachmark() {
 
   const handleDismiss = () => {
     writeCoachmarkDismissed();
-    localStorage.setItem(COACHMARK_STORAGE_KEY, "1");
+    safeStorage.setItem("local", COACHMARK_STORAGE_KEY, "1");
     coachmarkListeners.forEach((listener) => listener());
   };
 
