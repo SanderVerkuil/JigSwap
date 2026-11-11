@@ -4210,6 +4210,7 @@
       "pagerLabel": "Previous and next page",
       "mobileNavButton": "Docs<sr> (open navigation)</sr>",
       "mobileSearch": "Search documentation",
+      "mobileBarLabel": "Docs bar",
       "helpfulQuestion": "Was this page helpful?",
       "helpfulYes": "Yes",
       "helpfulNo": "Not really",

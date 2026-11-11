@@ -1,4 +1,5 @@
 import { Link } from "@/compat/link";
+import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import { useTranslations } from "use-intl";
 
@@ -11,19 +12,27 @@ export function DocBreadcrumb({
   return (
     <nav
       aria-label={t("breadcrumbLabel")}
-      // Wraps between crumbs, so each keeps its text on one line unless that alone is too wide.
+      // Wraps between crumbs, and the links keep their text on one line. The page's own title may
+      // wrap too, where it alone is wider than the column (a long Dutch title on a phone).
       className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[14px] text-mk-text-muted mb-4"
     >
       {trail.map((c, i) => {
         // Only the page itself is current; TanStack would also mark the links to its parents.
         const last = i === trail.length - 1;
         return (
-          <span key={i} className="flex items-center gap-1.5 whitespace-nowrap">
+          <span
+            key={i}
+            className={cn(
+              "flex items-center gap-1.5",
+              !last && "whitespace-nowrap",
+            )}
+          >
             {c.to ? (
               <Link
                 href={c.to}
                 activeOptions={{ exact: true }}
-                className="hover:text-mk-text-strong"
+                // A 44px hit area on touch screens that doesn't push the title down.
+                className="relative hover:text-mk-text-strong pointer-coarse:after:absolute pointer-coarse:after:-inset-x-2 pointer-coarse:after:-inset-y-3"
               >
                 {c.title}
               </Link>

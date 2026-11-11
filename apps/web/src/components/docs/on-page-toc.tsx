@@ -41,6 +41,8 @@ export function OnPageToc({
       className={cn(
         "py-[5px] px-2.5 rounded-sm text-[14px] leading-snug transition-colors duration-150",
         h.depth === 3 && "pl-5",
+        // The folded block is what phones get: a 44px row on touch screens.
+        variant === "details" && "flex items-center pointer-coarse:min-h-11",
         active === h.id
           ? cn(
               // On the folded block's Sky Soft fill the current entry is a white window instead.

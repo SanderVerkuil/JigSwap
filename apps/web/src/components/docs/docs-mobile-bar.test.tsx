@@ -52,6 +52,26 @@ describe("DocsMobileBar", () => {
     },
   );
 
+  // axe flagged its controls as outside every landmark ("region") on each phone article.
+  it.each([
+    ["en", "Docs bar"],
+    ["nl", "Documentatiebalk"],
+  ] as const)("is a named navigation landmark (%s)", (locale, name) => {
+    renderBar(locale);
+    const bar = screen.getByRole("navigation", { name });
+    expect(bar.hasAttribute("data-docs-bar")).toBe(true);
+    expect(bar.querySelectorAll("button")).toHaveLength(2);
+  });
+
+  // At 320px in Dutch the label squeezed the icon to 0px wide.
+  it("never squeezes the navigation button's icon", () => {
+    renderBar("nl");
+    const icon = screen
+      .getByRole("button", { name: /^Documentatie \(/ })
+      .querySelector("svg");
+    expect(icon?.getAttribute("class")).toContain("shrink-0");
+  });
+
   it("keeps a named search button", () => {
     const { onOpenSearch } = renderBar("en");
     fireEvent.click(

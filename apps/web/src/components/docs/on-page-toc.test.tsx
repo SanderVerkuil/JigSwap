@@ -17,7 +17,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const renderToc = () =>
+const renderToc = (variant?: "details") =>
   render(
     <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
       {headings.map((h) => (
@@ -25,9 +25,29 @@ const renderToc = () =>
           {h.text}
         </h2>
       ))}
-      <OnPageToc headings={headings} />
+      <OnPageToc headings={headings} variant={variant} />
     </IntlProvider>,
   );
+
+// The folded block is the contents on a phone, and its 23 Messages links measured 29px.
+describe("OnPageToc folded block", () => {
+  it("gives each entry a 44px row on touch screens", () => {
+    const { container } = renderToc("details");
+    const links = (
+      container.querySelector("details") as HTMLElement
+    ).querySelectorAll("a");
+    expect(links).toHaveLength(3);
+    for (const link of links) {
+      expect(link.className.split(" ")).toEqual(
+        expect.arrayContaining([
+          "pointer-coarse:min-h-11",
+          "flex",
+          "items-center",
+        ]),
+      );
+    }
+  });
+});
 
 // F14: 6 of Messages' 23 entries slipped out of the rail when current at 1280×720.
 describe("OnPageToc rail", () => {

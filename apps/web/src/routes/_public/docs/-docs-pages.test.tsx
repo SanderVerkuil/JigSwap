@@ -382,6 +382,50 @@ describe("docs breadcrumb", () => {
       "Getting started",
     );
   });
+
+  // The Dutch FAQ's title ran 15px past the column at 320px, and the crumb links were 21px targets
+  // on touch screens. A min-height would have pushed the title down about 50px.
+  it("lets the page's own title wrap and widens the links' touch area around them", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+
+    expect(
+      Array.from(nav.children, (crumb) =>
+        crumb.className.split(" ").includes("whitespace-nowrap"),
+      ),
+    ).toEqual([true, true, false]);
+    for (const link of crumbs().getAllByRole("link")) {
+      expect(link.className.split(" ")).toEqual(
+        expect.arrayContaining([
+          "relative",
+          "pointer-coarse:after:absolute",
+          "pointer-coarse:after:-inset-y-3",
+        ]),
+      );
+      expect(link.className).not.toContain("min-h-11");
+    }
+  });
+});
+
+describe("docs group page", () => {
+  beforeEach(async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started" },
+      context: { intl: { locale: "en" } },
+    });
+  });
+
+  // It has no previous or next page, and the empty landmark was all a screen reader found.
+  it("has no pager", () => {
+    render(withIntl(<docPage.component />));
+    expect(
+      screen.queryByRole("navigation", { name: "Previous and next page" }),
+    ).toBeNull();
+  });
 });
 
 describe("docs landing", () => {

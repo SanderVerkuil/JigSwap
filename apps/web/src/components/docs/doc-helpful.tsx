@@ -15,9 +15,9 @@ export function DocHelpful({ slug }: { slug: string }) {
   // The backend stores only the locales the app ships.
   const locale = useLocale() === "nl" ? "nl" : "en";
   const t = useTranslations("marketing.docs");
-  const [state, setState] = React.useState<"idle" | "negative" | "done">(
-    "idle",
-  );
+  const [state, setState] = React.useState<
+    "idle" | "negative" | "done" | "doneNegative"
+  >("idle");
   const [comment, setComment] = React.useState("");
   const sending = submit.isPending;
 
@@ -30,7 +30,6 @@ export function DocHelpful({ slug }: { slug: string }) {
     try {
       await submit.mutateAsync({ slug, helpful: true, locale });
       setState("done");
-      toast.success(t("helpfulThanks"));
     } catch {
       // Keep the buttons usable so the reader can retry.
       toast.error(t("helpfulError"));
@@ -46,17 +45,20 @@ export function DocHelpful({ slug }: { slug: string }) {
         comment: comment.trim() || undefined,
         locale,
       });
-      setState("done");
-      toast.success(t("helpfulThanksNegative"));
+      setState("doneNegative");
     } catch {
       toast.error(t("helpfulError"));
     }
   };
 
-  if (state === "done") {
+  // The thanks takes the question's place, once; a toast on top of it thanked the reader twice.
+  if (state === "done" || state === "doneNegative") {
     return (
-      <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4 text-[16px] text-mk-text-strong font-medium">
-        {t("helpfulThanks")}
+      <div
+        role="status"
+        className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4 text-[16px] text-mk-text-strong font-medium"
+      >
+        {t(state === "done" ? "helpfulThanks" : "helpfulThanksNegative")}
       </div>
     );
   }
