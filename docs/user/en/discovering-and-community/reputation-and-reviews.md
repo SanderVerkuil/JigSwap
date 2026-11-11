@@ -14,4 +14,4 @@ A partner review includes:
 - Four sub-scores: **communication**, **packaging**, **condition**, and **timeliness**.
 - An optional **text comment**.
 
-To leave one, complete an exchange and use **Leave Review** on the completed exchange (in **Trades**). You can't review yourself. Your received reviews roll up into a **reputation badge** (average rating + a credibility score) shown on your profile.
+To leave one, complete an exchange and use **Leave a review** on the completed exchange (in **Exchanges**). You can't review yourself. Your received reviews roll up into a **reputation badge** (average rating + a credibility score) shown on your profile.

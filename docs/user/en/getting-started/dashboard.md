@@ -19,6 +19,9 @@ Your dashboard is a personal briefing that summarizes your puzzle life at a glan
 - A **3D shelf** ("plank") showing your real puzzle copies as physical objects you can look at.
 - **Live stats**: how many puzzles you own. Trades completed, your average
   rating, and active exchanges join in once you have your first exchange or review.
+- **Solving now**: the puzzles you've started and not finished yet, each with
+  **Finish** to log the solve. When nothing is in progress, it links to your
+  puzzles to start one.
 - A **pulse section**: exchanges in motion, goal progress, and your latest activity.
 - A **fresh-puzzles scroller** with the puzzles you added most recently, once
   you have more than fit on your shelf.

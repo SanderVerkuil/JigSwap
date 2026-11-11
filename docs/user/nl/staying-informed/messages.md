@@ -66,7 +66,7 @@ een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
 
 **Over een specifieke puzzel:**
 
-1. Open de puzzelkopie (via **Bladeren** of het profiel van een lid).
+1. Open de puzzelkopie (via **Puzzels ontdekken** of het profiel van een lid).
 2. Klik op **Bericht**.
 3. Schrijf je eerste bericht. De puzzel wordt eraan toegevoegd, zodat de
    eigenaar weet welke je bedoelt.

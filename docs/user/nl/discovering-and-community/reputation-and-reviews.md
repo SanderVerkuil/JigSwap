@@ -14,4 +14,4 @@ Een partnerbeoordeling bevat:
 - Vier deelscores: **communicatie**, **verpakking**, **conditie** en **tijdigheid**.
 - Een optionele **tekstopmerking**.
 
-Om er een achter te laten, rond je een uitwisseling af en gebruik je **Beoordeling achterlaten** op de afgeronde uitwisseling (in **Uitwisselingen**). Je kunt jezelf niet beoordelen. Je ontvangen beoordelingen worden samengevoegd tot een **reputatiebadge** (gemiddelde waardering + een geloofwaardigheidsscore) die op je profiel wordt getoond.
+Om er een achter te laten, rond je een uitwisseling af en gebruik je **Laat een review achter** op de afgeronde uitwisseling (in **Uitwisselingen**). Je kunt jezelf niet beoordelen. Je ontvangen beoordelingen worden samengevoegd tot een **reputatiebadge** (gemiddelde waardering + een geloofwaardigheidsscore) die op je profiel wordt getoond.

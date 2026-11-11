@@ -24,9 +24,10 @@ JigSwap ondersteunt drie soorten uitwisselingen:
 
 - **Vanuit een catalogus-puzzel:** klik op de pagina van de puzzel op
   **Vind een exemplaar om te ruilen** of
-  **Bekijk alle _N_ beschikbare exemplaren →**. Dan opent **Bladeren**, gefilterd
+  **Bekijk alle _N_ beschikbare exemplaren →**. Dan opent **Puzzels ontdekken**, gefilterd
   op die puzzel. Haal het puzzelfilter weg om weer alle puzzels te zien.
-- **Vanuit Bladeren:** open een exemplaar om de pagina ervan te zien.
+- **Vanuit het overzicht:** open in **Puzzels ontdekken** een exemplaar om de
+  pagina ervan te zien.
 
 De pagina van een exemplaar toont de **Eigenaar**. De naam linkt naar diens
 profiel als je dat kunt zien. Is het profiel van de eigenaar voor jou
@@ -38,7 +39,7 @@ verborgen, dan staat er **Anonieme gebruiker**.
    de eigenaar aanbiedt: **Vragen om te lenen**, **Ruil aanvragen** of
    **Vragen om te kopen**, of **Aanvragen…** als de eigenaar meer dan één ding
    aanbiedt. Je kunt ook de aanvraagknop op de kaart van een exemplaar in
-   **Bladeren** gebruiken.
+   **Puzzels ontdekken** gebruiken.
 2. Kies in het venster **Deze puzzel aanvragen** een **Soort uitwisseling**. Je
    ziet alleen de soorten die de eigenaar aanbiedt:
    - **Ruilen** — kies de **Puzzel die je aanbiedt** uit je bibliotheek. Zit je

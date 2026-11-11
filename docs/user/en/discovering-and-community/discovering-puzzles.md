@@ -18,11 +18,11 @@ Browse searches all community-owned copies that are currently **available** (for
    - Category, difficulty, condition.
    - Piece-count range.
    - Availability flags (for trade / lend / sale).
-3. Results appear as a grid or list of cards, each showing the owner, a swap/lend/sale badge, and quick actions: **View**, **Request Exchange**, **Message**, **Favorite**.
+3. Results appear as a grid or list of cards, each showing the owner and a swap/lend/sale badge. The card's button names the offer: **Ask to borrow**, **Request swap**, **Ask to buy**, or **Request…** when the owner offers more than one. The icons message the owner and add a favourite, and clicking the card opens the copy. See [Request a copy](/docs/sharing-and-exchanges/lend-swap-trade#request-a-copy).
 
 ## The puzzle catalogue
 
-**Where:** **Puzzles** (`/puzzles`).
+**Where:** **Puzzles catalogue** (`/puzzles`).
 
 The catalogue is the community-curated list of approved puzzle definitions (not individual copies).
 

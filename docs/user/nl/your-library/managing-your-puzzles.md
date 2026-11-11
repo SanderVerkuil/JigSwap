@@ -12,7 +12,8 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
 
 ## Je puzzels bekijken
 
-1. Open **Mijn puzzels** vanuit de zijbalk of de tabbalk.
+1. Open **Mijn puzzels** vanuit de zijbalk. Op een telefoon tik je op het
+   tabblad **Bibliotheek** en dan op **Mijn puzzels**.
 2. Wissel tussen de weergaven **raster** en **lijst**.
 3. Typ in het **zoekvak** om puzzels te vinden op titel, merk of tag. Elk
    woord dat je typt moet erin voorkomen; hoofdletters en accenten maken niet
@@ -24,6 +25,7 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
    - **Beschikbaar**
    - **Te ruil**
    - **Te leen**
+   - **Uitgeleend**
    - **Bezig**
    - **Voltooid**
 6. Zit er nog iemand in je huishouden, dan kies je in het menu **Van wie** of
@@ -43,16 +45,19 @@ Elke puzzelkaart toont de conditie (een gekleurde stip met een woord als **Goed*
 
 ## Acties op elke puzzel
 
-Vanaf een puzzelkaart kun je:
+Klik op een puzzelkaart om de detailpagina te openen. Het ⋯-menu van de kaart
+biedt:
 
-- **Bekijken** — open de volledige detailpagina van de kopie.
+- **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
 - **Bewerken** — wijzig de details van de kopie.
 - **Aanbieden voor ruil** en **Aanbieden om uit te lenen** — zet dat aanbod aan of uit, en maak het zo nodig ongedaan.
+- **Delen met kringen…** — deel het exemplaar met kringen die je kiest.
+- **Aan collectie toevoegen** — zet het exemplaar in een van je collecties.
 - **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
-- **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
-- **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
-  lening af. JigSwap vraagt eerst om bevestiging en laat daarna weten of het
-  gelukt is.
+
+De kaart van een uitgeleende puzzel heeft ook een knop **Terugvragen**: heb je
+de puzzel terug, dan sluit je hiermee de lening af. JigSwap vraagt eerst om
+bevestiging en laat daarna weten of het gelukt is.
 
 ## Veel puzzels tegelijk wijzigen
 
@@ -81,7 +86,7 @@ een kring delen. Met **Klaar** stop je met selecteren.
 
 ## De detailpagina van een kopie
 
-**Waar:** klik op **Bekijken** bij een puzzel, of ga naar `/my-puzzles/<id>`.
+**Waar:** klik op een puzzelkaart, of ga naar `/my-puzzles/<id>`.
 
 De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
 
@@ -107,7 +112,7 @@ De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
   mag zien. Op je eigen kopie staat je naam gevolgd door "· jij". Houdt de
   eigenaar het profiel voor jou verborgen, dan staat er **Anonieme gebruiker**.
 - Een **fotostrook** met een lightbox. Als eigenaar kun je foto's uploaden, een omslagafbeelding instellen en per foto opmerkingen achterlaten.
-- Een **geschiedenis** in twee kolommen: je voltooiingstijdlijn (met beoordelingen), uitleengeschiedenis (met statuspillen) en ruil-/overdrachtsgeschiedenis.
+- Een **geschiedenis** in twee kolommen: je voltooiingstijdlijn (met beoordelingen), uitleengeschiedenis (met statuslabels) en ruil-/overdrachtsgeschiedenis.
   Heeft iemand uit die geschiedenis zijn account verwijderd, dan blijven diens
   regels staan, als **Verwijderd lid**, zonder naam, foto of link.
 - Een **opbouw van de communitybeoordeling** en een opmerkingengebied.

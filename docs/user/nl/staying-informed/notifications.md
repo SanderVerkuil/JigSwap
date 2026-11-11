@@ -26,9 +26,11 @@ de huidige status van een ruil.
   gelezen gemarkeerd.
 - Gebruik **Markeren als gelezen** voor één melding, of **Alles markeren als
   gelezen** voor allemaal.
-- De pagina Meldingen groepeert meldingen onder **Vandaag**, **Gisteren** en
-  **Eerder**. Filter met **Alle** of **Alleen ongelezen**, en druk onderaan op
-  **Meer laden** om oudere meldingen te zien.
+- De pagina Meldingen groepeert meldingen onder **Vandaag**, **Gisteren**,
+  **Deze week**, **Deze maand** en **Eerder**. Filter ze op categorie
+  (bijvoorbeeld **Uitwisselingen** of **Berichten**, of **Alle**), zet
+  **Alleen ongelezen** aan om gelezen meldingen te verbergen, en druk onderaan
+  op **Meer laden** om oudere meldingen te zien.
 - Gaan meerdere mensen je rond hetzelfde moment volgen, dan worden ze
   samengevoegd in één melding, zoals "**Mara**, **Joost** en 3 anderen volgen
   je nu."

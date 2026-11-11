@@ -15,8 +15,9 @@ Most pages also show a **primary action button** (for example, _Add Puzzle_) and
 
 ## Your account menu
 
-Click your avatar to open the account menu. Besides **Profile**,
-**Preferences**, **Notifications** and **Privacy & safety**, it has:
+Click your avatar to open the account menu. **Preferences**,
+**Notifications** and **Privacy & safety** are inside **Manage account**.
+Besides **Profile** and **Manage account**, the menu has:
 
 - **What's new**, on a phone: recent features and fixes (see below). On
   desktop it's at the foot of the sidebar instead, just above your account.

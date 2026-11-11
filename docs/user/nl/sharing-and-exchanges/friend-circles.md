@@ -158,7 +158,7 @@ en op de pagina van de kring.
 
 Heb je **Alleen bekijken**, dan is de aanvraagknop op een gedeelde puzzel
 (zoals **Ruil aanvragen**) grijs, met "Je mag in deze kring alleen bekijken", en toont
-**Bladeren** de puzzel zonder aanvraagknop.
+**Puzzels ontdekken** de puzzel zonder aanvraagknop.
 
 Je recht telt alleen voor puzzels die je via die kring bereikt. Je kunt een
 puzzel toch aanvragen als je hem ook op een andere manier bereikt: je hebt

@@ -45,7 +45,7 @@ Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
   ruil krijgt een melding dat die is geannuleerd.
 - Je puzzels worden verwijderd, met hun foto's, notities en voltooiingen, net
   als je andere foto's en voltooiingen, je doelen, collecties, verlanglijsten
-  en eigen categorieën. Ze zijn niet meer te zien bij Bladeren of in kringen.
+  en eigen categorieën. Ze zijn niet meer te zien bij Puzzels ontdekken of in kringen.
 - Een kring waarvan jij eigenaar bent gaat over naar een ander lid (zie
   [Vriendenkringen](/docs/sharing-and-exchanges/friend-circles)), en je
   verlaat je huishouden (zie [Huishoudens](/docs/sharing-and-exchanges/households)).

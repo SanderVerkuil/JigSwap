@@ -67,8 +67,10 @@ How the date you choose is used:
   year counts toward a goal whose period includes part of that year.
 - Neither has a solve time, and neither is included in your monthly solve
   trends.
-- To add an exact date later, **Edit** the solve on the Completions page
-  within the 24-hour edit window.
+- A solve without a date can get one with **Edit** on the Completions page,
+  within 24 hours of logging it. A solve with only a year usually can't be
+  edited afterwards: to give it an exact date, **Delete** it and log it again
+  with **Pick a date**.
 
 ### The Completions page
 

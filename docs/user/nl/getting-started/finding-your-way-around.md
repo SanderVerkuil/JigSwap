@@ -15,8 +15,9 @@ De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel to
 
 ## Je accountmenu
 
-Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
-**Voorkeuren**, **Meldingen** en **Privacy en veiligheid** vind je daar:
+Klik op je avatar om het accountmenu te openen. **Voorkeuren**,
+**Meldingen** en **Privacy en veiligheid** staan onder **Account beheren**.
+Naast **Profiel** en **Account beheren** vind je in het menu:
 
 - **Wat is er nieuw**, op een telefoon: recente functies en oplossingen (zie
   hieronder). Op desktop staat het onderaan de zijbalk, net boven je account.

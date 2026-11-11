@@ -20,6 +20,9 @@ Je dashboard is een persoonlijk overzicht dat je puzzelleven in één oogopslag 
 - **Live statistieken**: hoeveel puzzels je bezit. Afgeronde ruilen, je
   gemiddelde beoordeling en lopende uitwisselingen komen erbij zodra je je eerste
   uitwisseling of beoordeling hebt.
+- **Nu aan het puzzelen**: de puzzels waar je aan begonnen bent en die je nog
+  niet hebt afgerond, elk met **Afronden** om de voltooiing vast te leggen. Is
+  er niets bezig, dan staat er een link naar je puzzels om er een te starten.
 - Een **pulse-sectie**: uitwisselingen in beweging, doelvoortgang en je laatste activiteit.
 - Een **scroller met nieuwe puzzels** met de puzzels die je het laatst hebt
   toegevoegd, zodra je er meer hebt dan er op je plank passen.

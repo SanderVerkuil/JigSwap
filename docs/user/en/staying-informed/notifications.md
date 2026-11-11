@@ -25,9 +25,11 @@ current status of a trade.
   what it's about; it's marked as read automatically.
 - Use **Mark as read** on a single notification, or **Mark all as read** for
   all of them.
-- The Notifications page groups notifications under **Today**, **Yesterday**
-  and **Earlier**. Filter with **All** or **Unread only**, and press
-  **Load more** at the bottom to see older notifications.
+- The Notifications page groups notifications under **Today**, **Yesterday**,
+  **This week**, **This month** and **Earlier**. Filter them by category (for
+  example **Trades** or **Messages**, or **All**), turn on **Unread only** to
+  hide the ones you've read, and press **Load more** at the bottom to see older
+  notifications.
 - When several people follow you around the same time, they're combined into
   one notification, such as "**Mara**, **Joost** and 3 others followed you."
 - A trade notification shows the trade's current status. Clicking it opens that

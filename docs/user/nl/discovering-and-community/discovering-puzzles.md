@@ -8,21 +8,21 @@ summary: "Blader door beschikbare kopieën, verken de catalogus en lees de samen
 
 ## Blader door communitypuzzels
 
-**Waar:** **Bladeren** (`/browse`).
+**Waar:** **Puzzels ontdekken** (`/browse`).
 
-Bladeren doorzoekt alle kopieën in bezit van de community die momenteel **beschikbaar** zijn (voor ruil, uitlenen of verkoop).
+Puzzels ontdekken doorzoekt alle kopieën in bezit van de community die momenteel **beschikbaar** zijn (voor ruil, uitlenen of verkoop).
 
-1. Open **Bladeren**.
+1. Open **Puzzels ontdekken**.
 2. Bouw je filter met de **querybouwer** en combineer:
    - Zoeken op vrije tekst.
    - Categorie, moeilijkheid, conditie.
    - Bereik voor het aantal stukjes.
    - Beschikbaarheidsmarkeringen (voor ruil / uitlenen / verkoop).
-3. Resultaten verschijnen als een raster of lijst met kaarten, elk met de eigenaar, een badge voor ruil/uitlenen/verkoop en snelle acties: **Bekijken**, **Uitwisseling aanvragen**, **Bericht**, **Favoriet**.
+3. Resultaten verschijnen als een raster of lijst met kaarten, elk met de eigenaar en een badge voor ruil/uitlenen/verkoop. De knop op de kaart noemt het aanbod: **Vragen om te lenen**, **Ruil aanvragen**, **Vragen om te kopen**, of **Aanvragen…** als de eigenaar meer dan één ding aanbiedt. Met de iconen stuur je de eigenaar een bericht en voeg je een favoriet toe, en een klik op de kaart opent het exemplaar. Zie [Een exemplaar aanvragen](/docs/sharing-and-exchanges/lend-swap-trade#een-exemplaar-aanvragen).
 
 ## De puzzelcatalogus
 
-**Waar:** **Puzzels** (`/puzzles`).
+**Waar:** **Puzzelcatalogus** (`/puzzles`).
 
 De catalogus is de door de community samengestelde lijst met goedgekeurde puzzeldefinities (niet de afzonderlijke kopieën).
 
