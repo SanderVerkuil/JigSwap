@@ -47,9 +47,10 @@
   font-weight: 400;
   margin: 32px 0 8px;
 }
+/* Half a pixel above the text it heads: 17.5px, and 18.5px where the text is 18px. */
 .docs-prose h4 {
   font-family: var(--font-mk-sans);
-  font-size: 17.5px;
+  font-size: calc(1em + 0.5px);
   font-weight: 600;
   margin: 24px 0 6px;
 }
