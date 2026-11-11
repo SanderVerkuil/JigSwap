@@ -127,7 +127,9 @@ hieronder). Is het exemplaar uitgeleend, dan kun je pas weer een aanbod
 aanzetten als het terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
 vragen eerst om bevestiging, daarna eindigt de lening en staat de puzzel weer
 bij jou.
-**Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
+**Bezoekers** (andere leden) zien in plaats daarvan een openbare versie, met
+een knop om het exemplaar aan te vragen die naar het aanbod heet, zoals
+**Ruil aanvragen** of **Vragen om te lenen**, en **Bericht**.
 
 **Beoordelingen van dit exemplaar** zijn sterren voor dit fysieke exemplaar.
 Wie een voltooiing van het exemplaar vastlegt, krijgt de vraag het te
@@ -170,8 +172,8 @@ Alleen goedgekeurde foto's kunnen als omslag worden gebruikt.
 
 ## Wie een exemplaar kan zien
 
-Elk exemplaar is zichtbaar of privé. Je stelt dit in als je het exemplaar
-**Bewerkt**, onder **Wie kan dit exemplaar zien**:
+Elk exemplaar is zichtbaar of privé. Je stelt dit in via **Bewerken**, onder
+**Wie kan dit exemplaar zien**:
 
 - **Zichtbaar**: leden die je wederzijds volgt, kunnen het zien in je
   bibliotheek. Zolang je het aanbiedt, kunnen ook alle leden het zien als je
