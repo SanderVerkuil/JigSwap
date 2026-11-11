@@ -32,21 +32,29 @@ Nee. Je voltooiingsregistraties en statistieken blijven bij **jou**, niet bij de
 <details>
 <summary>Waarom zie ik een puzzel niet die ik weet dat iemand bezit?</summary>
 
-De zichtbaarheid wordt bepaald door de eigenaar. Als een kopie **privé** is of alleen gedeeld is met een **vriendenkring** waar jij niet in zit, verschijnt hij niet voor jou in Bladeren.
+Puzzels ontdekken toont alleen exemplaren die de eigenaar aanbiedt om te
+ruilen, uit te lenen of te verkopen. Een exemplaar ontbreekt als de eigenaar
+het niet aanbiedt, als het profiel van de eigenaar privé is en het exemplaar
+niet gedeeld is in een vriendenkring waar jij in zit, als het is uitgeleend, of
+als een van jullie de ander heeft geblokkeerd. Volgen jullie elkaar, dan zie je
+het misschien wel op diens profiel onder **Alle puzzels**, tenzij diegene het
+privé heeft gemaakt. Zie
+[Zichtbaarheid en privacy](/docs/sharing-and-exchanges/visibility-and-privacy#wie-een-exemplaar-ziet).
 
 </details>
 
 <details>
 <summary>Een puzzel die ik heb uitgeleend is niet beschikbaar voor nieuwe uitwisselingen.</summary>
 
-Dat is normaal — een kopie die is uitgeleend wordt automatisch als onbeschikbaar gemarkeerd totdat hij is teruggegeven. Gebruik **Terughalen** (eigenaar) of **Teruggeven** (lener) om de lening af te sluiten.
+Dat is normaal — een kopie die is uitgeleend wordt automatisch als onbeschikbaar gemarkeerd totdat hij is teruggegeven. Gebruik **Terugvragen** (eigenaar) of **Teruggeven** (lener) om de lening af te sluiten. Ook als hij terug is, wordt hij niet vanzelf weer aangeboden: zet **Aanbieden voor ruil** of **Aanbieden om uit te lenen** weer aan.
 
 </details>
 
 <details>
 <summary>Hoe rond ik een uitwisseling af? Ik klikte op "Markeren als voltooid" maar er werd niets afgerond.</summary>
 
-Uitwisselingen gebruiken **dubbele bevestiging** — _beide_ partijen moeten de afronding bevestigen voordat het eigendom/bezit overgaat. Wacht tot je partner het ook als voltooid markeert.
+Uitwisselingen gebruiken **dubbele bevestiging** — _beide_ partijen moeten de afronding bevestigen voordat het eigendom/bezit overgaat. Wacht tot je partner het ook als voltooid markeert. Zolang jullie niet allebei hebben bevestigd, kan ieder van jullie de uitwisseling **Annuleren**. Zie
+[Uitlenen, ruilen en verkopen](/docs/sharing-and-exchanges/lend-swap-trade#de-levenscyclus-van-een-uitwisseling).
 
 </details>
 
@@ -75,10 +83,11 @@ daarvan **Deblokkeren**. Zie
 <summary>Waarom is een foto in een gesprek vervaagd?</summary>
 
 Foto's zijn eerst vervaagd als de automatische controle het niet zeker wist
-(**Gevoelige inhoud**), als de controle niet kon worden uitgevoerd (**Niet
-gecontroleerd**), of als ze komen van iemand met wie je elkaar niet volgt (**Jullie volgen
+(**Gevoelige inhoud**), of als ze komen van iemand met wie je elkaar niet volgt (**Jullie volgen
 elkaar niet**). Klik
-op **Tonen** om de foto te zien.
+op **Tonen** om de foto te zien. Een foto die nog niet is gecontroleerd, toont
+**Wacht op controle**, zonder knop **Tonen**, en na een week
+**Foto niet meer beschikbaar**.
 
 </details>
 
@@ -142,6 +151,9 @@ persoonlijke gegevens. Zie
 <details>
 <summary>Hoe wijzig ik de taal van de app?</summary>
 
-Gebruik de taalwisselaar om **Engels** of **Nederlands** te kiezen; je keuze wordt automatisch opgeslagen.
+Gebruik in de app de wereldbolknop rechtsboven (**Taal wijzigen**). Op een
+telefoon tik je op **+** in de onderste balk; **Taal** staat onderaan het
+paneel. Op openbare pagina's gebruik je de vlag in de kop. Kies **English** of
+**Nederlands**; je keuze wordt automatisch opgeslagen.
 
 </details>

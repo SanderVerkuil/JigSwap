@@ -32,21 +32,28 @@ No. Your completion records and stats stay with **you**, not with the puzzle. Th
 <details>
 <summary>Why can't I see a puzzle I know someone owns?</summary>
 
-Visibility is controlled by the owner. If a copy is **private** or only shared to a **friend circle** you're not in, it won't appear in Browse for you.
+Browse lists only copies their owner offers to swap, lend or sell. A copy is
+missing when the owner doesn't offer it, when the owner's profile is private
+and the copy isn't shared into a friend circle you're in, when it's out on
+loan, or when one of you blocked the other. If you follow each other you may
+still see it on their profile under **All puzzles**, unless they made it
+private. See
+[Visibility & Privacy](/docs/sharing-and-exchanges/visibility-and-privacy#who-sees-a-copy).
 
 </details>
 
 <details>
 <summary>A puzzle I lent out isn't available for new exchanges.</summary>
 
-That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan.
+That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan. It stays off the market after it comes back: turn on **Offer for swap** or **Offer to lend** again.
 
 </details>
 
 <details>
-<summary>How do I complete an exchange? I clicked "Mark Complete" but nothing finalized.</summary>
+<summary>How do I complete an exchange? I clicked "Mark complete" but nothing finalized.</summary>
 
-Exchanges use **dual confirmation** — _both_ parties must confirm completion before ownership/possession transfers. Wait for your partner to also mark it complete.
+Exchanges use **dual confirmation** — _both_ parties must confirm completion before ownership/possession transfers. Wait for your partner to also mark it complete. Until you've both confirmed, either of you can **Cancel** the exchange. See
+[Lend, Swap & Sell](/docs/sharing-and-exchanges/lend-swap-trade#the-exchange-lifecycle).
 
 </details>
 
@@ -74,10 +81,10 @@ you blocked them yourself, the conversation offers **Unblock** instead. See
 <summary>Why is a photo in a conversation blurred?</summary>
 
 Photos are blurred at first when the automatic check wasn't sure about them
-(**Sensitive content**), when the check couldn't run (**Not checked**), or when
-they come from someone you don't follow each other with (**You don't follow
-each other**). Click **Show** to see
-the photo.
+(**Sensitive content**), or when they come from someone you don't follow each
+other with (**You don't follow each other**). Click **Show** to see
+the photo. A photo that hasn't been checked yet shows **Pending review**, with
+no **Show** button, and after a week it shows **Photo no longer available**.
 
 </details>
 
@@ -139,6 +146,9 @@ your account's **Privacy & safety** page, or in quick search
 <details>
 <summary>How do I change the app's language?</summary>
 
-Use the language switcher to pick **English** or **Dutch**; your choice is saved automatically.
+In the app, use the globe button at the top right (**Switch language**). On a
+phone, tap **+** in the bottom bar; **Language** is at the bottom of the sheet.
+On public pages, use the flag in the header. Pick **English** or
+**Nederlands**; your choice is saved automatically.
 
 </details>
