@@ -70,7 +70,8 @@ const RAIL_MARGIN = 24;
 
 // A contents rail that scrolls on its own (a long list on a short window) keeps its current entry
 // in view as the reader moves through the page. Only the rail scrolls, never the page, and only as
-// far as it has to. A hidden rail (below its breakpoint) has no box and is left alone.
+// far as it has to. The first entry takes the rail back to its top, so the rail's own title above
+// it isn't left cut in half. A hidden rail (below its breakpoint) has no box and is left alone.
 export function useRailFollowsActive(
   rail: React.RefObject<HTMLElement | null>,
   active: string | undefined,
@@ -81,6 +82,10 @@ export function useRailFollowsActive(
     if (!box || !entry) return;
     const view = box.getBoundingClientRect();
     if (view.height === 0) return;
+    if (entry === box.querySelector("a")) {
+      box.scrollTo({ top: 0 });
+      return;
+    }
     const { top, bottom } = entry.getBoundingClientRect();
     const above = view.top + RAIL_MARGIN - top;
     const below = bottom - (view.bottom - RAIL_MARGIN);

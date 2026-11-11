@@ -172,6 +172,15 @@ describe("useRailFollowsActive", () => {
     expect(rail().scrollTop).toBe(376);
   });
 
+  // The rail's title sits above its first entry, in the same scroll box. Coming back up, the rail
+  // stopped 24px above that entry and left the title cut in half.
+  it("takes the rail back to its top for the first entry, title and all", () => {
+    const { rerender } = render(<Rail active="c" />);
+    expect(rail().scrollTop).toBe(554);
+    rerender(<Rail active="a" />);
+    expect(rail().scrollTop).toBe(0);
+  });
+
   it("leaves the rail alone while the current entry is in view", () => {
     const { rerender } = render(<Rail active="a" />);
     rail().scrollTop = 300;
