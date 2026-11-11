@@ -92,6 +92,13 @@ const QUICK_ACTIONS = [
     icon: Search,
     keywords: ["browse", "discover", "verkennen", "ontdekken"],
   },
+  {
+    key: "searchDocs",
+    // The docs landing, whose hero is the docs search field.
+    href: "/docs",
+    icon: BookOpen,
+    keywords: ["help", "hulp", "handleiding", "docs", "documentatie"],
+  },
 ] as const;
 
 // The data export is a quick action too, but a direct one (it downloads in place), so no href.

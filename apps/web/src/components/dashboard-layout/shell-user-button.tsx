@@ -34,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
+  BookOpen,
   Check,
   CircleHelp,
   Cookie,
@@ -214,6 +215,11 @@ export function ShellUserButton({
             label={t("user.helpGuides")}
             labelIcon={<CircleHelp className="size-4" />}
             href="/whats-new?tab=guides"
+          />
+          <UserButton.Link
+            label={t("user.docs")}
+            labelIcon={<BookOpen className="size-4" />}
+            href="/docs"
           />
           {/* Always here (spec §2.3): reopens the quick start and brings back a hidden card.
             restoreCard is a no-op when the card was never hidden. */}

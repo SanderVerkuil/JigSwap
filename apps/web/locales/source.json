@@ -4322,6 +4322,7 @@
       "markPastSolves": "Mark past solves",
       "createCircle": "Create a Circle",
       "browseCommunity": "Browse Community",
+      "searchDocs": "Search the docs",
       "exportData": "Export my data"
     },
     "welcome": "Welcome back, {name}!",
@@ -4525,6 +4526,7 @@
       "privacySafety": "Privacy & safety",
       "homepage": "JigSwap homepage",
       "helpGuides": "Help & guides",
+      "docs": "Docs",
       "signOut": "Sign out"
     },
     "theme": {
@@ -4557,7 +4559,8 @@
         "findSwap": "Find a swap",
         "findSwapSub": "See what other puzzlers offer",
         "whatsNewSub": "Latest features and fixes",
-        "helpGuidesSub": "Short guided tours of JigSwap"
+        "helpGuidesSub": "Short guided tours of JigSwap",
+        "docsSub": "Guides to everything in JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Quick actions, # update} other {Quick actions, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # unread message} other {{name}, # unread messages}}",

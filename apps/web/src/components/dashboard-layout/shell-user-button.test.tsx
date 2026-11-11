@@ -508,6 +508,21 @@ describe("ShellUserButton help entry (UX-91)", () => {
       "/whats-new?tab=guides",
     ]);
   });
+
+  // A1: the signed-in app's lasting way into the written guides.
+  it.each([
+    ["en", "Help & guides", "Docs"],
+    ["nl", "Hulp en rondleidingen", "Documentatie"],
+  ] as const)(
+    "offers the docs right after Help & guides (%s)",
+    (locale, help, docs) => {
+      mocks.settings = undefined;
+      renderButton(locale);
+      const links = menuLinks();
+      const helpIndex = links.findIndex(([label]) => label === help);
+      expect(links[helpIndex + 1]).toEqual([docs, "/docs"]);
+    },
+  );
 });
 
 // Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar.

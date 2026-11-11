@@ -4322,6 +4322,7 @@
       "markPastSolves": "Eerdere voltooiingen vastleggen",
       "createCircle": "Een kring aanmaken",
       "browseCommunity": "Community verkennen",
+      "searchDocs": "Zoek in de documentatie",
       "exportData": "Mijn gegevens exporteren"
     },
     "welcome": "Welkom terug, {name}!",
@@ -4525,6 +4526,7 @@
       "privacySafety": "Privacy en veiligheid",
       "homepage": "JigSwap-homepage",
       "helpGuides": "Hulp en rondleidingen",
+      "docs": "Documentatie",
       "signOut": "Uitloggen"
     },
     "theme": {
@@ -4557,7 +4559,8 @@
         "findSwap": "Zoek een ruil",
         "findSwapSub": "Bekijk wat andere puzzelaars aanbieden",
         "whatsNewSub": "De nieuwste functies en oplossingen",
-        "helpGuidesSub": "Korte rondleidingen door JigSwap"
+        "helpGuidesSub": "Korte rondleidingen door JigSwap",
+        "docsSub": "Handleidingen voor alles in JigSwap"
       },
       "openQuickActionsUnread": "{count, plural, one {Snelle acties, # update} other {Snelle acties, # updates}}",
       "withUnreadMessages": "{count, plural, one {{name}, # ongelezen bericht} other {{name}, # ongelezen berichten}}",
