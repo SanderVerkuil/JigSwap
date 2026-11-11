@@ -1,6 +1,6 @@
 ---
 title: Adding & importing puzzles
-order: 2
+order: 1
 summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalogue."
 ---
 

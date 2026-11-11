@@ -1,6 +1,6 @@
 ---
 title: Managing your puzzles
-order: 1
+order: 2
 summary: "View your owned copies, search, sort and filter them, and explore the copy detail page."
 ---
 

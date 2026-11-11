@@ -1,6 +1,6 @@
 ---
 title: Je puzzels beheren
-order: 1
+order: 2
 summary: "Bekijk je eigen exemplaren, zoek, sorteer en filter ze, en verken de detailpagina van een exemplaar."
 ---
 
