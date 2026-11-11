@@ -129,7 +129,7 @@ daarvan **Deblokkeren**. Zie
 </details>
 
 <details>
-<summary>Waarom is een foto in een gesprek vervaagd?</summary>
+<summary>Waarom is een foto in een gesprek vervaagd (wazig)?</summary>
 
 Foto's zijn eerst vervaagd als de automatische controle het niet zeker wist
 (**Gevoelige inhoud**), of als ze komen van iemand met wie je elkaar niet volgt (**Jullie volgen

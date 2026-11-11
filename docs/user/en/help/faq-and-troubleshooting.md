@@ -125,7 +125,7 @@ you blocked them yourself, the conversation offers **Unblock** instead. See
 </details>
 
 <details>
-<summary>Why is a photo in a conversation blurred?</summary>
+<summary>Why is a photo in a conversation blurred (blurry)?</summary>
 
 Photos are blurred at first when the automatic check wasn't sure about them
 (**Sensitive content**), or when they come from someone you don't follow each

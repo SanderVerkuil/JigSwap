@@ -75,6 +75,9 @@ springen.
   **Push**.
 - Standaard staat elk type aan voor **In-app**; e-mail en push staan uit totdat
   je ze aanzet.
+- Wil je mails uitzetten (je afmelden voor e-mails), zet dan **E-mail** uit bij
+  elk type dat je niet meer per mail wilt krijgen. In de app zie je die
+  meldingen nog wel.
 - E-mail is niet voor elk type beschikbaar.
 - Een paar veiligheidsberichten, zoals wanneer een moderator inhoud van je
   verwijdert of je waarschuwt, zijn gemarkeerd met **Altijd aan: wettelijk
