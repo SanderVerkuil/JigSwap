@@ -108,14 +108,14 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
       return results.slice(0, 12).map((r) => {
         const text = r.text as string;
         const sections = r.sections as DocSection[];
+        // A filler word of the page that a content word reached as a typo ("het" for "zet") counts
+        // for neither the section nor the snippet: the page has it everywhere.
+        const terms = words.length
+          ? r.terms.filter((term) => !stopWords.has(term))
+          : r.terms;
         // Pages rank as they are; each then opens at its best section. Filler alone picks none.
         const section = words.length
-          ? bestSection(
-              text,
-              sections,
-              matchesIn(text, r.terms, words),
-              fillers,
-            )
+          ? bestSection(text, sections, matchesIn(text, terms, words), fillers)
           : undefined;
         const answer = section ? sectionText(text, sections, section) : "";
         return {
@@ -124,7 +124,7 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
           group: r.group as string,
           snippet: makeSnippet(
             answer || text,
-            r.terms,
+            terms,
             words.length ? words : typed,
           ),
           section: section?.title,

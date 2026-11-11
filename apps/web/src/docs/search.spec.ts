@@ -359,6 +359,29 @@ describe("docs search opens a result at its section", () => {
     expect(hit.hash).toBe("offer");
   });
 
+  // "zet" is a typo away from "het" and "met", which every opening has: they counted for the query
+  // and kept the page at its top, with "Licht of donker" a screen further down.
+  it("doesn't count a filler word of the page that a content word reached as a typo", () => {
+    const theme = sectioned(
+      "getting-started/language-and-region",
+      "Taal en thema",
+      "JigSwap is er in het Engels en het Nederlands, met een lichte of een donkere weergave.",
+      [
+        ["taal-wijzigen", "Taal wijzigen", "Kies je taal in het menu."],
+        [
+          "licht-of-donker",
+          "Licht of donker",
+          "Kies Licht, Donker of Systeem als modus.",
+        ],
+      ],
+    );
+    const [hit] = createDocsIndex([theme], "nl").search(
+      "hoe zet ik de donkere modus aan",
+    );
+    expect(hit.hash).toBe("licht-of-donker");
+    expect(hit.snippet).toContain("Donker");
+  });
+
   it("picks no section for a query of only filler words", () => {
     expect(index.search("why can't I").every((h) => !h.hash)).toBe(true);
   });
