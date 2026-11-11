@@ -276,6 +276,10 @@ describe("My Puzzles coachmark in the browser", () => {
     expect(screen.getByText(body).parentElement?.classList).toContain(
       "in-data-coachmark-dismissed:hidden",
     );
+    // The browser's hydration render reads document.cookie. Here, without the Start compiler,
+    // createIsomorphicFn always runs its server side, so the hydration below can't see a cookie
+    // written too early: check that the head left it alone.
+    expect(document.cookie).not.toContain("puzzles_coachmark_dismissed");
 
     // Hydration agrees with the server, then drops the hidden hint and copies the dismissal over.
     const mismatches: unknown[] = [];
