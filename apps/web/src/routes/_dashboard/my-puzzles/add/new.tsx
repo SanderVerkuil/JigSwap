@@ -514,12 +514,11 @@ function AddPuzzlePage() {
   const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
 
   // Unsaved work, in both modes: copy mode's title and piece count come from the catalogue, so only
-  // the member's own fields count there. Not while a submit is on its way: that work isn't lost.
-  const unsaved =
-    !submitPuzzle.isPending &&
-    (isCopyMode
-      ? copyFieldsOf(form) !== copyFieldsOf(baseline)
-      : formFingerprint(form) !== formFingerprint(baseline));
+  // the member's own fields count there. Also while a submit is on its way: it may still fail. A
+  // successful add empties the form (Save & Add Another) or leaves without asking.
+  const unsaved = isCopyMode
+    ? copyFieldsOf(form) !== copyFieldsOf(baseline)
+    : formFingerprint(form) !== formFingerprint(baseline);
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,

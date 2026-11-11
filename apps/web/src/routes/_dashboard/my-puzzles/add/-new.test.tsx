@@ -595,6 +595,33 @@ describe("leaving with unsaved work", () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     await waitFor(() => expect(asks()).toBe(false));
   });
+
+  // A nav tap or a closed tab while a big cover uploads would lose the form if the add then failed.
+  it("keeps asking while the puzzle is on its way, and after it failed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let fail: (error: Error) => void = () => {};
+    mocks.call.mockImplementation((name) =>
+      name === CREATE_PUZZLE
+        ? new Promise((_, reject) => {
+            fail = reject;
+          })
+        : Promise.resolve(null),
+    );
+    renderPage();
+    const title = screen.getByRole("textbox", { name: "Puzzle Title" });
+    fireEvent.change(title, { target: { value: "Kattenshow" } });
+    fireEvent.change(screen.getByLabelText("Piece Count"), {
+      target: { value: "500" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: en.puzzles.addPuzzle }));
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(asks()).toBe(true);
+
+    fail(new Error("offline"));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(asks()).toBe(true);
+    expect((title as HTMLInputElement).value).toBe("Kattenshow");
+  });
 });
 
 describe("page title", () => {

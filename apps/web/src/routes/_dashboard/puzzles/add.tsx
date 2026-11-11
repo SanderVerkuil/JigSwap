@@ -384,12 +384,10 @@ function ContributePuzzlePage() {
     setDismissedMatches(new Set());
   };
 
-  // Anything filled in or imported is work a nav tap would lose. Not while the submit is on its
-  // way, nor once it went through (the success links lead on).
+  // Anything filled in or imported is work a nav tap would lose, also while the submit is on its
+  // way (it may still fail). Not once it went through (the success links lead on).
   const unsaved =
-    !contribute.isPending &&
-    !contribute.data &&
-    formFingerprint(form) !== formFingerprint(DEFAULT_FORM);
+    !contribute.data && formFingerprint(form) !== formFingerprint(DEFAULT_FORM);
 
   const isReady = !!form.title.trim() && !!form.pieceCount;
 

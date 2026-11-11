@@ -305,9 +305,10 @@ function SuggestEditForm({
     },
   });
 
-  // A changed field or a picked cover is work a nav tap would lose; not while it is being sent.
+  // A changed field or a picked cover is work a nav tap would lose, also while it is being sent (it
+  // may still fail); not once it went through.
   const unsaved =
-    !submit.isPending &&
+    !submit.isSuccess &&
     (coverFile !== undefined ||
       JSON.stringify(form) !== JSON.stringify(openedForm));
 
