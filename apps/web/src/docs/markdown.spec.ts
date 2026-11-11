@@ -158,6 +158,20 @@ describe("compileMarkdown", () => {
     ]);
   });
 
+  // A sub-step heading gets its own place to open at without growing the contents list.
+  it("makes an h4 a search section with its level, but leaves it out of the TOC", async () => {
+    const r = await compileMarkdown(
+      "## Online status\n\nWho sees it.\n\n#### Set your status\n\nPick one.\n",
+    );
+    expect(r.headings.map((h) => h.id)).toEqual(["online-status"]);
+    expect(
+      r.sections.map((s) => [s.id, s.depth, r.text.slice(s.start, s.end)]),
+    ).toEqual([
+      ["online-status", 2, "Online status Who sees it."],
+      ["set-your-status", 4, "Set your status Pick one."],
+    ]);
+  });
+
   it("does not treat a deeply nested Note: as a callout", async () => {
     const r = await compileMarkdown(
       "> Regular quote.\n>\n> Then **Note:** later.\n",

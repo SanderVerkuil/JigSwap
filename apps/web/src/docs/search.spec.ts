@@ -329,6 +329,27 @@ describe("docs search opens a result at its section", () => {
     expect(built.headings).toBe("Send photos Blurred photos");
     expect(built.sections).toEqual(messages.sections);
   });
+
+  // An h4 is a place to open at, but its title doesn't rank the page as a heading does.
+  it("leaves an h4's title out of the page's headings", () => {
+    const [built] = buildSearchDocs([
+      leaf("en", "staying-informed/messages", "Messages", {
+        text: "Format your messages Bold. Emoji Pick one.",
+        sections: [
+          {
+            id: "format",
+            title: "Format your messages",
+            start: 0,
+            end: 26,
+            depth: 2,
+          },
+          { id: "emoji", title: "Emoji", start: 27, end: 42, depth: 4 },
+        ],
+      }),
+    ]);
+    expect(built.headings).toBe("Format your messages");
+    expect(built.sections.map((s) => s.id)).toEqual(["format", "emoji"]);
+  });
 });
 
 function doc(slug: string, title: string, text: string): SearchDoc {

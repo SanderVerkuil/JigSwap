@@ -189,12 +189,12 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
   };
 }
 
-// The sections a search result can open at: each h2/h3, and each FAQ question (a <details> with
-// an id from slugQuestions and a <summary>). The HTML is this processor's own output, so the tags
-// are known. A question ends at its </details>; text after it, before the next section, belongs
-// to none.
+// The sections a search result can open at: each h2 to h4 (the on-page TOC lists only h2/h3), and
+// each FAQ question (a <details> with an id from slugQuestions and a <summary>). The HTML is this
+// processor's own output, so the tags are known. A question ends at its </details>; text after it,
+// before the next section, belongs to none.
 const SECTION_TAG =
-  /<(h[23])\b[^>]*?\sid="([^"]+)"[^>]*>([\s\S]*?)<\/\1>|<details\b[^>]*?\sid="([^"]+)"[^>]*>\s*<summary\b[^>]*>([\s\S]*?)<\/summary>|<\/details>/g;
+  /<(h[234])\b[^>]*?\sid="([^"]+)"[^>]*>([\s\S]*?)<\/\1>|<details\b[^>]*?\sid="([^"]+)"[^>]*>\s*<summary\b[^>]*>([\s\S]*?)<\/summary>|<\/details>/g;
 
 // The page's plain text, stripHtml(html), built piece by piece to know where each section lies in it.
 function searchText(html: string): { text: string; sections: DocSection[] } {
@@ -211,7 +211,7 @@ function searchText(html: string): { text: string; sections: DocSection[] } {
   for (const m of html.matchAll(SECTION_TAG)) {
     add(html.slice(last, m.index));
     last = m.index + m[0].length;
-    const [, , headingId, heading, questionId, summary] = m;
+    const [, tag, headingId, heading, questionId, summary] = m;
     if (!headingId && !questionId) {
       // A </details>: it ends a question's answer; a plain <details> ends nothing.
       if (question && open) {
@@ -228,6 +228,7 @@ function searchText(html: string): { text: string; sections: DocSection[] } {
       title,
       start: text.length - title.length,
       end: text.length,
+      ...(tag && { depth: Number(tag[1]) as 2 | 3 | 4 }),
     };
     sections.push(open);
     question = !headingId;

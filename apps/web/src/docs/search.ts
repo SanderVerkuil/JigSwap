@@ -8,7 +8,7 @@ export interface SearchDoc {
   group: string;
   summary: string;
   keywords: string;
-  headings: string; // the titles of its sections, h2/h3 and FAQ questions
+  headings: string; // the titles of its h2/h3 sections and FAQ questions; an h4 only opens a result
   text: string;
   sections: DocSection[];
 }
@@ -36,7 +36,10 @@ export function buildSearchDocs(pages: readonly DocPage[]): SearchDoc[] {
       group: p.group,
       summary: p.frontmatter.summary ?? "",
       keywords: (p.frontmatter.keywords ?? []).join(" "),
-      headings: p.sections.map((s) => s.title).join(" "),
+      headings: p.sections
+        .filter((s) => s.depth !== 4)
+        .map((s) => s.title)
+        .join(" "),
       text: p.text,
       sections: p.sections,
     }));
