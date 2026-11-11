@@ -109,6 +109,19 @@ describe("buildNavTree", () => {
     ]);
     expect(tree[0].slug).toBe("getting-started");
   });
+
+  // A group's index page lists its articles with these, so the list follows the pages.
+  it("carries each page's summary on its link", () => {
+    const withSummary: DocMeta = {
+      ...page("your-library/shelf", "your-library", false, "Shelf", 2),
+      frontmatter: { title: "Shelf", order: 2, summary: "Build your shelf." },
+    };
+    const tree = buildNavTree([...PAGES, withSummary]);
+    expect(tree[1].links.map((l) => [l.title, l.summary])).toEqual([
+      ["Collections", undefined],
+      ["Shelf", "Build your shelf."],
+    ]);
+  });
 });
 
 describe("buildPager", () => {

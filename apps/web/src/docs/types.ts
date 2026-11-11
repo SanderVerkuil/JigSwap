@@ -48,6 +48,7 @@ export interface NavLink {
   title: string;
   slug: string;
   order: number;
+  summary?: string; // the page's frontmatter summary, for its group page's list
 }
 export interface NavGroup {
   title: string;

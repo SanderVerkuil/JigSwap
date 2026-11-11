@@ -1,5 +1,6 @@
 import { DocBreadcrumb } from "@/components/docs/doc-breadcrumb";
 import { DocContent } from "@/components/docs/doc-content";
+import { DocGroupArticles } from "@/components/docs/doc-group-articles";
 import { DocHelpful } from "@/components/docs/doc-helpful";
 import { DocPager } from "@/components/docs/doc-pager";
 import { OnPageToc } from "@/components/docs/on-page-toc";
@@ -107,6 +108,8 @@ function DocPageView() {
           className="mb-8 min-[1280px]:hidden"
         />
         <DocContent html={html} />
+        {/* A group's page leads on to its articles, so its crumb on every article isn't a dead end. */}
+        {page.isIndex && group && <DocGroupArticles links={group.links} />}
         <DocPager pager={pager} />
         <DocHelpful slug={slug} />
       </article>

@@ -37,16 +37,21 @@ vi.mock("@tanstack/react-router", () => ({
   useRouter: () => ({ navigate: vi.fn() }),
   Link: ({
     to,
-    params: _params,
+    params,
     activeOptions,
     children,
     ...rest
   }: ComponentProps<"a"> & {
     to: string;
-    params?: object;
+    params?: { _splat?: string };
     activeOptions?: { exact?: boolean };
   }) => (
-    <a href={to} data-exact={activeOptions?.exact ? "" : undefined} {...rest}>
+    <a
+      href={to}
+      data-splat={params?._splat}
+      data-exact={activeOptions?.exact ? "" : undefined}
+      {...rest}
+    >
       {children}
     </a>
   ),
@@ -425,6 +430,50 @@ describe("docs group page", () => {
     expect(
       screen.queryByRole("navigation", { name: "Previous and next page" }),
     ).toBeNull();
+  });
+
+  // A4: the group crumb on every article led to one sentence with no links.
+  const articles = () =>
+    within(screen.getByRole("list"))
+      .getAllByRole("listitem")
+      .map((item) => {
+        const link = within(item).getByRole("link");
+        return [
+          link.textContent,
+          link.getAttribute("data-splat"),
+          item.querySelector("p")?.textContent,
+        ];
+      });
+
+  it("lists the group's articles in nav order, after its own text, each with its summary", () => {
+    const { container } = render(withIntl(<docPage.component />));
+    expect(articles()).toEqual([
+      ["First steps", "getting-started/first", "Begin here"],
+      ["Next steps", "getting-started/next", undefined],
+    ]);
+    const [text, list] = container.querySelectorAll(".docs-prose");
+    expect(text.textContent).toBe("Getting started");
+    expect(list.contains(screen.getByRole("list"))).toBe(true);
+    expect(
+      text.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("lists them in the visitor's language, English where a page has no translation", () => {
+    render(withIntl(<docPage.component />, "nl"));
+    expect(articles()).toEqual([
+      ["Eerste stappen", "getting-started/first", "Begin hier"],
+      ["Next steps", "getting-started/next", undefined],
+    ]);
+  });
+
+  it("leaves the list off an article", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
 
