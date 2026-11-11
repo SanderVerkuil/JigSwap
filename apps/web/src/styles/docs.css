@@ -220,12 +220,14 @@
 }
 
 /* Collapsible sections (e.g. the FAQ). Authored as <details><summary>…</summary>
-   …</details> in markdown. */
+   …</details> in markdown. A FAQ question has an id a search result opens at, so it lands
+   16px below the sticky chrome, like a heading. */
 .docs-prose details {
   margin: 10px 0;
   border-radius: 6px;
   background: var(--mk-sky-soft);
   overflow: hidden;
+  scroll-margin-top: 16px;
 }
 .docs-prose details + details {
   margin-top: 8px;
