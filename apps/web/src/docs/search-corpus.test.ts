@@ -80,6 +80,18 @@ describe("docs search over the real guides", () => {
     },
   );
 
+  // At the lender's section, not at the borrower's "give back" one, nor at taking a puzzle out of
+  // a collection. "take" once reached the lender's section only as a typo of "fake".
+  it.each(["take my puzzle back", "take back"])(
+    "finds the lending guide first for '%s', at the lender's section",
+    (query) => {
+      expect(top3("en", query)[0]).toMatchObject({
+        slug: "sharing-and-exchanges/lend-swap-trade",
+        hash: "get-a-lent-puzzle-back",
+      });
+    },
+  );
+
   // "stop" once reached Notifications only as a typo of "top", from "the bell in the top bar".
   it("finds Notifications first for 'stop email', at its preferences", () => {
     expect(top3("en", "stop email")[0]).toMatchObject({

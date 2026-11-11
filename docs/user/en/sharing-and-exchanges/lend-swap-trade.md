@@ -184,8 +184,9 @@ it once the lender has the puzzle back, because the loan then closes for good.
 
 ## Get a lent puzzle back
 
-Lent a puzzle to a friend and want it back? On **Exchanges**, open **Loans**:
-under **Lent out** you see who has each puzzle you lent, and for how long.
+Lent a puzzle to a friend and want to take it back? On **Exchanges**, open
+**Loans**: under **Lent out** you see who has each puzzle you lent, and for how
+long.
 
 - To arrange getting it back, click **Message** next to it, if you're
   connected with the borrower.
