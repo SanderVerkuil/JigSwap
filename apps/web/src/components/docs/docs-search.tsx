@@ -1,3 +1,4 @@
+import { focusHashTarget } from "@/components/a11y/skip-link";
 import {
   Command,
   CommandEmpty,
@@ -14,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createDocsSearchStore } from "@/docs/search-store";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
@@ -26,6 +27,19 @@ const searchStore = createDocsSearchStore(async (locale) => {
   const load = searchLoaders[locale] ?? searchLoaders.en;
   return load ? (await load()).docs : [];
 });
+
+// Opens the FAQ question or heading `hash` names, brings it into view and moves focus to it, as a
+// pick on another page would; with no section, back to the top of the page.
+function landOn(hash: string) {
+  const target = hash ? document.getElementById(hash) : null;
+  if (!target) {
+    window.scrollTo({ top: 0 });
+    return;
+  }
+  if (target instanceof HTMLDetailsElement) target.open = true;
+  target.scrollIntoView();
+  focusHashTarget(hash, { preventScroll: true });
+}
 
 // Docs command palette. We disable cmdk's own filtering (`shouldFilter={false}`)
 // and feed it MiniSearch results for our controlled query, so ranking/snippets
@@ -79,10 +93,21 @@ export function DocsSearch({
     return () => cancelAnimationFrame(frame);
   }, [hits]);
 
-  // A result opens at its section when it has one (the page shows that FAQ question open).
+  // A result opens at its section when it has one (the page shows that FAQ question open). The
+  // router leaves a page where it is scrolled to when it is at that place already, so picking the
+  // section the page is at (again) lands there once the dialog has closed.
+  const location = useLocation();
+  const landingRef = React.useRef<string | null>(null);
   const go = (slug: string, hash?: string) => {
     onOpenChange(false);
     setQuery("");
+    if (
+      location.pathname.replace(/\/$/, "") === `/docs/${slug}` &&
+      location.hash === (hash ?? "")
+    ) {
+      landingRef.current = location.hash;
+      return;
+    }
     void navigate({ to: "/docs/$", params: { _splat: slug }, hash });
   };
 
@@ -91,7 +116,13 @@ export function DocsSearch({
       <DialogContent
         className="overflow-hidden p-0"
         onOpenAutoFocus={onOpenAutoFocus}
-        onCloseAutoFocus={onCloseAutoFocus}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (landingRef.current === null) return;
+          event.preventDefault();
+          landOn(landingRef.current);
+          landingRef.current = null;
+        }}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("searchTitle")}</DialogTitle>

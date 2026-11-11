@@ -5,14 +5,21 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
+import * as React from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import { MAIN_CONTENT_ID } from "../a11y/skip-link";
 import { DocsSearch } from "./docs-search";
 
 const navigate = vi.hoisted(() => vi.fn());
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
+const location = vi.hoisted(() => ({ pathname: "/docs", hash: "" }));
+vi.mock("@tanstack/react-router", () => ({
+  useLocation: () => location,
+  useNavigate: () => navigate,
+}));
 
 // A loaded index with one page per query; "blurred" opens Messages at a section.
 vi.mock("@/docs/search-store", () => {
@@ -127,6 +134,47 @@ describe("DocsSearch opens a result at its section", () => {
       params: { _splat: "staying-informed/messages" },
       hash: "blurred-photos",
     });
+  });
+
+  // The same place again is no navigation for the router: it kept the page where it was scrolled
+  // to, with the question the reader had closed still closed.
+  it("lands on the section the page is at already, once the dialog has closed", async () => {
+    navigate.mockClear();
+    Object.assign(location, {
+      pathname: "/docs/staying-informed/messages",
+      hash: "blurred-photos",
+    });
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<main id="${MAIN_CONTENT_ID}"><details id="blurred-photos"><summary>Blurred photos</summary><p>A photo is blurred at first.</p></details></main>`,
+    );
+    const question = document.getElementById(
+      "blurred-photos",
+    ) as HTMLDetailsElement;
+    const scroll = vi.spyOn(question, "scrollIntoView");
+    function Harness() {
+      const [open, setOpen] = React.useState(true);
+      return <DocsSearch open={open} onOpenChange={setOpen} />;
+    }
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <Harness />
+      </IntlProvider>,
+    );
+    act(() => {
+      fireEvent.change(screen.getByRole("combobox"), {
+        target: { value: "blurred" },
+      });
+    });
+    fireEvent.click(screen.getByRole("option"));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(question.open).toBe(true));
+    expect(navigate).not.toHaveBeenCalled();
+    expect(scroll).toHaveBeenCalled();
+    expect(document.activeElement).toBe(question.querySelector("summary"));
+    Object.assign(location, { pathname: "/docs", hash: "" });
+    document.querySelector("main")?.remove();
   });
 
   it("goes to the top of a page with no section, titled by the page alone", () => {

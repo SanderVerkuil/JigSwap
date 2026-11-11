@@ -13,7 +13,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import { Route } from "./route";
 
-const location = vi.hoisted(() => ({ pathname: "/docs/getting-started" }));
+const location = vi.hoisted(() => ({
+  pathname: "/docs/getting-started",
+  hash: "",
+}));
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
@@ -43,7 +46,12 @@ vi.mock("@tanstack/react-router", () => ({
       {children}
     </a>
   ),
-  Outlet: () => <button type="button">In the page</button>,
+  Outlet: () => (
+    <>
+      <button type="button">In the page</button>
+      <h2 id="a-section">A section</h2>
+    </>
+  ),
   useLocation: () => location,
   useNavigate: () => vi.fn(),
 }));
@@ -131,10 +139,13 @@ describe("docs overlays hand focus back", () => {
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     expect(dialog()).toBeTruthy();
     await waitFor(() => expect(document.activeElement).not.toBe(inPage));
+    const refocus = vi.spyOn(inPage, "focus");
 
     pressEscape();
 
     await waitFor(() => expect(document.activeElement).toBe(inPage));
+    // It may be scrolled out of view by now: closing doesn't jump the page back to it.
+    expect(refocus).toHaveBeenCalledWith({ preventScroll: true });
   });
 
   it("doesn't jump back to an earlier opener when nothing had focus", async () => {
@@ -206,6 +217,24 @@ describe("docs overlays hand focus back", () => {
     await radixFocusReturn();
     expect(refocus).not.toHaveBeenCalled();
     expect(document.activeElement).not.toBe(opener);
+  });
+
+  // A pick on the page the reader is on moves only the hash, so no route change moves focus: it
+  // went back to the opener, and scrolled the page back to it.
+  it("moves focus to the picked section when search stays on this page", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: "Search documentation" });
+    activate(opener);
+    await waitFor(() => expect(document.activeElement).not.toBe(opener));
+    const refocus = vi.spyOn(opener, "focus");
+
+    window.history.pushState({}, "", `${window.location.pathname}#a-section`);
+    pressEscape();
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    const section = screen.getByRole("heading", { name: "A section" });
+    await waitFor(() => expect(document.activeElement).toBe(section));
+    expect(refocus).not.toHaveBeenCalled();
   });
 
   it("leaves focus to the new page when a link in the sheet led there", async () => {
