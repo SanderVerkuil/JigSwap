@@ -23,6 +23,7 @@ Naast **Profiel** en **Account beheren** vind je in het menu:
   hieronder). Op desktop staat het onderaan de zijbalk, net boven je account.
 - **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
   **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
+- **Documentatie**: deze handleiding.
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
   [Je dashboard](/docs/getting-started/dashboard#snel-instellen).
 

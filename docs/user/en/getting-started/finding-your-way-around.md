@@ -23,6 +23,7 @@ Besides **Profile** and **Manage account**, the menu has:
   desktop it's at the foot of the sidebar instead, just above your account.
 - **Help & guides**: every guided tour, on the **Guides** tab of What's new
   (see [Guides](#guides)).
+- **Docs**: this guide.
 - **Quick setup**: reopens the guided setup for your shelf. See
   [Your Dashboard](/docs/getting-started/dashboard#quick-setup).
 
