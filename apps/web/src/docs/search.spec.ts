@@ -336,12 +336,27 @@ describe("docs search opens a result at its section", () => {
     expect(index.search("get my puzzle back")[0].hash).toBe("get-back");
     // Filler words alone don't move a result off the page's opening.
     const opening = sectioned("a", "Language", "Change the language.", [
-      ["the-app", "The app", "Change the language."],
+      ["how-to", "How to", "Change the language."],
     ]);
     const [hit] = createDocsIndex([opening], "en").search(
-      "change the language",
+      "how to change the language",
     );
     expect(hit.hash).toBeUndefined();
+  });
+
+  // "a" is in "Get a lent puzzle back" as in most titles: it doesn't pull "lend a puzzle" there.
+  it("doesn't break a tie between sections by an article", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Swap or sell.",
+      [
+        ["offer", "Offer your puzzle to lend", "Turn on Offer to lend."],
+        ["get-back", "Get a lent puzzle back", "Recall it."],
+      ],
+    );
+    const [hit] = createDocsIndex([lend], "en").search("lend a puzzle");
+    expect(hit.hash).toBe("offer");
   });
 
   it("picks no section for a query of only filler words", () => {

@@ -61,6 +61,8 @@ const STOP_WORDS: Readonly<Record<string, ReadonlySet<string>>> = {
     ),
   ),
 };
+// Filler words that sit in nearly every title, so they don't break a tie between sections.
+const ARTICLES: ReadonlySet<string> = new Set("a an the de het een".split(" "));
 
 // A word as MiniSearch's default tokenizer cuts them: a run of anything but space and punctuation.
 const WORD = /[^\n\r\p{Z}\p{P}]+/gu;
@@ -93,7 +95,9 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
       if (!query.trim()) return [];
       const typed = query.toLowerCase().match(WORD) ?? [];
       const words = typed.filter(isContentWord);
-      const fillers = new Set(typed.filter((word) => stopWords.has(word)));
+      const fillers = new Set(
+        typed.filter((word) => stopWords.has(word) && !ARTICLES.has(word)),
+      );
       // Only filler so far ("how do I", halfway through a question): search what's typed, as
       // before, rather than flash "No results".
       const results = words.length
