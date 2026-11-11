@@ -132,4 +132,18 @@ describe("DocsMobileBar", () => {
       /@media \(width < 861px\) \{\s*html:has\(\.mk-root\):has\(\[data-docs-bar\]\) \{\s*scroll-padding-top: 112px;/,
     );
   });
+
+  // The header's 80px already holds a 16px gap; an anchor's own 16px on top of it landed it 32px
+  // below the header. Only the bar's 112px has no gap.
+  it("gives anchors their own 16px only where the bar shows", () => {
+    const css = readFileSync(
+      join(__dirname, "../../styles/docs.css"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const phone = /@media \(width < 861px\) \{([\s\S]*?)\n\}/.exec(css)?.[1];
+    expect(phone).toMatch(
+      /\.docs-prose :is\(h1, h2, h3, h4, details\) \{\s*scroll-margin-top: 16px;/,
+    );
+    expect(css.replace(phone ?? "", "")).not.toContain("scroll-margin-top");
+  });
 });

@@ -19,19 +19,22 @@
   }
 }
 
-/* An anchored heading lands 16px below what covers the top of the page: the page's own
-   scroll-padding clears the header (80px, marketing.css) and, on phones, the Docs bar (below). */
+/* An anchored heading or FAQ question lands 16px below what covers the top of the page. The
+   page's own scroll-padding clears the header with that gap (80px, marketing.css). */
 .docs-prose :is(h1, h2, h3, h4) {
   font-family: var(--font-mk-heading);
   color: var(--mk-text-strong);
   letter-spacing: -0.01em;
-  scroll-margin-top: 16px;
 }
 /* Where the sticky Docs bar shows (docs-mobile-bar.tsx), anchors and focus also clear its 48px:
-   64px header + 48px bar. The doubled :has() outranks marketing.css's 80px whatever the order. */
+   64px header + 48px bar. The doubled :has() outranks marketing.css's 80px whatever the order.
+   That leaves no gap under the bar, so there an anchor adds the 16px itself. */
 @media (width < 861px) {
   html:has(.mk-root):has([data-docs-bar]) {
     scroll-padding-top: 112px;
+  }
+  .docs-prose :is(h1, h2, h3, h4, details) {
+    scroll-margin-top: 16px;
   }
 }
 /* At least 26px, so on phones an h2 stands clearly above the 21px h3 in the same serif. 27px
@@ -212,6 +215,13 @@
   word-break: normal;
   white-space: nowrap;
 }
+/* Below 360px those tokens would push the formatting table 16px past its column: the cells give
+   up some side padding instead. */
+@media (width < 360px) {
+  .docs-prose :is(thead th, td) {
+    padding-inline: 8px;
+  }
+}
 
 .docs-prose blockquote:not(.docs-callout) {
   border-left: 1px solid var(--mk-input-border);
@@ -221,14 +231,13 @@
 }
 
 /* Collapsible sections (e.g. the FAQ). Authored as <details><summary>…</summary>
-   …</details> in markdown. A FAQ question has an id a search result opens at, so it lands
-   16px below the sticky chrome, like a heading. */
+   …</details> in markdown. A FAQ question has an id a search result opens at, and lands like a
+   heading (above). */
 .docs-prose details {
   margin: 10px 0;
   border-radius: 6px;
   background: var(--mk-sky-soft);
   overflow: hidden;
-  scroll-margin-top: 16px;
 }
 .docs-prose details + details {
   margin-top: 8px;
