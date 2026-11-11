@@ -1,4 +1,4 @@
-import { focusHashTarget } from "@/components/a11y/skip-link";
+import { focusHashTarget, focusMainContent } from "@/components/a11y/skip-link";
 import {
   Command,
   CommandEmpty,
@@ -29,11 +29,13 @@ const searchStore = createDocsSearchStore(async (locale) => {
 });
 
 // Opens the FAQ question or heading `hash` names, brings it into view and moves focus to it, as a
-// pick on another page would; with no section, back to the top of the page.
+// pick on another page would; with no section, back to the top of the page with focus on its main
+// content.
 function landOn(hash: string) {
   const target = hash ? document.getElementById(hash) : null;
   if (!target) {
     window.scrollTo({ top: 0 });
+    focusMainContent({ preventScroll: true });
     return;
   }
   if (target instanceof HTMLDetailsElement) target.open = true;
@@ -95,19 +97,19 @@ export function DocsSearch({
 
   // A result opens at its section when it has one (the page shows that FAQ question open). The
   // router leaves a page where it is scrolled to when it is at that place already, so picking the
-  // section the page is at (again) lands there once the dialog has closed.
+  // section the page is at (again) lands there once the dialog has closed. The page itself, picked
+  // while the address names one of its sections, drops that section and lands at the top too.
   const location = useLocation();
   const landingRef = React.useRef<string | null>(null);
   const go = (slug: string, hash?: string) => {
     onOpenChange(false);
     setQuery("");
-    if (
-      location.pathname.replace(/\/$/, "") === `/docs/${slug}` &&
-      location.hash === (hash ?? "")
-    ) {
+    const samePage = location.pathname.replace(/\/$/, "") === `/docs/${slug}`;
+    if (samePage && location.hash === (hash ?? "")) {
       landingRef.current = location.hash;
       return;
     }
+    if (samePage && !hash) landingRef.current = "";
     void navigate({ to: "/docs/$", params: { _splat: slug }, hash });
   };
 

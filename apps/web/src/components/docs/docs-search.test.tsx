@@ -190,6 +190,58 @@ describe("DocsSearch opens a result at its section", () => {
     document.querySelector("main")?.remove();
   });
 
+  // The page picked on itself went back to the top but left focus on the control that opened search,
+  // where a pick from another page focuses the article.
+  it.each([
+    ["", false],
+    ["the-exchange-lifecycle", true],
+  ])(
+    "lands at the top of the page it is on, focus in the article (hash %j)",
+    async (hash, navigates) => {
+      navigate.mockClear();
+      Object.assign(location, { pathname: "/docs/lend", hash });
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<button id="opener">Search</button><main id="${MAIN_CONTENT_ID}"><h2 id="the-exchange-lifecycle">The exchange lifecycle</h2></main>`,
+      );
+      const scroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+      function Harness() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <DocsSearch
+            open={open}
+            onOpenChange={setOpen}
+            // As the docs layout's focus return does on the same page and hash: the opener.
+            onCloseAutoFocus={() => document.getElementById("opener")?.focus()}
+          />
+        );
+      }
+      render(
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <Harness />
+        </IntlProvider>,
+      );
+      act(() => {
+        fireEvent.change(screen.getByRole("combobox"), {
+          target: { value: "lend" },
+        });
+      });
+      fireEvent.click(screen.getByRole("option"));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() =>
+        expect(document.activeElement?.id).toBe(MAIN_CONTENT_ID),
+      );
+      expect(scroll).toHaveBeenCalledWith({ top: 0 });
+      // With a section in the address, the router drops it.
+      expect(navigate).toHaveBeenCalledTimes(navigates ? 1 : 0);
+      scroll.mockRestore();
+      Object.assign(location, { pathname: "/docs", hash: "" });
+      document.querySelector("main")?.remove();
+      document.getElementById("opener")?.remove();
+    },
+  );
+
   it("goes to the top of a page with no section, titled by the page alone", () => {
     navigate.mockClear();
     const row = search("lend");
