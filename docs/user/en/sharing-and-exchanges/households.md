@@ -2,6 +2,8 @@
 title: Households
 order: 4
 summary: "Share one puzzle library with the people you live with, and choose what they may do with each puzzle."
+keywords:
+  - family
 ---
 
 # Households

@@ -2,6 +2,8 @@
 title: Berichten
 order: 2
 summary: "Chat met andere leden en je kringen, maak tekst op en voeg emoji, puzzels, foto's en locaties toe, zie wie er typt of online is en vind oudere berichten terug."
+keywords:
+  - chatten
 ---
 
 # Berichten

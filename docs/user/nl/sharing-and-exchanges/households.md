@@ -2,6 +2,8 @@
 title: Huishoudens
 order: 4
 summary: "Deel één puzzelbibliotheek met de mensen met wie je samenwoont, en kies per puzzel wat ze ermee mogen doen."
+keywords:
+  - gezin
 ---
 
 # Huishoudens

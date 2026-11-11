@@ -2,6 +2,9 @@
 title: Uitlenen, ruilen en verkopen
 order: 2
 summary: "Bied je puzzels aan, vind een exemplaar, vraag het aan, stuur de eigenaar een bericht, beheer je uitwisselingen en krijg een uitgeleende puzzel terug."
+keywords:
+  - leenverzoek
+  - ruilverzoek
 ---
 
 # Uitlenen, ruilen en verkopen

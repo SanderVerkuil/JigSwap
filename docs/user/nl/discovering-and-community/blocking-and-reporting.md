@@ -2,6 +2,8 @@
 title: Blokkeren en melden
 order: 5
 summary: "Blokkeer leden met wie je geen contact wilt, meld problemen en beheer je blokkeringen."
+keywords:
+  - lastigvallen
 ---
 
 # Blokkeren en melden

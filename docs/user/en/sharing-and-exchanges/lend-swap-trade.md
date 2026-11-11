@@ -2,6 +2,8 @@
 title: Lend, swap & sell
 order: 2
 summary: "Offer your puzzles, find a copy, request it, message its owner, manage your exchanges, and get a lent puzzle back."
+keywords:
+  - trade
 ---
 
 # Lend, Swap & Sell
