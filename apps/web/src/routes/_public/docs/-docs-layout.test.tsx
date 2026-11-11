@@ -22,7 +22,8 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
   }),
-  // Follows a plain click itself, like the router's Link, so happy-dom doesn't navigate the window.
+  // Follows a plain click itself, like the router's Link, so happy-dom doesn't navigate the window,
+  // and marks the current page's link as the router's Link does.
   Link: ({
     children,
     to: _to,
@@ -37,6 +38,9 @@ vi.mock("@tanstack/react-router", () => ({
   }) => (
     <a
       href={`/docs/${params._splat}`}
+      aria-current={
+        location.pathname === `/docs/${params._splat}` ? "page" : undefined
+      }
       onClick={(e) => {
         e.preventDefault();
         onClick?.(e);
@@ -114,6 +118,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   window.history.pushState({}, "", START_PATH);
+  location.pathname = "/docs/getting-started";
 });
 
 describe("docs overlays hand focus back", () => {
@@ -274,6 +279,23 @@ describe("docs navigation sheet", () => {
     fireEvent.click(within(sheet).getByRole("link", { name: "First steps" }));
     await waitFor(() => expect(dialog()).toBeNull());
   });
+
+  // The sheet opens scrolled to the current page; focus went to the search box at its top, out of
+  // view, and the first Tab scrolled the sheet back up.
+  it("starts focus at the current page's link, without scrolling", async () => {
+    location.pathname = "/docs/getting-started/first";
+    renderLayout();
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+
+    activate(screen.getByRole("button", { name: /^Docs \(/ }));
+
+    const sheet = dialog() as HTMLElement;
+    const current = within(sheet).getByRole("link", { name: "First steps" });
+    await waitFor(() => expect(document.activeElement).toBe(current));
+    expect(focus.mock.calls[focus.mock.contexts.indexOf(current)]).toEqual([
+      { preventScroll: true },
+    ]);
+  });
 });
 
 // F20: from 861 to 1279px neither the rail beside the article nor the phone Docs bar shows, so a
@@ -317,6 +339,18 @@ describe("docs sidebar", () => {
         "flex",
         "items-center",
       ]),
+    );
+  });
+
+  // Its in-view check for the current page measured the whole window, so a link under the open
+  // cookie banner counted as in view.
+  it("ends above the cookie banner, like the contents rail", () => {
+    renderLayout();
+    const aside = screen.getByRole("complementary", {
+      name: en.marketing.docs.navSheetTitle,
+    });
+    expect(aside.className.split(" ")).toContain(
+      "max-h-[calc(100dvh-86px-var(--consent-banner-height,0px))]",
     );
   });
 });
