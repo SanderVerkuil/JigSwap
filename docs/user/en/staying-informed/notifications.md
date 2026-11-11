@@ -72,9 +72,9 @@ also see **Admin**). Use **Jump to** to go to a category.
   **Email** and **Push**.
 - By default, every type is on for **In-app**; email and push are off until
   you turn them on.
-- To turn off (unsubscribe from) emails, switch **Email** off for each type
-  you don't want by email any more. You still see those notifications in the
-  app.
+- To stop getting emails (turn them off, or unsubscribe), switch **Email** off
+  for each type you don't want by email any more. You still see those
+  notifications in the app.
 - Email isn't offered for every type.
 - A few safety notices, such as when a moderator removes your content or warns
   you, are marked **Always on: legally required notices**. They always appear

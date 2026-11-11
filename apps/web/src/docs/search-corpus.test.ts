@@ -80,6 +80,23 @@ describe("docs search over the real guides", () => {
     },
   );
 
+  // "stop" once reached Notifications only as a typo of "top", from "the bell in the top bar".
+  it("finds Notifications first for 'stop email', at its preferences", () => {
+    expect(top3("en", "stop email")[0]).toMatchObject({
+      slug: "staying-informed/notifications",
+      hash: "notification-preferences",
+    });
+  });
+  it.each(["stop emails", "how do i stop getting emails"])(
+    "finds Notifications for '%s', at its preferences",
+    (query) => {
+      const notifications = top3("en", query).find(
+        (hit) => hit.slug === "staying-informed/notifications",
+      );
+      expect(notifications?.hash).toBe("notification-preferences");
+    },
+  );
+
   // In the two rows a phone shows: "meer" once matched a FAQ question about a partner who no
   // longer answers.
   it("finds Meldingen for a member who wants no more mail", () => {
