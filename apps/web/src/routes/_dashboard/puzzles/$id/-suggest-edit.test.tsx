@@ -5,9 +5,17 @@ import {
   usePageHeaderContent,
 } from "@/components/dashboard-layout/page-header-slot";
 import { gateway } from "@/gateway";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { getFunctionName, type FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../../locales/en.json";
@@ -27,8 +35,8 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   // The leave guard's useBlocker options on the latest render.
   blocker: { disabled: true } as { disabled?: boolean },
-  // The submit mutation's options, so a test can run its onSuccess.
-  submit: undefined as { onSuccess?: () => void } | undefined,
+  // Sends the suggestion (proposeChange, or editChangeProposal for a reopened one).
+  send: vi.fn<(args: unknown) => Promise<unknown>>(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -50,16 +58,12 @@ vi.mock("@/compat/link", () => ({
     <a href={href}>{children}</a>
   ),
 }));
-vi.mock("@tanstack/react-query", () => ({
+vi.mock("@tanstack/react-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-query")>()),
   useQuery: ({ queryKey }: { queryKey: [string] }) => ({
     data: mocks.data.get(queryKey[0]),
     isError: mocks.failed.has(queryKey[0]),
   }),
-  // The form is never sent here; a test runs the success handler itself.
-  useMutation: (options: { onSuccess?: () => void }) => {
-    mocks.submit = options;
-    return { isPending: false, mutate: vi.fn() };
-  },
 }));
 // The photo editor stands in as one button that applies a cropped file.
 vi.mock("@/components/image-editor/lazy-image-editor-dialog", () => ({
@@ -82,7 +86,7 @@ vi.mock("@convex-dev/react-query", async () => {
     convexQuery: (ref: Parameters<typeof name>[0]) => ({
       queryKey: [name(ref)],
     }),
-    useConvexMutation: () => vi.fn(),
+    useConvexMutation: () => mocks.send,
   };
 });
 vi.mock("@/hooks/use-box-art-check", () => ({
@@ -130,16 +134,18 @@ const publishedHeader = () =>
 const renderPage = (locale: "en" | "nl" = "en") => {
   const Page = Route.options.component!;
   return render(
-    <IntlProvider
-      locale={locale}
-      messages={locale === "en" ? en : nl}
-      timeZone="Europe/Amsterdam"
-    >
-      <PageHeaderSlotProvider>
-        <Page />
-        <PublishedHeader />
-      </PageHeaderSlotProvider>
-    </IntlProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <IntlProvider
+        locale={locale}
+        messages={locale === "en" ? en : nl}
+        timeZone="Europe/Amsterdam"
+      >
+        <PageHeaderSlotProvider>
+          <Page />
+          <PublishedHeader />
+        </PageHeaderSlotProvider>
+      </IntlProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -153,7 +159,8 @@ beforeEach(() => {
   mocks.push.mockReset();
   mocks.navigate.mockReset();
   mocks.blocker = { disabled: true };
-  mocks.submit = undefined;
+  mocks.send.mockReset();
+  mocks.send.mockResolvedValue(null);
   setQuery(gateway.catalog.puzzleById, sparseView());
   setQuery(gateway.catalog.listMyChangeProposals, []);
   setQuery(gateway.catalog.puzzleCategories, [
@@ -302,6 +309,11 @@ describe("a puzzle that can't be found or edited", () => {
 describe("leaving with unsaved work", () => {
   const asks = () => mocks.blocker.disabled === false;
   const title = () => screen.getByLabelText("Title");
+  // The inline copy of the action row (the lg side panel holds the other).
+  const send = () =>
+    outsideSidePanel(
+      screen.getAllByRole("button", { name: en.suggestEdit.submit }),
+    )[0];
 
   it("doesn't ask about an untouched form", () => {
     renderPage();
@@ -345,14 +357,62 @@ describe("leaving with unsaved work", () => {
     expect(asks()).toBe(true);
   });
 
-  it("goes to the puzzle after sending without asking", () => {
+  it("goes to the puzzle after sending without asking", async () => {
     renderPage();
     fireEvent.change(title(), { target: { value: "Café de Paris" } });
-    mocks.submit?.onSuccess?.();
-    expect(mocks.navigate).toHaveBeenCalledWith({
-      to: "/puzzles/$id",
-      params: { id: PUZZLE_ID },
-      ignoreBlocker: true,
-    });
+    fireEvent.click(send());
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: "/puzzles/$id",
+        params: { id: PUZZLE_ID },
+        ignoreBlocker: true,
+      }),
+    );
+    await waitFor(() => expect(asks()).toBe(false));
+  });
+
+  // A nav tap or a closed tab while a new cover uploads would lose the edits if the send then failed.
+  it("keeps asking while the suggestion is on its way, and after it failed", async () => {
+    vi.mocked(toast.error).mockClear();
+    let fail: (error: Error) => void = () => {};
+    mocks.send.mockReturnValue(
+      new Promise((_, reject) => {
+        fail = reject;
+      }),
+    );
+    renderPage();
+    fireEvent.change(title(), { target: { value: "Café de Paris" } });
+    fireEvent.click(send());
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    expect(asks()).toBe(true);
+
+    fail(new Error("offline"));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(en.suggestEdit.errors.generic),
+    );
+    expect(asks()).toBe(true);
+    expect((title() as HTMLInputElement).value).toBe("Café de Paris");
+  });
+
+  // Discard while it is sent lets the member go; a send that lands later must not pull them back.
+  it("leaves a member who went elsewhere while it was sent where they went", async () => {
+    vi.mocked(toast.success).mockClear();
+    let land: (value: unknown) => void = () => {};
+    mocks.send.mockReturnValue(
+      new Promise((resolve) => {
+        land = resolve;
+      }),
+    );
+    renderPage();
+    fireEvent.change(title(), { target: { value: "Café de Paris" } });
+    fireEvent.click(send());
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    cleanup();
+
+    land(null);
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(en.suggestEdit.submitted),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 });

@@ -370,6 +370,31 @@ describe("after adding", () => {
     });
     expect(callsTo(COPY_DOC_ID)).toEqual([]);
   });
+
+  // Discard while it is added lets the member go; an add that lands later must not pull them back.
+  it("leaves a member who went elsewhere while it was added where they went", async () => {
+    let land: (value: unknown) => void = () => {};
+    mocks.call.mockImplementation((name) =>
+      name === ACQUIRE
+        ? new Promise((resolve) => {
+            land = resolve;
+          })
+        : Promise.resolve(name === COPY_DOC_ID ? "copy_doc_1" : null),
+    );
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    cleanup();
+
+    land("copy_agg_1");
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        en.puzzles.puzzleAdded,
+        expect.anything(),
+      ),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
 });
 
 describe("the box photo", () => {
@@ -594,6 +619,33 @@ describe("leaving with unsaved work", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save & Add Another" }));
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     await waitFor(() => expect(asks()).toBe(false));
+  });
+
+  // A nav tap or a closed tab while a big cover uploads would lose the form if the add then failed.
+  it("keeps asking while the puzzle is on its way, and after it failed", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let fail: (error: Error) => void = () => {};
+    mocks.call.mockImplementation((name) =>
+      name === CREATE_PUZZLE
+        ? new Promise((_, reject) => {
+            fail = reject;
+          })
+        : Promise.resolve(null),
+    );
+    renderPage();
+    const title = screen.getByRole("textbox", { name: "Puzzle Title" });
+    fireEvent.change(title, { target: { value: "Kattenshow" } });
+    fireEvent.change(screen.getByLabelText("Piece Count"), {
+      target: { value: "500" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: en.puzzles.addPuzzle }));
+    await waitFor(() => expect(callsTo(CREATE_PUZZLE)).toHaveLength(1));
+    expect(asks()).toBe(true);
+
+    fail(new Error("offline"));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(asks()).toBe(true);
+    expect((title as HTMLInputElement).value).toBe("Kattenshow");
   });
 });
 

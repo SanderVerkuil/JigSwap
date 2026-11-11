@@ -9,6 +9,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { toast } from "sonner";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
@@ -398,6 +399,34 @@ describe("leaving with unsaved work", () => {
     );
     await screen.findByRole("heading", { level: 2, name: /“Café”/ });
     expect(asks()).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Contribute another" }));
+    expect(asks()).toBe(false);
+  });
+
+  // A nav tap or a closed tab while a big cover uploads would lose the form if the save then failed.
+  it("keeps asking while the puzzle is on its way, and after it failed", async () => {
+    vi.mocked(toast.error).mockClear();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let fail: (error: Error) => void = () => {};
+    mocks.createPuzzle.mockReturnValue(
+      new Promise((_, reject) => {
+        fail = reject;
+      }),
+    );
+    renderPage();
+    fillRequired("Café");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Contribute a Puzzle" }),
+    );
+    await waitFor(() => expect(mocks.createPuzzle).toHaveBeenCalledTimes(1));
+    expect(asks()).toBe(true);
+
+    fail(new Error("offline"));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(asks()).toBe(true);
+    expect(
+      (screen.getByLabelText("Puzzle Title") as HTMLInputElement).value,
+    ).toBe("Café");
   });
 });
 

@@ -3,8 +3,15 @@
 // UX-158: no surface states a keyboard shortcut the member's platform doesn't use. My Puzzles' own
 // search box (UX-22) replaced its "Press ⌘K" hint, so it names none at all, on any platform.
 // UX-157: the puzzle count shows once.
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
+import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { IntlProvider } from "use-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -25,6 +32,11 @@ vi.mock("@tanstack/react-router", () => ({
     useSearch: () => ({}),
   }),
   useNavigate: () => vi.fn(),
+}));
+// The server reads the request's cookies; this member's request carries none.
+vi.mock("@tanstack/react-start/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-start/server")>()),
+  getCookie: () => undefined,
 }));
 vi.mock("@/components/dashboard-layout/page-header-slot", () => ({
   usePageHeader: (factory: () => { meta?: unknown; actions?: unknown }) => {
@@ -231,5 +243,68 @@ describe("My Puzzles coachmark in the browser", () => {
     render(page());
     expect(screen.queryByText(body)).toBeNull();
     expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
+  });
+
+  // With storage switched off (Firefox's dom.storage.enabled) localStorage is null, while cookies,
+  // and so signing in, still work: the page still opens, and X still dismisses into the cookie.
+  it("opens and dismisses with storage switched off", () => {
+    vi.stubGlobal("localStorage", null);
+    stubPlatform("Win32");
+    render(page());
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss hint" }));
+    expect(screen.queryByText(body)).toBeNull();
+    expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
+  });
+
+  // Every dismissal from before the cookie is in localStorage alone, which the server can't read,
+  // so that member's first My Puzzles after it still has the hint in its HTML. The page's head
+  // script hides it before the first paint, so hydration taking it out moves nothing.
+  it("keeps a dismissal from before the cookie out of the first paint", async () => {
+    localStorage.setItem("jigswap.coachmark.myPuzzlesActions", "1");
+    stubPlatform("Win32");
+    const html = renderToString(page());
+    expect(html).toContain(body);
+
+    // The head's scripts run before the browser parses the body.
+    const { head } = (
+      Route as unknown as {
+        options: {
+          head: (ctx: { match: { context: unknown } }) => {
+            scripts?: { children: string }[];
+          };
+        };
+      }
+    ).options;
+    for (const script of head({ match: { context: {} } }).scripts ?? []) {
+      new Function(script.children)();
+    }
+    const container = document.createElement("div");
+    document.body.append(container);
+    container.innerHTML = html;
+    expect(
+      document.documentElement.hasAttribute("data-coachmark-dismissed"),
+    ).toBe(true);
+    expect(screen.getByText(body).parentElement?.classList).toContain(
+      "in-data-coachmark-dismissed:hidden",
+    );
+    // The browser's hydration render reads document.cookie. Here, without the Start compiler,
+    // createIsomorphicFn always runs its server side, so the hydration below can't see a cookie
+    // written too early: check that the head left it alone.
+    expect(document.cookie).not.toContain("puzzles_coachmark_dismissed");
+
+    // Hydration agrees with the server, then drops the hidden hint and copies the dismissal over.
+    const mismatches: unknown[] = [];
+    const root = await act(async () =>
+      hydrateRoot(container, page(), {
+        onRecoverableError: (error) => mismatches.push(error),
+      }),
+    );
+    expect(mismatches).toEqual([]);
+    expect(container.textContent).not.toContain(body);
+    expect(document.cookie).toContain("puzzles_coachmark_dismissed=1");
+
+    await act(async () => root.unmount());
+    container.remove();
+    document.documentElement.removeAttribute("data-coachmark-dismissed");
   });
 });

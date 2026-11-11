@@ -449,32 +449,19 @@ function AddPuzzlePage() {
           andAnother || returnTo ? null : await resolveCopyPageId(copyId),
       };
     },
-    onSuccess: ({ copyPageId, notOffered }, { andAnother }) => {
-      if (notOffered) toast.error(t("addedNotOffered"));
-      if (andAnother) {
-        if (!notOffered) toast.success(t("puzzleAdded"));
-        resetForm();
-      } else if (returnTo) {
-        if (!notOffered) toast.success(t("puzzleAdded"));
-        void navigate({ href: returnTo, ignoreBlocker: true });
+    // Also said to a member who left while it was added; what the form does next is leadOn's.
+    onSuccess: ({ notOffered }, { andAnother }) => {
+      if (notOffered) {
+        toast.error(t("addedNotOffered"));
+      } else if (andAnother || returnTo) {
+        toast.success(t("puzzleAdded"));
       } else {
-        if (!notOffered) {
-          toast.success(t("puzzleAdded"), {
-            action: {
-              label: t("addAnother"),
-              onClick: () => void navigate({ to: "/my-puzzles/add" }),
-            },
-          });
-        }
-        if (copyPageId) {
-          void navigate({
-            to: "/my-puzzles/$id",
-            params: { id: copyPageId },
-            ignoreBlocker: true,
-          });
-        } else {
-          void navigate({ to: "/my-puzzles", ignoreBlocker: true });
-        }
+        toast.success(t("puzzleAdded"), {
+          action: {
+            label: t("addAnother"),
+            onClick: () => void navigate({ to: "/my-puzzles/add" }),
+          },
+        });
       }
     },
     onError: (error) => {
@@ -500,26 +487,46 @@ function AddPuzzlePage() {
   const definitionReady =
     !!selectedDefinitionId || (!!form.title.trim() && !!form.pieceCount);
 
+  // What follows an add, passed per call: TanStack Query skips it once the form is gone, so a member
+  // who left while it was added stays where they went.
+  const leadOn = (
+    { copyPageId }: { copyPageId: string | null },
+    { andAnother }: { andAnother: boolean },
+  ) => {
+    if (andAnother) {
+      resetForm();
+    } else if (returnTo) {
+      void navigate({ href: returnTo, ignoreBlocker: true });
+    } else if (copyPageId) {
+      void navigate({
+        to: "/my-puzzles/$id",
+        params: { id: copyPageId },
+        ignoreBlocker: true,
+      });
+    } else {
+      void navigate({ to: "/my-puzzles", ignoreBlocker: true });
+    }
+  };
+
   const handleAdd = () => {
     if (!definitionReady) return;
-    submitPuzzle.mutate({ andAnother: false });
+    submitPuzzle.mutate({ andAnother: false }, { onSuccess: leadOn });
   };
 
   const handleSaveAndAddAnother = () => {
     if (!definitionReady) return;
-    submitPuzzle.mutate({ andAnother: true });
+    submitPuzzle.mutate({ andAnother: true }, { onSuccess: leadOn });
   };
 
   // In copy mode the definition is fixed, so only the copy fields gate submit.
   const isReady = isCopyMode ? !!selectedDefinitionId : definitionReady;
 
   // Unsaved work, in both modes: copy mode's title and piece count come from the catalogue, so only
-  // the member's own fields count there. Not while a submit is on its way: that work isn't lost.
-  const unsaved =
-    !submitPuzzle.isPending &&
-    (isCopyMode
-      ? copyFieldsOf(form) !== copyFieldsOf(baseline)
-      : formFingerprint(form) !== formFingerprint(baseline));
+  // the member's own fields count there. Also while a submit is on its way: it may still fail. A
+  // successful add empties the form (Save & Add Another) or leaves without asking.
+  const unsaved = isCopyMode
+    ? copyFieldsOf(form) !== copyFieldsOf(baseline)
+    : formFingerprint(form) !== formFingerprint(baseline);
 
   const difficultyOptions = DIFFICULTY_OPTIONS.map((o) => ({
     ...o,
