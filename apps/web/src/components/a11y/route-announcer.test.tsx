@@ -89,10 +89,26 @@ function makeRouter() {
       head: () => ({ meta: [{ title: ROUTE_TITLE }] }),
       component: () => <p>{path}</p>,
     });
+  // A docs page's sections: a heading, and a FAQ question.
+  const guide = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/guide",
+    head: () => ({ meta: [{ title: ROUTE_TITLE }] }),
+    component: () => (
+      <>
+        <h2 id="blurred-photos">Blurred photos</h2>
+        <details id="why-blurred">
+          <summary>Why is a photo blurred?</summary>
+          <p>The check wasn't sure.</p>
+        </details>
+      </>
+    ),
+  });
   return createRouter({
     routeTree: rootRoute.addChildren([
       page("/a", rootRoute),
       page("/b", rootRoute),
+      guide,
       page("/docs/$slug", rootRoute),
       shellRoute.addChildren([page("/items/$id", shellRoute)]),
     ]),
@@ -187,6 +203,35 @@ describe("RouteAnnouncer", () => {
     await frames();
     expect(region().textContent).toBe(ROUTE_TITLE);
     expect(document.activeElement).toBe(byId(MAIN_CONTENT_ID));
+  });
+
+  // A docs search result or cross-link to a section left focus on <main>, at the top of the page,
+  // so the first Tab went back up to the breadcrumb.
+  describe("at a #hash", () => {
+    it("moves focus to the heading it names, without scrolling", async () => {
+      byId("nav-link").focus();
+      await go(() => router.history.push("/guide#blurred-photos"), "/guide");
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(byId("blurred-photos")),
+      );
+      expect(byId("blurred-photos").getAttribute("tabindex")).toBe("-1");
+    });
+
+    it("moves focus to a FAQ question by its summary", async () => {
+      byId("nav-link").focus();
+      await go(() => router.history.push("/guide#why-blurred"), "/guide");
+      const summary = byId("why-blurred").querySelector("summary");
+      await vi.waitFor(() => expect(document.activeElement).toBe(summary));
+      expect(summary?.hasAttribute("tabindex")).toBe(false);
+    });
+
+    it("moves focus to the main content when the hash names nothing", async () => {
+      byId("nav-link").focus();
+      await go(() => router.history.push("/guide#gone"), "/guide");
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(byId(MAIN_CONTENT_ID)),
+      );
+    });
   });
 
   // A detail page's route title is generic ("My puzzles") until the page's data is in and the shell

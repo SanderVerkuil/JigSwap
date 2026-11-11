@@ -1,6 +1,10 @@
 import { useRouter } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { focusMainContent, mainContentElement } from "./skip-link";
+import {
+  focusHashTarget,
+  focusMainContent,
+  mainContentElement,
+} from "./skip-link";
 
 /**
  * Whether a route change should move focus to the new page's main content: when focus is lost
@@ -30,7 +34,7 @@ const SHELL_ROUTE_ID = "/_dashboard";
  * Client-side navigation is silent to screen readers and leaves focus on the clicked link. After
  * each change of page (not a search- or hash-only change, not the first load) this speaks the new
  * page title in a polite live region and, on a link/push navigation, moves focus to the main
- * content without scrolling. Back/forward only announce: they keep the restored scroll position
+ * content (or the section its #hash names) without scrolling. Back/forward only announce: they keep the restored scroll position
  * and focus where the browser left it. A route with params in the shell is a detail page, whose
  * route title is generic until the shell names the tab after its data (ShellDocumentTitle): while
  * the tab still shows the route's title the announcement waits for that name. Any later change of
@@ -86,7 +90,15 @@ export function RouteAnnouncer() {
         }
         const main = mainContentElement();
         if (moveFocus && shouldMoveFocus(document.activeElement, main)) {
-          focusMainContent({ preventScroll: true });
+          // A link to a section (a docs search result, a cross-link) starts the reader there, as
+          // a full load at its #fragment would, rather than at the top of the page.
+          if (
+            !focusHashTarget(router.state.location.hash, {
+              preventScroll: true,
+            })
+          ) {
+            focusMainContent({ preventScroll: true });
+          }
         }
       });
     });

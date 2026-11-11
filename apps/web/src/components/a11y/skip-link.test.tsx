@@ -6,7 +6,12 @@ import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it } from "vitest";
 import en from "../../../locales/en.json";
 import nl from "../../../locales/nl.json";
-import { focusMainContent, MAIN_CONTENT_ID, SkipLink } from "./skip-link";
+import {
+  focusHashTarget,
+  focusMainContent,
+  MAIN_CONTENT_ID,
+  SkipLink,
+} from "./skip-link";
 
 afterEach(() => {
   cleanup();
@@ -43,6 +48,25 @@ describe("focusMainContent", () => {
   it("does nothing when the page has no main landmark", () => {
     mount(`<div>no landmark</div>`);
     expect(focusMainContent()).toBe(false);
+    expect(document.activeElement).toBe(document.body);
+  });
+});
+
+describe("focusHashTarget", () => {
+  // A Dutch heading's id keeps its accents; the browser's location.hash has them percent-encoded.
+  it("finds a section by a hash as the address bar encodes it", () => {
+    mount(
+      `<main id="${MAIN_CONTENT_ID}"><h2 id="een-exemplaar-privé-maken">Een exemplaar privé maken</h2></main>`,
+    );
+    expect(focusHashTarget("#een-exemplaar-priv%C3%A9-maken")).toBe(true);
+    expect(document.activeElement?.id).toBe("een-exemplaar-privé-maken");
+  });
+
+  it("leaves alone a target outside the main content", () => {
+    mount(
+      `<nav><h2 id="menu">Menu</h2></nav><main id="${MAIN_CONTENT_ID}">x</main>`,
+    );
+    expect(focusHashTarget("menu")).toBe(false);
     expect(document.activeElement).toBe(document.body);
   });
 });
