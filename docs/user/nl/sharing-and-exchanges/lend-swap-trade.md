@@ -156,14 +156,15 @@ Een uitwisseling doorloopt duidelijke stappen:
    kunt maken; het andere lid krijgt in beide gevallen een melding.
 3. **Afronding** — eenmaal geaccepteerd moeten **beide partijen** de afronding
    bevestigen. Gebruik **Markeren als voltooid** zodra de puzzel echt is
-   overgedragen. Een venster vertelt je eerst wat afronden doet: bij een ruil
-   of verkoop gaat de puzzel naar de bibliotheek van het andere lid en dat kun
-   je niet ongedaan maken; bij een lening gaat de lening in. Na je bevestiging
-   staat er **Je hebt … bevestigd · Wachten op …** tot je partner ook
-   bevestigt. Heeft je partner als eerste bevestigd, dan staat er **Jouw
-   beurt** en rond jij de uitwisseling af met je bevestiging. Tot dan kunnen
-   jullie allebei de uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen
-   veranderen of het andere lid niet meer reageert.
+   overgedragen: geruild, verkocht of uitgeleend. Een venster vertelt je eerst
+   wat afronden doet: bij een ruil of verkoop gaat de puzzel naar de
+   bibliotheek van het andere lid en dat kun je niet ongedaan maken; bij een
+   lening gaat de lening in. Na je bevestiging staat er
+   **Je hebt … bevestigd · Wachten op …** tot je partner ook bevestigt. Heeft
+   je partner als eerste bevestigd, dan staat er **Jouw beurt** en rond jij de
+   uitwisseling af met je bevestiging. Tot dan kunnen jullie allebei de
+   uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen veranderen of
+   het andere lid niet meer reageert.
 4. **Afgerond** — wanneer beiden bevestigen, gaat het eigendom (ruil/verkoop)
    of bezit (leen) over, en kun je **Laat een review achter** gebruiken om je
    partner te beoordelen. Bij een afgeronde lening laat de status zien waar de

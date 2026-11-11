@@ -92,6 +92,20 @@ describe("docs search over the real guides", () => {
     },
   );
 
+  // A finished sale: the guide says "sell" and "sale", and "sold" reached it only as a typo of
+  // "fold". "mark as sold" opens where Mark complete is explained.
+  it.each([
+    ["en", "sold", "the-exchange-lifecycle"],
+    ["en", "i sold my puzzle", "the-exchange-lifecycle"],
+    ["en", "mark as sold", "the-exchange-lifecycle"],
+    ["nl", "verkocht", "de-levenscyclus-van-een-uitwisseling"],
+  ])("finds the lending guide for a sale (%s: %s)", (locale, query, hash) => {
+    const lend = top3(locale, query).find(
+      (hit) => hit.slug === "sharing-and-exchanges/lend-swap-trade",
+    );
+    expect(lend?.hash).toBe(hash);
+  });
+
   // "stop" once reached Notifications only as a typo of "top", from "the bell in the top bar".
   it("finds Notifications first for 'stop email', at its preferences", () => {
     expect(top3("en", "stop email")[0]).toMatchObject({
