@@ -114,7 +114,8 @@ The detail page is the rich record of a single owned copy. It includes:
 - A **community rating breakdown** and a comment area.
 
 **Owner actions** on this page include the **Offer for swap** and **Offer to
-lend** switches, **Log a solve**, and editing. Each switch change is
+lend** switches (and **Offer for sale**, shown only while the copy is for
+sale), **Log a solve**, and editing. Each switch change is
 confirmed with an **Undo**, and it never changes who can see the copy (see
 below). While the copy is out on loan you can't switch an offer on until it's
 back. Use **Recall** once you have the puzzle back: it asks you to confirm

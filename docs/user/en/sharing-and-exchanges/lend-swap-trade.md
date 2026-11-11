@@ -1,7 +1,7 @@
 ---
 title: Lend, swap & sell
 order: 2
-summary: "Find a copy, request it, message its owner, and manage your exchanges."
+summary: "Offer your puzzles, find a copy, request it, message its owner, manage your exchanges, and get a lent puzzle back."
 ---
 
 # Lend, Swap & Sell
@@ -18,6 +18,25 @@ JigSwap supports three kinds of exchanges:
 > new owner.
 
 **Where:** **Exchanges** (`/trades`).
+
+## Offer your puzzle to swap, lend or sell
+
+Other members can only request a puzzle you offer.
+
+- **To swap or lend it:** turn on **Offer for swap** or **Offer to lend**, in
+  the ⋯ menu on the puzzle's card in **My Puzzles** or with the switches on the
+  puzzle's own page.
+- **To sell it:** open the puzzle's page, click **Edit**, turn on **For Sale**
+  under **Availability** and click **Save**. The puzzle's page then shows an
+  **Offer for sale** switch: turn it off to stop selling.
+
+When someone asks for your puzzle, you get a notification and the request
+shows on **Exchanges** under **Incoming**. Click **Accept** (or **Decline**),
+arrange the handover with **Message**, and once the puzzle has changed hands,
+both of you click **Mark complete**. See
+[The exchange lifecycle](#the-exchange-lifecycle), and for your puzzles' other
+actions,
+[Managing your puzzles](/docs/your-library/managing-your-puzzles#actions-on-each-puzzle).
 
 ## Find a copy
 
@@ -103,6 +122,11 @@ Click or tap an exchange to expand its details: both puzzles, the trade-partner
 card and the actions for the exchange's current step. Click it again to fold
 the details away.
 
+You can also **Message** your exchange partner from the exchange to coordinate
+details. To report a problem with a trade, open the **Trade actions** menu and
+choose **Report member**. See
+[Blocking & Reporting](/docs/discovering-and-community/blocking-and-reporting).
+
 When you open a notification about an exchange, the **Exchanges** page opens
 with that exchange expanded and highlighted.
 
@@ -146,25 +170,30 @@ gone since the request was sent. A message tells you why. An exchange whose
 puzzle changed hands can't be completed any more: decline it if it's still a
 request, or cancel it if it was accepted.
 
-## Returning a borrowed puzzle
+## Give back a puzzle you borrowed
 
 If you've borrowed a puzzle (it's under **Loans › Borrowed by you**), use the
 **Return** action to give it back. You're asked to confirm first: only return
 it once the lender has the puzzle back, because the loan then closes for good.
 
-If you're the lender, use **Recall** under **Loans › Lent out**, or on the
-puzzle's card in **My Puzzles**, once you have the puzzle back. The loan then
-closes for good, and the borrower doesn't get a notification. You're asked to
-confirm first. Under **Loans**, **Message** next to it lets you arrange getting
-the puzzle back, if you're connected with the borrower.
+## Get a lent puzzle back
+
+Lent a puzzle to a friend and want it back? On **Exchanges**, open **Loans**:
+under **Lent out** you see who has each puzzle you lent, and for how long.
+
+- To arrange getting it back, click **Message** next to it, if you're
+  connected with the borrower.
+- Once you have the puzzle back, click **Recall** there, or on the puzzle's
+  card in **My Puzzles**. You're asked to confirm first. The loan then closes
+  for good, and the borrower doesn't get a notification.
+- Until you've both clicked **Mark complete**, the loan hasn't started, and
+  either of you can still **Cancel** the exchange.
+- If the borrower stops answering or won't give the puzzle back, find the loan
+  under **Incoming** and expand it, open its **Trade actions** menu and choose
+  **Report member**, for example with **Fake trade or no-show**.
 
 A puzzle can be on loan to one member at a time. While it's out on loan, it
 isn't available: nobody can request it, you can't offer it again or offer it in
 a swap, and you can't delete it. No exchange that would move it can be accepted
 or completed until it's back. Once it's returned or recalled, turn on
 **Offer for Swap** or **Offer to Lend** on its page to offer it again.
-
-You can also **Message** your exchange partner from the exchange to coordinate
-details. To report a problem with a trade, open the **Trade actions** menu and
-choose **Report member**. See
-[Blocking & Reporting](/docs/discovering-and-community/blocking-and-reporting).

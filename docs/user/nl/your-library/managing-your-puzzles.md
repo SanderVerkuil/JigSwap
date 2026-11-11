@@ -119,8 +119,9 @@ bevat:
 - Een **opbouw van de communitybeoordeling** en een opmerkingengebied.
 
 **Eigenaarsacties** op deze pagina zijn onder meer de schakelaars
-**Aanbieden voor ruil** en **Aanbieden om uit te lenen**, een voltooiing
-vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
+**Aanbieden voor ruil** en **Aanbieden om uit te lenen** (en
+**Te koop aanbieden**, alleen zolang het exemplaar te koop staat), een
+voltooiing vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
 **Ongedaan maken**, en hij verandert nooit wie het exemplaar kan zien (zie
 hieronder). Is het exemplaar uitgeleend, dan kun je pas weer een aanbod
 aanzetten als het terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
