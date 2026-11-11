@@ -413,6 +413,11 @@ describe("docs breadcrumb", () => {
       );
       expect(link.className).not.toContain("min-h-11");
     }
+    // Wrapped rows (a Dutch trail at 320px) were 2px apart, so the second row's link took taps
+    // on the lower half of the first row's. 24px is the two 12px insets.
+    expect(nav.className.split(" ")).toEqual(
+      expect.arrayContaining(["gap-y-0.5", "pointer-coarse:gap-y-6"]),
+    );
   });
 });
 

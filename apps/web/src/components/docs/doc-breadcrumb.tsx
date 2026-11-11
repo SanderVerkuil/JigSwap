@@ -13,8 +13,10 @@ export function DocBreadcrumb({
     <nav
       aria-label={t("breadcrumbLabel")}
       // Wraps between crumbs, and the links keep their text on one line. The page's own title may
-      // wrap too, where it alone is wider than the column (a long Dutch title on a phone).
-      className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[14px] text-mk-text-muted mb-4"
+      // wrap too, where it alone is wider than the column (a long Dutch title on a phone). On touch
+      // screens wrapped rows sit 24px apart, so the links' hit areas (12px above and below) meet
+      // without one row's link covering the other's text.
+      className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pointer-coarse:gap-y-6 text-[14px] text-mk-text-muted mb-4"
     >
       {trail.map((c, i) => {
         // Only the page itself is current; TanStack would also mark the links to its parents.
