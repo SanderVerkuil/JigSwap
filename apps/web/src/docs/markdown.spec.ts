@@ -172,6 +172,37 @@ describe("compileMarkdown", () => {
     ]);
   });
 
+  // axe's heading-order: an h4 straight under an h2 skipped a level in a screen reader's list.
+  it("makes a sub-step straight under an h2 an h3 that keeps its sub-step look and place", async () => {
+    const r = await compileMarkdown(
+      "## Online status\n\n#### Turn it on or off\n\nA.\n\n#### Who sees it\n\nB.\n\n## Read\n\n### Quick links\n\n#### In the header\n\nC.\n",
+    );
+    expect(
+      Array.from(r.html.matchAll(/<(h[2-4])\b[^>]*>/g), (m) => m[0]),
+    ).toEqual([
+      '<h2 id="online-status">',
+      '<h3 id="turn-it-on-or-off" class="docs-substep">',
+      '<h3 id="who-sees-it" class="docs-substep">',
+      '<h2 id="read">',
+      '<h3 id="quick-links">',
+      // Under an h3 an h4 is at its level already.
+      '<h4 id="in-the-header">',
+    ]);
+    expect(r.headings.map((h) => h.id)).toEqual([
+      "online-status",
+      "read",
+      "quick-links",
+    ]);
+    expect(r.sections.map((s) => [s.id, s.depth])).toEqual([
+      ["online-status", 2],
+      ["turn-it-on-or-off", 4],
+      ["who-sees-it", 4],
+      ["read", 2],
+      ["quick-links", 3],
+      ["in-the-header", 4],
+    ]);
+  });
+
   it("does not treat a deeply nested Note: as a callout", async () => {
     const r = await compileMarkdown(
       "> Regular quote.\n>\n> Then **Note:** later.\n",

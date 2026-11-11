@@ -50,8 +50,9 @@
   font-weight: 400;
   margin: 32px 0 8px;
 }
-/* Half a pixel above the text it heads: 17.5px, and 18.5px where the text is 18px. */
-.docs-prose h4 {
+/* Half a pixel above the text it heads: 17.5px, and 18.5px where the text is 18px. A sub-step
+   straight under an h2 is an h3 that looks like this (markdown.ts). */
+.docs-prose :is(h4, .docs-substep) {
   font-family: var(--font-mk-sans);
   font-size: calc(1em + 0.5px);
   font-weight: 600;

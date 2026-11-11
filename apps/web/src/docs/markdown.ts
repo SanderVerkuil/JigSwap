@@ -35,6 +35,26 @@ function collectHeadings() {
   };
 }
 
+// An h4 straight under an h2, with no h3 between (Messages' sub-steps, "Turn it on or off" under
+// "Online status"), becomes an h3, so a screen reader's list of headings doesn't skip a level. It
+// keeps the h4's look (docs-substep). This runs after collectHeadings, so it stays out of the
+// contents list, and search still counts it as a sub-step (searchText).
+const SUBSTEP = "docs-substep";
+function substepsAtTheirLevel() {
+  return (tree: Root) => {
+    let underH3 = false;
+    visit(tree, (node) => {
+      if (node.type !== "element") return;
+      if (node.tagName === "h2") underH3 = false;
+      else if (node.tagName === "h3") underH3 = true;
+      else if (node.tagName === "h4" && !underH3) {
+        node.tagName = "h3";
+        node.properties = { ...node.properties, className: [SUBSTEP] };
+      }
+    });
+  };
+}
+
 // Strip the first/leading H1 from the rendered body so each page has exactly one
 // H1 (the route injects its own from frontmatter). The stripped H1's text is
 // exposed on `file.data.title` as a fallback page title.
@@ -162,6 +182,7 @@ const processor = unified()
     themes: { light: "github-light", dark: "github-dark" },
   })
   .use(collectHeadings)
+  .use(substepsAtTheirLevel)
   .use(stripLeadingH1)
   .use(calloutsFromBlockquotes)
   .use(rehypeStringify);
@@ -189,10 +210,10 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
   };
 }
 
-// The sections a search result can open at: each h2 to h4 (the on-page TOC lists only h2/h3), and
-// each FAQ question (a <details> with an id from slugQuestions and a <summary>). The HTML is this
-// processor's own output, so the tags are known. A question ends at its </details>; text after it,
-// before the next section, belongs to none.
+// The sections a search result can open at: each h2 to h4 (the on-page TOC lists only h2/h3; a
+// sub-step is an h4 here, whatever its tag), and each FAQ question (a <details> with an id from
+// slugQuestions and a <summary>). The HTML is this processor's own output, so the tags are known.
+// A question ends at its </details>; text after it, before the next section, belongs to none.
 const SECTION_TAG =
   /<(h[234])\b[^>]*?\sid="([^"]+)"[^>]*>([\s\S]*?)<\/\1>|<details\b[^>]*?\sid="([^"]+)"[^>]*>\s*<summary\b[^>]*>([\s\S]*?)<\/summary>|<\/details>/g;
 
@@ -228,7 +249,11 @@ function searchText(html: string): { text: string; sections: DocSection[] } {
       title,
       start: text.length - title.length,
       end: text.length,
-      ...(tag && { depth: Number(tag[1]) as 2 | 3 | 4 }),
+      ...(tag && {
+        depth: m[0].slice(0, m[0].indexOf(">")).includes(`class="${SUBSTEP}"`)
+          ? 4
+          : (Number(tag[1]) as 2 | 3 | 4),
+      }),
     };
     sections.push(open);
     question = !headingId;
