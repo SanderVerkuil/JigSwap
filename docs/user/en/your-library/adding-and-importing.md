@@ -34,14 +34,18 @@ Adding a puzzle is a two-step flow:
 
 You'll land on the creation/copy form (`/my-puzzles/add/new`).
 
-**Import from a store URL (fastest way):**
+### Import from a store link
+
+This is the fastest way.
 
 1. Find the **import zone** at the top of the form.
 2. Paste a puzzle's web address from a retailer.
 3. JigSwap fetches the puzzle details and auto-fills the form fields for you.
 4. If the puzzle already exists in the catalogue, you'll see a **match banner** offering to use the existing entry instead of creating a duplicate.
 
-**Fill in the details manually (or adjust the imported ones):**
+### Fill in the details yourself
+
+Or adjust the ones the import filled in:
 
 - **Title**, **brand**, **piece count**, **difficulty**, **condition** (New (sealed), Like new, Good, Fair or Poor).
 - **Availability chips**: mark it _for trade_, _for lend_, and/or _for sale_.

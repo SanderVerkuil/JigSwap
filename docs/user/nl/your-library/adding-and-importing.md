@@ -36,14 +36,18 @@ Een puzzel toevoegen gaat in twee stappen:
 
 Je komt terecht op het aanmaak-/kopieerformulier (`/my-puzzles/add/new`).
 
-**Importeren via een winkellink (de snelste manier):**
+### Importeren via een winkellink
+
+Dit is de snelste manier.
 
 1. Zoek de **importzone** bovenaan het formulier.
 2. Plak een webadres van een puzzel bij een winkel.
 3. JigSwap haalt de puzzelgegevens op en vult de formuliervelden automatisch voor je in.
 4. Bestaat de puzzel al in de catalogus, dan zie je een **overeenkomstbanner** die aanbiedt de bestaande vermelding te gebruiken in plaats van een dubbele aan te maken.
 
-**Vul de gegevens handmatig in (of pas de geïmporteerde aan):**
+### De gegevens zelf invullen
+
+Of pas de gegevens aan die de import heeft ingevuld:
 
 - **Titel**, **merk**, **aantal stukjes**, **moeilijkheid**, **conditie** (Nieuw (verzegeld), Zo goed als nieuw, Goed, Redelijk of Slecht).
 - **Beschikbaarheids-chips**: markeer als _voor ruil_, _voor uitlenen_ en/of _te koop_.
