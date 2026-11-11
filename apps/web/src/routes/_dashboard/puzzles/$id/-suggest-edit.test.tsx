@@ -393,4 +393,26 @@ describe("leaving with unsaved work", () => {
     expect(asks()).toBe(true);
     expect((title() as HTMLInputElement).value).toBe("Café de Paris");
   });
+
+  // Discard while it is sent lets the member go; a send that lands later must not pull them back.
+  it("leaves a member who went elsewhere while it was sent where they went", async () => {
+    vi.mocked(toast.success).mockClear();
+    let land: (value: unknown) => void = () => {};
+    mocks.send.mockReturnValue(
+      new Promise((resolve) => {
+        land = resolve;
+      }),
+    );
+    renderPage();
+    fireEvent.change(title(), { target: { value: "Café de Paris" } });
+    fireEvent.click(send());
+    await waitFor(() => expect(mocks.send).toHaveBeenCalledTimes(1));
+    cleanup();
+
+    land(null);
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(en.suggestEdit.submitted),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
 });

@@ -370,6 +370,31 @@ describe("after adding", () => {
     });
     expect(callsTo(COPY_DOC_ID)).toEqual([]);
   });
+
+  // Discard while it is added lets the member go; an add that lands later must not pull them back.
+  it("leaves a member who went elsewhere while it was added where they went", async () => {
+    let land: (value: unknown) => void = () => {};
+    mocks.call.mockImplementation((name) =>
+      name === ACQUIRE
+        ? new Promise((resolve) => {
+            land = resolve;
+          })
+        : Promise.resolve(name === COPY_DOC_ID ? "copy_doc_1" : null),
+    );
+    renderPage({ puzzleId: PUZZLE_DOC_ID });
+    fireEvent.click(screen.getByRole("button", { name: "Add to my puzzles" }));
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    cleanup();
+
+    land("copy_agg_1");
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        en.puzzles.puzzleAdded,
+        expect.anything(),
+      ),
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
 });
 
 describe("the box photo", () => {

@@ -276,13 +276,10 @@ function SuggestEditForm({
       }
       await notifyBoxArtCheck(args.image);
     },
+    // Also said to a member who left while it was sent; going on to the puzzle is the Submit
+    // button's, below.
     onSuccess: () => {
       toast.success(t(openProposal ? "updated" : "submitted"));
-      void navigate({
-        to: "/puzzles/$id",
-        params: { id },
-        ignoreBlocker: true,
-      });
     },
     onError: (error) => {
       // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
@@ -343,7 +340,18 @@ function SuggestEditForm({
       </Button>
       <Button
         disabled={!canSubmit || submit.isPending}
-        onClick={() => submit.mutate()}
+        onClick={() =>
+          // Per call: TanStack Query skips this once the form is gone, so a member who left while
+          // it was sent stays where they went.
+          submit.mutate(undefined, {
+            onSuccess: () =>
+              void navigate({
+                to: "/puzzles/$id",
+                params: { id },
+                ignoreBlocker: true,
+              }),
+          })
+        }
       >
         {submit.isPending
           ? t("submitting")
