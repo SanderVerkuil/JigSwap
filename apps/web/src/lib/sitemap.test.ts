@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildSitemapXml,
   collectSitemapEntries,
+  docsSitemapPaths,
   SITEMAP_CACHE_CONTROL,
+  SITEMAP_MAX_URLS,
   sitemapResponse,
   type SitemapEntry,
   type SitemapPage,
@@ -73,6 +75,48 @@ describe("buildSitemapXml", () => {
       ].join("\n"),
     );
   });
+
+  it("lists the given paths after the /catalog root", () => {
+    expect(
+      buildSitemapXml(ORIGIN, [entry(0)], ["/docs", "/docs/help/faq"]),
+    ).toBe(
+      [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        "  <url><loc>https://jigswap.site/catalog</loc></url>",
+        "  <url><loc>https://jigswap.site/docs</loc></url>",
+        "  <url><loc>https://jigswap.site/docs/help/faq</loc></url>",
+        "  <url><loc>https://jigswap.site/catalog/def0</loc><lastmod>2026-10-01T00:00:00.000Z</lastmod></url>",
+        "</urlset>",
+        "",
+      ].join("\n"),
+    );
+  });
+});
+
+describe("docsSitemapPaths", () => {
+  const page = (locale: string, slug: string, isIndex = false) => ({
+    locale,
+    slug,
+    isIndex,
+  });
+
+  it("lists the docs landing and each English article, without the group pages", () => {
+    expect(
+      docsSitemapPaths([
+        page("en", "", true),
+        page("en", "help", true),
+        page("en", "help/faq-and-troubleshooting"),
+        page("en", "getting-started/dashboard"),
+        // One URL serves both languages, so a Dutch page adds none.
+        page("nl", "help/faq-and-troubleshooting"),
+      ]),
+    ).toEqual([
+      "/docs",
+      "/docs/help/faq-and-troubleshooting",
+      "/docs/getting-started/dashboard",
+    ]);
+  });
 });
 
 describe("sitemapResponse", () => {
@@ -107,5 +151,33 @@ describe("sitemapResponse", () => {
     );
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     expect(await res.text()).toBe(buildSitemapXml(ORIGIN, []));
+  });
+
+  const DOCS = ["/docs", "/docs/help/faq-and-troubleshooting"];
+
+  it("serves the docs paths with the catalogue", async () => {
+    const res = await sitemapResponse(ORIGIN, feed(2, 2), DOCS);
+
+    expect(await res.text()).toBe(
+      buildSitemapXml(ORIGIN, [entry(0), entry(1)], DOCS),
+    );
+  });
+
+  it("keeps the docs paths when the feed fails", async () => {
+    const fetchPage = vi.fn(async () => {
+      throw new Error("Convex unreachable");
+    });
+
+    const res = await sitemapResponse(ORIGIN, fetchPage, DOCS);
+
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
+    expect(await res.text()).toBe(buildSitemapXml(ORIGIN, [], DOCS));
+  });
+
+  it("makes room for the docs paths under the 50,000-URL limit", async () => {
+    const res = await sitemapResponse(ORIGIN, feed(60_000, 1000), DOCS);
+
+    const urls = (await res.text()).match(/<url>/g) ?? [];
+    expect(urls).toHaveLength(SITEMAP_MAX_URLS);
   });
 });
