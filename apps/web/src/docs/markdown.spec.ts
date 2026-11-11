@@ -38,6 +38,14 @@ describe("compileMarkdown", () => {
     });
   });
 
+  it("passes a keywords list through for search", async () => {
+    const r = await compileMarkdown(
+      "---\ntitle: Lend\nkeywords:\n  - trade\n  - huisgenoot\n---\n\nBody.\n",
+    );
+    expect(r.frontmatter.keywords).toEqual(["trade", "huisgenoot"]);
+    expect(r.html).not.toContain("trade");
+  });
+
   it("emits stable heading ids for h2/h3 in the TOC", async () => {
     const r = await compileMarkdown(SRC);
     expect(r.headings).toEqual([

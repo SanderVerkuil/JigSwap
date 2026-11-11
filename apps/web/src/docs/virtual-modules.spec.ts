@@ -130,6 +130,7 @@ describe("renderDocsModule", () => {
         title: "Overzicht",
         group: "getting-started",
         summary: "",
+        keywords: "",
         text: "Overzicht text",
       },
       {
@@ -138,6 +139,7 @@ describe("renderDocsModule", () => {
         title: "FAQ",
         group: "help",
         summary: "",
+        keywords: "",
         text: "FAQ text",
       },
     ]);

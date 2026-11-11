@@ -9,6 +9,7 @@ const DOCS: SearchDoc[] = [
     title: "Collections",
     group: "your-library",
     summary: "",
+    keywords: "",
     text: "Create a collection to group puzzles together.",
   },
 ];

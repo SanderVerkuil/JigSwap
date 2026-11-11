@@ -2,6 +2,8 @@ export interface DocFrontmatter {
   title: string;
   order?: number;
   summary?: string;
+  // Words members search with that the page doesn't use itself; only search reads them.
+  keywords?: string[];
 }
 
 export interface DocHeading {
