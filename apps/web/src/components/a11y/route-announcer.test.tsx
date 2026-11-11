@@ -99,7 +99,7 @@ function makeRouter() {
         <h2 id="blurred-photos">Blurred photos</h2>
         <details id="why-blurred">
           <summary>Why is a photo blurred?</summary>
-          <p>The check wasn't sure.</p>
+          <p>The check was not sure.</p>
         </details>
       </>
     ),
