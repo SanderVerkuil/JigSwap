@@ -262,20 +262,22 @@
   outline-offset: -3px;
   border-radius: 6px;
 }
-/* chevron affordance that rotates when open */
+/* chevron affordance that rotates when open, centred on the question's first line at 17px and
+   at 18px */
 .docs-prose summary::before {
   content: "";
   flex: none;
   width: 8px;
   height: 8px;
-  margin-top: 7px;
+  margin-top: calc(0.5lh - 4px);
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
   transition: transform 0.15s var(--ease-mk-out);
 }
+/* Turned down, its ink sits 2px low in its box. */
 .docs-prose details[open] > summary::before {
-  transform: rotate(45deg);
+  transform: translateY(-2px) rotate(45deg);
 }
 /* the answer body inside an open <details>, starting under the question's text (16px padding,
    8px chevron, 10px gap) */
