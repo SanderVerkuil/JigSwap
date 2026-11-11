@@ -12,6 +12,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Collections" },
     html: "",
     headings: [],
+    sections: [],
     text: "Create a collection to group puzzles together.",
   },
   {
@@ -23,6 +24,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Visibility & Privacy" },
     html: "",
     headings: [],
+    sections: [],
     text: "Control who can see your puzzles with visibility settings.",
   },
   {
@@ -34,6 +36,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Your Library" },
     html: "",
     headings: [],
+    sections: [],
     text: "Library overview.",
   },
 ];
@@ -174,6 +177,106 @@ describe("docs search ignores filler words", () => {
   });
 });
 
+// Pages rank as they are; each result then opens at its best section.
+describe("docs search opens a result at its section", () => {
+  const messages = sectioned(
+    "staying-informed/messages",
+    "Messages",
+    "Messages is where you talk to other members.",
+    [
+      [
+        "send-photos",
+        "Send photos",
+        "Attach photos to a message. Each photo is checked, and a photo can take a moment.",
+      ],
+      [
+        "blurred-photos",
+        "Blurred photos",
+        "A photo is blurred at first when the check was not sure. Click Show to see it.",
+      ],
+    ],
+  );
+  const faq = sectioned(
+    "help/faq-and-troubleshooting",
+    "FAQ & troubleshooting",
+    "Choose a question to see the answer.",
+    [
+      [
+        "why-cant-i-reply",
+        "Why can't I reply to a conversation?",
+        "The other member is no longer reachable by you.",
+      ],
+    ],
+  );
+  const households = sectioned(
+    "sharing-and-exchanges/households",
+    "Households",
+    "A household lets the people you live with share one puzzle library.",
+    [["invite-someone", "Invite someone", "Only the admin can invite."]],
+  );
+  const index = createDocsIndex([messages, faq, households], "en");
+
+  it("opens at the section with the most of the query's words, and says so in the row", () => {
+    const [hit] = index.search("photo blurred");
+    expect(hit).toMatchObject({
+      slug: "staying-informed/messages",
+      title: "Messages",
+      section: "Blurred photos",
+      hash: "blurred-photos",
+    });
+    // The snippet comes from that section, after its title.
+    expect(hit.snippet.startsWith("A photo is blurred")).toBe(true);
+  });
+
+  it("opens at a FAQ question", () => {
+    const [hit] = index.search("can't reply");
+    expect(hit).toMatchObject({
+      section: "Why can't I reply to a conversation?",
+      hash: "why-cant-i-reply",
+    });
+  });
+
+  it("opens at the top when the page's opening holds the most", () => {
+    const [hit] = index.search("puzzle library");
+    expect(hit.slug).toBe("sharing-and-exchanges/households");
+    expect(hit.section).toBeUndefined();
+    expect(hit.hash).toBeUndefined();
+  });
+
+  it("lists each page once, however many of its sections match", () => {
+    expect(index.search("photo").map((h) => h.slug)).toEqual([
+      "staying-informed/messages",
+    ]);
+  });
+
+  it("picks no section for a query of only filler words", () => {
+    expect(index.search("why can't I").every((h) => !h.hash)).toBe(true);
+  });
+
+  it("ranks a page by its headings", () => {
+    const loans = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Lending, swapping and selling puzzles with other members, step by step, from the first request to the end.",
+      [["recall-a-loan", "Recall a loan", "Ask for it back early."]],
+    );
+    const other = doc("a", "Other", "You can recall it.");
+    const [hit] = createDocsIndex([other, loans], "en").search("recall");
+    expect(hit.slug).toBe("sharing-and-exchanges/lend-swap-trade");
+  });
+
+  it("builds the corpus with each page's section titles as its headings", () => {
+    const [built] = buildSearchDocs([
+      leaf("en", "staying-informed/messages", "Messages", {
+        text: messages.text,
+        sections: messages.sections,
+      }),
+    ]);
+    expect(built.headings).toBe("Send photos Blurred photos");
+    expect(built.sections).toEqual(messages.sections);
+  });
+});
+
 function doc(slug: string, title: string, text: string): SearchDoc {
   return {
     id: slug,
@@ -182,7 +285,30 @@ function doc(slug: string, title: string, text: string): SearchDoc {
     group: slug.split("/")[0],
     summary: "",
     keywords: "",
+    headings: "",
     text,
+    sections: [],
+  };
+}
+
+// A page's search text as compileMarkdown builds it: its opening, then each section's title and
+// body, with where each section lies in it.
+function sectioned(
+  slug: string,
+  title: string,
+  opening: string,
+  parts: [id: string, title: string, body: string][],
+): SearchDoc {
+  let text = opening;
+  const sections = parts.map(([id, heading, body]) => {
+    const start = text.length + 1;
+    text += ` ${heading} ${body}`;
+    return { id, title: heading, start, end: text.length };
+  });
+  return {
+    ...doc(slug, title, text),
+    headings: parts.map(([, heading]) => heading).join(" "),
+    sections,
   };
 }
 
@@ -202,6 +328,7 @@ function leaf(
     html: "",
     headings: [],
     text: title,
+    sections: [],
     ...extra,
   };
 }

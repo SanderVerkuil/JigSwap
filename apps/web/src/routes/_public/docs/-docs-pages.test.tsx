@@ -19,6 +19,7 @@ import { Route as DocsIndexRoute } from "./index";
 
 const NOT_FOUND = vi.hoisted(() => ({ isNotFound: true }));
 const loaderData = vi.hoisted(() => ({ current: undefined as unknown }));
+const location = vi.hoisted(() => ({ hash: "" }));
 
 // The head reads the strings from the loaded catalog of the context's locale.
 vi.mock("@/lib/i18n-catalog", () => ({
@@ -31,6 +32,8 @@ vi.mock("@tanstack/react-router", () => ({
     useLoaderData: () => loaderData.current,
   }),
   notFound: () => NOT_FOUND,
+  useLocation: (opts?: { select?: (l: typeof location) => unknown }) =>
+    opts?.select ? opts.select(location) : location,
   Link: ({
     to,
     params: _params,
@@ -68,6 +71,7 @@ vi.mock("virtual:docs", () => {
     html: `<p>${title}</p>`,
     headings: [],
     text: title,
+    sections: [],
     ...extra,
   });
   return {
@@ -278,6 +282,59 @@ describe("docs page landmarks", () => {
     expect(railCurrent.className).toContain("bg-mk-sky-soft");
     expect(foldCurrent.className).toContain("bg-mk-card");
     expect(foldCurrent.className).not.toContain("bg-mk-sky-soft");
+  });
+});
+
+// A search result can open a page at a FAQ question; the router navigates with pushState, which
+// leaves a <details> closed.
+describe("docs page opens the FAQ question in the hash", () => {
+  const FAQ_HTML =
+    '<details id="why-is-a-photo-blurred"><summary>Why is a photo blurred?</summary><p>The check.</p></details>';
+  const firstPage = () =>
+    docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+  const question = (container: HTMLElement) =>
+    container.querySelector(
+      "details#why-is-a-photo-blurred",
+    ) as HTMLDetailsElement;
+
+  afterEach(() => {
+    location.hash = "";
+    vi.restoreAllMocks();
+  });
+
+  it("opens the question and lands on it", async () => {
+    loaderData.current = { ...(await firstPage()), html: FAQ_HTML };
+    location.hash = "why-is-a-photo-blurred";
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {});
+    const { container } = render(withIntl(<docPage.component />));
+    expect(question(container).open).toBe(true);
+    expect(scrollIntoView.mock.contexts).toEqual([question(container)]);
+  });
+
+  // The router sets the new hash while the last page still shows.
+  it("opens it once the new page's body is in", async () => {
+    const before = await firstPage();
+    loaderData.current = before;
+    location.hash = "why-is-a-photo-blurred";
+    const { container, rerender } = render(withIntl(<docPage.component />));
+    loaderData.current = { ...before, html: FAQ_HTML };
+    rerender(withIntl(<docPage.component />));
+    expect(question(container).open).toBe(true);
+  });
+
+  it("leaves the folded On this page block to its own link", async () => {
+    loaderData.current = await firstPage();
+    location.hash = "on-this-page";
+    const { container } = render(withIntl(<docPage.component />));
+    const contents = container.querySelector(
+      "details#on-this-page",
+    ) as HTMLDetailsElement;
+    expect(contents.open).toBe(false);
   });
 });
 

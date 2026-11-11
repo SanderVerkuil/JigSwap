@@ -11,15 +11,27 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
 import { DocsSearch } from "./docs-search";
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
+const navigate = vi.hoisted(() => vi.fn());
+vi.mock("@tanstack/react-router", () => ({ useNavigate: () => navigate }));
 
-// A loaded index with one page per query.
+// A loaded index with one page per query; "blurred" opens Messages at a section.
 vi.mock("@/docs/search-store", () => {
   const index = {
     search: (query: string) =>
-      query
-        ? [{ slug: query, title: `Page ${query}`, group: "g", snippet: "" }]
-        : [],
+      query === "blurred"
+        ? [
+            {
+              slug: "staying-informed/messages",
+              title: "Messages",
+              group: "staying-informed",
+              snippet: "A photo is blurred at first.",
+              section: "Blurred photos",
+              hash: "blurred-photos",
+            },
+          ]
+        : query
+          ? [{ slug: query, title: `Page ${query}`, group: "g", snippet: "" }]
+          : [],
   };
   return {
     createDocsSearchStore: () => ({
@@ -79,5 +91,53 @@ describe("DocsSearch results", () => {
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
     raf.mockRestore();
     scrollTo.mockRestore();
+  });
+});
+
+describe("DocsSearch opens a result at its section", () => {
+  const search = (query: string) => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <DocsSearch open onOpenChange={() => {}} />
+      </IntlProvider>,
+    );
+    act(() => {
+      fireEvent.change(screen.getByRole("combobox"), {
+        target: { value: query },
+      });
+    });
+    return screen.getByRole("option");
+  };
+
+  it("names the section after the page, in a row that stays two lines", () => {
+    const row = search("blurred");
+    const [title, snippet] = Array.from(
+      row.querySelectorAll(":scope > div > span:not([aria-hidden])"),
+    );
+    expect(title.textContent).toBe("Messages › Blurred photos");
+    expect(snippet.textContent).toBe("A photo is blurred at first.");
+    expect(row.querySelectorAll(":scope > div > span")).toHaveLength(2);
+  });
+
+  it("goes to the section's hash", () => {
+    navigate.mockClear();
+    fireEvent.click(search("blurred"));
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/docs/$",
+      params: { _splat: "staying-informed/messages" },
+      hash: "blurred-photos",
+    });
+  });
+
+  it("goes to the top of a page with no section, titled by the page alone", () => {
+    navigate.mockClear();
+    const row = search("lend");
+    expect(row.querySelector("span")?.textContent).toBe("Page lend");
+    fireEvent.click(row);
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/docs/$",
+      params: { _splat: "lend" },
+      hash: undefined,
+    });
   });
 });

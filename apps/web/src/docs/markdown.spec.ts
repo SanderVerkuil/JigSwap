@@ -114,6 +114,50 @@ describe("compileMarkdown", () => {
     expect(r.html).toContain("<strong>answer</strong>");
   });
 
+  // The router scrolls to an id on <details>, not to one inside its closed answer.
+  it("ids each FAQ question's <details> from its question, in the page's language", async () => {
+    const r = await compileMarkdown(
+      '<details>\n<summary>Why is a photo blurred?</summary>\n\nThe check.\n\n</details>\n\n<details>\n<summary>Wat is het verschil tussen een "puzzel" en een "exemplaar"?</summary>\n\nEen exemplaar.\n\n</details>\n',
+    );
+    expect(r.html).toContain('<details id="why-is-a-photo-blurred">');
+    expect(r.html).toContain(
+      '<details id="wat-is-het-verschil-tussen-een-puzzel-en-een-exemplaar">',
+    );
+  });
+
+  it("keeps a question's id clear of the headings' ids and of the other questions'", async () => {
+    const r = await compileMarkdown(
+      "## Blurred photos\n\n<details>\n<summary>Blurred photos</summary>\n\nA.\n\n</details>\n\n<details>\n<summary>Blurred photos</summary>\n\nB.\n\n</details>\n",
+    );
+    expect(r.html).toContain('<h2 id="blurred-photos">');
+    expect(r.html).toContain('<details id="blurred-photos-1">');
+    expect(r.html).toContain('<details id="blurred-photos-2">');
+  });
+
+  it("finds each section a search result can open at, FAQ questions under a heading included", async () => {
+    const r = await compileMarkdown(
+      "Intro.\n\n## Messages and photos\n\nAbout photos.\n\n<details>\n<summary>Why is a photo blurred?</summary>\n\nThe check was not sure.\n\n</details>\n\nAfter the question.\n\n### Sending\n\nSend **one**.\n",
+    );
+    expect(r.text).toBe(
+      "Intro. Messages and photos About photos. Why is a photo blurred? The check was not sure. After the question. Sending Send one.",
+    );
+    expect(
+      r.sections.map((s) => [s.id, s.title, r.text.slice(s.start, s.end)]),
+    ).toEqual([
+      [
+        "messages-and-photos",
+        "Messages and photos",
+        "Messages and photos About photos.",
+      ],
+      [
+        "why-is-a-photo-blurred",
+        "Why is a photo blurred?",
+        "Why is a photo blurred? The check was not sure.",
+      ],
+      ["sending", "Sending", "Sending Send one."],
+    ]);
+  });
+
   it("does not treat a deeply nested Note: as a callout", async () => {
     const r = await compileMarkdown(
       "> Regular quote.\n>\n> Then **Note:** later.\n",

@@ -11,7 +11,7 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
-import type { DocFrontmatter, DocHeading } from "./types";
+import type { DocFrontmatter, DocHeading, DocSection } from "./types";
 
 // Extra fields the transforms below stash on the vfile for compileMarkdown to read.
 type DocData = { headings?: DocHeading[]; title?: string };
@@ -94,6 +94,42 @@ function calloutsFromBlockquotes() {
   };
 }
 
+// Give each FAQ question (a <details> with a <summary>) an id slugged from the question, as
+// rehype-slug ids headings, so a search result can open the page at it. The id goes on <details>:
+// the router scrolls to it there, but not to an id inside the closed answer. An id a heading or an
+// earlier question already has gets "-1", "-2"… on the end.
+function slugQuestions() {
+  return (tree: Root) => {
+    const taken = new Set<string>();
+    visit(tree, (node) => {
+      if (node.type === "element" && typeof node.properties.id === "string")
+        taken.add(node.properties.id);
+    });
+    visit(tree, (node) => {
+      if (node.type !== "element" || node.tagName !== "details") return;
+      if (node.properties.id) return;
+      const summary = node.children.find(
+        (c): c is Element => c.type === "element" && c.tagName === "summary",
+      );
+      const base = summary ? slug(toText(summary)) : "";
+      if (!base) return;
+      let id = base;
+      for (let n = 1; taken.has(id); n++) id = `${base}-${n}`;
+      taken.add(id);
+      node.properties = { id, ...node.properties };
+    });
+  };
+}
+
+// github-slugger's slug, which rehype-slug uses: lowercase, punctuation dropped, a hyphen per space.
+function slug(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\p{Pc} -]/gu, "")
+    .replace(/ /g, "-");
+}
+
 // Recursively extract the text content of any hast node.
 function toText(node: Nodes): string {
   if (node.type === "text") return node.value;
@@ -111,6 +147,7 @@ const processor = unified()
   .use(remarkRehype, { allowDangerousHtml: true })
   .use(rehypeRaw)
   .use(rehypeSlug)
+  .use(slugQuestions)
   // External links open in a new tab; the .docs-prose ↗ affordance keys off
   // the resulting target="_blank". Internal links (relative/root paths) are
   // left untouched.
@@ -134,6 +171,7 @@ export interface CompiledDoc {
   html: string;
   headings: DocHeading[];
   text: string;
+  sections: DocSection[];
   title?: string;
 }
 
@@ -146,9 +184,57 @@ export async function compileMarkdown(raw: string): Promise<CompiledDoc> {
     frontmatter: data as DocFrontmatter,
     html,
     headings: docData.headings ?? [],
-    text: stripHtml(html),
+    ...searchText(html),
     title: docData.title,
   };
+}
+
+// The sections a search result can open at: each h2/h3, and each FAQ question (a <details> with
+// an id from slugQuestions and a <summary>). The HTML is this processor's own output, so the tags
+// are known. A question ends at its </details>; text after it, before the next section, belongs
+// to none.
+const SECTION_TAG =
+  /<(h[23])\b[^>]*?\sid="([^"]+)"[^>]*>([\s\S]*?)<\/\1>|<details\b[^>]*?\sid="([^"]+)"[^>]*>\s*<summary\b[^>]*>([\s\S]*?)<\/summary>|<\/details>/g;
+
+// The page's plain text, stripHtml(html), built piece by piece to know where each section lies in it.
+function searchText(html: string): { text: string; sections: DocSection[] } {
+  let text = "";
+  const add = (fragment: string) => {
+    const piece = stripHtml(fragment);
+    if (piece) text += (text ? " " : "") + piece;
+    return piece;
+  };
+  const sections: DocSection[] = [];
+  let open: DocSection | undefined;
+  let question = false;
+  let last = 0;
+  for (const m of html.matchAll(SECTION_TAG)) {
+    add(html.slice(last, m.index));
+    last = m.index + m[0].length;
+    const [, , headingId, heading, questionId, summary] = m;
+    if (!headingId && !questionId) {
+      // A </details>: it ends a question's answer; a plain <details> ends nothing.
+      if (question && open) {
+        open.end = text.length;
+        open = undefined;
+      }
+      question = false;
+      continue;
+    }
+    if (open) open.end = text.length;
+    const title = add(headingId ? heading : summary);
+    open = {
+      id: headingId ?? questionId,
+      title,
+      start: text.length - title.length,
+      end: text.length,
+    };
+    sections.push(open);
+    question = !headingId;
+  }
+  add(html.slice(last));
+  if (open) open.end = text.length;
+  return { text, sections };
 }
 
 // Block elements separate words; inline ones (bold, a link, a code token) sit inside a sentence,

@@ -12,8 +12,8 @@ import {
 } from "@/docs/nav";
 import { pageTitle } from "@/lib/page-title";
 import { seoHead } from "@/lib/seo-head";
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 import { pageLoaders } from "virtual:docs/content";
@@ -59,6 +59,19 @@ function DocPageView() {
   const localePages = useMemo(() => pagesForLocale(pages, locale), [locale]);
   const { page, html, headings } = Route.useLoaderData();
   const slug = page.slug;
+
+  // A search result can open the page at a FAQ question. The router navigates with pushState, so
+  // the browser neither opens the question's <details> nor fires hashchange: open it here, and
+  // land on it whichever of this and the router's own scroll to the hash runs first. The hash
+  // changes while the last page still shows, so this runs again when the new body is in.
+  const hash = useLocation({ select: (location) => location.hash });
+  useEffect(() => {
+    const question = hash ? document.getElementById(hash) : null;
+    if (!(question instanceof HTMLDetailsElement)) return;
+    if (!question.closest(".docs-prose") || question.open) return;
+    question.open = true;
+    question.scrollIntoView();
+  }, [hash, html]);
 
   const tree = buildNavTree(localePages);
   const pager = buildPager(tree, slug);

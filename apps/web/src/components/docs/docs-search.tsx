@@ -79,10 +79,11 @@ export function DocsSearch({
     return () => cancelAnimationFrame(frame);
   }, [hits]);
 
-  const go = (slug: string) => {
+  // A result opens at its section when it has one (the page shows that FAQ question open).
+  const go = (slug: string, hash?: string) => {
     onOpenChange(false);
     setQuery("");
-    void navigate({ to: "/docs/$", params: { _splat: slug } });
+    void navigate({ to: "/docs/$", params: { _splat: slug }, hash });
   };
 
   return (
@@ -124,11 +125,19 @@ export function DocsSearch({
                   <CommandItem
                     key={h.slug}
                     value={h.slug}
-                    onSelect={() => go(h.slug)}
+                    onSelect={() => go(h.slug, h.hash)}
                   >
                     <FileText className="size-4 text-mk-text-muted" />
                     <div className="flex flex-col">
-                      <span className="text-[14px]">{h.title}</span>
+                      <span className="text-[14px]">
+                        {h.title}
+                        {h.section && (
+                          <>
+                            {" "}
+                            <span aria-hidden="true">›</span> {h.section}
+                          </>
+                        )}
+                      </span>
                       <span className="text-[12px] text-mk-text-muted">
                         {h.snippet}
                       </span>

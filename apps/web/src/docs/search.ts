@@ -1,5 +1,5 @@
 import MiniSearch from "minisearch";
-import type { DocPage } from "./types";
+import type { DocPage, DocSection } from "./types";
 
 export interface SearchDoc {
   id: string;
@@ -8,7 +8,9 @@ export interface SearchDoc {
   group: string;
   summary: string;
   keywords: string;
+  headings: string; // the titles of its sections, h2/h3 and FAQ questions
   text: string;
+  sections: DocSection[];
 }
 
 export interface SearchHit {
@@ -16,6 +18,9 @@ export interface SearchHit {
   title: string;
   group: string;
   snippet: string;
+  // The heading or FAQ question the result opens at, and its id; none when it opens at the top.
+  section?: string;
+  hash?: string;
 }
 
 // Leaf pages only — index and root pages are navigation hubs, not search targets.
@@ -31,7 +36,9 @@ export function buildSearchDocs(pages: readonly DocPage[]): SearchDoc[] {
       group: p.group,
       summary: p.frontmatter.summary ?? "",
       keywords: (p.frontmatter.keywords ?? []).join(" "),
+      headings: p.sections.map((s) => s.title).join(" "),
       text: p.text,
+      sections: p.sections,
     }));
 }
 
@@ -63,10 +70,10 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
   const isContentWord = (word: string) =>
     word.length >= 2 && !stopWords.has(word);
   const mini = new MiniSearch<SearchDoc>({
-    fields: ["title", "summary", "text", "keywords"],
-    storeFields: ["slug", "title", "group", "text"],
+    fields: ["title", "summary", "headings", "text", "keywords"],
+    storeFields: ["slug", "title", "group", "text", "sections"],
     searchOptions: {
-      boost: { title: 3, summary: 2, keywords: 2 },
+      boost: { title: 3, summary: 2, headings: 2, keywords: 2 },
       prefix: true,
       fuzzy: 0.2,
       // The query's words only: the index keeps every word.
@@ -89,33 +96,47 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
         : mini.search(query, {
             processTerm: MiniSearch.getDefault("processTerm"),
           });
-      return results.slice(0, 12).map((r) => ({
-        slug: r.slug as string,
-        title: r.title as string,
-        group: r.group as string,
-        snippet: makeSnippet(
-          r.text as string,
-          r.terms,
-          words.length ? words : typed,
-        ),
-      }));
+      return results.slice(0, 12).map((r) => {
+        const text = r.text as string;
+        // Pages rank as they are; each then opens at its best section. Filler alone picks none.
+        const section = words.length
+          ? bestSection(
+              text,
+              r.sections as DocSection[],
+              matchesIn(text, r.terms, words),
+            )
+          : undefined;
+        const answer = section
+          ? text.slice(section.start + section.title.length, section.end)
+          : "";
+        return {
+          slug: r.slug as string,
+          title: r.title as string,
+          group: r.group as string,
+          snippet: makeSnippet(
+            answer.trim() || text,
+            r.terms,
+            words.length ? words : typed,
+          ),
+          section: section?.title,
+          hash: section?.id,
+        };
+      });
     },
   };
 }
 
-const SNIPPET_LENGTH = 120;
-const SNIPPET_LEAD = 40;
+type Match = { at: number; end: number; word: string };
 
-// A short excerpt for the result list, cut where the most different query words sit within one
-// excerpt's reach (the text's opening if none is in it). `terms` are the words of the page that
-// MiniSearch matched, typos and longer words included; each counts for the query word it matched.
-function makeSnippet(
+// The words of `text` that MiniSearch matched (`terms`, typos and longer words included), each
+// with the query word it counts for.
+function matchesIn(
   text: string,
   terms: readonly string[],
   words: readonly string[],
-): string {
+): Match[] {
   const matched = new Set(terms);
-  const found: { at: number; end: number; word: string }[] = [];
+  const found: Match[] = [];
   for (const m of text.matchAll(WORD)) {
     const term = m[0].toLowerCase();
     if (matched.has(term))
@@ -125,6 +146,51 @@ function makeSnippet(
         word: queryWordOf(term, words),
       });
   }
+  return found;
+}
+
+// How many different query words the matches between `from` and `to` stand for.
+function wordsBetween(found: readonly Match[], from: number, to: number) {
+  return new Set(
+    found.filter((f) => f.at >= from && f.end <= to).map((f) => f.word),
+  ).size;
+}
+
+// The section with the most different query words in it, its title included. The page's opening,
+// before the first section, competes too: when it has the most, the result opens at the top. On a
+// tie, the section with more of them in its title wins, then the first.
+function bestSection(
+  text: string,
+  sections: readonly DocSection[],
+  found: readonly Match[],
+): DocSection | undefined {
+  let best: DocSection | undefined;
+  let most = wordsBetween(found, 0, sections[0]?.start ?? text.length);
+  let mostInTitle = 0;
+  for (const s of sections) {
+    const all = wordsBetween(found, s.start, s.end);
+    const inTitle = wordsBetween(found, s.start, s.start + s.title.length);
+    if (all > most || (all === most && inTitle > mostInTitle)) {
+      best = s;
+      most = all;
+      mostInTitle = inTitle;
+    }
+  }
+  return best;
+}
+
+const SNIPPET_LENGTH = 120;
+const SNIPPET_LEAD = 40;
+
+// A short excerpt for the result list, cut where the most different query words sit within one
+// excerpt's reach (the text's opening if none is in it). `terms` are the words of the page that
+// MiniSearch matched; each counts for the query word it matched.
+function makeSnippet(
+  text: string,
+  terms: readonly string[],
+  words: readonly string[],
+): string {
+  const found = matchesIn(text, terms, words);
   let hit = -1;
   let most = 0;
   for (let i = 0; i < found.length; i++) {

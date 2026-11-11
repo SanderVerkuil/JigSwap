@@ -42,6 +42,7 @@ export function docPageFromFile(rel: string, compiled: CompiledDoc): DocPage {
     html: compiled.html,
     headings: compiled.headings,
     text: compiled.text,
+    sections: compiled.sections,
   };
 }
 

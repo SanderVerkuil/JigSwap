@@ -30,9 +30,18 @@ export interface DocContent {
   headings: DocHeading[];
 }
 
+// A part of a page that a search result can open at: an h2/h3, or a FAQ question.
+export interface DocSection {
+  id: string; // the heading's id, or the question's <details> id
+  title: string; // the heading, or the question
+  start: number; // where its title starts in the page's search text
+  end: number; // where its text ends there
+}
+
 // A compiled page as the build sees it, before it is split into modules.
 export interface DocPage extends DocMeta, DocContent {
   text: string; // plain text for the search index
+  sections: DocSection[]; // in document order
 }
 
 export interface NavLink {
