@@ -108,6 +108,41 @@ describe("docs search", () => {
       "sharing-and-exchanges/lend-swap-trade",
     );
   });
+
+  // "dark" is a letter away from "mark": the FAQ question about "Mark complete" came first.
+  it("doesn't take a short word the pages have for a typo of one with another first letter", () => {
+    const index = createDocsIndex(
+      [
+        doc("faq", "FAQ", "Click Mark complete once the puzzle is back."),
+        doc("theme", "Language & theme", "Choose Light or Dark."),
+      ],
+      "en",
+    );
+    expect(index.search("dark").map((h) => h.slug)).toEqual(["theme"]);
+  });
+
+  it("finds a word from a typo in a longer word", () => {
+    const index = createDocsIndex(
+      [
+        doc("lend", "Lend", "Ask to borrow a puzzle."),
+        doc("other", "Other", "Nothing here."),
+      ],
+      "en",
+    );
+    expect(index.search("borow").map((h) => h.slug)).toEqual(["lend"]);
+  });
+
+  // The guides say "email", never "mail".
+  it("finds a word from a short word the pages don't have", () => {
+    const index = createDocsIndex(
+      [
+        doc("notifications", "Notifications", "Choose which email you get."),
+        doc("other", "Other", "Nothing here."),
+      ],
+      "en",
+    );
+    expect(index.search("mail").map((h) => h.slug)).toEqual(["notifications"]);
+  });
 });
 
 // Questions are full of words that match every page ("how", "my", "ik", "geen"), so the longest

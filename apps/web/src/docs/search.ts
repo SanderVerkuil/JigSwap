@@ -75,6 +75,24 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
   // matched every word starting with it.
   const isContentWord = (word: string) =>
     word.length >= 2 && !stopWords.has(word);
+  // Every word of the pages, as the index holds them.
+  const known = new Set(
+    docs.flatMap(
+      (d) =>
+        [d.title, d.summary, d.headings, d.text, d.keywords]
+          .join(" ")
+          .toLowerCase()
+          .match(WORD) ?? [],
+    ),
+  );
+  // A short word (under 5 letters) the pages have is a typo only of words with its first letter:
+  // "dark" also found "mark", and the FAQ question about "Mark complete" came before "Light or
+  // dark". "leen" still finds "lenen". A short word the pages don't have may be off at its start
+  // ("mail" for "email").
+  const sameFirstLetter = (word: string) =>
+    word.length < 5 && known.has(word)
+      ? (_id: unknown, term: string) => (term[0] === word[0] ? 1 : 0)
+      : undefined;
   const mini = new MiniSearch<SearchDoc>({
     fields: ["title", "summary", "headings", "text", "keywords"],
     storeFields: ["slug", "title", "group", "text", "sections"],
@@ -99,9 +117,16 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
         typed.filter((word) => stopWords.has(word) && !ARTICLES.has(word)),
       );
       // Only filler so far ("how do I", halfway through a question): search what's typed, as
-      // before, rather than flash "No results".
+      // before, rather than flash "No results". Otherwise each word on its own, which ranks as
+      // the whole query does but lets each keep to its own typos.
       const results = words.length
-        ? mini.search(query)
+        ? mini.search({
+            combineWith: "OR",
+            queries: words.map((word) => ({
+              queries: [word],
+              boostDocument: sameFirstLetter(word),
+            })),
+          })
         : mini.search(query, {
             processTerm: MiniSearch.getDefault("processTerm"),
           });

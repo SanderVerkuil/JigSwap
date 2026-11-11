@@ -90,6 +90,20 @@ describe("docs search over the real guides", () => {
     ).toContain("staying-informed/notifications");
   });
 
+  // "dark" is a letter away from "mark": the FAQ question about "Mark complete" came first.
+  it.each([
+    ["en", "how do I turn on dark mode", "light-or-dark"],
+    ["nl", "hoe zet ik de donkere modus aan", "licht-of-donker"],
+  ])(
+    "finds Language & theme first for dark mode, at its light or dark section (%s)",
+    (locale, query, hash) => {
+      expect(top3(locale, query)[0]).toMatchObject({
+        slug: "getting-started/language-and-region",
+        hash,
+      });
+    },
+  );
+
   it("opens Messages at its blurred photos section", () => {
     const messages = top3("en", "blurred").find(
       (hit) => hit.slug === "staying-informed/messages",
