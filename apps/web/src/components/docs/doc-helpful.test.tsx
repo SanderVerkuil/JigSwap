@@ -46,14 +46,20 @@ afterEach(() => {
 
 // The thanks showed in the box and again in a toast, so the reader was thanked twice.
 describe("DocHelpful", () => {
-  it("thanks a Yes once, in place of the question", async () => {
+  // A live region mounted with its text already in it often isn't announced, and the thanks
+  // replaced a toast, whose region is always there.
+  it("thanks a Yes once, in place of the question, in a live region that was there before", async () => {
     mocks.submit.mockResolvedValue(null);
     renderHelpful();
+    const region = screen.getByRole("status");
+    expect(region.textContent).toBe("");
 
     fireEvent.click(screen.getByRole("button", { name: "Yes" }));
 
-    const thanks = await screen.findByRole("status");
-    expect(thanks.textContent).toBe(en.marketing.docs.helpfulThanks);
+    await waitFor(() =>
+      expect(region.textContent).toBe(en.marketing.docs.helpfulThanks),
+    );
+    expect(screen.getByRole("status")).toBe(region);
     expect(mocks.submit.mock.calls[0]?.[0]).toEqual({
       slug: "getting-started/first",
       helpful: true,
@@ -85,9 +91,10 @@ describe("DocHelpful", () => {
         }),
       );
 
-      const thanks = await screen.findByRole("status");
-      expect(thanks.textContent).toBe(
-        messages.marketing.docs.helpfulThanksNegative,
+      await waitFor(() =>
+        expect(screen.getByRole("status").textContent).toBe(
+          messages.marketing.docs.helpfulThanksNegative,
+        ),
       );
       expect(mocks.submit.mock.calls[0]?.[0]).toEqual({
         slug: "getting-started/first",
@@ -110,7 +117,7 @@ describe("DocHelpful", () => {
         en.marketing.docs.helpfulError,
       ),
     );
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("");
     expect(screen.getByRole("button", { name: "Yes" })).toBeTruthy();
   });
 });
