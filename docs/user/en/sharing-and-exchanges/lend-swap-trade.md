@@ -143,7 +143,7 @@ An exchange moves through clear steps:
    confirm first, because they can't be undone; the other member gets a
    notification either way.
 3. **Completion** — once accepted, **both parties must confirm** completion.
-   Use **Mark Complete** once the puzzle has actually changed hands. A dialog
+   Use **Mark complete** once the puzzle has actually changed hands. A dialog
    first tells you what completing does: for a swap or sale the puzzle moves to
    the other member's library and that can't be undone; for a loan, the loan
    starts. After you confirm, the exchange shows **You confirmed … · Waiting
@@ -170,7 +170,7 @@ requests for it, and you can accept one once the puzzle is free again. If the
 exchange stalls, either of you can **Cancel** it, which frees the puzzle.
 
 **Accept** doesn't go through while a puzzle in the exchange is set aside for
-another exchange. **Accept** and **Mark Complete** don't go through while a
+another exchange. **Accept** and **Mark complete** don't go through while a
 puzzle in the exchange is out on loan, or once a puzzle has changed hands or is
 gone since the request was sent. A message tells you why. An exchange whose
 puzzle changed hands can't be completed any more: decline it if it's still a
@@ -202,4 +202,4 @@ A puzzle can be on loan to one member at a time. While it's out on loan, it
 isn't available: nobody can request it, you can't offer it again or offer it in
 a swap, and you can't delete it. No exchange that would move it can be accepted
 or completed until it's back. Once it's returned or recalled, turn on
-**Offer for Swap** or **Offer to Lend** on its page to offer it again.
+**Offer for swap** or **Offer to lend** on its page to offer it again.

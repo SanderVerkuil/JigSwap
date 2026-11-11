@@ -87,7 +87,7 @@ stay picked, so you can safely try again.
 
 ## Contributing a brand-new puzzle to the catalogue
 
-If a puzzle isn't in the catalogue yet, you can contribute its definition for everyone. Use **Puzzles → Add** (`/puzzles/add`). This uses the same form (without the copy-specific fields) and sends your submission to the **moderation queue** for an admin to approve.
+If a puzzle isn't in the catalogue yet, you can contribute its definition for everyone. Open **Puzzles catalogue** and click **Contribute a Puzzle** (`/puzzles/add`). This uses the same form (without the copy-specific fields) and sends your submission to the **moderation queue** for an admin to approve.
 
 The **EAN** and **UPC** under **More details (optional)** are checked when you
 leave the field: an EAN has 13 digits and a UPC 12, and the last digit has to

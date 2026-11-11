@@ -50,6 +50,17 @@ const QUOTED: ReadonlyArray<
   ["your-library/managing-your-puzzles.md", (m) => m.shell.mobile.tabs.library],
   ["your-library/managing-your-puzzles.md", (m) => m.puzzles.filters.lentOut],
   ["your-library/managing-your-puzzles.md", (m) => m.lending.recallAction],
+  ["your-library/adding-and-importing.md", (m) => m.shell.pages.puzzles.title],
+  ["your-library/adding-and-importing.md", (m) => m.puzzles.contributePuzzle],
+  ["sharing-and-exchanges/lend-swap-trade.md", (m) => m.trades.markComplete],
+  [
+    "sharing-and-exchanges/lend-swap-trade.md",
+    (m) => m.copyInstance.offers.swapLabel,
+  ],
+  [
+    "sharing-and-exchanges/lend-swap-trade.md",
+    (m) => m.copyInstance.offers.lendLabel,
+  ],
 ];
 
 describe("guides that quote the app's labels", () => {

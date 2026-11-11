@@ -95,7 +95,7 @@ proberen.
 
 ## Een gloednieuwe puzzel aan de catalogus bijdragen
 
-Staat een puzzel nog niet in de catalogus, dan kun je zijn definitie voor iedereen bijdragen. Gebruik **Puzzels → Toevoegen** (`/puzzles/add`). Dit gebruikt hetzelfde formulier (zonder de velden van een exemplaar) en stuurt je inzending naar de **moderatiewachtrij** zodat een beheerder hem kan goedkeuren.
+Staat een puzzel nog niet in de catalogus, dan kun je zijn definitie voor iedereen bijdragen. Open de **Puzzelcatalogus** en klik op **Een puzzel bijdragen** (`/puzzles/add`). Dit gebruikt hetzelfde formulier (zonder de velden van een exemplaar) en stuurt je inzending naar de **moderatiewachtrij** zodat een beheerder hem kan goedkeuren.
 
 De **EAN** en **UPC** onder **Meer details (optioneel)** worden gecontroleerd
 zodra je het veld verlaat: een EAN heeft 13 cijfers en een UPC 12, en het

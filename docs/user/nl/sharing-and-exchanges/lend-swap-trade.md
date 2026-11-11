@@ -113,7 +113,7 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
   - **Door jou geleend** — puzzels die jij nu in bezit hebt. Begin of rond
     een puzzel af, of leg een voltooiing vast, vanaf de rij of vanaf de pagina
     van de puzzel zelf. Heb je er geen, dan linkt het naar **Puzzels
-    Ontdekken**.
+    ontdekken**.
   - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
     beheren) die zijn uitgeleend, en bij wie ze zijn. In **Mijn puzzels** laat
     het filter **Uitgeleend** dezelfde puzzels zien tussen de rest van je
