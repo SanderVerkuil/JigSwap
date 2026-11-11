@@ -85,8 +85,16 @@ function DocsLayout() {
           <SheetDescription className="sr-only">
             {t("navSheetDescription")}
           </SheetDescription>
-          {/* Clears the sheet's close button (top right) and keeps the rows off its edges. */}
-          <div className="px-4 pt-12 pb-6" onClick={() => setNavOpen(false)}>
+          {/* Clears the sheet's close button (top right) and keeps the rows off its edges. A link
+              closes the sheet on its way to the page; folding a group keeps it open. */}
+          <div
+            className="px-4 pt-12 pb-6"
+            onClick={(e) => {
+              if (e.target instanceof Element && e.target.closest("a[href]")) {
+                setNavOpen(false);
+              }
+            }}
+          >
             <DocsSidebar
               onOpenSearch={() => {
                 setNavOpen(false);

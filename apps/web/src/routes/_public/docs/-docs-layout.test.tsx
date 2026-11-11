@@ -19,8 +19,29 @@ vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
   }),
-  Link: ({ children, ...rest }: ComponentProps<"a">) => (
-    <a {...rest}>{children}</a>
+  // Follows a plain click itself, like the router's Link, so happy-dom doesn't navigate the window.
+  Link: ({
+    children,
+    to: _to,
+    params,
+    activeProps: _activeProps,
+    onClick,
+    ...rest
+  }: ComponentProps<"a"> & {
+    to: string;
+    params: { _splat: string };
+    activeProps?: object;
+  }) => (
+    <a
+      href={`/docs/${params._splat}`}
+      onClick={(e) => {
+        e.preventDefault();
+        onClick?.(e);
+      }}
+      {...rest}
+    >
+      {children}
+    </a>
   ),
   Outlet: () => <button type="button">In the page</button>,
   useLocation: () => location,
@@ -43,6 +64,13 @@ vi.mock("virtual:docs", () => ({
       html: "<p>Start here</p>",
       text: "Start here",
       headings: [],
+    },
+    {
+      slug: "getting-started/first",
+      group: "getting-started",
+      isIndex: false,
+      locale: "en",
+      frontmatter: { title: "First steps", order: 1 },
     },
   ],
 }));
@@ -70,7 +98,15 @@ const activate = (button: HTMLElement) => {
 
 const dialog = () => screen.queryByRole("dialog");
 
-afterEach(cleanup);
+// Radix hands focus back on the task after an overlay unmounts.
+const radixFocusReturn = () => new Promise((done) => setTimeout(done, 10));
+
+const START_PATH = window.location.pathname;
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  window.history.pushState({}, "", START_PATH);
+});
 
 describe("docs overlays hand focus back", () => {
   it("returns from search to the control that opened it", async () => {
@@ -152,6 +188,63 @@ describe("docs overlays hand focus back", () => {
     await waitFor(() => expect(dialog()).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
   });
+
+  // The route change moves focus to the new page's main content. Handing it back to the opener
+  // afterwards left a search pick on the sidebar's search button, 29 Tabs from the article.
+  it("leaves focus to the new page when search closed on its way there", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: "Search documentation" });
+    activate(opener);
+    await waitFor(() => expect(document.activeElement).not.toBe(opener));
+    const refocus = vi.spyOn(opener, "focus");
+
+    // What a pick does: the router moves to the page as the dialog closes.
+    window.history.pushState({}, "", "/docs/getting-started/first");
+    pressEscape();
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    await radixFocusReturn();
+    expect(refocus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(opener);
+  });
+
+  it("leaves focus to the new page when a link in the sheet led there", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: /^Docs \(/ });
+    activate(opener);
+    const sheet = dialog() as HTMLElement;
+    const refocus = vi.spyOn(opener, "focus");
+
+    window.history.pushState({}, "", "/docs/getting-started/first");
+    fireEvent.click(within(sheet).getByRole("link", { name: "First steps" }));
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    await radixFocusReturn();
+    expect(refocus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(opener);
+  });
+});
+
+describe("docs navigation sheet", () => {
+  // Any tap inside the sheet closed it, so folding a group shut the whole menu.
+  it("stays open while a group folds, and closes when a link is followed", async () => {
+    renderLayout();
+    activate(screen.getByRole("button", { name: /^Docs \(/ }));
+    const sheet = dialog() as HTMLElement;
+    const group = within(sheet).getByRole("button", {
+      name: "Getting started",
+    });
+
+    fireEvent.click(group);
+    expect(within(sheet).queryByRole("link", { name: "First steps" })).toBe(
+      null,
+    );
+    fireEvent.click(group);
+    expect(dialog()).toBe(sheet);
+
+    fireEvent.click(within(sheet).getByRole("link", { name: "First steps" }));
+    await waitFor(() => expect(dialog()).toBeNull());
+  });
 });
 
 // F20: from 861 to 1279px neither the rail beside the article nor the phone Docs bar shows, so a
@@ -180,5 +273,21 @@ describe("docs sidebar", () => {
     fireEvent.click(link);
     expect(contents.open).toBe(true);
     contents.remove();
+  });
+
+  // They measured 33px; DESIGN.md asks 44px on touch.
+  it("gives each article link a 44px row on touch screens", () => {
+    renderLayout();
+    const sidebar = screen.getByRole("navigation", {
+      name: en.marketing.docs.navLabel,
+    });
+    const link = within(sidebar).getByRole("link", { name: "First steps" });
+    expect(link.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "pointer-coarse:min-h-11",
+        "flex",
+        "items-center",
+      ]),
+    );
   });
 });

@@ -69,7 +69,8 @@ export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
                   key={link.slug}
                   to="/docs/$"
                   params={{ _splat: link.slug }}
-                  className="py-[6px] px-3 text-[15px] leading-snug rounded-sm transition-colors duration-150 text-mk-text-muted font-medium hover:text-mk-text-strong hover:bg-mk-muted dark:hover:bg-accent"
+                  // A 44px row on touch screens, its label centred in it.
+                  className="flex items-center py-[6px] px-3 text-[15px] leading-snug rounded-sm transition-colors duration-150 text-mk-text-muted font-medium hover:text-mk-text-strong hover:bg-mk-muted dark:hover:bg-accent pointer-coarse:min-h-11"
                   activeProps={{
                     className: cn(
                       "py-[6px] px-3 text-[15px] leading-snug rounded-sm",
