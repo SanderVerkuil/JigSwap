@@ -208,10 +208,11 @@ function makeSnippet(
 }
 
 // The query word a matched word of the page came from: the one it starts with, or (a typo) the
-// one it shares the longest start with.
+// one it shares the longest start with. A typo in the first letter shares no start with any of
+// them ("heeft" for "geeft"): it comes from the one it's closest to, not the first one typed.
 function queryWordOf(term: string, words: readonly string[]): string {
   let best = term;
-  let shared = -1;
+  let shared = 0;
   for (const word of words) {
     let n = 0;
     while (n < word.length && word[n] === term[n]) n++;
@@ -220,7 +221,33 @@ function queryWordOf(term: string, words: readonly string[]): string {
       best = word;
     }
   }
+  if (shared > 0) return best;
+  let fewest = Infinity;
+  for (const word of words) {
+    const edits = editDistance(word, term);
+    if (edits < fewest) {
+      fewest = edits;
+      best = word;
+    }
+  }
   return best;
+}
+
+// How many letters to add, drop or change to turn one word into the other (Levenshtein).
+function editDistance(a: string, b: string): number {
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j++) {
+      next[j] = Math.min(
+        row[j] + 1,
+        next[j - 1] + 1,
+        row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    row = next;
+  }
+  return row[b.length];
 }
 
 // SNIPPET_LENGTH of the text, starting SNIPPET_LEAD before `hit`. It starts and ends on a whole

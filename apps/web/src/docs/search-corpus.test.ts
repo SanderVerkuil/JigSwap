@@ -36,13 +36,27 @@ const top3 = (locale: string, query: string) =>
   indexes[locale].search(query).slice(0, 3);
 
 describe("docs search over the real guides", () => {
-  it("finds the lending guide for a friend who won't give a puzzle back", () => {
-    expect(
-      top3("en", "my friend has my puzzle and won't give it back").map(
-        (hit) => hit.slug,
-      ),
-    ).toContain("sharing-and-exchanges/lend-swap-trade");
-  });
+  // At the lender's section, not at the borrower's "give back" one just above it.
+  it.each([
+    [
+      "en",
+      "my friend has my puzzle and won't give it back",
+      "get-a-lent-puzzle-back",
+    ],
+    [
+      "nl",
+      "mijn vriendin geeft mijn puzzel niet terug",
+      "een-uitgeleende-puzzel-terugkrijgen",
+    ],
+  ])(
+    "finds the lending guide for a friend who won't give a puzzle back (%s)",
+    (locale, query, hash) => {
+      const lend = top3(locale, query).find(
+        (hit) => hit.slug === "sharing-and-exchanges/lend-swap-trade",
+      );
+      expect(lend?.hash).toBe(hash);
+    },
+  );
 
   // In the two rows a phone shows: "meer" once matched a FAQ question about a partner who no
   // longer answers.

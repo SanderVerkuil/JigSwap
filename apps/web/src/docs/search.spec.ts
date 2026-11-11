@@ -249,6 +249,30 @@ describe("docs search opens a result at its section", () => {
     ]);
   });
 
+  // "heeft" is a typo-match for "geeft" that shares no first letter with any query word; it once
+  // counted for the first word typed, "vriend", and tied the sections.
+  it("counts a typo in a word's first letter for the word it's closest to", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Uitlenen",
+      "Leen een puzzel uit.",
+      [
+        [
+          "teruggeven",
+          "Teruggeven",
+          "Geef de puzzel pas terug als de uitlener hem heeft.",
+        ],
+        [
+          "terugkrijgen",
+          "Terugkrijgen",
+          "Je vriend geeft de puzzel niet terug?",
+        ],
+      ],
+    );
+    const [hit] = createDocsIndex([lend], "nl").search("vriend geeft puzzel");
+    expect(hit.hash).toBe("terugkrijgen");
+  });
+
   it("picks no section for a query of only filler words", () => {
     expect(index.search("why can't I").every((h) => !h.hash)).toBe(true);
   });
