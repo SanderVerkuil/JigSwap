@@ -13,16 +13,49 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import { Route } from "./route";
 
-const location = vi.hoisted(() => ({ pathname: "/docs/getting-started" }));
+const location = vi.hoisted(() => ({
+  pathname: "/docs/getting-started",
+  hash: "",
+}));
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: { component: ComponentType }) => ({
     options,
   }),
-  Link: ({ children, ...rest }: ComponentProps<"a">) => (
-    <a {...rest}>{children}</a>
+  // Follows a plain click itself, like the router's Link, so happy-dom doesn't navigate the window,
+  // and marks the current page's link as the router's Link does.
+  Link: ({
+    children,
+    to: _to,
+    params,
+    activeProps: _activeProps,
+    onClick,
+    ...rest
+  }: ComponentProps<"a"> & {
+    to: string;
+    params: { _splat: string };
+    activeProps?: object;
+  }) => (
+    <a
+      href={`/docs/${params._splat}`}
+      aria-current={
+        location.pathname === `/docs/${params._splat}` ? "page" : undefined
+      }
+      onClick={(e) => {
+        e.preventDefault();
+        onClick?.(e);
+      }}
+      {...rest}
+    >
+      {children}
+    </a>
   ),
-  Outlet: () => <button type="button">In the page</button>,
+  Outlet: () => (
+    <>
+      <button type="button">In the page</button>
+      <h2 id="a-section">A section</h2>
+    </>
+  ),
   useLocation: () => location,
   useNavigate: () => vi.fn(),
 }));
@@ -43,6 +76,13 @@ vi.mock("virtual:docs", () => ({
       html: "<p>Start here</p>",
       text: "Start here",
       headings: [],
+    },
+    {
+      slug: "getting-started/first",
+      group: "getting-started",
+      isIndex: false,
+      locale: "en",
+      frontmatter: { title: "First steps", order: 1 },
     },
   ],
 }));
@@ -70,7 +110,16 @@ const activate = (button: HTMLElement) => {
 
 const dialog = () => screen.queryByRole("dialog");
 
-afterEach(cleanup);
+// Radix hands focus back on the task after an overlay unmounts.
+const radixFocusReturn = () => new Promise((done) => setTimeout(done, 10));
+
+const START_PATH = window.location.pathname;
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  window.history.pushState({}, "", START_PATH);
+  location.pathname = "/docs/getting-started";
+});
 
 describe("docs overlays hand focus back", () => {
   it("returns from search to the control that opened it", async () => {
@@ -95,10 +144,13 @@ describe("docs overlays hand focus back", () => {
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     expect(dialog()).toBeTruthy();
     await waitFor(() => expect(document.activeElement).not.toBe(inPage));
+    const refocus = vi.spyOn(inPage, "focus");
 
     pressEscape();
 
     await waitFor(() => expect(document.activeElement).toBe(inPage));
+    // It may be scrolled out of view by now: closing doesn't jump the page back to it.
+    expect(refocus).toHaveBeenCalledWith({ preventScroll: true });
   });
 
   it("doesn't jump back to an earlier opener when nothing had focus", async () => {
@@ -152,6 +204,98 @@ describe("docs overlays hand focus back", () => {
     await waitFor(() => expect(dialog()).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
   });
+
+  // The route change moves focus to the new page's main content. Handing it back to the opener
+  // afterwards left a search pick on the sidebar's search button, 29 Tabs from the article.
+  it("leaves focus to the new page when search closed on its way there", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: "Search documentation" });
+    activate(opener);
+    await waitFor(() => expect(document.activeElement).not.toBe(opener));
+    const refocus = vi.spyOn(opener, "focus");
+
+    // What a pick does: the router moves to the page as the dialog closes.
+    window.history.pushState({}, "", "/docs/getting-started/first");
+    pressEscape();
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    await radixFocusReturn();
+    expect(refocus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(opener);
+  });
+
+  // A pick on the page the reader is on moves only the hash, so no route change moves focus: it
+  // went back to the opener, and scrolled the page back to it.
+  it("moves focus to the picked section when search stays on this page", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: "Search documentation" });
+    activate(opener);
+    await waitFor(() => expect(document.activeElement).not.toBe(opener));
+    const refocus = vi.spyOn(opener, "focus");
+
+    window.history.pushState({}, "", `${window.location.pathname}#a-section`);
+    pressEscape();
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    const section = screen.getByRole("heading", { name: "A section" });
+    await waitFor(() => expect(document.activeElement).toBe(section));
+    expect(refocus).not.toHaveBeenCalled();
+  });
+
+  it("leaves focus to the new page when a link in the sheet led there", async () => {
+    renderLayout();
+    const opener = screen.getByRole("button", { name: /^Docs \(/ });
+    activate(opener);
+    const sheet = dialog() as HTMLElement;
+    const refocus = vi.spyOn(opener, "focus");
+
+    window.history.pushState({}, "", "/docs/getting-started/first");
+    fireEvent.click(within(sheet).getByRole("link", { name: "First steps" }));
+
+    await waitFor(() => expect(dialog()).toBeNull());
+    await radixFocusReturn();
+    expect(refocus).not.toHaveBeenCalled();
+    expect(document.activeElement).not.toBe(opener);
+  });
+});
+
+describe("docs navigation sheet", () => {
+  // Any tap inside the sheet closed it, so folding a group shut the whole menu.
+  it("stays open while a group folds, and closes when a link is followed", async () => {
+    renderLayout();
+    activate(screen.getByRole("button", { name: /^Docs \(/ }));
+    const sheet = dialog() as HTMLElement;
+    const group = within(sheet).getByRole("button", {
+      name: "Getting started",
+    });
+
+    fireEvent.click(group);
+    expect(within(sheet).queryByRole("link", { name: "First steps" })).toBe(
+      null,
+    );
+    fireEvent.click(group);
+    expect(dialog()).toBe(sheet);
+
+    fireEvent.click(within(sheet).getByRole("link", { name: "First steps" }));
+    await waitFor(() => expect(dialog()).toBeNull());
+  });
+
+  // The sheet opens scrolled to the current page; focus went to the search box at its top, out of
+  // view, and the first Tab scrolled the sheet back up.
+  it("starts focus at the current page's link, without scrolling", async () => {
+    location.pathname = "/docs/getting-started/first";
+    renderLayout();
+    const focus = vi.spyOn(HTMLElement.prototype, "focus");
+
+    activate(screen.getByRole("button", { name: /^Docs \(/ }));
+
+    const sheet = dialog() as HTMLElement;
+    const current = within(sheet).getByRole("link", { name: "First steps" });
+    await waitFor(() => expect(document.activeElement).toBe(current));
+    expect(focus.mock.calls[focus.mock.contexts.indexOf(current)]).toEqual([
+      { preventScroll: true },
+    ]);
+  });
 });
 
 // F20: from 861 to 1279px neither the rail beside the article nor the phone Docs bar shows, so a
@@ -180,5 +324,33 @@ describe("docs sidebar", () => {
     fireEvent.click(link);
     expect(contents.open).toBe(true);
     contents.remove();
+  });
+
+  // They measured 33px; DESIGN.md asks 44px on touch.
+  it("gives each article link a 44px row on touch screens", () => {
+    renderLayout();
+    const sidebar = screen.getByRole("navigation", {
+      name: en.marketing.docs.navLabel,
+    });
+    const link = within(sidebar).getByRole("link", { name: "First steps" });
+    expect(link.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "pointer-coarse:min-h-11",
+        "flex",
+        "items-center",
+      ]),
+    );
+  });
+
+  // Its in-view check for the current page measured the whole window, so a link under the open
+  // cookie banner counted as in view.
+  it("ends above the cookie banner, like the contents rail", () => {
+    renderLayout();
+    const aside = screen.getByRole("complementary", {
+      name: en.marketing.docs.navSheetTitle,
+    });
+    expect(aside.className.split(" ")).toContain(
+      "max-h-[calc(100dvh-86px-var(--consent-banner-height,0px))]",
+    );
   });
 });

@@ -2,12 +2,14 @@
 title: Blokkeren en melden
 order: 5
 summary: "Blokkeer leden met wie je geen contact wilt, meld problemen en beheer je blokkeringen."
+keywords:
+  - lastigvallen
 ---
 
 # Blokkeren en melden
 
-Valt iemand je lastig, dan kun je diegene blokkeren, zodat die geen contact
-meer met je kan opnemen. Je kunt ook een lid, een bericht of een foto melden
+Valt iemand je lastig of krijg je nare berichten van iemand, dan kun je diegene
+blokkeren, zodat die geen contact meer met je kan opnemen. Je kunt ook een lid, een bericht of een foto melden
 bij onze moderators.
 
 **Waar:** het profiel van een lid, een gesprek, een ruil op

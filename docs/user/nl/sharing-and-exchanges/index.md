@@ -1,7 +1,7 @@
 ---
 title: Delen en uitwisselingen
 order: 3
-summary: "Bepaal wie elke kopie ziet en leen, ruil en handel vervolgens met anderen, in kringen en huishoudens."
+summary: "Bepaal wie elk exemplaar ziet en leen, ruil en handel vervolgens met anderen, in kringen en huishoudens."
 ---
 
 # Delen en uitwisselingen

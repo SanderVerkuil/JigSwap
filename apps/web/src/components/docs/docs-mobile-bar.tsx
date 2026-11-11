@@ -16,9 +16,11 @@ export function DocsMobileBar({
   // Sky like the header it sticks under, so the two read as one head storey with
   // a visible edge over what scrolls beneath, by day and at night. The controls
   // draw their focus ring inside, because the header covers the bar's top edge.
+  // A landmark of its own, so its controls aren't left outside every region.
   return (
-    <div
+    <nav
       data-docs-bar=""
+      aria-label={t("mobileBarLabel")}
       className="hidden max-[861px]:flex sticky top-16 z-30 items-center gap-3 h-12 px-5 bg-mk-sky"
     >
       {/* The name comes from the content, so it starts with the visible label
@@ -29,7 +31,7 @@ export function DocsMobileBar({
         aria-haspopup="dialog"
         className="-ml-2 inline-flex items-center gap-1.5 h-11 min-w-11 px-2 text-[14px] text-mk-text-body focus-visible:outline-offset-[-2px]"
       >
-        <PanelLeft className="size-4" aria-hidden="true" />
+        <PanelLeft className="size-4 shrink-0" aria-hidden="true" />
         {t.rich("mobileNavButton", {
           sr: (chunks) => <span className="sr-only">{chunks}</span>,
         })}
@@ -44,6 +46,6 @@ export function DocsMobileBar({
       >
         <Search className="size-4 text-mk-text-muted" aria-hidden="true" />
       </button>
-    </div>
+    </nav>
   );
 }

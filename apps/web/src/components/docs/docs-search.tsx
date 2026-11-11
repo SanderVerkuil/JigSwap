@@ -1,3 +1,4 @@
+import { focusHashTarget, focusMainContent } from "@/components/a11y/skip-link";
 import {
   Command,
   CommandEmpty,
@@ -14,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createDocsSearchStore } from "@/docs/search-store";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import * as React from "react";
 import { useLocale, useTranslations } from "use-intl";
@@ -26,6 +27,21 @@ const searchStore = createDocsSearchStore(async (locale) => {
   const load = searchLoaders[locale] ?? searchLoaders.en;
   return load ? (await load()).docs : [];
 });
+
+// Opens the FAQ question or heading `hash` names, brings it into view and moves focus to it, as a
+// pick on another page would; with no section, back to the top of the page with focus on its main
+// content.
+function landOn(hash: string) {
+  const target = hash ? document.getElementById(hash) : null;
+  if (!target) {
+    window.scrollTo({ top: 0 });
+    focusMainContent({ preventScroll: true });
+    return;
+  }
+  if (target instanceof HTMLDetailsElement) target.open = true;
+  target.scrollIntoView();
+  focusHashTarget(hash, { preventScroll: true });
+}
 
 // Docs command palette. We disable cmdk's own filtering (`shouldFilter={false}`)
 // and feed it MiniSearch results for our controlled query, so ranking/snippets
@@ -79,10 +95,22 @@ export function DocsSearch({
     return () => cancelAnimationFrame(frame);
   }, [hits]);
 
-  const go = (slug: string) => {
+  // A result opens at its section when it has one (the page shows that FAQ question open). The
+  // router leaves a page where it is scrolled to when it is at that place already, so picking the
+  // section the page is at (again) lands there once the dialog has closed. The page itself, picked
+  // while the address names one of its sections, drops that section and lands at the top too.
+  const location = useLocation();
+  const landingRef = React.useRef<string | null>(null);
+  const go = (slug: string, hash?: string) => {
     onOpenChange(false);
     setQuery("");
-    void navigate({ to: "/docs/$", params: { _splat: slug } });
+    const samePage = location.pathname.replace(/\/$/, "") === `/docs/${slug}`;
+    if (samePage && location.hash === (hash ?? "")) {
+      landingRef.current = location.hash;
+      return;
+    }
+    if (samePage && !hash) landingRef.current = "";
+    void navigate({ to: "/docs/$", params: { _splat: slug }, hash });
   };
 
   return (
@@ -90,7 +118,13 @@ export function DocsSearch({
       <DialogContent
         className="overflow-hidden p-0"
         onOpenAutoFocus={onOpenAutoFocus}
-        onCloseAutoFocus={onCloseAutoFocus}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (landingRef.current === null) return;
+          event.preventDefault();
+          landOn(landingRef.current);
+          landingRef.current = null;
+        }}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>{t("searchTitle")}</DialogTitle>
@@ -124,11 +158,24 @@ export function DocsSearch({
                   <CommandItem
                     key={h.slug}
                     value={h.slug}
-                    onSelect={() => go(h.slug)}
+                    onSelect={() => go(h.slug, h.hash)}
                   >
                     <FileText className="size-4 text-mk-text-muted" />
-                    <div className="flex flex-col">
-                      <span className="text-[14px]">{h.title}</span>
+                    <div className="flex min-w-0 flex-col">
+                      {/* One line, so three results fit the list: a long page name and section
+                          ("Veelgestelde vragen en problemen oplossen › Hoe rond ik…") each give
+                          way in step with their length. The spaces keep the words apart in the
+                          text; the flex row doesn't render them. */}
+                      <span className="flex gap-1 text-[14px]">
+                        <span className="truncate">{h.title}</span>
+                        {h.section && (
+                          <>
+                            {" "}
+                            <span aria-hidden="true">›</span>{" "}
+                            <span className="truncate">{h.section}</span>
+                          </>
+                        )}
+                      </span>
                       <span className="text-[12px] text-mk-text-muted">
                         {h.snippet}
                       </span>

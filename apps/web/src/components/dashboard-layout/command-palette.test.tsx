@@ -323,10 +323,35 @@ describe("CommandPalette", () => {
     ["Mark past solves", "/completions/past"],
     ["Create a Circle", "/circles?create=1"],
     ["Browse Community", "/browse"],
+    ["Search the docs", "/docs"],
   ])("“%s” goes to %s", (name, href) => {
     renderPalette();
     fireEvent.click(screen.getByRole("option", { name }));
     expect(mocks.push).toHaveBeenCalledWith(href);
+  });
+
+  // A1: a member stuck in the app reaches the docs by either language's word.
+  it.each([
+    ["en", "help", "Search the docs"],
+    ["en", "documentatie", "Search the docs"],
+    ["nl", "hulp", "Zoek in de documentatie"],
+    ["nl", "handleiding", "Zoek in de documentatie"],
+    ["nl", "docs", "Zoek in de documentatie"],
+  ] as const)("finds the docs: %s “%s”", (locale, term, name) => {
+    renderPalette({ locale });
+    type(term);
+    expect(screen.getByRole("option", { name })).toBeTruthy();
+  });
+
+  // An open book stands for Library, here too: it marks the "In your library" rows.
+  it("draws Search the docs as a page, not as Library's open book", () => {
+    renderPalette();
+    const icon = screen
+      .getByRole("option", { name: "Search the docs" })
+      .querySelector("svg")
+      ?.getAttribute("class");
+    expect(icon).toContain("lucide-file-text");
+    expect(icon).not.toContain("lucide-book-open");
   });
 
   // A member with a long history looks for this under either language's word, wherever they are.

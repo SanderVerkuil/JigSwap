@@ -379,6 +379,19 @@ describe("Dutch docs", () => {
     );
     expect(offenders).toEqual([]);
   });
+
+  // A puzzle someone owns is an exemplaar, as in the app, in the singular too. "JSON-kopie" is a
+  // copy of data; "kopieer" (to copy) doesn't match.
+  it("call puzzle copies exemplaren", () => {
+    const offenders = files.flatMap((path) =>
+      lines(path).flatMap((line, index) =>
+        /kopie(ën)?\b/i.test(line.replaceAll("JSON-kopie", ""))
+          ? [`${relative(DOCS, path)}:${index + 1}: ${line.trim()}`]
+          : [],
+      ),
+    );
+    expect(offenders).toEqual([]);
+  });
 });
 
 // The three catalogs describe the same keys: a key missing from nl.json renders the raw key

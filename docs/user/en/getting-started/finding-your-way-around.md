@@ -15,13 +15,15 @@ Most pages also show a **primary action button** (for example, _Add Puzzle_) and
 
 ## Your account menu
 
-Click your avatar to open the account menu. Besides **Profile**,
-**Preferences**, **Notifications** and **Privacy & safety**, it has:
+Click your avatar to open the account menu. **Preferences**,
+**Notifications** and **Privacy & safety** are inside **Manage account**.
+Besides **Profile** and **Manage account**, the menu has:
 
 - **What's new**, on a phone: recent features and fixes (see below). On
   desktop it's at the foot of the sidebar instead, just above your account.
 - **Help & guides**: every guided tour, on the **Guides** tab of What's new
   (see [Guides](#guides)).
+- **Docs**: this guide.
 - **Quick setup**: reopens the guided setup for your shelf. See
   [Your Dashboard](/docs/getting-started/dashboard#quick-setup).
 
@@ -80,7 +82,9 @@ You can add JigSwap to your phone's home screen and open it like an app: full
 screen, one tap away. On iPhone and iPad, this is also what lets JigSwap send
 you push notifications.
 
-**On Android (Chrome and similar browsers):**
+### Android (Chrome)
+
+In Chrome and similar browsers:
 
 1. Tap the center **quick-action button** in the tab bar.
 2. Tap **Install app**.
@@ -90,13 +94,16 @@ If Chrome hasn't offered the install prompt yet, the tip shows two steps
 instead: tap the **menu** at the top right of Chrome, then choose **Add to
 home screen** or **Install app**, and then **Install**.
 
-**On Android (Firefox):** Firefox doesn't offer an install prompt, so the tip
-shows the steps:
+### Android (Firefox)
+
+Firefox doesn't offer an install prompt, so the tip shows the steps:
 
 1. Tap the **⋮ menu** in Firefox's toolbar (at the top or bottom).
 2. Choose **Add app to Home screen** or **Add to Home screen**, then confirm.
 
-**On iPhone and iPad (Safari, or Chrome, Edge and Firefox on recent iOS versions):**
+### iPhone and iPad
+
+In Safari, or in Chrome, Edge and Firefox on recent iOS versions:
 
 1. Tap **Share** (under **⋯** if you don't see it; in Firefox it's in the
    address bar or Firefox's menu).

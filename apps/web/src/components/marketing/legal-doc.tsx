@@ -1,7 +1,11 @@
 import { Container } from "@/components/marketing/container";
 import { TEXT_LINK } from "@/components/marketing/home/classes";
 import { Section } from "@/components/marketing/section";
-import { isPlainClick, useActiveHeading } from "@/hooks/use-active-heading";
+import {
+  isPlainClick,
+  useActiveHeading,
+  useRailFollowsActive,
+} from "@/hooks/use-active-heading";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
@@ -37,6 +41,8 @@ export function LegalDoc({
 }) {
   const t = useTranslations("marketing.legal");
   const [active, pick] = useActiveHeading(sections);
+  const railRef = React.useRef<HTMLElement>(null);
+  useRailFollowsActive(railRef, active);
   const contentsRef = React.useRef<HTMLDetailsElement>(null);
 
   return (
@@ -45,7 +51,10 @@ export function LegalDoc({
         <div className="grid grid-cols-[240px_minmax(0,1fr)] items-start gap-[clamp(32px,5vw,72px)] max-[900px]:grid-cols-1">
           {/* Scrolls on its own where the list is taller than the window (a laptop, in Dutch),
               ending above the cookie banner while that is open. */}
-          <aside className="sticky top-24 -mx-1 max-h-[calc(100dvh-96px-var(--consent-banner-height,0px))] self-start overflow-y-auto overscroll-contain px-1 pb-6 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin] max-[900px]:hidden">
+          <aside
+            ref={railRef}
+            className="sticky top-24 -mx-1 max-h-[calc(100dvh-96px-var(--consent-banner-height,0px))] self-start overflow-y-auto overscroll-contain px-1 pb-6 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin] max-[900px]:hidden"
+          >
             <div className="font-mk-heading text-mk-text-strong mb-3 text-[18px]">
               {t("contents")}
             </div>

@@ -52,6 +52,26 @@ describe("DocsMobileBar", () => {
     },
   );
 
+  // axe flagged its controls as outside every landmark ("region") on each phone article.
+  it.each([
+    ["en", "Docs bar"],
+    ["nl", "Documentatiebalk"],
+  ] as const)("is a named navigation landmark (%s)", (locale, name) => {
+    renderBar(locale);
+    const bar = screen.getByRole("navigation", { name });
+    expect(bar.hasAttribute("data-docs-bar")).toBe(true);
+    expect(bar.querySelectorAll("button")).toHaveLength(2);
+  });
+
+  // At 320px in Dutch the label squeezed the icon to 0px wide.
+  it("never squeezes the navigation button's icon", () => {
+    renderBar("nl");
+    const icon = screen
+      .getByRole("button", { name: /^Documentatie \(/ })
+      .querySelector("svg");
+    expect(icon?.getAttribute("class")).toContain("shrink-0");
+  });
+
   it("keeps a named search button", () => {
     const { onOpenSearch } = renderBar("en");
     fireEvent.click(
@@ -111,5 +131,19 @@ describe("DocsMobileBar", () => {
     expect(css).toMatch(
       /@media \(width < 861px\) \{\s*html:has\(\.mk-root\):has\(\[data-docs-bar\]\) \{\s*scroll-padding-top: 112px;/,
     );
+  });
+
+  // The header's 80px already holds a 16px gap; an anchor's own 16px on top of it landed it 32px
+  // below the header. Only the bar's 112px has no gap.
+  it("gives anchors their own 16px only where the bar shows", () => {
+    const css = readFileSync(
+      join(__dirname, "../../styles/docs.css"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    const phone = /@media \(width < 861px\) \{([\s\S]*?)\n\}/.exec(css)?.[1];
+    expect(phone).toMatch(
+      /\.docs-prose :is\(h1, h2, h3, h4, details\) \{\s*scroll-margin-top: 16px;/,
+    );
+    expect(css.replace(phone ?? "", "")).not.toContain("scroll-margin-top");
   });
 });

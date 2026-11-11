@@ -23,6 +23,16 @@ JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt 
 
 > **Tip:** Als je een privépagina probeert te openen (je bibliotheek, uitwisselingen, profiel, enz.) terwijl je uitgelogd bent, stuurt JigSwap je automatisch naar het inlogscherm en brengt je na het inloggen weer terug naar waar je naartoe wilde.
 
+### Je wachtwoord vergeten?
+
+1. Klik op **Inloggen**, vul je e-mailadres of gebruikersnaam in en klik op
+   **Doorgaan**.
+2. Klik op **Wachtwoord vergeten?** en volg de stappen: je vult een code in die
+   naar je e-mailadres is gestuurd, en kiest daarna een nieuw wachtwoord.
+
+Heb je je aangemeld met Google, dan heb je geen JigSwap-wachtwoord: gebruik dan
+**Ga verder met Google**.
+
 ## Openbare pagina's (geen account nodig)
 
 Deze pagina's kan iedereen lezen zonder in te loggen:
@@ -36,6 +46,16 @@ Deze pagina's kan iedereen lezen zonder in te loggen:
 - [Contact](/contact), het [Privacybeleid](/privacy) en de
   [Algemene voorwaarden](/terms).
 
+## Je account verwijderen
+
+1. Klik op je avatar om het accountmenu te openen en kies **Account beheren**.
+2. Open **Beveiliging**.
+3. Klik op **Verwijder account**, typ "Account verwijderen" ter bevestiging en
+   klik op **Account verwijderen**.
+
+Je account verwijderen kun je niet ongedaan maken. Hieronder staat wat er
+verdwijnt en wat blijft.
+
 ## Als je je account verwijdert
 
 Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
@@ -45,7 +65,7 @@ Als je je account verwijdert, verdwijnen je bibliotheek en wat daarbij hoort:
   ruil krijgt een melding dat die is geannuleerd.
 - Je puzzels worden verwijderd, met hun foto's, notities en voltooiingen, net
   als je andere foto's en voltooiingen, je doelen, collecties, verlanglijsten
-  en eigen categorieën. Ze zijn niet meer te zien bij Bladeren of in kringen.
+  en eigen categorieën. Ze zijn niet meer te zien bij Puzzels ontdekken of in kringen.
 - Een kring waarvan jij eigenaar bent gaat over naar een ander lid (zie
   [Vriendenkringen](/docs/sharing-and-exchanges/friend-circles)), en je
   verlaat je huishouden (zie [Huishoudens](/docs/sharing-and-exchanges/households)).

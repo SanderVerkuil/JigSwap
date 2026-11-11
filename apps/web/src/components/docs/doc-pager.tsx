@@ -5,6 +5,8 @@ import { useTranslations } from "use-intl";
 
 export function DocPager({ pager }: { pager: Pager }) {
   const t = useTranslations("marketing.docs");
+  // A group's index page has neither, and an empty landmark is noise to a screen reader.
+  if (!pager.prev && !pager.next) return null;
   return (
     <nav
       aria-label={t("pagerLabel")}

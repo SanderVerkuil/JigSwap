@@ -2,12 +2,15 @@
 title: Blocking & reporting
 order: 5
 summary: "Block members you don't want contact with, report problems, and manage your blocks."
+keywords:
+  - harassing
 ---
 
 # Blocking & Reporting
 
-If someone bothers you, you can block them so they can't contact you. You can
-also report a member, a message or a photo to our moderators.
+If someone bothers or harasses you, or sends you nasty messages, you can block
+them so they can't contact you. You can also report a member, a message or a
+photo to our moderators.
 
 **Where:** a member's profile, a conversation, a trade on **Exchanges**, and
 your account's **Privacy & safety** page.

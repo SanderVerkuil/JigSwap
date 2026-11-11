@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildSearchDocs, createDocsIndex } from "./search";
-import type { DocPage } from "./types";
+import { buildSearchDocs, createDocsIndex, type SearchDoc } from "./search";
+import type { DocPage, DocSection } from "./types";
 
 const pages: DocPage[] = [
   {
@@ -12,6 +12,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Collections" },
     html: "",
     headings: [],
+    sections: [],
     text: "Create a collection to group puzzles together.",
   },
   {
@@ -23,6 +24,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Visibility & Privacy" },
     html: "",
     headings: [],
+    sections: [],
     text: "Control who can see your puzzles with visibility settings.",
   },
   {
@@ -34,6 +36,7 @@ const pages: DocPage[] = [
     frontmatter: { title: "Your Library" },
     html: "",
     headings: [],
+    sections: [],
     text: "Library overview.",
   },
 ];
@@ -49,7 +52,7 @@ describe("docs search", () => {
   });
 
   it("finds a page by body keyword", () => {
-    const index = createDocsIndex(buildSearchDocs(pages));
+    const index = createDocsIndex(buildSearchDocs(pages), "en");
     const hits = index.search("visibility");
     expect(hits[0].slug).toBe("sharing-and-exchanges/visibility-and-privacy");
   });
@@ -57,16 +60,7 @@ describe("docs search", () => {
   it("starts and ends a snippet on a whole word", () => {
     const text =
       "Swap means trading one puzzle for another puzzle. Sale means selling a puzzle for a price. Lend means letting someone borrow a puzzle and get it back later on, when they are done with it and it is ready for the next one.";
-    const index = createDocsIndex([
-      {
-        id: "a",
-        slug: "a",
-        title: "Exchanges",
-        group: "g",
-        summary: "",
-        text,
-      },
-    ]);
+    const index = createDocsIndex([doc("a", "Exchanges", text)], "en");
     const [hit] = index.search("Lend");
     expect(hit.snippet).toMatch(/^…(\S+ )+Lend means /);
     expect(hit.snippet).toMatch(/ \S+…$/);
@@ -79,16 +73,451 @@ describe("docs search", () => {
 
   it("shows a long text's opening when the term isn't literally in it", () => {
     const text = "Word ".repeat(40).trim();
-    const index = createDocsIndex([
-      { id: "a", slug: "a", title: "Sales", group: "g", summary: "", text },
-    ]);
+    const index = createDocsIndex([doc("a", "Sales", text)], "en");
     const [hit] = index.search("sales");
     expect(hit.snippet.startsWith("Word Word")).toBe(true);
     expect(hit.snippet.endsWith("Word…")).toBe(true);
   });
 
   it("returns no hits for an empty query", () => {
-    const index = createDocsIndex(buildSearchDocs(pages));
+    const index = createDocsIndex(buildSearchDocs(pages), "en");
     expect(index.search("   ")).toEqual([]);
   });
+
+  it("cuts the snippet where the most query words sit together, not at the first one typed", () => {
+    const text = `Add a photo of your puzzle when you add it. ${"Filler words keep going here. ".repeat(6)}A blurred photo shows a Show button.`;
+    const index = createDocsIndex(
+      [doc("a", "Messages", text), doc("b", "Other", "Nothing here.")],
+      "en",
+    );
+    const [hit] = index.search("photo blurred");
+    expect(hit.snippet).toContain("A blurred photo shows");
+  });
+
+  it("finds a page by a hidden keyword", () => {
+    const docs = buildSearchDocs([
+      leaf("en", "sharing-and-exchanges/lend-swap-trade", "Lend, swap & sell", {
+        frontmatter: { title: "Lend, swap & sell", keywords: ["trade"] },
+        text: "Swap a puzzle for another one.",
+      }),
+      leaf("en", "your-library/collections", "Collections"),
+    ]);
+    expect(docs[0].keywords).toBe("trade");
+    const index = createDocsIndex(docs, "en");
+    expect(index.search("trade")[0]?.slug).toBe(
+      "sharing-and-exchanges/lend-swap-trade",
+    );
+  });
+
+  // "dark" is a letter away from "mark": the FAQ question about "Mark complete" came first.
+  it("doesn't take a short word the pages have for a typo of one with another first letter", () => {
+    const index = createDocsIndex(
+      [
+        doc("faq", "FAQ", "Click Mark complete once the puzzle is back."),
+        doc("theme", "Language & theme", "Choose Light or Dark."),
+      ],
+      "en",
+    );
+    expect(index.search("dark").map((h) => h.slug)).toEqual(["theme"]);
+  });
+
+  it("finds a word from a typo in a longer word", () => {
+    const index = createDocsIndex(
+      [
+        doc("lend", "Lend", "Ask to borrow a puzzle."),
+        doc("other", "Other", "Nothing here."),
+      ],
+      "en",
+    );
+    expect(index.search("borow").map((h) => h.slug)).toEqual(["lend"]);
+  });
+
+  // The guides say "email", never "mail".
+  it("finds a word from a short word the pages don't have", () => {
+    const index = createDocsIndex(
+      [
+        doc("notifications", "Notifications", "Choose which email you get."),
+        doc("other", "Other", "Nothing here."),
+      ],
+      "en",
+    );
+    expect(index.search("mail").map((h) => h.slug)).toEqual(["notifications"]);
+  });
 });
+
+// Questions are full of words that match every page ("how", "my", "ik", "geen"), so the longest
+// pages won; a one-letter scrap ("foto's" -> "foto", "s") matched every word starting with it.
+describe("docs search ignores filler words", () => {
+  // Pages that share the question's real words with Meldingen, and also its filler.
+  const filler = (topic: string, more = "") =>
+    `Ik zie geen ${topic}? Dan heb ik geen ${topic} gekregen. Je kunt mails krijgen over een ${topic}, en meer, maar ik zie er geen.${more}`;
+  const nl = createDocsIndex(
+    [
+      doc(
+        "staying-informed/messages",
+        "Berichten",
+        filler("bericht", " Soms staat er een foto bij."),
+      ),
+      doc(
+        "sharing-and-exchanges/friend-circles",
+        "Vriendenkringen",
+        filler("kring"),
+      ),
+      doc(
+        "sharing-and-exchanges/households",
+        "Huishoudens",
+        filler("huishouden", " Samen sparen, slim selecteren, snel sorteren."),
+      ),
+      doc(
+        "discovering-and-community/people-and-following",
+        "Mensen en volgen",
+        filler("volger"),
+      ),
+      doc(
+        "staying-informed/notifications",
+        "Meldingen",
+        "Zet elk meldingstype aan of uit per kanaal. Mails over berichten komen gebundeld, zodat je minder mails gaat krijgen en niet meer per bericht.",
+      ),
+      doc(
+        "help/faq-and-troubleshooting",
+        "Veelgestelde vragen",
+        "Waarom is een foto vervaagd? De controle was niet zeker.",
+      ),
+    ],
+    "nl",
+  );
+
+  it("finds Meldingen for 'ik wil geen mails meer krijgen'", () => {
+    const top3 = nl
+      .search("ik wil geen mails meer krijgen")
+      .slice(0, 3)
+      .map((h) => h.title);
+    expect(top3).toContain("Meldingen");
+  });
+
+  it('ranks "foto\'s vervaagd" as "foto vervaagd"', () => {
+    const order = (query: string) => nl.search(query).map((h) => h.slug);
+    expect(order("foto's vervaagd")).toEqual(order("foto vervaagd"));
+  });
+
+  it("searches a query of only filler words as typed, so a half-typed question still has results", () => {
+    const en = createDocsIndex(
+      [
+        doc("a", "Language", "How the app picks its language."),
+        doc("b", "Other", "Nothing to see."),
+      ],
+      "en",
+    );
+    expect(en.search("how do I").map((h) => h.slug)).toEqual(["a"]);
+  });
+});
+
+// Pages rank as they are; each result then opens at its best section.
+describe("docs search opens a result at its section", () => {
+  const messages = sectioned(
+    "staying-informed/messages",
+    "Messages",
+    "Messages is where you talk to other members.",
+    [
+      [
+        "send-photos",
+        "Send photos",
+        "Attach photos to a message. Each photo is checked, and a photo can take a moment.",
+      ],
+      [
+        "blurred-photos",
+        "Blurred photos",
+        "A photo is blurred at first when the check was not sure. Click Show to see it.",
+      ],
+    ],
+  );
+  const faq = sectioned(
+    "help/faq-and-troubleshooting",
+    "FAQ & troubleshooting",
+    "Choose a question to see the answer.",
+    [
+      [
+        "why-cant-i-reply",
+        "Why can't I reply to a conversation?",
+        "The other member is no longer reachable by you.",
+      ],
+    ],
+  );
+  const households = sectioned(
+    "sharing-and-exchanges/households",
+    "Households",
+    "A household lets the people you live with share one puzzle library.",
+    [["invite-someone", "Invite someone", "Only the admin can invite."]],
+  );
+  const index = createDocsIndex([messages, faq, households], "en");
+
+  it("opens at the section with the most of the query's words, and says so in the row", () => {
+    const [hit] = index.search("photo blurred");
+    expect(hit).toMatchObject({
+      slug: "staying-informed/messages",
+      title: "Messages",
+      section: "Blurred photos",
+      hash: "blurred-photos",
+    });
+    // The snippet comes from that section, after its title.
+    expect(hit.snippet.startsWith("A photo is blurred")).toBe(true);
+  });
+
+  it("opens at a FAQ question", () => {
+    const [hit] = index.search("can't reply");
+    expect(hit).toMatchObject({
+      section: "Why can't I reply to a conversation?",
+      hash: "why-cant-i-reply",
+    });
+  });
+
+  // A FAQ group's heading is followed straight by its questions. Its snippet once came from the
+  // whole page, here the "out on loan" answer of another group.
+  it("takes the snippet of a heading with no text of its own from what's under it", () => {
+    const text =
+      "Choose a question. Puzzles Why can't I see a puzzle? It may be out on loan, so ask its owner when they expect it back or look for another copy. Exchanges and loans Is a lent puzzle unavailable? A copy on loan is unavailable until it's returned.";
+    const at = (part: string) => text.indexOf(part);
+    const sections: DocSection[] = [
+      {
+        id: "puzzles",
+        title: "Puzzles",
+        start: at("Puzzles"),
+        end: at("Puzzles") + 7,
+        depth: 2,
+      },
+      {
+        id: "why",
+        title: "Why can't I see a puzzle?",
+        start: at("Why"),
+        end: at("Exchanges") - 1,
+      },
+      {
+        id: "exchanges-and-loans",
+        title: "Exchanges and loans",
+        start: at("Exchanges"),
+        end: at("Exchanges") + 19,
+        depth: 2,
+      },
+      {
+        id: "lent",
+        title: "Is a lent puzzle unavailable?",
+        start: at("Is a"),
+        end: text.length,
+      },
+    ];
+    const faq = { ...doc("help/faq", "FAQ", text), sections };
+    const [hit] = createDocsIndex([faq], "en").search("loans");
+    expect(hit.hash).toBe("exchanges-and-loans");
+    expect(hit.snippet).toContain("A copy on loan is unavailable");
+    expect(hit.snippet).not.toContain("out on loan");
+  });
+
+  it("opens at the top when the page's opening holds the most", () => {
+    const [hit] = index.search("puzzle library");
+    expect(hit.slug).toBe("sharing-and-exchanges/households");
+    expect(hit.section).toBeUndefined();
+    expect(hit.hash).toBeUndefined();
+  });
+
+  it("lists each page once, however many of its sections match", () => {
+    expect(index.search("photo").map((h) => h.slug)).toEqual([
+      "staying-informed/messages",
+    ]);
+  });
+
+  // "heeft" is a typo-match for "geeft" that shares no first letter with any query word; it once
+  // counted for the first word typed, "vriend", and tied the sections.
+  it("counts a typo in a word's first letter for the word it's closest to", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Uitlenen",
+      "Leen een puzzel uit.",
+      [
+        [
+          "teruggeven",
+          "Teruggeven",
+          "Geef de puzzel pas terug als de uitlener hem heeft.",
+        ],
+        [
+          "terugkrijgen",
+          "Terugkrijgen",
+          "Je vriend geeft de puzzel niet terug?",
+        ],
+      ],
+    );
+    const [hit] = createDocsIndex([lend], "nl").search("vriend geeft puzzel");
+    expect(hit.hash).toBe("terugkrijgen");
+  });
+
+  it("breaks a tie between sections by the filler words in their titles", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Lend a copy.",
+      [
+        [
+          "give-back",
+          "Give back a puzzle you borrowed",
+          "Return it once the lender has the puzzle back.",
+        ],
+        [
+          "get-back",
+          "Get a lent puzzle back",
+          "Want the puzzle back? Recall it.",
+        ],
+      ],
+    );
+    const index = createDocsIndex([lend], "en");
+    expect(index.search("get my puzzle back")[0].hash).toBe("get-back");
+    // Filler words alone don't move a result off the page's opening.
+    const opening = sectioned("a", "Language", "Change the language.", [
+      ["how-to", "How to", "Change the language."],
+    ]);
+    const [hit] = createDocsIndex([opening], "en").search(
+      "how to change the language",
+    );
+    expect(hit.hash).toBeUndefined();
+  });
+
+  // "a" is in "Get a lent puzzle back" as in most titles: it doesn't pull "lend a puzzle" there.
+  it("doesn't break a tie between sections by an article", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Swap or sell.",
+      [
+        ["offer", "Offer your puzzle to lend", "Turn on Offer to lend."],
+        ["get-back", "Get a lent puzzle back", "Recall it."],
+      ],
+    );
+    const [hit] = createDocsIndex([lend], "en").search("lend a puzzle");
+    expect(hit.hash).toBe("offer");
+  });
+
+  // "zet" is a typo away from "het" and "met", which every opening has: they counted for the query
+  // and kept the page at its top, with "Licht of donker" a screen further down.
+  it("doesn't count a filler word of the page that a content word reached as a typo", () => {
+    const theme = sectioned(
+      "getting-started/language-and-region",
+      "Taal en thema",
+      "JigSwap is er in het Engels en het Nederlands, met een lichte of een donkere weergave.",
+      [
+        ["taal-wijzigen", "Taal wijzigen", "Kies je taal in het menu."],
+        [
+          "licht-of-donker",
+          "Licht of donker",
+          "Kies Licht, Donker of Systeem als modus.",
+        ],
+      ],
+    );
+    const [hit] = createDocsIndex([theme], "nl").search(
+      "hoe zet ik de donkere modus aan",
+    );
+    expect(hit.hash).toBe("licht-of-donker");
+    expect(hit.snippet).toContain("Donker");
+  });
+
+  it("picks no section for a query of only filler words", () => {
+    expect(index.search("why can't I").every((h) => !h.hash)).toBe(true);
+  });
+
+  it("ranks a page by its headings", () => {
+    const loans = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Lending, swapping and selling puzzles with other members, step by step, from the first request to the end.",
+      [["recall-a-loan", "Recall a loan", "Ask for it back early."]],
+    );
+    const other = doc("a", "Other", "You can recall it.");
+    const [hit] = createDocsIndex([other, loans], "en").search("recall");
+    expect(hit.slug).toBe("sharing-and-exchanges/lend-swap-trade");
+  });
+
+  it("builds the corpus with each page's section titles as its headings", () => {
+    const [built] = buildSearchDocs([
+      leaf("en", "staying-informed/messages", "Messages", {
+        text: messages.text,
+        sections: messages.sections,
+      }),
+    ]);
+    expect(built.headings).toBe("Send photos Blurred photos");
+    expect(built.sections).toEqual(messages.sections);
+  });
+
+  // An h4 is a place to open at, but its title doesn't rank the page as a heading does.
+  it("leaves an h4's title out of the page's headings", () => {
+    const [built] = buildSearchDocs([
+      leaf("en", "staying-informed/messages", "Messages", {
+        text: "Format your messages Bold. Emoji Pick one.",
+        sections: [
+          {
+            id: "format",
+            title: "Format your messages",
+            start: 0,
+            end: 26,
+            depth: 2,
+          },
+          { id: "emoji", title: "Emoji", start: 27, end: 42, depth: 4 },
+        ],
+      }),
+    ]);
+    expect(built.headings).toBe("Format your messages");
+    expect(built.sections.map((s) => s.id)).toEqual(["format", "emoji"]);
+  });
+});
+
+function doc(slug: string, title: string, text: string): SearchDoc {
+  return {
+    id: slug,
+    slug,
+    title,
+    group: slug.split("/")[0],
+    summary: "",
+    keywords: "",
+    headings: "",
+    text,
+    sections: [],
+  };
+}
+
+// A page's search text as compileMarkdown builds it: its opening, then each section's title and
+// body, with where each section lies in it.
+function sectioned(
+  slug: string,
+  title: string,
+  opening: string,
+  parts: [id: string, title: string, body: string][],
+): SearchDoc {
+  let text = opening;
+  const sections = parts.map(([id, heading, body]) => {
+    const start = text.length + 1;
+    text += ` ${heading} ${body}`;
+    return { id, title: heading, start, end: text.length };
+  });
+  return {
+    ...doc(slug, title, text),
+    headings: parts.map(([, heading]) => heading).join(" "),
+    sections,
+  };
+}
+
+function leaf(
+  locale: string,
+  slug: string,
+  title: string,
+  extra: Partial<DocPage> = {},
+): DocPage {
+  return {
+    id: `${locale}/${slug}`,
+    locale,
+    slug,
+    group: slug.split("/")[0],
+    isIndex: false,
+    frontmatter: { title },
+    html: "",
+    headings: [],
+    text: title,
+    sections: [],
+    ...extra,
+  };
+}

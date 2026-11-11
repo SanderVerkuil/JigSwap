@@ -1,9 +1,9 @@
 ---
 title: Help
 order: 6
-summary: "Answers to common questions and fixes for things that go wrong."
+summary: "Fixes for exchanges that won't complete, messages you can't send, notifications that don't arrive, and more."
 ---
 
 # Help
 
-Find answers to frequently asked questions and troubleshooting steps for common issues.
+Something not working? Start here.

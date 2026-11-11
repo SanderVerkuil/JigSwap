@@ -1,7 +1,10 @@
 ---
 title: Uitlenen, ruilen en verkopen
 order: 2
-summary: "Vind een exemplaar, vraag het aan, stuur de eigenaar een bericht en beheer je uitwisselingen."
+summary: "Bied je puzzels aan, vind een exemplaar, vraag het aan, stuur de eigenaar een bericht, beheer je uitwisselingen en krijg een uitgeleende puzzel terug."
+keywords:
+  - leenverzoek
+  - ruilverzoek
 ---
 
 # Uitlenen, ruilen en verkopen
@@ -20,13 +23,35 @@ JigSwap ondersteunt drie soorten uitwisselingen:
 
 **Waar:** **Uitwisselingen** (`/trades`).
 
+## Je puzzel aanbieden om te ruilen, uit te lenen of te verkopen
+
+Andere leden kunnen alleen een puzzel aanvragen die je aanbiedt.
+
+- **Om hem te ruilen of aan een vriend uit te lenen:** zet
+  **Aanbieden voor ruil** of **Aanbieden om uit te lenen** aan, in het ⋯-menu
+  op de kaart van de puzzel in **Mijn puzzels** of met de schakelaars op de
+  pagina van de puzzel zelf.
+- **Om hem te verkopen:** open de pagina van de puzzel, klik op **Bewerken**,
+  zet onder **Beschikbaarheid** **Te koop** aan en klik op **Opslaan**. Op de
+  pagina van de puzzel staat daarna een schakelaar **Te koop aanbieden**: zet
+  die uit als je hem niet meer wilt verkopen.
+
+Vraagt iemand om je puzzel, dan krijg je een melding en staat het verzoek op
+**Uitwisselingen** onder **Inkomend**. Klik op **Accepteren** (of
+**Afwijzen**), spreek de overdracht af met **Bericht**, en klik allebei op
+**Markeren als voltooid** zodra de puzzel van hand is gewisseld. Zie
+[De levenscyclus van een uitwisseling](#de-levenscyclus-van-een-uitwisseling),
+en voor de andere acties op je puzzels
+[Je puzzels beheren](/docs/your-library/managing-your-puzzles#acties-op-elke-puzzel).
+
 ## Een exemplaar vinden
 
 - **Vanuit een catalogus-puzzel:** klik op de pagina van de puzzel op
   **Vind een exemplaar om te ruilen** of
-  **Bekijk alle _N_ beschikbare exemplaren →**. Dan opent **Bladeren**, gefilterd
+  **Bekijk alle _N_ beschikbare exemplaren →**. Dan opent **Puzzels ontdekken**, gefilterd
   op die puzzel. Haal het puzzelfilter weg om weer alle puzzels te zien.
-- **Vanuit Bladeren:** open een exemplaar om de pagina ervan te zien.
+- **Vanuit het overzicht:** open in **Puzzels ontdekken** een exemplaar om de
+  pagina ervan te zien.
 
 De pagina van een exemplaar toont de **Eigenaar**. De naam linkt naar diens
 profiel als je dat kunt zien. Is het profiel van de eigenaar voor jou
@@ -38,7 +63,7 @@ verborgen, dan staat er **Anonieme gebruiker**.
    de eigenaar aanbiedt: **Vragen om te lenen**, **Ruil aanvragen** of
    **Vragen om te kopen**, of **Aanvragen…** als de eigenaar meer dan één ding
    aanbiedt. Je kunt ook de aanvraagknop op de kaart van een exemplaar in
-   **Bladeren** gebruiken.
+   **Puzzels ontdekken** gebruiken.
 2. Kies in het venster **Deze puzzel aanvragen** een **Soort uitwisseling**. Je
    ziet alleen de soorten die de eigenaar aanbiedt:
    - **Ruilen** — kies de **Puzzel die je aanbiedt** uit je bibliotheek. Zit je
@@ -89,7 +114,7 @@ De pagina **Uitwisselingen** ordent alles in tabbladen:
   - **Door jou geleend** — puzzels die jij nu in bezit hebt. Begin of rond
     een puzzel af, of leg een voltooiing vast, vanaf de rij of vanaf de pagina
     van de puzzel zelf. Heb je er geen, dan linkt het naar **Puzzels
-    Ontdekken**.
+    ontdekken**.
   - **Uitgeleend** — jouw puzzels (en puzzels uit je huishouden die je mag
     beheren) die zijn uitgeleend, en bij wie ze zijn. In **Mijn puzzels** laat
     het filter **Uitgeleend** dezelfde puzzels zien tussen de rest van je
@@ -111,6 +136,11 @@ Klik of tik op een uitwisseling om de details uit te klappen: beide puzzels,
 de ruilpartnerkaart en de acties voor de huidige stap van de uitwisseling.
 Klik er nog een keer op om de details weer in te klappen.
 
+Je kunt je uitwisselingspartner ook vanuit de uitwisseling een **Bericht**
+sturen om details af te stemmen. Wil je een probleem met een ruil melden, open
+dan het menu **Ruilacties** en kies **Lid melden**. Zie
+[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).
+
 Open je een melding over een uitwisseling, dan opent de pagina
 **Uitwisselingen** met die uitwisseling uitgeklapt en gemarkeerd.
 
@@ -126,19 +156,24 @@ Een uitwisseling doorloopt duidelijke stappen:
    kunt maken; het andere lid krijgt in beide gevallen een melding.
 3. **Afronding** — eenmaal geaccepteerd moeten **beide partijen** de afronding
    bevestigen. Gebruik **Markeren als voltooid** zodra de puzzel echt is
-   overgedragen. Een venster vertelt je eerst wat afronden doet: bij een ruil
-   of verkoop gaat de puzzel naar de bibliotheek van het andere lid en dat kun
-   je niet ongedaan maken; bij een lening gaat de lening in. Na je bevestiging
-   staat er **Je hebt … bevestigd · Wachten op …** tot je partner ook
-   bevestigt. Heeft je partner als eerste bevestigd, dan staat er **Jouw
-   beurt** en rond jij de uitwisseling af met je bevestiging. Tot dan kunnen
-   jullie allebei de uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen
-   veranderen of het andere lid niet meer reageert.
+   overgedragen: geruild, verkocht of uitgeleend. Een venster vertelt je eerst
+   wat afronden doet: bij een ruil of verkoop gaat de puzzel naar de
+   bibliotheek van het andere lid en dat kun je niet ongedaan maken; bij een
+   lening gaat de lening in. Na je bevestiging staat er
+   **Je hebt … bevestigd · Wachten op …** tot je partner ook bevestigt. Heeft
+   je partner als eerste bevestigd, dan staat er **Jouw beurt** en rond jij de
+   uitwisseling af met je bevestiging. Tot dan kunnen jullie allebei de
+   uitwisseling nog **Annuleren**, bijvoorbeeld als de plannen veranderen of
+   het andere lid niet meer reageert.
 4. **Afgerond** — wanneer beiden bevestigen, gaat het eigendom (ruil/verkoop)
    of bezit (leen) over, en kun je **Laat een review achter** gebruiken om je
    partner te beoordelen. Bij een afgeronde lening laat de status zien waar de
    puzzel is: **In bruikleen** zolang de lener hem heeft, daarna
    **Teruggegeven op** of **Teruggevraagd op** met de datum waarop hij terugkwam.
+
+Loopt een uitwisseling niet zoals gepland, zie dan
+[Uitwisselingen en leningen](/docs/help/faq-and-troubleshooting#uitwisselingen-en-leningen)
+in de veelgestelde vragen.
 
 ### Eén puzzel, één afspraak
 
@@ -164,12 +199,24 @@ gebruik dan de actie **Teruggeven** om hem terug te geven. We vragen je eerst
 om te bevestigen: geef hem pas terug als de uitlener de puzzel echt terug
 heeft, want daarna is de lening definitief afgesloten.
 
-Ben je de uitlener, gebruik dan **Terugvragen** onder **Leningen ›
-Uitgeleend**, of op de kaart van de puzzel in **Mijn puzzels**, zodra je de
-puzzel terug hebt. De lening is dan definitief afgesloten, en wie de puzzel
-leende krijgt daar geen melding van. We vragen je eerst om te bevestigen. Onder
-**Leningen** spreek je met **Bericht** ernaast af hoe je de puzzel terugkrijgt,
-als je met de lener verbonden bent.
+## Een uitgeleende puzzel terugkrijgen
+
+Heb je een puzzel aan een vriend of vriendin uitgeleend en wil je hem terug?
+Open op **Uitwisselingen** het tabblad **Leningen**: onder **Uitgeleend** zie
+je bij wie elke puzzel is die je uitleende, en hoe lang al.
+
+- Spreek met **Bericht** ernaast af hoe je de puzzel terugkrijgt, als je met de
+  lener verbonden bent.
+- Heb je de puzzel terug, klik dan daar op **Terugvragen**, of op de kaart van
+  de puzzel in **Mijn puzzels**. We vragen je eerst om te bevestigen. De lening
+  is dan definitief afgesloten, en wie de puzzel leende krijgt daar geen
+  melding van.
+- Zolang jullie niet allebei op **Markeren als voltooid** hebben geklikt, is de
+  lening nog niet begonnen en kunnen jullie de uitwisseling allebei nog
+  **Annuleren**.
+- Reageert de lener niet meer of geeft die de puzzel niet terug, zoek de lening
+  dan op onder **Inkomend** en klap hem uit, open het menu **Ruilacties** en
+  kies **Lid melden**, bijvoorbeeld met **Nepruil of niet komen opdagen**.
 
 Een puzzel kan maar aan één lid tegelijk uitgeleend zijn. Zolang hij is
 uitgeleend, is hij niet beschikbaar: niemand kan hem aanvragen, je kunt hem niet
@@ -178,8 +225,3 @@ uitwisseling waarmee hij van eigenaar of van plek zou wisselen, kan pas worden
 geaccepteerd of afgerond als hij terug is. Is hij teruggegeven of teruggevraagd,
 zet dan **Aanbieden voor ruil** of **Aanbieden om uit te lenen** aan op de
 pagina van de puzzel om hem weer aan te bieden.
-
-Je kunt je uitwisselingspartner ook vanuit de uitwisseling een **Bericht**
-sturen om details af te stemmen. Wil je een probleem met een ruil melden, open
-dan het menu **Ruilacties** en kies **Lid melden**. Zie
-[Blokkeren en melden](/docs/discovering-and-community/blocking-and-reporting).

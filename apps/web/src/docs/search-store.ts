@@ -25,7 +25,7 @@ export function createDocsSearchStore(
         if (failures.delete(locale)) notify();
         loading = Promise.all([import("./search"), loadDocs(locale)])
           .then(([{ createDocsIndex }, docs]) => {
-            indexes.set(locale, createDocsIndex(docs));
+            indexes.set(locale, createDocsIndex(docs, locale));
             notify();
           })
           // Search stays empty and says so; the next load() retries.

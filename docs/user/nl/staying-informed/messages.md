@@ -2,6 +2,8 @@
 title: Berichten
 order: 2
 summary: "Chat met andere leden en je kringen, maak tekst op en voeg emoji, puzzels, foto's en locaties toe, zie wie er typt of online is en vind oudere berichten terug."
+keywords:
+  - chatten
 ---
 
 # Berichten
@@ -59,14 +61,14 @@ een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
 
 ## Een gesprek beginnen
 
-**Vanaf het profiel van een lid of hun tegel bij Mensen:**
+#### Vanaf het profiel van een lid of hun tegel bij Mensen
 
 1. Klik op **Bericht**.
 2. JigSwap opent je gesprek met dat lid, of begint een nieuw gesprek.
 
-**Over een specifieke puzzel:**
+#### Over een specifieke puzzel
 
-1. Open de puzzelkopie (via **Bladeren** of het profiel van een lid).
+1. Open het exemplaar (via **Puzzels ontdekken** of het profiel van een lid).
 2. Klik op **Bericht**.
 3. Schrijf je eerste bericht. De puzzel wordt eraan toegevoegd, zodat de
    eigenaar weet welke je bedoelt.
@@ -76,7 +78,7 @@ Heb je al een gesprek met de eigenaar, dan brengt JigSwap je daar direct
 naartoe. Over je eigen puzzel kun je geen bericht sturen. Sommige eigenaren
 houden hun profiel privé; dan kun je ze vanaf hun puzzel geen bericht sturen.
 
-**Met een vriendenkring:**
+#### Met een vriendenkring
 
 1. Klik bij de kring op **Groepschat openen**, op **Kringen** of op de eigen
    pagina van de kring. Of klik in Berichten op **Nieuw**, kies **Kringchat**
@@ -189,13 +191,17 @@ verstuurd is.
 Je kunt mensen die je wederzijds volgt laten zien wanneer je online bent. Dit
 staat uit tot je kiest om het te delen.
 
-**Aan- of uitzetten:** de eerste keer dat je Berichten opent, vraagt een kaart
+#### Aan- of uitzetten
+
+De eerste keer dat je Berichten opent, vraagt een kaart
 of je je online status wilt delen. Kies **Delen** of **Niet nu**. Je kunt dit
 altijd veranderen met de instelling **Online-status** op
 **Privacy en veiligheid** (open je accountmenu → **Account beheren** →
 **Privacy en veiligheid**).
 
-**Wie het ziet:** iemand kan je status alleen zien als dit allemaal klopt:
+#### Wie het ziet
+
+Iemand kan je status alleen zien als dit allemaal klopt:
 
 - jullie delen allebei je online status;
 - jullie volgen elkaar;
@@ -207,13 +213,17 @@ anderen ook niet. Kringleden die je niet wederzijds volgt, zien je status niet,
 ook niet in de kringchat. JigSwap laat nooit zien wanneer je voor het laatst
 online was, en houdt niet bij wanneer je online was.
 
-**Waar je het ziet:** een groene stip op de avatar van een lid betekent
+#### Waar je het ziet
+
+Een groene stip op de avatar van een lid betekent
 online, een half gevulde stip betekent afwezig. Je ziet dit bij gesprekken in
 je overzicht, in de kop van een gesprek en in het ledenpaneel van een kring,
 waar de kop ook telt wie er online is, zoals "Kringchat · 6 leden · 2 online". Daarin tellen
 alleen leden die online zijn (niet afwezig) en van wie je de status mag zien.
 
-**Je status instellen:** open je accountmenu en kies je status:
+#### Je status instellen
+
+Open je accountmenu en kies je status:
 
 - **Automatisch**: je bent online zolang JigSwap open is, afwezig na 5 minuten
   zonder activiteit, en offline als het tabblad verborgen of gesloten is.
@@ -245,7 +255,7 @@ De kop van het gesprek heeft snelkoppelingen naar waar het gesprek over gaat:
 - **Uitwisseling bekijken** opent de uitwisseling, bij een gesprek over een
   ruil, uitlening of verkoop.
 - Gaat het gesprek over twee of meer puzzels, dan opent een stapel omslagen
-  een menu **Puzzels** met elke puzzel en van wie die kopie is.
+  een menu **Puzzels** met elke puzzel en van wie dat exemplaar is.
 
 Op een telefoon staan **Profiel bekijken** en **Uitwisseling bekijken** in het
 menu **Gespreksopties**.
@@ -271,17 +281,23 @@ tonen de gewone tekst.
 - Wil je een teken zoals `*` gewoon tonen, zet er dan een backslash voor:
   `\*`.
 
-**Sneltoetsen:** selecteer tekst in het berichtvak en druk op **Ctrl+B** voor
+#### Sneltoetsen
+
+Selecteer tekst in het berichtvak en druk op **Ctrl+B** voor
 vet, **Ctrl+I** voor cursief of **Ctrl+U** voor onderstreept (**⌘** in plaats
 van **Ctrl** op een Mac). Druk nog een keer op dezelfde sneltoets om de opmaak
 weer weg te halen. Zonder selectie zet de sneltoets de tekens neer met de
 cursor ertussen.
 
-**Links:** webadressen die beginnen met `https://`, `http://` of `www.` worden
+#### Links
+
+Webadressen die beginnen met `https://`, `http://` of `www.` worden
 links, die in een nieuw tabblad openen. De link toont altijd het volledige
 adres.
 
-**Emoji:** klik op een computer op de smileyknop naast het berichtvak om een
+#### Emoji
+
+Klik op een computer op de smileyknop naast het berichtvak om een
 emoji te kiezen; die komt waar de cursor staat. Gebruik op een telefoon de
 emojitoets van je toetsenbord.
 

@@ -56,12 +56,12 @@ through it, and its unread count is grey.
 
 ## Start a conversation
 
-**From a member's profile or their tile on People:**
+#### From a member's profile or their tile on People
 
 1. Click **Message**.
 2. JigSwap opens your conversation with that member, or starts a new one.
 
-**About a specific puzzle:**
+#### About a specific puzzle
 
 1. Open the puzzle copy (from **Browse** or a member's profile).
 2. Click **Message**.
@@ -73,7 +73,7 @@ If you already have a conversation with the owner, JigSwap takes you straight
 to it. You can't message about your own puzzle, and some owners keep their
 profile private, in which case you can't message them from their puzzle.
 
-**With a friend circle:**
+#### With a friend circle
 
 1. Click **Open group chat** on the circle, on **Circles** or on the circle's
    own page. Or, in Messages, click **New**, choose **Circle chat** and pick
@@ -180,13 +180,17 @@ typing…". It disappears a few seconds after they stop, or when they send.
 You can let mutual followers see when you're online. It's off until you choose
 to share it.
 
-**Turn it on or off:** the first time you open Messages, a card asks whether
+#### Turn it on or off
+
+The first time you open Messages, a card asks whether
 you want to share your online status. Choose **Share** or **Not now**. You
 can change this at any time with the **Online status** setting on
 **Privacy & safety** (open your account menu → **Manage account** →
 **Privacy & safety**).
 
-**Who sees it:** someone can see your status only when all of these are true:
+#### Who sees it
+
+Someone can see your status only when all of these are true:
 
 - you both share your online status;
 - you follow each other;
@@ -198,13 +202,17 @@ else's. Circle members you don't follow each other with don't see your status,
 even in the circle chat. JigSwap never shows when you were last online, and
 doesn't keep a history of when you were online.
 
-**Where it shows:** a green dot on a member's avatar means online, a
+#### Where it shows
+
+A green dot on a member's avatar means online, a
 half-filled dot means away. You see it on conversations in your inbox, in the
 conversation header, and in a circle's members panel, where the header also
 counts who's online, such as "Circle chat · 6 members · 2 online". The count includes only
 members who are online (not away) and whose status you can see.
 
-**Set your status:** open your account menu and choose your status:
+#### Set your status
+
+Open your account menu and choose your status:
 
 - **Automatic**: you show as online while JigSwap is open, as away after
   5 minutes without activity, and as offline when the tab is hidden or closed.
@@ -257,16 +265,22 @@ show the plain text.
   `2*3*4` aren't formatted.
 - To show a character such as `*` as it is, put a backslash before it: `\*`.
 
-**Shortcuts:** select text in the message box and press **Ctrl+B** for bold,
+#### Shortcuts
+
+Select text in the message box and press **Ctrl+B** for bold,
 **Ctrl+I** for italic or **Ctrl+U** for underline (**⌘** instead of **Ctrl**
 on a Mac). Press the same shortcut again to remove it. Without a selection,
 the shortcut adds the characters with the cursor between them.
 
-**Links:** web addresses that start with `https://`, `http://` or `www.`
+#### Links
+
+Web addresses that start with `https://`, `http://` or `www.`
 become links, which open in a new tab. The link always shows the full
 address.
 
-**Emoji:** on a computer, click the smiley button next to the message box to
+#### Emoji
+
+On a computer, click the smiley button next to the message box to
 pick an emoji; it's added where the cursor is. On a phone, use your
 keyboard's emoji key.
 

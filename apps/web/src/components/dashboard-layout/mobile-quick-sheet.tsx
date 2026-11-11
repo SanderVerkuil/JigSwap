@@ -18,6 +18,7 @@ import {
   CircleCheck,
   CircleHelp,
   Download,
+  FileText,
   MessageSquare,
   Plus,
   Sparkles,
@@ -89,6 +90,13 @@ const ACTIONS: Array<{
     subKey: "mobile.quick.helpGuidesSub",
     href: "/whats-new?tab=guides",
     icon: CircleHelp,
+  },
+  // The written guides at /docs, under the tours. Same label as the account menu's item.
+  {
+    titleKey: "user.docs",
+    subKey: "mobile.quick.docsSub",
+    href: "/docs",
+    icon: FileText,
   },
 ];
 

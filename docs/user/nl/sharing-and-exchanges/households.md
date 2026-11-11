@@ -2,6 +2,8 @@
 title: Huishoudens
 order: 4
 summary: "Deel één puzzelbibliotheek met de mensen met wie je samenwoont, en kies per puzzel wat ze ermee mogen doen."
+keywords:
+  - gezin
 ---
 
 # Huishoudens
@@ -122,6 +124,9 @@ uitnodiging voor een huishouden.
    huishouden, klik dan onder **Of begin je eigen huishouden** op
    **Huishouden aanmaken**.
 
+Je kunt ook direct vanuit de melding reageren; zie
+[Direct reageren vanuit een melding](/docs/staying-informed/notifications#direct-reageren-vanuit-een-melding).
+
 ## Naar een ander huishouden overstappen
 
 Je kunt in één huishouden tegelijk zitten. Zit je al in een huishouden en
@@ -202,6 +207,9 @@ zijn of haar foto en naam.
 - Wat een lid verder met jouw puzzel mag doen, hangt af van de
   **Toegang huishouden**.
 
+Wie buiten je huishouden een puzzel ziet, lees je in
+[Wie een exemplaar ziet](/docs/sharing-and-exchanges/visibility-and-privacy#wie-een-exemplaar-ziet).
+
 ## Toegang huishouden instellen voor een puzzel
 
 Elke puzzel heeft een van twee toegangsniveaus:
@@ -237,7 +245,9 @@ Alleen de eigenaar kan de toegang voor het huishouden van een puzzel wijzigen.
 Wil je opnieuw beginnen, klik dan in de balk op **✕** (**Selectie wissen**).
 
 Je kunt maximaal 200 puzzels tegelijk wijzigen. Deze lijst toont alleen je
-eigen puzzels.
+eigen puzzels. Wil je in plaats daarvan veel puzzels tegelijk aanbieden,
+intrekken of delen, zie dan
+[Veel puzzels tegelijk wijzigen](/docs/your-library/managing-your-puzzles#veel-puzzels-tegelijk-wijzigen).
 
 ## De standaard van het huishouden instellen
 

@@ -13,6 +13,7 @@ function compiled(title: string): CompiledDoc {
     html: `<p>${title} html</p>`,
     headings: [{ id: "intro", text: `${title} intro`, depth: 2 }],
     text: `${title} text`,
+    sections: [{ id: "intro", title, start: 0, end: `${title} text`.length }],
   };
 }
 
@@ -130,7 +131,10 @@ describe("renderDocsModule", () => {
         title: "Overzicht",
         group: "getting-started",
         summary: "",
+        keywords: "",
+        headings: "Overzicht",
         text: "Overzicht text",
+        sections: [{ id: "intro", title: "Overzicht", start: 0, end: 14 }],
       },
       {
         id: "help/faq",
@@ -138,7 +142,10 @@ describe("renderDocsModule", () => {
         title: "FAQ",
         group: "help",
         summary: "",
+        keywords: "",
+        headings: "FAQ",
         text: "FAQ text",
+        sections: [{ id: "intro", title: "FAQ", start: 0, end: 8 }],
       },
     ]);
   });

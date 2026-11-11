@@ -55,6 +55,7 @@ export function buildNavTree(pages: readonly DocMeta[]): NavTree {
         title: p.frontmatter.title,
         slug: p.slug,
         order: p.frontmatter.order ?? 0,
+        summary: p.frontmatter.summary,
       }));
     groups.push({
       title: idx.frontmatter.title,

@@ -1,18 +1,19 @@
 ---
 title: Je puzzels beheren
-order: 1
-summary: "Bekijk je eigen kopieën, zoek, sorteer en filter ze, en verken de detailpagina van een kopie."
+order: 2
+summary: "Bekijk je eigen exemplaren, zoek, sorteer en filter ze, en verken de detailpagina van een exemplaar."
 ---
 
 # Je puzzelbibliotheek beheren
 
-Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk bezit. (Een "kopie" is één fysieke puzzel die je bezit — het platform houdt elke kopie apart bij, zodat je geschiedenis bij jou blijft.)
+Je bibliotheek is de verzameling fysieke **exemplaren** die jij persoonlijk bezit. (Een "exemplaar" is één fysieke puzzel die je bezit — het platform houdt elk exemplaar apart bij, zodat je geschiedenis bij jou blijft.)
 
 **Waar:** **Mijn puzzels** (`/my-puzzles`).
 
 ## Je puzzels bekijken
 
-1. Open **Mijn puzzels** vanuit de zijbalk of de tabbalk.
+1. Open **Mijn puzzels** vanuit de zijbalk. Op een telefoon tik je op het
+   tabblad **Bibliotheek** en dan op **Mijn puzzels**.
 2. Wissel tussen de weergaven **raster** en **lijst**.
 3. Typ in het **zoekvak** om puzzels te vinden op titel, merk of tag. Elk
    woord dat je typt moet erin voorkomen; hoofdletters en accenten maken niet
@@ -24,6 +25,7 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
    - **Beschikbaar**
    - **Te ruil**
    - **Te leen**
+   - **Uitgeleend**
    - **Bezig**
    - **Voltooid**
 6. Zit er nog iemand in je huishouden, dan kies je in het menu **Van wie** of
@@ -43,16 +45,19 @@ Elke puzzelkaart toont de conditie (een gekleurde stip met een woord als **Goed*
 
 ## Acties op elke puzzel
 
-Vanaf een puzzelkaart kun je:
+Klik op een puzzelkaart om de detailpagina te openen. Het ⋯-menu van de kaart
+biedt:
 
-- **Bekijken** — open de volledige detailpagina van de kopie.
-- **Bewerken** — wijzig de details van de kopie.
-- **Aanbieden voor ruil** en **Aanbieden om uit te lenen** — zet dat aanbod aan of uit, en maak het zo nodig ongedaan.
-- **Verwijderen** — haal de kopie uit je bibliotheek (met bevestiging).
 - **Voltooiing vastleggen** of **Puzzel starten** — leg vast dat je de puzzel hebt voltooid (of gestart).
-- **Terugvragen** — heb je een uitgeleende puzzel terug, dan sluit je hiermee de
-  lening af. JigSwap vraagt eerst om bevestiging en laat daarna weten of het
-  gelukt is.
+- **Bewerken** — wijzig de details van het exemplaar.
+- **Aanbieden voor ruil** en **Aanbieden om uit te lenen** — zet dat aanbod aan of uit, en maak het zo nodig ongedaan.
+- **Delen met kringen…** — deel het exemplaar met kringen die je kiest.
+- **Aan collectie toevoegen** — zet het exemplaar in een van je collecties.
+- **Verwijderen** — haal het exemplaar uit je bibliotheek (met bevestiging).
+
+De kaart van een uitgeleende puzzel heeft ook een knop **Terugvragen**: heb je
+de puzzel terug, dan sluit je hiermee de lening af. JigSwap vraagt eerst om
+bevestiging en laat daarna weten of het gelukt is.
 
 ## Veel puzzels tegelijk wijzigen
 
@@ -72,58 +77,63 @@ filters tonen. Onder aan de lijst verschijnt dan een balk met:
 Daarna zie je wat er is veranderd en wat niet, met **Ongedaan maken** voor het
 aanbod. Een uitgeleende puzzel of een puzzel in een lopende uitwisseling kun je
 niet aanbieden, maar een aanbod intrekken kan altijd. Deze acties veranderen nooit je keuze wie
-een kopie kan zien: een privékopie is zichtbaar zolang je hem aanbiedt en weer
-privé zodra je elk aanbod intrekt.
+een exemplaar kan zien: een privé-exemplaar is zichtbaar zolang je het aanbiedt
+en weer privé zodra je elk aanbod intrekt.
 
 Een puzzel van een huisgenoot kun je alleen selecteren als die jou hem laat
 beheren. Hij komt niet in je eigen collecties, en alleen de eigenaar kan hem met
 een kring delen. Met **Klaar** stop je met selecteren.
 
-## De detailpagina van een kopie
+## De detailpagina van een exemplaar
 
-**Waar:** klik op **Bekijken** bij een puzzel, of ga naar `/my-puzzles/<id>`.
+**Waar:** klik op een puzzelkaart, of ga naar `/my-puzzles/<id>`.
 
-De detailpagina is het uitgebreide overzicht van één eigen kopie. Het bevat:
+De detailpagina is het uitgebreide overzicht van één eigen exemplaar. Het
+bevat:
 
 - Een **hero-afbeelding** met chips voor conditie en moeilijkheid. Op een
   telefoon tik je erop om hem groot te zien. Daar, en op een tablet, knijp je
   erin om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te
   zoomen.
-- Een **statusregel** onder de titel. Op je eigen kopie staat daar waar de
-  kopie is en wie hem kan zien: "Uitgeleend aan _naam_ sinds _datum_" (met
-  **Terugvragen**); waarvoor hij wordt aangeboden en wie hem nu kan zien: de
-  community als je profiel openbaar is, vrienden en gedeelde kringen als het
-  privé is, of alleen zolang je hem aanbiedt als je **Privé** hebt gekozen; of,
-  als je hem niet aanbiedt, dat vrienden hem kunnen zien of dat hij privé is.
-  Andere leden zien alleen waarvoor hij wordt aangeboden.
-- **Verwervingsgegevens** (wanneer en hoe je hem kreeg) en je privénotities.
-  Alleen jij (en leden van je huishouden die de kopie mogen beheren) zien ze.
-  Staat er nog niets, klik dan op **Details toevoegen** om de maand, het jaar
-  en de bron in te vullen.
+- Een **statusregel** onder de titel. Op je eigen exemplaar staat daar waar
+  het exemplaar is en wie het kan zien: "Uitgeleend aan _naam_ sinds _datum_"
+  (met **Terugvragen**); waarvoor het wordt aangeboden en wie het nu kan zien:
+  de community als je profiel openbaar is, vrienden en gedeelde kringen als
+  het privé is, of alleen zolang je het aanbiedt als je **Privé** hebt
+  gekozen; of, als je het niet aanbiedt, dat vrienden het kunnen zien of dat
+  het privé is. Andere leden zien alleen waarvoor het wordt aangeboden.
+- **Verwervingsgegevens** (wanneer en hoe je het kreeg) en je privénotities.
+  Alleen jij (en leden van je huishouden die het exemplaar mogen beheren) zien
+  ze. Staat er nog niets, klik dan op **Details toevoegen** om de maand, het
+  jaar en de bron in te vullen.
 - Een **statistiekenstrook**: aantal keer voltooid, snelste tijd (uit de ingevulde tijden), aantal keer
-  uitgeleend en je eigen beoordeling van de kopie (te zien voor jou en je
-  huishouden, of voor wie hem beoordeeld heeft).
+  uitgeleend en je eigen beoordeling van het exemplaar (te zien voor jou en je
+  huishouden, of voor wie het beoordeeld heeft).
 - De **Eigenaar**: avatar en naam, met een link naar het profiel als je dat
-  mag zien. Op je eigen kopie staat je naam gevolgd door "· jij". Houdt de
+  mag zien. Op je eigen exemplaar staat je naam gevolgd door "· jij". Houdt de
   eigenaar het profiel voor jou verborgen, dan staat er **Anonieme gebruiker**.
 - Een **fotostrook** met een lightbox. Als eigenaar kun je foto's uploaden, een omslagafbeelding instellen en per foto opmerkingen achterlaten.
-- Een **geschiedenis** in twee kolommen: je voltooiingstijdlijn (met beoordelingen), uitleengeschiedenis (met statuspillen) en ruil-/overdrachtsgeschiedenis.
+- Een **geschiedenis** in twee kolommen: je voltooiingstijdlijn (met beoordelingen), uitleengeschiedenis (met statuslabels) en ruil-/overdrachtsgeschiedenis.
   Heeft iemand uit die geschiedenis zijn account verwijderd, dan blijven diens
   regels staan, als **Verwijderd lid**, zonder naam, foto of link.
 - Een **opbouw van de communitybeoordeling** en een opmerkingengebied.
 
 **Eigenaarsacties** op deze pagina zijn onder meer de schakelaars
-**Aanbieden voor ruil** en **Aanbieden om uit te lenen**, een voltooiing
-vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
-**Ongedaan maken**, en hij verandert nooit wie de kopie kan zien (zie
-hieronder). Is de kopie uitgeleend, dan kun je pas weer een aanbod aanzetten
-als hij terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
+**Aanbieden voor ruil** en **Aanbieden om uit te lenen** (en
+**Te koop aanbieden**, alleen zolang het exemplaar te koop staat), een
+voltooiing vastleggen en bewerken. Elke wijziging met een schakelaar bevestigen we met
+**Ongedaan maken**, en hij verandert nooit wie het exemplaar kan zien (zie
+hieronder). Is het exemplaar uitgeleend, dan kun je pas weer een aanbod
+aanzetten als het terug is. Gebruik **Terugvragen** als je de puzzel terug hebt: we
 vragen eerst om bevestiging, daarna eindigt de lening en staat de puzzel weer
 bij jou.
-**Bezoekers** (andere leden) zien een openbare versie met in plaats daarvan de acties _Ruil Aanvragen_ en _Bericht_.
+**Bezoekers** (andere leden) zien in plaats daarvan een openbare versie, met
+een knop om het exemplaar aan te vragen die naar het aanbod heet, zoals
+**Ruil aanvragen** of **Vragen om te lenen**, en **Bericht**.
 
-**Beoordelingen van dit exemplaar** zijn sterren voor deze fysieke kopie. Wie
-een voltooiing van de kopie vastlegt, krijgt de vraag hem te beoordelen.
+**Beoordelingen van dit exemplaar** zijn sterren voor dit fysieke exemplaar.
+Wie een voltooiing van het exemplaar vastlegt, krijgt de vraag het te
+beoordelen.
 
 ## Foto's
 
@@ -160,27 +170,27 @@ hem kunnen zien. Tot die tijd:
 
 Alleen goedgekeurde foto's kunnen als omslag worden gebruikt.
 
-## Wie een kopie kan zien
+## Wie een exemplaar kan zien
 
-Elke kopie is zichtbaar of privé. Je stelt dit in als je de kopie **Bewerkt**,
-onder **Wie kan dit exemplaar zien**:
+Elk exemplaar is zichtbaar of privé. Je stelt dit in via **Bewerken**, onder
+**Wie kan dit exemplaar zien**:
 
-- **Zichtbaar**: leden die je wederzijds volgt, kunnen hem zien in je
-  bibliotheek. Zolang je hem aanbiedt, kunnen ook alle leden hem zien als je
-  profiel openbaar is, en leden van kringen waarin je hem hebt gedeeld als het
-  privé is.
+- **Zichtbaar**: leden die je wederzijds volgt, kunnen het zien in je
+  bibliotheek. Zolang je het aanbiedt, kunnen ook alle leden het zien als je
+  profiel openbaar is, en leden van kringen waarin je het hebt gedeeld als je
+  profiel privé is.
 - **Privé — alleen jij en je huishouden**: verborgen voor alle anderen, ook
   voor je vrienden.
 
-Een kopie die je aanbiedt om te ruilen, uit te lenen of te verkopen, is
+Een exemplaar dat je aanbiedt om te ruilen, uit te lenen of te verkopen, is
 zichtbaar zolang het aanbod loopt. Koos je **Privé**, dan blijft dat je keuze:
-trek je elk aanbod in, dan is de kopie weer privé. Zie voor het volledige
+trek je elk aanbod in, dan is het exemplaar weer privé. Zie voor het volledige
 overzicht
 [Zichtbaarheid en privacy](/docs/sharing-and-exchanges/visibility-and-privacy).
 
-## Kopieën van je huishouden
+## Exemplaren van je huishouden
 
-Zit je in een huishouden, dan staan de kopieën van je huisgenoten ook in je
+Zit je in een huishouden, dan staan de exemplaren van je huisgenoten ook in je
 bibliotheek, gemarkeerd met een badge **Huishouden** en de naam van de
 eigenaar. Wat je ermee kunt doen, hangt af van de toegang die ze je hebben
 gegeven; zie [Huishoudens](/docs/sharing-and-exchanges/households).

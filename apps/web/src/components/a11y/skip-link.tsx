@@ -23,6 +23,33 @@ export function focusMainContent(options?: FocusOptions): boolean {
 }
 
 /**
+ * Focuses what a URL hash (with or without its "#", encoded or not) points at in the main content,
+ * as the browser does when it loads a page at a fragment: a FAQ question's <details> by its
+ * <summary>, which can take focus already, anything else made script-focusable. Returns whether it
+ * found one.
+ */
+export function focusHashTarget(hash: string, options?: FocusOptions): boolean {
+  let id = hash.replace(/^#/, "");
+  try {
+    id = decodeURIComponent(id);
+  } catch {
+    // Not percent-encoded after all: look it up as it is.
+  }
+  const target = id ? document.getElementById(id) : null;
+  if (!target || !mainContentElement()?.contains(target)) return false;
+  const summary =
+    target instanceof HTMLDetailsElement
+      ? target.querySelector("summary")
+      : null;
+  const element = summary ?? target;
+  if (!summary && !element.hasAttribute("tabindex")) {
+    element.setAttribute("tabindex", "-1");
+  }
+  element.focus(options);
+  return true;
+}
+
+/**
  * "Skip to content" bypass link (WCAG 2.4.1): hidden until focused, so it is the first Tab stop
  * and lets keyboard users jump past the header, sidebar and top-bar controls.
  */

@@ -1,5 +1,6 @@
 import { DocBreadcrumb } from "@/components/docs/doc-breadcrumb";
 import { DocContent } from "@/components/docs/doc-content";
+import { DocGroupArticles } from "@/components/docs/doc-group-articles";
 import { DocHelpful } from "@/components/docs/doc-helpful";
 import { DocPager } from "@/components/docs/doc-pager";
 import { OnPageToc } from "@/components/docs/on-page-toc";
@@ -12,8 +13,8 @@ import {
 } from "@/docs/nav";
 import { pageTitle } from "@/lib/page-title";
 import { seoHead } from "@/lib/seo-head";
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, notFound, useLocation } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 import { pageLoaders } from "virtual:docs/content";
@@ -60,6 +61,19 @@ function DocPageView() {
   const { page, html, headings } = Route.useLoaderData();
   const slug = page.slug;
 
+  // A search result can open the page at a FAQ question. The router navigates with pushState, so
+  // the browser neither opens the question's <details> nor fires hashchange: open it here, and
+  // land on it whichever of this and the router's own scroll to the hash runs first. The hash
+  // changes while the last page still shows, so this runs again when the new body is in.
+  const hash = useLocation({ select: (location) => location.hash });
+  useEffect(() => {
+    const question = hash ? document.getElementById(hash) : null;
+    if (!(question instanceof HTMLDetailsElement)) return;
+    if (!question.closest(".docs-prose") || question.open) return;
+    question.open = true;
+    question.scrollIntoView();
+  }, [hash, html]);
+
   const tree = buildNavTree(localePages);
   const pager = buildPager(tree, slug);
   const group = tree.find((g) => g.slug === page.group);
@@ -82,7 +96,10 @@ function DocPageView() {
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_220px] max-[1280px]:grid-cols-1 gap-x-[clamp(24px,3vw,56px)] items-start">
-      <article className="max-w-[72ch] min-w-0">
+      {/* About 71 characters a line: 620px at 18px, 576px at 17px below 861px, where 620px ran 79.
+          The text steps up by this column's own width (docs.css): beside the sidebar it is
+          narrower than 620px up to about 1004px wide. */}
+      <article className="@container max-w-[620px] max-[861px]:max-w-[36rem] min-w-0">
         <DocBreadcrumb trail={trail} />
         <h1 className="font-mk-heading font-normal tracking-[-0.01em] text-mk-text-strong text-[clamp(30px,4vw,44px)] leading-[1.1] mb-5 text-balance">
           {page.frontmatter.title}
@@ -94,6 +111,8 @@ function DocPageView() {
           className="mb-8 min-[1280px]:hidden"
         />
         <DocContent html={html} />
+        {/* A group's page leads on to its articles, so its crumb on every article isn't a dead end. */}
+        {page.isIndex && group && <DocGroupArticles links={group.links} />}
         <DocPager pager={pager} />
         <DocHelpful slug={slug} />
       </article>

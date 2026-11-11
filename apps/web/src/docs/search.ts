@@ -1,5 +1,5 @@
 import MiniSearch from "minisearch";
-import type { DocPage } from "./types";
+import type { DocPage, DocSection } from "./types";
 
 export interface SearchDoc {
   id: string;
@@ -7,7 +7,10 @@ export interface SearchDoc {
   title: string;
   group: string;
   summary: string;
+  keywords: string;
+  headings: string; // the titles of its h2/h3 sections and FAQ questions; an h4 only opens a result
   text: string;
+  sections: DocSection[];
 }
 
 export interface SearchHit {
@@ -15,6 +18,9 @@ export interface SearchHit {
   title: string;
   group: string;
   snippet: string;
+  // The heading or FAQ question the result opens at, and its id; none when it opens at the top.
+  section?: string;
+  hash?: string;
 }
 
 // Leaf pages only — index and root pages are navigation hubs, not search targets.
@@ -29,47 +35,295 @@ export function buildSearchDocs(pages: readonly DocPage[]): SearchDoc[] {
       title: p.frontmatter.title,
       group: p.group,
       summary: p.frontmatter.summary ?? "",
+      keywords: (p.frontmatter.keywords ?? []).join(" "),
+      headings: p.sections
+        .filter((s) => s.depth !== 4)
+        .map((s) => s.title)
+        .join(" "),
       text: p.text,
+      sections: p.sections,
     }));
 }
 
+// Words that match nearly every page, so in a question ("how do I…", "ik wil geen…") they made
+// the longest pages win. "who" / "wie" stay: "Who sees a copy" is a heading. MiniSearch splits
+// words at an apostrophe, so "can't" arrives as "can" and "t". "meer" is the "no longer" of
+// "niet meer".
+const STOP_WORDS: Readonly<Record<string, ReadonlySet<string>>> = {
+  en: new Set(
+    "a an the i im my me we our you your do does did how to of in on at for is are was be can cant could what why when where which with and or it its this that from as by not no if so get got".split(
+      " ",
+    ),
+  ),
+  nl: new Set(
+    "de het een ik je jij jou mijn me mij we wij ons hoe wat waarom wanneer waar kan kun kunnen niet geen in op aan van voor met en of te is er dat die dit zijn word wordt ben bij om naar dan als ook nog meer".split(
+      " ",
+    ),
+  ),
+};
+// Filler words that sit in nearly every title, so they don't break a tie between sections.
+const ARTICLES: ReadonlySet<string> = new Set("a an the de het een".split(" "));
+
+// A word as MiniSearch's default tokenizer cuts them: a run of anything but space and punctuation.
+const WORD = /[^\n\r\p{Z}\p{P}]+/gu;
+
 export type DocsIndex = ReturnType<typeof createDocsIndex>;
 
-export function createDocsIndex(docs: readonly SearchDoc[]) {
+export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
+  const stopWords = STOP_WORDS[locale] ?? STOP_WORDS.en;
+  // Leaves out a stop word, and a one-letter scrap such as the "s" of "foto's", which as a prefix
+  // matched every word starting with it.
+  const isContentWord = (word: string) =>
+    word.length >= 2 && !stopWords.has(word);
+  // Every word of the pages, as the index holds them.
+  const known = new Set(
+    docs.flatMap(
+      (d) =>
+        [d.title, d.summary, d.headings, d.text, d.keywords]
+          .join(" ")
+          .toLowerCase()
+          .match(WORD) ?? [],
+    ),
+  );
+  // A short word (under 5 letters) the pages have is a typo only of words with its first letter:
+  // "dark" also found "mark", and the FAQ question about "Mark complete" came before "Light or
+  // dark". "leen" still finds "lenen". A short word the pages don't have may be off at its start
+  // ("mail" for "email").
+  const sameFirstLetter = (word: string) =>
+    word.length < 5 && known.has(word)
+      ? (_id: unknown, term: string) => (term[0] === word[0] ? 1 : 0)
+      : undefined;
   const mini = new MiniSearch<SearchDoc>({
-    fields: ["title", "summary", "text"],
-    storeFields: ["slug", "title", "group", "text"],
+    fields: ["title", "summary", "headings", "text", "keywords"],
+    storeFields: ["slug", "title", "group", "text", "sections"],
     searchOptions: {
-      boost: { title: 3, summary: 2 },
+      boost: { title: 3, summary: 2, headings: 2, keywords: 2 },
       prefix: true,
       fuzzy: 0.2,
+      // The query's words only: the index keeps every word.
+      processTerm: (term) => {
+        const word = term.toLowerCase();
+        return isContentWord(word) ? word : null;
+      },
     },
   });
   mini.addAll(docs);
   return {
     search(query: string): SearchHit[] {
       if (!query.trim()) return [];
-      return mini
-        .search(query)
-        .slice(0, 12)
-        .map((r) => ({
+      const typed = query.toLowerCase().match(WORD) ?? [];
+      const words = typed.filter(isContentWord);
+      const fillers = new Set(
+        typed.filter((word) => stopWords.has(word) && !ARTICLES.has(word)),
+      );
+      // Only filler so far ("how do I", halfway through a question): search what's typed, as
+      // before, rather than flash "No results". Otherwise each word on its own, which ranks as
+      // the whole query does but lets each keep to its own typos.
+      const results = words.length
+        ? mini.search({
+            combineWith: "OR",
+            queries: words.map((word) => ({
+              queries: [word],
+              boostDocument: sameFirstLetter(word),
+            })),
+          })
+        : mini.search(query, {
+            processTerm: MiniSearch.getDefault("processTerm"),
+          });
+      return results.slice(0, 12).map((r) => {
+        const text = r.text as string;
+        const sections = r.sections as DocSection[];
+        // A filler word of the page that a content word reached as a typo ("het" for "zet") counts
+        // for neither the section nor the snippet: the page has it everywhere.
+        const terms = words.length
+          ? r.terms.filter((term) => !stopWords.has(term))
+          : r.terms;
+        // Pages rank as they are; each then opens at its best section. Filler alone picks none.
+        const section = words.length
+          ? bestSection(text, sections, matchesIn(text, terms, words), fillers)
+          : undefined;
+        const answer = section ? sectionText(text, sections, section) : "";
+        return {
           slug: r.slug as string,
           title: r.title as string,
           group: r.group as string,
-          snippet: makeSnippet(r.text as string, query),
-        }));
+          snippet: makeSnippet(
+            answer || text,
+            terms,
+            words.length ? words : typed,
+          ),
+          section: section?.title,
+          hash: section?.id,
+        };
+      });
     },
   };
+}
+
+// The text under a section's title, which its snippet comes from. A heading followed straight by
+// its subheadings or questions (a FAQ group, "Start a conversation") has none of its own: it then
+// takes theirs, up to the next heading at its level or above, so the row doesn't name one section
+// and show a passage from another.
+function sectionText(
+  text: string,
+  sections: readonly DocSection[],
+  section: DocSection,
+): string {
+  const own = text
+    .slice(section.start + section.title.length, section.end)
+    .trim();
+  const depth = section.depth;
+  if (own || !depth) return own;
+  const next = sections.find(
+    (s) => s.start > section.start && s.depth && s.depth <= depth,
+  );
+  return text.slice(section.end, next?.start ?? text.length).trim();
+}
+
+type Match = { at: number; end: number; word: string };
+
+// The words of `text` that MiniSearch matched (`terms`, typos and longer words included), each
+// with the query word it counts for.
+function matchesIn(
+  text: string,
+  terms: readonly string[],
+  words: readonly string[],
+): Match[] {
+  const matched = new Set(terms);
+  const found: Match[] = [];
+  for (const m of text.matchAll(WORD)) {
+    const term = m[0].toLowerCase();
+    if (matched.has(term))
+      found.push({
+        at: m.index,
+        end: m.index + m[0].length,
+        word: queryWordOf(term, words),
+      });
+  }
+  return found;
+}
+
+// How many different query words the matches between `from` and `to` stand for.
+function wordsBetween(found: readonly Match[], from: number, to: number) {
+  return new Set(
+    found.filter((f) => f.at >= from && f.end <= to).map((f) => f.word),
+  ).size;
+}
+
+// The section with the most different query words in it, its title included. The page's opening,
+// before the first section, competes too: when it has the most, the result opens at the top. On a
+// tie, the section with more of them in its title wins. Between two sections, the one whose title
+// holds more of the filler words typed comes next ("get my puzzle back" opens at "Get a lent puzzle
+// back", not at "Give back a puzzle you borrowed"), then the first.
+function bestSection(
+  text: string,
+  sections: readonly DocSection[],
+  found: readonly Match[],
+  fillers: ReadonlySet<string>,
+): DocSection | undefined {
+  let best: DocSection | undefined;
+  let most = wordsBetween(found, 0, sections[0]?.start ?? text.length);
+  let mostInTitle = 0;
+  let mostFillers = 0;
+  for (const s of sections) {
+    const all = wordsBetween(found, s.start, s.end);
+    const inTitle = wordsBetween(found, s.start, s.start + s.title.length);
+    const titleFillers = new Set(
+      s.title
+        .toLowerCase()
+        .match(WORD)
+        ?.filter((w) => fillers.has(w)),
+    ).size;
+    if (
+      all > most ||
+      (all === most &&
+        (inTitle > mostInTitle ||
+          (inTitle === mostInTitle &&
+            best !== undefined &&
+            titleFillers > mostFillers)))
+    ) {
+      best = s;
+      most = all;
+      mostInTitle = inTitle;
+      mostFillers = titleFillers;
+    }
+  }
+  return best;
 }
 
 const SNIPPET_LENGTH = 120;
 const SNIPPET_LEAD = 40;
 
-// A short excerpt around the first query term, for the result list. It starts and ends on a whole
+// A short excerpt for the result list, cut where the most different query words sit within one
+// excerpt's reach (the text's opening if none is in it). `terms` are the words of the page that
+// MiniSearch matched; each counts for the query word it matched.
+function makeSnippet(
+  text: string,
+  terms: readonly string[],
+  words: readonly string[],
+): string {
+  const found = matchesIn(text, terms, words);
+  let hit = -1;
+  let most = 0;
+  for (let i = 0; i < found.length; i++) {
+    const near = new Set([found[i].word]);
+    const reach = found[i].at + SNIPPET_LENGTH - SNIPPET_LEAD;
+    for (let j = i + 1; j < found.length && found[j].end <= reach; j++)
+      near.add(found[j].word);
+    if (near.size > most) {
+      most = near.size;
+      hit = found[i].at;
+    }
+  }
+  return cutSnippet(text, hit);
+}
+
+// The query word a matched word of the page came from: the one it starts with, or (a typo) the
+// one it shares the longest start with. A typo in the first letter shares no start with any of
+// them ("heeft" for "geeft"): it comes from the one it's closest to, not the first one typed.
+function queryWordOf(term: string, words: readonly string[]): string {
+  let best = term;
+  let shared = 0;
+  for (const word of words) {
+    let n = 0;
+    while (n < word.length && word[n] === term[n]) n++;
+    if (n > shared) {
+      shared = n;
+      best = word;
+    }
+  }
+  if (shared > 0) return best;
+  let fewest = Infinity;
+  for (const word of words) {
+    const edits = editDistance(word, term);
+    if (edits < fewest) {
+      fewest = edits;
+      best = word;
+    }
+  }
+  return best;
+}
+
+// How many letters to add, drop or change to turn one word into the other (Levenshtein).
+function editDistance(a: string, b: string): number {
+  let row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j++) {
+      next[j] = Math.min(
+        row[j] + 1,
+        next[j - 1] + 1,
+        row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    row = next;
+  }
+  return row[b.length];
+}
+
+// SNIPPET_LENGTH of the text, starting SNIPPET_LEAD before `hit`. It starts and ends on a whole
 // word, with an ellipsis where it cuts the text.
-function makeSnippet(text: string, query: string): string {
-  const term = query.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
-  const hit = term ? text.toLowerCase().indexOf(term) : -1;
+function cutSnippet(text: string, hit: number): string {
   let start = Math.max(0, hit - SNIPPET_LEAD);
   if (start > 0 && text[start - 1] !== " ") {
     // Unless the term is in the word being cut, skip to the next word.

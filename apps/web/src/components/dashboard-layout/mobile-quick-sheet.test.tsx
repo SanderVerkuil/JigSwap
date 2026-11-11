@@ -68,6 +68,7 @@ describe("MobileQuickSheet", () => {
     ["Messages", "/messages"],
     ["Profile", "/profile"],
     ["What's new", "/whats-new"],
+    ["Docs", "/docs"],
   ])("“%s” goes to %s", (name, href) => {
     renderSheet();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(name) }));
@@ -84,6 +85,7 @@ describe("MobileQuickSheet", () => {
       "Profile",
       "What's new",
       "Help & guides",
+      "Docs",
     ]);
   });
 
@@ -151,6 +153,30 @@ describe("MobileQuickSheet help entry (UX-91)", () => {
   it("speaks Dutch", () => {
     renderSheet("nl");
     expect(rowNames()).toContain("Hulp en rondleidingen");
+  });
+
+  // A1: the written guides, under the tours.
+  it("lists the docs right after Help & guides, in both languages", () => {
+    renderSheet();
+    const names = rowNames();
+    expect(names[names.indexOf("Help & guides") + 1]).toBe("Docs");
+    cleanup();
+    renderSheet("nl");
+    const dutch = rowNames();
+    expect(dutch[dutch.indexOf("Hulp en rondleidingen") + 1]).toBe(
+      "Documentatie",
+    );
+  });
+
+  // An open book is the Library tab's icon.
+  it("draws Docs as a page, not as Library's open book", () => {
+    renderSheet();
+    const icon = screen
+      .getByRole("button", { name: /^Docs/ })
+      .querySelector("svg")
+      ?.getAttribute("class");
+    expect(icon).toContain("lucide-file-text");
+    expect(icon).not.toContain("lucide-book-open");
   });
 });
 

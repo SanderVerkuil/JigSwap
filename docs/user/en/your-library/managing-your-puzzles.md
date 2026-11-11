@@ -1,6 +1,6 @@
 ---
 title: Managing your puzzles
-order: 1
+order: 2
 summary: "View your owned copies, search, sort and filter them, and explore the copy detail page."
 ---
 
@@ -12,7 +12,8 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
 
 ## View your puzzles
 
-1. Open **My Puzzles** from the sidebar or tab bar.
+1. Open **My Puzzles** from the sidebar. On a phone, tap the **Library** tab,
+   then **My Puzzles**.
 2. Switch between **grid** and **list** layouts.
 3. Type in the **search box** to find puzzles by title, brand or tag. Every
    word you type has to match; capitals and accents don't matter, and you can
@@ -24,6 +25,7 @@ Your library is the set of physical puzzle **copies** you personally own. (A "co
    - **Available**
    - **For Trade**
    - **For Loan**
+   - **Lent Out**
    - **In Progress**
    - **Completed**
 6. In a household with someone else in it, the **Whose** menu shows everyone's
@@ -42,15 +44,18 @@ Each puzzle card shows its condition (a coloured dot and its word, such as **Goo
 
 ## Actions on each puzzle
 
-From a puzzle card you can:
+Click a puzzle card to open its detail page. The card's ⋯ menu offers:
 
-- **View** — open the full copy detail page.
+- **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
 - **Edit** — change the copy's details.
 - **Offer for swap** and **Offer to lend** — switch that offer on or off, with an Undo.
+- **Share with circles…** — share the copy with circles you pick.
+- **Add to collection** — put the copy in one of your collections.
 - **Delete** — remove the copy from your library (with confirmation).
-- **Log a solve** or **Start puzzle** — record that you've completed (or started) the puzzle.
-- **Recall** — once a lent-out puzzle is back with you, use this to close the
-  loan. JigSwap asks you to confirm first, then tells you whether it worked.
+
+A lent-out puzzle's card also has a **Recall** button: once the puzzle is back
+with you, use it to close the loan. JigSwap asks you to confirm first, then
+tells you whether it worked.
 
 ## Change many puzzles at once
 
@@ -78,7 +83,7 @@ ends the selection.
 
 ## The copy detail page
 
-**Where:** click **View** on a puzzle, or go to `/my-puzzles/<id>`.
+**Where:** click a puzzle card, or go to `/my-puzzles/<id>`.
 
 The detail page is the rich record of a single owned copy. It includes:
 
@@ -103,18 +108,21 @@ The detail page is the rich record of a single owned copy. It includes:
   If the owner keeps their profile hidden from you, it shows
   **Anonymous user**.
 - A **photo strip** with a lightbox. As the owner you can upload photos, set a cover image, and leave per-photo comments.
-- A two-column **history**: your completion timeline (with ratings), lending history (with status pills), and swap/transfer history.
+- A two-column **history**: your completion timeline (with ratings), lending history (with status labels), and swap/transfer history.
   If someone in that history has deleted their account, their entries stay
   and show **Deleted member**, without a name, picture or link.
 - A **community rating breakdown** and a comment area.
 
 **Owner actions** on this page include the **Offer for swap** and **Offer to
-lend** switches, **Log a solve**, and editing. Each switch change is
+lend** switches (and **Offer for sale**, shown only while the copy is for
+sale), **Log a solve**, and editing. Each switch change is
 confirmed with an **Undo**, and it never changes who can see the copy (see
 below). While the copy is out on loan you can't switch an offer on until it's
 back. Use **Recall** once you have the puzzle back: it asks you to confirm
 first, then ends the loan and marks the puzzle as back with you.
-**Visitors** (other members) see a public version with _Request Swap_ and _Message_ actions instead.
+**Visitors** (other members) see a public version instead, with a request
+button named after the offer, such as **Request swap** or **Ask to borrow**,
+and **Message**.
 
 **Copy reviews** are star ratings of this physical copy. Anyone who logs a
 solve of the copy is asked to rate it.

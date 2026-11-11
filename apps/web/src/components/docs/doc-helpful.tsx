@@ -15,9 +15,9 @@ export function DocHelpful({ slug }: { slug: string }) {
   // The backend stores only the locales the app ships.
   const locale = useLocale() === "nl" ? "nl" : "en";
   const t = useTranslations("marketing.docs");
-  const [state, setState] = React.useState<"idle" | "negative" | "done">(
-    "idle",
-  );
+  const [state, setState] = React.useState<
+    "idle" | "negative" | "done" | "doneNegative"
+  >("idle");
   const [comment, setComment] = React.useState("");
   const sending = submit.isPending;
 
@@ -30,7 +30,6 @@ export function DocHelpful({ slug }: { slug: string }) {
     try {
       await submit.mutateAsync({ slug, helpful: true, locale });
       setState("done");
-      toast.success(t("helpfulThanks"));
     } catch {
       // Keep the buttons usable so the reader can retry.
       toast.error(t("helpfulError"));
@@ -46,68 +45,80 @@ export function DocHelpful({ slug }: { slug: string }) {
         comment: comment.trim() || undefined,
         locale,
       });
-      setState("done");
-      toast.success(t("helpfulThanksNegative"));
+      setState("doneNegative");
     } catch {
       toast.error(t("helpfulError"));
     }
   };
 
-  if (state === "done") {
-    return (
-      <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4 text-[16px] text-mk-text-strong font-medium">
-        {t("helpfulThanks")}
-      </div>
-    );
-  }
+  // The thanks takes the question's place, once; a toast on top of it thanked the reader twice.
+  // It lands in a live region that is there from the start: one mounted with its text already in
+  // it often isn't announced, and the toast it replaced was the only spoken thanks.
+  const thanks =
+    state === "done"
+      ? t("helpfulThanks")
+      : state === "doneNegative"
+        ? t("helpfulThanksNegative")
+        : null;
 
   return (
-    <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[16px] text-mk-text-body font-medium">
-          {t("helpfulQuestion")}
-        </span>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={sending}
-            onClick={() => vote(true)}
-          >
-            <ThumbsUp className="size-4" /> {t("helpfulYes")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={sending}
-            onClick={() => vote(false)}
-          >
-            <ThumbsDown className="size-4" /> {t("helpfulNo")}
-          </Button>
-        </div>
+    <>
+      <div role="status">
+        {thanks && (
+          <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4 text-[16px] text-mk-text-strong font-medium">
+            {thanks}
+          </div>
+        )}
       </div>
-      {state === "negative" && (
-        <div className="mt-3 flex flex-col gap-2">
-          <Textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder={t("helpfulPlaceholder")}
-            aria-label={t("helpfulCommentLabel")}
-            maxLength={2000}
-            className="bg-mk-card"
-            rows={3}
-          />
-          <Button
-            variant="brand"
-            size="sm"
-            className="self-start"
-            disabled={sending}
-            onClick={sendNegative}
-          >
-            {t("helpfulSend")}
-          </Button>
+      {!thanks && (
+        <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-[16px] text-mk-text-body font-medium">
+              {t("helpfulQuestion")}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={sending}
+                onClick={() => vote(true)}
+              >
+                <ThumbsUp className="size-4" /> {t("helpfulYes")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={sending}
+                onClick={() => vote(false)}
+              >
+                <ThumbsDown className="size-4" /> {t("helpfulNo")}
+              </Button>
+            </div>
+          </div>
+          {state === "negative" && (
+            <div className="mt-3 flex flex-col gap-2">
+              <Textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder={t("helpfulPlaceholder")}
+                aria-label={t("helpfulCommentLabel")}
+                maxLength={2000}
+                className="bg-mk-card"
+                rows={3}
+              />
+              <Button
+                variant="brand"
+                size="sm"
+                className="self-start"
+                disabled={sending}
+                onClick={sendNegative}
+              >
+                {t("helpfulSend")}
+              </Button>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 }

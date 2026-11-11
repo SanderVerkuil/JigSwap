@@ -5,21 +5,40 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
+import * as React from "react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../locales/en.json";
+import { MAIN_CONTENT_ID } from "../a11y/skip-link";
 import { DocsSearch } from "./docs-search";
 
-vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
+const navigate = vi.hoisted(() => vi.fn());
+const location = vi.hoisted(() => ({ pathname: "/docs", hash: "" }));
+vi.mock("@tanstack/react-router", () => ({
+  useLocation: () => location,
+  useNavigate: () => navigate,
+}));
 
-// A loaded index with one page per query.
+// A loaded index with one page per query; "blurred" opens Messages at a section.
 vi.mock("@/docs/search-store", () => {
   const index = {
     search: (query: string) =>
-      query
-        ? [{ slug: query, title: `Page ${query}`, group: "g", snippet: "" }]
-        : [],
+      query === "blurred"
+        ? [
+            {
+              slug: "staying-informed/messages",
+              title: "Messages",
+              group: "staying-informed",
+              snippet: "A photo is blurred at first.",
+              section: "Blurred photos",
+              hash: "blurred-photos",
+            },
+          ]
+        : query
+          ? [{ slug: query, title: `Page ${query}`, group: "g", snippet: "" }]
+          : [],
   };
   return {
     createDocsSearchStore: () => ({
@@ -79,5 +98,159 @@ describe("DocsSearch results", () => {
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
     raf.mockRestore();
     scrollTo.mockRestore();
+  });
+});
+
+describe("DocsSearch opens a result at its section", () => {
+  const search = (query: string) => {
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <DocsSearch open onOpenChange={() => {}} />
+      </IntlProvider>,
+    );
+    act(() => {
+      fireEvent.change(screen.getByRole("combobox"), {
+        target: { value: query },
+      });
+    });
+    return screen.getByRole("option");
+  };
+
+  it("names the section after the page, in a row that stays two lines", () => {
+    const row = search("blurred");
+    const [title, snippet] = Array.from(
+      row.querySelectorAll(":scope > div > span:not([aria-hidden])"),
+    );
+    expect(title.textContent).toBe("Messages › Blurred photos");
+    expect(snippet.textContent).toBe("A photo is blurred at first.");
+    expect(row.querySelectorAll(":scope > div > span")).toHaveLength(2);
+    // The title is one line: a long page and section ("Veelgestelde vragen en problemen oplossen
+    // › Hoe rond ik…") ran to four, and only two results fit the list.
+    expect(title.className.split(" ")).toContain("flex");
+    expect(
+      Array.from(
+        title.querySelectorAll(":scope > span:not([aria-hidden])"),
+        (part) => [part.textContent, part.className],
+      ),
+    ).toEqual([
+      ["Messages", "truncate"],
+      ["Blurred photos", "truncate"],
+    ]);
+    expect(row.querySelector(":scope > div")?.className).toContain("min-w-0");
+  });
+
+  it("goes to the section's hash", () => {
+    navigate.mockClear();
+    fireEvent.click(search("blurred"));
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/docs/$",
+      params: { _splat: "staying-informed/messages" },
+      hash: "blurred-photos",
+    });
+  });
+
+  // The same place again is no navigation for the router: it kept the page where it was scrolled
+  // to, with the question the reader had closed still closed.
+  it("lands on the section the page is at already, once the dialog has closed", async () => {
+    navigate.mockClear();
+    Object.assign(location, {
+      pathname: "/docs/staying-informed/messages",
+      hash: "blurred-photos",
+    });
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<main id="${MAIN_CONTENT_ID}"><details id="blurred-photos"><summary>Blurred photos</summary><p>A photo is blurred at first.</p></details></main>`,
+    );
+    const question = document.getElementById(
+      "blurred-photos",
+    ) as HTMLDetailsElement;
+    const scroll = vi.spyOn(question, "scrollIntoView");
+    function Harness() {
+      const [open, setOpen] = React.useState(true);
+      return <DocsSearch open={open} onOpenChange={setOpen} />;
+    }
+    render(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <Harness />
+      </IntlProvider>,
+    );
+    act(() => {
+      fireEvent.change(screen.getByRole("combobox"), {
+        target: { value: "blurred" },
+      });
+    });
+    fireEvent.click(screen.getByRole("option"));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(question.open).toBe(true));
+    expect(navigate).not.toHaveBeenCalled();
+    expect(scroll).toHaveBeenCalled();
+    expect(document.activeElement).toBe(question.querySelector("summary"));
+    Object.assign(location, { pathname: "/docs", hash: "" });
+    document.querySelector("main")?.remove();
+  });
+
+  // The page picked on itself went back to the top but left focus on the control that opened search,
+  // where a pick from another page focuses the article.
+  it.each([
+    ["", false],
+    ["the-exchange-lifecycle", true],
+  ])(
+    "lands at the top of the page it is on, focus in the article (hash %j)",
+    async (hash, navigates) => {
+      navigate.mockClear();
+      Object.assign(location, { pathname: "/docs/lend", hash });
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<button id="opener">Search</button><main id="${MAIN_CONTENT_ID}"><h2 id="the-exchange-lifecycle">The exchange lifecycle</h2></main>`,
+      );
+      const scroll = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+      function Harness() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <DocsSearch
+            open={open}
+            onOpenChange={setOpen}
+            // As the docs layout's focus return does on the same page and hash: the opener.
+            onCloseAutoFocus={() => document.getElementById("opener")?.focus()}
+          />
+        );
+      }
+      render(
+        <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+          <Harness />
+        </IntlProvider>,
+      );
+      act(() => {
+        fireEvent.change(screen.getByRole("combobox"), {
+          target: { value: "lend" },
+        });
+      });
+      fireEvent.click(screen.getByRole("option"));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() =>
+        expect(document.activeElement?.id).toBe(MAIN_CONTENT_ID),
+      );
+      expect(scroll).toHaveBeenCalledWith({ top: 0 });
+      // With a section in the address, the router drops it.
+      expect(navigate).toHaveBeenCalledTimes(navigates ? 1 : 0);
+      scroll.mockRestore();
+      Object.assign(location, { pathname: "/docs", hash: "" });
+      document.querySelector("main")?.remove();
+      document.getElementById("opener")?.remove();
+    },
+  );
+
+  it("goes to the top of a page with no section, titled by the page alone", () => {
+    navigate.mockClear();
+    const row = search("lend");
+    expect(row.querySelector("span")?.textContent).toBe("Page lend");
+    fireEvent.click(row);
+    expect(navigate).toHaveBeenCalledWith({
+      to: "/docs/$",
+      params: { _splat: "lend" },
+      hash: undefined,
+    });
   });
 });

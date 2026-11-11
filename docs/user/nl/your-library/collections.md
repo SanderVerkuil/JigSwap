@@ -6,7 +6,7 @@ summary: "Maak benoemde planken, voeg puzzels toe, bekijk collectiestatistieken 
 
 # Collecties — je planken organiseren
 
-Collecties zijn benoemde planken die je aanmaakt om je kopieën te organiseren.
+Collecties zijn benoemde planken die je aanmaakt om je exemplaren te organiseren.
 
 **Waar:** **Collecties** (`/collections`).
 
@@ -30,7 +30,7 @@ en biedt hij **Nieuwe collectie** aan.
 ## Puzzels aan een collectie toevoegen
 
 1. Open een collectietegel om de details te zien.
-2. Gebruik **Puzzels toevoegen** (`/collections/<id>/add-puzzles`) om kopieën
+2. Gebruik **Puzzels toevoegen** (`/collections/<id>/add-puzzles`) om exemplaren
    uit je bibliotheek te koppelen. Elke puzzel uit je bibliotheek kan in een
    collectie, ook puzzels die je voor jezelf houdt, privépuzzels en puzzels
    die uitgeleend zijn; puzzels die al in deze collectie zitten, staan er niet

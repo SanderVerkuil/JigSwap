@@ -2,6 +2,8 @@ export interface DocFrontmatter {
   title: string;
   order?: number;
   summary?: string;
+  // Words members search with that the page doesn't use itself; only search reads them.
+  keywords?: string[];
 }
 
 export interface DocHeading {
@@ -28,15 +30,26 @@ export interface DocContent {
   headings: DocHeading[];
 }
 
+// A part of a page that a search result can open at: an h2 to h4, or a FAQ question.
+export interface DocSection {
+  id: string; // the heading's id, or the question's <details> id
+  title: string; // the heading, or the question
+  start: number; // where its title starts in the page's search text
+  end: number; // where its text ends there
+  depth?: 2 | 3 | 4; // the heading's level; a question has none
+}
+
 // A compiled page as the build sees it, before it is split into modules.
 export interface DocPage extends DocMeta, DocContent {
   text: string; // plain text for the search index
+  sections: DocSection[]; // in document order
 }
 
 export interface NavLink {
   title: string;
   slug: string;
   order: number;
+  summary?: string; // the page's frontmatter summary, for its group page's list
 }
 export interface NavGroup {
   title: string;

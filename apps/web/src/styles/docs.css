@@ -10,24 +10,39 @@
   max-width: 72ch;
   text-wrap: pretty;
 }
+/* Once the article ($.tsx, the query container) is 600px wide, the text steps up to 18px with
+   the same 29.7px line spacing: about 71 characters a line in its full 620px. A narrower column
+   keeps 17px: at most 576px below 861px, and beside the sidebar below about 984px wide, where
+   18px ran 52 to 69 characters a line. */
+@container (width >= 600px) {
+  .docs-prose {
+    font-size: 18px;
+    line-height: 1.65;
+  }
+}
 
-/* An anchored heading lands 16px below what covers the top of the page: the page's own
-   scroll-padding clears the header (80px, marketing.css) and, on phones, the Docs bar (below). */
+/* An anchored heading or FAQ question lands 16px below what covers the top of the page. The
+   page's own scroll-padding clears the header with that gap (80px, marketing.css). */
 .docs-prose :is(h1, h2, h3, h4) {
   font-family: var(--font-mk-heading);
   color: var(--mk-text-strong);
   letter-spacing: -0.01em;
-  scroll-margin-top: 16px;
 }
 /* Where the sticky Docs bar shows (docs-mobile-bar.tsx), anchors and focus also clear its 48px:
-   64px header + 48px bar. The doubled :has() outranks marketing.css's 80px whatever the order. */
+   64px header + 48px bar. The doubled :has() outranks marketing.css's 80px whatever the order.
+   That leaves no gap under the bar, so there an anchor adds the 16px itself. */
 @media (width < 861px) {
   html:has(.mk-root):has([data-docs-bar]) {
     scroll-padding-top: 112px;
   }
+  .docs-prose :is(h1, h2, h3, h4, details) {
+    scroll-margin-top: 16px;
+  }
 }
+/* At least 26px, so on phones an h2 stands clearly above the 21px h3 in the same serif. 27px
+   would push the Dutch "Meldingsvoorkeuren" past a 320px screen. */
 .docs-prose h2 {
-  font-size: clamp(24px, 2.6vw, 30px);
+  font-size: clamp(26px, 2.6vw, 30px);
   font-weight: 400;
   line-height: 1.18;
   margin: 56px 0 14px;
@@ -37,9 +52,11 @@
   font-weight: 400;
   margin: 32px 0 8px;
 }
-.docs-prose h4 {
+/* Half a pixel above the text it heads: 17.5px, and 18.5px where the text is 18px. A sub-step
+   straight under an h2 is an h3 that looks like this (markdown.ts). */
+.docs-prose :is(h4, .docs-substep) {
   font-family: var(--font-mk-sans);
-  font-size: 17.5px;
+  font-size: calc(1em + 0.5px);
   font-weight: 600;
   margin: 24px 0 6px;
 }
@@ -98,6 +115,7 @@
   font-weight: 600;
   text-decoration: underline;
   text-decoration-color: var(--mk-text-muted);
+  text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
   transition:
     color 0.15s var(--ease-mk-out),
@@ -184,13 +202,28 @@
   background: var(--mk-sky-soft);
   padding: 10px 14px;
   border-bottom: 1px solid var(--mk-border);
+  vertical-align: top;
 }
 .docs-prose td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--mk-border);
+  vertical-align: top;
 }
 .docs-prose tbody tr:last-child td {
   border-bottom: 0;
+}
+/* A syntax token like ~~strikethrough~~ stays on one line in a narrow cell. */
+.docs-prose td code {
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
+}
+/* Below 360px those tokens would push the formatting table 16px past its column: the cells give
+   up some side padding instead. */
+@media (width < 360px) {
+  .docs-prose :is(thead th, td) {
+    padding-inline: 8px;
+  }
 }
 
 .docs-prose blockquote:not(.docs-callout) {
@@ -201,7 +234,8 @@
 }
 
 /* Collapsible sections (e.g. the FAQ). Authored as <details><summary>…</summary>
-   …</details> in markdown. */
+   …</details> in markdown. A FAQ question has an id a search result opens at, and lands like a
+   heading (above). */
 .docs-prose details {
   margin: 10px 0;
   border-radius: 6px;
@@ -219,7 +253,6 @@
   gap: 10px;
   padding: 14px 16px;
   font-weight: 600;
-  font-size: 16px;
   color: var(--mk-text-strong);
 }
 .docs-prose summary::-webkit-details-marker {
@@ -231,29 +264,32 @@
   outline-offset: -3px;
   border-radius: 6px;
 }
-/* chevron affordance that rotates when open */
+/* chevron affordance that rotates when open, centred on the question's first line at 17px and
+   at 18px */
 .docs-prose summary::before {
   content: "";
   flex: none;
   width: 8px;
   height: 8px;
-  margin-top: 7px;
+  margin-top: calc(0.5lh - 4px);
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
   transition: transform 0.15s var(--ease-mk-out);
 }
+/* Turned down, its ink sits 2px low in its box. */
 .docs-prose details[open] > summary::before {
-  transform: rotate(45deg);
+  transform: translateY(-2px) rotate(45deg);
 }
-/* the answer body inside an open <details> */
+/* the answer body inside an open <details>, starting under the question's text (16px padding,
+   8px chevron, 10px gap) */
 .docs-prose details > :not(summary) {
   margin: 0;
-  padding: 4px 16px 16px;
+  padding: 4px 16px 16px 34px;
   color: var(--mk-text-body);
 }
 .docs-prose details > :not(summary):first-of-type {
-  padding-top: 14px;
+  padding-top: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-prose summary::before {

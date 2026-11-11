@@ -15,13 +15,15 @@ De meeste pagina's tonen ook een **primaire actieknop** (bijvoorbeeld _Puzzel to
 
 ## Je accountmenu
 
-Klik op je avatar om het accountmenu te openen. Naast **Profiel**,
-**Voorkeuren**, **Meldingen** en **Privacy en veiligheid** vind je daar:
+Klik op je avatar om het accountmenu te openen. **Voorkeuren**,
+**Meldingen** en **Privacy en veiligheid** staan onder **Account beheren**.
+Naast **Profiel** en **Account beheren** vind je in het menu:
 
 - **Wat is er nieuw**, op een telefoon: recente functies en oplossingen (zie
   hieronder). Op desktop staat het onderaan de zijbalk, net boven je account.
 - **Hulp en rondleidingen**: alle rondleidingen, op het tabblad
   **Rondleidingen** van Wat is er nieuw (zie [Rondleidingen](#rondleidingen)).
+- **Documentatie**: deze handleiding.
 - **Snel instellen**: opent opnieuw de begeleide inrichting van je plank. Zie
   [Je dashboard](/docs/getting-started/dashboard#snel-instellen).
 
@@ -86,7 +88,9 @@ Je kunt JigSwap op het beginscherm van je telefoon zetten en het openen als een
 app: schermvullend, met één tik. Op iPhone en iPad zorgt dit er ook voor dat
 JigSwap je pushmeldingen kan sturen.
 
-**Op Android (Chrome en vergelijkbare browsers):**
+### Android (Chrome)
+
+In Chrome en vergelijkbare browsers:
 
 1. Tik op de **snelle-actieknop** in het midden van de tabbalk.
 2. Tik op **App installeren**.
@@ -96,14 +100,17 @@ Heeft Chrome de installatievraag nog niet aangeboden, dan toont de tip twee
 stappen: tik op het **menu** rechtsboven in Chrome, kies **Toevoegen aan
 startscherm** of **App installeren**, en dan **Installeren**.
 
-**Op Android (Firefox):** Firefox biedt geen installatievraag aan, dus de tip
-toont de stappen:
+### Android (Firefox)
+
+Firefox biedt geen installatievraag aan, dus de tip toont de stappen:
 
 1. Tik op het **⋮-menu** in de werkbalk van Firefox (boven of onder).
 2. Kies **App toevoegen aan startscherm** of **Toevoegen aan startscherm**, en
    bevestig.
 
-**Op iPhone en iPad (Safari, of Chrome, Edge en Firefox op recente iOS-versies):**
+### iPhone en iPad
+
+In Safari, of in Chrome, Edge en Firefox op recente iOS-versies:
 
 1. Tik op **Deel** (onder **⋯** als je het niet ziet; in Firefox zit het in de
    adresbalk of het menu van Firefox).

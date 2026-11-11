@@ -37,6 +37,7 @@ import {
   Check,
   CircleHelp,
   Cookie,
+  FileText,
   House,
   ListChecks,
   LogOut,
@@ -214,6 +215,11 @@ export function ShellUserButton({
             label={t("user.helpGuides")}
             labelIcon={<CircleHelp className="size-4" />}
             href="/whats-new?tab=guides"
+          />
+          <UserButton.Link
+            label={t("user.docs")}
+            labelIcon={<FileText className="size-4" />}
+            href="/docs"
           />
           {/* Always here (spec §2.3): reopens the quick start and brings back a hidden card.
             restoreCard is a no-op when the card was never hidden. */}

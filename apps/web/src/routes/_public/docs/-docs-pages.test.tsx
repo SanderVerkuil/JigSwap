@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { DocsSearchProvider } from "@/components/docs/docs-search-context";
 import type { DocMeta, DocPage } from "@/docs/types";
 import {
@@ -19,6 +21,7 @@ import { Route as DocsIndexRoute } from "./index";
 
 const NOT_FOUND = vi.hoisted(() => ({ isNotFound: true }));
 const loaderData = vi.hoisted(() => ({ current: undefined as unknown }));
+const location = vi.hoisted(() => ({ hash: "" }));
 
 // The head reads the strings from the loaded catalog of the context's locale.
 vi.mock("@/lib/i18n-catalog", () => ({
@@ -31,18 +34,26 @@ vi.mock("@tanstack/react-router", () => ({
     useLoaderData: () => loaderData.current,
   }),
   notFound: () => NOT_FOUND,
+  useLocation: (opts?: { select?: (l: typeof location) => unknown }) =>
+    opts?.select ? opts.select(location) : location,
+  useRouter: () => ({ navigate: vi.fn() }),
   Link: ({
     to,
-    params: _params,
+    params,
     activeOptions,
     children,
     ...rest
   }: ComponentProps<"a"> & {
     to: string;
-    params?: object;
+    params?: { _splat?: string };
     activeOptions?: { exact?: boolean };
   }) => (
-    <a href={to} data-exact={activeOptions?.exact ? "" : undefined} {...rest}>
+    <a
+      href={to}
+      data-splat={params?._splat}
+      data-exact={activeOptions?.exact ? "" : undefined}
+      {...rest}
+    >
       {children}
     </a>
   ),
@@ -68,6 +79,7 @@ vi.mock("virtual:docs", () => {
     html: `<p>${title}</p>`,
     headings: [],
     text: title,
+    sections: [],
     ...extra,
   });
   return {
@@ -225,6 +237,38 @@ describe("docs page landmarks", () => {
     expect(within(toc).getByRole("link", { name: "One" })).toBeTruthy();
   });
 
+  // Item 9: 620px holds about 71 characters at the 18px the text takes in a full column, but at
+  // 17px below 861px a tablet's lines ran 79. 36rem brings them back to about 72.
+  it("narrows the article to 36rem below 861px, where the text is 17px", () => {
+    render(withIntl(<docPage.component />));
+    const article = screen
+      .getByRole("heading", { level: 1 })
+      .closest("article") as HTMLElement;
+    expect(article.className.split(" ")).toEqual(
+      expect.arrayContaining(["max-w-[620px]", "max-[861px]:max-w-[36rem]"]),
+    );
+  });
+
+  // Beside the sidebar the column is only 620px from about 1004px wide. Stepped up from 861px,
+  // the 18px text ran 52 to 69 characters a line in a 484 to 618px column. It now steps up by the
+  // article's own width, so a narrower column keeps 17px.
+  it("steps the text up to 18px by the article's width, not the window's", () => {
+    render(withIntl(<docPage.component />));
+    const article = screen
+      .getByRole("heading", { level: 1 })
+      .closest("article") as HTMLElement;
+    expect(article.className.split(" ")).toContain("@container");
+    expect(article.querySelector(".docs-prose")).not.toBeNull();
+    const css = readFileSync(
+      join(__dirname, "../../../styles/docs.css"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(css).toMatch(
+      /@container \(width >= 600px\) \{\s*\.docs-prose \{\s*font-size: 18px;\s*line-height: 1\.65;/,
+    );
+    expect(css).not.toMatch(/@media[^{]*\{\s*\.docs-prose \{\s*font-size/);
+  });
+
   it("starts at one h1, the page's own title", () => {
     render(withIntl(<docPage.component />));
     expect(
@@ -281,6 +325,59 @@ describe("docs page landmarks", () => {
   });
 });
 
+// A search result can open a page at a FAQ question; the router navigates with pushState, which
+// leaves a <details> closed.
+describe("docs page opens the FAQ question in the hash", () => {
+  const FAQ_HTML =
+    '<details id="why-is-a-photo-blurred"><summary>Why is a photo blurred?</summary><p>The check.</p></details>';
+  const firstPage = () =>
+    docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+  const question = (container: HTMLElement) =>
+    container.querySelector(
+      "details#why-is-a-photo-blurred",
+    ) as HTMLDetailsElement;
+
+  afterEach(() => {
+    location.hash = "";
+    vi.restoreAllMocks();
+  });
+
+  it("opens the question and lands on it", async () => {
+    loaderData.current = { ...(await firstPage()), html: FAQ_HTML };
+    location.hash = "why-is-a-photo-blurred";
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {});
+    const { container } = render(withIntl(<docPage.component />));
+    expect(question(container).open).toBe(true);
+    expect(scrollIntoView.mock.contexts).toEqual([question(container)]);
+  });
+
+  // The router sets the new hash while the last page still shows.
+  it("opens it once the new page's body is in", async () => {
+    const before = await firstPage();
+    loaderData.current = before;
+    location.hash = "why-is-a-photo-blurred";
+    const { container, rerender } = render(withIntl(<docPage.component />));
+    loaderData.current = { ...before, html: FAQ_HTML };
+    rerender(withIntl(<docPage.component />));
+    expect(question(container).open).toBe(true);
+  });
+
+  it("leaves the folded On this page block to its own link", async () => {
+    loaderData.current = await firstPage();
+    location.hash = "on-this-page";
+    const { container } = render(withIntl(<docPage.component />));
+    const contents = container.querySelector(
+      "details#on-this-page",
+    ) as HTMLDetailsElement;
+    expect(contents.open).toBe(false);
+  });
+});
+
 // F19: every crumb used to carry aria-current, and a group's index page listed its group twice.
 describe("docs breadcrumb", () => {
   const crumbs = () =>
@@ -323,6 +420,99 @@ describe("docs breadcrumb", () => {
     expect(nav.querySelector("[aria-current]")?.textContent).toBe(
       "Getting started",
     );
+  });
+
+  // The Dutch FAQ's title ran 15px past the column at 320px, and the crumb links were 21px targets
+  // on touch screens. A min-height would have pushed the title down about 50px.
+  it("lets the page's own title wrap and widens the links' touch area around them", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+
+    expect(
+      Array.from(nav.children, (crumb) =>
+        crumb.className.split(" ").includes("whitespace-nowrap"),
+      ),
+    ).toEqual([true, true, false]);
+    for (const link of crumbs().getAllByRole("link")) {
+      expect(link.className.split(" ")).toEqual(
+        expect.arrayContaining([
+          "relative",
+          "pointer-coarse:after:absolute",
+          "pointer-coarse:after:-inset-y-3",
+        ]),
+      );
+      expect(link.className).not.toContain("min-h-11");
+    }
+    // Wrapped rows (a Dutch trail at 320px) were 2px apart, so the second row's link took taps
+    // on the lower half of the first row's. 24px is the two 12px insets.
+    expect(nav.className.split(" ")).toEqual(
+      expect.arrayContaining(["gap-y-0.5", "pointer-coarse:gap-y-6"]),
+    );
+  });
+});
+
+describe("docs group page", () => {
+  beforeEach(async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started" },
+      context: { intl: { locale: "en" } },
+    });
+  });
+
+  // It has no previous or next page, and the empty landmark was all a screen reader found.
+  it("has no pager", () => {
+    render(withIntl(<docPage.component />));
+    expect(
+      screen.queryByRole("navigation", { name: "Previous and next page" }),
+    ).toBeNull();
+  });
+
+  // A4: the group crumb on every article led to one sentence with no links.
+  const articles = () =>
+    within(screen.getByRole("list"))
+      .getAllByRole("listitem")
+      .map((item) => {
+        const link = within(item).getByRole("link");
+        return [
+          link.textContent,
+          link.getAttribute("data-splat"),
+          item.querySelector("p")?.textContent,
+        ];
+      });
+
+  it("lists the group's articles in nav order, after its own text, each with its summary", () => {
+    const { container } = render(withIntl(<docPage.component />));
+    expect(articles()).toEqual([
+      ["First steps", "getting-started/first", "Begin here"],
+      ["Next steps", "getting-started/next", undefined],
+    ]);
+    const [text, list] = container.querySelectorAll(".docs-prose");
+    expect(text.textContent).toBe("Getting started");
+    expect(list.contains(screen.getByRole("list"))).toBe(true);
+    expect(
+      text.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("lists them in the visitor's language, English where a page has no translation", () => {
+    render(withIntl(<docPage.component />, "nl"));
+    expect(articles()).toEqual([
+      ["Eerste stappen", "getting-started/first", "Begin hier"],
+      ["Next steps", "getting-started/next", undefined],
+    ]);
+  });
+
+  it("leaves the list off an article", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
 
