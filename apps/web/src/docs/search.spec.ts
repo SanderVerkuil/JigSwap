@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSearchDocs, createDocsIndex, type SearchDoc } from "./search";
-import type { DocPage } from "./types";
+import type { DocPage, DocSection } from "./types";
 
 const pages: DocPage[] = [
   {
@@ -234,6 +234,47 @@ describe("docs search opens a result at its section", () => {
       section: "Why can't I reply to a conversation?",
       hash: "why-cant-i-reply",
     });
+  });
+
+  // A FAQ group's heading is followed straight by its questions. Its snippet once came from the
+  // whole page, here the "out on loan" answer of another group.
+  it("takes the snippet of a heading with no text of its own from what's under it", () => {
+    const text =
+      "Choose a question. Puzzles Why can't I see a puzzle? It may be out on loan, so ask its owner when they expect it back or look for another copy. Exchanges and loans Is a lent puzzle unavailable? A copy on loan is unavailable until it's returned.";
+    const at = (part: string) => text.indexOf(part);
+    const sections: DocSection[] = [
+      {
+        id: "puzzles",
+        title: "Puzzles",
+        start: at("Puzzles"),
+        end: at("Puzzles") + 7,
+        depth: 2,
+      },
+      {
+        id: "why",
+        title: "Why can't I see a puzzle?",
+        start: at("Why"),
+        end: at("Exchanges") - 1,
+      },
+      {
+        id: "exchanges-and-loans",
+        title: "Exchanges and loans",
+        start: at("Exchanges"),
+        end: at("Exchanges") + 19,
+        depth: 2,
+      },
+      {
+        id: "lent",
+        title: "Is a lent puzzle unavailable?",
+        start: at("Is a"),
+        end: text.length,
+      },
+    ];
+    const faq = { ...doc("help/faq", "FAQ", text), sections };
+    const [hit] = createDocsIndex([faq], "en").search("loans");
+    expect(hit.hash).toBe("exchanges-and-loans");
+    expect(hit.snippet).toContain("A copy on loan is unavailable");
+    expect(hit.snippet).not.toContain("out on loan");
   });
 
   it("opens at the top when the page's opening holds the most", () => {

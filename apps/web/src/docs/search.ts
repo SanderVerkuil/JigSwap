@@ -103,24 +103,23 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
           });
       return results.slice(0, 12).map((r) => {
         const text = r.text as string;
+        const sections = r.sections as DocSection[];
         // Pages rank as they are; each then opens at its best section. Filler alone picks none.
         const section = words.length
           ? bestSection(
               text,
-              r.sections as DocSection[],
+              sections,
               matchesIn(text, r.terms, words),
               fillers,
             )
           : undefined;
-        const answer = section
-          ? text.slice(section.start + section.title.length, section.end)
-          : "";
+        const answer = section ? sectionText(text, sections, section) : "";
         return {
           slug: r.slug as string,
           title: r.title as string,
           group: r.group as string,
           snippet: makeSnippet(
-            answer.trim() || text,
+            answer || text,
             r.terms,
             words.length ? words : typed,
           ),
@@ -130,6 +129,26 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
       });
     },
   };
+}
+
+// The text under a section's title, which its snippet comes from. A heading followed straight by
+// its subheadings or questions (a FAQ group, "Start a conversation") has none of its own: it then
+// takes theirs, up to the next heading at its level or above, so the row doesn't name one section
+// and show a passage from another.
+function sectionText(
+  text: string,
+  sections: readonly DocSection[],
+  section: DocSection,
+): string {
+  const own = text
+    .slice(section.start + section.title.length, section.end)
+    .trim();
+  const depth = section.depth;
+  if (own || !depth) return own;
+  const next = sections.find(
+    (s) => s.start > section.start && s.depth && s.depth <= depth,
+  );
+  return text.slice(section.end, next?.start ?? text.length).trim();
 }
 
 type Match = { at: number; end: number; word: string };
