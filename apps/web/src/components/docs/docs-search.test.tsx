@@ -124,6 +124,19 @@ describe("DocsSearch opens a result at its section", () => {
     expect(title.textContent).toBe("Messages › Blurred photos");
     expect(snippet.textContent).toBe("A photo is blurred at first.");
     expect(row.querySelectorAll(":scope > div > span")).toHaveLength(2);
+    // The title is one line: a long page and section ("Veelgestelde vragen en problemen oplossen
+    // › Hoe rond ik…") ran to four, and only two results fit the list.
+    expect(title.className.split(" ")).toContain("flex");
+    expect(
+      Array.from(
+        title.querySelectorAll(":scope > span:not([aria-hidden])"),
+        (part) => [part.textContent, part.className],
+      ),
+    ).toEqual([
+      ["Messages", "truncate"],
+      ["Blurred photos", "truncate"],
+    ]);
+    expect(row.querySelector(":scope > div")?.className).toContain("min-w-0");
   });
 
   it("goes to the section's hash", () => {

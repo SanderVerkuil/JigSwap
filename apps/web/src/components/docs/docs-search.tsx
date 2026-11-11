@@ -159,13 +159,18 @@ export function DocsSearch({
                     onSelect={() => go(h.slug, h.hash)}
                   >
                     <FileText className="size-4 text-mk-text-muted" />
-                    <div className="flex flex-col">
-                      <span className="text-[14px]">
-                        {h.title}
+                    <div className="flex min-w-0 flex-col">
+                      {/* One line, so three results fit the list: a long page name and section
+                          ("Veelgestelde vragen en problemen oplossen › Hoe rond ik…") each give
+                          way in step with their length. The spaces keep the words apart in the
+                          text; the flex row doesn't render them. */}
+                      <span className="flex gap-1 text-[14px]">
+                        <span className="truncate">{h.title}</span>
                         {h.section && (
                           <>
                             {" "}
-                            <span aria-hidden="true">›</span> {h.section}
+                            <span aria-hidden="true">›</span>{" "}
+                            <span className="truncate">{h.section}</span>
                           </>
                         )}
                       </span>
