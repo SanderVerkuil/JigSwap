@@ -27,9 +27,10 @@ JigSwap ondersteunt drie soorten uitwisselingen:
 
 Andere leden kunnen alleen een puzzel aanvragen die je aanbiedt.
 
-- **Om hem te ruilen of uit te lenen:** zet **Aanbieden voor ruil** of
-  **Aanbieden om uit te lenen** aan, in het ⋯-menu op de kaart van de puzzel in
-  **Mijn puzzels** of met de schakelaars op de pagina van de puzzel zelf.
+- **Om hem te ruilen of aan een vriend uit te lenen:** zet
+  **Aanbieden voor ruil** of **Aanbieden om uit te lenen** aan, in het ⋯-menu
+  op de kaart van de puzzel in **Mijn puzzels** of met de schakelaars op de
+  pagina van de puzzel zelf.
 - **Om hem te verkopen:** open de pagina van de puzzel, klik op **Bewerken**,
   zet onder **Beschikbaarheid** **Te koop** aan en klik op **Opslaan**. Op de
   pagina van de puzzel staat daarna een schakelaar **Te koop aanbieden**: zet

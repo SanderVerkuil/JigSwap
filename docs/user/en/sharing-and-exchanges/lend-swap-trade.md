@@ -25,9 +25,9 @@ JigSwap supports three kinds of exchanges:
 
 Other members can only request a puzzle you offer.
 
-- **To swap or lend it:** turn on **Offer for swap** or **Offer to lend**, in
-  the ⋯ menu on the puzzle's card in **My Puzzles** or with the switches on the
-  puzzle's own page.
+- **To swap it, or lend it to a friend:** turn on **Offer for swap** or
+  **Offer to lend**, in the ⋯ menu on the puzzle's card in **My Puzzles** or
+  with the switches on the puzzle's own page.
 - **To sell it:** open the puzzle's page, click **Edit**, turn on **For Sale**
   under **Availability** and click **Save**. The puzzle's page then shows an
   **Offer for sale** switch: turn it off to stop selling.

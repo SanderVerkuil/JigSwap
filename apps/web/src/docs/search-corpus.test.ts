@@ -58,6 +58,28 @@ describe("docs search over the real guides", () => {
     },
   );
 
+  // At the section on offering a puzzle, not at getting a lent one back, which also says "friend".
+  it.each([
+    [
+      "en",
+      "how do I lend a puzzle to a friend",
+      "offer-your-puzzle-to-swap-lend-or-sell",
+    ],
+    [
+      "nl",
+      "hoe leen ik een puzzel uit aan een vriend",
+      "je-puzzel-aanbieden-om-te-ruilen-uit-te-lenen-of-te-verkopen",
+    ],
+  ])(
+    "finds the lending guide for lending a puzzle to a friend (%s)",
+    (locale, query, hash) => {
+      const lend = top3(locale, query).find(
+        (hit) => hit.slug === "sharing-and-exchanges/lend-swap-trade",
+      );
+      expect(lend?.hash).toBe(hash);
+    },
+  );
+
   // In the two rows a phone shows: "meer" once matched a FAQ question about a partner who no
   // longer answers.
   it("finds Meldingen for a member who wants no more mail", () => {
