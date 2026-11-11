@@ -112,6 +112,9 @@ invite.
 2. Click **Accept** or **Decline**. If you'd rather start your own, click
    **Create household** under **Or start your own household**.
 
+You can also answer from the notification itself; see
+[Act from a notification](/docs/staying-informed/notifications#act-from-a-notification).
+
 ## Join another household
 
 You can be in one household at a time. If you're already in one and someone
@@ -183,6 +186,9 @@ own say **You**, a housemate's show their picture and name.
 - What else a member may do with your puzzle depends on its
   **Household access**.
 
+Who outside your household sees a puzzle is explained in
+[Who sees a copy](/docs/sharing-and-exchanges/visibility-and-privacy#who-sees-a-copy).
+
 ## Set household access for a puzzle
 
 Each puzzle has one of two access levels:
@@ -218,7 +224,8 @@ Only the owner can change a puzzle's household access.
 To start again, click **✕** (**Clear selection**) in the bar.
 
 You can change up to 200 puzzles at once. This list shows only your own
-puzzles.
+puzzles. To offer, withdraw or share many puzzles at once instead, see
+[Change many puzzles at once](/docs/your-library/managing-your-puzzles#change-many-puzzles-at-once).
 
 ## Set the household default
 
