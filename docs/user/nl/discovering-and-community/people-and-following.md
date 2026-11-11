@@ -26,8 +26,8 @@ summary: "Bouw je netwerk op, nodig vrienden uit, volg leden, volg de activiteit
 De items in de feed zijn klikbaar:
 
 - Klik op de **naam** van een lid om het profiel te openen.
-- Klik op de **rest van het item** om te openen waar het over gaat: de
-  puzzelkopie, de puzzels die een lid net heeft toegevoegd, of de uitwisseling
+- Klik op de **rest van het item** om te openen waar het over gaat: het
+  exemplaar, de puzzels die een lid net heeft toegevoegd, of de uitwisseling
   (alleen als je eraan meedeed).
 
 Items linken alleen naar pagina's die je mag zien. Puzzels die in één keer
@@ -39,7 +39,7 @@ verschijnen niet in de feed.
 Als jij en een ander lid **elkaar volgen**, zie je op hun profiel hun **hele
 bibliotheek**, niet alleen de puzzels die ze aanbieden om te ruilen, uit te
 lenen of te verkopen. Wissel tussen de twee met het filter **Alle puzzels** en
-**Beschikbaar**. Kopieën die ze privé hebben gemaakt, blijven verborgen.
+**Beschikbaar**. Exemplaren die ze privé hebben gemaakt, blijven verborgen.
 
 Leden die elkaar niet volgen, zien alleen de aangeboden puzzels. Zie voor de
 details
@@ -113,5 +113,5 @@ e-mail. De uitnodiging komt dan in JigSwap bij je binnen, als dezelfde kaart
 ## Opmerkingen en beoordelingen
 
 - **Puzzelbeoordelingen:** plaats op een catalogusdefinitiepagina een communityopmerking met een waardering van 1 tot 5 sterren.
-- **Opmerkingen bij kopieën:** bespreek een specifieke kopie op de detailpagina.
+- **Opmerkingen bij exemplaren:** bespreek een specifiek exemplaar op de detailpagina.
 - **Foto-opmerkingen:** laat in de foto-lightbox tekstopmerkingen achter bij afzonderlijke foto's.

@@ -11,21 +11,21 @@ Tik op een vraag om het antwoord uit te klappen.
 <details>
 <summary>Ik heb een puzzel toegevoegd, maar hij staat niet in de openbare catalogus. Waarom?</summary>
 
-Nieuwe puzzel*definities* die je bijdraagt gaan naar een moderatiewachtrij en moeten **door een beheerder worden goedgekeurd** voordat ze openbaar verschijnen. Je eigen kopie staat nog steeds in je bibliotheek — alleen de gedeelde catalogusvermelding wacht op goedkeuring. Tot dan staat hij bovenaan in je keuzescherm bij Puzzel toevoegen als niet-goedgekeurde inzending.
+Nieuwe puzzel*definities* die je bijdraagt gaan naar een moderatiewachtrij en moeten **door een beheerder worden goedgekeurd** voordat ze openbaar verschijnen. Je eigen exemplaar staat nog steeds in je bibliotheek — alleen de gedeelde catalogusvermelding wacht op goedkeuring. Tot dan staat hij bovenaan in je keuzescherm bij Puzzel toevoegen als niet-goedgekeurde inzending.
 
 </details>
 
 <details>
-<summary>Wat is het verschil tussen een "puzzel" en een "kopie"?</summary>
+<summary>Wat is het verschil tussen een "puzzel" en een "exemplaar"?</summary>
 
-Een **puzzel** (catalogusdefinitie) is het product — titel, merk, aantal stukjes, afbeelding. Een **kopie** is de specifieke fysieke puzzel die _jij_ bezit, met een eigen conditie, foto's, notities en voltooiingsgeschiedenis. Meerdere mensen kunnen kopieën van dezelfde puzzel bezitten.
+Een **puzzel** (catalogusdefinitie) is het product — titel, merk, aantal stukjes, afbeelding. Een **exemplaar** is de specifieke fysieke puzzel die _jij_ bezit, met een eigen conditie, foto's, notities en voltooiingsgeschiedenis. Meerdere mensen kunnen exemplaren van dezelfde puzzel bezitten.
 
 </details>
 
 <details>
 <summary>Ik heb een puzzel weggeruild. Ben ik mijn voltooiingsgeschiedenis kwijt?</summary>
 
-Nee. Je voltooiingsregistraties en statistieken blijven bij **jou**, niet bij de puzzel. De nieuwe eigenaar krijgt een verse geschiedenis voor zijn kopie.
+Nee. Je voltooiingsregistraties en statistieken blijven bij **jou**, niet bij de puzzel. De nieuwe eigenaar krijgt een verse geschiedenis voor zijn exemplaar.
 
 </details>
 
@@ -46,7 +46,7 @@ privé heeft gemaakt. Zie
 <details>
 <summary>Een puzzel die ik heb uitgeleend is niet beschikbaar voor nieuwe uitwisselingen.</summary>
 
-Dat is normaal — een kopie die is uitgeleend wordt automatisch als onbeschikbaar gemarkeerd totdat hij is teruggegeven. Gebruik **Terugvragen** (eigenaar) of **Teruggeven** (lener) om de lening af te sluiten. Ook als hij terug is, wordt hij niet vanzelf weer aangeboden: zet **Aanbieden voor ruil** of **Aanbieden om uit te lenen** weer aan.
+Dat is normaal — een exemplaar dat is uitgeleend, wordt automatisch als onbeschikbaar gemarkeerd totdat het is teruggegeven. Gebruik **Terugvragen** (eigenaar) of **Teruggeven** (lener) om de lening af te sluiten. Ook als het terug is, wordt het niet vanzelf weer aangeboden: zet **Aanbieden voor ruil** of **Aanbieden om uit te lenen** weer aan.
 
 </details>
 

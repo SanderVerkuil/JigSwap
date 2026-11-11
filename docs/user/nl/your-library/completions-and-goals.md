@@ -15,7 +15,7 @@ JigSwap houdt een volledig **voltooiingslogboek** bij van elke puzzel waar je aa
 ### Een voltooiing vastleggen
 
 1. Ga naar **Mijn puzzels**.
-2. Klik bij de kopie die je hebt opgelost op **Voltooiing vastleggen**.
+2. Klik bij het exemplaar dat je hebt opgelost op **Voltooiing vastleggen**.
 3. Kies in het dialoogvenster **Afgerond** (de standaard) of **Nog bezig**.
    Beide datums staan eerst op vandaag. Bij **Nog bezig** vul je alleen de
    startdatum in, en rond je de voltooiing later af.

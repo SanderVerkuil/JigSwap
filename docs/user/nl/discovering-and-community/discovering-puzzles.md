@@ -1,7 +1,7 @@
 ---
 title: Puzzels ontdekken
 order: 1
-summary: "Blader door beschikbare kopieën, verken de catalogus en lees de samengevoegde puzzeldetails."
+summary: "Blader door beschikbare exemplaren, verken de catalogus en lees de samengevoegde puzzeldetails."
 ---
 
 # Puzzels ontdekken — bladeren en catalogus
@@ -10,7 +10,7 @@ summary: "Blader door beschikbare kopieën, verken de catalogus en lees de samen
 
 **Waar:** **Puzzels ontdekken** (`/browse`).
 
-Puzzels ontdekken doorzoekt alle kopieën in bezit van de community die momenteel **beschikbaar** zijn (voor ruil, uitlenen of verkoop).
+Puzzels ontdekken doorzoekt alle exemplaren in bezit van de community die momenteel **beschikbaar** zijn (voor ruil, uitlenen of verkoop).
 
 1. Open **Puzzels ontdekken**.
 2. Bouw je filter met de **querybouwer** en combineer:
@@ -24,9 +24,9 @@ Puzzels ontdekken doorzoekt alle kopieën in bezit van de community die momentee
 
 **Waar:** **Puzzelcatalogus** (`/puzzles`).
 
-De catalogus is de door de community samengestelde lijst met goedgekeurde puzzeldefinities (niet de afzonderlijke kopieën).
+De catalogus is de door de community samengestelde lijst met goedgekeurde puzzeldefinities (niet de afzonderlijke exemplaren).
 
 - Blader door het raster met oneindig scrollen en filters.
-- Open een definitie (`/puzzles/<id>`) om de omslag te zien, de beoordeling met opbouw, de moeilijkheid, chips voor categorie/tags, communitystatistieken (eigenaren, voltooiingen, gemiddeld aantal oplosdagen, kopieën beschikbaar om te ruilen) en een lijst met beschikbare kopieën en hun eigenaren. Op een telefoon of tablet knijp je in de omslag om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te zoomen.
-- Bezit je hem, dan zie je een eigendomsbanner met een link naar je kopie.
+- Open een definitie (`/puzzles/<id>`) om de omslag te zien, de beoordeling met opbouw, de moeilijkheid, chips voor categorie/tags, communitystatistieken (eigenaren, voltooiingen, gemiddeld aantal oplosdagen, exemplaren beschikbaar om te ruilen) en een lijst met beschikbare exemplaren en hun eigenaren. Op een telefoon of tablet knijp je in de omslag om in te zoomen en sleep je om rond te kijken; dubbeltik om weer uit te zoomen.
+- Bezit je hem, dan zie je een eigendomsbanner met een link naar je exemplaar.
 - Je kunt hem vanaf deze pagina **toevoegen aan je bibliotheek**, een **beoordeling schrijven** of een **nieuwe definitie bijdragen**.

@@ -66,7 +66,7 @@ een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
 
 **Over een specifieke puzzel:**
 
-1. Open de puzzelkopie (via **Puzzels ontdekken** of het profiel van een lid).
+1. Open het exemplaar (via **Puzzels ontdekken** of het profiel van een lid).
 2. Klik op **Bericht**.
 3. Schrijf je eerste bericht. De puzzel wordt eraan toegevoegd, zodat de
    eigenaar weet welke je bedoelt.
@@ -245,7 +245,7 @@ De kop van het gesprek heeft snelkoppelingen naar waar het gesprek over gaat:
 - **Uitwisseling bekijken** opent de uitwisseling, bij een gesprek over een
   ruil, uitlening of verkoop.
 - Gaat het gesprek over twee of meer puzzels, dan opent een stapel omslagen
-  een menu **Puzzels** met elke puzzel en van wie die kopie is.
+  een menu **Puzzels** met elke puzzel en van wie dat exemplaar is.
 
 Op een telefoon staan **Profiel bekijken** en **Uitwisseling bekijken** in het
 menu **Gespreksopties**.
