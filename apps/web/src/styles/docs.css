@@ -10,6 +10,14 @@
   max-width: 72ch;
   text-wrap: pretty;
 }
+/* Where the sidebar shows, the text steps up to 18px in the article's 620px column ($.tsx),
+   about 74 characters a line, with the same 29.7px line spacing. */
+@media (width >= 861px) {
+  .docs-prose {
+    font-size: 18px;
+    line-height: 1.65;
+  }
+}
 
 /* An anchored heading lands 16px below what covers the top of the page: the page's own
    scroll-padding clears the header (80px, marketing.css) and, on phones, the Docs bar (below). */
@@ -26,8 +34,10 @@
     scroll-padding-top: 112px;
   }
 }
+/* At least 26px, so on phones an h2 stands clearly above the 21px h3 in the same serif. 27px
+   would push the Dutch "Meldingsvoorkeuren" past a 320px screen. */
 .docs-prose h2 {
-  font-size: clamp(24px, 2.6vw, 30px);
+  font-size: clamp(26px, 2.6vw, 30px);
   font-weight: 400;
   line-height: 1.18;
   margin: 56px 0 14px;
@@ -98,6 +108,7 @@
   font-weight: 600;
   text-decoration: underline;
   text-decoration-color: var(--mk-text-muted);
+  text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
   transition:
     color 0.15s var(--ease-mk-out),
@@ -184,13 +195,21 @@
   background: var(--mk-sky-soft);
   padding: 10px 14px;
   border-bottom: 1px solid var(--mk-border);
+  vertical-align: top;
 }
 .docs-prose td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--mk-border);
+  vertical-align: top;
 }
 .docs-prose tbody tr:last-child td {
   border-bottom: 0;
+}
+/* A syntax token like ~~strikethrough~~ stays on one line in a narrow cell. */
+.docs-prose td code {
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
 }
 
 .docs-prose blockquote:not(.docs-callout) {
@@ -219,7 +238,6 @@
   gap: 10px;
   padding: 14px 16px;
   font-weight: 600;
-  font-size: 16px;
   color: var(--mk-text-strong);
 }
 .docs-prose summary::-webkit-details-marker {
@@ -246,14 +264,15 @@
 .docs-prose details[open] > summary::before {
   transform: rotate(45deg);
 }
-/* the answer body inside an open <details> */
+/* the answer body inside an open <details>, starting under the question's text (16px padding,
+   8px chevron, 10px gap) */
 .docs-prose details > :not(summary) {
   margin: 0;
-  padding: 4px 16px 16px;
+  padding: 4px 16px 16px 34px;
   color: var(--mk-text-body);
 }
 .docs-prose details > :not(summary):first-of-type {
-  padding-top: 14px;
+  padding-top: 0;
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-prose summary::before {
