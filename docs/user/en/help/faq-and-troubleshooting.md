@@ -6,7 +6,9 @@ summary: "Answers to common questions and fixes for things that go wrong."
 
 # FAQ & Troubleshooting
 
-Tap a question to expand the answer.
+Choose a question to see the answer.
+
+## Puzzles and the catalogue
 
 <details>
 <summary>I added a puzzle, but it's not showing in the public catalogue. Why?</summary>
@@ -19,13 +21,6 @@ New puzzle _definitions_ you contribute go to a moderation queue and must be **a
 <summary>What's the difference between a "puzzle" and a "copy"?</summary>
 
 A **puzzle** (catalogue definition) is the product — title, brand, piece count, artwork. A **copy** is the specific physical puzzle _you_ own, with its own condition, photos, notes, and completion history. Multiple people can own copies of the same puzzle.
-
-</details>
-
-<details>
-<summary>I traded a puzzle away. Did I lose my solving history?</summary>
-
-No. Your completion records and stats stay with **you**, not with the puzzle. The new owner gets a fresh history for their copy.
 
 </details>
 
@@ -43,11 +38,14 @@ private. See
 </details>
 
 <details>
-<summary>A puzzle I lent out isn't available for new exchanges.</summary>
+<summary>A puzzle's details are wrong in the catalogue.</summary>
 
-That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan. It stays off the market after it comes back: turn on **Offer for swap** or **Offer to lend** again.
+Open the puzzle in the **Puzzles catalogue** and click **Suggest an edit**. See
+[Fix wrong details on a catalogue puzzle](/docs/discovering-and-community/discovering-puzzles#fix-wrong-details-on-a-catalogue-puzzle).
 
 </details>
+
+## Exchanges and loans
 
 <details>
 <summary>How do I complete an exchange? I clicked "Mark complete" but nothing finalized.</summary>
@@ -56,6 +54,55 @@ Exchanges use **dual confirmation** — _both_ parties must confirm completion b
 [Lend, Swap & Sell](/docs/sharing-and-exchanges/lend-swap-trade#the-exchange-lifecycle).
 
 </details>
+
+<details>
+<summary>My exchange partner stopped responding or didn't show up.</summary>
+
+Until you've both clicked **Mark complete**, either of you can **Cancel** the
+exchange. To report the member, expand the exchange on **Exchanges**, open its
+**Trade actions** menu, choose **Report member** and pick
+**Fake trade or no-show**. See
+[The exchange lifecycle](/docs/sharing-and-exchanges/lend-swap-trade#the-exchange-lifecycle)
+and [Report something](/docs/discovering-and-community/blocking-and-reporting#report-something).
+
+</details>
+
+<details>
+<summary>I can't request a puzzle.</summary>
+
+You can't request your own puzzle, or send a second open request for the same
+puzzle. You also can't request puzzles from a member who blocked you or whom
+you blocked, or a puzzle you only see through a circle where you have
+**View only**. See
+[Request a copy](/docs/sharing-and-exchanges/lend-swap-trade#request-a-copy).
+
+</details>
+
+<details>
+<summary>A puzzle I lent out isn't available for new exchanges.</summary>
+
+That's expected — a copy that's on loan is automatically marked unavailable until it's returned. Use **Recall** (owner) or **Return** (borrower) to close the loan. It stays off the market after it comes back: turn on **Offer for swap** or **Offer to lend** again.
+
+</details>
+
+<details>
+<summary>A puzzle I lent out hasn't come back.</summary>
+
+On **Exchanges**, open **Loans**: under **Lent out**, use **Message** to arrange
+getting it back, and click **Recall** once you have it. If the borrower won't
+give it back, you can report them. See
+[Get a lent puzzle back](/docs/sharing-and-exchanges/lend-swap-trade#get-a-lent-puzzle-back).
+
+</details>
+
+<details>
+<summary>I traded a puzzle away. Did I lose my solving history?</summary>
+
+No. Your completion records and stats stay with **you**, not with the puzzle. The new owner gets a fresh history for their copy.
+
+</details>
+
+## Messages and photos
 
 <details>
 <summary>Why can't I message this member?</summary>
@@ -99,6 +146,8 @@ photo, it's removed and you can click **Ask for a review**. See
 
 </details>
 
+## Following, circles and households
+
 <details>
 <summary>Why didn't my invite link make us follow each other?</summary>
 
@@ -111,9 +160,39 @@ days to answer. See
 </details>
 
 <details>
-<summary>I can't access the Admin area.</summary>
+<summary>My household invite link doesn't work any more.</summary>
 
-The Admin panel (categories management and puzzle moderation) is restricted to users with the **admin role**. Regular members don't have access.
+A household invite link works once and expires after 14 days. Open the link
+while signed in and click **Ask to join**: the person who shared it can then
+let you in. See
+[Ask to join with an old invite link](/docs/sharing-and-exchanges/households#ask-to-join-with-an-old-invite-link).
+
+</details>
+
+## Notifications
+
+<details>
+<summary>I don't get emails or push notifications.</summary>
+
+Email and push are off for every type of notification until you turn them on
+in **Notifications → Notification preferences**. For push, also click
+**Enable** under **Push on this device**. If it says "Push is blocked", allow
+notifications for JigSwap in your browser's settings. On iPhone and iPad, push
+only works once you've added JigSwap to your home screen. Brave turns push off
+by default: turn on "Use Google services for push messaging" in Brave's
+settings. See
+[Notification preferences](/docs/staying-informed/notifications#notification-preferences).
+
+</details>
+
+## Your account and the app
+
+<details>
+<summary>I forgot my password.</summary>
+
+Click **Log in**, enter your email address or username, click **Continue**,
+then **Forgot password?**. See
+[Forgot your password?](/docs/getting-started/accounts-and-sign-in#forgot-your-password).
 
 </details>
 
@@ -125,11 +204,12 @@ JigSwap keeps your session in sync; if you sign out in another tab or your sessi
 </details>
 
 <details>
-<summary>It says "A new version of JigSwap is available". What should I do?</summary>
+<summary>How do I change the app's language?</summary>
 
-We updated JigSwap while you had it open. Choose **Reload** to switch to the
-new version; finish anything you're typing first, because reloading clears
-it. **Not now** hides the message until there's another update.
+In the app, use the globe button at the top right (**Switch language**). On a
+phone, tap **+** in the bottom bar; **Language** is at the bottom of the sheet.
+On public pages, use the flag in the header. Pick **English** or
+**Nederlands**; your choice is saved automatically.
 
 </details>
 
@@ -144,11 +224,26 @@ your account's **Privacy & safety** page, or in quick search
 </details>
 
 <details>
-<summary>How do I change the app's language?</summary>
+<summary>How do I delete my account?</summary>
 
-In the app, use the globe button at the top right (**Switch language**). On a
-phone, tap **+** in the bottom bar; **Language** is at the bottom of the sheet.
-On public pages, use the flag in the header. Pick **English** or
-**Nederlands**; your choice is saved automatically.
+Open your account menu → **Manage account** → **Security** →
+**Delete account**. See
+[Delete your account](/docs/getting-started/accounts-and-sign-in#delete-your-account).
+
+</details>
+
+<details>
+<summary>It says "A new version of JigSwap is available". What should I do?</summary>
+
+We updated JigSwap while you had it open. Choose **Reload** to switch to the
+new version; finish anything you're typing first, because reloading clears
+it. **Not now** hides the message until there's another update.
+
+</details>
+
+<details>
+<summary>I can't access the Admin area.</summary>
+
+The Admin panel (categories management and puzzle moderation) is restricted to users with the **admin role**. Regular members don't have access.
 
 </details>

@@ -77,11 +77,13 @@ also see **Admin**). Use **Jump to** to go to a category.
   you, are marked **Always on: legally required notices**. They always appear
   in-app; you can still choose email and push for them.
 - Under **Push on this device** in the same screen, click **Enable** to get
-  push notifications in this browser (your browser asks for permission).
+  push notifications in this browser (your browser asks for permission). If
+  emails or push notifications don't arrive, see
+  [Notifications](/docs/help/faq-and-troubleshooting#notifications) in the FAQ.
 
 > **Tip:** On iPhone and iPad, push notifications only work after you add
 > JigSwap to your home screen. See
-> [Finding Your Way Around](/docs/getting-started/finding-your-way-around).
+> [Finding Your Way Around](/docs/getting-started/finding-your-way-around#install-jigswap-on-your-phone).
 
 ## Notification types you may see
 

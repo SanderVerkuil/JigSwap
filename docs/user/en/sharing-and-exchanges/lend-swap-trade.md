@@ -155,6 +155,10 @@ An exchange moves through clear steps:
    borrower has it, then **Returned** or **Recalled** with the date it came
    back.
 
+If an exchange doesn't go as planned, see
+[Exchanges and loans](/docs/help/faq-and-troubleshooting#exchanges-and-loans)
+in the FAQ.
+
 ### One puzzle, one deal
 
 Accepting a request sets the puzzle aside for that exchange. Until the exchange

@@ -166,6 +166,10 @@ Een uitwisseling doorloopt duidelijke stappen:
    puzzel is: **In bruikleen** zolang de lener hem heeft, daarna
    **Teruggegeven op** of **Teruggevraagd op** met de datum waarop hij terugkwam.
 
+Loopt een uitwisseling niet zoals gepland, zie dan
+[Uitwisselingen en leningen](/docs/help/faq-and-troubleshooting#uitwisselingen-en-leningen)
+in de veelgestelde vragen.
+
 ### Eén puzzel, één afspraak
 
 Als je een verzoek accepteert, is de puzzel gereserveerd voor die uitwisseling.

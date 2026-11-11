@@ -82,10 +82,13 @@ springen.
   er nog steeds voor kiezen.
 - Klik in hetzelfde scherm onder **Push op dit apparaat** op **Inschakelen** om
   pushmeldingen in deze browser te krijgen (je browser vraagt om toestemming).
+  Komen e-mails of pushmeldingen niet aan, zie dan
+  [Meldingen](/docs/help/faq-and-troubleshooting#meldingen) in de veelgestelde
+  vragen.
 
 > **Tip:** Op iPhone en iPad werken pushmeldingen pas nadat je JigSwap op je
 > beginscherm hebt gezet. Zie
-> [Je weg vinden](/docs/getting-started/finding-your-way-around).
+> [Je weg vinden](/docs/getting-started/finding-your-way-around#jigswap-op-je-telefoon-installeren).
 
 ## Meldingstypen die je kunt zien
 
