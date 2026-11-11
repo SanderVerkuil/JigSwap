@@ -273,6 +273,36 @@ describe("docs search opens a result at its section", () => {
     expect(hit.hash).toBe("terugkrijgen");
   });
 
+  it("breaks a tie between sections by the filler words in their titles", () => {
+    const lend = sectioned(
+      "sharing-and-exchanges/lend-swap-trade",
+      "Lend, swap & sell",
+      "Lend a copy.",
+      [
+        [
+          "give-back",
+          "Give back a puzzle you borrowed",
+          "Return it once the lender has the puzzle back.",
+        ],
+        [
+          "get-back",
+          "Get a lent puzzle back",
+          "Want the puzzle back? Recall it.",
+        ],
+      ],
+    );
+    const index = createDocsIndex([lend], "en");
+    expect(index.search("get my puzzle back")[0].hash).toBe("get-back");
+    // Filler words alone don't move a result off the page's opening.
+    const opening = sectioned("a", "Language", "Change the language.", [
+      ["the-app", "The app", "Change the language."],
+    ]);
+    const [hit] = createDocsIndex([opening], "en").search(
+      "change the language",
+    );
+    expect(hit.hash).toBeUndefined();
+  });
+
   it("picks no section for a query of only filler words", () => {
     expect(index.search("why can't I").every((h) => !h.hash)).toBe(true);
   });

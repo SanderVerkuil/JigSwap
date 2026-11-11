@@ -90,6 +90,7 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
       if (!query.trim()) return [];
       const typed = query.toLowerCase().match(WORD) ?? [];
       const words = typed.filter(isContentWord);
+      const fillers = new Set(typed.filter((word) => stopWords.has(word)));
       // Only filler so far ("how do I", halfway through a question): search what's typed, as
       // before, rather than flash "No results".
       const results = words.length
@@ -105,6 +106,7 @@ export function createDocsIndex(docs: readonly SearchDoc[], locale: string) {
               text,
               r.sections as DocSection[],
               matchesIn(text, r.terms, words),
+              fillers,
             )
           : undefined;
         const answer = section
@@ -159,22 +161,40 @@ function wordsBetween(found: readonly Match[], from: number, to: number) {
 
 // The section with the most different query words in it, its title included. The page's opening,
 // before the first section, competes too: when it has the most, the result opens at the top. On a
-// tie, the section with more of them in its title wins, then the first.
+// tie, the section with more of them in its title wins. Between two sections, the one whose title
+// holds more of the filler words typed comes next ("get my puzzle back" opens at "Get a lent puzzle
+// back", not at "Give back a puzzle you borrowed"), then the first.
 function bestSection(
   text: string,
   sections: readonly DocSection[],
   found: readonly Match[],
+  fillers: ReadonlySet<string>,
 ): DocSection | undefined {
   let best: DocSection | undefined;
   let most = wordsBetween(found, 0, sections[0]?.start ?? text.length);
   let mostInTitle = 0;
+  let mostFillers = 0;
   for (const s of sections) {
     const all = wordsBetween(found, s.start, s.end);
     const inTitle = wordsBetween(found, s.start, s.start + s.title.length);
-    if (all > most || (all === most && inTitle > mostInTitle)) {
+    const titleFillers = new Set(
+      s.title
+        .toLowerCase()
+        .match(WORD)
+        ?.filter((w) => fillers.has(w)),
+    ).size;
+    if (
+      all > most ||
+      (all === most &&
+        (inTitle > mostInTitle ||
+          (inTitle === mostInTitle &&
+            best !== undefined &&
+            titleFillers > mostFillers)))
+    ) {
       best = s;
       most = all;
       mostInTitle = inTitle;
+      mostFillers = titleFillers;
     }
   }
   return best;
