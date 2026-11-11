@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { DocsSearchProvider } from "@/components/docs/docs-search-context";
 import type { DocMeta, DocPage } from "@/docs/types";
 import {
@@ -235,8 +237,8 @@ describe("docs page landmarks", () => {
     expect(within(toc).getByRole("link", { name: "One" })).toBeTruthy();
   });
 
-  // Item 9: 620px holds about 74 characters at the 18px the text takes from 861px, but at 17px
-  // below that a tablet's lines ran 79. 36rem brings them back to about 72.
+  // Item 9: 620px holds about 71 characters at the 18px the text takes in a full column, but at
+  // 17px below 861px a tablet's lines ran 79. 36rem brings them back to about 72.
   it("narrows the article to 36rem below 861px, where the text is 17px", () => {
     render(withIntl(<docPage.component />));
     const article = screen
@@ -245,6 +247,26 @@ describe("docs page landmarks", () => {
     expect(article.className.split(" ")).toEqual(
       expect.arrayContaining(["max-w-[620px]", "max-[861px]:max-w-[36rem]"]),
     );
+  });
+
+  // Beside the sidebar the column is only 620px from about 1004px wide. Stepped up from 861px,
+  // the 18px text ran 52 to 69 characters a line in a 484 to 618px column. It now steps up by the
+  // article's own width, so a narrower column keeps 17px.
+  it("steps the text up to 18px by the article's width, not the window's", () => {
+    render(withIntl(<docPage.component />));
+    const article = screen
+      .getByRole("heading", { level: 1 })
+      .closest("article") as HTMLElement;
+    expect(article.className.split(" ")).toContain("@container");
+    expect(article.querySelector(".docs-prose")).not.toBeNull();
+    const css = readFileSync(
+      join(__dirname, "../../../styles/docs.css"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(css).toMatch(
+      /@container \(width >= 600px\) \{\s*\.docs-prose \{\s*font-size: 18px;\s*line-height: 1\.65;/,
+    );
+    expect(css).not.toMatch(/@media[^{]*\{\s*\.docs-prose \{\s*font-size/);
   });
 
   it("starts at one h1, the page's own title", () => {

@@ -10,9 +10,11 @@
   max-width: 72ch;
   text-wrap: pretty;
 }
-/* Where the sidebar shows, the text steps up to 18px in the article's 620px column ($.tsx),
-   about 74 characters a line, with the same 29.7px line spacing. Below it the column is 576px. */
-@media (width >= 861px) {
+/* Once the article ($.tsx, the query container) is 600px wide, the text steps up to 18px with
+   the same 29.7px line spacing: about 71 characters a line in its full 620px. A narrower column
+   keeps 17px: at most 576px below 861px, and beside the sidebar below about 984px wide, where
+   18px ran 52 to 69 characters a line. */
+@container (width >= 600px) {
   .docs-prose {
     font-size: 18px;
     line-height: 1.65;
