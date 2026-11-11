@@ -20,6 +20,7 @@ import { gateway, type Id } from "@/gateway";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberDisplayName } from "@/lib/member-display-name";
+import { useConnectionState } from "@/lib/use-connection-state";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
@@ -236,8 +237,8 @@ export function ThreadView({
   });
   const newestIsMine = messages?.at(-1)?.isMine;
   // Changes when a message arrives at the bottom and when a pending send is
-  // confirmed (pending-… → real id: the confirmed group grows a time row, so
-  // follow again) — but not when an older page is prepended, so the
+  // confirmed (pending-… → real id: the confirmed group's Sending… line becomes
+  // its time row, so follow again) — but not when an older page is prepended, so the
   // follow-scroll below doesn't fire on scroll-up loads.
   const newestId = messages?.at(-1)?.id;
   const oldestId = messages?.[0]?.id;
@@ -1249,7 +1250,9 @@ function GroupBody({
           </Fragment>
         );
       })}
-      {!lastPending && (
+      {lastPending ? (
+        <PendingStatus />
+      ) : (
         <time
           dateTime={new Date(last.sentAt).toISOString()}
           className="text-muted-foreground px-1 pt-0.5 text-xs tabular-nums"
@@ -1258,6 +1261,18 @@ function GroupBody({
         </time>
       )}
     </>
+  );
+}
+
+// In the time's place under a message still on its way: Sending…, or Waiting for connection
+// while the app is offline (the message goes out once it reconnects).
+function PendingStatus() {
+  const t = useTranslations("messages");
+  const { connected } = useConnectionState();
+  return (
+    <p className="text-muted-foreground px-1 pt-0.5 text-xs">
+      {connected ? t("sending") : t("waitingForConnection")}
+    </p>
   );
 }
 

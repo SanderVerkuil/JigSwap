@@ -238,11 +238,55 @@ describe("NotificationItem rendering", () => {
     expect(container.querySelectorAll("button").length).toBe(1); // mark read
   });
 
+  // The tint alone (1.06:1 in light) was the only unread cue, and hover was darker than it.
+  it("marks an unread row with a decorative Tulip dot, on both surfaces, and a read row with none", () => {
+    for (const surface of ["page", "popover"] as const) {
+      const { container } = renderItem(base(), { surface });
+      const dot = container.querySelector("li > .bg-jigsaw-primary-accent");
+      expect(dot).not.toBeNull();
+      expect(dot!.getAttribute("aria-hidden")).toBe("true");
+      expect(dot!.classList).toContain("rounded-full");
+      expect(dot!.classList).toContain("size-2");
+      // Screen readers still hear it in the sentence.
+      expect(rowLink(container)!.textContent).toMatch(/^Unread, /);
+      cleanup();
+    }
+    const { container } = renderItem(base({ isRead: true }));
+    expect(container.querySelector(".bg-jigsaw-primary-accent")).toBeNull();
+  });
+
+  it("gives hover its own step past the unread tint", () => {
+    const { container } = renderItem(base());
+    const classes = [...container.querySelector("li")!.classList];
+    expect(classes).toContain("has-[[data-row-link]:hover]:bg-accent");
+    expect(classes).toEqual(
+      expect.arrayContaining(["bg-accent/40", "dark:bg-accent/60"]),
+    );
+    // Hover used to be accent/60: barely past unread in light, the same as unread after dark.
+    expect(classes).not.toContain("has-[[data-row-link]:hover]:bg-accent/60");
+  });
+
+  it("draws the exchange status chip with the 4px badge corner", () => {
+    renderItem(
+      base({
+        type: "trade_request",
+        href: "/trades?exchange=ex_1",
+        context: { puzzleTitle: "Starry Night", exchangeStatus: "accepted" },
+      }),
+    );
+    const chip = screen.getByText("Accepted");
+    expect(chip.classList).toContain("rounded-md");
+    expect(chip.classList).not.toContain("rounded-full");
+  });
+
   it("renders a resolved row as a status chip without actions", () => {
     renderItem(base({ state: "resolved", resolvedAs: "following_each_other" }));
     expect(screen.getByRole("status").textContent).toContain(
       "You follow each other",
     );
+    // A badge, not a removable chip: the 4px corner (DESIGN.md Shapes).
+    expect(screen.getByRole("status").classList).toContain("rounded-md");
+    expect(screen.getByRole("status").classList).not.toContain("rounded-full");
     expect(screen.queryByRole("button", { name: /follow back/i })).toBeNull();
   });
 

@@ -49,7 +49,7 @@ Each row in the inbox shows:
 - The cover of the latest puzzle the conversation is about, when there is one.
 
 A circle's group chat shows the circle name with a member's avatar and the
-purple circle icon (two people), so you can tell it from a chat with one
+circle icon (two people), so you can tell it from a chat with one
 person. Its preview starts with the name of whoever wrote last (for example
 "Bas: Who has the Wasgij?"). A muted conversation shows a bell with a line
 through it, and its unread count is grey.
@@ -77,7 +77,7 @@ profile private, in which case you can't message them from their puzzle.
 
 1. Click **Open group chat** on the circle, on **Circles** or on the circle's
    own page. Or, in Messages, click **New**, choose **Circle chat** and pick
-   the circle (each one shows the purple circle icon).
+   the circle (each one shows the circle icon).
 2. Write your message and send it.
 
 A circle's chat shows up in your inbox once someone has written in it, or once
@@ -220,6 +220,10 @@ members who are online (not away) and whose status you can see.
 - When you scroll to the top, older messages load automatically. You can also
   press **Load earlier messages**. When you reach the beginning, you see
   **Start of the conversation**.
+- A message on its way shows **Sending…** where its time goes, or
+  **Waiting for connection** while you're offline; it goes out once you're
+  back online. After a few seconds without a connection, a slim strip at the
+  top of the page says you're offline, until the connection is back.
 
 ### Quick links in the header
 

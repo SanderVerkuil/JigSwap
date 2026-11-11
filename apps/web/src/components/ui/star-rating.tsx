@@ -79,7 +79,7 @@ export function StarRating({
             className={cn(
               SIZES[size],
               star <= value
-                ? "fill-yellow-400 text-yellow-400"
+                ? "fill-jigsaw-gold text-jigsaw-gold"
                 : "text-muted-foreground/40",
             )}
             aria-hidden="true"
@@ -157,7 +157,7 @@ export function StarRating({
               SIZES[size],
               "transition-transform group-hover:scale-110",
               star <= shown
-                ? "fill-yellow-400 text-yellow-400"
+                ? "fill-jigsaw-gold text-jigsaw-gold"
                 : "text-muted-foreground/40",
             )}
           />

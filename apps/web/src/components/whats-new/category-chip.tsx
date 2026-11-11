@@ -12,7 +12,7 @@ export const CATEGORY_META: Record<
   feature: {
     icon: Rocket,
     className:
-      "bg-jigsaw-primary/10 text-jigsaw-primary dark:bg-jigsaw-primary/20 dark:text-violet-300",
+      "bg-jigsaw-primary/10 text-primary-text dark:bg-jigsaw-primary/20",
   },
   improvement: {
     icon: TrendingUp,
@@ -33,7 +33,7 @@ export function CategoryChip({ category }: { category: WhatsNewCategory }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold [&>svg]:size-3",
+        "inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-semibold [&>svg]:size-3",
         meta.className,
       )}
     >
@@ -43,6 +43,7 @@ export function CategoryChip({ category }: { category: WhatsNewCategory }) {
   );
 }
 
-// The unread count pill colours (spec Part B §2): plain bg-primary in dark mode is only 3.8:1.
+// The unread count pill colours (spec Part B §2): plain bg-primary sinks into the night sheet, so
+// dark mode gets the light canal tone.
 export const COUNT_PILL_COLORS =
-  "bg-primary text-primary-foreground dark:bg-violet-300 dark:text-background";
+  "bg-primary text-primary-foreground dark:bg-primary-text dark:text-background";

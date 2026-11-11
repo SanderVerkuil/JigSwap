@@ -86,7 +86,7 @@ describe("WhatsNewNavItem", () => {
     expect(attr(pill, "aria-hidden")).toBe("true");
     expect(textOf(pill)).toBe("9+");
     expect(classes(pill)).toEqual(
-      expect.arrayContaining(["bg-primary", "dark:bg-violet-300"]),
+      expect.arrayContaining(["bg-primary", "dark:bg-primary-text"]),
     );
     const dot = els.find((el) =>
       classes(el).includes("group-data-[collapsible=icon]:block"),

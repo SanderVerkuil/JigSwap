@@ -164,6 +164,17 @@ describe("TopBar layout", () => {
       "max-lg:grid-cols-[auto_minmax(0,520px)_1fr]",
     );
   });
+
+  // F66: on a touch tablet the controls are 44px, so a 48px bar left them no room and clipped the
+  // bell's badge. The sidebar starts below the taller bar (app-sidebar.test.tsx).
+  it("is 48px tall for a mouse and 56px on touch", () => {
+    render(topBar());
+    const classes = (searchPill().closest("header")?.className ?? "").split(
+      /\s+/,
+    );
+    expect(classes).toContain("h-12");
+    expect(classes).toContain("pointer-coarse:h-14");
+  });
 });
 
 describe("TopBar add action", () => {

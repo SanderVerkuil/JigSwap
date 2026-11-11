@@ -6,10 +6,12 @@
 // inside Clerk's profile modal. Shared by the desktop sidebar footer and the mobile
 // top bar so both open the same menu instead of hard-navigating to /profile.
 // Once the member shares their presence it also offers the status choice
-// (Automatic / Away / Appear offline) and shows their own status dot. "Help &
-// guides" opens the Guides tab of What's new, so the tours are one tap from any
-// page on desktop and phone (UX-91).
+// (Automatic / Away / Appear offline) and shows their own status dot, except while
+// the app is offline. "Help & guides" opens the Guides tab of What's new, so the
+// tours are one tap from any page on desktop and phone (UX-91). What's new itself
+// is listed only on the phone: the desktop sidebar has it right above the account row.
 import { useClerk, UserButton, useUser } from "@/compat/clerk";
+import { MemberInitial } from "@/components/members/member-initial";
 import { NotificationPreferencesPanel } from "@/components/notifications/notification-preferences-panel";
 import { useAppActivity } from "@/components/presence/app-presence";
 import { PresenceDot } from "@/components/presence/presence-dot";
@@ -22,6 +24,8 @@ import { useWhatsNewUnreadCount } from "@/components/whats-new/use-whats-new-sta
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import { openCookieSettings } from "@/lib/analytics-consent";
+import { memberInitialOf } from "@/lib/member-display-name";
+import { useConnectionState } from "@/lib/use-connection-state";
 import { cn } from "@/lib/utils";
 import { tearDownPushForSignOut } from "@/lib/web-push";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -56,6 +60,11 @@ import { useShellPreferences } from "./preferences";
 const TRIGGER_FOCUS_RING =
   "focus-visible:ring-2! focus-visible:ring-ring! focus-visible:ring-offset-2! focus-visible:ring-offset-background!";
 
+// Clerk's menu rows are about 50px. A mouse gets 36px rows, a touch screen keeps 44px targets, and
+// the menu scrolls inside itself when it is taller than the window, so Sign out stays in reach.
+const MENU_ROW =
+  "pointer-fine:min-h-9! pointer-fine:py-1.5! pointer-coarse:min-h-11! pointer-coarse:py-2.5!";
+
 const STATUS_OPTIONS = [
   { override: "auto", label: "statusAuto" },
   { override: "away", label: "statusAway" },
@@ -68,7 +77,7 @@ const STATUS_OPTIONS = [
 export function ShellUserButton({
   // When set, the avatar's trigger fills a 44px touch target (with the avatar
   // itself at 28px) so it matches the other controls in the mobile top bar. The
-  // desktop sidebar footer leaves it compact (a 32px avatar, no extra hit area).
+  // desktop sidebar footer leaves it compact (a 24px avatar in a nav-height row).
   tapTarget = false,
 }: {
   tapTarget?: boolean;
@@ -102,6 +111,8 @@ export function ShellUserButton({
       : presence.override === "away" || activity === "idle"
         ? "away"
         : "online";
+  // While this page is offline nobody sees the member online, so the dot goes too.
+  const { connected } = useConnectionState();
 
   // Backend-confirmed admin role — same source as the /admin route guard and
   // the sidebar's gated group; Convex dedupes the shared subscription. This
@@ -109,6 +120,12 @@ export function ShellUserButton({
   const { data: isAdmin } = useQuery(
     convexQuery(gateway.identity.isAdmin, user?.id ? {} : "skip"),
   );
+  // Without a photo the trigger shows this initial on canal (below), and the menu's header shows
+  // the same in place of Clerk's default picture.
+  const initial =
+    user && !user.hasImage
+      ? memberInitialOf({ name: user.fullName, username: user.username })
+      : undefined;
 
   return (
     // The dot sits beside Clerk's avatar (absolute, no layout shift), not
@@ -120,6 +137,29 @@ export function ShellUserButton({
             // Clerk's own Sign out stays hidden: ours (below) tears push down first. Clerk
             // still renders a default item that isn't re-listed, so hiding is the only way out.
             userButtonPopoverActionButton__signOut: "!hidden",
+            // `!` because Clerk's own unlayered `overflow: hidden` beats Tailwind's layered utilities.
+            userButtonPopoverMain:
+              "max-h-[calc(100dvh-140px)]! overflow-y-auto! overscroll-contain!",
+            userButtonPopoverCustomItemButton: MENU_ROW,
+            userButtonPopoverActionButton: MENU_ROW,
+            ...(initial
+              ? {
+                  userPreviewAvatarImage: { display: "none" },
+                  userPreviewAvatarBox: {
+                    backgroundColor: "var(--primary)",
+                    color: "var(--primary-foreground)",
+                    display: "grid",
+                    placeItems: "center",
+                    // Clerk's box packs its grid tracks to the start; centre them too.
+                    placeContent: "center",
+                    "&::after": {
+                      content: JSON.stringify(initial),
+                      fontSize: "15px",
+                      fontWeight: 600,
+                    },
+                  },
+                }
+              : {}),
             ...(tapTarget
               ? {
                   userButtonAvatarBox: "!w-7 !h-7",
@@ -129,7 +169,7 @@ export function ShellUserButton({
                   ),
                 }
               : {
-                  userButtonAvatarBox: "!w-8 !h-8",
+                  userButtonAvatarBox: "!w-6 !h-6",
                   // The desktop sidebar on a touch screen (tablets): a 44px target.
                   userButtonTrigger: cn(
                     "pointer-coarse:flex! pointer-coarse:size-11! pointer-coarse:items-center! pointer-coarse:justify-center! pointer-coarse:rounded-lg!",
@@ -149,23 +189,26 @@ export function ShellUserButton({
             href="/profile"
           />
           {/* Clerk's label is a plain string, so the count goes in the text ("What's new (2)"),
-            which also gives screen readers the count; the icon dot is decorative. */}
-          <UserButton.Link
-            label={
-              whatsNewCount > 0
-                ? tWhatsNew("menuLabelUnread", { count: whatsNewCount })
-                : tWhatsNew("menuLabel")
-            }
-            labelIcon={
-              <span className="relative">
-                <Sparkles className="size-4" />
-                {whatsNewCount > 0 && (
-                  <UnreadDot className="ring-popover -top-1 -right-1 size-2" />
-                )}
-              </span>
-            }
-            href="/whats-new"
-          />
+            which also gives screen readers the count; the icon dot is decorative. Phone only:
+            on desktop the sidebar lists What's new right above this menu's trigger. */}
+          {tapTarget && (
+            <UserButton.Link
+              label={
+                whatsNewCount > 0
+                  ? tWhatsNew("menuLabelUnread", { count: whatsNewCount })
+                  : tWhatsNew("menuLabel")
+              }
+              labelIcon={
+                <span className="relative">
+                  <Sparkles className="size-4" />
+                  {whatsNewCount > 0 && (
+                    <UnreadDot className="ring-popover -top-1 -right-1 size-2" />
+                  )}
+                </span>
+              }
+              href="/whats-new"
+            />
+          )}
           {/* Clerk parses the query, so this lands on the Guides tab. */}
           <UserButton.Link
             label={t("user.helpGuides")}
@@ -281,9 +324,29 @@ export function ShellUserButton({
           <PrivacySafetyPanel />
         </UserButton.UserProfilePage>
       </UserButton>
+      {/* Clerk's default picture is a violet gradient, so without a real photo the initial covers
+          it. Clicks fall through to Clerk's trigger. */}
+      {user && !user.hasImage && (
+        <span
+          aria-hidden
+          className={cn(
+            "bg-primary text-primary-foreground pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[10px] font-semibold",
+            // The phone's presence dot is larger, so the letter steps clear of it.
+            tapTarget ? "size-7 pr-1 pb-1" : "size-6",
+          )}
+        >
+          <MemberInitial
+            source={{ name: user.fullName, username: user.username }}
+          />
+        </span>
+      )}
       <PresenceDot
-        status={ownStatus}
-        className={tapTarget ? "right-2 bottom-2" : undefined}
+        status={connected ? ownStatus : undefined}
+        className={
+          tapTarget
+            ? "right-2 bottom-2"
+            : "-right-0.5 -bottom-0.5 size-2.5 ring-sidebar-skyline"
+        }
       />
     </span>
   );

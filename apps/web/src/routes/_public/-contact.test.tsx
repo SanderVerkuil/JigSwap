@@ -132,6 +132,38 @@ describe("contact form subject", () => {
       subject: "account",
     });
   });
+
+  // F08: at night the canal fill sat on the night card at 1.48:1; the chosen chip takes the light
+  // ring colour with canal text instead. By day it stays canal.
+  it("fills the chosen subject in a colour that still stands out at night", () => {
+    renderPage();
+    const chip = (name: string) =>
+      screen.getByRole("radio", { name }).closest("label")!.className;
+
+    expect(chip(copy.subjectSwap).split(/\s+/)).toEqual(
+      expect.arrayContaining([
+        "bg-mk-canal",
+        "text-mk-on-canal",
+        "dark:bg-mk-ring",
+        "dark:border-mk-ring",
+        "dark:text-mk-canal",
+      ]),
+    );
+    expect(chip(copy.subjectAccount)).not.toContain("dark:bg-mk-ring");
+  });
+});
+
+describe("contact form send button", () => {
+  // F06: the public pages share one large action, the one the home page uses.
+  it("is the public action at full width", () => {
+    renderPage();
+    const button = screen.getByRole("button", { name: copy.submit });
+    const classes = button.className.split(/\s+/);
+    expect(classes).toEqual(
+      expect.arrayContaining(["h-[50px]", "rounded-[10px]", "w-full"]),
+    );
+    expect(classes).not.toContain("h-11");
+  });
 });
 
 describe("contact form", () => {
@@ -147,7 +179,7 @@ describe("contact form", () => {
     fireEvent.change(field(nl.marketing.contactPage.formMessage), {
       target: { value: "A perfectly reasonable message." },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Verstuur bericht" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bericht versturen" }));
 
     await screen.findByText("Bericht verstuurd!");
     expect(backend.submit.mock.calls[0]?.[0]).toEqual({
@@ -187,7 +219,7 @@ describe("contact form", () => {
     send();
 
     await screen.findByText(
-      "Something went wrong while sending — please try again.",
+      "Something went wrong while sending. Please try again.",
     );
     await waitFor(() =>
       expect(screen.queryByText(/a lot of messages/)).toBeNull(),

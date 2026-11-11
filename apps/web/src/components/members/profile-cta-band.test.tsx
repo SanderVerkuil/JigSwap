@@ -58,10 +58,20 @@ const withIntl = (node: ReactNode) =>
     </IntlProvider>,
   );
 
-// The brand variant is the only one carrying the brand glow.
+const classesOf = (el: Element) => attr(el, "class")?.split(" ") ?? [];
+
+// The brand variant is the only marigold one; a Persuade page's one marigold action is at the
+// public size (50px, 10px radius, 18px/700).
 const expectBrandButton = (link: Element) => {
   expect(attr(link, "data-slot")).toBe("button");
-  expect(attr(link, "class")?.split(" ")).toContain("shadow-mk-brand");
+  expect(classesOf(link)).toEqual(
+    expect.arrayContaining([
+      "bg-jigsaw-gold",
+      "rounded-[10px]",
+      "text-[18px]",
+      "font-bold",
+    ]),
+  );
 };
 
 // A locked profile renders only the hero + private card, so no queries are needed.
@@ -90,7 +100,33 @@ describe("logged-out profile sign-up CTAs", () => {
     expect(attr(links[0]!, "data-redirect")).toBe("/members/hans?invite=abc");
   });
 
-  it("renders the hero Follow and the private card CTA as brand buttons", () => {
+  // The street's closing call to action (the home page's FinalCTA): the statement on sky, on the
+  // public 40px edge, with no icon and no rule above it.
+  it("closes the page like the street does", () => {
+    const html = withIntl(<ProfileCtaBand returnToHref="/members/hans" />);
+    const band = parseFragment(html).childNodes.find(isElement)!;
+    expect(classesOf(band)).toContain("bg-mk-sky");
+    expect(classesOf(band)).not.toContain("border-t");
+    const row = band.childNodes.find(isElement)!;
+    expect(classesOf(row)).toEqual(
+      expect.arrayContaining(["px-4", "min-[760px]:px-10"]),
+    );
+    expect(html).not.toContain("<svg");
+    const h2 = row.childNodes.find(
+      (n): n is Element => isElement(n) && n.tagName === "h2",
+    )!;
+    expect(classesOf(h2)).toEqual(
+      expect.arrayContaining([
+        "font-mk-heading",
+        "text-[clamp(32px,4.4vw,68px)]",
+        "font-normal",
+      ]),
+    );
+  });
+
+  // One marigold action per Persuade page: the hero's Follow steps down to outline, and the private
+  // card's sign-up is the marigold one.
+  it("keeps one marigold action on a private profile: Follow is outline", () => {
     const links = signUpLinks(
       withIntl(
         <ProfileBody
@@ -102,8 +138,24 @@ describe("logged-out profile sign-up CTAs", () => {
     );
     expect(links).toHaveLength(2);
     for (const link of links) {
-      expectBrandButton(link);
       expect(attr(link, "data-redirect")).toBe("/members/hans");
     }
+    const [follow, cardCta] = links;
+    expect(
+      follow!.childNodes.map((n) => ("value" in n ? n.value : "")),
+    ).toEqual([en.members.profile.follow]);
+    expect(classesOf(follow!)).not.toContain("bg-jigsaw-gold");
+    expect(classesOf(follow!)).toContain("border");
+    expectBrandButton(cardCta!);
+    // Its Dutch label takes two lines on a phone; it stays at least 50px, on touch too (the base's
+    // 44px coarse-pointer floor would otherwise win over min-h-[50px]).
+    expect(classesOf(cardCta!)).toEqual(
+      expect.arrayContaining([
+        "min-h-[50px]",
+        "pointer-coarse:min-h-[50px]",
+        "whitespace-normal",
+      ]),
+    );
+    expect(classesOf(cardCta!)).not.toContain("pointer-coarse:min-h-11");
   });
 });

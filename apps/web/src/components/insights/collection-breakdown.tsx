@@ -71,21 +71,21 @@ export function brandSeries(data: DistributionEntry[]): {
   };
 }
 
-// Difficulty is ordered, so its colours are one violet ramp: in light mode from light (easy) to dark
-// (expert), in dark mode from near the page (easy) to bright (expert), plus a grey for a difficulty
-// the puzzle doesn't have. The colour belongs to the difficulty, never to its rank, so it stays put
-// as counts change. Checked as an ordinal ramp against the page background (light #fdfdff, dark
-// #1d1c34): one hue, lightness monotone with steps of at least 0.06 OKLCH L, the faintest step at
-// least 2:1. Colour is never the only cue: the legend names every difficulty.
+// Difficulty keeps the product's own four-step scale, the one its chips use (--mk-diff-*): green
+// for easy through amber and rust to red for expert, with the strong tone as the fill in both themes
+// (dark on the light page, light at night). A difficulty the puzzle doesn't have is an Ink Muted
+// tint. The colour belongs to the difficulty, never to its rank, so it stays put as counts change.
+// Every fill is at least 2:1 against the page (light #ffffff, dark #15343d): the four steps 7.5:1
+// or more, Unknown 2.6:1 and 3.7:1. Colour is never the only cue: the legend names every difficulty.
 const DIFFICULTY_LEVELS = ["easy", "medium", "hard", "expert"] as const;
 type DifficultyLevel = (typeof DIFFICULTY_LEVELS)[number];
 
 const DIFFICULTY_SWATCH: Record<DifficultyLevel | "unknown", string> = {
-  easy: "bg-[#a3a9f6] dark:bg-[#4c4a95]",
-  medium: "bg-[#7e80ee] dark:bg-[#6b67d2]",
-  hard: "bg-[#5e56de] dark:bg-[#8e8fef]",
-  expert: "bg-[#4338ae] dark:bg-[#babdfe]",
-  unknown: "bg-[#a4a4ac] dark:bg-[#686774]",
+  easy: "bg-mk-diff-easy-fg",
+  medium: "bg-mk-diff-medium-fg",
+  hard: "bg-mk-diff-hard-fg",
+  expert: "bg-mk-diff-expert-fg",
+  unknown: "bg-muted-foreground/60",
 };
 
 const isDifficultyLevel = (label: string): label is DifficultyLevel =>

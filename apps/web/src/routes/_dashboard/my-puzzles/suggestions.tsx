@@ -79,6 +79,10 @@ function MySuggestionsPage() {
           <p className="text-muted-foreground text-sm">
             {t("empty.description")}
           </p>
+          {/* Suggest an edit lives on a catalogue puzzle's page: the way there. */}
+          <Button variant="outline" asChild className="mt-2">
+            <Link href="/puzzles">{t("empty.browseCatalogue")}</Link>
+          </Button>
         </div>
       ) : (
         <div className="bg-card rounded-xl border">

@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { IntlProvider } from "use-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -58,11 +60,56 @@ describe("DocsMobileBar", () => {
     expect(onOpenSearch).toHaveBeenCalledOnce();
   });
 
-  it("gives both buttons a 44px tap target", () => {
+  it("gives every control a 44px tap target", () => {
     renderBar("en");
-    for (const button of screen.getAllByRole("button")) {
-      expect(button.className).toMatch(/\bh-11\b/);
-      expect(button.className).toMatch(/\bmin-w-11\b/);
+    for (const control of [
+      ...screen.getAllByRole("button"),
+      screen.getByRole("link", { name: "On this page" }),
+    ]) {
+      expect(control.className).toMatch(/\bh-11\b/);
+      expect(control.className).toMatch(/\bmin-w-11\b/);
     }
+  });
+
+  // F20: a long article's contents are otherwise only at its top on a phone.
+  it.each([
+    ["en", "On this page"],
+    ["nl", "Op deze pagina"],
+  ] as const)(
+    "jumps back to the article's contents and opens them (%s)",
+    (locale, label) => {
+      const contents = document.createElement("details");
+      contents.id = "on-this-page";
+      document.body.append(contents);
+      renderBar(locale);
+
+      const link = screen.getByRole("link", { name: label });
+      expect(link.getAttribute("href")).toBe("#on-this-page");
+      fireEvent.click(link);
+      expect(contents.open).toBe(true);
+      contents.remove();
+    },
+  );
+
+  it("hides the jump on pages without contents to jump to", () => {
+    renderBar("en");
+    expect(
+      screen.getByRole("link", { name: "On this page" }).className,
+    ).toContain("[body:not(:has(#on-this-page))_&]:hidden");
+  });
+
+  // F16: an anchored heading used to land half under the bar. The page's scroll-padding grows by the
+  // bar's 48px wherever it shows (64px header + 48px bar), keyed to the bar's own marker.
+  it("is cleared by the page's scroll-padding where it shows", () => {
+    renderBar("en");
+    const bar = document.querySelector("[data-docs-bar]");
+    expect(bar?.className).toContain("max-[861px]:flex");
+    const css = readFileSync(
+      join(__dirname, "../../styles/docs.css"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(css).toMatch(
+      /@media \(width < 861px\) \{\s*html:has\(\.mk-root\):has\(\[data-docs-bar\]\) \{\s*scroll-padding-top: 112px;/,
+    );
   });
 });

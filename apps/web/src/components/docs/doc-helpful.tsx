@@ -55,16 +55,16 @@ export function DocHelpful({ slug }: { slug: string }) {
 
   if (state === "done") {
     return (
-      <div className="mt-10 rounded-[14px] bg-mk-muted border border-mk-border px-5 py-4 text-[14.5px] text-mk-green-600 font-medium">
+      <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4 text-[16px] text-mk-text-strong font-medium">
         {t("helpfulThanks")}
       </div>
     );
   }
 
   return (
-    <div className="mt-10 rounded-[14px] bg-mk-muted border border-mk-border px-5 py-4">
+    <div className="mt-10 rounded-md bg-mk-sky-soft dark:bg-mk-muted px-5 py-4">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-[14.5px] text-mk-text-body font-medium">
+        <span className="text-[16px] text-mk-text-body font-medium">
           {t("helpfulQuestion")}
         </span>
         <div className="flex gap-2">

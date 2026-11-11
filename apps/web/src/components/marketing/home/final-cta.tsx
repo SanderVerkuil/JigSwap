@@ -1,55 +1,70 @@
 import { Link } from "@/compat/link";
-import { Container } from "@/components/marketing/container";
-import { PieceMotif } from "@/components/marketing/piece-motif";
-import { Section } from "@/components/marketing/section";
+import canalBoat from "@/components/marketing/assets/art/crops/canal-boat.webp";
+import picnic from "@/components/marketing/assets/art/crops/picnic.webp";
+import handover from "@/components/marketing/assets/art/crops/window-handover.webp";
+import { EDGE } from "@/components/marketing/home/classes";
+import { Reveal } from "@/components/marketing/reveal";
 import { useStartLink } from "@/components/marketing/use-start-link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useTranslations } from "use-intl";
 
-// Closing CTA panel: violet gradient, floating piece motifs, white button.
-// The marketing ramp inverts in dark mode (600 turns light), so dark mode uses
-// the deep 300 step to keep the panel — and the white text on it — at AA.
+// Closing: three art crops with a gutter between them, then the sky band with the statement and the one
+// marigold action directly under it, which stands out on sky more than it would on a marigold band.
 export function FinalCTA() {
   const t = useTranslations("marketing");
   const start = useStartLink();
+  const crops = [
+    { src: handover, width: 560, alt: t("home.pictures.handover") },
+    { src: picnic, width: 640, alt: t("home.pictures.picnic") },
+    { src: canalBoat, width: 480, alt: t("home.pictures.boat") },
+  ];
   return (
-    <Section>
-      <Container>
-        <div className="relative overflow-hidden rounded-[20px] [background:linear-gradient(135deg,var(--mk-violet-600),var(--mk-violet-400))] dark:[background:linear-gradient(135deg,var(--mk-violet-300),var(--mk-violet-400))] p-[clamp(44px,6vw,76px)] text-center">
-          <PieceMotif
-            size={140}
-            color="rgba(255,255,255,.12)"
-            rotate={-12}
-            className="absolute -top-6 -left-2.5"
-          />
-          <PieceMotif
-            size={110}
-            color="rgba(255,255,255,.10)"
-            rotate={18}
-            className="absolute -bottom-[30px] right-5"
-          />
-          <div className="relative">
-            <h2 className="font-mk-heading font-bold tracking-tight text-[clamp(28px,4vw,44px)] text-white leading-[1.1]">
+    <section>
+      <div className="grid grid-cols-2 gap-1.5 bg-mk-sky min-[760px]:h-[40svh] min-[760px]:grid-cols-3">
+        {crops.map((crop, i) => (
+          <div
+            key={crop.src}
+            className={cn(
+              "min-h-0",
+              i === 0 && "col-span-2 min-[760px]:col-span-1",
+            )}
+          >
+            <img
+              src={crop.src}
+              alt={crop.alt}
+              width={crop.width}
+              height={crop.width * 0.75}
+              loading="lazy"
+              decoding="async"
+              className="block aspect-[4/3] h-auto w-full object-cover min-[760px]:aspect-auto min-[760px]:h-full"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="bg-mk-sky text-mk-text-strong">
+        <div className={cn(EDGE, "py-[clamp(40px,6vw,88px)]")}>
+          <Reveal rise={20}>
+            <h2 className="max-w-[16em] font-mk-heading text-[clamp(32px,4.4vw,68px)] leading-[1.06] font-normal text-balance">
               {t("home.cta.title")}
             </h2>
-            <p className="text-lg text-white/90 mt-4 max-w-[520px] mx-auto">
+          </Reveal>
+          <Reveal rise={20} delay={70}>
+            <p className="mt-4 max-w-[46ch] text-[18px] leading-[1.5] text-pretty">
               {t("home.cta.body")}
             </p>
-            <div className="mt-[30px] flex justify-center">
-              <Button
-                className="h-11 px-6 text-[15px] bg-white text-mk-violet-600 dark:text-mk-violet-300 hover:bg-white/90"
-                asChild
-              >
-                <Link href={start.href}>
-                  {start.label}
-                  <ArrowRight size={17} />
-                </Link>
-              </Button>
-            </div>
+          </Reveal>
+          <div className="mt-7">
+            <Button
+              variant="brand"
+              asChild
+              className="h-[54px] rounded-[10px] px-6 text-[18px] font-bold"
+            >
+              <Link href={start.href}>{start.label}</Link>
+            </Button>
           </div>
         </div>
-      </Container>
-    </Section>
+      </div>
+    </section>
   );
 }

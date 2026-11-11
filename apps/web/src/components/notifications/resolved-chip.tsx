@@ -25,7 +25,7 @@ export function ResolvedChip({
       role="status"
       tabIndex={-1}
       className={cn(
-        "bg-muted text-foreground/80 inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium outline-none",
+        "bg-muted text-foreground/80 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring",
         "animate-in fade-in-0 motion-reduce:animate-none",
       )}

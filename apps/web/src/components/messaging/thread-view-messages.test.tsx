@@ -23,6 +23,11 @@ const mocks = vi.hoisted(() => ({
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   // The thread's messages, ascending; served newest-first as one exhausted page.
   messages: [] as unknown[],
+  connected: true,
+}));
+
+vi.mock("@/lib/use-connection-state", () => ({
+  useConnectionState: () => ({ connected: mocks.connected }),
 }));
 
 // ThreadView pages listThreadMessages through Convex's usePaginatedQuery (#174).
@@ -144,6 +149,7 @@ const renderThread = (
   // The thread's own inbox row (getInboxThread); null when the inbox wouldn't list it;
   // "unsupported" for a backend without getInboxThread, whose inbox first page holds the thread.
   header: InboxThread | null | "unsupported" = thread,
+  messages: unknown[] = MESSAGES,
 ) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -158,7 +164,7 @@ const renderThread = (
       },
     },
   });
-  mocks.messages = MESSAGES;
+  mocks.messages = messages;
   const headerKey = convexQuery(gateway.conversation.getInboxThread, {
     threadId: thread.threadId,
   }).queryKey;
@@ -197,6 +203,7 @@ const renderThread = (
 
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
+  mocks.connected = true;
 });
 afterEach(cleanup);
 
@@ -618,6 +625,51 @@ describe("ThreadView trade lifecycle lines", () => {
     renderThread(exchangeThread());
     expect(screen.getByText("Exchange completed")).toBeTruthy();
     expect(screen.getByText("Trade accepted")).toBeTruthy();
+  });
+});
+
+// A message still on its way shows a line in its time's place: Sending…, or Waiting for connection
+// while the app is offline.
+describe("ThreadView pending send", () => {
+  const withPending = [
+    ...MESSAGES,
+    {
+      id: "pending-1",
+      isMine: true,
+      kind: "text",
+      body: "On my way",
+      sentAt: 6,
+    },
+  ];
+  const groupOf = (text: string) =>
+    screen.getByText(text).closest("li") as HTMLElement;
+
+  it.each([
+    ["en", "Sending…"],
+    ["nl", "Versturen…"],
+  ] as const)(
+    "says Sending… under the last pending bubble (%s)",
+    (locale, line) => {
+      renderThread(dmThread(), locale, undefined, dmThread(), withPending);
+      const group = groupOf("On my way");
+      expect(group.textContent).toContain(line);
+      expect(group.querySelector("time")).toBeNull();
+    },
+  );
+
+  it("says it is waiting for a connection while offline", () => {
+    mocks.connected = false;
+    renderThread(dmThread(), "en", undefined, dmThread(), withPending);
+    expect(groupOf("On my way").textContent).toContain(
+      "Waiting for connection",
+    );
+    expect(screen.queryByText("Sending…")).toBeNull();
+  });
+
+  it("shows the time, not a send status, once the message is sent", () => {
+    renderThread(dmThread());
+    expect(screen.queryByText("Sending…")).toBeNull();
+    expect(groupOf("My own message").querySelector("time")).not.toBeNull();
   });
 });
 

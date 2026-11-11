@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { TOGGLE_TRACK, toggleOption } from "@/components/library/filter-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,7 @@ export function WhatsNewList({
         <div
           role="group"
           aria-label={t("filter.label")}
-          className="-mb-4 flex flex-wrap gap-2"
+          className={cn(TOGGLE_TRACK, "-mb-4")}
         >
           {(["all", ...categories] as const).map((value) => {
             const pressed = value === category;
@@ -99,15 +100,10 @@ export function WhatsNewList({
                 key={value}
                 type="button"
                 size="sm"
-                variant={pressed ? "default" : "outline"}
+                variant="ghost"
                 aria-pressed={pressed}
                 onClick={() => setCategory(value)}
-                className={cn(
-                  "rounded-full",
-                  TOUCH_TARGET,
-                  pressed &&
-                    "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
-                )}
+                className={cn(TOUCH_TARGET, toggleOption(pressed))}
               >
                 {Icon && <Icon aria-hidden />}
                 {value === "all" ? t("filter.all") : t(`category.${value}`)}
@@ -122,7 +118,7 @@ export function WhatsNewList({
           <section key={group.key} aria-labelledby={headingId}>
             <h2
               id={headingId}
-              className="text-muted-foreground mb-4 flex items-center gap-3 font-mono text-[11px] font-medium tracking-[0.09em] uppercase"
+              className="font-heading mb-4 flex items-center gap-3 text-lg"
             >
               {format.dateTime(new Date(group.monthStart), {
                 month: "long",
@@ -211,7 +207,7 @@ function EntryCard({
           {unread && (
             <span
               className={cn(
-                "ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase",
+                "ml-auto rounded-md px-2 py-0.5 text-xs font-semibold",
                 COUNT_PILL_COLORS,
               )}
             >
@@ -223,7 +219,7 @@ function EntryCard({
         <h3
           id={titleId}
           tabIndex={-1}
-          className="font-heading text-card-foreground text-xl leading-tight font-semibold focus-visible:outline-none"
+          className="font-heading text-card-foreground text-xl leading-tight focus-visible:outline-none"
         >
           {unread && <span className="sr-only">{`${t("newPrefix")} `}</span>}
           {content.title}
@@ -350,7 +346,7 @@ function EmptyState() {
     <div className="mx-auto w-full max-w-3xl">
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="bg-muted mx-auto mb-4 flex size-16 items-center justify-center rounded-full">
+          <div className="bg-muted mx-auto mb-4 flex size-16 items-center justify-center rounded-lg">
             <Sparkles aria-hidden className="text-muted-foreground size-8" />
           </div>
           <h2 className="mb-2 text-lg font-medium">{t("title")}</h2>

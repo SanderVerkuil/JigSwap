@@ -42,7 +42,7 @@ const STATUS_LOOK: Record<
 > = {
   active: {
     icon: Target,
-    chip: "bg-jigsaw-primary/10 text-jigsaw-primary",
+    chip: "bg-jigsaw-primary/10 text-primary-text",
     bar: "bg-jigsaw-primary",
   },
   achieved: {
@@ -129,12 +129,12 @@ export function GoalTile({
           </div>
           <div className="text-muted-foreground mt-px text-xs">{period}</div>
           {/* In a narrow tile the count sits under the title, so the title keeps the width. */}
-          <div className="text-muted-foreground font-mono text-xs @sm/goal:hidden">
+          <div className="text-muted-foreground text-xs tabular-nums @sm/goal:hidden">
             {progressCount}
           </div>
         </div>
         <div className="text-right">
-          <div className="font-heading text-xl leading-none font-bold">
+          <div className="font-sans text-xl leading-none font-semibold tabular-nums">
             {pct}%
           </div>
           <div className="text-muted-foreground hidden font-mono text-xs @sm/goal:block">
@@ -186,7 +186,10 @@ export function GoalTile({
       </div>
       <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
         <div
-          className={cn("h-full rounded-full transition-all", look.bar)}
+          className={cn(
+            "h-full rounded-full transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]",
+            look.bar,
+          )}
           style={{ width: `${pct}%` }}
         />
       </div>

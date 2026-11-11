@@ -38,6 +38,12 @@ vi.mock("@tanstack/react-router", () => ({
     options,
     useParams: () => ({ id: "col_doc" }),
   }),
+  useLocation: (opts?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = { pathname: "/collections/col_doc" };
+    return opts?.select ? opts.select(location) : location;
+  },
 }));
 vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -103,9 +109,11 @@ const collection: CollectionDetailView = {
   hasMorePuzzles: false,
 };
 
+// `null` is what the server returns for a missing or private collection; "unreadable" fails the read
+// (a malformed id).
 const renderPage = (
   viewer: string,
-  shown: CollectionDetailView = collection,
+  shown: CollectionDetailView | null | "unreadable" = collection,
 ) => {
   mocks.member = { _id: viewer };
   const convexQueryClient = new ConvexQueryClient(
@@ -117,16 +125,21 @@ const renderPage = (
         queryKeyHashFn: convexQueryClient.hashFn(),
         staleTime: Infinity,
         retry: false,
-        queryFn: () => new Promise<never>(() => {}),
+        queryFn:
+          shown === "unreadable"
+            ? () => Promise.reject(new Error("ArgumentValidationError"))
+            : () => new Promise<never>(() => {}),
       },
     },
   });
-  queryClient.setQueryData(
-    convexQuery(gateway.collections.byId, {
-      collectionId: "col_doc" as Id<"collections">,
-    }).queryKey,
-    shown,
-  );
+  if (shown !== "unreadable") {
+    queryClient.setQueryData(
+      convexQuery(gateway.collections.byId, {
+        collectionId: "col_doc" as Id<"collections">,
+      }).queryKey,
+      shown,
+    );
+  }
   const Page = (Route as unknown as { options: { component: ComponentType } })
     .options.component;
   render(
@@ -163,19 +176,50 @@ afterEach(cleanup);
 
 // What the page published into the shell's page head.
 function PublishedTitle() {
-  const { title, titleInContent, mobileTitle } = usePageHeaderContent();
+  const { title, titleInContent, mobileTitle, crumbs, actions } =
+    usePageHeaderContent();
   return (
     <output data-testid="head">
-      {JSON.stringify({ title, titleInContent, mobileTitle })}
+      {JSON.stringify({
+        title,
+        titleInContent,
+        mobileTitle,
+        crumbs,
+        actions: actions ? "some" : undefined,
+      })}
     </output>
   );
 }
+const head = () => JSON.parse(screen.getByTestId("head").textContent ?? "");
+
+describe("a collection that can't be shown", () => {
+  it.each([
+    ["is missing or private", null],
+    ["has an unreadable id", "unreadable"],
+  ] as const)(
+    "says so when it %s, with the way back to Collections",
+    async (_, shown) => {
+      renderPage(OWNER, shown);
+      const back = await screen.findByRole("link", {
+        name: "Back to Collections",
+      });
+      expect(back.getAttribute("href")).toBe("/collections");
+      expect(screen.getByText(en.collections.notFoundSub)).toBeTruthy();
+      expect(screen.queryByText(en.common.loading)).toBeNull();
+      // The title is the page head's (its h1), with no trail and nothing to do.
+      expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+      await waitFor(() =>
+        expect(head()).toEqual({ title: "Collection not found", crumbs: [] }),
+      );
+    },
+  );
+});
 
 describe("the collection's name", () => {
   it("shows once at each width: the hero's h1, kept as the crumb's leaf, not in the top bar", () => {
     renderPage(OWNER);
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Cats");
-    expect(JSON.parse(screen.getByTestId("head").textContent ?? "")).toEqual({
+    expect(head()).toEqual({
       title: "Cats",
       titleInContent: true,
       mobileTitle: "Collections",

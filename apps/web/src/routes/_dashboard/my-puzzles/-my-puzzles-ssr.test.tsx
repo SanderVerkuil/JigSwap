@@ -16,6 +16,15 @@ import { Route } from "./index";
 // it needs the whole library, which doesn't belong in a page's HTML.
 
 const location = vi.hoisted(() => ({ search: {} as Record<string, unknown> }));
+// The request's cookies, as the server reads them.
+const cookies = vi.hoisted(() => ({
+  current: {} as Record<string, string | undefined>,
+}));
+
+vi.mock("@tanstack/react-start/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-start/server")>()),
+  getCookie: (name: string) => cookies.current[name],
+}));
 
 vi.mock("@/compat/clerk", () => ({
   useAuth: () => ({ isSignedIn: true }),
@@ -106,6 +115,7 @@ const renderPage = (queryClient: QueryClient) => {
 
 beforeEach(() => {
   location.search = {};
+  cookies.current = {};
 });
 
 describe("My Puzzles on the server", () => {
@@ -153,9 +163,14 @@ describe("My Puzzles on the server", () => {
     );
   });
 
-  it("leaves the one-time hint out: only the browser knows if it was dismissed", async () => {
+  // The dismissal is a cookie the server reads, so the hint is in the first paint or not at all:
+  // it never appears after hydration and pushes the list down.
+  it("paints the one-time hint unless the request's cookie says it was dismissed", async () => {
     const { queryClient } = clientAnswering();
     await prefetchMyPuzzles(queryClient, {});
+    expect(renderPage(queryClient)).toContain(en.puzzles.coachmark.body);
+
+    cookies.current = { puzzles_coachmark_dismissed: "1" };
     expect(renderPage(queryClient)).not.toContain(en.puzzles.coachmark.body);
   });
 

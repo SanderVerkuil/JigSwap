@@ -36,16 +36,16 @@ export function SectionHead({
       <h2
         {...headingProps}
         className={cn(
-          "font-heading flex min-w-0 items-center gap-2 text-xl font-semibold sm:whitespace-nowrap",
+          "font-heading flex min-w-0 items-center gap-2 text-xl sm:whitespace-nowrap",
           headingProps?.className,
         )}
       >
-        {Icon && <Icon className="text-jigsaw-primary size-[18px] shrink-0" />}
+        {Icon && <Icon className="text-primary-text size-[18px] shrink-0" />}
         {title}
       </h2>
-      <div className="flex min-w-0 items-center gap-3.5">
+      <div className="flex min-w-0 items-center gap-3.5 sm:ml-auto">
         {meta && (
-          <span className="text-muted-foreground truncate text-right text-sm">
+          <span className="text-muted-foreground truncate text-left text-sm sm:text-right">
             {meta}
           </span>
         )}

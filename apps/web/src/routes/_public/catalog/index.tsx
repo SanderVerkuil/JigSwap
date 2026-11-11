@@ -1,8 +1,9 @@
 import { Link } from "@/compat/link";
 import { MAIN_CONTENT_ID } from "@/components/a11y/skip-link";
 import { EmptyState } from "@/components/library/empty-state";
+import { Container } from "@/components/marketing/container";
+import { PageHero } from "@/components/marketing/page-hero";
 import { DefinitionCard } from "@/components/puzzles/definition-card";
-import { PuzzleViewProvider } from "@/components/puzzles/puzzle-view-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,11 +41,11 @@ import { useTranslations } from "use-intl";
 type BrowseResult = FunctionReturnType<typeof gateway.catalog.publicBrowse>;
 
 const PAGE_SIZE = 20;
-// The grid's first row at its widest (lg:grid-cols-4), which holds the page's
+// The grid's first row at its widest (2xl:grid-cols-5), which holds the page's
 // likely LCP image: these covers are server-rendered eager and high priority,
 // so the browser fetches them before the scripts run. On narrower grids this
 // also covers (part of) the second row; covers further down stay lazy.
-const ABOVE_THE_FOLD_CARDS = 4;
+const ABOVE_THE_FOLD_CARDS = 5;
 // One page for the URL's filters; a null cursor is the first. The loader prefetches EXACTLY these
 // args so a filtered link renders its results on the server (same pattern as the home page's
 // globalStatsQuery).
@@ -83,11 +84,17 @@ const PIECE_BUCKET_LABELS = {
   b1500: "pieces1500",
 } as const satisfies Record<PieceBucket, string>;
 
-// A card cover's rendered width in the grid below (2/3/4 columns at base/md/lg, 18px gaps, inside
-// the 1200px main with 24px padding, minus the card's 1px borders), so the browser fetches the
-// smallest box-art rendition that is still sharp. Keep it in step with the grid's classes.
+// The results read as shelves: the columns meet, so the planks under the boxes run on across a row.
+const SHELF_GRID =
+  "grid grid-cols-2 gap-y-10 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5";
+
+// A cover's widest in SHELF_GRID (2/3/4/5 columns at base/md/lg/2xl, no column gap, inside the
+// Container's 16px margins, 40px from 760px, minus DefinitionCard's side padding at its smallest in
+// each range), so the browser fetches the smallest box-art rendition that is still sharp. A cover
+// also has to fit its slot's height and can stand narrower, so this is an upper bound. Keep it in
+// step with the grid's classes.
 const CARD_IMAGE_SIZES =
-  "(min-width: 1200px) 273px, (min-width: 1024px) calc((100vw - 110px) / 4), (min-width: 768px) calc((100vw - 90px) / 3), calc((100vw - 70px) / 2)";
+  "(min-width: 1536px) calc((100vw - 80px) / 5 - 40px), (min-width: 1024px) calc((100vw - 80px) / 4 - 28px), (min-width: 768px) calc((100vw - 80px) / 3 - 21px), calc((100vw - 32px) / 2 - 16px)";
 
 export const Route = createFileRoute("/_public/catalog/")({
   // Search, brand, piece bucket and the pages opened with "Load more" live in the URL so Back
@@ -230,149 +237,156 @@ function CatalogListPage() {
   };
 
   return (
-    <main
-      id={MAIN_CONTENT_ID}
-      className="mx-auto w-full max-w-[1200px] px-6 py-10"
-    >
-      <h1 className="font-heading text-3xl font-bold tracking-tight">
-        {t("title")}
-      </h1>
-      <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
-
-      {/* Toolbar: search + brand + piece bucket. One row on >=sm; on phones the search gets
-          its own row and the two selects share the next, so results start sooner. The piece
-          column is wider because its labels are. The triggers render their label themselves:
-          it shows in the server HTML for a filtered link, and a long one ends in an ellipsis
-          instead of being clipped. */}
-      <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-          <Input
-            type="search"
-            aria-label={t("searchLabel")}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-            className="pl-9"
-          />
-        </div>
-        <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,5fr)] gap-2.5 sm:flex">
-          <Select
-            value={brand ?? "all"}
-            onValueChange={(v) =>
-              updateSearch({ brand: v === "all" ? undefined : v })
-            }
-          >
-            <SelectTrigger
-              aria-label={t("brandLabel")}
-              className="w-full sm:w-44"
+    <main id={MAIN_CONTENT_ID}>
+      <PageHero title={t("title")} lead={t("subtitle")} />
+      <Container className="py-8">
+        {/* Toolbar: search + brand + piece bucket. One row on >=sm; on phones the search gets
+            its own row and the two selects share the next, so results start sooner. The piece
+            column is wider because its labels are. The triggers render their label themselves:
+            it shows in the server HTML for a filtered link, and a long one ends in an ellipsis
+            instead of being clipped. */}
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+            <Input
+              type="search"
+              aria-label={t("searchLabel")}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="pl-9"
+            />
+          </div>
+          <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,5fr)] gap-2.5 sm:flex">
+            <Select
+              value={brand ?? "all"}
+              onValueChange={(v) =>
+                updateSearch({ brand: v === "all" ? undefined : v })
+              }
             >
-              <SelectValue>
-                <span className="truncate">{brand ?? t("allBrands")}</span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allBrands")}</SelectItem>
-              {(brands ?? [])
-                .filter((b): b is string => !!b)
-                .map((b) => (
-                  <SelectItem key={b} value={b}>
-                    {b}
+              <SelectTrigger
+                aria-label={t("brandLabel")}
+                className="w-full sm:w-44"
+              >
+                <SelectValue>
+                  <span className="truncate">{brand ?? t("allBrands")}</span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allBrands")}</SelectItem>
+                {(brands ?? [])
+                  .filter((b): b is string => !!b)
+                  .map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={pieces ?? "all"}
+              onValueChange={(v) =>
+                updateSearch({ pieces: isPieceBucket(v) ? v : undefined })
+              }
+            >
+              <SelectTrigger
+                aria-label={t("piecesLabel")}
+                className="w-full sm:w-56"
+              >
+                <SelectValue>
+                  <span className="truncate">
+                    {pieces ? t(PIECE_BUCKET_LABELS[pieces]) : t("allPieces")}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allPieces")}</SelectItem>
+                {(
+                  Object.entries(PIECE_BUCKET_LABELS) as [PieceBucket, string][]
+                ).map(([bucket, label]) => (
+                  <SelectItem key={bucket} value={bucket}>
+                    {t(label)}
                   </SelectItem>
                 ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={pieces ?? "all"}
-            onValueChange={(v) =>
-              updateSearch({ pieces: isPieceBucket(v) ? v : undefined })
-            }
-          >
-            <SelectTrigger
-              aria-label={t("piecesLabel")}
-              className="w-full sm:w-56"
-            >
-              <SelectValue>
-                <span className="truncate">
-                  {pieces ? t(PIECE_BUCKET_LABELS[pieces]) : t("allPieces")}
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allPieces")}</SelectItem>
-              {(
-                Object.entries(PIECE_BUCKET_LABELS) as [PieceBucket, string][]
-              ).map(([bucket, label]) => (
-                <SelectItem key={bucket} value={bucket}>
-                  {t(label)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Grid. The sr-only h2 keeps the heading outline h1 > h2 > card h3. */}
-      <div className="mt-8">
-        <h2 className="sr-only">{t("resultsHeading")}</h2>
-        {firstPage === undefined ? (
-          <div className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
-            ))}
+              </SelectContent>
+            </Select>
           </div>
-        ) : cards.length === 0 && lastPage?.isDone ? (
-          q || brand || pieces ? (
-            <EmptyState
-              title={q ? t("noResults", { query: q }) : t("noResultsFiltered")}
-              sub={t(q ? "noResultsSub" : "noResultsFilteredSub")}
-              action={
-                <Button variant="outline" onClick={clearFilters}>
-                  {t(brand || pieces ? "clearFilters" : "clearSearch")}
-                </Button>
-              }
-            />
-          ) : (
-            <EmptyState title={t("empty")} sub={t("emptySub")} />
-          )
-        ) : (
-          <>
-            <PuzzleViewProvider
-              viewMode="grid"
-              className="grid grid-cols-2 gap-[18px] md:grid-cols-3 lg:grid-cols-4"
-            >
-              {cards.map((card, index) => (
-                <DefinitionCard
-                  key={card._id}
-                  card={card}
-                  imageSizes={CARD_IMAGE_SIZES}
-                  priority={index < ABOVE_THE_FOLD_CARDS}
-                />
-              ))}
-            </PuzzleViewProvider>
-            {lastPage && !lastPage.isDone && (
-              <div className="mt-8 flex justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => void loadMore()}
-                  disabled={loadingMore}
-                >
-                  {t("loadMore")}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Conversion tail for logged-out visitors. */}
-      <Unauthenticated>
-        <div className="mt-12 flex justify-center">
-          <Button variant="brand" asChild>
-            <Link href="/sign-up">{t("joinCta")}</Link>
-          </Button>
         </div>
-      </Unauthenticated>
+
+        {/* Grid. The sr-only h2 keeps the heading outline h1 > h2 > card h3. */}
+        <div className="mt-8">
+          <h2 className="sr-only">{t("resultsHeading")}</h2>
+          {firstPage === undefined ? (
+            <div className={SHELF_GRID}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i}>
+                  {/* DefinitionCard's box slot and plank, so the empty shelves match the full ones. */}
+                  <div className="h-[clamp(140px,17vw,250px)] px-[clamp(8px,1.4vw,20px)]">
+                    <Skeleton className="size-full rounded-sm" />
+                  </div>
+                  <div className="bg-mk-plank h-[9px]" />
+                </div>
+              ))}
+            </div>
+          ) : cards.length === 0 && lastPage?.isDone ? (
+            q || brand || pieces ? (
+              <EmptyState
+                title={
+                  q ? t("noResults", { query: q }) : t("noResultsFiltered")
+                }
+                sub={t(q ? "noResultsSub" : "noResultsFilteredSub")}
+                action={
+                  <Button variant="outline" onClick={clearFilters}>
+                    {t(brand || pieces ? "clearFilters" : "clearSearch")}
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState title={t("empty")} sub={t("emptySub")} />
+            )
+          ) : (
+            <>
+              <div className={SHELF_GRID}>
+                {cards.map((card, index) => (
+                  <DefinitionCard
+                    key={card._id}
+                    card={card}
+                    imageSizes={CARD_IMAGE_SIZES}
+                    priority={index < ABOVE_THE_FOLD_CARDS}
+                  />
+                ))}
+              </div>
+              {lastPage && !lastPage.isDone && (
+                <div className="mt-8 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => void loadMore()}
+                    disabled={loadingMore}
+                  >
+                    {t("loadMore")}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Conversion tail for logged-out visitors. */}
+        <Unauthenticated>
+          <div className="mt-12 flex justify-center">
+            {/* The label is wider than a 320px phone at the public size, so it may wrap. It stays
+                50px on touch too, over the base's 44px coarse-pointer floor. */}
+            <Button
+              variant="brand"
+              size="public"
+              className="h-auto min-h-[50px] max-w-full py-2.5 text-center whitespace-normal pointer-coarse:min-h-[50px]"
+              asChild
+            >
+              <Link href="/sign-up">{t("joinCta")}</Link>
+            </Button>
+          </div>
+        </Unauthenticated>
+      </Container>
     </main>
   );
 }

@@ -66,6 +66,19 @@ describe("contributeError", () => {
     ).toEqual({ key: "invalidDimensions" });
   });
 
+  // An imported EAN or UPC the member never looked at used to end in "Failed to create puzzle".
+  it("says a barcode is wrong for an InvalidBarcode refusal", () => {
+    expect(
+      contributeError(
+        new ConvexError({
+          code: "InvalidBarcode",
+          message: "Invalid EAN: check digit does not match",
+        }),
+        NOW,
+      ),
+    ).toEqual({ key: "invalidBarcode" });
+  });
+
   it.each([
     ["a failed upload", new Error("Image upload failed")],
     ["a failed cover step", new CoverStepError(new Error("upload failed"))],
@@ -88,6 +101,7 @@ describe("contributeError", () => {
       "coverRateLimited",
       "addRateLimited",
       "textTooLong",
+      "invalidBarcode",
       "puzzleCreationFailed",
     ] as const) {
       expect(en.puzzles[key]).toBeTruthy();

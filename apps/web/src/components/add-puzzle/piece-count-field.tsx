@@ -1,5 +1,6 @@
 // apps/web/src/components/add-puzzle/piece-count-field.tsx
 import { Input } from "@/components/ui/input";
+import { useTranslations } from "use-intl";
 import { PIECE_PRESETS } from "./add-puzzle-schema";
 
 // The most pieces the server takes (catalog/domain/piece-count.ts MAX_PIECE_COUNT).
@@ -14,6 +15,7 @@ export function PieceCountField({
   onChange: (n: number | undefined) => void;
   id?: string;
 }) {
+  const t = useTranslations("puzzles");
   return (
     <div className="flex flex-col gap-2">
       <Input
@@ -24,7 +26,8 @@ export function PieceCountField({
         min="1"
         max={MAX_PIECE_COUNT}
         value={value ?? ""}
-        placeholder="1000"
+        // An example, not a value: a bare "1000" read as already filled in (and as a preset).
+        placeholder={t("pieceCountExample")}
         onChange={(e) => {
           if (e.target.value === "") return onChange(undefined);
           const n = Number(e.target.value);
@@ -39,11 +42,13 @@ export function PieceCountField({
           <button
             key={n}
             type="button"
+            aria-pressed={value === n}
             onClick={() => onChange(n)}
             className={[
-              "inline-flex items-center justify-center rounded-full border px-2.5 py-1 font-mono text-xs cursor-pointer transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11",
+              "inline-flex items-center justify-center rounded-md border px-2.5 py-1 text-xs tabular-nums cursor-pointer transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11",
+              // Picked: the tint plus a Canal Link edge, so the choice doesn't rest on a fill alone.
               value === n
-                ? "bg-jigsaw-primary-tint text-primary-text border-border"
+                ? "bg-jigsaw-primary-tint text-primary-text border-primary-text"
                 : "bg-card text-muted-foreground border-border hover:bg-accent",
             ].join(" ")}
           >

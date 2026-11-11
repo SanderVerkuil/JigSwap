@@ -64,26 +64,44 @@ function DocPageView() {
   const pager = buildPager(tree, slug);
   const group = tree.find((g) => g.slug === page.group);
 
+  // A group's own index page ends the trail itself, so it isn't listed twice; elsewhere the group
+  // links to its index page where it has one.
+  const groupCrumbs =
+    group && group.slug !== slug
+      ? [
+          findDocPage(localePages, group.slug)
+            ? { title: group.title, to: `/docs/${group.slug}` }
+            : { title: group.title },
+        ]
+      : [];
   const trail = [
     { title: t("breadcrumbRoot"), to: "/docs" },
-    ...(group ? [{ title: group.title }] : []),
+    ...groupCrumbs,
     { title: page.frontmatter.title },
   ];
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_220px] max-[1280px]:grid-cols-1 gap-x-[clamp(24px,3vw,56px)] items-start">
-      <article className="max-w-[720px] min-w-0">
+      <article className="max-w-[72ch] min-w-0">
         <DocBreadcrumb trail={trail} />
-        <h1 className="font-mk-heading font-bold tracking-tight text-mk-text-strong text-[clamp(30px,4vw,40px)] leading-[1.12] mb-4">
+        <h1 className="font-mk-heading font-normal tracking-[-0.01em] text-mk-text-strong text-[clamp(30px,4vw,44px)] leading-[1.1] mb-5 text-balance">
           {page.frontmatter.title}
         </h1>
+        {/* Where the rail beside the text doesn't fit, the same list folds in here. */}
+        <OnPageToc
+          headings={headings}
+          variant="details"
+          className="mb-8 min-[1280px]:hidden"
+        />
         <DocContent html={html} />
         <DocPager pager={pager} />
         <DocHelpful slug={slug} />
       </article>
+      {/* Scrolls on its own when a long article's list is taller than the window, ending above
+          the cookie banner while that is open. */}
       <OnPageToc
         headings={headings}
-        className="max-[1280px]:hidden sticky top-[96px]"
+        className="max-[1280px]:hidden sticky top-[96px] max-h-[calc(100dvh-96px-var(--consent-banner-height,0px))] overflow-y-auto overscroll-contain -mx-1 px-1 pb-6 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin]"
       />
     </div>
   );

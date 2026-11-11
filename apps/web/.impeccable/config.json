@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "hanken grotesk fallback",
+        "createdAt": "2026-11-10T18:54:13.385Z",
+        "reason": "Claude: metric-adjusted local Arial fallback for the documented Hanken Grotesk (globals.css font-face notes), not a new font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "young serif fallback",
+        "createdAt": "2026-11-10T18:54:13.402Z",
+        "reason": "Claude: metric-adjusted local Georgia fallback for the documented Young Serif (globals.css font-face notes), not a new font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "baloo 2 fallback",
+        "createdAt": "2026-11-10T18:54:13.417Z",
+        "reason": "Claude: metric-adjusted local Arial fallback for the documented Baloo 2 wordmark face (globals.css font-face notes), not a new font"
+      }
+    ]
+  }
+}

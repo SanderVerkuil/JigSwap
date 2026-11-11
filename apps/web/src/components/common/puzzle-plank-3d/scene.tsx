@@ -25,11 +25,13 @@ import { easing } from "maath";
 import * as React from "react";
 import * as THREE from "three";
 import { framedContentHeight, layoutRow } from "./layout";
-import { DEFAULT_WOOD_PARAMS, useWoodTexture } from "./wood-texture";
 
 // ——— shelf constants ———
 const SHELF_THICKNESS = 0.14;
 const SHELF_DEPTH = 0.6;
+// The board is the flat plank token, matte, with no grain: the same plain board as the CSS plank
+// that shows before the scene loads and on phones.
+const SHELF_ROUGHNESS = 0.9;
 
 // ——— camera constants ———
 const FOV = 38;
@@ -105,7 +107,7 @@ function Lights({
       <directionalLight
         ref={rim}
         position={[-3, 3.5, -2]}
-        color="#8b5cf6"
+        color="#b4dcf8"
         intensity={preset.rimIntensity}
       />
     </>
@@ -190,9 +192,6 @@ function Arrangement({
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
 
-  // Wood-grain texture for the shelf board, tinted from the theme shelf colour.
-  const woodTexture = useWoodTexture(lightingPreset.shelfColor);
-
   const { slots, rowWidth } = React.useMemo(() => layoutRow(boxes), [boxes]);
 
   // Live per-box world heights: cover boxes aspect-correct after their image
@@ -258,8 +257,8 @@ function Arrangement({
           >
             <boxGeometry args={[shelfW, SHELF_THICKNESS, SHELF_DEPTH]} />
             <meshStandardMaterial
-              map={woodTexture}
-              roughness={DEFAULT_WOOD_PARAMS.roughness}
+              color={lightingPreset.shelfColor}
+              roughness={SHELF_ROUGHNESS}
             />
           </mesh>
 
@@ -269,8 +268,8 @@ function Arrangement({
               box={box}
               slot={{
                 x: slots[i]?.x ?? 0,
-                c1: resolved[i]?.c1 ?? "#6048e8",
-                c2: resolved[i]?.c2 ?? "#494e92",
+                c1: resolved[i]?.c1 ?? "#146350",
+                c2: resolved[i]?.c2 ?? "#0f3b30",
               }}
               index={i}
               headingFont={headingFont}

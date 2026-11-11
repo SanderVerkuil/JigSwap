@@ -6,19 +6,12 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 import type { ComponentProps, ComponentType } from "react";
 import { IntlProvider } from "use-intl";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import nl from "../../../../locales/nl.json";
 import { Route as DocPageRoute } from "./$";
@@ -41,10 +34,15 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({
     to,
     params: _params,
+    activeOptions,
     children,
     ...rest
-  }: ComponentProps<"a"> & { to: string; params?: object }) => (
-    <a href={to} {...rest}>
+  }: ComponentProps<"a"> & {
+    to: string;
+    params?: object;
+    activeOptions?: { exact?: boolean };
+  }) => (
+    <a href={to} data-exact={activeOptions?.exact ? "" : undefined} {...rest}>
       {children}
     </a>
   ),
@@ -150,16 +148,6 @@ const headMatch = (locale: "en" | "nl") => ({
   pathname: "/docs/getting-started/first",
 });
 
-beforeAll(() => {
-  vi.stubGlobal(
-    "IntersectionObserver",
-    class {
-      observe() {}
-      disconnect() {}
-    },
-  );
-});
-
 afterEach(cleanup);
 
 describe("docs page loader", () => {
@@ -245,6 +233,97 @@ describe("docs page landmarks", () => {
         .map((heading) => heading.textContent),
     ).toEqual(["First steps"]);
   });
+
+  // F20: below 1280px the rail is hidden, so the same list folds in under the title, where the
+  // phone Docs bar jumps back to it.
+  it("folds the on-page contents in under the title where the rail doesn't fit", () => {
+    const { container } = render(withIntl(<docPage.component />));
+    const details = container.querySelector("details#on-this-page");
+    expect(details).not.toBeNull();
+    expect(details?.className).toContain("min-[1280px]:hidden");
+    expect(details?.querySelector("summary")?.textContent).toBe("On this page");
+    expect(
+      within(details as HTMLElement)
+        .getAllByRole("link")
+        .map((a) => a.getAttribute("href")),
+    ).toEqual(["#one"]);
+    const h1 = screen.getByRole("heading", { level: 1 });
+    const prose = container.querySelector(".docs-prose") as Element;
+    expect(
+      h1.compareDocumentPosition(details as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      (details as Element).compareDocumentPosition(prose) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  // As on the legal pages: the rail sits on the white page, the folded block is Sky Soft, and
+  // each marks its current entry so it stands off its own ground.
+  it("marks the current entry with a Sky Soft pill in the rail and a white window in the fold", async () => {
+    const { container } = render(withIntl(<docPage.component />));
+    const details = container.querySelector(
+      "details#on-this-page",
+    ) as HTMLElement;
+    expect(details.className).toContain("bg-mk-sky-soft");
+    const rail = screen.getByRole("complementary", { name: "On this page" });
+    const railCurrent = within(rail).getByRole("link", { name: "One" });
+    const foldCurrent = within(details).getByRole("link", { name: "One" });
+    // happy-dom has no layout, so every top is 0 and the last heading is the current one.
+    await waitFor(() =>
+      expect(railCurrent.getAttribute("aria-current")).toBe("true"),
+    );
+    expect(foldCurrent.getAttribute("aria-current")).toBe("true");
+    expect(railCurrent.className).toContain("bg-mk-sky-soft");
+    expect(foldCurrent.className).toContain("bg-mk-card");
+    expect(foldCurrent.className).not.toContain("bg-mk-sky-soft");
+  });
+});
+
+// F19: every crumb used to carry aria-current, and a group's index page listed its group twice.
+describe("docs breadcrumb", () => {
+  const crumbs = () =>
+    within(screen.getByRole("navigation", { name: "Breadcrumb" }));
+
+  it("marks only the page itself as current, and links its group", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started/first" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+
+    const current = nav.querySelectorAll("[aria-current]");
+    expect(current).toHaveLength(1);
+    expect(current[0].textContent).toBe("First steps");
+    expect(current[0].getAttribute("aria-current")).toBe("page");
+
+    const links = crumbs().getAllByRole("link");
+    expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+      ["Docs", "/docs"],
+      ["Getting started", "/docs/getting-started"],
+    ]);
+    // TanStack would otherwise mark them current on every page below them.
+    for (const link of links)
+      expect(link.hasAttribute("data-exact")).toBe(true);
+  });
+
+  it("leaves the group out on the group's own index page", async () => {
+    loaderData.current = await docPage.loader({
+      params: { _splat: "getting-started" },
+      context: { intl: { locale: "en" } },
+    });
+    render(withIntl(<docPage.component />));
+    const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(Array.from(nav.children, (crumb) => crumb.textContent)).toEqual([
+      "Docs",
+      "Getting started",
+    ]);
+    expect(nav.querySelector("[aria-current]")?.textContent).toBe(
+      "Getting started",
+    );
+  });
 });
 
 describe("docs landing", () => {
@@ -258,6 +337,15 @@ describe("docs landing", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Getting started" }),
     ).toBeTruthy();
+  });
+
+  // F17: inline links were 21px targets on touch screens.
+  it("gives each article link a 44px row on touch screens", () => {
+    render(withIntl(<DocsIndex />));
+    const link = screen.getByRole("link", { name: "First steps" });
+    expect(link.className).toContain("pointer-coarse:min-h-11");
+    expect(link.className).toContain("inline-flex");
+    expect(link.closest("ul")?.className).toContain("pointer-coarse:gap-0");
   });
 
   it("gives each topic its own icon", () => {

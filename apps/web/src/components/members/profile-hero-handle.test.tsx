@@ -47,7 +47,8 @@ const renderHero = (profile: PublicProfileView, requestedHandle?: string) =>
   );
 
 const handleLine = () =>
-  document.querySelector("section span.font-mono")?.textContent ?? null;
+  document.querySelector("section [data-slot=member-handle]")?.textContent ??
+  null;
 
 afterEach(cleanup);
 

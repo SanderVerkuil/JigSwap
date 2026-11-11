@@ -19,7 +19,7 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
    uit, en een tag mag je met of zonder **#** typen.
 4. Kies een volgorde in het **sorteermenu**: **Onlangs toegevoegd** (de
    standaard), **Titel A–Z** of **Minste stukjes eerst**.
-5. Gebruik de **statusfilter-pillen** om te beperken wat je ziet:
+5. Gebruik de **statusfilters** om te beperken wat je ziet:
    - **Alles**
    - **Beschikbaar**
    - **Te ruil**
@@ -30,8 +30,8 @@ Je bibliotheek is de verzameling fysieke puzzel**kopieën** die jij persoonlijk 
    je de puzzels van iedereen ziet, alleen die van jou of alleen die van je
    huisgenoten.
 
-Op een telefoon staan de statuspillen, **Van wie** en de volgorde achter de knop
-**Filters** naast het zoekvak. Filters die aanstaan, zie je daaronder als
+Op een telefoon staan de statusfilters, **Van wie** en de volgorde achter de
+knop **Filters** naast het zoekvak. Filters die aanstaan, zie je daaronder als
 chips: tik op een chip om hem weg te halen.
 
 Je zoekterm, volgorde, filters en weergave staan in het adres van de pagina.

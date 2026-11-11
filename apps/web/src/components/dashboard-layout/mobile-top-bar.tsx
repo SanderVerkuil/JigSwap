@@ -1,6 +1,6 @@
 "use client";
 
-// Slim mobile top bar (replaces the desktop chrome below the md breakpoint):
+// Slim sky top bar (replaces the desktop chrome below the md breakpoint):
 // brand lockup on the dashboard, a back chevron on deep pages (instead of
 // breadcrumbs), just the title on landings, tab roots and the profile;
 // then search (command palette), Messages (with the unread count: Messages has
@@ -24,6 +24,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Bell, ChevronLeft, MessageSquare, Search } from "lucide-react";
 import { useCallback, useSyncExternalStore, type MouseEvent } from "react";
 import { useTranslations } from "use-intl";
+import { ConnectionNotice } from "./connection-notice";
 import { formatNavBadge, nameForNavBadge } from "./nav-badge";
 import { useUnreadMessageCount } from "./nav-counts";
 import { usePageHeaderContent } from "./page-header-slot";
@@ -38,7 +39,7 @@ import { MOBILE_TOP_BAR_HEIGHT_VAR, useHeightCssVar } from "./sticky-offset";
 
 // Shared 44px touch target for every control in the bar; the page's own control shows as current.
 const tapTarget =
-  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent aria-[current=page]:text-primary-text";
+  "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-[background-color,scale] duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.97] aria-[current=page]:text-primary-text";
 
 export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const t = useTranslations("shell");
@@ -122,7 +123,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <header
       ref={measureRef}
-      className="sticky top-0 z-30 shrink-0 border-b bg-card pt-[env(safe-area-inset-top)] md:hidden"
+      className="sticky top-0 z-30 shrink-0 bg-sidebar pt-[env(safe-area-inset-top)] text-sidebar-foreground md:hidden"
     >
       <div className="flex h-14 items-center gap-1 pr-2 pl-1.5 max-sm:gap-0">
         {up ? (
@@ -155,9 +156,9 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               priority
               className="size-7 object-contain"
             />
-            <span className="font-heading text-[19px] leading-none font-bold">
-              <span className="text-jigsaw-primary">Jig</span>
-              <span className="text-jigsaw-secondary">Swap</span>
+            <span className="font-logo text-[22px] leading-none font-bold">
+              <span className="text-logo-jig">Jig</span>
+              <span className="text-logo-swap">Swap</span>
             </span>
           </Link>
         ) : null}
@@ -167,8 +168,10 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           {title && (
             <p
               className={cn(
-                // The controls leave a phone about 126px: two smaller lines before an ellipsis.
-                "font-heading truncate text-lg font-bold max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-base max-sm:leading-snug",
+                // The controls leave a phone about 126px: two 14px lines before an ellipsis, which
+                // fit the long Dutch titles in the wide serif. Phone browsers hyphenate by <html
+                // lang>, so a single long word ("Meldingsvoorkeuren") breaks instead of cutting off.
+                "font-heading truncate text-xl leading-7 max-sm:line-clamp-2 max-sm:whitespace-normal max-sm:text-sm max-sm:leading-snug max-sm:hyphens-auto",
                 !up && "pl-2",
               )}
             >
@@ -181,7 +184,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           type="button"
           onClick={onOpenPalette}
           aria-label={t("search.label")}
-          className={cn(tapTarget, "text-muted-foreground")}
+          className={tapTarget}
         >
           <Search className="size-5" />
         </button>
@@ -196,7 +199,7 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               : messagesTitle
           }
           aria-current={pathname === "/messages" ? "page" : undefined}
-          className={cn(tapTarget, "relative text-muted-foreground")}
+          className={cn(tapTarget, "relative")}
         >
           <MessageSquare className="size-5" />
           {unreadMessages > 0 && (
@@ -214,13 +217,13 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           aria-current={pathname === "/notifications" ? "page" : undefined}
           // Preferences isn't the notifications page, though it sits below it.
           activeOptions={{ exact: true }}
-          className={cn(tapTarget, "relative text-muted-foreground")}
+          className={cn(tapTarget, "relative")}
         >
           <Bell className="size-5" />
           {unread > 0 && (
             <span
               aria-hidden
-              className="bg-jigsaw-primary-accent ring-card absolute top-2.5 right-2.5 size-2 rounded-full ring-2"
+              className="bg-jigsaw-primary-accent ring-sidebar absolute top-2.5 right-2.5 size-2 rounded-full ring-2"
             />
           )}
         </Link>
@@ -228,6 +231,8 @@ export function MobileTopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
           <ShellUserButton tapTarget />
         </span>
       </div>
+      {/* Inside the sticky bar, so it stays in view and sticky page content clears it. */}
+      <ConnectionNotice />
     </header>
   );
 }

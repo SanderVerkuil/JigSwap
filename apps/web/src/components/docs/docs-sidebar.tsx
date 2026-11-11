@@ -11,6 +11,7 @@ import { useMemo } from "react";
 import { useLocale, useTranslations } from "use-intl";
 import { pages } from "virtual:docs";
 import { DocsSearchPill } from "./docs-search-pill";
+import { OnThisPageLink } from "./on-page-toc";
 
 export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const t = useTranslations("marketing.docs");
@@ -22,25 +23,28 @@ export function DocsSidebar({ onOpenSearch }: { onOpenSearch: () => void }) {
   return (
     <nav aria-label={t("navLabel")} className="flex flex-col gap-1">
       <DocsSearchPill onOpenSearch={onOpenSearch} />
+      {/* From 861 to 1279px neither the rail beside the article nor the phone Docs bar shows; the
+          sticky sidebar keeps the way back to the contents folded in under the title in reach. */}
+      <OnThisPageLink className="hidden min-[861px]:max-[1280px]:flex items-center gap-2 ml-1.5 py-[6px] px-3 text-[15px] leading-snug rounded-sm transition-colors duration-150 text-mk-text-muted font-medium hover:text-mk-text-strong hover:bg-mk-muted dark:hover:bg-accent pointer-coarse:min-h-11" />
 
       {navTree.map((group) => (
         <Collapsible key={group.slug} defaultOpen>
-          <CollapsibleTrigger className="group flex items-center gap-2 w-full py-2 mt-3 font-mk-heading font-semibold text-[13px] tracking-[.04em] text-mk-text-strong">
+          <CollapsibleTrigger className="group flex items-center gap-2 w-full py-2 mt-3 font-mk-heading font-normal text-[17px] text-mk-text-strong">
             <ChevronRight className="size-3.5 text-mk-text-muted transition-transform group-data-[state=open]:rotate-90" />
             {group.title}
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="flex flex-col border-l border-mk-border ml-1.5">
+            <div className="flex flex-col gap-0.5 ml-1.5">
               {group.links.map((link) => (
                 <Link
                   key={link.slug}
                   to="/docs/$"
                   params={{ _splat: link.slug }}
-                  className="-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px] transition-colors border-transparent text-mk-text-muted font-medium hover:text-mk-text-body hover:bg-mk-muted/60"
+                  className="py-[6px] px-3 text-[15px] leading-snug rounded-sm transition-colors duration-150 text-mk-text-muted font-medium hover:text-mk-text-strong hover:bg-mk-muted dark:hover:bg-accent"
                   activeProps={{
                     className: cn(
-                      "-ml-px border-l-2 py-[6px] px-3.5 text-[13.5px] leading-snug rounded-r-[6px]",
-                      "border-mk-violet-400 text-mk-violet-600 font-semibold bg-mk-violet-50",
+                      "py-[6px] px-3 text-[15px] leading-snug rounded-sm",
+                      "text-mk-text-strong font-semibold bg-mk-sky-soft dark:bg-mk-muted",
                     ),
                   }}
                 >

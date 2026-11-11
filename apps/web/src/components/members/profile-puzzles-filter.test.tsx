@@ -57,14 +57,14 @@ afterEach(() => cleanup());
 describe("ProfilePuzzlesSection filter", () => {
   it("scope 'all': offers All/Available, defaulting to All", () => {
     renderSection("all");
-    const group = screen.getByRole("radiogroup", {
+    const group = screen.getByRole("group", {
       name: "Which of Hans's puzzles to show",
     });
     expect(group).toBeTruthy();
     expect(
       screen
-        .getByRole("radio", { name: "All puzzles" })
-        .getAttribute("aria-checked"),
+        .getByRole("button", { name: "All puzzles" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     expect(lastArgs()).toMatchObject({ memberId: "member1", filter: "all" });
     expect(
@@ -75,12 +75,12 @@ describe("ProfilePuzzlesSection filter", () => {
 
   it("scope 'all': choosing Available re-queries with filter 'available'", () => {
     renderSection("all");
-    fireEvent.click(screen.getByRole("radio", { name: "Available" }));
+    fireEvent.click(screen.getByRole("button", { name: "Available" }));
     expect(lastArgs()).toMatchObject({ filter: "available" });
     expect(
       screen
-        .getByRole("radio", { name: "Available" })
-        .getAttribute("aria-checked"),
+        .getByRole("button", { name: "Available" })
+        .getAttribute("aria-pressed"),
     ).toBe("true");
     expect(
       screen.getByText("Puzzles Hans offers to swap, lend or sell."),
@@ -90,8 +90,10 @@ describe("ProfilePuzzlesSection filter", () => {
   it("scope 'all' + Available with nothing open: keeps the filter and says so", () => {
     renderSection("all");
     paginated.results = [];
-    fireEvent.click(screen.getByRole("radio", { name: "Available" }));
-    expect(screen.getByRole("radiogroup")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Available" }));
+    expect(
+      screen.getByRole("group", { name: "Which of Hans's puzzles to show" }),
+    ).toBeTruthy();
     expect(
       screen.getByText(
         "Hans has no puzzles available to swap, lend or sell right now.",
@@ -101,7 +103,9 @@ describe("ProfilePuzzlesSection filter", () => {
 
   it("scope 'available': no filter, a listings-only note, queries 'available'", () => {
     renderSection("available");
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(
+      screen.queryByRole("group", { name: "Which of Hans's puzzles to show" }),
+    ).toBeNull();
     expect(
       screen.getByText("Puzzles Hans offers to swap, lend or sell."),
     ).toBeTruthy();

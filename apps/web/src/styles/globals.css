@@ -1,50 +1,62 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 /* Self-hosted fonts: Vite emits the woff2 files as hashed /assets, so no
-   request goes to Google. Baloo 2 is one variable face (400–800); Poppins
-   ships only the weights the UI uses (font-normal … font-bold). Per-script
-   unicode-range faces, so browsers download only the subsets a page needs.
-   __root.tsx preloads the two latin files used above the fold. */
+   request goes to Google. Hanken Grotesk is one variable face; Young Serif has
+   one weight; Baloo 2 is one variable face that sets only the logo's wordmark.
+   Per-script unicode-range faces, so browsers download only the subsets a page
+   needs. __root.tsx preloads the two latin files used above the fold. */
+@import "@fontsource-variable/hanken-grotesk";
+@import "@fontsource/young-serif/400.css";
 @import "@fontsource-variable/baloo-2";
-@import "@fontsource/poppins/400.css";
-@import "@fontsource/poppins/500.css";
-@import "@fontsource/poppins/600.css";
-@import "@fontsource/poppins/700.css";
 @import "./marketing.css";
 @import "./docs.css";
 
 /* Metric-matched fallbacks for the swap period: until a web-font file
-   arrives, latin text is set in the local Arial scaled to the web font's
-   average glyph width and line metrics, so swapping in Poppins or Baloo 2
-   barely moves the layout. Values use next/font's formula on the capsize
-   metrics: size-adjust = font xWidthAvg / Arial xWidthAvg (913/2048, bold
-   983/2048); each override = font metric / size-adjust (per 1000 units:
-   Poppins 500, bold 515, ascent 1050, descent 350, gap 100; Baloo 2 427,
-   bold 450, ascent 1078, descent 524). The 700 faces pair bold with Arial
-   Bold, so 600+ text keeps real bold glyphs. unicode-range is fontsource's
-   latin subset, so other scripts fall through to the system stack as before.
-   Where Arial is missing (Android, Linux) these faces are simply skipped. */
+   arrives, latin text is set in a local face scaled to the web font's average
+   glyph width and line metrics, so swapping in the web font barely moves the
+   layout. Values use next/font's formula on the capsize metrics: size-adjust =
+   font xWidthAvg / local xWidthAvg; each override = font metric / size-adjust
+   (per 1000 units: Hanken Grotesk 450, bold 457, ascent 1000, descent 303;
+   Young Serif 511, ascent 1046, descent 366; Baloo 2 427, bold 450, ascent 1078,
+   descent 524. Arial 446, bold 480; Georgia 446). Hanken and Baloo pair with
+   Arial, the 700 faces with Arial Bold so 600+ text keeps real bold glyphs. Young
+   Serif pairs with Georgia, the closest common serif. unicode-range is
+   fontsource's latin subset, so other scripts fall through to the system stack
+   as before. Where the local face is missing these are simply skipped. */
 @font-face {
-  font-family: "Poppins Fallback";
+  font-family: "Hanken Grotesk Fallback";
   src: local("Arial"), local("ArialMT");
   font-weight: 400;
-  size-adjust: 112.16%;
-  ascent-override: 93.62%;
-  descent-override: 31.21%;
-  line-gap-override: 8.92%;
+  size-adjust: 100.94%;
+  ascent-override: 99.07%;
+  descent-override: 30.02%;
+  line-gap-override: 0%;
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
     U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Poppins Fallback";
+  font-family: "Hanken Grotesk Fallback";
   src: local("Arial Bold"), local("Arial-BoldMT");
   font-weight: 700;
-  size-adjust: 107.3%;
-  ascent-override: 97.86%;
-  descent-override: 32.62%;
-  line-gap-override: 9.32%;
+  size-adjust: 95.21%;
+  ascent-override: 105.03%;
+  descent-override: 31.82%;
+  line-gap-override: 0%;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Young Serif Fallback";
+  src: local("Georgia");
+  font-weight: 400;
+  size-adjust: 114.63%;
+  ascent-override: 91.25%;
+  descent-override: 31.93%;
+  line-gap-override: 0%;
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
@@ -80,120 +92,128 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light mode colors */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  /* Brand violet is the everyday primary (vivid Jig Violet ≈ #6048e8). */
-  --primary: oklch(0.52 0.22 279);
-  --primary-foreground: oklch(0.985 0.002 286);
-  /* Primary as TEXT (links, chips, icons) on page surfaces; identical to --primary in light mode. */
-  --primary-text: var(--primary);
-  --secondary: oklch(0.965 0.012 286);
-  --secondary-foreground: oklch(0.32 0.08 281);
-  --muted: oklch(0.965 0.012 286);
-  /* L 0.51 (was 0.553): muted text has to pass AA on the app's own tints, not only on white:
-     5.21:1 on --muted (was 4.34:1), 5.05:1 on --sidebar, 4.61:1 on --sidebar-accent. */
-  --muted-foreground: oklch(0.51 0.035 282);
-  --accent: oklch(0.95 0.022 286);
-  --accent-foreground: oklch(0.45 0.18 281);
+  /* The street: a sky frame around a white sheet, canal-house green for ink and the everyday
+     action, and marigold kept for the one action that matters most on a screen. */
+  --card: #ffffff;
+  --card-foreground: #0f3b30;
+  --popover: #ffffff;
+  --popover-foreground: #0f3b30;
+  --primary: #134a3c;
+  --primary-foreground: #ffffff;
+  /* Primary as TEXT (links, chips, icons) on page surfaces. */
+  --primary-text: #146350;
+  --secondary: #eaf4fa;
+  --secondary-foreground: #0f3b30;
+  --muted: #eef5f9;
+  --muted-foreground: #4a655d;
+  --accent: #e3f1fa;
+  --accent-foreground: #0f3b30;
   --destructive: oklch(0.577 0.245 27.325);
+  /* Destructive as TEXT (text-destructive and its variants, through --text-color-destructive).
+     Deeper than the fill: --destructive as text was 4.01:1 on a focused destructive menu row
+     (destructive/10 over the popover). This red stays over 4.5:1 on every tint it sits on. */
+  --destructive-text: #c10007;
   --destructive-foreground: #f8fafc;
-  --border: oklch(0.915 0.013 286);
-  --input: oklch(0.915 0.013 286);
-  --ring: oklch(0.55 0.2 279);
-  --radius: 0.625rem;
+  --border: #d8e5eb;
+  --input: #c6d6dd;
+  --ring: #146350;
+  --radius: 0.375rem;
 
   /* JigSwap custom colors */
-  --jigsaw-primary: #6048e8;
-  --jigsaw-primary-accent: #ec4899;
-  --jigsaw-secondary: #19c316;
-  /* Brand green is a fill/dot colour: white on it is 2.37:1 and it is 2.13:1 as text on its own
-     tint. Same hue (oklch h 142.5), darker: white on --jigsaw-secondary-strong is 5.50:1, and
-     --jigsaw-secondary-text is 5.50:1 on white, 4.95:1 on --jigsaw-secondary-tint. */
-  --jigsaw-secondary-strong: #127a10;
-  --jigsaw-secondary-text: #127a10;
-  --jigsaw-success: #10b981;
-  --jigsaw-warning: #f59e0b;
-  --jigsaw-puzzle: #ec4899;
-  --jigsaw-neutral: #6b7280;
-  /* Brand tint surfaces for forms/chips (Add-Puzzle redesign) */
-  --jigsaw-primary-tint: color-mix(in oklab, var(--jigsaw-primary) 9%, white);
+  --jigsaw-primary: #134a3c;
+  /* Tulip: unread dots and counts. */
+  --jigsaw-primary-accent: #c8321f;
+  --jigsaw-secondary: #1e7b34;
+  /* The green as a fill behind white text, and as text. */
+  --jigsaw-secondary-strong: #1e7b34;
+  --jigsaw-secondary-text: #17652b;
+  --jigsaw-success: #1e7b34;
+  --jigsaw-warning: #a86400;
+  --jigsaw-puzzle: #d6246e;
+  --jigsaw-neutral: #5e7069;
+  /* Marigold and the ink that sits on it. */
+  --jigsaw-gold: #ffb81c;
+  --jigsaw-on-gold: #0f3b30;
+  /* The logo keeps its own colours, whatever the theme's primary does. */
+  --logo-jig: #4a37b8;
+  --logo-swap: #128a10;
+  /* Brand tint surfaces for forms/chips (Add-Puzzle redesign). The primary tint is the picked
+     and selected fill: a canal-sky step below the hover sky (--accent), never a grey. */
+  --jigsaw-primary-tint: color-mix(
+    in oklab,
+    var(--primary-text) 12%,
+    var(--accent)
+  );
   --jigsaw-secondary-tint: color-mix(
     in oklab,
     var(--jigsaw-secondary) 14%,
     white
   );
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  /* Shell chrome: gently violet-tinted surface (single hue, slightly deeper
-     than the page), with violet hover/active accents for the sidebar nav. */
-  --sidebar: oklch(0.955 0.022 286);
-  --sidebar-foreground: oklch(0.2 0.03 281);
-  --sidebar-primary: oklch(0.52 0.22 279);
-  --sidebar-primary-foreground: oklch(0.985 0.002 286);
-  --sidebar-accent: oklch(0.925 0.035 286);
-  --sidebar-accent-foreground: oklch(0.5 0.21 280);
-  --sidebar-border: oklch(0.905 0.022 286);
-  --sidebar-ring: oklch(0.55 0.2 279);
-  --background: oklch(0.995 0.004 286);
-  --foreground: oklch(0.129 0.042 264.695);
+  --chart-1: #146350;
+  --chart-2: #e09a00;
+  --chart-3: #2b7bb9;
+  --chart-4: #c8321f;
+  --chart-5: #8a6a3b;
+  /* Shell chrome: the sky frame. The active item is a white window in it. */
+  --sidebar: #e3f1fa;
+  --sidebar-foreground: #0f3b30;
+  --sidebar-primary: #134a3c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #cfe6f5;
+  --sidebar-accent-foreground: #0f3b30;
+  --sidebar-active: #ffffff;
+  --sidebar-border: #cbe0ec;
+  --sidebar-ring: #146350;
+  /* The tone-on-tone skyline at the foot of the sidebar. */
+  --sidebar-skyline: #cfe6f5;
+  --sidebar-skyline-window: #cfe6f5;
+  --background: #ffffff;
+  --foreground: #0f3b30;
 }
 
 .dark {
-  /* Dark mode colors — a dark *violet* tone of the primary hue, kept clearly
-     above black so the brand stays recognisable (never near-black). */
-  --background: oklch(0.24 0.045 285);
-  --foreground: oklch(0.965 0.01 286);
-  --card: oklch(0.285 0.05 285);
-  --card-foreground: oklch(0.965 0.01 286);
-  --popover: oklch(0.285 0.05 285);
-  --popover-foreground: oklch(0.965 0.01 286);
-  /* L 0.57 (was 0.62): primary-foreground on primary reaches 4.68:1 (was 3.80:1). The ring stays
-     lighter than the fill (see --ring below). */
-  --primary: oklch(0.57 0.21 282);
-  --primary-foreground: oklch(0.99 0.005 286);
-  /* --primary stays dark enough for white text on fills, which makes it too dark as text on these
-     surfaces (3.44:1 on the background). Same hue, lifted: 7.87:1 on the background, 5.26:1 on
-     accent, 4.98:1 at the 80% hover opacity on card. */
-  --primary-text: oklch(0.78 0.14 282);
-  --secondary: oklch(0.33 0.05 285);
-  --secondary-foreground: oklch(0.965 0.01 286);
-  --muted: oklch(0.33 0.05 285);
-  /* L 0.74 (was 0.72): muted text in a hovered or highlighted row sits on --accent, where 0.72
-     was 4.41:1. Now 4.78:1 on --accent and 5.31:1 on --muted. */
-  --muted-foreground: oklch(0.74 0.04 286);
-  --accent: oklch(0.36 0.06 285);
-  --accent-foreground: oklch(0.965 0.01 286);
-  /* Text on an outline button (input/30 over the card) stays over 4.5:1, and white on
-     bg-destructive/60 still does too. */
+  /* The same street at night: a deep blue-green sky, kept clearly above black, with lit windows. */
+  --background: #15343d;
+  --foreground: #eaf4f7;
+  --card: #1b3f49;
+  --card-foreground: #eaf4f7;
+  --popover: #1b3f49;
+  --popover-foreground: #eaf4f7;
+  --primary: #1f7a63;
+  --primary-foreground: #ffffff;
+  --primary-text: #8fdcc6;
+  --secondary: #234a54;
+  --secondary-foreground: #eaf4f7;
+  --muted: #234a54;
+  --muted-foreground: #a9c6cc;
+  --accent: #2a5561;
+  --accent-foreground: #eaf4f7;
+  /* For fills: white on bg-destructive/60 stays over 4.5:1. As text it falls under 4.5:1 on
+     the night card, so text uses the lighter --destructive-text, which stays over 4.5:1 on the
+     card, the accent, an outline button (input/30 over the card) and a focused destructive menu
+     row (destructive/20 over the popover). */
   --destructive: oklch(0.74 0.17 22.2);
+  --destructive-text: #ffb0ab;
   --destructive-foreground: #f8fafc;
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
-  /* L 0.65 (was 0.62): the full-alpha focus ring has to reach 3:1 on every dark surface a control
-     sits on, including a highlighted row (--accent, 3.12:1; was 2.82:1); 4.10:1 on the card. */
-  --ring: oklch(0.65 0.21 282);
+  --ring: #8fdcc6;
 
   /* JigSwap custom colors for dark mode */
-  /* oklch L 0.57 (was #7560f0, L 0.588), same hue and chroma: white text on it reaches 4.84:1
-     (was 4.48:1). */
-  --jigsaw-primary: #705aea;
-  --jigsaw-primary-accent: #ec4899;
-  --jigsaw-secondary: #19c316;
-  /* Fills behind white text keep the light value (5.50:1). Green as text is lifted instead
-     (same hue, oklch L 0.80): #19c316 is only 4.21:1 on the dark --jigsaw-secondary-tint, this
-     is 5.68:1 there and 8.27:1 on the card. */
-  --jigsaw-secondary-strong: #127a10;
-  --jigsaw-secondary-text: #66dc5c;
-  --jigsaw-success: #34d399;
-  --jigsaw-warning: #fbbf24;
-  --jigsaw-puzzle: #f472b6;
-  --jigsaw-neutral: #9ca3af;
+  --jigsaw-primary: #1f7a63;
+  --jigsaw-primary-accent: #d43f2a;
+  --jigsaw-secondary: #1e7b34;
+  /* Fills behind white text keep the light value. Green as text is lifted instead. */
+  --jigsaw-secondary-strong: #1e7b34;
+  --jigsaw-secondary-text: #6fdb9b;
+  --jigsaw-success: #4cc38a;
+  --jigsaw-warning: #e8a200;
+  --jigsaw-puzzle: #f0609b;
+  --jigsaw-neutral: #9fb4b0;
+  --jigsaw-gold: #ffb81c;
+  --jigsaw-on-gold: #0f2a33;
+  --logo-jig: #a79cf7;
+  --logo-swap: #4fd14c;
   --jigsaw-primary-tint: color-mix(
     in oklab,
     var(--jigsaw-primary) 22%,
@@ -204,21 +224,23 @@
     var(--jigsaw-secondary) 22%,
     var(--card)
   );
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  /* Shell chrome (dark): same single violet hint, slightly deeper than the
-     page card so the inset reads against it. */
-  --sidebar: oklch(0.2 0.04 285);
-  --sidebar-foreground: oklch(0.965 0.01 286);
-  --sidebar-primary: oklch(0.62 0.21 282);
-  --sidebar-primary-foreground: oklch(0.99 0.005 286);
-  --sidebar-accent: oklch(0.32 0.07 285);
-  --sidebar-accent-foreground: oklch(0.85 0.12 285);
+  --chart-1: #4cc3a5;
+  --chart-2: #ffb81c;
+  --chart-3: #6db7ec;
+  --chart-4: #f0705c;
+  --chart-5: #c9a46b;
+  /* Shell chrome (dark): the night sky, slightly deeper than the sheet. */
+  --sidebar: #0f2a33;
+  --sidebar-foreground: #eaf4f7;
+  --sidebar-primary: #4cc3a5;
+  --sidebar-primary-foreground: #0f2a33;
+  --sidebar-accent: #1b3f49;
+  --sidebar-accent-foreground: #eaf4f7;
+  --sidebar-active: #15343d;
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.62 0.21 282);
+  --sidebar-ring: #8fdcc6;
+  --sidebar-skyline: #15343d;
+  --sidebar-skyline-window: color-mix(in oklab, #ffb81c 70%, #15343d);
 }
 
 @theme inline {
@@ -238,6 +260,10 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  /* text-* reads --text-color-* before --color-*, so every text-destructive (hover:, focus:,
+     data-*:, the *:[svg] form) is set in the text token while bg-, border- and ring-destructive
+     keep the fill. */
+  --text-color-destructive: var(--destructive-text);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -255,17 +281,25 @@
   --color-jigsaw-neutral: var(--jigsaw-neutral);
   --color-jigsaw-primary-tint: var(--jigsaw-primary-tint);
   --color-jigsaw-secondary-tint: var(--jigsaw-secondary-tint);
+  --color-jigsaw-gold: var(--jigsaw-gold);
+  --color-jigsaw-on-gold: var(--jigsaw-on-gold);
+  --color-logo-jig: var(--logo-jig);
+  --color-logo-swap: var(--logo-swap);
 
-  /* "Poppins" (self-hosted, imported at the top of this file) first, then its
+  /* "Hanken Grotesk" (self-hosted, imported at the top of this file) first, then its
      metric-matched Arial fallback; the system stack stays as fallback. */
   --font-sans:
-    "Poppins", "Poppins Fallback", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    "Hanken Grotesk Variable", "Hanken Grotesk Fallback", ui-sans-serif,
+    system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono:
     ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo,
     monospace;
-  /* Fontsource names its variable build "Baloo 2 Variable". */
-  --font-heading: "Baloo 2 Variable", "Baloo 2 Fallback", var(--font-sans);
+  --font-heading:
+    "Young Serif", "Young Serif Fallback", Georgia, "Times New Roman", serif;
+  /* Baloo 2 is the logo's lettering and nothing else. Fontsource names its variable build
+     "Baloo 2 Variable". */
+  --font-logo: "Baloo 2 Variable", "Baloo 2 Fallback", var(--font-sans);
 
   --radius: var(--radius);
 
@@ -276,6 +310,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 
   --color-sidebar-accent: var(--sidebar-accent);
+
+  --color-sidebar-active: var(--sidebar-active);
+
+  --color-sidebar-skyline: var(--sidebar-skyline);
+
+  --color-sidebar-skyline-window: var(--sidebar-skyline-window);
 
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
 
@@ -310,6 +350,13 @@ body {
     "calt" 1;
 }
 
+/* The Figures Rule: figures that are data are set in Hanken Grotesk with lining, tabular
+   numerals, never in Young Serif's old-style ones (a 0 reads as o, 11 as II). */
+@utility figures {
+  font-family: var(--font-sans);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring;
@@ -328,6 +375,29 @@ body {
 
   html {
     @apply overflow-x-hidden;
+    /* Young Serif has one weight; a font-bold on it must not be faked by the browser. */
+    font-synthesis-weight: none;
+    scrollbar-color: var(--muted-foreground) transparent;
+    /* Focus and anchors scroll clear of what floats over the page's foot: the open cookie
+       banner (--consent-banner-height, sticky-offset.ts) and the phone tab bar. Both are unset
+       when absent. */
+    scroll-padding-bottom: calc(
+      var(--consent-banner-height, 0px) + var(--mobile-tab-bar-height, 0px)
+    );
+  }
+  /* While the cookie banner is open, the page's end is reserved so nothing stays under it. The
+     shell reserves it on its own scroll region instead, so its phone tab bar stays at the
+     bottom. */
+  body {
+    padding-bottom: var(--consent-banner-height, 0px);
+  }
+  body:has([data-scroll-restoration-id]) {
+    padding-bottom: 0;
+  }
+
+  ::selection {
+    background: var(--jigsaw-gold);
+    color: var(--jigsaw-on-gold);
   }
 }
 

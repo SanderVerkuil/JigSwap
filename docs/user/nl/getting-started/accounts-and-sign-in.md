@@ -11,7 +11,7 @@ JigSwap gebruikt een veilig inlogsysteem (mogelijk gemaakt door Clerk). Je hebt 
 ## Een account aanmaken
 
 1. Ga naar een openbare JigSwap-pagina, zoals de [startpagina](/).
-2. Klik bovenaan de pagina op **Begin met ruilen**.
+2. Klik bovenaan de pagina op **Begin je plank**.
 3. Volg de stappen om je te registreren (e-mail/wachtwoord of een andere aangeboden inlogoptie).
 4. Zodra je geregistreerd bent, kom je terecht op het **Dashboard** van de app.
 

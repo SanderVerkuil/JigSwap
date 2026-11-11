@@ -7,34 +7,37 @@ import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Heart, X } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useTranslations } from "use-intl";
 
-// What an empty Browse says, picked by browseEmptyState: only a set text or filter is blamed (with
-// a way to clear them), and every message offers the next step.
-export function BrowseEmptyState({
-  search,
-  onClearConditions,
-}: {
-  search: BrowseSearch;
-  onClearConditions: () => void;
-}) {
+// What an empty Browse says, picked by browseEmptyState: a plain search is named as one, only a set
+// filter is blamed, and every message offers the next step. A search or filter leads on to the
+// catalogue, carrying the text, since it lists puzzles nobody offers yet. The way to clear them is
+// the toolbar's Clear All, on screen whenever one is set, so it isn't repeated here.
+export function BrowseEmptyState({ search }: { search: BrowseSearch }) {
   const t = useTranslations("browse");
   const kind = browseEmptyState(search);
 
-  if (kind === "filtered") {
+  if (kind === "searched" || kind === "filtered") {
     return (
       <EmptyState
-        title={t("empty.filteredTitle")}
-        sub={t("tryDifferentFilters")}
+        // The member's own text may be one long word: let it wrap inside the column.
+        className={kind === "searched" ? "wrap-anywhere" : undefined}
+        title={
+          kind === "searched"
+            ? t("empty.searchedTitle", { query: search.q ?? "" })
+            : t("empty.filteredTitle")
+        }
+        sub={
+          kind === "searched"
+            ? t("empty.searchedHint")
+            : t("tryDifferentFilters")
+        }
         action={
-          <Button
-            variant="outline"
-            onClick={onClearConditions}
-            className="text-foreground"
-          >
-            <X className="h-4 w-4" aria-hidden />
-            {t("clearFilters")}
+          <Button asChild variant="outline" className="text-foreground">
+            <Link to="/puzzles" search={{ q: search.q }}>
+              {t("empty.openCatalogue")}
+            </Link>
           </Button>
         }
       />

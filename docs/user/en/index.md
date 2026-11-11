@@ -1,5 +1,5 @@
 ---
-title: User Guide
+title: User guide
 order: 0
 summary: "Everything you need to build your library, log solves, and swap puzzles."
 ---

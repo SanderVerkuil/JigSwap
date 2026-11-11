@@ -327,6 +327,9 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   "/puzzles": { pageKey: "puzzles", group: "community" },
   "/puzzles/$id": { pageKey: "puzzles", group: "community" },
   "/puzzles/add": { pageKey: "contributePuzzle", group: "community" },
+  // Titled while the puzzle loads, so the catalogue's head doesn't stand in for it; the form then
+  // publishes its own title and "Community › Puzzles catalogue › <puzzle>" crumbs.
+  "/puzzles/$id/suggest-edit": { pageKey: "suggestEdit", group: "community" },
   "/circles": { pageKey: "circles", group: "community" },
   "/trades": { pageKey: "exchanges", group: "community" },
   "/messages": { pageKey: "messages", group: "community" },
@@ -370,11 +373,29 @@ export const ROUTE_META: Record<string, ShellRouteMeta> = {
   },
 };
 
-/** Resolve the shell meta for a pathname (exact, then longest prefix). */
+/**
+ * Resolve the shell meta for a pathname: exact, then a key of the same depth whose `$param`
+ * segments stand for any one segment (/puzzles/$id/suggest-edit), then the longest prefix.
+ */
 export function getRouteMeta(pathname: string): ShellRouteMeta | undefined {
   const clean = pathname.replace(/\/+$/, "") || "/";
   const exact = ROUTE_META[clean];
   if (exact) return exact;
+
+  const segments = clean.split("/");
+  for (const [path, meta] of Object.entries(ROUTE_META)) {
+    const parts = path.split("/");
+    if (
+      path.includes("$") &&
+      parts.length === segments.length &&
+      parts.every(
+        (part, i) =>
+          part === segments[i] || (part.startsWith("$") && segments[i] !== ""),
+      )
+    ) {
+      return meta;
+    }
+  }
 
   let best: ShellRouteMeta | undefined;
   let bestLength = 0;

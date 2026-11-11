@@ -119,7 +119,7 @@ describe("shell page title headings", () => {
   it("names the phone home page with the greeting and drops the logo's duplicate alt", () => {
     const { container } = renderShell("/dashboard");
     expect(container.querySelector("main h1")?.textContent).toBe(
-      "Welcome back, Henk! 🧩",
+      "Welcome back, Henk!",
     );
     // The wordmark next to the logo already says JigSwap.
     expect(container.querySelector("header img")?.getAttribute("alt")).toBe("");

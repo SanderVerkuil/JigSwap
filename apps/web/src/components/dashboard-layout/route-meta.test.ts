@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import en from "../../../locales/en.json";
+import nl from "../../../locales/nl.json";
 import {
   getNavGroup,
+  getRouteMeta,
   hasOwnAddAction,
   isFullBleedRoute,
   isImmersiveMobileRoute,
@@ -104,5 +107,30 @@ describe("hasOwnAddAction", () => {
     "/puzzlesx",
   ])("leaves the top bar's add action on %s", (pathname) => {
     expect(hasOwnAddAction(pathname)).toBe(false);
+  });
+});
+
+describe("getRouteMeta", () => {
+  // F47: a puzzle's suggest-edit page used to borrow the catalogue's head while it loaded.
+  it("titles a puzzle's suggest-edit page by its own entry", () => {
+    expect(
+      getRouteMeta("/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz/suggest-edit"),
+    ).toEqual({ pageKey: "suggestEdit", group: "community" });
+    expect(en.shell.pages.suggestEdit.title).toBe(en.suggestEdit.title);
+    expect(nl.shell.pages.suggestEdit.title).toBe(nl.suggestEdit.title);
+  });
+
+  it.each([
+    ["/puzzles", "puzzles"],
+    ["/puzzles/m9712xm5gtgnqszgq5xwvh82ph8a9hdz", "puzzles"],
+    ["/puzzles/add", "contributePuzzle"],
+    ["/my-puzzles/add", "addPuzzle"],
+    ["/my-puzzles/add/new", "createPuzzle"],
+    ["/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr", "myPuzzles"],
+    ["/my-puzzles/m572kmqqpcd0c4a106ve41fz318ge4xr/photos", "myPuzzles"],
+    ["/admin/puzzles/proposals", "adminPuzzles"],
+    ["/members/ada/", "members"],
+  ])("keeps %s on %s", (pathname, pageKey) => {
+    expect(getRouteMeta(pathname)?.pageKey).toBe(pageKey);
   });
 });

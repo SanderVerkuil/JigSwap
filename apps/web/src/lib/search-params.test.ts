@@ -173,6 +173,6 @@ describe("/browse search params through the router", () => {
     // Neither is a value that was dropped.
     expect(browseEmptyState(await browse("condition=bogus"))).toBe("noOffers");
     expect(browseEmptyState(await browse("view=foo"))).toBe("noOffers");
-    expect(browseEmptyState(await browse("q=2000"))).toBe("filtered");
+    expect(browseEmptyState(await browse("q=2000"))).toBe("searched");
   });
 });

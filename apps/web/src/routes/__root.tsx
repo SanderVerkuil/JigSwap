@@ -32,8 +32,8 @@ import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
 // Self-hosted font files to preload (see head below).
-import balooLatinWoff2 from "@fontsource-variable/baloo-2/files/baloo-2-latin-wght-normal.woff2?url";
-import poppinsLatin400Woff2 from "@fontsource/poppins/files/poppins-latin-400-normal.woff2?url";
+import hankenLatinWoff2 from "@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2?url";
+import youngSerifLatinWoff2 from "@fontsource/young-serif/files/young-serif-latin-400-normal.woff2?url";
 // Tailwind 4 entry + theme tokens; CSS-based config travels with this import.
 import appCss from "../styles/globals.css?url";
 
@@ -126,20 +126,20 @@ export const Route = createRootRouteWithContext<{
       ...catalogPreloadLinks(contextLocale(match.context)),
       { rel: "stylesheet", href: appCss },
       // The fonts are self-hosted: globals.css imports their @font-face rules.
-      // Preload the latin files of the faces every page shows (Baloo 2
-      // headings, Poppins 400 body text) so they load alongside the CSS
+      // Preload the latin files of the faces every page shows (Young Serif
+      // headings, Hanken Grotesk body text) so they load alongside the CSS
       // instead of after it. Same hashed URL as the CSS url(), so nothing
       // downloads twice; font preloads must be CORS-mode to be reused.
       {
         rel: "preload",
-        href: balooLatinWoff2,
+        href: youngSerifLatinWoff2,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
       },
       {
         rel: "preload",
-        href: poppinsLatin400Woff2,
+        href: hankenLatinWoff2,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
@@ -195,7 +195,9 @@ const clerkAppearance = {
     colorInputText: "var(--foreground)",
     colorInputBackground: "var(--background)",
     colorNeutral: "var(--foreground)",
-    colorDanger: "var(--destructive)",
+    // The text token, like the app's own destructive text: the fill colour was 4.45:1 as error
+    // text on the night card.
+    colorDanger: "var(--destructive-text)",
     colorSuccess: "var(--jigsaw-success)",
     colorWarning: "var(--jigsaw-warning)",
   },
@@ -206,7 +208,12 @@ const clerkAppearance = {
     formFieldInput: {
       "@media (pointer: coarse)": { fontSize: "16px", minHeight: "44px" },
     },
-    formButtonPrimary: { "@media (pointer: coarse)": { minHeight: "44px" } },
+    // Clerk writes white on its solid danger button, and the text token is pale at night, so that
+    // label takes the sheet colour: white on the day red, dark ink on the night rose.
+    formButtonPrimary: {
+      "@media (pointer: coarse)": { minHeight: "44px" },
+      '&[data-color="danger"]': { color: "var(--background)" },
+    },
     socialButtonsIconButton: {
       "@media (pointer: coarse)": { minHeight: "44px" },
     },
@@ -216,6 +223,15 @@ const clerkAppearance = {
     formFieldInputShowPasswordButton: {
       "@media (pointer: coarse)": { minHeight: "44px", minWidth: "44px" },
     },
+    // Clerk draws the account menu's rows in the text colour at 62% alpha, under 4.5:1 on white
+    // with Canal Ink. Muted text is opaque and passes in both themes. Our rows are custom items;
+    // Manage account is Clerk's own action.
+    userButtonPopoverCustomItemButton: { color: "var(--muted-foreground)" },
+    userButtonPopoverCustomItemButtonIconBox: {
+      color: "var(--muted-foreground)",
+    },
+    userButtonPopoverActionButton: { color: "var(--muted-foreground)" },
+    userButtonPopoverActionButtonIcon: { color: "var(--muted-foreground)" },
   },
 } as const;
 
@@ -304,17 +320,17 @@ function RootDocument({
           dangerouslySetInnerHTML={{ __html: ZOD_JITLESS_SCRIPT }}
         />
         {/* Tints the browser / installed-app status bar to the mobile top
-            bar's surface (bg-card) per OS colour scheme; the manifest carries
-            the light value. */}
+            bar's sky surface per OS colour scheme; the manifest carries the
+            light value. */}
         <meta
           name="theme-color"
           media="(prefers-color-scheme: light)"
-          content="#ffffff"
+          content="#e3f1fa"
         />
         <meta
           name="theme-color"
           media="(prefers-color-scheme: dark)"
-          content="#282642"
+          content="#0f2a33"
         />
       </head>
       <body className="font-sans antialiased bg-background text-foreground">

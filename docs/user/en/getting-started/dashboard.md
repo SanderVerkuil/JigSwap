@@ -1,5 +1,5 @@
 ---
-title: Your Dashboard
+title: Your dashboard
 order: 3
 summary: "Read your personal briefing of exchanges, goals, stats, and fresh puzzles, and set up your shelf with Quick setup."
 ---
@@ -13,7 +13,9 @@ Your dashboard is a personal briefing that summarizes your puzzle life at a glan
 - A **headline sentence** summarizing your active exchanges and goal progress,
   or, when nothing is in motion yet, your shelf and how much of it is up for swap.
 - A **pending-request banner** if someone has sent you an incoming exchange request that needs a response.
-- **Quick-action chips**: _Add Puzzle_, _Browse_, and _Log a solve_.
+- **Quick-action chips**: _Browse Community_ and _Log a solve_. To add a
+  puzzle, use **Add to my puzzles** in the top bar (on a phone, the center
+  quick-action button).
 - A **3D shelf** ("plank") showing your real puzzle copies as physical objects you can look at.
 - **Live stats**: how many puzzles you own. Trades completed, your average
   rating, and active exchanges join in once you have your first exchange or review.

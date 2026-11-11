@@ -7,6 +7,7 @@ import {
   favouritesInCatalogue,
   hasActiveCatalogueFilters,
   matchesCatalogueSearch,
+  type CatalogueFilters,
 } from "./catalogue-filters";
 
 const puzzle = {
@@ -172,24 +173,32 @@ describe("hasActiveCatalogueFilters", () => {
 });
 
 describe("catalogueEmptyState", () => {
-  it("blames the filters only when a term or filter is set", () => {
-    expect(
-      catalogueEmptyState({ favoritesOnly: false, hasFilters: true }),
-    ).toBe("filtered");
-    expect(catalogueEmptyState({ favoritesOnly: true, hasFilters: true })).toBe(
+  const empty = (favoritesOnly: boolean, set: Partial<CatalogueFilters>) =>
+    catalogueEmptyState({
+      favoritesOnly,
+      filters: { ...EMPTY_CATALOGUE_FILTERS, ...set },
+    });
+
+  it("names a term on its own as a search, not as filters", () => {
+    expect(empty(false, { searchTerm: "lake" })).toBe("searched");
+  });
+
+  it("blames the filters when a filter is set, or a term searched only favourites", () => {
+    expect(empty(false, { brand: "Jumbo" })).toBe("filtered");
+    expect(empty(false, { searchTerm: "lake", tags: ["water"] })).toBe(
       "filtered",
     );
+    expect(empty(true, { maxPieces: "500" })).toBe("filtered");
+    // Only the favourites were searched: the catalogue may well have a lake puzzle.
+    expect(empty(true, { searchTerm: "lake" })).toBe("filtered");
   });
 
   it("says there are no favourites yet when only favourites is on", () => {
-    expect(
-      catalogueEmptyState({ favoritesOnly: true, hasFilters: false }),
-    ).toBe("noFavourites");
+    expect(empty(true, {})).toBe("noFavourites");
+    expect(empty(true, { searchTerm: "  " })).toBe("noFavourites");
   });
 
   it("says the catalogue is empty when nothing narrows it", () => {
-    expect(
-      catalogueEmptyState({ favoritesOnly: false, hasFilters: false }),
-    ).toBe("emptyCatalogue");
+    expect(empty(false, {})).toBe("emptyCatalogue");
   });
 });

@@ -1,67 +1,74 @@
 import * as React from "react";
 
-// SSR-safe layout effect: layout on the client, plain effect during SSR render.
-const useIsoLayoutEffect =
-  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
-
-// Reveal-on-scroll. Base state is VISIBLE — nothing can ever get stuck hidden
-// (and SSR paints full content). Only elements that start below the fold are
-// hidden and animated in on intersection; reduced-motion users get no animation.
+// Entrance on scroll, once. Base state is VISIBLE: the server and a page without JavaScript paint full
+// content, and nothing is hidden until the visitor first scrolls, so nothing can get stuck hidden. At
+// that first scroll, whatever started well below the fold is put in its starting state; it enters when
+// it reaches the viewport, which is at once if the scroll jumped straight to it. Reduced motion keeps
+// the fade and drops the rise.
 export function Reveal({
   delay = 0,
+  rise = 24,
   className,
   style,
   children,
 }: {
   delay?: number;
+  rise?: number;
   className?: string;
   style?: React.CSSProperties;
   children: React.ReactNode;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const [shown, setShown] = React.useState(true);
+  const [state, setState] = React.useState<"rest" | "waiting" | "entering">(
+    "rest",
+  );
+  const [lift, setLift] = React.useState(0);
 
-  useIsoLayoutEffect(() => {
+  React.useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const r = el.getBoundingClientRect();
-    if (r.top < (window.innerHeight || 800) - 60) return; // above/at fold → stay visible
-    setShown(false);
-    let done = false;
-    const reveal = () => {
-      if (!done) {
-        done = true;
-        setShown(true);
-      }
-    };
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            reveal();
-            io.disconnect();
+    let io: IntersectionObserver | undefined;
+    const startedBelowFold =
+      el.getBoundingClientRect().top + window.scrollY >=
+      window.innerHeight + 80;
+    const arm = () => {
+      if (!startedBelowFold) return;
+      setLift(
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? 0
+          : rise,
+      );
+      setState("waiting");
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            setState("entering");
+            io?.disconnect();
           }
-        }
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-    );
-    io.observe(el);
-    const fallback = setTimeout(reveal, 1400);
-    return () => {
-      io.disconnect();
-      clearTimeout(fallback);
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+      );
+      io.observe(el);
     };
-  }, []);
+    window.addEventListener("scroll", arm, { once: true, passive: true });
+    return () => {
+      window.removeEventListener("scroll", arm);
+      io?.disconnect();
+    };
+  }, [rise]);
 
   return (
     <div
       ref={ref}
       className={className}
       style={{
-        opacity: shown ? 1 : 0,
-        transform: shown ? "none" : "translateY(18px)",
-        transition: `opacity .6s var(--ease-mk-out) ${delay}ms, transform .6s var(--ease-mk-out) ${delay}ms`,
+        ...(state === "waiting" && {
+          opacity: 0,
+          transform: lift ? `translateY(${lift}px)` : undefined,
+        }),
+        ...(state === "entering" && {
+          transition: `opacity .56s var(--ease-mk-out) ${delay}ms, transform .56s var(--ease-mk-out) ${delay}ms`,
+        }),
         ...style,
       }}
     >

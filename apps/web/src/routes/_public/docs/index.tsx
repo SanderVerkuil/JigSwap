@@ -49,34 +49,45 @@ function DocsIndex() {
 
   return (
     <div>
-      <PageHero
-        eyebrow={t("landingEyebrow")}
-        title={t("landingTitle")}
-        lead={t("landingLead")}
-      >
+      <PageHero title={t("landingTitle")} lead={t("landingLead")}>
         <DocsHeroSearch />
       </PageHero>
       <Section>
         <Container>
-          <div className="grid grid-cols-3 max-[860px]:grid-cols-2 max-[540px]:grid-cols-1 gap-6">
+          <div className="grid grid-cols-2 gap-x-[clamp(32px,5vw,72px)] gap-y-11 max-[760px]:grid-cols-1">
             {tree.map((group) => (
-              <Link
-                key={group.slug}
-                // Typed router Link carries the splat param, unlike @/compat/link.
-                to="/docs/$"
-                params={{ _splat: group.links[0]?.slug ?? group.slug }}
-                className="group rounded-[20px] bg-mk-card border border-mk-border p-6 transition-all hover:shadow-mk-md hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
-              >
-                <div className="grid place-items-center size-11 rounded-[12px] bg-mk-violet-50 text-mk-violet-600 mb-4">
-                  <GroupIcon slug={group.slug} />
-                </div>
-                <h2 className="font-mk-heading font-semibold text-[18px] text-mk-text-strong group-hover:text-mk-violet-600">
-                  {group.title}
-                </h2>
-                <p className="text-[14.5px] text-mk-text-muted mt-1.5">
+              <section key={group.slug}>
+                <Link
+                  // Typed router Link carries the splat param, unlike @/compat/link.
+                  to="/docs/$"
+                  params={{ _splat: group.links[0]?.slug ?? group.slug }}
+                  className="group block w-fit"
+                >
+                  <div className="bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong mb-3 grid size-11 place-items-center rounded-md">
+                    <GroupIcon slug={group.slug} />
+                  </div>
+                  <h2 className="font-mk-heading text-mk-text-strong group-hover:decoration-mk-text-strong text-[26px] leading-[1.2] font-normal underline decoration-transparent underline-offset-4 transition-[text-decoration-color] duration-150">
+                    {group.title}
+                  </h2>
+                </Link>
+                <p className="text-mk-text-body mt-2 max-w-[56ch] text-[17px] leading-relaxed">
                   {summaryFor(group.slug)}
                 </p>
-              </Link>
+                {/* On touch screens each link is a 44px row. */}
+                <ul className="mt-3 flex flex-col gap-1 pointer-coarse:gap-0">
+                  {group.links.map((link) => (
+                    <li key={link.slug}>
+                      <Link
+                        to="/docs/$"
+                        params={{ _splat: link.slug }}
+                        className="text-mk-text-strong inline-flex items-center text-[16px] underline decoration-mk-text-muted underline-offset-3 transition-[text-decoration-color] duration-150 hover:decoration-mk-text-strong pointer-coarse:min-h-11"
+                      >
+                        {link.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
           </div>
         </Container>
@@ -103,16 +114,15 @@ function DocsHeroSearch() {
       onClick={openSearch}
       aria-haspopup="dialog"
       aria-keyshortcuts="Meta+K Control+K"
-      className="flex items-center gap-3 w-full max-w-[520px] h-12 px-4 rounded-[12px] bg-mk-card border border-mk-border text-mk-text-muted text-base text-left shadow-mk-sm transition-colors hover:border-mk-violet-300 hover:text-mk-text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+      className="bg-mk-card border-mk-input-border text-mk-text-muted hover:border-mk-ring/60 hover:text-mk-text-body focus-visible:border-mk-ring focus-visible:ring-mk-ring/50 flex h-12 w-full max-w-[520px] cursor-pointer items-center gap-3 rounded-md border px-4 text-left text-[16px] transition-colors duration-150 outline-none focus-visible:ring-[3px]"
     >
-      <Search className="size-[18px] opacity-70" aria-hidden="true" />
+      <Search className="size-[18px] shrink-0" aria-hidden="true" />
       <span>{t("searchTrigger")}</span>
-      {/* Known only after mount; touch screens have no keyboard to press it with. The muted text
-          colour is only 3.58:1 on the muted chip. */}
+      {/* Known only after mount; touch screens have no keyboard to press it with. */}
       {shortcut && (
         <kbd
           aria-hidden="true"
-          className="ml-auto max-md:hidden font-mono text-[12px] text-mk-text-body px-1.5 py-0.5 rounded-[5px] bg-mk-muted border border-mk-border pointer-coarse:hidden"
+          className="text-mk-text-body ml-auto font-sans text-[14px] max-md:hidden pointer-coarse:hidden"
         >
           {shortcut}
         </kbd>

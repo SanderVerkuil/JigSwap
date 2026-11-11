@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  CONSENT_BANNER_HEIGHT_VAR,
+  MOBILE_TAB_BAR_HEIGHT_VAR,
+} from "@/components/dashboard-layout/sticky-offset";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -74,6 +78,48 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
       [ref],
     );
 
+    // While it shows, publish the strip of the viewport it covers above the tab bar
+    // (sticky-offset.ts) so the page can reserve it: its height plus its `bottom` offset, less the
+    // bar. Read from layout rather than its on-screen position, so the entrance slide doesn't
+    // count. Measured again when it wraps, and when <html>'s inline style changes: the tab bar
+    // publishes its height there as it comes and goes with the route (an open thread hides it),
+    // and the banner's lift above the bar comes and goes with it. That lift glides (its
+    // duration-200 transitions `bottom` too), so it is measured once more where it lands.
+    React.useLayoutEffect(() => {
+      const node = regionRef.current;
+      if (!visible || !node) return;
+      const root = document.documentElement;
+      const publish = () => {
+        const bottom = Number.parseFloat(getComputedStyle(node).bottom) || 0;
+        const tabBar =
+          Number.parseFloat(
+            root.style.getPropertyValue(MOBILE_TAB_BAR_HEIGHT_VAR),
+          ) || 0;
+        const covered = `${Math.max(0, node.getBoundingClientRect().height + bottom - tabBar)}px`;
+        // Unchanged values aren't rewritten, or the observer below would wake itself forever.
+        if (
+          root.style.getPropertyValue(CONSENT_BANNER_HEIGHT_VAR) !== covered
+        ) {
+          root.style.setProperty(CONSENT_BANNER_HEIGHT_VAR, covered);
+        }
+      };
+      publish();
+      const resize =
+        typeof ResizeObserver === "undefined"
+          ? undefined
+          : new ResizeObserver(publish);
+      resize?.observe(node);
+      const rootStyle = new MutationObserver(publish);
+      rootStyle.observe(root, { attributes: true, attributeFilter: ["style"] });
+      node.addEventListener("transitionend", publish);
+      return () => {
+        resize?.disconnect();
+        rootStyle.disconnect();
+        node.removeEventListener("transitionend", publish);
+        root.style.removeProperty(CONSENT_BANNER_HEIGHT_VAR);
+      };
+    }, [visible]);
+
     // Reopened from "Cookie settings": move focus onto the banner so keyboard
     // and screen-reader users land on the choice, and remember the control
     // that opened it so focus can go back there afterwards.
@@ -146,7 +192,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (!visible) return null;
 
     const containerClasses = cn(
-      "fixed z-50 outline-none animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out motion-reduce:animate-none",
+      "fixed z-50 outline-none animate-in fade-in slide-in-from-bottom-4 duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:animate-none",
       className,
     );
 
@@ -161,7 +207,7 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
           ? // Inside the app on phones it sits above the bottom tab bar (its
             // published height: 57px, more in the installed app) and its raised
             // "+" (12px overhang), with an 8px gap.
-            "left-0 right-0 sm:left-4 bottom-4 max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)] w-full sm:max-w-3xl"
+            "inset-x-0 bottom-0 max-md:[body:has([data-mobile-tab-bar])_&]:bottom-[calc(var(--mobile-tab-bar-height,57px)+20px)]"
           : "bottom-0 left-0 right-0 sm:left-4 sm:bottom-4 w-full sm:max-w-md",
       ),
       ...props,
@@ -170,7 +216,9 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "default") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="m-3 shadow-lg">
+          <Card
+            className="m-3 shadow-lg" // taste-skill-ignore: a real overlay.
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg">{t("title")}</CardTitle>
               <Cookie className="h-5 w-5" />
@@ -209,7 +257,9 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "small") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="m-3 shadow-lg">
+          <Card
+            className="m-3 shadow-lg" // taste-skill-ignore: a real overlay.
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 h-0 px-4">
               <CardTitle className="text-base">{t("title")}</CardTitle>
               <Cookie className="h-4 w-4" />
@@ -244,49 +294,52 @@ const CookieConsent = React.forwardRef<HTMLDivElement, CookieConsentProps>(
     if (variant === "mini") {
       return (
         <div {...commonWrapperProps}>
-          <Card className="relative mx-3 p-0 py-3 shadow-lg">
-            <CardContent className="sm:flex grid gap-4 p-0 px-3.5">
-              <CardDescription
-                className={cn(
-                  "text-xs sm:text-sm flex-1",
-                  canClose && "max-sm:pr-8",
-                )}
+          {/* A 1px Line edge and an upward Popover float, so on a white page it reads as a bar
+              over the page rather than its next paragraph. */}
+          <div
+            className="bg-card text-card-foreground border-border relative flex flex-col gap-2 border-t px-4 py-2.5 shadow-[0_-4px_6px_-1px_rgb(0_0_0/0.1),0_-2px_4px_-2px_rgb(0_0_0/0.1)] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-10" // taste-skill-ignore: a real overlay.
+          >
+            <p
+              className={cn(
+                "max-w-[80ch] flex-1 text-base leading-snug",
+                canClose && "max-sm:pr-8",
+              )}
+            >
+              {consentDescription}
+              {canClose && (
+                <span className="mt-1 block font-medium text-foreground">
+                  {t(choice === "granted" ? "currentGranted" : "currentDenied")}
+                </span>
+              )}
+            </p>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+              <Button
+                onClick={handleDecline}
+                variant="secondary"
+                className="h-10 max-sm:h-11 max-sm:flex-1"
               >
-                {consentDescription}
-                {canClose && (
-                  <span className="mt-1 block font-medium text-foreground">
-                    {t(
-                      choice === "granted" ? "currentGranted" : "currentDenied",
-                    )}
-                  </span>
-                )}
-              </CardDescription>
-              <div className="flex flex-wrap items-center gap-2 justify-end sm:flex-nowrap sm:gap-3">
+                {t("declineText")}
+              </Button>
+              <Button
+                onClick={handleAccept}
+                className="h-10 max-sm:h-11 max-sm:flex-1"
+              >
+                {t("acceptText")}
+              </Button>
+              {canClose && (
+                // In the corner on phones, where the buttons fill the row.
                 <Button
-                  onClick={handleDecline}
-                  variant="secondary"
-                  className="h-10 px-4 text-sm"
+                  onClick={handleClose}
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("closeSettings")}
+                  className="size-10 max-sm:absolute max-sm:top-1 max-sm:right-1"
                 >
-                  {t("declineText")}
+                  <X className="size-4" />
                 </Button>
-                <Button onClick={handleAccept} className="h-10 px-4 text-sm">
-                  {t("acceptText")}
-                </Button>
-                {canClose && (
-                  // In the corner on phones, where the buttons fill the row.
-                  <Button
-                    onClick={handleClose}
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t("closeSettings")}
-                    className="size-10 max-sm:absolute max-sm:top-1 max-sm:right-1"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         </div>
       );
     }

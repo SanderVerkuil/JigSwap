@@ -11,11 +11,11 @@ import { BoxArtCheckingLabel } from "./box-art-checking";
 
 // Shared presentational pieces for the divider-led catalog detail pages
 // (puzzle definition + copy instance). Extracted so the two pages stay visually
-// identical without duplicating the gradient cover, avatars, section heads, etc.
+// identical without duplicating the cover fallback, avatars, section heads, etc.
 
 export { difficultyClasses } from "./difficulty-classes";
 
-// The violet gradient + centered puzzle glyph used as the no-image cover
+// The flat tint + centered puzzle glyph used as the no-image cover
 // fallback across the catalog detail pages.
 export function PuzzleCoverFallback({
   checking = false,
@@ -24,7 +24,7 @@ export function PuzzleCoverFallback({
   checking?: boolean;
 }) {
   return (
-    <div className="from-jigsaw-primary/20 to-jigsaw-primary text-jigsaw-primary-foreground/70 absolute inset-0 flex items-center justify-center bg-gradient-to-br">
+    <div className="bg-muted text-primary-text/50 absolute inset-0 flex items-center justify-center">
       <Puzzle className="h-1/3 w-1/3" />
       {checking && <BoxArtCheckingLabel />}
     </div>
@@ -52,7 +52,7 @@ export function MemberAvatar({
   );
 }
 
-// A section head: brand-tinted icon + heading + optional mono meta string.
+// A section head: brand-tinted icon + heading + optional meta string.
 export function SectionHead({
   icon,
   title,
@@ -64,10 +64,12 @@ export function SectionHead({
 }) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
-      <span className="text-jigsaw-primary inline-flex">{icon}</span>
-      <h2 className="font-heading text-lg font-bold">{title}</h2>
+      <span className="text-primary-text inline-flex">{icon}</span>
+      <h2 className="font-heading text-lg">{title}</h2>
       {meta && (
-        <span className="text-muted-foreground font-mono text-xs">{meta}</span>
+        <span className="text-muted-foreground text-xs tabular-nums">
+          {meta}
+        </span>
       )}
     </div>
   );
@@ -85,7 +87,7 @@ export function Stat({
 }) {
   return (
     <div className={cn(divided && "border-border sm:border-l sm:pl-5")}>
-      <div className="font-heading text-foreground text-3xl font-bold leading-none">
+      <div className="text-foreground font-sans text-3xl leading-none font-semibold tabular-nums">
         {value}
       </div>
       <div className="text-muted-foreground mt-1.5 text-sm">{label}</div>

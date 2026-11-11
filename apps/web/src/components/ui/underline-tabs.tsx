@@ -17,7 +17,7 @@ export const UNDERLINE_TABS_LIST_CLASS =
 
 // Inset focus ring: an outset one would be clipped by the scrolling list. 44px tall under a finger.
 export const TAB_TRIGGER_CLASS =
-  "group flex-none gap-2 pointer-coarse:min-h-11 focus-visible:ring-inset rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:border-primary dark:data-[state=active]:bg-transparent";
+  "group flex-none gap-2 pointer-coarse:min-h-11 focus-visible:ring-inset rounded-none border-0 border-b-2 border-transparent px-4 py-2.5 font-semibold text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground dark:data-[state=active]:border-primary-text dark:data-[state=active]:bg-transparent";
 
 // `capped`: the count stopped at a server-side cap, so it reads "50+" (formatQueueCount).
 export function TabCount({

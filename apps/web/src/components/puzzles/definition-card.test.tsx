@@ -112,3 +112,18 @@ describe("DefinitionCard cover priority", () => {
     expect(img).toMatch(/fetchpriority="high"/i);
   });
 });
+
+// The shelf's columns meet (no gap) so the planks run on; happy-dom has no layout, so this pins the
+// classes that keep a long Dutch compound inside its own card. Checked in a browser at 320-390px.
+describe("DefinitionCard title", () => {
+  it("breaks a long compound inside the card and clamps to three lines", () => {
+    render(card({ title: "Kerstmarktwandelingsinterklaasavond" }));
+    const title = container.querySelector("h3");
+    const classes = title?.className.split(/\s+/) ?? [];
+    // A syllable break with a hyphen first (by <html lang>); anywhere only as the fallback.
+    expect(classes).toContain("hyphens-auto");
+    expect(classes).toContain("[overflow-wrap:anywhere]");
+    expect(classes).toContain("line-clamp-3");
+    expect(title?.textContent).toBe("Kerstmarktwandelingsinterklaasavond");
+  });
+});

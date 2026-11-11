@@ -1,7 +1,9 @@
 // apps/web/src/components/add-puzzle/live-preview-card.tsx
+import { PuzzleCardShell } from "@/components/puzzles/puzzle-card-shell";
 import { Badge } from "@/components/ui/badge";
 import { PuzzleCard, PuzzleViewProvider } from "@/components/ui/puzzle-card";
-import { Check, Puzzle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ArrowLeftRight, Check, Puzzle } from "lucide-react";
 import type { ComponentProps } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -75,62 +77,49 @@ export function CopyPreviewCard({
   );
 }
 
+/**
+ * The contribute form's preview: the catalogue card's own shell, built from the form, so it looks
+ * like the card the puzzle gets once approved. Title and brand sit under the cover, never on it.
+ * No link and no actions: there is no puzzle yet. Unfilled, title and brand show their
+ * placeholders in muted text.
+ */
 export function LivePreviewCard(props: LivePreviewProps) {
   const t = useTranslations("puzzles");
-  const format = useFormatter();
-  const cover = props.coverPhotoUrl
-    ? {
-        backgroundImage: `url(${props.coverPhotoUrl})`,
-        backgroundSize: "cover",
-      }
-    : undefined;
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <div className="relative aspect-square w-full bg-muted" style={cover}>
-        {!props.coverPhotoUrl && (
-          <Puzzle
-            aria-hidden
-            className="absolute left-1/2 top-[40%] size-14 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40"
-          />
-        )}
-        {props.available && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-jigsaw-secondary-strong px-2.5 py-1 text-xs font-semibold text-white">
-            <span className="size-1.5 rounded-full bg-white" />{" "}
-            {t("previewAvailable")}
-          </span>
-        )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4">
-          <div className="font-semibold text-white">
-            {props.title || t("previewTitlePlaceholder")}
-          </div>
-          <div className="text-sm text-white/80">
-            {props.brand || t("previewBrandPlaceholder")}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between gap-2 p-3">
-        <span className="text-sm">
-          {props.pieceCount != null ? (
-            <>
-              <span className="font-semibold">
-                {format.number(props.pieceCount)}
-              </span>{" "}
-              {t("pieces", { count: props.pieceCount })}
-            </>
-          ) : (
-            `— ${t("pieces", { count: 0 })}`
-          )}
-        </span>
-        {props.difficulty && (
-          <Badge variant="outline">{t(`difficulty_${props.difficulty}`)}</Badge>
-        )}
-      </div>
-    </div>
+    <PuzzleViewProvider viewMode="grid" className="">
+      <PuzzleCardShell
+        puzzle={{
+          id: "preview",
+          title: props.title || t("previewTitlePlaceholder"),
+          brand: props.brand || t("previewBrandPlaceholder"),
+          pieceCount: props.pieceCount,
+          difficulty: props.difficulty,
+          imageUrl: props.coverPhotoUrl,
+        }}
+        imageFit="contain"
+        // The preview sits under the page's h1, like CopyPreviewCard.
+        headingLevel={2}
+        className={cn(!props.title && "[&_h2]:text-muted-foreground")}
+        badges={
+          props.available ? (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <Badge
+                variant="outline"
+                className="border-jigsaw-secondary/40 bg-jigsaw-secondary-tint text-green-800 dark:text-green-300"
+              >
+                <ArrowLeftRight aria-hidden />
+                {t("previewAvailable")}
+              </Badge>
+            </div>
+          ) : undefined
+        }
+      />
+    </PuzzleViewProvider>
   );
 }
 
 /**
- * Below lg the live preview is hidden: this one-row recap of what the submit adds stands in for
+ * Below xl the live preview is hidden: this one-row recap of what the submit adds stands in for
  * it, placed right above the submit buttons. Renders nothing until there is a title.
  */
 export function AddPuzzleSummary({
@@ -159,7 +148,7 @@ export function AddPuzzleSummary({
   return (
     <div
       data-testid="add-summary"
-      className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 lg:hidden"
+      className="flex items-center gap-3 rounded-lg border border-border bg-card p-2.5 xl:hidden"
     >
       <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
         {coverPhotoUrl ? (

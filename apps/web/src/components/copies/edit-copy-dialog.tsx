@@ -50,7 +50,7 @@ const ACQUISITION_SOURCES: readonly AcquisitionSource[] = [
 ];
 const FIRST_ACQUISITION_YEAR = 1950;
 const selectClass =
-  "bg-card focus:ring-primary h-10 w-full rounded-md border px-2 text-base focus:ring-2 focus:outline-none md:h-9 md:not-pointer-coarse:text-sm";
+  "bg-card focus-visible:ring-ring h-10 w-full rounded-md border px-2 text-base focus-visible:ring-2 focus-visible:outline-none md:h-9 md:not-pointer-coarse:text-sm";
 
 // Owner-only inline editor for a single owned copy. Each field maps to a granular Library
 // mutation; on save we diff against the loaded snapshot and fire only the mutations whose value
@@ -480,7 +480,6 @@ function EditCopyDialogForm({
             {t("editCopy.cancel")}
           </Button>
           <Button
-            variant="brand"
             onClick={() => void save()}
             disabled={saving || acquiredIncomplete}
           >

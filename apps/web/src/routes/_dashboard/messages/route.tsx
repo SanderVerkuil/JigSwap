@@ -34,7 +34,10 @@ export const Route = createFileRoute("/_dashboard/messages")({
 function MessagesLayout() {
   const { member } = useCurrentMember();
   // "New" lives in the page head (and the phone actions row), not in the list.
-  usePageHeaderActions(() => <NewConversationMenu />, []);
+  // Republished per thread: a dead thread's not-found clears the head when it
+  // unmounts, and React runs that cleanup before this effect runs again.
+  const { threadId } = useParams({ strict: false });
+  usePageHeaderActions(() => <NewConversationMenu />, [threadId]);
   // The inbox list's window ("Show older conversations") lives here, so it
   // survives moving between the inbox and a thread.
   return (

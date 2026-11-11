@@ -32,7 +32,7 @@ afterEach(cleanup);
 const classes = (el: Element) => el.getAttribute("class")?.split(/\s+/) ?? [];
 
 describe("coarse-pointer touch targets", () => {
-  it.each(["default", "sm", "lg", "icon"] as const)(
+  it.each(["default", "sm", "lg", "icon", "public"] as const)(
     "gives a %s Button a 44px minimum on touch, even with a size override",
     (size) => {
       render(
@@ -50,6 +50,26 @@ describe("coarse-pointer touch targets", () => {
       );
     },
   );
+
+  it("sizes a public Button at 50px, 10px round, 18px bold, over the compact base", () => {
+    render(<Button size="public">Start your shelf</Button>);
+    const list = classes(
+      screen.getByRole("button", { name: "Start your shelf" }),
+    );
+    expect(list).toEqual(
+      expect.arrayContaining([
+        "h-[50px]",
+        "rounded-[10px]",
+        "px-[22px]",
+        "text-[18px]",
+        "font-bold",
+        "pointer-coarse:min-h-11",
+      ]),
+    );
+    for (const base of ["rounded-md", "text-sm", "font-medium"]) {
+      expect(list).not.toContain(base);
+    }
+  });
 
   it("lets a caller opt a Button out on touch", () => {
     render(

@@ -152,7 +152,6 @@ function CirclesPage() {
       <>
         <GuideHelpButton tourId="circles" startTour={startTour} />
         <Button
-          variant="brand"
           size="sm"
           onClick={() => setIsCreateOpen(true)}
           data-tour="circles-create"

@@ -2,7 +2,13 @@
 import { gateway } from "@/gateway";
 import type { MyLibraryCopyView } from "@jigswap/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import type { ReactNode } from "react";
 import { IntlProvider } from "use-intl";
@@ -138,6 +144,30 @@ describe("HouseholdPuzzles", () => {
     expect(screen.getByText("De Kattenshow")).toBeTruthy();
     expect(screen.queryByText("Lam Gelegd")).toBeNull();
     expect(screen.getByText("1 of 2 puzzles")).toBeTruthy();
+  });
+
+  // The owner filter is a single choice like the availability one below it: both sit in the tab
+  // track, the chosen option a white window, never the canal fill of an action.
+  it("marks the chosen owner as the tab track's window, not a primary button", () => {
+    renderTab();
+    const group = screen.getByRole("group", { name: "Filter by owner" });
+    const everyone = within(group).getByRole("button", { name: "Everyone" });
+    const bob = within(group).getByRole("button", { name: /Bob$/ });
+    expect([...everyone.parentElement!.classList]).toEqual(
+      expect.arrayContaining(["bg-muted", "rounded-lg", "p-[3px]"]),
+    );
+    for (const chip of within(group).getAllByRole("button")) {
+      expect(chip.classList).not.toContain("rounded-full");
+      expect(chip.classList).not.toContain("bg-jigsaw-primary");
+    }
+    expect(everyone.getAttribute("aria-pressed")).toBe("true");
+    expect(everyone.classList).toContain("bg-background");
+    expect(bob.classList).not.toContain("bg-background");
+
+    fireEvent.click(bob);
+    expect(bob.getAttribute("aria-pressed")).toBe("true");
+    expect(bob.classList).toContain("bg-background");
+    expect(everyone.classList).not.toContain("bg-background");
   });
 
   it("offers Show more while the server says there is more", () => {

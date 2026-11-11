@@ -258,7 +258,7 @@ export function PuzzleFilters({
                 className={cn(
                   "border-border cursor-pointer rounded-full border px-2.5 py-1 font-mono text-xs transition-colors pointer-coarse:min-h-9",
                   on
-                    ? "bg-jigsaw-primary-tint text-primary-text"
+                    ? "bg-jigsaw-primary-tint text-primary-text ring-primary-text ring-1 ring-inset"
                     : "bg-card text-muted-foreground hover:bg-accent",
                 )}
               >

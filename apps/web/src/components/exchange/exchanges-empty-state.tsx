@@ -40,14 +40,14 @@ export function ExchangesEmptyState({
       sub={t(`empty.${tab}.sub`)}
       action={
         tab === "incoming" ? (
-          <Button asChild variant="brand">
+          <Button asChild>
             <Link href="/my-puzzles">
               <Library className="h-4 w-4" />
               {t("empty.incoming.action")}
             </Link>
           </Button>
         ) : (
-          <Button asChild variant="brand">
+          <Button asChild>
             <Link href="/browse">
               <Search className="h-4 w-4" />
               {t("empty.browse")}

@@ -1,10 +1,10 @@
 "use client";
 
-// Console-style inset shell (Google-Cloud-Console pattern): the tinted chrome
-// surface fills the viewport and carries the global top bar and the
-// transparent sidebar; the page content floats on it as a rounded, bordered,
-// soft-shadowed card with the page head fixed at its top and the content
-// scrolling inside it.
+// Framed-sheet shell: one sky L-frame carries the global top bar and the sidebar
+// with no rule between them; the page sits on a white sheet butting both, inset
+// 8px from the window's right and bottom, with a 1px edge and no shadow. The page
+// head is fixed at the sheet's top and the content scrolls inside it. Frame, sheet
+// and card are the only three levels.
 //
 // Below the md breakpoint (the single mobile source of truth, = useIsMobile's
 // 768px) that desktop chrome is CSS-swapped for a dedicated mobile shell: a
@@ -30,6 +30,7 @@ import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { AppSidebar } from "./app-sidebar";
 import { CommandPalette } from "./command-palette";
+import { ConnectionNotice } from "./connection-notice";
 import { contentWidthClass } from "./content-width";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { MobileTopBar } from "./mobile-top-bar";
@@ -82,7 +83,7 @@ export function DashboardShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const sidebarState = useSidebarOpen(sidebar);
   const pathname = useLocation({ select: (location) => location.pathname });
-  // Full-bleed pages (/messages) fill the card from md: no content padding and
+  // Full-bleed pages (/messages) fill the sheet from md: no content padding and
   // no page scroll, so only the page's own panes scroll.
   const fullBleed = isFullBleedRoute(pathname);
 
@@ -95,9 +96,9 @@ export function DashboardShell({
             below md) so the browser's address bar auto-hides on scroll-down and
             returns on scroll-up — the regular-website behaviour. The mobile top
             bar is sticky and the tab bar is position:fixed so both stay pinned
-            while the page scrolls under them. Desktop keeps the inset-card model:
+            while the page scrolls under them. Desktop keeps the sheet model:
             a fixed `svh` column that clips its own overflow and scrolls inside
-            the card. */}
+            the sheet. */}
         {/* Controlled: the provider still writes the sidebar_state cookie on every docked toggle. */}
         <SidebarProvider
           open={sidebarState.open}
@@ -110,26 +111,36 @@ export function DashboardShell({
           <SkipLink />
           <TopBar onOpenPalette={() => setPaletteOpen(true)} />
           <MobileTopBar onOpenPalette={() => setPaletteOpen(true)} />
-          <div className="flex flex-1 md:min-h-0">
+          <div className="relative flex flex-1 md:min-h-0">
             <AppSidebar />
+            {/* The skyline's ground runs on under the sheet's bottom edge and rounded corner, so
+                its band has no seam where the sidebar ends. Gone with the skyline itself. */}
+            <div className="bg-sidebar-skyline pointer-events-none absolute inset-x-0 bottom-0 hidden h-5 md:[@media(min-height:720px)]:block md:[@media(min-height:720px)]:peer-data-[state=collapsed]:hidden" />
             <SidebarInset
               id={MAIN_CONTENT_ID}
               tabIndex={-1}
-              className="md:min-h-0 md:overflow-hidden md:peer-data-[variant=inset]:mt-0 md:peer-data-[variant=inset]:mr-3 md:peer-data-[variant=inset]:mb-3 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-0"
+              className="md:min-h-0 md:overflow-hidden"
             >
+              {/* Above the scroll region, so it stays in view; phones show it in the top bar. */}
+              <ConnectionNotice className="hidden md:block" />
               {/* ONE scroll region holds the page head + content, so content scrolls UNDER the
-                  glass head (sticky top-0). Clipped to the card's rounded corners by SidebarInset's
+                  head (sticky top-0). Clipped to the sheet's rounded corners by SidebarInset's
                   overflow-hidden. */}
               {/* --app-sticky-top: where sticky page content (tab bars) sticks — below the mobile
                   top bar on phones, below the page head from md (see sticky-offset.ts), and at the
                   top in a window too short for the head to stick. Phones clip rather than hide
                   x-overflow: `hidden` would make this a scroll container that never scrolls (the
                   document does), and sticky children would never stick. */}
+              {/* While the cookie banner is open, the strip it covers is reserved at the end
+                  (sticky-offset.ts): here, not on <body>, so on phones the sticky tab bar after
+                  this region stays at the bottom. From md, where this region scrolls, it is also
+                  scroll padding, so focus lands above the banner; on /messages the padding lifts
+                  the composer. */}
               <div
                 data-scroll-restoration-id={APP_SCROLL_REGION_ID}
                 className={cn(
-                  "flex-1 overflow-x-clip [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[--app-sticky-top:var(--page-head-height,0px)] [@media(max-height:500px)]:md:[--app-sticky-top:0px]",
-                  // Full-bleed: a column whose content area takes the rest of the card. It only
+                  "flex-1 overflow-x-clip pb-[var(--consent-banner-height,0px)] md:scroll-pb-[var(--consent-banner-height,0px)] [--app-sticky-top:var(--mobile-top-bar-height,0px)] md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] md:[scrollbar-width:thin] md:[--app-sticky-top:var(--page-head-height,0px)] [@media(max-height:500px)]:md:[--app-sticky-top:0px]",
+                  // Full-bleed: a column whose content area takes the rest of the sheet. It only
                   // scrolls (with no reserved gutter) when the window is shorter than the page's
                   // minimum height, so the composer is never clipped out of reach.
                   fullBleed
@@ -178,7 +189,7 @@ export function MobilePageActions() {
 }
 
 // The padded content region inside the shared scroll container (the scroll lives one level up so
-// content passes under the sticky glass head). Honours the content-width preference (full width by
+// content passes under the sticky head). Honours the content-width preference (full width by
 // default, or a ~1180px centered column).
 function ContentArea({
   children,
@@ -198,7 +209,7 @@ function ContentArea({
         // center button's overhang.
         "w-full px-4 pt-[18px] pb-6 md:p-6",
         contentWidthClass(fullWidth),
-        // Edge to edge whatever the width preference, filling the card's height.
+        // Edge to edge whatever the width preference, filling the sheet's height.
         fullBleed && "md:flex md:min-h-0 md:max-w-none md:flex-1 md:p-0",
       )}
     >

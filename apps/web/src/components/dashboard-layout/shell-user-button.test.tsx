@@ -25,8 +25,18 @@ const mocks = vi.hoisted(() => ({
   setPreference: vi.fn<(key: string, value: unknown) => void>(),
   mutation: vi.fn<(name: string, args: unknown) => Promise<unknown>>(),
   signOut: vi.fn<() => Promise<void>>(),
-  appearance: undefined as
-    { elements?: Record<string, string | undefined> } | undefined,
+  appearance: undefined as { elements?: Record<string, unknown> } | undefined,
+  user: { id: "user_me" } as {
+    id: string;
+    hasImage?: boolean;
+    fullName?: string | null;
+    username?: string | null;
+  },
+  connected: true,
+}));
+
+vi.mock("@/lib/use-connection-state", () => ({
+  useConnectionState: () => ({ connected: mocks.connected }),
 }));
 
 // A stand-in for Clerk's UserButton: menu items render as plain buttons/links
@@ -81,7 +91,7 @@ vi.mock("@/compat/clerk", () => {
     ) : null;
   return {
     UserButton,
-    useUser: () => ({ user: { id: "user_me" } }),
+    useUser: () => ({ user: mocks.user }),
     useClerk: () => ({ signOut: mocks.signOut }),
   };
 });
@@ -151,6 +161,8 @@ const renderButton = (
 beforeEach(() => {
   mocks.mutation.mockReset().mockResolvedValue(null);
   mocks.signOut.mockReset().mockResolvedValue(undefined);
+  mocks.user = { id: "user_me" };
+  mocks.connected = true;
 });
 afterEach(cleanup);
 
@@ -234,6 +246,96 @@ describe("ShellUserButton status menu", () => {
       container.querySelector<HTMLElement>("[data-presence]")?.dataset
         .presence ?? null,
     ).toBe(dot);
+  });
+
+  // F74: offline, nobody sees the member online, so their own dot doesn't claim it.
+  it("hides the member's own dot while the app is offline", () => {
+    mocks.settings = { share: true, override: "auto" };
+    mocks.connected = false;
+    const { container } = renderButton();
+    expect(container.querySelector("[data-presence]")).toBeNull();
+    // The status choice itself stays.
+    expect(statusItems()).toHaveLength(3);
+  });
+});
+
+// F70: the menu was 11 rows of about 50px, cut off at laptop heights and below the fold on a phone.
+describe("ShellUserButton menu size", () => {
+  const elements = () => mocks.appearance?.elements ?? {};
+  const menuLinks = () =>
+    screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+
+  // Important, because Clerk's own unlayered `overflow: hidden` beats a layered utility: without
+  // it the menu is capped but can't scroll, and Sign out is clipped out of reach on a short phone.
+  it("scrolls inside a menu capped below the window height", () => {
+    renderButton();
+    expect(String(elements().userButtonPopoverMain).split(/\s+/)).toEqual(
+      expect.arrayContaining([
+        "max-h-[calc(100dvh-140px)]!",
+        "overflow-y-auto!",
+        "overscroll-contain!",
+      ]),
+    );
+  });
+
+  it("sizes rows to 36px for a mouse and keeps 44px targets on touch", () => {
+    renderButton();
+    for (const key of [
+      "userButtonPopoverCustomItemButton",
+      "userButtonPopoverActionButton",
+    ]) {
+      expect(String(elements()[key]).split(/\s+/)).toEqual(
+        expect.arrayContaining([
+          "pointer-fine:min-h-9!",
+          "pointer-coarse:min-h-11!",
+        ]),
+      );
+    }
+  });
+
+  it("leaves What's new to the desktop sidebar, and lists it on the phone", () => {
+    mocks.settings = undefined;
+    renderButton();
+    expect(menuLinks()).not.toContain("/whats-new");
+    expect(menuLinks()).toContain("/whats-new?tab=guides");
+    cleanup();
+    renderButton("en", { tapTarget: true });
+    expect(menuLinks()).toContain("/whats-new");
+  });
+});
+
+// F55: without a photo the trigger shows the member's initial on canal; the menu's header shows the
+// same instead of Clerk's default picture.
+describe("ShellUserButton menu header avatar", () => {
+  it("draws the member's initial on canal when they have no photo", () => {
+    mocks.user = {
+      id: "user_me",
+      hasImage: false,
+      fullName: "Hanna de Vries",
+      username: "hanna",
+    };
+    renderButton();
+    const elements = mocks.appearance?.elements ?? {};
+    expect(elements.userPreviewAvatarImage).toEqual({ display: "none" });
+    expect(elements.userPreviewAvatarBox).toMatchObject({
+      backgroundColor: "var(--primary)",
+      color: "var(--primary-foreground)",
+      // Clerk's box packs its grid to the start; the initial must sit in the middle of the disc.
+      placeItems: "center",
+      placeContent: "center",
+      "&::after": { content: '"H"' },
+    });
+  });
+
+  it.each([
+    ["with a photo", { hasImage: true, fullName: "Hanna de Vries" }],
+    ["with no name to take an initial from", { hasImage: false }],
+  ])("keeps Clerk's own picture %s", (_label, user) => {
+    mocks.user = { id: "user_me", ...user };
+    renderButton();
+    const elements = mocks.appearance?.elements ?? {};
+    expect(elements.userPreviewAvatarImage).toBeUndefined();
+    expect(elements.userPreviewAvatarBox).toBeUndefined();
   });
 });
 
@@ -389,7 +491,7 @@ describe("ShellUserButton help entry (UX-91)", () => {
 
   it("offers Help & guides right after What's new, opening the Guides tab", () => {
     mocks.settings = undefined;
-    renderButton();
+    renderButton("en", { tapTarget: true });
     const links = menuLinks();
     const whatsNew = links.findIndex(([label]) => label === "What's new");
     expect(links[whatsNew + 1]).toEqual([

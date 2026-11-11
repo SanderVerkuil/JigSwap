@@ -14,12 +14,12 @@ export function DocPager({ pager }: { pager: Pager }) {
         <Link
           to="/docs/$"
           params={{ _splat: pager.prev.slug }}
-          className="group flex flex-col gap-1 rounded-[14px] border border-mk-border bg-mk-card p-4 transition-all hover:border-mk-violet-300 hover:shadow-mk-sm hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+          className="group flex flex-col gap-1 rounded-md bg-mk-sky-soft dark:bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
         >
-          <span className="flex items-center gap-1 text-[12px] text-mk-text-muted">
+          <span className="flex items-center gap-1 text-[14px] text-mk-text-muted">
             <ArrowLeft className="size-3.5" /> {t("pagerPrevious")}
           </span>
-          <span className="font-mk-heading font-semibold text-[15px] text-mk-text-strong group-hover:text-mk-violet-600">
+          <span className="font-mk-heading text-[17px] text-mk-text-strong">
             {pager.prev.title}
           </span>
         </Link>
@@ -30,12 +30,12 @@ export function DocPager({ pager }: { pager: Pager }) {
         <Link
           to="/docs/$"
           params={{ _splat: pager.next.slug }}
-          className="group flex flex-col gap-1 items-end text-right rounded-[14px] border border-mk-border bg-mk-card p-4 transition-all hover:border-mk-violet-300 hover:shadow-mk-sm hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+          className="group flex flex-col gap-1 items-end text-right rounded-md bg-mk-sky-soft dark:bg-mk-muted p-4 transition-[background-color] duration-150 hover:bg-mk-sky dark:hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
         >
-          <span className="flex items-center gap-1 text-[12px] text-mk-text-muted">
+          <span className="flex items-center gap-1 text-[14px] text-mk-text-muted">
             {t("pagerNext")} <ArrowRight className="size-3.5" />
           </span>
-          <span className="font-mk-heading font-semibold text-[15px] text-mk-text-strong group-hover:text-mk-violet-600">
+          <span className="font-mk-heading text-[17px] text-mk-text-strong">
             {pager.next.title}
           </span>
         </Link>

@@ -64,7 +64,7 @@ export function UserFooter() {
     <div
       ref={rootRef}
       data-tour="account-menu"
-      className="flex items-center gap-2 rounded-md p-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+      className="flex h-8 items-center rounded-md px-1 hover:bg-sidebar-foreground/8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
     >
       <ShellUserButton />
       <button
@@ -73,9 +73,9 @@ export function UserFooter() {
         onPointerDown={rememberMenuState}
         onClick={openUserMenu}
         aria-haspopup="menu"
-        className="grid min-w-0 flex-1 content-center rounded-md px-1 py-0.5 text-left text-sm leading-tight transition-colors hover:bg-accent group-data-[collapsible=icon]:hidden pointer-coarse:min-h-11"
+        className="grid min-w-0 flex-1 cursor-pointer content-center rounded-md px-1 text-left ring-sidebar-ring outline-none focus-visible:ring-2 group-data-[collapsible=icon]:hidden pointer-coarse:min-h-11"
       >
-        <span className="truncate font-medium">
+        <span className="truncate text-sm leading-4 font-medium">
           {/* No email fallback: the email line below honours hideEmail. */}
           {displayName({
             name: [user.firstName, user.lastName].filter(Boolean).join(" "),
@@ -85,7 +85,7 @@ export function UserFooter() {
         <span
           aria-hidden={hideEmail}
           className={cn(
-            "truncate text-xs text-muted-foreground transition-[filter]",
+            "truncate text-xs leading-3.5 text-muted-foreground transition-[filter]",
             hideEmail && "blur-[4px] select-none",
           )}
         >

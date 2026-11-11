@@ -36,7 +36,7 @@ export function CompletionsEmptyState() {
       sub={t("emptyHint")}
       action={
         <div className="flex flex-col items-center gap-3">
-          <Button variant="brand" asChild className="pointer-coarse:min-h-11">
+          <Button asChild className="pointer-coarse:min-h-11">
             <Link href="/completions/new" data-tour="completions-log">
               <Plus aria-hidden className="h-4 w-4" />
               {t("emptyLog")}

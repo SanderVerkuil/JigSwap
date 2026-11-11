@@ -82,6 +82,30 @@ describe("TagInput", () => {
     expect(tagsShown()).toEqual(["sunset"]);
   });
 
+  // It sits among Inputs, so it is drawn like one; its placeholder was 50% currentColor (2.88:1).
+  it("is drawn like Input, with a legible placeholder", () => {
+    render(<Host id="tags" />);
+    const input = screen.getByRole("textbox", { name: "Keywords" });
+    const box = input.parentElement!.className.split(" ");
+    expect(box).toEqual(
+      expect.arrayContaining([
+        "min-h-9",
+        "rounded-md",
+        "border-input",
+        "px-3",
+        "py-1",
+        "focus-within:border-ring",
+        "focus-within:ring-[3px]",
+        "focus-within:ring-ring/50",
+        "pointer-coarse:min-h-11",
+      ]),
+    );
+    expect(box).not.toContain("rounded-lg");
+    expect(input.className.split(" ")).toContain(
+      "placeholder:text-muted-foreground",
+    );
+  });
+
   it("removes a tag with its own button or Backspace on an empty field", () => {
     render(<Host id="tags" initial={["ocean", "calm", "forest"]} />);
 

@@ -1,5 +1,5 @@
 ---
-title: Adding & Importing Puzzles
+title: Adding & importing puzzles
 order: 2
 summary: "Add owned copies one at a time or several at once, search by barcode, import from a store URL, and contribute to the catalogue."
 ---
@@ -49,7 +49,7 @@ You'll land on the creation/copy form (`/my-puzzles/add/new`).
 - **Tags** and **notes**.
 - **Advanced fields** (collapsible): EAN, UPC, model number, artist, series, shape, dimensions.
 
-On a large screen, a **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look. On a phone or tablet, a short summary sits above the add button instead.
+On a wide screen, a **live preview card** and a **readiness checklist** sit alongside the form so you can see how your puzzle will look. On a phone, tablet or smaller laptop screen, a short summary sits above the add button instead.
 
 > **Adding a copy of an existing puzzle:** When you add from the catalogue (copy mode), the puzzle's catalogue definition is locked read-only, and you only fill in the copy-specific fields (your condition, availability and notes). You add photos of your own copy on its page afterwards.
 
@@ -82,3 +82,13 @@ stay picked, so you can safely try again.
 ## Contributing a brand-new puzzle to the catalogue
 
 If a puzzle isn't in the catalogue yet, you can contribute its definition for everyone. Use **Puzzles → Add** (`/puzzles/add`). This uses the same form (without the copy-specific fields) and sends your submission to the **moderation queue** for an admin to approve.
+
+The **EAN** and **UPC** under **More details (optional)** are checked when you
+leave the field: an EAN has 13 digits and a UPC 12, and the last digit has to
+match the others. A code that doesn't fit is named under its field. If you
+press **Contribute a Puzzle** with a wrong code, **More details** opens on that
+field instead of sending.
+
+If you leave the form after filling something in or importing a puzzle,
+JigSwap first asks **Leave without saving?**: choose **Keep editing** to stay,
+or **Discard** to leave without contributing it.

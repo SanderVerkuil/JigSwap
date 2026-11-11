@@ -52,7 +52,7 @@ Elke rij in het overzicht toont:
 - De omslag van de laatste puzzel waar het gesprek over gaat, als die er is.
 
 De groepschat van een kring toont de naam van de kring met de avatar van een
-lid en het paarse kringicoon (twee mensen), zodat je hem niet verwart met een
+lid en het kringicoon (twee mensen), zodat je hem niet verwart met een
 gesprek met één persoon. Het voorbeeld begint met de naam van wie het laatst
 schreef (bijvoorbeeld "Bas: Wie heeft de Wasgij?"). Een gedempt gesprek toont
 een doorgestreepte bel, en het aantal ongelezen berichten is grijs.
@@ -80,7 +80,7 @@ houden hun profiel privé; dan kun je ze vanaf hun puzzel geen bericht sturen.
 
 1. Klik bij de kring op **Groepschat openen**, op **Kringen** of op de eigen
    pagina van de kring. Of klik in Berichten op **Nieuw**, kies **Kringchat**
-   en kies de kring (elke kring toont het paarse kringicoon).
+   en kies de kring (elke kring toont het kringicoon).
 2. Schrijf je bericht en verstuur het.
 
 De chat van een kring verschijnt in je overzicht zodra iemand erin heeft
@@ -231,6 +231,11 @@ alleen leden die online zijn (niet afwezig) en van wie je de status mag zien.
 - Als je naar boven scrolt, worden oudere berichten automatisch geladen. Je
   kunt ook op **Eerdere berichten laden** drukken. Ben je bij het begin, dan
   zie je **Begin van het gesprek**.
+- Een bericht dat onderweg is, toont **Versturen…** waar de tijd staat, of
+  **Wachten op verbinding** als je offline bent; het wordt verstuurd zodra je
+  weer online bent. Ben je een paar seconden zonder verbinding, dan meldt
+  een smalle strook boven aan de pagina dat je offline bent, tot de verbinding
+  terug is.
 
 ### Snelkoppelingen in de kop
 

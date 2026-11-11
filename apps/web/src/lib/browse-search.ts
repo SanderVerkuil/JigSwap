@@ -105,10 +105,13 @@ export function browseSearchFromFilters(
   };
 }
 
-/** Which "nothing here" message an empty Browse shows: "filtered" (the text or a filter is set,
- *  so blame those), "puzzleNotOffered" (only ?puzzle narrows it: nobody offers that puzzle) or
- *  "noOffers" (nothing narrows it: nobody offers anything this member can see). */
-export type BrowseEmptyState = "filtered" | "puzzleNotOffered" | "noOffers";
+/** Which "nothing here" message an empty Browse shows: "searched" (only the text narrows it:
+ *  nobody offers a match, though the catalogue may have one), "filtered" (a filter is set, or the
+ *  text searched only the ?puzzle's copies, so blame the filters), "puzzleNotOffered" (only
+ *  ?puzzle narrows it: nobody offers that puzzle) or "noOffers" (nothing narrows it: nobody offers
+ *  anything this member can see). */
+export type BrowseEmptyState =
+  "searched" | "filtered" | "puzzleNotOffered" | "noOffers";
 
 // The conditions a member sets in the query builder. Named, not "everything but ?puzzle and the
 // view": the search also holds params no validator knows, such as utm_source (see lib/search-params).
@@ -123,14 +126,8 @@ const CONDITION_PARAMS = [
 ] as const;
 
 export function browseEmptyState(search: BrowseSearch): BrowseEmptyState {
-  if (CONDITION_PARAMS.some((param) => search[param] !== undefined)) {
-    return "filtered";
-  }
+  const set = CONDITION_PARAMS.filter((param) => search[param] !== undefined);
+  if (set.length === 1 && set[0] === "q" && !search.puzzle) return "searched";
+  if (set.length > 0) return "filtered";
   return search.puzzle ? "puzzleNotOffered" : "noOffers";
 }
-
-/** The search with the text and every filter cleared; ?puzzle and the view mode stay. */
-export const withoutBrowseConditions = ({
-  puzzle,
-  view,
-}: BrowseSearch): BrowseSearch => ({ puzzle, view });

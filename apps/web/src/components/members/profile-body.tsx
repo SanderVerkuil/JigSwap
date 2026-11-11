@@ -13,7 +13,6 @@ import {
 } from "@/components/circles/invite-to-circle-dialog";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
-import { contentWidthClass } from "@/components/dashboard-layout/content-width";
 import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import { MemberInitial } from "@/components/members/member-initial";
 import {
@@ -123,16 +122,8 @@ function ProfileBodyContent({
   // The viewer blocked this member: the payload is an identity stub.
   const blockedByMe = profile.locked && profile.blockedByMe === true;
 
-  return (
-    // Inside the dashboard shell the content area already applies the user's
-    // width preference and the page padding; the logged-out page has neither,
-    // so it pads itself and uses the regular (non-full-width) column.
-    <div
-      className={cn(
-        "flex w-full flex-col gap-10",
-        viewer === "public" && ["px-4 py-10", contentWidthClass(false)],
-      )}
-    >
+  const top = (
+    <>
       {invitedName && <InvitedBanner name={invitedName} kind={invitedKind} />}
       {inviteExpired && <InviteExpiredNotice />}
       {/* The hero lays out on its OWN width (the `hero` container), not the
@@ -148,49 +139,76 @@ function ProfileBodyContent({
           requestedHandle={requestedHandle}
         />
       </div>
+    </>
+  );
 
-      {blockedByMe ? (
-        <BlockedCard
-          name={displayName({ name: hero.displayName })}
-          memberId={hero.memberId as Id<"users">}
-        />
-      ) : profile.locked ? (
-        <LockedCard
-          firstName={firstName}
-          name={displayName({ name: hero.displayName })}
-          memberId={hero.memberId as Id<"users">}
-          viewer={viewer}
-          returnToHref={returnToHref}
-          invited={invitedName ? invitedKind : undefined}
-        />
-      ) : (
-        <>
-          {profile.story && (
-            <StorySection firstName={firstName} story={profile.story} />
-          )}
-          <StatStrip stats={profile.stats} />
-          <RecordsRow records={profile.records} />
-          <CurrentlySolvingSection
-            firstName={firstName}
-            items={profile.currentlySolving ?? []}
-          />
-          {/* Auth-gated paginated listings: signed-in viewers only. */}
-          {viewer !== "public" && (
-            <ProfileCompletionsSection
-              memberId={hero.memberId as Id<"users">}
-              firstName={firstName}
-            />
-          )}
-          <ShelfSection firstName={firstName} shelf={shelf} />
-          {viewer !== "public" && (
-            <ProfilePuzzlesSection
-              memberId={hero.memberId as Id<"users">}
-              firstName={firstName}
-              scope={profile.libraryScope}
-            />
-          )}
-        </>
+  const rest = blockedByMe ? (
+    <BlockedCard
+      name={displayName({ name: hero.displayName })}
+      memberId={hero.memberId as Id<"users">}
+    />
+  ) : profile.locked ? (
+    <LockedCard
+      firstName={firstName}
+      name={displayName({ name: hero.displayName })}
+      memberId={hero.memberId as Id<"users">}
+      viewer={viewer}
+      returnToHref={returnToHref}
+      invited={invitedName ? invitedKind : undefined}
+    />
+  ) : (
+    <>
+      {profile.story && (
+        <StorySection firstName={firstName} story={profile.story} />
       )}
+      <StatStrip stats={profile.stats} viewer={viewer} />
+      <RecordsRow records={profile.records} />
+      <CurrentlySolvingSection
+        firstName={firstName}
+        items={profile.currentlySolving ?? []}
+      />
+      {/* Auth-gated paginated listings: signed-in viewers only. */}
+      {viewer !== "public" && (
+        <ProfileCompletionsSection
+          memberId={hero.memberId as Id<"users">}
+          firstName={firstName}
+        />
+      )}
+      <ShelfSection firstName={firstName} shelf={shelf} />
+      {viewer !== "public" && (
+        <ProfilePuzzlesSection
+          memberId={hero.memberId as Id<"users">}
+          firstName={firstName}
+          scope={profile.libraryScope}
+        />
+      )}
+    </>
+  );
+
+  // Inside the dashboard shell the content area already applies the user's
+  // width preference and the page padding.
+  if (viewer !== "public") {
+    return (
+      <div className="flex w-full flex-col gap-10">
+        {top}
+        {rest}
+      </div>
+    );
+  }
+
+  // The logged-out page is a street page: the hero on a full-bleed sky band, the rest below it, both
+  // on the public 16/40px edge. On sky the app's muted grey falls under 4.5:1, so the band uses the
+  // street's muted ink. A column with nothing to show collapses, so the sky bands meet.
+  return (
+    <div className="flex w-full flex-col">
+      <div className="bg-mk-sky [--muted-foreground:var(--mk-text-muted)]">
+        <div className="flex max-w-[1280px] flex-col gap-10 px-4 py-10 min-[760px]:px-10">
+          {top}
+        </div>
+      </div>
+      <div className="flex max-w-[1280px] flex-col gap-10 px-4 py-10 empty:hidden min-[760px]:px-10">
+        {rest}
+      </div>
     </div>
   );
 }
@@ -240,7 +258,16 @@ function HeroSection({
               {name}
             </h1>
             {hero.reviewCount > 0 && (
-              <span className="bg-jigsaw-secondary/10 text-jigsaw-secondary-text inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium">
+              // A visitor's hero sits on sky, where the 10% green tint falls under 4.5:1: there the
+              // pill is the street's opaque success chip.
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium",
+                  viewer === "public"
+                    ? "bg-mk-success-soft text-mk-success-strong"
+                    : "bg-jigsaw-secondary/10 text-jigsaw-secondary-text",
+                )}
+              >
                 <Star className="size-3.5 fill-current" />
                 {t("ratingPill", {
                   rating: format.number(hero.rating, {
@@ -263,7 +290,7 @@ function HeroSection({
             {handle && (
               <span className="inline-flex items-center gap-1 [overflow-wrap:anywhere]">
                 <AtSign className="size-3.5" />
-                <span className="font-mono">{handle}</span>
+                <span data-slot="member-handle">{handle}</span>
               </span>
             )}
             {hero.location && (
@@ -346,10 +373,11 @@ function HeroActions({
     );
   }
 
-  // Logged-out: the only real action is to join; deep follow lives behind sign-up.
+  // Logged-out: the only real action is to join; deep follow lives behind sign-up. Outline, so the
+  // page's one marigold action stays the sign-up below.
   return (
     <div className="flex shrink-0 items-center gap-2">
-      <Button asChild variant="brand">
+      <Button asChild variant="outline">
         <SignUpLink returnToHref={returnToHref}>{t("follow")}</SignUpLink>
       </Button>
     </div>
@@ -554,7 +582,7 @@ function StorySection({
       <div className="relative">
         <span
           aria-hidden
-          className="font-heading text-jigsaw-primary/10 pointer-events-none absolute -top-6 -left-2 select-none text-8xl leading-none"
+          className="font-heading text-primary-text/10 pointer-events-none absolute -top-6 -left-2 select-none text-8xl leading-none"
         >
           &ldquo;
         </span>
@@ -567,23 +595,43 @@ function StorySection({
 }
 
 // ── Stat strip ───────────────────────────────────────────────────────────────
-function StatStrip({ stats }: { stats: UnlockedProfile["stats"] }) {
+function StatStrip({
+  stats,
+  viewer,
+}: {
+  stats: UnlockedProfile["stats"];
+  viewer: ProfileViewer;
+}) {
   const t = useTranslations("members.profile");
   const format = useFormatter();
-  const cells = [
+  const all = [
     { value: stats.puzzlesOwned, label: t("statOwned") },
     { value: stats.completions, label: t("statCompletions") },
     { value: stats.piecesPlaced, label: t("statPieces") },
     { value: stats.swaps, label: t("statSwaps") },
   ];
+  // A visitor sees only what the member has done, laid out like the catalogue detail's strip on the
+  // page's left edge: a row of zeros says nothing to them.
+  const isPublic = viewer === "public";
+  const cells = isPublic ? all.filter((cell) => cell.value > 0) : all;
+  if (cells.length === 0) return null;
   return (
-    <section className="grid grid-cols-2 gap-y-6 sm:grid-cols-4 sm:gap-y-0">
+    <section
+      className={cn(
+        "grid grid-cols-2 gap-y-6 sm:grid-cols-4 sm:gap-y-0",
+        isPublic && "max-w-[760px]",
+      )}
+    >
       {cells.map((cell, i) => (
         <div
           key={cell.label}
-          className={cn("px-3 text-center", i > 0 && "sm:border-l")}
+          className={
+            isPublic
+              ? cn(i > 0 && "sm:border-l sm:pl-5")
+              : cn("px-3 text-center", i > 0 && "sm:border-l")
+          }
         >
-          <div className="font-heading text-primary-text text-4xl leading-none font-bold">
+          <div className="text-primary-text font-sans text-4xl leading-none font-semibold tabular-nums">
             {format.number(cell.value)}
           </div>
           <div className="text-muted-foreground mt-2 text-sm">{cell.label}</div>
@@ -630,7 +678,7 @@ function RecordsRow({ records }: { records: UnlockedProfile["records"] }) {
       {records.hardest && (
         <RecordCard
           icon={Mountain}
-          chipClass="bg-jigsaw-primary/10 text-jigsaw-primary"
+          chipClass="bg-jigsaw-primary/10 text-primary-text"
           label={t("hardestLabel")}
           title={records.hardest.title}
           sub={t("piecesValue", { count: records.hardest.pieceCount })}
@@ -664,9 +712,7 @@ function RecordCard({
         <Icon className="size-5" />
       </div>
       <div className="min-w-0">
-        <div className="text-muted-foreground font-mono text-xs uppercase">
-          {label}
-        </div>
+        <div className="text-muted-foreground text-xs">{label}</div>
         <div className="truncate font-semibold">{title}</div>
         <div className="text-muted-foreground text-sm">{sub}</div>
       </div>
@@ -798,7 +844,14 @@ function LockedCard({
         <FollowButton memberId={memberId} memberName={name} />
       )}
       {viewer === "public" && (
-        <Button asChild variant="brand">
+        // The page's one marigold action; the Dutch labels need two lines in the card on a phone.
+        // It stays 50px on touch too, over the base's 44px coarse-pointer floor.
+        <Button
+          asChild
+          variant="brand"
+          size="public"
+          className="h-auto min-h-[50px] max-w-full py-2.5 text-center whitespace-normal pointer-coarse:min-h-[50px]"
+        >
           <SignUpLink returnToHref={returnToHref}>
             {invited === "network"
               ? t("signUpToFollowEachOther")
@@ -913,16 +966,20 @@ function SignUpLink({
 }
 
 // The bottom "Love puzzles too? / Sign up free" band on the logged-out public
-// view — pure presentation, routed through the existing Clerk sign-up flow.
+// view, routed through the existing Clerk sign-up flow. The street's closing call to action (the
+// home page's FinalCTA): the statement on sky with the page's one marigold action under it.
 export function ProfileCtaBand({ returnToHref }: { returnToHref?: string }) {
   const t = useTranslations("members.profile");
   return (
-    <section className="border-border/60 mt-4 border-t">
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 px-4 py-14 text-center">
-        <Sparkles className="text-jigsaw-primary size-7" />
-        <h2 className="font-heading text-2xl">{t("ctaTitle")}</h2>
-        <p className="text-muted-foreground max-w-md">{t("ctaSub")}</p>
-        <Button asChild variant="brand" size="lg" className="mt-1">
+    <section className="bg-mk-sky text-mk-text-strong">
+      <div className="w-full px-4 py-[clamp(40px,6vw,88px)] min-[760px]:px-10">
+        <h2 className="font-mk-heading max-w-[16em] text-[clamp(32px,4.4vw,68px)] leading-[1.06] font-normal text-balance">
+          {t("ctaTitle")}
+        </h2>
+        <p className="mt-4 max-w-[46ch] text-[18px] leading-[1.5] text-pretty">
+          {t("ctaSub")}
+        </p>
+        <Button asChild variant="brand" size="public" className="mt-7">
           <SignUpLink returnToHref={returnToHref}>{t("ctaButton")}</SignUpLink>
         </Button>
       </div>

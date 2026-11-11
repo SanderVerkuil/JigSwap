@@ -65,6 +65,16 @@ describe("QueryBuilder: search box", () => {
   });
 });
 
+describe("QueryBuilder: Add Filter", () => {
+  // A plain button beside the search box, as the catalogue's toolbar buttons are: not a pill.
+  it("has the toolbar's button shape", () => {
+    renderBuilder();
+    expect(
+      screen.getByRole("button", { name: en.browse.addFilter }).className,
+    ).not.toContain("rounded-full");
+  });
+});
+
 describe("QueryBuilder: focus when a condition goes away", () => {
   const addFilter = () =>
     screen.getByRole("button", { name: en.browse.addFilter });

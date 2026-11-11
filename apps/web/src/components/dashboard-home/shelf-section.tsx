@@ -3,6 +3,7 @@
 import { Link } from "@/compat/link";
 import { PuzzlePlankBox } from "@/components/common/puzzle-plank";
 import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
+import { BOX_COLORS } from "@/components/profile/to-plank-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
@@ -34,15 +35,6 @@ type OwnedCopy = FunctionReturnType<
 // How many copies the dashboard shelf reads: the Fresh section below shows six, so both sections
 // share one library.myShelf subscription; the plank shows the first SHELF_BOX_COUNT of them.
 export const MY_SHELF_SIZE = 6;
-
-// Warm gradient pairs for boxes without cover art (violet / green / pink /
-// amber brand hues) — never an empty gray box.
-const BOX_GRADIENTS: ReadonlyArray<readonly [string, string]> = [
-  ["#6048e8", "#494e92"],
-  ["#3fae3c", "#157a13"],
-  ["#ec4899", "#b22d6e"],
-  ["#f5a623", "#cf7911"],
-];
 
 // Varied box heights so the shelf reads like a real, lived-in collection.
 const BOX_HEIGHTS = [148, 130, 156, 126, 142];
@@ -88,15 +80,15 @@ function toPlankBox(
   // Prefer the copy's resolved cover (a user-uploaded/pinned photo) over the
   // catalogue image so a copy with its own cover shows it, not placeholder art.
   const cover = copy.coverUrl ?? copy.puzzle?.images?.[0];
-  const [c1, c2] = BOX_GRADIENTS[index % BOX_GRADIENTS.length];
+  const color = BOX_COLORS[index % BOX_COLORS.length];
   const heights = isMobile ? MOBILE_BOX_HEIGHTS : BOX_HEIGHTS;
   return {
     title: copy.puzzle?.title ?? copy.snapshot?.title,
     series: copy.puzzle?.brand ?? copy.snapshot?.brand,
     pieceCount: copy.puzzle?.pieceCount ?? copy.snapshot?.pieceCount,
     cover,
-    c1,
-    c2,
+    c1: color,
+    c2: color,
     // Narrower boxes on mobile; PuzzlePlank derives cover-box height from width,
     // so this shortens the whole shelf. Desktop keeps the component default (116).
     width: isMobile ? 92 : undefined,
@@ -123,7 +115,7 @@ function StatRow({
       hash={hash}
       className="group flex items-center gap-2.5 border-t py-3 sm:gap-3.5 lg:first:border-t-0"
     >
-      <span className="font-heading min-w-9 text-xl leading-none font-bold sm:min-w-[52px] sm:text-2xl">
+      <span className="min-w-9 font-sans text-xl leading-none font-semibold tabular-nums sm:min-w-[52px] sm:text-2xl">
         {value}
       </span>
       <span className="min-w-0 flex-1">

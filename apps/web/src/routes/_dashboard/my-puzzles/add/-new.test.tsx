@@ -119,6 +119,8 @@ const callsTo = (name: string) =>
 const renderPage = (
   search: Record<string, unknown> = {},
   ownedDefinitionIds: string[] = [],
+  // Seeds or fails further reads before the page mounts.
+  prepare?: (queryClient: QueryClient) => void,
 ) => {
   mocks.search = search;
   const convexQueryClient = new ConvexQueryClient(
@@ -143,6 +145,7 @@ const renderPage = (
     convexQuery(gateway.library.myOwnedDefinitionIds, {}).queryKey,
     ownedDefinitionIds,
   );
+  prepare?.(queryClient);
   const Page = routeOptions.component;
   render(
     <QueryClientProvider client={queryClient}>
@@ -416,7 +419,10 @@ describe("the box photo", () => {
     renderPage();
     fillRequired();
     upload();
-    const thumb = screen.getByRole("button", { pressed: true });
+    const thumb = screen.getByRole("button", {
+      name: en.puzzles.coverPhotoUploaded,
+      pressed: true,
+    });
     fireEvent.click(thumb);
     expect(thumb.getAttribute("aria-pressed")).toBe("false");
 
@@ -616,5 +622,52 @@ describe("page title", () => {
       }).meta[0]?.title;
     expect(title({ puzzleId: PUZZLE_DOC_ID })).toBe("Add your copy — JigSwap");
     expect(title({})).toBe(en.titles.createPuzzle);
+  });
+});
+
+// F46: a stale or edited ?puzzleId used to pulse forever, or show an empty "Adding a copy of".
+describe("a copy link whose puzzle can't be found", () => {
+  const MISSING = "puzzle_doc_gone" as Id<"puzzles">;
+  const puzzleKey = (puzzleId: Id<"puzzles">) =>
+    convexQuery(gateway.catalog.puzzleById, { puzzleId }).queryKey;
+
+  const expectNotFound = async () => {
+    await waitFor(() =>
+      expect(publishedHeader()).toBe(en.puzzleDefinition.notFound),
+    );
+    expect(screen.getByText(en.puzzleDefinition.notFoundSub)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Back to Add Puzzle" })
+        .getAttribute("href"),
+    ).toMatch(/^\/my-puzzles\/add\?/);
+    expect(document.querySelector(".animate-pulse")).toBeNull();
+    expect(screen.queryByText(en.puzzles.chooser.chosenPuzzle)).toBeNull();
+    expect(screen.queryByText(en.puzzles.addReadyHint)).toBeNull();
+  };
+
+  it("says so, titled in the page head, when the id can't be read", async () => {
+    renderPage({ puzzleId: MISSING }, [], (queryClient) =>
+      queryClient.setQueryDefaults(puzzleKey(MISSING), {
+        queryFn: () => Promise.reject(new Error("ArgumentValidationError")),
+      }),
+    );
+    await expectNotFound();
+  });
+
+  it("says so when the puzzle is gone", async () => {
+    renderPage({ puzzleId: MISSING }, [], (queryClient) =>
+      queryClient.setQueryData(puzzleKey(MISSING), null),
+    );
+    await expectNotFound();
+  });
+
+  it("asks for no title or piece count on a puzzle it can show", () => {
+    const { aggregateId: _, ...unsubmittable } = PUZZLE;
+    renderPage({ puzzleId: MISSING }, [], (queryClient) =>
+      queryClient.setQueryData(puzzleKey(MISSING), unsubmittable),
+    );
+    expect(screen.getByText(en.puzzles.chooser.chosenPuzzle)).toBeTruthy();
+    expect(screen.queryByText(en.puzzles.addReadyHint)).toBeNull();
   });
 });

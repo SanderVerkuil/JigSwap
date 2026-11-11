@@ -4,7 +4,7 @@ import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { convexErrorCode } from "@/components/exchange/request-trade";
 import { useConditionLabel } from "@/components/library/condition";
-import { EmptyState } from "@/components/library/empty-state";
+import { ShellNotFound } from "@/components/NotFound";
 import {
   difficultyClasses,
   MemberAvatar,
@@ -128,9 +128,22 @@ function PuzzleDefinitionSkeleton() {
   );
 }
 
+// Publishes its title into the page head: the page's own header is published by the detail below,
+// which isn't rendered here.
 function PuzzleDefinitionNotFound() {
   const t = useTranslations("puzzleDefinition");
-  return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
+  const tNotFound = useTranslations("notFound");
+  const tShell = useTranslations("shell");
+  return (
+    <ShellNotFound
+      title={t("notFound")}
+      description={t("notFoundSub")}
+      backHref="/puzzles"
+      backLabel={tNotFound("backTo", {
+        page: tShell("pages.puzzles.title"),
+      })}
+    />
+  );
 }
 
 function PuzzleDefinitionDetail({
@@ -224,7 +237,7 @@ function PuzzleDefinitionDetail({
         {/* Cover — full width on phones, a 200px then 300px column beside the info once the
             content is wide enough. object-contain (via ImageZoom) shows the whole puzzle; hovering
             opens a side panel that magnifies where the cursor points. */}
-        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-2xl shadow-sm">
+        <div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg">
           {definition.image ? (
             <ImageZoom
               src={definition.image}
@@ -239,12 +252,10 @@ function PuzzleDefinitionDetail({
 
         {/* Info */}
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold tracking-tight">
-            {definition.title}
-          </h1>
+          <h1 className="font-heading text-3xl">{definition.title}</h1>
           <p className="text-muted-foreground mt-1 text-base">
             {definition.brand ? `${definition.brand} · ` : ""}
-            <span className="font-mono">
+            <span className="tabular-nums">
               {format.number(definition.pieceCount)}
             </span>{" "}
             {tPuzzles("pieces", { count: definition.pieceCount })}
@@ -269,7 +280,7 @@ function PuzzleDefinitionDetail({
             {definition.difficulty && (
               <Badge
                 className={cn(
-                  "rounded-full border-transparent px-2.5 py-0.5 text-xs font-semibold",
+                  "rounded-md border-transparent px-2.5 py-0.5 text-xs font-semibold",
                   difficultyClasses(definition.difficulty),
                 )}
               >
@@ -279,7 +290,7 @@ function PuzzleDefinitionDetail({
             {topics.map((topic, i) => (
               <span
                 key={`${topic}-${i}`}
-                className="border-border text-foreground inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                className="border-border text-foreground inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold"
               >
                 {topic}
               </span>
@@ -305,14 +316,14 @@ function PuzzleDefinitionDetail({
               link-style extras. */}
           <div className="mt-5 flex flex-wrap items-center gap-2.5">
             {ownCopyHref && (
-              <Button variant="brand" className={wrappingAction} asChild>
+              <Button className={wrappingAction} asChild>
                 <Link href={ownCopyHref}>{t("viewYourCopy")}</Link>
               </Button>
             )}
             {/* Opens the copy-mode add form (definition pre-filled; the member
                 fills in condition/availability/cover/notes for their copy). */}
             <Button
-              variant={ownCopyHref ? "outline" : "brand"}
+              variant={ownCopyHref ? "outline" : "default"}
               className={wrappingAction}
               onClick={() =>
                 router.push(`/my-puzzles/add/new?puzzleId=${puzzleId}`)
@@ -481,7 +492,7 @@ function CommunityRating({
     <section>
       <SectionHead icon={<StarGlyph />} title={t("communityRating")} />
       <div className="mb-3.5 flex items-end gap-3.5">
-        <div className="font-heading text-foreground text-4xl font-bold leading-none">
+        <div className="text-foreground font-sans text-4xl font-semibold leading-none tabular-nums">
           {rating.rating}
         </div>
         <div className="pb-0.5">
@@ -505,7 +516,7 @@ function CommunityRating({
                   style={{ width: `${percent}%` }}
                 />
               </span>
-              <span className="text-muted-foreground w-9 text-right font-mono text-xs">
+              <span className="text-muted-foreground w-9 text-right text-xs tabular-nums">
                 {percent}%
               </span>
             </div>
@@ -521,9 +532,9 @@ function swapTypeClasses(swapType: AvailableCopy["swapType"]) {
     case "swap":
       return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200";
     case "lend":
-      return "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200";
+      return "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200";
     default:
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200";
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
   }
 }
 
@@ -589,7 +600,7 @@ function AvailableToSwap({
               </div>
               <span
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                  "rounded-md px-2.5 py-0.5 text-xs font-semibold",
                   swapTypeClasses(copy.swapType),
                 )}
               >
@@ -751,7 +762,6 @@ function ReviewsSection({
                 className="max-h-60"
               />
               <Button
-                variant="brand"
                 className="self-end"
                 onClick={() => void submit()}
                 disabled={postReview.isPending || needsRating}

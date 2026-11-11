@@ -262,6 +262,8 @@ describe("MobileTopBar lockup", () => {
 
 // UX-06/UX-59: four icons and a back chevron leave about 126px at 360px, so on phones the title
 // is a little smaller and may take two lines before it truncates; the controls close up too.
+// F65: 14px, so long Dutch titles in the wide serif fit at 390px, and hyphenated, so a single
+// long word ("Meldingsvoorkeuren") breaks at 360px on phones instead of cutting off.
 describe("MobileTopBar title", () => {
   it("wraps onto two smaller lines on phones instead of truncating", () => {
     renderBar("/completions/new");
@@ -274,8 +276,9 @@ describe("MobileTopBar title", () => {
       expect.arrayContaining([
         "max-sm:line-clamp-2",
         "max-sm:whitespace-normal",
-        "max-sm:text-base",
+        "max-sm:text-sm",
         "max-sm:leading-snug",
+        "max-sm:hyphens-auto",
       ]),
     );
   });
@@ -288,6 +291,16 @@ describe("MobileTopBar title", () => {
     expect(
       screen.getByRole("link", { name: "Messages" }).getAttribute("class"),
     ).toContain("size-11");
+  });
+});
+
+// F74: the offline notice rides in the sticky bar, so it stays in view and sticky page content
+// (measured below the bar) clears it.
+describe("MobileTopBar offline notice", () => {
+  it("holds the connection status region inside the sticky bar", () => {
+    renderBar("/library");
+    const region = screen.getByRole("status");
+    expect(region.closest("header")?.className).toContain("sticky");
   });
 });
 

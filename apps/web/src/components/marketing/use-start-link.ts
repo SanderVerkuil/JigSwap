@@ -11,5 +11,5 @@ export function useStartLink(): { href: string; label: string } {
   const { isAuthenticated } = useConvexAuth();
   return isAuthenticated
     ? { href: "/dashboard", label: t("dashboard") }
-    : { href: "/sign-up", label: t("startTrading") };
+    : { href: "/sign-up", label: t("startShelf") };
 }

@@ -38,7 +38,7 @@ function nextTrustLevel(
 }
 
 // The profile's key numbers as four centered, hairline-divided columns — big
-// font-heading figures in the brand primary over muted labels, straight on the
+// figures in the primary ink over muted labels, straight on the
 // page ground (no stat cards). They are the same four numbers, from the same
 // read and with the same labels, that visitors see on /members/<handle>, so
 // the owner's /profile never disagrees with their public page. The old
@@ -94,7 +94,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
               i === 2 && "sm:border-l",
             )}
           >
-            <div className="font-heading text-primary-text text-4xl leading-none font-bold">
+            <div className="text-primary-text font-sans text-4xl leading-none font-semibold tabular-nums">
               {format.number(item.value)}
             </div>
             <div className="text-muted-foreground mt-2 text-sm">
@@ -125,7 +125,7 @@ export function ProfileStatsSection({ member }: { member: Member }) {
           className="bg-muted mt-2 h-1.5 w-full overflow-hidden rounded-full"
         >
           <div
-            className="bg-jigsaw-primary h-full rounded-full transition-all duration-300"
+            className="bg-jigsaw-primary h-full rounded-full transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
             style={{ width: `${(trustValue / TRUST_MAX) * 100}%` }}
           />
         </div>

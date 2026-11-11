@@ -21,8 +21,9 @@ de huidige status van een ruil.
 
 - De **bel** toont je laatste meldingen. **Alle meldingen bekijken** opent de
   volledige pagina.
-- Ongelezen meldingen zijn gemarkeerd. Klik op een melding om te openen waar
-  hij over gaat; hij wordt automatisch als gelezen gemarkeerd.
+- Ongelezen meldingen hebben een rode stip en zijn licht gemarkeerd. Klik op
+  een melding om te openen waar hij over gaat; hij wordt automatisch als
+  gelezen gemarkeerd.
 - Gebruik **Markeren als gelezen** voor één melding, of **Alles markeren als
   gelezen** voor allemaal.
 - De pagina Meldingen groepeert meldingen onder **Vandaag**, **Gisteren** en

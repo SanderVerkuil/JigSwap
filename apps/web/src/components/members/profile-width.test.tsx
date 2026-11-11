@@ -14,11 +14,14 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children?: ReactNode }) => <a href="#">{children}</a>,
 }));
 
-// One page of two visible copies; no network.
+// One page of two visible copies; no network. A test may empty it.
+const paginated = vi.hoisted(() => ({
+  results: [{ _id: "c1" }, { _id: "c2" }] as unknown[],
+}));
 vi.mock("convex/react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("convex/react")>()),
   usePaginatedQuery: () => ({
-    results: [{ _id: "c1" }, { _id: "c2" }],
+    results: paginated.results,
     status: "Exhausted",
     loadMore: () => {},
   }),
@@ -50,6 +53,16 @@ const elementsOf = (html: string): Element[] => {
 const classOf = (el: Element) =>
   el.attrs.find((a) => a.name === "class")?.value ?? "";
 const classes = (el: Element) => classOf(el).split(/\s+/);
+const descendantsOf = (el: Element): Element[] =>
+  el.childNodes
+    .filter(isElement)
+    .flatMap((child) => [child, ...descendantsOf(child)]);
+const textOfEl = (el: Element): string =>
+  el.childNodes
+    .map((c) =>
+      isElement(c) ? textOfEl(c) : "value" in c ? String(c.value) : "",
+    )
+    .join("");
 
 const withIntl = (node: ReactNode) =>
   renderToStaticMarkup(
@@ -80,18 +93,83 @@ const rootOf = (viewer: "public" | "owner") =>
     withIntl(<ProfileBody profile={lockedProfile} viewer={viewer} />),
   )[0];
 
+// The public page's two rows: the sky band around the hero, then the sections column.
+const publicRowsOf = (profile: PublicProfileView) => {
+  const root = elementsOf(
+    withIntl(<ProfileBody profile={profile} viewer="public" />),
+  )[0];
+  const [band, column] = root.childNodes.filter(isElement);
+  return { root, band, column };
+};
+
+const unlockedProfile = (stats: Record<string, number>) =>
+  ({
+    ...lockedProfile,
+    locked: false,
+    hero: { ...lockedProfile.hero, visibility: "public" },
+    stats,
+    records: {},
+    currentlySolving: [],
+    libraryScope: "available",
+  }) as unknown as PublicProfileView;
+
+const NO_STATS = { puzzlesOwned: 0, completions: 0, piecesPlaced: 0, swaps: 0 };
+
 describe("profile page width", () => {
-  it("shares the shell's regular-width column", () => {
-    expect(contentWidthClass(true)).toBeUndefined();
-    expect(contentWidthClass(false)).toBe("mx-auto max-w-[1180px]");
+  // DESIGN.md Layout: public text on a 16px margin that becomes 40px at 760px, in full-width bands.
+  // The shell's centred column (contentWidthClass) is no longer the logged-out page's.
+  it("lays the logged-out page on the public edge, not the shell's column", () => {
+    const { root, band, column } = publicRowsOf(lockedProfile);
+    for (const cls of contentWidthClass(false)!.split(" ")) {
+      expect(classes(root)).not.toContain(cls);
+    }
+    expect(classes(band)).toContain("bg-mk-sky");
+    const bandRow = band.childNodes.find(isElement)!;
+    for (const row of [bandRow, column]) {
+      expect(classes(row)).toEqual(
+        expect.arrayContaining(["px-4", "py-10", "min-[760px]:px-10"]),
+      );
+      expect(classes(row)).not.toContain("mx-auto");
+    }
   });
 
-  it("uses the regular column for the logged-out page (no preferences)", () => {
-    const root = classes(rootOf("public"));
-    expect(root).toEqual(
-      expect.arrayContaining(contentWidthClass(false)!.split(" ")),
+  it("opens the logged-out page on a sky band carrying the hero", () => {
+    const { band, column } = publicRowsOf(lockedProfile);
+    expect(descendantsOf(band).some((el) => el.tagName === "h1")).toBe(true);
+    expect(descendantsOf(column).some((el) => el.tagName === "h1")).toBe(false);
+    // On sky the app's muted grey falls under 4.5:1, so the band reads the street's muted ink.
+    expect(classes(band)).toContain(
+      "[--muted-foreground:var(--mk-text-muted)]",
     );
-    expect(root).not.toContain("max-w-3xl");
+  });
+
+  // The 10% green tint over sky is 4.42:1 in light mode, under AA; the visitor's pill is the
+  // street's opaque success chip (#14572a on #d9f0de). The shell keeps its tinted pill.
+  it("gives the rating pill an opaque street chip on the sky band", () => {
+    const rated = {
+      ...lockedProfile,
+      hero: { ...lockedProfile.hero, reviewCount: 3, rating: 4.7 },
+    } as PublicProfileView;
+    const pillOf = (viewer: "public" | "owner") =>
+      elementsOf(
+        withIntl(<ProfileBody profile={rated} viewer={viewer} />),
+      ).find(
+        (el) =>
+          el.tagName === "span" &&
+          classes(el).includes("rounded-full") &&
+          textOfEl(el).includes("4.7"),
+      )!;
+    const visitor = classes(pillOf("public"));
+    expect(visitor).toEqual(
+      expect.arrayContaining(["bg-mk-success-soft", "text-mk-success-strong"]),
+    );
+    expect(visitor).not.toContain("bg-jigsaw-secondary/10");
+    expect(classes(pillOf("owner"))).toEqual(
+      expect.arrayContaining([
+        "bg-jigsaw-secondary/10",
+        "text-jigsaw-secondary-text",
+      ]),
+    );
   });
 
   it("defers to the dashboard shell's width preference when signed in", () => {
@@ -102,12 +180,14 @@ describe("profile page width", () => {
   });
 
   it("pads only the logged-out page; the dashboard shell already pads signed-in viewers", () => {
-    expect(classes(rootOf("public"))).toEqual(
-      expect.arrayContaining(["px-4", "py-10"]),
-    );
-    const signedIn = classes(rootOf("owner"));
-    expect(signedIn).not.toContain("px-4");
-    expect(signedIn).not.toContain("py-10");
+    const signedIn = rootOf("owner");
+    expect(classOf(signedIn)).toBe("flex w-full flex-col gap-10");
+    for (const el of elementsOf(
+      withIntl(<ProfileBody profile={lockedProfile} viewer="owner" />),
+    )) {
+      expect(classes(el)).not.toContain("bg-mk-sky");
+      expect(classes(el)).not.toContain("min-[760px]:px-10");
+    }
   });
 
   it("fits two puzzle cards per row on phones and auto-fills 212px columns from sm", () => {
@@ -199,5 +279,45 @@ describe("profile hero layout", () => {
     expect(classes(metaItem("Leusden, Nederland")!)).toContain(
       "[overflow-wrap:anywhere]",
     );
+  });
+});
+
+// A visitor sees what the member has done, as on the catalogue detail; a row of zeros says nothing.
+// Members and the owner keep all four figures.
+describe("profile stat strip", () => {
+  const LABELS = ["puzzles owned", "completions", "pieces placed", "swaps"];
+  const labelsShown = (
+    profile: PublicProfileView,
+    viewer: "public" | "owner",
+  ) =>
+    LABELS.filter((label) =>
+      elementsOf(
+        withIntl(<ProfileBody profile={profile} viewer={viewer} />),
+      ).some((el) => el.tagName === "div" && textOfEl(el) === label),
+    );
+
+  it("shows a visitor only the figures that aren't zero", () => {
+    expect(
+      labelsShown(unlockedProfile({ ...NO_STATS, puzzlesOwned: 9 }), "public"),
+    ).toEqual(["puzzles owned"]);
+  });
+
+  it("leaves out the strip, and the empty column, when a visitor would see only zeros", () => {
+    const profile = unlockedProfile(NO_STATS);
+    expect(labelsShown(profile, "public")).toEqual([]);
+    // Nothing below the hero: the column is empty, so its sky neighbours meet.
+    const { column } = publicRowsOf(profile);
+    expect(column.childNodes).toHaveLength(0);
+    expect(classes(column)).toContain("empty:hidden");
+  });
+
+  it("keeps all four figures, zeros included, for a signed-in viewer", () => {
+    const copies = paginated.results;
+    paginated.results = []; // the signed-in listings below the strip stay out of the way
+    try {
+      expect(labelsShown(unlockedProfile(NO_STATS), "owner")).toEqual(LABELS);
+    } finally {
+      paginated.results = copies;
+    }
   });
 });

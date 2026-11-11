@@ -62,7 +62,10 @@ export function IdentityHeader({
     convexQuery(gateway.social.profile, {}),
   );
 
-  const avatarSrc = member.avatar ?? user?.imageUrl;
+  // member.avatar is only ever Clerk's image_url, default picture included, and that default is a
+  // violet gradient. On the member's own profile useUser knows if it is a real photo; if not, the
+  // initial shows.
+  const avatarSrc = user?.hasImage ? user.imageUrl : undefined;
   const memberYear = new Date(member.createdAt).getFullYear();
   // Same precedence as the server's memberDisplayNameOf: chosen display name,
   // else account name, else username — never the email others can't see.
@@ -85,13 +88,13 @@ export function IdentityHeader({
     <header className="flex flex-wrap items-center gap-x-5 gap-y-4 border-b pb-6">
       <Avatar className="size-[84px]">
         <AvatarImage src={avatarSrc} alt={name} />
-        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-primary-text text-2xl font-bold">
+        <AvatarFallback className="font-heading bg-jigsaw-primary/10 text-primary-text text-2xl">
           <MemberInitial source={nameSource} />
         </AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 grow basis-48">
-        <h2 className="font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
+        <h2 className="font-heading text-2xl [overflow-wrap:anywhere] sm:text-3xl">
           {name}
         </h2>
         <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">

@@ -47,17 +47,19 @@ describe.each<[string, ComponentType]>([
 
   it("invites a visitor to start", () => {
     renderSurface();
-    expect(
-      screen.getByRole("link", { name: "Start trading" }).getAttribute("href"),
-    ).toBe("/sign-up");
+    const links = screen.getAllByRole("link", { name: "Start your shelf" });
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBe("/sign-up");
+    }
   });
 
   it("takes a member to their dashboard, under that name", () => {
     auth.isAuthenticated = true;
     renderSurface();
-    expect(screen.queryByRole("link", { name: "Start trading" })).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "Dashboard" }).getAttribute("href"),
-    ).toBe("/dashboard");
+    expect(screen.queryByRole("link", { name: "Start your shelf" })).toBeNull();
+    const links = screen.getAllByRole("link", { name: "Dashboard" });
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBe("/dashboard");
+    }
   });
 });

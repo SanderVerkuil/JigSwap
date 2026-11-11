@@ -68,10 +68,15 @@ export function DocsSearch({
   };
   const hits = React.useMemo(() => index?.search(query) ?? [], [index, query]);
   // New results start at the top. cmdk selects the first one but doesn't reliably scroll to it,
-  // which left the top result cut off under the search box.
+  // which left the top result cut off under the search box. Its own scroll to the selection runs a
+  // few renders after this effect (and can still aim at the last query's pick), so this waits a
+  // frame to land after it.
   const listRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    listRef.current?.scrollTo({ top: 0 });
+    const frame = requestAnimationFrame(() =>
+      listRef.current?.scrollTo({ top: 0 }),
+    );
+    return () => cancelAnimationFrame(frame);
   }, [hits]);
 
   const go = (slug: string) => {

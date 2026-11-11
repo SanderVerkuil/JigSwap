@@ -1,5 +1,5 @@
 ---
-title: Reputation & Reviews
+title: Reputation & reviews
 order: 4
 summary: "Leave partner reviews after exchanges and build your reputation badge."
 ---

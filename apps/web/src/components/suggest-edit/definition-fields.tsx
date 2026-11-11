@@ -7,8 +7,10 @@ import {
   SuggestInput,
   TagInput,
 } from "@/components/add-puzzle";
+import { BarcodeInput } from "@/components/add-puzzle/barcode-input";
 import { LazyImageEditorDialog } from "@/components/image-editor/lazy-image-editor-dialog";
 import { Button } from "@/components/ui/button";
+import { FilePickButton } from "@/components/ui/file-pick-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -220,7 +222,8 @@ export function PuzzleDefinitionFields({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-ean`}>{tf("ean.label")}</Label>
-          <Input
+          <BarcodeInput
+            kind="ean"
             id={`${idPrefix}-ean`}
             value={form.ean}
             onChange={(e) => set("ean", e.target.value)}
@@ -229,7 +232,8 @@ export function PuzzleDefinitionFields({
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-upc`}>{tf("upc.label")}</Label>
-          <Input
+          <BarcodeInput
+            kind="upc"
             id={`${idPrefix}-upc`}
             value={form.upc}
             onChange={(e) => set("upc", e.target.value)}
@@ -367,27 +371,22 @@ export function CoverImageField({
             {imageStateLabel}
           </span>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <label className="cursor-pointer">
-                {t("replaceImage")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setEditing({
-                        src: URL.createObjectURL(file),
-                        fileName: file.name,
-                        revoke: true,
-                      });
-                    }
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-            </Button>
+            <FilePickButton
+              variant="outline"
+              size="sm"
+              accept="image/*"
+              onFiles={([file]) => {
+                if (file) {
+                  setEditing({
+                    src: URL.createObjectURL(file),
+                    fileName: file.name,
+                    revoke: true,
+                  });
+                }
+              }}
+            >
+              {t("replaceImage")}
+            </FilePickButton>
             {currentImageUrl && (
               <Button
                 type="button"

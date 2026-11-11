@@ -10,7 +10,8 @@ import {
   FormContextPanel,
 } from "@/components/catalog/form-context-panel";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { EmptyState } from "@/components/library/empty-state";
+import { ShellNotFound } from "@/components/NotFound";
+import { LeaveGuard } from "@/components/quick-start/leave-guard";
 import {
   CoverImageField,
   PuzzleDefinitionFields,
@@ -36,7 +37,7 @@ import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { ConvexError } from "convex/values";
 import { useEffect, useMemo, useState } from "react";
@@ -82,8 +83,13 @@ const errorKeyFor = (error: unknown): string => {
 function SuggestEditPage() {
   const { id } = Route.useParams();
   const t = useTranslations("suggestEdit");
+  const tDefinition = useTranslations("puzzleDefinition");
+  const tNotFound = useTranslations("notFound");
+  const tShell = useTranslations("shell");
+  const tConversation = useTranslations("copyConversation");
 
-  const { data: view } = useQuery(
+  // An id that can't be read (a stale or edited link) fails the query instead of returning null.
+  const { data: view, isError: viewFailed } = useQuery(
     convexQuery(gateway.catalog.puzzleById, { puzzleId: id as Id<"puzzles"> }),
   );
   const { data: myProposals } = useQuery(
@@ -93,6 +99,17 @@ function SuggestEditPage() {
     convexQuery(gateway.catalog.puzzleCategories, {}),
   );
 
+  // A read that fails after the puzzle loaded keeps the form (and the member's edits) up.
+  if (view === null || (viewFailed && view === undefined)) {
+    return (
+      <ShellNotFound
+        title={tDefinition("notFound")}
+        description={tDefinition("notFoundSub")}
+        backHref="/puzzles"
+        backLabel={tNotFound("backTo", { page: tShell("pages.puzzles.title") })}
+      />
+    );
+  }
   if (
     view === undefined ||
     myProposals === undefined ||
@@ -100,8 +117,16 @@ function SuggestEditPage() {
   ) {
     return <PageLoading message={t("title")} />;
   }
-  if (view === null || view.status !== "approved" || !view.aggregateId) {
-    return <EmptyState title={t("notFound")} sub={t("notFoundSub")} />;
+  // The puzzle is there, but not one the catalogue takes suggestions for (yet).
+  if (view.status !== "approved" || !view.aggregateId) {
+    return (
+      <ShellNotFound
+        title={t("notFound")}
+        description={t("notFoundSub")}
+        backHref={`/puzzles/${id}`}
+        backLabel={tConversation("backToPuzzle")}
+      />
+    );
   }
 
   // Snapshot-at-open trade-off: if a pending proposal appears via live update after mount,
@@ -145,6 +170,7 @@ function SuggestEditForm({
 }) {
   const { id } = Route.useParams();
   const router = useRouter();
+  const navigate = useNavigate();
   const t = useTranslations("suggestEdit");
   const tShell = useTranslations("shell");
   const tCommon = useTranslations("common");
@@ -169,7 +195,9 @@ function SuggestEditForm({
   // definition mid-edit, diffing untouched fields against the live view would silently propose
   // a revert. The live `view` stays in use for display only.
   const [baseline] = useState(() => view);
-  const [form, setForm] = useState<ProposalFormState>(() => {
+  // The form as opened (a reopened proposal's changes laid over the definition): what the member
+  // hasn't changed yet, so leaving it untouched asks nothing.
+  const [openedForm] = useState<ProposalFormState>(() => {
     const base = formFromView(baseline);
     return openProposal
       ? overlayProposal(
@@ -182,6 +210,7 @@ function SuggestEditForm({
         )
       : base;
   });
+  const [form, setForm] = useState(openedForm);
   const [coverFile, setCoverFile] = useState<File | undefined>(undefined);
 
   // Object-URL preview lifecycle for a freshly picked file (mirrors add.tsx).
@@ -249,7 +278,11 @@ function SuggestEditForm({
     },
     onSuccess: () => {
       toast.success(t(openProposal ? "updated" : "submitted"));
-      router.push(`/puzzles/${id}`);
+      void navigate({
+        to: "/puzzles/$id",
+        params: { id },
+        ignoreBlocker: true,
+      });
     },
     onError: (error) => {
       // A box-art upload URL refused by the member's upload limit says to wait (SEC-20).
@@ -271,6 +304,12 @@ function SuggestEditForm({
       );
     },
   });
+
+  // A changed field or a picked cover is work a nav tap would lose; not while it is being sent.
+  const unsaved =
+    !submit.isPending &&
+    (coverFile !== undefined ||
+      JSON.stringify(form) !== JSON.stringify(openedForm));
 
   const set = <K extends keyof ProposalFormState>(
     key: K,
@@ -302,7 +341,6 @@ function SuggestEditForm({
         {t("cancel")}
       </Button>
       <Button
-        variant="brand"
         disabled={!canSubmit || submit.isPending}
         onClick={() => submit.mutate()}
       >
@@ -372,6 +410,7 @@ function SuggestEditForm({
           actions={actionsRow}
         />
       </aside>
+      <LeaveGuard work={unsaved ? { kind: "suggestEdit", count: 1 } : null} />
     </div>
   );
 }

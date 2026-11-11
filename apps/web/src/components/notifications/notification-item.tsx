@@ -59,7 +59,7 @@ function ExchangeStatusChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
         STATUS_TONES[status] ?? "bg-muted text-muted-foreground",
       )}
     >
@@ -167,14 +167,19 @@ export function NotificationItem({
     <li
       className={cn(
         "group relative flex items-start gap-3 px-4 py-3 transition-colors motion-reduce:transition-none",
-        "has-[[data-row-link]:hover]:bg-accent/60",
+        // Hover is a step past the unread tint in both themes, so an unread row still answers
+        // the pointer; the dot, not the tint, says unread.
+        "has-[[data-row-link]:hover]:bg-accent",
         unread && "bg-accent/40 dark:bg-accent/60",
       )}
     >
+      {/* The unread mark: a Tulip dot in the row's left gutter, level with the avatar, so read and
+          unread rows keep one alignment. The tint alone is 1.06:1 in light; screen readers hear
+          the sr-only "Unread" in the sentence. */}
       {unread && (
         <span
           aria-hidden="true"
-          className="bg-primary absolute inset-y-0 left-0 w-0.5"
+          className="bg-jigsaw-primary-accent absolute top-6.5 left-1 size-2 rounded-full"
         />
       )}
       <NotificationActor

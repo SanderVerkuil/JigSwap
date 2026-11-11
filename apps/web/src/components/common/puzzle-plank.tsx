@@ -3,12 +3,11 @@ import * as React from "react";
 
 // The signature "puzzle plank" motif for the logged-in app: 3D puzzle boxes on
 // a wooden shelf with a finished right-hand end cap. Adapted from the marketing
-// plank (components/marketing/plank.tsx) but bound to app tokens (font-heading,
-// brand hexes) instead of the --mk-* marketing tokens, so it can render a
-// member's real collection on the dashboard. Boxes show real cover art when a
-// thumbnail exists and fall back to a warm gradient box with the title and
-// piece count — never an empty gray box. Kept as inline styles — it's a bespoke
-// isometric illustration, not layout.
+// plank (components/marketing/plank.tsx) but bound to app tokens instead, so it
+// can render a member's real collection on the dashboard. Boxes show real cover
+// art when a thumbnail exists and fall back to a flat painted box with the title
+// and piece count — never an empty gray box. Kept as inline styles — it's a
+// bespoke isometric illustration, not layout.
 
 export interface PuzzlePlankBox {
   title?: string;
@@ -53,9 +52,7 @@ export function PuzzlePlank({
           height: sd,
           transformOrigin: "bottom left",
           transform: "skewX(-45deg)",
-          background:
-            "repeating-linear-gradient(90deg, rgb(90 55 20 / .12) 0 1px, transparent 1px 15px), linear-gradient(170deg, #e0ae6e, #c98f4d)",
-          boxShadow: "inset 0 2px 0 rgb(255 255 255 / .22)",
+          background: "var(--mk-plank)",
         }}
       />
       {/* boxes, set back onto the shelf */}
@@ -83,30 +80,9 @@ export function PuzzlePlank({
           right: -16,
           bottom: -lip,
           height: lip,
-          background: "linear-gradient(180deg, #bd8449, #91602e)",
-          boxShadow: "0 15px 22px -10px rgb(120 72 22 / .5)",
+          background: "color-mix(in oklab, var(--mk-plank), black 16%)",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 0,
-            height: 2,
-            background: "rgb(255 255 255 / .3)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 3,
-            background: "rgb(60 36 14 / .45)",
-          }}
-        />
         {/* RIGHT end cap — the shelf's side face, receding up-right like the boxes' sides */}
         <div
           style={{
@@ -117,8 +93,7 @@ export function PuzzlePlank({
             height: lip,
             transformOrigin: "top left",
             transform: "skewY(-45deg)",
-            background: "linear-gradient(90deg, #8a5a28, #6f4519)",
-            boxShadow: "inset 1px 0 0 rgb(255 255 255 / .12)",
+            background: "color-mix(in oklab, var(--mk-plank), black 32%)",
           }}
         />
       </div>
@@ -131,7 +106,7 @@ function PlankBox({
   series,
   pieceCount,
   cover,
-  c1 = "#6048e8",
+  c1 = "var(--jigsaw-primary)",
   c2 = "var(--jigsaw-primary)",
   width = 116,
   height,
@@ -158,10 +133,9 @@ function PlankBox({
           top: -depth,
           width,
           height: depth,
-          background: `linear-gradient(180deg, color-mix(in oklab, ${c1}, white 42%), color-mix(in oklab, ${c1}, white 24%))`,
+          background: `color-mix(in oklab, ${c1}, white 30%)`,
           transformOrigin: "bottom left",
           transform: "skewX(-45deg)",
-          boxShadow: "inset 0 1px 0 rgb(255 255 255 / .35)",
         }}
       />
       {/* box side face */}
@@ -172,24 +146,9 @@ function PlankBox({
           top: 0,
           width: depth,
           height: boxH,
-          background: `linear-gradient(90deg, color-mix(in oklab, ${c2}, black 26%), color-mix(in oklab, ${c2}, black 40%))`,
+          background: `color-mix(in oklab, ${c2}, black 30%)`,
           transformOrigin: "top left",
           transform: "skewY(-45deg)",
-        }}
-      />
-      {/* soft cast shadow */}
-      <div
-        style={{
-          position: "absolute",
-          left: 5,
-          bottom: -2,
-          width,
-          height: depth,
-          background: "rgb(70 42 16 / .30)",
-          transformOrigin: "bottom left",
-          transform: "skewX(-45deg)",
-          filter: "blur(3px)",
-          zIndex: -1,
         }}
       />
       {/* box front */}
@@ -198,12 +157,11 @@ function PlankBox({
           position: "absolute",
           inset: 0,
           overflow: "hidden",
-          background: `linear-gradient(158deg, ${c1}, ${c2})`,
+          background: c1,
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          boxShadow:
-            "inset 0 0 0 1px rgb(0 0 0 / .12), inset 1.5px 1.5px 0 rgb(255 255 255 / .22), inset -2px -3px 5px rgb(0 0 0 / .16)",
+          boxShadow: "inset 0 0 0 1px rgb(0 0 0 / .12)",
         }}
       >
         {isArt ? (
@@ -221,13 +179,10 @@ function PlankBox({
               <div
                 style={{
                   position: "relative",
-                  fontFamily: "var(--font-heading)",
-                  fontWeight: 700,
-                  fontSize: 9.5,
-                  letterSpacing: ".03em",
+                  fontWeight: 600,
+                  fontSize: 11,
                   color: "rgb(255 255 255 / .92)",
                   padding: "6px 8px 0",
-                  textTransform: "uppercase",
                 }}
               >
                 {series}
@@ -244,35 +199,17 @@ function PlankBox({
                     height: 28,
                     padding: "0 4px",
                     display: "flex",
-                    flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
                     background: "#fff",
                     borderRadius: 9999,
-                    boxShadow: "0 1px 3px rgb(16 24 40 / .3)",
+                    fontWeight: 600,
+                    fontSize: 11,
+                    lineHeight: 1,
+                    color: "var(--jigsaw-on-gold)",
                   }}
                 >
-                  <b
-                    style={{
-                      fontFamily: "var(--font-heading)",
-                      fontWeight: 700,
-                      fontSize: 11,
-                      lineHeight: 1,
-                      color: "#1f1b2e",
-                    }}
-                  >
-                    {pieceCount}
-                  </b>
-                  <span
-                    style={{
-                      fontSize: 5.5,
-                      letterSpacing: ".06em",
-                      textTransform: "uppercase",
-                      color: "#7c7689",
-                    }}
-                  >
-                    pcs
-                  </span>
+                  {pieceCount}
                 </div>
               )}
             </div>
@@ -282,15 +219,13 @@ function PlankBox({
                   position: "relative",
                   background: "#fff",
                   padding: "5px 8px 6px",
-                  boxShadow: "inset 0 1px 0 rgb(0 0 0 / .08)",
                 }}
               >
                 <div
                   style={{
-                    fontFamily: "var(--font-heading)",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: 11,
-                    color: "#1f1b2e",
+                    color: "var(--jigsaw-on-gold)",
                     lineHeight: 1.1,
                     textAlign: "center",
                   }}

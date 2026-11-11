@@ -14,9 +14,9 @@ import { useRef } from "react";
 import { useTranslations } from "use-intl";
 import type { StepCommitKind } from "./step-commit";
 
-/** What leaving would drop: a quick setup step's unsaved work, or a filled-in add form. */
+/** What leaving would drop: a quick setup step's unsaved work, a filled-in add form or an edit. */
 export interface LeaveWork {
-  kind: StepCommitKind | "addForm";
+  kind: StepCommitKind | "addForm" | "suggestEdit";
   count: number;
 }
 

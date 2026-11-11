@@ -46,20 +46,21 @@ const ACTIVE_STATUSES = new Set(["proposed", "accepted", "disputed"]);
 // exchanges", "All goals") gives each its own accessible name.
 const srOnly = (chunks: ReactNode) => <span className="sr-only">{chunks}</span>;
 
-// Soft status pill tones: Pending amber, Accepted/Disputed violet,
-// Completed green — everything else muted.
+// Opaque street status chips, a soft fill under strong text: Pending and
+// Disputed amber, Accepted canal, Completed green — everything else muted.
 const PILL_TONES: Record<string, string> = {
-  proposed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  accepted: "bg-jigsaw-primary/10 text-primary-text",
-  disputed: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  completed: "bg-green-500/15 text-green-700 dark:text-green-400",
+  proposed: "bg-mk-warning-soft text-mk-warning-strong",
+  accepted: "bg-jigsaw-primary-tint text-primary-text",
+  disputed: "bg-mk-warning-soft text-mk-warning-strong",
+  completed: "bg-mk-success-soft text-mk-success-strong",
 };
 
-// Solid circle colors for the timeline markers, matching the pill hues.
+// Solid circle colors for the timeline markers, matching the pill hues. The
+// night amber is light, so its icon takes the dark on-gold ink after dark.
 const DOT_TONES: Record<string, string> = {
-  proposed: "bg-jigsaw-warning",
+  proposed: "bg-jigsaw-warning dark:text-jigsaw-on-gold",
   accepted: "bg-jigsaw-primary",
-  disputed: "bg-jigsaw-warning",
+  disputed: "bg-jigsaw-warning dark:text-jigsaw-on-gold",
   completed: "bg-jigsaw-secondary-strong",
 };
 
@@ -68,7 +69,7 @@ function StatusPill({ status }: { status: ExchangeRow["status"] }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold",
+        "inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-bold",
         PILL_TONES[status] ?? "bg-muted text-muted-foreground",
       )}
     >
@@ -112,7 +113,8 @@ function ExchangeTimelineRow({
         <span
           className={cn(
             "inline-flex size-[34px] items-center justify-center rounded-full text-white",
-            DOT_TONES[exchange.status] ?? "bg-muted-foreground",
+            DOT_TONES[exchange.status] ??
+              "bg-muted-foreground dark:text-jigsaw-on-gold",
           )}
         >
           <KindIcon className="size-[15px]" />
@@ -120,7 +122,7 @@ function ExchangeTimelineRow({
         {!isLast && <span className="bg-border mt-1.5 w-0.5 flex-1" />}
       </div>
       <div className={cn("min-w-0 pt-px", !isLast && "pb-5")}>
-        <div className="text-sm font-semibold">
+        <div className="text-primary-text text-sm font-semibold">
           {primary}
           {secondary && (
             <span className="text-muted-foreground font-medium">
@@ -199,7 +201,7 @@ function InMotionColumn({ exchanges }: { exchanges: ExchangeRow[] }) {
 
 /* --------------------------------------------------------------- Goals */
 
-// The SVG goal ring: a muted track with the brand-violet progress arc and the
+// The SVG goal ring: a muted track with the canal progress arc and the
 // big percentage in the middle.
 function GoalRing({
   current,
@@ -233,7 +235,7 @@ function GoalRing({
           cy={mid}
           r={r}
           fill="none"
-          stroke="var(--jigsaw-primary)"
+          stroke="var(--primary-text)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${c * p} ${c}`}
@@ -241,14 +243,14 @@ function GoalRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-        <span className="font-heading text-3xl leading-none font-bold">
+        <span className="font-sans text-3xl leading-none font-semibold tabular-nums">
           {goalPercent({
             currentCompletions: current,
             targetCompletions: target,
           })}
           %
         </span>
-        <span className="text-muted-foreground font-mono text-xs">
+        <span className="text-muted-foreground text-xs tabular-nums">
           {t("done", { current, target })}
         </span>
       </div>
@@ -262,13 +264,13 @@ function GoalBar({ goal }: { goal: GoalRow }) {
     <Link href="/goals" className="block">
       <div className="mb-1.5 flex items-baseline justify-between gap-2.5">
         <span className="truncate text-xs font-semibold">{goal.title}</span>
-        <span className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+        <span className="text-muted-foreground text-xs tabular-nums whitespace-nowrap">
           {goal.currentCompletions}/{goal.targetCompletions}
         </span>
       </div>
       <div className="bg-muted h-1.5 overflow-hidden rounded-full">
         <div
-          className="bg-jigsaw-primary h-full rounded-full transition-[width] duration-500"
+          className="bg-primary-text h-full rounded-full"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -419,8 +421,16 @@ function ActivityRow({
           name: displayName(actor),
           count,
           title: entry.title ?? "",
+          // Canal Link only when the row is a link to the puzzle.
           puzzle: (chunks) => (
-            <span className="text-foreground font-medium">{chunks}</span>
+            <span
+              className={cn(
+                "font-medium",
+                entry.target ? "text-primary-text" : "text-foreground",
+              )}
+            >
+              {chunks}
+            </span>
           ),
           strong: (chunks) =>
             entry.actor ? (

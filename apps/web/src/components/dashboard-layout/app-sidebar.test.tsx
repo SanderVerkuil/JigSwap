@@ -102,10 +102,10 @@ describe("AppSidebar hub labels", () => {
     );
   });
 
-  it("renders the label as a 12px row with a hover and focus background", () => {
+  it("renders the label as a serif row with a hover and focus background", () => {
     renderSidebar();
     const classes = classesOf(hubLink(en.shell.groups.library.label));
-    expect(classes).toContain("text-xs");
+    expect(classes).toContain("text-[15px]");
     expect(classes).not.toContain("text-[10px]");
     expect(classes).toContain("hover:bg-sidebar-accent");
     expect(classes).toContain("focus-visible:bg-sidebar-accent");
@@ -132,11 +132,39 @@ describe("AppSidebar hub labels", () => {
     expect(
       hubLink(en.shell.groups.community.label).hasAttribute("aria-current"),
     ).toBe(false);
-    // The active look keys off aria-current, so it cannot drift from the semantics.
+    // The active look keys off aria-current, so it cannot drift from the semantics. It is an
+    // underline, not a tinted pill (F67, DESIGN.md Navigation › Sidebar).
     const classes = classesOf(hubLink(en.shell.groups.library.label));
-    expect(classes).toContain("aria-[current=page]:bg-sidebar-accent");
+    expect(classes).toContain("aria-[current=page]:underline");
+    expect(classes).not.toContain("aria-[current=page]:bg-sidebar-accent");
+    // Hover and keyboard focus keep their row background.
+    expect(classes).toContain("hover:bg-sidebar-accent");
+    expect(classes).toContain("focus-visible:bg-sidebar-accent");
+  });
+});
+
+describe("AppSidebar frame", () => {
+  const container = () =>
+    document.querySelector("[data-slot=sidebar-container]") as Element;
+
+  // F66: the top bar is 56px on touch screens, so the sidebar starts below it there.
+  it("slots below the top bar, 48px tall for a mouse and 56px on touch", () => {
+    renderSidebar();
+    const classes = classesOf(container());
+    expect(classes).toContain("top-12");
+    expect(classes).toContain("pointer-coarse:top-14");
+  });
+
+  // F57: while the cookie banner is open, the sidebar ends above it, so the account row (and with
+  // it the only Sign out) isn't covered.
+  it("ends above the cookie banner while it is open", () => {
+    renderSidebar();
+    const classes = classesOf(container());
     expect(classes).toContain(
-      "aria-[current=page]:text-sidebar-accent-foreground",
+      "h-[calc(100svh-3rem-var(--consent-banner-height,0px))]",
+    );
+    expect(classes).toContain(
+      "pointer-coarse:h-[calc(100svh-3.5rem-var(--consent-banner-height,0px))]",
     );
   });
 });

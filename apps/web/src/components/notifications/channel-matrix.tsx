@@ -123,7 +123,7 @@ export function ChannelMatrix({
               key={channel}
               role="columnheader"
               id={`col-${channel}`}
-              className="text-muted-foreground text-center text-xs font-medium tracking-wide uppercase"
+              className="text-muted-foreground text-center text-xs font-medium"
             >
               {channelLabel[channel]}
             </span>

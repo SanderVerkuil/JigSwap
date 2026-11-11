@@ -59,6 +59,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway } from "@/gateway";
+import {
+  COACHMARK_STORAGE_KEY,
+  parseCoachmarkDismissed,
+  readCoachmarkDismissed,
+  writeCoachmarkDismissed,
+} from "@/lib/coachmark-state";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { pageTitle } from "@/lib/page-title";
 import { loadMemberDataOnServer } from "@/lib/ssr-member-data";
@@ -79,7 +85,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useLocale, useTranslations } from "use-intl";
 
 export const Route = createFileRoute("/_dashboard/my-puzzles/")({
@@ -126,12 +132,10 @@ function PuzzlesGridSkeleton() {
 
 // ---------------------------------------------------------------------------
 // One-time coachmark banner
-// Persists dismissed state in localStorage. Read as an external store: the server can't know, and
-// this page renders on the server with the member's puzzles, so server and hydration leave the hint
-// out and it appears right after if it was never dismissed.
+// Dismissed for good with its X, in a cookie the server reads (lib/coachmark-state.ts): this page
+// renders on the server with the member's puzzles, and the hint is in that first paint or not at
+// all, so it never pushes the list down after hydration.
 // ---------------------------------------------------------------------------
-const COACHMARK_KEY = "jigswap.coachmark.myPuzzlesActions";
-
 const coachmarkListeners = new Set<() => void>();
 
 function subscribeCoachmark(listener: () => void) {
@@ -141,19 +145,35 @@ function subscribeCoachmark(listener: () => void) {
   };
 }
 
+// The browser's answer: the cookie, or a dismissal from before it that only localStorage holds.
+function coachmarkDismissedInBrowser() {
+  return (
+    parseCoachmarkDismissed(document.cookie) ||
+    localStorage.getItem(COACHMARK_STORAGE_KEY) === "1"
+  );
+}
+
 function ActionsCoachmark() {
   const t = useTranslations("puzzles.coachmark");
 
   const dismissed = useSyncExternalStore(
     subscribeCoachmark,
-    () => localStorage.getItem(COACHMARK_KEY) === "1",
-    () => true,
+    coachmarkDismissedInBrowser,
+    readCoachmarkDismissed,
   );
+
+  // A dismissal from before the cookie: copy it over, so the server leaves the hint out next time.
+  useEffect(() => {
+    if (dismissed && !parseCoachmarkDismissed(document.cookie)) {
+      writeCoachmarkDismissed();
+    }
+  }, [dismissed]);
 
   if (dismissed) return null;
 
   const handleDismiss = () => {
-    localStorage.setItem(COACHMARK_KEY, "1");
+    writeCoachmarkDismissed();
+    localStorage.setItem(COACHMARK_STORAGE_KEY, "1");
     coachmarkListeners.forEach((listener) => listener());
   };
 
@@ -187,6 +207,11 @@ function PhoneActionsRowPlaceholder() {
     <div aria-hidden className="-mb-0.5 h-8 md:hidden pointer-coarse:h-11" />
   );
 }
+
+// From md the page's Add Puzzle is the screen's marigold add (the top bar leaves its own out here).
+// Below md the tab bar's raised + is that one marigold control (DESIGN.md), so these turn canal.
+const PHONE_CANAL =
+  "max-md:bg-primary max-md:text-primary-foreground max-md:hover:bg-primary/90";
 
 function PuzzlesPage() {
   const t = useTranslations("puzzles");
@@ -405,7 +430,7 @@ function PuzzlesPage() {
               variant="brand"
               size="sm"
               asChild
-              className="pointer-coarse:min-h-11"
+              className={`pointer-coarse:min-h-11 ${PHONE_CANAL}`}
             >
               <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
                 <Plus className="h-4 w-4" />
@@ -597,7 +622,7 @@ function PuzzlesPage() {
           title={t("noPuzzles")}
           sub={t("addFirstPuzzle")}
           action={
-            <Button variant="brand" asChild>
+            <Button variant="brand" asChild className={PHONE_CANAL}>
               <Link href="/my-puzzles/add" data-tour="my-puzzles-add">
                 <Plus className="h-4 w-4" />
                 {t("addPuzzle")}

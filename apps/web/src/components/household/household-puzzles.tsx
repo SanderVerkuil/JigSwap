@@ -6,7 +6,12 @@ import {
   useSolveStateByCopyId,
 } from "@/components/library/copy-card-actions";
 import { EmptyState } from "@/components/library/empty-state";
-import { FilterBar, type FilterOption } from "@/components/library/filter-bar";
+import {
+  FilterBar,
+  TOGGLE_TRACK,
+  toggleOption,
+  type FilterOption,
+} from "@/components/library/filter-bar";
 import {
   LIBRARY_ROWS_MAX,
   useLibraryRows,
@@ -144,7 +149,7 @@ export function HouseholdPuzzles({
   ];
 
   const addPuzzle = (
-    <Button variant="brand" asChild>
+    <Button asChild>
       <Link href="/my-puzzles/add">
         <Plus className="h-4 w-4" />
         {tPuzzles("addPuzzle")}
@@ -184,41 +189,37 @@ export function HouseholdPuzzles({
         <div
           role="group"
           aria-label={t("ownerFilter")}
-          className="-mx-4 flex min-w-0 gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          className="-mx-4 flex min-w-0 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:overflow-visible sm:px-0"
         >
-          {ownerChips.map((chip) => {
-            const active = owner === chip.value;
-            return (
-              <Button
-                key={chip.value}
-                type="button"
-                size="sm"
-                variant={active ? "default" : "outline"}
-                aria-pressed={active}
-                onClick={() => setOwner(chip.value)}
-                className={cn(
-                  "shrink-0 rounded-full pointer-coarse:min-h-11",
-                  active &&
-                    "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white",
-                )}
-              >
-                {"person" in chip && chip.person && (
-                  <Avatar
-                    className={cn(
-                      "-ml-1.5 size-5",
-                      active && "ring-2 ring-white/70",
-                    )}
-                  >
-                    <AvatarImage src={chip.person.avatar} alt="" />
-                    <AvatarFallback className="text-foreground text-[10px]">
-                      <MemberInitial source={chip.person} />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <span className="max-w-[10rem] truncate">{chip.label}</span>
-              </Button>
-            );
-          })}
+          <div className={cn(TOGGLE_TRACK, "max-sm:flex-nowrap")}>
+            {ownerChips.map((chip) => {
+              const active = owner === chip.value;
+              return (
+                <Button
+                  key={chip.value}
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  aria-pressed={active}
+                  onClick={() => setOwner(chip.value)}
+                  className={cn(
+                    "shrink-0 pointer-coarse:min-h-11",
+                    toggleOption(active),
+                  )}
+                >
+                  {"person" in chip && chip.person && (
+                    <Avatar className="-ml-1.5 size-5">
+                      <AvatarImage src={chip.person.avatar} alt="" />
+                      <AvatarFallback className="text-[10px]">
+                        <MemberInitial source={chip.person} />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <span className="max-w-[10rem] truncate">{chip.label}</span>
+                </Button>
+              );
+            })}
+          </div>
         </div>
       )}
 

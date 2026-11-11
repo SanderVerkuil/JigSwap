@@ -39,6 +39,12 @@ vi.mock("@tanstack/react-router", () => ({
     options,
     useParams: () => ({ id: "col_doc" }),
   }),
+  useLocation: (opts?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = { pathname: "/collections/col_doc/add-puzzles" };
+    return opts?.select ? opts.select(location) : location;
+  },
 }));
 vi.mock("@/compat/navigation", () => ({
   useRouter: () => ({ push: mocks.push }),
@@ -106,15 +112,25 @@ const collection = (puzzles: OwnedCopyView[]): CollectionDetailView => ({
 });
 
 function PublishedActions() {
-  return <div>{usePageHeaderContent().actions}</div>;
+  const { title, crumbs, actions } = usePageHeaderContent();
+  return (
+    <>
+      <output data-testid="head">{JSON.stringify({ title, crumbs })}</output>
+      <div data-testid="head-actions">{actions}</div>
+    </>
+  );
 }
 
+// `shown`: the collection as read, `null` for a missing or private one, or "unreadable" when the
+// read fails (a malformed id).
 const renderPicker = ({
   library,
   inCollection = [],
+  shown = collection(inCollection),
 }: {
   library: OwnedCopyView[];
   inCollection?: OwnedCopyView[];
+  shown?: CollectionDetailView | null | "unreadable";
 }) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
@@ -125,7 +141,10 @@ const renderPicker = ({
         queryKeyHashFn: convexQueryClient.hashFn(),
         staleTime: Infinity,
         retry: false,
-        queryFn: () => new Promise<never>(() => {}),
+        queryFn:
+          shown === "unreadable"
+            ? () => Promise.reject(new Error("ArgumentValidationError"))
+            : () => new Promise<never>(() => {}),
       },
     },
   });
@@ -133,12 +152,14 @@ const renderPicker = ({
     convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
     { _id: ME },
   );
-  queryClient.setQueryData(
-    convexQuery(gateway.collections.byId, {
-      collectionId: "col_doc" as Id<"collections">,
-    }).queryKey,
-    collection(inCollection),
-  );
+  if (shown !== "unreadable") {
+    queryClient.setQueryData(
+      convexQuery(gateway.collections.byId, {
+        collectionId: "col_doc" as Id<"collections">,
+      }).queryKey,
+      shown,
+    );
+  }
   // Seeded ONLY for the whole-library read: a picker that asked for the offered copies alone
   // would never resolve and stay on its loading screen.
   queryClient.setQueryData(
@@ -175,6 +196,31 @@ beforeEach(() => {
   vi.mocked(toast.error).mockReset();
 });
 afterEach(cleanup);
+
+describe("collection Add Puzzles picker for a collection that can't be shown", () => {
+  it.each([
+    ["is missing or private", null],
+    ["has an unreadable id", "unreadable"],
+  ] as const)(
+    "says so when it %s, with the way back and nothing to confirm",
+    async (_, shown) => {
+      renderPicker({ library: [copy(1)], shown });
+      const back = await screen.findByRole("link", {
+        name: "Back to Collections",
+      });
+      expect(back.getAttribute("href")).toBe("/collections");
+      expect(screen.getByText(en.collections.notFoundSub)).toBeTruthy();
+      expect(screen.queryByText("Puzzle 1")).toBeNull();
+      await waitFor(() =>
+        expect(
+          JSON.parse(screen.getByTestId("head").textContent ?? ""),
+        ).toEqual({ title: "Collection not found", crumbs: [] }),
+      );
+      // No Cancel or Add selected left in the head.
+      expect(screen.getByTestId("head-actions").childElementCount).toBe(0);
+    },
+  );
+});
 
 describe("collection Add Puzzles picker", () => {
   it("shows each copy's whole box, as My Puzzles does", () => {

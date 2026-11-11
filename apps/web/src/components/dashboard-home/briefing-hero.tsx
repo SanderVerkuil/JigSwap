@@ -10,11 +10,10 @@ import { useMemberToday } from "@/hooks/use-member-today";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { currentGoals, goalPercent } from "@/lib/goal-form";
 import { useMemberDisplayName } from "@/lib/member-display-name";
-import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
-import { CircleCheck, Plus, Search } from "lucide-react";
+import { CircleCheck, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslations } from "use-intl";
 import { MY_SHELF_SIZE } from "./shelf-section";
@@ -22,24 +21,19 @@ import { useCurrentMember } from "./use-current-member";
 
 type ExchangeRow = FunctionReturnType<typeof gateway.exchange.myLive>[number];
 
+// A link inside the sentence: same ink as the words around it, marked by its underline alone.
+// It sits on the canal storey, so the underline and focus outline are On Canal too.
 function HeadlineLink({
   href,
-  tone = "violet",
   children,
 }: {
   href: string;
-  tone?: "violet" | "green";
   children: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className={cn(
-        "underline decoration-2 underline-offset-[5px] transition-colors",
-        tone === "green"
-          ? "text-jigsaw-secondary-text decoration-jigsaw-secondary/30 hover:decoration-jigsaw-secondary"
-          : "text-primary-text decoration-jigsaw-primary/30 hover:decoration-jigsaw-primary",
-      )}
+      className="decoration-mk-on-canal/45 hover:decoration-mk-on-canal focus-visible:outline-mk-on-canal underline decoration-2 underline-offset-[5px] transition-colors"
     >
       {children}
     </Link>
@@ -112,7 +106,7 @@ export function Headline({
   });
 
   return (
-    <p className="font-heading max-w-[860px] text-xl leading-snug font-semibold tracking-tight text-pretty md:text-3xl md:leading-[1.4]">
+    <p className="font-heading max-w-[860px] text-xl leading-snug text-pretty md:text-xl md:leading-snug">
       {t.rich(variant, {
         swapsCount: activeCount,
         pendingCount,
@@ -124,9 +118,7 @@ export function Headline({
           <HeadlineLink href="/trades">{chunks}</HeadlineLink>
         ),
         goalLink: (chunks) => (
-          <HeadlineLink href="/goals" tone="green">
-            {chunks}
-          </HeadlineLink>
+          <HeadlineLink href="/goals">{chunks}</HeadlineLink>
         ),
         shelfLink: (chunks) => (
           // The offered ones when the words say how many are up for swap, not the whole shelf.
@@ -190,7 +182,7 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
       );
 
   return (
-    <div className="border-jigsaw-primary/20 bg-jigsaw-primary/5 flex flex-wrap items-center gap-3.5 rounded-xl border px-4 py-3">
+    <div className="bg-card text-card-foreground flex flex-wrap items-center gap-3.5 rounded-lg border px-4 py-3">
       <Avatar className="size-10">
         {requester.avatar && (
           <AvatarImage src={requester.avatar} alt={displayName(requester)} />
@@ -215,11 +207,10 @@ function PendingRequestBanner({ exchange }: { exchange: ExchangeRow }) {
   );
 }
 
-// Small rounded quick-action chips with violet icons.
+// Flat quick-action chips with a press response.
 function QuickActions() {
   const t = useTranslations("dashboard.actions");
   const actions = [
-    { icon: Plus, label: t("addPuzzle"), href: "/my-puzzles/add" },
     { icon: Search, label: t("browse"), href: "/browse" },
     { icon: CircleCheck, label: t("logCompletion"), href: "/completions/new" },
   ];
@@ -229,9 +220,9 @@ function QuickActions() {
         <Link
           key={href}
           href={href}
-          className="bg-background hover:bg-accent inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors pointer-coarse:min-h-11"
+          className="bg-card text-card-foreground hover:bg-accent focus-visible:border-ring focus-visible:ring-mk-on-canal focus-visible:ring-offset-mk-canal relative inline-flex h-8 items-center gap-2 rounded-md border pointer-coarse:min-h-11 px-3 text-sm font-medium transition-[background-color,scale] max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 duration-[160ms] ease-[cubic-bezier(0.23,1,0.32,1)] outline-none focus-visible:ring-2 focus-visible:ring-offset-2 motion-safe:active:scale-[0.97]"
         >
-          <Icon className="text-jigsaw-primary size-[15px]" />
+          <Icon className="text-primary-text size-4" />
           {label}
         </Link>
       ))}
@@ -240,8 +231,12 @@ function QuickActions() {
 }
 
 // The editorial "morning briefing" opener: narrative headline, the waiting
-// request as a banner, and the quick-action pills — no boxes, no page h1 (the
-// shell chrome owns the greeting).
+// request as a banner, and the quick-action chips. No page h1 (the shell chrome
+// owns the greeting). It stands on the canal storey: one Canal Ink band across
+// the sheet (its negative margins undo ContentArea's padding, which comes back
+// inside), holding a white slip and white chips. The border-image paints the
+// fill out to the sheet's edges in the centred-column width too; the scroll
+// region clips it there, and the band's box and text stay in the column.
 export function BriefingHero() {
   const { member, isMemberLoading } = useCurrentMember();
   const today = useMemberToday();
@@ -269,15 +264,15 @@ export function BriefingHero() {
 
   if (loading) {
     return (
-      <section className="flex flex-col gap-4 md:gap-5">
+      <section className="bg-mk-canal text-mk-on-canal -mx-4 -mt-[18px] flex flex-col gap-4 px-4 pt-[18px] pb-[18px] [border-image:linear-gradient(var(--mk-canal)_0_0)_fill_0//0_100vmax] forced-colors:[border-image:none] md:-mx-6 md:-mt-6 md:gap-5 md:p-6">
         <div className="max-w-[860px] space-y-3">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="bg-mk-on-canal/15 h-8 w-full" />
+          <Skeleton className="bg-mk-on-canal/15 h-8 w-3/4" />
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-8 w-32 rounded-full" />
-          <Skeleton className="h-8 w-40 rounded-full" />
-          <Skeleton className="h-8 w-36 rounded-full" />
+          <Skeleton className="bg-mk-on-canal/15 h-8 w-32 rounded-md" />
+          <Skeleton className="bg-mk-on-canal/15 h-8 w-40 rounded-md" />
+          <Skeleton className="bg-mk-on-canal/15 h-8 w-36 rounded-md" />
         </div>
       </section>
     );
@@ -298,7 +293,7 @@ export function BriefingHero() {
       : null;
 
   return (
-    <section className="flex flex-col gap-4 md:gap-5">
+    <section className="bg-mk-canal text-mk-on-canal -mx-4 -mt-[18px] flex flex-col gap-4 px-4 pt-[18px] pb-[18px] [border-image:linear-gradient(var(--mk-canal)_0_0)_fill_0//0_100vmax] forced-colors:[border-image:none] md:-mx-6 md:-mt-6 md:gap-5 md:p-6">
       <Headline
         activeCount={active.length}
         pendingCount={pendingIncoming.length}

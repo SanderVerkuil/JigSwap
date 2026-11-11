@@ -21,8 +21,8 @@ current status of a trade.
 
 - The **bell** shows your latest notifications. **See all notifications**
   opens the full page.
-- Unread notifications are highlighted. Click one to open what it's about; it's
-  marked as read automatically.
+- Unread notifications have a red dot and a light highlight. Click one to open
+  what it's about; it's marked as read automatically.
 - Use **Mark as read** on a single notification, or **Mark all as read** for
   all of them.
 - The Notifications page groups notifications under **Today**, **Yesterday**

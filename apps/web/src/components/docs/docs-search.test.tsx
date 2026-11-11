@@ -45,7 +45,14 @@ Element.prototype.scrollIntoView = vi.fn();
 afterEach(cleanup);
 
 describe("DocsSearch results", () => {
-  it("shows new results from the top, so the first one is never cut off", () => {
+  // cmdk scrolls its selection into view a few renders after a query changes, and that selection
+  // can still be the last query's pick further down the list, so the scroll to the top waits for
+  // the next frame to land after it (F22).
+  it("shows new results from the top, a frame after cmdk's own scroll, so the first one is never cut off", () => {
+    const frames: FrameRequestCallback[] = [];
+    const raf = vi
+      .spyOn(globalThis, "requestAnimationFrame")
+      .mockImplementation((cb) => frames.push(cb));
     const scrollTo = vi
       .spyOn(HTMLElement.prototype, "scrollTo")
       .mockImplementation(() => {});
@@ -55,13 +62,22 @@ describe("DocsSearch results", () => {
       </IntlProvider>,
     );
     const box = screen.getByRole("combobox");
-
+    act(() => {
+      for (const frame of frames.splice(0)) frame(0);
+    });
     scrollTo.mockClear();
+
     act(() => {
       fireEvent.change(box, { target: { value: "lend" } });
     });
-
     expect(screen.getByText("Page lend")).toBeTruthy();
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    act(() => {
+      for (const frame of frames.splice(0)) frame(0);
+    });
     expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+    raf.mockRestore();
+    scrollTo.mockRestore();
   });
 });

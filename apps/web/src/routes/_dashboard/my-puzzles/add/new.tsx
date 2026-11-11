@@ -24,6 +24,7 @@ import {
 } from "@/components/add-puzzle";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { useConditionOptions } from "@/components/library/condition";
+import { ShellNotFound } from "@/components/NotFound";
 import type { ImportedDraft } from "@/components/puzzle-import/draft-to-form-defaults";
 import type { ImportedMatch } from "@/components/puzzle-import/use-puzzle-import";
 import { LeaveGuard } from "@/components/quick-start/leave-guard";
@@ -61,7 +62,7 @@ import { LIBRARY_TEXT_LIMITS } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Puzzle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
@@ -170,6 +171,8 @@ function AddPuzzlePage() {
   const uploadLimitMessage = useUploadLimitMessage();
   const relativeTime = useRelativeTime();
   const tShell = useTranslations("shell");
+  const tDefinition = useTranslations("puzzleDefinition");
+  const tNotFound = useTranslations("notFound");
   const format = useFormatter();
 
   const navigate = useNavigate();
@@ -203,7 +206,8 @@ function AddPuzzlePage() {
 
   // puzzleId from URL — pre-select an existing definition (copy mode).
   const puzzleIdFromUrl = searchParams.get("puzzleId") as Id<"puzzles"> | null;
-  const { data: specificPuzzle } = useQuery(
+  // An id that can't be read (a stale or edited link) fails the query instead of returning null.
+  const { data: specificPuzzle, isError: specificPuzzleFailed } = useQuery(
     convexQuery(
       gateway.catalog.puzzleById,
       puzzleIdFromUrl ? { puzzleId: puzzleIdFromUrl } : "skip",
@@ -265,25 +269,35 @@ function AddPuzzlePage() {
   // (not selectedDefinitionId, which also flips during an import match) so the
   // chrome doesn't flicker between the loading and resolved states.
   const isCopyMode = !!puzzleIdFromUrl;
-  const copyLoading = isCopyMode && specificPuzzle === undefined;
+  // A read that fails after the puzzle loaded keeps the form (and what the member filled in) up.
+  const copyUnavailable =
+    isCopyMode &&
+    (specificPuzzle === null ||
+      (specificPuzzleFailed && specificPuzzle === undefined));
+  const copyLoading =
+    isCopyMode && specificPuzzle === undefined && !specificPuzzleFailed;
 
   // The route's static head is "Create a Puzzle", which copy mode is not: there the page titles
-  // itself "Add your copy" under My Library › Add Puzzle (the chooser it came from).
+  // itself "Add your copy" under My Library › Add Puzzle (the chooser it came from). A puzzle the
+  // link can't find is titled as such, with no crumbs: this header would overwrite one that
+  // ShellNotFound published, so that one doesn't publish.
   usePageHeader(
     () =>
-      isCopyMode
-        ? {
-            title: t("chooser.addYourCopy"),
-            crumbs: [
-              { label: tShell("groups.library.label"), href: "/library" },
-              {
-                label: tShell("pages.addPuzzle.title"),
-                href: "/my-puzzles/add",
-              },
-            ],
-          }
-        : {},
-    [isCopyMode, t, tShell],
+      copyUnavailable
+        ? { title: tDefinition("notFound"), crumbs: [] }
+        : isCopyMode
+          ? {
+              title: t("chooser.addYourCopy"),
+              crumbs: [
+                { label: tShell("groups.library.label"), href: "/library" },
+                {
+                  label: tShell("pages.addPuzzle.title"),
+                  href: "/my-puzzles/add",
+                },
+              ],
+            }
+          : {},
+    [isCopyMode, copyUnavailable, t, tShell, tDefinition],
   );
 
   // Object URL for the cover file preview — derived from the file; the effect only revokes the
@@ -526,13 +540,13 @@ function AddPuzzlePage() {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-2xl">
-            🧩
+          <div className="flex h-full w-full items-center justify-center">
+            <Puzzle aria-hidden className="text-primary-text size-6" />
           </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {t("chooser.chosenPuzzle")}
         </div>
         <div className="mt-1 truncate font-semibold">
@@ -648,7 +662,8 @@ function AddPuzzlePage() {
       >
         {t("cancel")}
       </Button>
-      {!isReady && !copyLoading && (
+      {/* Copy mode has no title or piece count to fill in. */}
+      {!isReady && !isCopyMode && (
         <span className="ml-auto text-xs text-muted-foreground">
           {t("addReadyHint")}
         </span>
@@ -1122,9 +1137,7 @@ function AddPuzzlePage() {
 
   const previewColumn = (
     <>
-      <div className="font-mono text-[10px] uppercase tracking-[0.09em] text-muted-foreground">
-        {t("livePreview")}
-      </div>
+      <div className="text-xs text-muted-foreground">{t("livePreview")}</div>
       <CopyPreviewCard
         title={specificPuzzle?.title ?? form.title}
         brand={
@@ -1159,6 +1172,20 @@ function AddPuzzlePage() {
       )}
     </>
   );
+
+  if (copyUnavailable) {
+    return (
+      <ShellNotFound
+        publish={false}
+        title={tDefinition("notFound")}
+        description={tDefinition("notFoundSub")}
+        backHref="/my-puzzles/add"
+        backLabel={tNotFound("backTo", {
+          page: tShell("pages.addPuzzle.title"),
+        })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

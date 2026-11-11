@@ -14,7 +14,7 @@ export function InsightsEmptyState() {
       sub={t("emptyHint")}
       action={
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button variant="brand" asChild className="pointer-coarse:min-h-11">
+          <Button asChild className="pointer-coarse:min-h-11">
             <Link href="/completions/new">
               <Plus aria-hidden className="h-4 w-4" />
               {t("emptyLog")}

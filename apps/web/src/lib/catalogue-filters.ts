@@ -138,18 +138,21 @@ export function favouritesInCatalogue<
 }
 
 export type CatalogueEmptyState =
-  "filtered" | "noFavourites" | "emptyCatalogue";
+  "searched" | "filtered" | "noFavourites" | "emptyCatalogue";
 
-// Which "nothing here" message an exhausted, empty catalogue shows. Only a term or filter is
-// worth blaming; favourites on its own means there are none yet; with nothing set, the catalogue
-// itself is empty.
+// Which "nothing here" message an exhausted, empty catalogue shows. A set filter is blamed; a term
+// is named as a search only when it is all that narrows the catalogue (in favourites it searched
+// the favourites alone, so it is blamed like a filter); favourites on its own means there are none
+// yet; with nothing set, the catalogue itself is empty.
 export function catalogueEmptyState({
   favoritesOnly,
-  hasFilters,
+  filters,
 }: {
   favoritesOnly: boolean;
-  hasFilters: boolean;
+  filters: CatalogueFilters;
 }): CatalogueEmptyState {
-  if (hasFilters) return "filtered";
+  if (activeFacetCount(filters) > 0) return "filtered";
+  if (filters.searchTerm.trim() !== "")
+    return favoritesOnly ? "filtered" : "searched";
   return favoritesOnly ? "noFavourites" : "emptyCatalogue";
 }

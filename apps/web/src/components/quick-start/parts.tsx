@@ -10,8 +10,7 @@ export const PRIMARY_LOOK =
   "bg-jigsaw-primary hover:bg-jigsaw-primary/90 text-white pointer-coarse:min-h-11";
 
 // The eyebrow shared with the tour card and the highlight modal.
-export const EYEBROW =
-  "text-muted-foreground font-mono text-[11px] tracking-[0.09em] uppercase";
+export const EYEBROW = "text-muted-foreground text-xs";
 
 /**
  * The four-segment progress bar (D9), one segment per required step. One element with
@@ -46,9 +45,11 @@ export function QuickStartProgress({
           aria-hidden
           className={cn(
             "h-1.5 flex-1 rounded-full transition-colors motion-reduce:transition-none",
-            on ? "bg-primary" : "bg-muted",
+            // At night Canal Primary is 2.5:1 on the card: the done segments and the current
+            // ring use the lifted primary text colour there.
+            on ? "bg-primary dark:bg-primary-text" : "bg-muted",
             i === current &&
-              "ring-primary ring-offset-background ring-2 ring-offset-1",
+              "ring-primary dark:ring-primary-text ring-offset-background ring-2 ring-offset-1",
           )}
         />
       ))}

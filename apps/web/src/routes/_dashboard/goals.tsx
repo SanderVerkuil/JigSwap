@@ -130,7 +130,6 @@ function GoalsPage() {
             meta: headerMeta,
             actions: (
               <Button
-                variant="brand"
                 size="sm"
                 onClick={(event) => openForm(event.currentTarget)}
                 data-tour="goals-create"
@@ -193,7 +192,6 @@ function GoalsPage() {
           sub={t("emptyHint")}
           action={
             <Button
-              variant="brand"
               onClick={(event) => openForm(event.currentTarget)}
               data-tour="goals-create"
             >

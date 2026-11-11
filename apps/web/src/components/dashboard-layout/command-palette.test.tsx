@@ -480,3 +480,60 @@ describe("CommandPalette data export", () => {
     },
   );
 });
+
+// People results use the shared avatar parts: Clerk's generated default picture (what a member
+// without a photo has stored) gives way to their initial, as on every other surface, and the
+// avatar adds nothing to the row's name.
+describe("CommandPalette people", () => {
+  const CLERK_DEFAULT =
+    "https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18yWGsxIiwicmlkIjoidXNlcl8yWXE5IiwiaW5pdGlhbHMiOiJISiJ9";
+  const CLERK_PHOTO =
+    "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvdXBsb2FkZWQvaW1nXzJacjQuanBlZyJ9";
+
+  // Every image "loads" at once, so Radix draws the <img> whenever AvatarImage asks for one.
+  beforeEach(() => {
+    vi.stubGlobal(
+      "Image",
+      class {
+        complete = true;
+        naturalWidth = 1;
+        src = "";
+        addEventListener() {}
+        removeEventListener() {}
+      },
+    );
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const findHenk = async (image: string | null) => {
+    renderPalette({
+      seeded: {
+        henk: {
+          ...NO_HITS,
+          people: [
+            { id: "u1", name: "Henk Pieterszoon", image, href: "/members/u1" },
+          ],
+        },
+      },
+    });
+    type("henk");
+    // An exact name: the avatar is hidden, so its initial doesn't double the row's name.
+    return screen.findByRole("option", { name: "Henk Pieterszoon" });
+  };
+
+  it.each([
+    ["Clerk's default picture", CLERK_DEFAULT],
+    ["no picture", null],
+  ])("shows the initial for %s", async (_, image) => {
+    const row = await findHenk(image);
+    expect(row.querySelector("img")).toBeNull();
+    expect(
+      row.querySelector('[data-slot="avatar-fallback"]')?.textContent,
+    ).toBe("H");
+  });
+
+  it("shows a real photo", async () => {
+    const row = await findHenk(CLERK_PHOTO);
+    expect(row.querySelector("img")?.getAttribute("src")).toBe(CLERK_PHOTO);
+  });
+});

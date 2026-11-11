@@ -27,6 +27,14 @@ export default defineConfig({
         ),
       }
     : {},
+  build: {
+    // Fonts are always served as files. Hanken Grotesk's cyrillic-ext face is under Vite's 4 KB
+    // inline limit, so it was built into globals.css as a data: URI and every route paid 2.2 KB of
+    // CSS for a face that only loads if its unicode-range is on the page. Other assets keep
+    // Vite's default.
+    assetsInlineLimit: (file: string) =>
+      /\.(woff2?|ttf|otf)$/.test(file) ? false : undefined,
+  },
   plugins: [
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),

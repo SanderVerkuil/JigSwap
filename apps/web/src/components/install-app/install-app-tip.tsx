@@ -202,7 +202,7 @@ export function InstallAppTipView({
       <section
         id={TIP_ID}
         aria-labelledby={headingId}
-        className="bg-card text-card-foreground border-jigsaw-primary/20 animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-2xl border p-1.5 pl-3 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.28)] duration-300 ease-out motion-reduce:animate-none dark:shadow-[0_12px_32px_-8px_rgb(0_0_0/0.6)]"
+        className="bg-sidebar text-sidebar-foreground animate-in fade-in slide-in-from-bottom-3 pointer-events-auto rounded-lg p-1.5 pl-3 duration-300 ease-out motion-reduce:animate-none dark:shadow-[0_12px_32px_-8px_rgb(0_0_0/0.6)]"
       >
         {/* One row: the app icon, what this is, How? to expand, and ✕ for "not now". */}
         <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export function InstallAppTipView({
             alt=""
             width={32}
             height={32}
-            className="ring-border size-8 shrink-0 rounded-lg bg-white p-0.5 ring-1"
+            className="size-8 shrink-0"
           />
           {/* Wraps rather than truncates on narrow phones; two lines still fit the 44px row. */}
           <h2
@@ -324,10 +324,7 @@ export function InstallAppTipView({
 
           <div className="mt-3 flex justify-end gap-2">
             {method === "prompt" && (
-              <Button
-                className="bg-jigsaw-primary hover:bg-jigsaw-primary/90 h-11 flex-1 text-white"
-                onClick={onInstall}
-              >
+              <Button className="h-11 flex-1" onClick={onInstall}>
                 <Download aria-hidden />
                 {t("install")}
               </Button>

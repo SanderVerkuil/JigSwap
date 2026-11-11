@@ -131,8 +131,9 @@ export function CataloguePickerView({
                   onClick={() => onToggle(row)}
                   className={cn(
                     "flex min-h-11 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50",
+                    // Picked: the tint plus a Canal Link edge, so the row doesn't rest on a fill alone.
                     picked
-                      ? "bg-jigsaw-primary-tint text-foreground"
+                      ? "bg-jigsaw-primary-tint text-foreground ring-1 ring-primary-text ring-inset"
                       : "hover:bg-accent",
                   )}
                 >
@@ -170,7 +171,7 @@ export function CataloguePickerView({
                   {picked ? (
                     <Check
                       aria-hidden
-                      className="text-jigsaw-primary dark:text-foreground size-5 shrink-0"
+                      className="text-primary-text size-5 shrink-0"
                     />
                   ) : (
                     <Plus

@@ -91,17 +91,35 @@ describe("NotificationsPage phone filter row (UX-122)", () => {
   };
   const classesOf = (element: Element) => [...element.classList];
 
-  it("puts the category pills in one named row that scrolls sideways below md and wraps from md", () => {
+  it("puts the category filters in one named row that scrolls sideways below md and wraps from md", () => {
     const group = renderPage();
-    expect(classesOf(group)).toEqual(
-      expect.arrayContaining(["max-md:overflow-x-auto", "md:flex-wrap"]),
+    expect(classesOf(group)).toContain("max-md:overflow-x-auto");
+    const track = within(group).getAllByRole("button")[0].parentElement!;
+    expect(classesOf(track)).toEqual(
+      expect.arrayContaining(["flex-wrap", "max-md:flex-nowrap"]),
     );
-    expect(classesOf(group)).not.toContain("flex-wrap");
     expect(
       within(group)
         .getAllByRole("button")
         .map((pill) => pill.getAttribute("aria-pressed")),
     ).toContain("true");
+  });
+
+  // The chosen category used to be the canal-filled primary button; it is the tab track's white
+  // window now, the same selection look as every FilterBar.
+  it("marks the chosen category as the tab track's window, not a primary button", () => {
+    const group = renderPage();
+    const all = within(group).getByRole("button", { name: "All" });
+    expect(all.getAttribute("aria-pressed")).toBe("true");
+    expect(classesOf(all.parentElement!)).toEqual(
+      expect.arrayContaining(["bg-muted", "rounded-lg", "p-[3px]"]),
+    );
+    expect(classesOf(all)).toEqual(
+      expect.arrayContaining(["bg-background", "font-semibold"]),
+    );
+    for (const pill of within(group).getAllByRole("button")) {
+      expect(classesOf(pill)).not.toContain("bg-primary");
+    }
   });
 
   it("keeps the unread-only switch out of the pill row, under it on a phone", () => {

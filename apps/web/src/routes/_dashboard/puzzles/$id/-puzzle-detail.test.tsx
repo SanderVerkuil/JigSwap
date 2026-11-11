@@ -54,6 +54,12 @@ vi.mock("@tanstack/react-router", () => ({
     </a>
   ),
   useNavigate: () => vi.fn(),
+  useLocation: (opts?: {
+    select?: (location: { pathname: string }) => unknown;
+  }) => {
+    const location = { pathname: `/puzzles/${PUZZLE_ID}` };
+    return opts?.select ? opts.select(location) : location;
+  },
 }));
 vi.mock("convex-helpers/react", () => ({
   usePaginatedQuery: () => ({
@@ -193,6 +199,24 @@ afterEach(cleanup);
 
 const t = en.puzzleDefinition;
 
+describe("puzzle detail page: not found", () => {
+  it("says so, with the way back to the catalogue and no second h1", () => {
+    mocks.data.set(
+      getFunctionName(gateway.library.getPuzzleDefinitionView),
+      null,
+    );
+    renderPage();
+    expect(screen.getByText(t.notFoundSub)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Back to Puzzles catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles");
+    // The title goes to the page head, which holds the page's h1.
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+});
+
 describe("puzzle detail page: missing data", () => {
   it("never renders placeholder numbers when nobody has rated, finished or offered it", () => {
     setView({
@@ -301,9 +325,8 @@ describe("puzzle detail page: available copies link", () => {
 
 describe("puzzle detail page: actions", () => {
   const tCatalog = en.puzzles.puzzles;
-  // The brand (primary) button variant paints a gradient background.
-  const isPrimary = (el: HTMLElement) =>
-    el.className.includes("linear-gradient");
+  // The primary button is the default variant's canal fill.
+  const isPrimary = (el: HTMLElement) => el.className.includes("bg-primary");
 
   it("leads with the member's own copy when they already own the puzzle", () => {
     setView({

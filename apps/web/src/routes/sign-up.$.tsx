@@ -1,5 +1,6 @@
 import { SignUp } from "@/compat/clerk";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { authAppearance } from "@/components/marketing/auth-field";
 import { InviteSignUpNote } from "@/components/social/invite-sign-up-note";
 import { pageTitle } from "@/lib/page-title";
 import { isSharedCopyHref } from "@/lib/shared-copy-link";
@@ -40,7 +41,7 @@ function SignUpPage() {
           without it Clerk links to the instance's hosted Account Portal,
           which has no way back to JigSwap. */}
       <SignUp
-        appearance={{ elements: { rootBox: "mx-auto", card: "shadow-lg" } }}
+        appearance={authAppearance}
         fallbackRedirectUrl="/dashboard"
         signInUrl="/sign-in"
       />

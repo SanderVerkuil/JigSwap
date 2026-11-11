@@ -55,7 +55,7 @@ export function PushDeviceSection() {
           <BellOff className="h-4 w-4" />
           {t("pushDeviceDesc")}
         </span>
-        <Button variant="brand" size="sm" disabled={busy} onClick={enable}>
+        <Button size="sm" disabled={busy} onClick={enable}>
           {t("pushEnable")}
         </Button>
       </>

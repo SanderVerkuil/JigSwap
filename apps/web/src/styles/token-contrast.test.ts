@@ -174,4 +174,108 @@ describe.each(Object.entries(themes))("%s theme tokens", (_name, vars) => {
       expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  // Picked presets, tag chips and the selected thread sit on the primary tint with primary or
+  // muted text.
+  it("keeps primary and muted text at AA on the primary tint", () => {
+    const tint = c("jigsaw-primary-tint");
+    for (const text of ["primary-text", "muted-foreground", "foreground"]) {
+      expect(contrast(c(text), tint), text).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("keeps destructive text at AA on the sheet, the card and the popover", () => {
+    for (const surface of ["background", "card", "popover"]) {
+      expect(
+        contrast(c("destructive-text"), c(surface)),
+        surface,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+describe("light primary tint", () => {
+  const c = (name: string) => resolve(`var(--${name})`, themes.light);
+
+  // It had drifted to a near-neutral grey (#e9edec, chroma 0.005), so picked states read as
+  // disabled. It is a hued sky step, and a visible step below the hover fill.
+  it("has a hue, and is a visible step from hover and from white", () => {
+    const [, a, b] = linearToOklab(c("jigsaw-primary-tint"));
+    expect(Math.hypot(a, b)).toBeGreaterThanOrEqual(0.015);
+    expect(
+      contrast(c("accent"), c("jigsaw-primary-tint")),
+    ).toBeGreaterThanOrEqual(1.15);
+    expect(
+      contrast(c("background"), c("jigsaw-primary-tint")),
+    ).toBeGreaterThanOrEqual(1.3);
+  });
+});
+
+describe("light destructive", () => {
+  const c = (name: string) => resolve(`var(--${name})`, themes.light);
+
+  // Text uses its own deeper token: --destructive as text was 4.01:1 on a focused destructive
+  // menu row.
+  it("keeps destructive text at AA where it sits by day", () => {
+    const text = c("destructive-text");
+    const surfaces: Record<string, Rgb> = {
+      accent: c("accent"),
+      muted: c("muted"),
+      secondary: c("secondary"),
+      "primary tint": c("jigsaw-primary-tint"),
+      "focused destructive menu row (destructive/10 on popover)": over(
+        c("destructive"),
+        0.1,
+        c("popover"),
+      ),
+      "destructive/15 on card": over(c("destructive"), 0.15, c("card")),
+    };
+    for (const [surface, bg] of Object.entries(surfaces)) {
+      expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+describe("night destructive", () => {
+  const vars = themes.dark;
+  const c = (name: string) => resolve(`var(--${name})`, vars);
+  const white: Rgb = [1, 1, 1];
+  // --input is white at 16% alpha.
+  const inputOver = (alpha: number) => over(white, 0.16 * alpha, c("card"));
+
+  // Text uses its own lighter token: --destructive as text was 4.45:1 on the night card.
+  it("keeps destructive text at AA where it sits at night", () => {
+    const text = c("destructive-text");
+    const surfaces: Record<string, Rgb> = {
+      accent: c("accent"),
+      muted: c("muted"),
+      "outline button (input/30 on card)": inputOver(0.3),
+      "outline button hover (input/50 on card)": inputOver(0.5),
+      "focused destructive menu row (destructive/20 on popover)": over(
+        c("destructive"),
+        0.2,
+        c("popover"),
+      ),
+    };
+    for (const [surface, bg] of Object.entries(surfaces)) {
+      expect(contrast(text, bg), surface).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("keeps white at AA on the destructive fill (bg-destructive/60)", () => {
+    for (const surface of ["background", "card"]) {
+      expect(
+        contrast(white, over(c("destructive"), 0.6, c(surface))),
+        surface,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  // text-* reads --text-color-* first, so every text-destructive variant takes the text token
+  // while bg-, border- and ring-destructive keep the fill.
+  it("routes the text-destructive utilities to the text token", () => {
+    expect(css).toMatch(
+      /--text-color-destructive:\s*var\(--destructive-text\);/,
+    );
+  });
 });

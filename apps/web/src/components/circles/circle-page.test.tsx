@@ -50,6 +50,11 @@ vi.mock("@/components/dashboard-home/use-current-member", () => ({
 
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
+  // ShellNotFound reads the path (to pad full-bleed routes).
+  useLocation: (opts?: { select?: (l: { pathname: string }) => unknown }) => {
+    const location = { pathname: "/circles/circle_1" };
+    return opts?.select ? opts.select(location) : location;
+  },
 }));
 
 vi.mock("@convex-dev/react-query", async (importOriginal) => ({
@@ -373,7 +378,13 @@ describe("CirclePage", () => {
 
   it("renders the generic not-found page for a non-member or an unknown circle", () => {
     renderPage({ circle: null, threadId: null });
-    expect(screen.getByText(en.notFound.title)).toBeTruthy();
+    // The title moved into the page head (pinned in circle-page-not-found.test.tsx).
+    expect(screen.getByText(en.notFound.description)).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: en.notFound.backToDashboard })
+        .getAttribute("href"),
+    ).toBe("/dashboard");
     expect(screen.queryByText("Puzzle Club")).toBeNull();
     expect(screen.queryByText(en.circles.page.chatTitle)).toBeNull();
   });

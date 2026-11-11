@@ -12,7 +12,7 @@ export function DocsSearchPill({ onOpenSearch }: { onOpenSearch: () => void }) {
       type="button"
       onClick={onOpenSearch}
       aria-keyshortcuts="Meta+K Control+K"
-      className="flex items-center gap-2.5 w-full h-10 px-3 mb-2 rounded-[10px] bg-mk-card border border-mk-border text-mk-text-muted text-[14px] text-left transition-colors hover:border-mk-violet-300 hover:text-mk-text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
+      className="flex items-center gap-2.5 w-full h-10 px-3 mb-2 rounded-md bg-mk-card border border-mk-border text-mk-text-muted text-[14px] text-left transition-colors hover:border-mk-canal-300 hover:text-mk-text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring"
     >
       <Search className="size-4 shrink-0 opacity-70" />
       <span className="min-w-0 flex-1 truncate">{t("searchTrigger")}</span>

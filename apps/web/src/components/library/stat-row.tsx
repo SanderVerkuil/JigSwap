@@ -6,7 +6,7 @@ export interface StatRowItem {
   sub?: string;
 }
 
-// Open divided stat row from the design language: big Baloo numbers separated
+// Open divided stat row from the design language: big numbers separated
 // by thin hairline rules, no boxes. Two columns on mobile (three with
 // mobileCols={3}, for rows of short secondary figures), one flexible column
 // per stat from the md breakpoint up.
@@ -46,7 +46,7 @@ export function StatRow({
           >
             <span
               className={cn(
-                "font-heading leading-none font-bold",
+                "font-sans leading-none font-semibold tabular-nums",
                 size === "lg" ? "text-4xl" : "text-2xl",
               )}
             >

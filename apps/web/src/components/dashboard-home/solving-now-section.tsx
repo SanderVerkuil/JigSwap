@@ -52,7 +52,10 @@ export function SolvingNowSection() {
       {solves.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           {t("empty")}{" "}
-          <Link href="/my-puzzles" className="underline underline-offset-2">
+          <Link
+            href="/my-puzzles"
+            className="text-primary-text underline underline-offset-2"
+          >
             {t("emptyCta")}
           </Link>
         </p>

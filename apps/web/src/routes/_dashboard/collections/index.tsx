@@ -78,11 +78,7 @@ function CollectionsPage() {
     () => ({
       meta: headerMeta,
       actions: (
-        <Button
-          variant="brand"
-          size="sm"
-          onClick={() => setIsCreateDialogOpen(true)}
-        >
+        <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           {t("newCollection")}
         </Button>
@@ -125,10 +121,7 @@ function CollectionsPage() {
             title={t("noCollections")}
             sub={t("emptyHint")}
             action={
-              <Button
-                variant="brand"
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4" />
                 {t("newCollection")}
               </Button>
@@ -142,7 +135,7 @@ function CollectionsPage() {
               <div key={collection._id} className="relative">
                 <Link
                   href={`/collections/${collection._id}`}
-                  className="bg-card focus-visible:ring-ring flex h-full gap-3.5 rounded-xl border p-3.5 shadow-sm transition-shadow outline-none hover:shadow-md focus-visible:ring-2"
+                  className="bg-card focus-visible:ring-ring flex h-full gap-3.5 rounded-xl border p-3.5 transition-colors outline-none focus-visible:ring-2"
                 >
                   <CoverChip
                     color={collection.color || chipColor(index)}

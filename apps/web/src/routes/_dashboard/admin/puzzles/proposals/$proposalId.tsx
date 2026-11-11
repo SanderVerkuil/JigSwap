@@ -282,7 +282,6 @@ function ProposalReview({
             {t("reject")}
           </Button>
           <Button
-            variant="brand"
             disabled={busy}
             onClick={() => setApprovingVersion(proposal.updatedAt)}
           >

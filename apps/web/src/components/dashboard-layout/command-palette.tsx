@@ -8,10 +8,13 @@
 // still reaches Goals, Messages or Exchanges. From MIN_TERM_LENGTH characters the live result groups render
 // above them, with a "Searching…" row while the query runs; the empty text shows only when the
 // search is done and nothing at all matches. With an empty input the palette is a pure jump-to
-// navigator. Opened from the top-bar search pill or Cmd/Ctrl+K.
+// navigator. Opened from the top-bar search control or Cmd/Ctrl+K. It opens
+// and closes without animation, because it is pressed many times a day; other dialogs keep theirs.
 import { useUser } from "@/compat/clerk";
 import { useRouter } from "@/compat/navigation";
 import { useDataExport } from "@/components/insights/export-button";
+import { MemberInitial } from "@/components/members/member-initial";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   CommandDialog,
   CommandEmpty,
@@ -38,7 +41,6 @@ import {
   Plus,
   Puzzle,
   Search,
-  User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "use-intl";
@@ -327,13 +329,15 @@ export function CommandPalette({
       title={t("search.label")}
       description={t("search.inputPlaceholder")}
       filter={paletteFilter}
+      // The dialog primitive animates on data-state, so match it; the backdrop is the sibling before.
+      className="data-[state=closed]:animate-none! data-[state=open]:animate-none [[data-slot=dialog-overlay]:has(+&)]:animate-none!"
     >
       <CommandInput
         placeholder={t("search.inputPlaceholder")}
         value={value}
         onValueChange={setValue}
       />
-      <CommandList>
+      <CommandList className="[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent] [scrollbar-width:thin]">
         {isSearching ? (
           <div
             data-slot="command-searching"
@@ -418,16 +422,14 @@ export function CommandPalette({
                 value={keep(hit.id)}
                 onSelect={() => go(hit.href)}
               >
-                {hit.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={hit.image}
-                    alt=""
-                    className="size-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <User />
-                )}
+                {/* The shared avatar parts, so Clerk's default picture is skipped for the
+                    member's initial, as everywhere else. */}
+                <Avatar className="size-5" aria-hidden="true">
+                  {hit.image && <AvatarImage src={hit.image} alt="" />}
+                  <AvatarFallback className="text-[10px] font-semibold">
+                    <MemberInitial source={{ name: hit.name }} />
+                  </AvatarFallback>
+                </Avatar>
                 <span>{displayName({ name: hit.name })}</span>
               </CommandItem>
             ))}

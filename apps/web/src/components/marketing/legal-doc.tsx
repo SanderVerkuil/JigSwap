@@ -1,7 +1,9 @@
 import { Container } from "@/components/marketing/container";
+import { TEXT_LINK } from "@/components/marketing/home/classes";
 import { Section } from "@/components/marketing/section";
+import { isPlainClick, useActiveHeading } from "@/hooks/use-active-heading";
 import { cn } from "@/lib/utils";
-import { Calendar, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import * as React from "react";
 import { useTranslations } from "use-intl";
 
@@ -19,9 +21,9 @@ export interface LegalSection {
   action?: React.ReactNode; // a control shown after the text (e.g. Cookie settings)
 }
 
-// Shared legal document layout: sticky table of contents with scroll-spy
-// beside a 720px reading column (a collapsible Contents block below 900px).
-// Ported from the design handoff's LegalDoc.
+// Shared legal document layout: sticky table of contents with scroll-spy beside a reading column at a
+// comfortable measure (a collapsible Contents block below 900px). Section numbers stay because legal
+// text is cited by section.
 export function LegalDoc({
   updated,
   intro,
@@ -34,46 +36,34 @@ export function LegalDoc({
   children?: React.ReactNode; // trailing contact note
 }) {
   const t = useTranslations("marketing.legal");
-  const [active, setActive] = React.useState(sections[0]?.id);
-
-  React.useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) setActive(e.target.id);
-        }
-      },
-      { rootMargin: "-30% 0px -60% 0px" },
-    );
-    for (const s of sections) {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    }
-    return () => obs.disconnect();
-  }, [sections]);
+  const [active, pick] = useActiveHeading(sections);
+  const contentsRef = React.useRef<HTMLDetailsElement>(null);
 
   return (
     <Section>
       <Container>
-        <div className="grid grid-cols-[240px_1fr] max-[900px]:grid-cols-1 gap-[clamp(32px,5vw,72px)] items-start">
-          <aside className="sticky top-24 self-start max-[900px]:hidden">
-            <div className="font-mono text-[11px] font-bold tracking-[.1em] uppercase text-mk-text-muted mb-3.5">
+        <div className="grid grid-cols-[240px_minmax(0,1fr)] items-start gap-[clamp(32px,5vw,72px)] max-[900px]:grid-cols-1">
+          {/* Scrolls on its own where the list is taller than the window (a laptop, in Dutch),
+              ending above the cookie banner while that is open. */}
+          <aside className="sticky top-24 -mx-1 max-h-[calc(100dvh-96px-var(--consent-banner-height,0px))] self-start overflow-y-auto overscroll-contain px-1 pb-6 [scrollbar-color:var(--mk-input-border)_transparent] [scrollbar-width:thin] max-[900px]:hidden">
+            <div className="font-mk-heading text-mk-text-strong mb-3 text-[18px]">
               {t("contents")}
             </div>
-            <LegalToc sections={sections} active={active} />
+            <LegalToc sections={sections} active={active} onPick={pick} />
           </aside>
-          <div className="max-w-[720px]">
-            <div className="flex items-center gap-2.5 text-[13.5px] text-mk-text-muted mb-6">
-              <Calendar size={15} />
-              {updated}
-            </div>
-            <p className="text-[16.5px] leading-[1.7] text-mk-text-body mb-2">
+          <div className="max-w-[70ch]">
+            <p className="text-mk-text-muted mb-5 text-[15px]">{updated}</p>
+            <p className="text-mk-text-body text-[18px] leading-[1.65]">
               {intro}
             </p>
             {/* Below 900px the sticky list above is hidden; the same links
                 fold into a Contents block at the top of the text. */}
-            <details className="group min-[901px]:hidden mt-6 rounded-[14px] border border-mk-border bg-mk-card">
-              <summary className="flex items-center justify-between gap-3 min-h-12 px-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden font-mono text-[12px] font-bold tracking-[.1em] uppercase text-mk-text-muted rounded-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mk-ring">
+            <details
+              id="contents"
+              ref={contentsRef}
+              className="group bg-mk-sky-soft dark:bg-mk-muted mt-6 scroll-mt-2.5 rounded-md min-[901px]:hidden"
+            >
+              <summary className="font-mk-heading text-mk-text-strong focus-visible:ring-mk-ring flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-md px-4 text-[18px] font-normal focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                 {t("contents")}
                 <ChevronDown
                   size={18}
@@ -82,12 +72,19 @@ export function LegalDoc({
                 />
               </summary>
               <div className="px-4 pb-3">
-                <LegalToc sections={sections} active={active} />
+                <LegalToc
+                  sections={sections}
+                  active={active}
+                  onPick={pick}
+                  variant="fold"
+                />
               </div>
             </details>
             {sections.map((s, i) => (
-              <section key={s.id} id={s.id} className="scroll-mt-[90px] pt-9">
-                <h2 className="font-mk-heading font-bold tracking-tight text-2xl text-mk-text-strong mb-3.5">
+              // Lands 90px down: the page's scroll-padding clears the header (80px) and this adds 10.
+              <section key={s.id} id={s.id} className="scroll-mt-2.5 pt-11">
+                {/* Lining figures: Young Serif's old-style 11 reads as II. */}
+                <h2 className="font-mk-heading text-mk-text-strong mb-3.5 text-[clamp(24px,2.4vw,30px)] leading-[1.2] font-normal lining-nums">
                   {i + 1}. {s.heading}
                 </h2>
                 {s.blocks.map((b, j) => {
@@ -96,7 +93,7 @@ export function LegalDoc({
                       return (
                         <h3
                           key={j}
-                          className="font-mk-heading font-semibold text-lg text-mk-text-strong mt-5 mb-2.5"
+                          className="text-mk-text-strong mt-6 mb-2 text-[18px] leading-snug font-semibold"
                         >
                           {b.text}
                         </h3>
@@ -105,12 +102,12 @@ export function LegalDoc({
                       return (
                         <ul
                           key={j}
-                          className="mb-3.5 pl-[22px] list-disc flex flex-col gap-2"
+                          className="marker:text-mk-text-muted mb-4 flex list-disc flex-col gap-2 pl-[22px]"
                         >
                           {b.items.map((li) => (
                             <li
                               key={li}
-                              className="text-[15.5px] leading-relaxed text-mk-text-body"
+                              className="text-mk-text-body text-[17px] leading-relaxed"
                             >
                               {li}
                             </li>
@@ -121,7 +118,7 @@ export function LegalDoc({
                       return (
                         <p
                           key={j}
-                          className="text-[15.5px] leading-[1.7] font-medium text-mk-text-body mb-3.5"
+                          className="text-mk-text-strong mb-4 text-[17px] leading-[1.7] font-semibold"
                         >
                           {b.text}
                         </p>
@@ -130,7 +127,7 @@ export function LegalDoc({
                       return (
                         <p
                           key={j}
-                          className="text-[15.5px] leading-[1.7] text-mk-text-body mb-3.5"
+                          className="text-mk-text-body mb-4 text-[17px] leading-[1.7]"
                         >
                           {b.text}
                         </p>
@@ -138,10 +135,23 @@ export function LegalDoc({
                   }
                 })}
                 {s.action && <div className="mb-3.5">{s.action}</div>}
+                {/* On phones the contents sit only at the top of a very long page. */}
+                <a
+                  href="#contents"
+                  onClick={() => {
+                    if (contentsRef.current) contentsRef.current.open = true;
+                  }}
+                  className={cn(
+                    TEXT_LINK,
+                    "text-mk-text-muted hover:text-mk-text-strong inline-flex min-h-11 items-center text-[15px] min-[901px]:hidden",
+                  )}
+                >
+                  {t("backToContents")}
+                </a>
               </section>
             ))}
             {children && (
-              <div className="mt-12 pt-6 border-t border-mk-border text-[14.5px] text-mk-text-muted">
+              <div className="text-mk-text-body mt-12 text-[17px] leading-[1.7]">
                 {children}
               </div>
             )}
@@ -153,30 +163,38 @@ export function LegalDoc({
 }
 
 // The contents list: plain #hash links, so every section has a URL to share
-// and the browser does the jump (sections carry scroll-mt for the header).
+// and the browser does the jump (the page's scroll-padding clears the header).
+// A picked section is marked current straight away. The current entry is a Sky Soft
+// pill on the white page ("rail"), or a white window inside the Sky Soft Contents block ("fold").
 function LegalToc({
   sections,
   active,
+  onPick,
+  variant = "rail",
 }: {
   sections: LegalSection[];
   active: string | undefined;
+  onPick: (id: string) => void;
+  variant?: "rail" | "fold";
 }) {
   const t = useTranslations("marketing.legal");
   return (
-    <nav
-      aria-label={t("contents")}
-      className="flex flex-col gap-0.5 border-l border-mk-border"
-    >
+    <nav aria-label={t("contents")} className="flex flex-col gap-0.5">
       {sections.map((s, i) => (
         <a
           key={s.id}
           href={`#${s.id}`}
+          onClick={(e) => {
+            if (isPlainClick(e)) onPick(s.id);
+          }}
           aria-current={active === s.id ? "true" : undefined}
           className={cn(
-            "py-[7px] px-3.5 -ml-px border-l-2 text-[13.5px] leading-snug transition-colors",
+            "rounded-sm px-2.5 py-[6px] text-[14px] leading-snug transition-colors duration-150",
             active === s.id
-              ? "border-mk-violet-400 text-mk-violet-600 font-semibold"
-              : "border-transparent text-mk-text-muted font-medium hover:text-mk-text-body",
+              ? variant === "fold"
+                ? "bg-mk-card text-mk-text-strong font-semibold"
+                : "bg-mk-sky-soft dark:bg-mk-muted text-mk-text-strong font-semibold"
+              : "text-mk-text-muted hover:text-mk-text-strong font-medium",
           )}
         >
           {i + 1}. {s.heading}

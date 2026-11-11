@@ -23,19 +23,23 @@ vi.mock("@/hooks/use-favorites", () => ({
   }),
 }));
 vi.mock("@tanstack/react-router", () => ({
+  // Like the router, leaves a param that is undefined out of the URL.
   Link: ({
     to,
     search,
     children,
   }: {
     to: string;
-    search?: Record<string, string>;
+    search?: Record<string, string | undefined>;
     children?: ReactNode;
-  }) => (
-    <a href={search ? `${to}?${new URLSearchParams(search)}` : to}>
-      {children}
-    </a>
-  ),
+  }) => {
+    const params = new URLSearchParams(
+      Object.entries(search ?? {}).filter(
+        (entry): entry is [string, string] => entry[1] !== undefined,
+      ),
+    ).toString();
+    return <a href={params ? `${to}?${params}` : to}>{children}</a>;
+  },
 }));
 
 const PUZZLE_ID = "puzzle_1";
@@ -44,12 +48,10 @@ const renderEmpty = ({
   search,
   puzzle = { _id: PUZZLE_ID, title: "Café" },
   locale = "en",
-  onClearConditions = () => {},
 }: {
   search: BrowseSearch;
   puzzle?: { _id: string; title: string } | null;
   locale?: "en" | "nl";
-  onClearConditions?: () => void;
 }) => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -69,10 +71,7 @@ const renderEmpty = ({
         messages={locale === "en" ? en : nl}
         timeZone="Europe/Amsterdam"
       >
-        <BrowseEmptyState
-          search={search}
-          onClearConditions={onClearConditions}
-        />
+        <BrowseEmptyState search={search} />
       </IntlProvider>
     </QueryClientProvider>,
   );
@@ -85,16 +84,56 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("BrowseEmptyState", () => {
-  it("blames the filters and clears them when the text or a filter is set", () => {
-    const onClearConditions = vi.fn();
-    renderEmpty({
-      search: { puzzle: PUZZLE_ID, q: "zzz" },
-      onClearConditions,
-    });
+  // The toolbar's Clear All is on screen whenever text or a filter is set: none is repeated here.
+  it("names a plain search, and takes it on to the catalogue", () => {
+    renderEmpty({ search: { q: "Dolomites" } });
+    const title = screen.getByText(
+      "Nobody offers a copy matching “Dolomites” right now",
+    );
+    // The member's text may be one long word: it wraps inside the column instead of overflowing.
+    expect(title.closest(".wrap-anywhere")).not.toBeNull();
+    expect(screen.queryByText("No copies match these filters")).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "Open the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles?q=Dolomites");
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  // Only that puzzle's copies were searched, so "nobody offers a match" would be untrue.
+  it("blames the filters for text within one puzzle's copies", () => {
+    renderEmpty({ search: { puzzle: PUZZLE_ID, q: "Dolomites" } });
     expect(screen.getByText("No copies match these filters")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Clear All" }));
-    expect(onClearConditions).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByText("Nobody offers a copy matching “Dolomites” right now"),
+    ).toBeNull();
     expect(screen.queryByText("Nobody offers this puzzle yet")).toBeNull();
+    expect(
+      screen
+        .getByRole("link", { name: "Open the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles?q=Dolomites");
+  });
+
+  it("blames the filters when one is set, offering the catalogue, with the text", () => {
+    renderEmpty({ search: { q: "lake", condition: "good" } });
+    expect(screen.getByText("No copies match these filters")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: "Open the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles?q=lake");
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("offers the bare catalogue when only a filter is set", () => {
+    renderEmpty({ search: { avail: ["forLend"] } });
+    expect(
+      screen
+        .getByRole("link", { name: "Open the catalogue" })
+        .getAttribute("href"),
+    ).toBe("/puzzles");
   });
 
   it("says nobody offers the puzzle and lets the member favourite it", () => {
@@ -139,6 +178,18 @@ describe("BrowseEmptyState", () => {
     expect(screen.getByText("Nog niemand biedt deze puzzel aan")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Toevoegen aan favorieten" }),
+    ).toBeTruthy();
+  });
+
+  it("names a plain search in Dutch", () => {
+    renderEmpty({ search: { q: "Dolomieten" }, locale: "nl" });
+    expect(
+      screen.getByText(
+        "Niemand biedt nu een exemplaar aan dat past bij “Dolomieten”",
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Naar de catalogus" }),
     ).toBeTruthy();
   });
 });

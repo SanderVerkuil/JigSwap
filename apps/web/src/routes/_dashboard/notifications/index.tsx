@@ -2,6 +2,7 @@ import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
+import { TOGGLE_TRACK, toggleOption } from "@/components/library/filter-bar";
 import { emptyStateFor } from "@/components/notifications/notification-empty-state";
 import { groupByRecency } from "@/components/notifications/notification-groups";
 import { NotificationItem } from "@/components/notifications/notification-item";
@@ -227,49 +228,43 @@ function NotificationsPage() {
     <div className="flex w-full flex-col gap-6">
       <div className="grid gap-6 lg:gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
         <aside className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-[calc(var(--app-sticky-top,0px)+0.5rem)] xl:self-start">
-          {/* Category pills + unread-only toggle: always visible. Below md the pills are ONE
-              row that scrolls sideways, bleeding to the screen edges, with the toggle under it
-              (two rows, not three); a wrapping row from md; a vertical stack at xl. */}
+          {/* Category filters + unread-only toggle: always visible. Below md the tab track is
+              ONE row that scrolls sideways, bleeding to the screen edges, with the toggle under
+              it (two rows, not three); a wrapping track from md; a vertical stack at xl. */}
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center xl:flex-col xl:items-start xl:gap-3">
             <div
               role="group"
               aria-label={t("filterLabel")}
-              className="flex gap-2 [scrollbar-width:none] max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:px-4 max-md:py-1 md:flex-wrap"
+              className="flex [scrollbar-width:none] max-md:-mx-4 max-md:overflow-x-auto max-md:overscroll-x-contain max-md:px-4 max-md:py-1"
             >
-              <Button
-                type="button"
-                size="sm"
-                variant={category === "all" ? "default" : "outline"}
-                aria-pressed={category === "all"}
-                onClick={() => setCategory("all")}
-                className={cn(
-                  "rounded-full",
-                  category === "all" &&
-                    "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-                )}
-              >
-                {t("filterAll")}
-              </Button>
-              {visibleCategories.map((cat) => {
-                const active = category === cat.key;
-                return (
-                  <Button
-                    key={cat.key}
-                    type="button"
-                    size="sm"
-                    variant={active ? "default" : "outline"}
-                    aria-pressed={active}
-                    onClick={() => setCategory(cat.key)}
-                    className={cn(
-                      "rounded-full",
-                      active &&
-                        "bg-jigsaw-primary text-white hover:bg-jigsaw-primary/90",
-                    )}
-                  >
-                    {t(`categories.${cat.key}.title`)}
-                  </Button>
-                );
-              })}
+              <div className={cn(TOGGLE_TRACK, "max-md:flex-nowrap")}>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  aria-pressed={category === "all"}
+                  className={toggleOption(category === "all")}
+                  onClick={() => setCategory("all")}
+                >
+                  {t("filterAll")}
+                </Button>
+                {visibleCategories.map((cat) => {
+                  const active = category === cat.key;
+                  return (
+                    <Button
+                      key={cat.key}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-pressed={active}
+                      className={toggleOption(active)}
+                      onClick={() => setCategory(cat.key)}
+                    >
+                      {t(`categories.${cat.key}.title`)}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
             <label className="text-muted-foreground flex items-center gap-2 self-start text-sm md:self-auto">
               <Switch
