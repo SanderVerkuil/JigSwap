@@ -167,6 +167,17 @@ describe("MobileQuickSheet help entry (UX-91)", () => {
       "Documentatie",
     );
   });
+
+  // An open book is the Library tab's icon.
+  it("draws Docs as a page, not as Library's open book", () => {
+    renderSheet();
+    const icon = screen
+      .getByRole("button", { name: /^Docs/ })
+      .querySelector("svg")
+      ?.getAttribute("class");
+    expect(icon).toContain("lucide-file-text");
+    expect(icon).not.toContain("lucide-book-open");
+  });
 });
 
 // The sheet has to be closable without seeing the backdrop: a screen reader doesn't expose it, so

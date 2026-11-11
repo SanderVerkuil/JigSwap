@@ -55,9 +55,20 @@ vi.mock("@/compat/clerk", () => {
   UserButton.MenuItems = ({ children }: { children: ReactNode }) => (
     <ul>{children}</ul>
   );
-  UserButton.Link = ({ label, href }: { label: string; href: string }) => (
+  UserButton.Link = ({
+    label,
+    labelIcon,
+    href,
+  }: {
+    label: string;
+    labelIcon?: ReactNode;
+    href: string;
+  }) => (
     <li>
-      <a href={href}>{label}</a>
+      <a href={href}>
+        {labelIcon}
+        {label}
+      </a>
     </li>
   );
   UserButton.Action = ({
@@ -523,6 +534,18 @@ describe("ShellUserButton help entry (UX-91)", () => {
       expect(links[helpIndex + 1]).toEqual([docs, "/docs"]);
     },
   );
+
+  // An open book is Library's icon, and on a phone the tab bar's Library tab shows below this menu.
+  it("draws Docs as a page, not as Library's open book", () => {
+    mocks.settings = undefined;
+    renderButton();
+    const icon = screen
+      .getByRole("link", { name: "Docs" })
+      .querySelector("svg")
+      ?.getAttribute("class");
+    expect(icon).toContain("lucide-file-text");
+    expect(icon).not.toContain("lucide-book-open");
+  });
 });
 
 // Clerk's own focus style is a faint 4px box-shadow, about 1.4:1 on the lavender sidebar.

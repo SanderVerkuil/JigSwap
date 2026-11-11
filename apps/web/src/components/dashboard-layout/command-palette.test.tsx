@@ -343,6 +343,17 @@ describe("CommandPalette", () => {
     expect(screen.getByRole("option", { name })).toBeTruthy();
   });
 
+  // An open book stands for Library, here too: it marks the "In your library" rows.
+  it("draws Search the docs as a page, not as Library's open book", () => {
+    renderPalette();
+    const icon = screen
+      .getByRole("option", { name: "Search the docs" })
+      .querySelector("svg")
+      ?.getAttribute("class");
+    expect(icon).toContain("lucide-file-text");
+    expect(icon).not.toContain("lucide-book-open");
+  });
+
   // A member with a long history looks for this under either language's word, wherever they are.
   it.each(["past", "eerdere"])("finds marking past solves by “%s”", (term) => {
     renderPalette();

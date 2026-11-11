@@ -34,10 +34,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Bell,
-  BookOpen,
   Check,
   CircleHelp,
   Cookie,
+  FileText,
   House,
   ListChecks,
   LogOut,
@@ -218,7 +218,7 @@ export function ShellUserButton({
           />
           <UserButton.Link
             label={t("user.docs")}
-            labelIcon={<BookOpen className="size-4" />}
+            labelIcon={<FileText className="size-4" />}
             href="/docs"
           />
           {/* Always here (spec §2.3): reopens the quick start and brings back a hidden card.

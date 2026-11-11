@@ -15,10 +15,10 @@ import { WhatsNewCountPill } from "@/components/whats-new/badges";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
-  BookOpen,
   CircleCheck,
   CircleHelp,
   Download,
+  FileText,
   MessageSquare,
   Plus,
   Sparkles,
@@ -96,7 +96,7 @@ const ACTIONS: Array<{
     titleKey: "user.docs",
     subKey: "mobile.quick.docsSub",
     href: "/docs",
-    icon: BookOpen,
+    icon: FileText,
   },
 ];
 

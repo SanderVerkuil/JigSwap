@@ -36,6 +36,7 @@ import {
   BookOpen,
   CircleCheck,
   Download,
+  FileText,
   FolderOpen,
   History,
   Plus,
@@ -96,7 +97,7 @@ const QUICK_ACTIONS = [
     key: "searchDocs",
     // The docs landing, whose hero is the docs search field.
     href: "/docs",
-    icon: BookOpen,
+    icon: FileText,
     keywords: ["help", "hulp", "handleiding", "docs", "documentatie"],
   },
 ] as const;
