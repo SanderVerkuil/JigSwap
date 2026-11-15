@@ -5,7 +5,7 @@ import {
   type ExportSection,
   type ProjectedMember,
 } from "@jigswap/contracts";
-import { COOLDOWN_MS } from "@jigswap/domain";
+import { readsAsPendingToRequester } from "@jigswap/domain";
 import type { PaginationOptions, PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -228,21 +228,6 @@ const proposalFieldsOf = async (
   return image === undefined
     ? rest
     : { ...rest, imageUrl: await boxArtUrl(ctx, image) };
-};
-
-/** The follow request statuses the requester sees: a decline never shows (getFollowRelation). */
-const requesterStatusOf = (
-  request: Doc<"followRequests">,
-  now: number,
-): "pending" | "approved" | null => {
-  if (request.status === "approved") return "approved";
-  if (request.status === "pending") return "pending";
-  // Declined: masked as pending in its cooldown unless the requester cancelled, then no request.
-  return request.cancelledAt === undefined &&
-    request.respondedAt !== undefined &&
-    now - request.respondedAt < COOLDOWN_MS
-    ? "pending"
-    : null;
 };
 
 const pushServiceOf = (endpoint: string): string | undefined => {
@@ -764,7 +749,12 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
         .withIndex("by_requester", (q) => q.eq("requesterId", me))
         .paginate(page),
       async (r) => {
-        const status = requesterStatusOf(r, now);
+        const status =
+          r.status === "approved"
+            ? "approved"
+            : readsAsPendingToRequester(r, now)
+              ? "pending"
+              : null;
         if (status === null || blocked.has(r.targetId)) return null;
         return {
           to: await followPerson(ctx, r.targetId, r.createdAt),
