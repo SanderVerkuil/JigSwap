@@ -152,18 +152,6 @@ const one = <V>(rows: V[]): V => {
 
 const SUMMARY_READS: [string, SummaryRead][] = [
   [
-    "catalog.listAllPuzzles",
-    async (t) => {
-      const response = await t.query(
-        api.catalog.listAllPuzzles.listAllPuzzles,
-        {
-          paginationOpts: { numItems: 10, cursor: null },
-        },
-      );
-      return { card: one(response.page), response };
-    },
-  ],
-  [
     "catalog.getRecentPuzzles",
     async (t) => {
       const response = await t.query(

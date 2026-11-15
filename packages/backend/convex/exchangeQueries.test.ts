@@ -117,24 +117,24 @@ const listedExchanges = async (reader: ReturnType<typeof asAlice>) => {
   return [...live, ...history.page];
 };
 
-describe("exchange.getExchangeById", () => {
+// One exchange as the caller's own lists show it (null when they are no party to it).
+const rowOf = async (
+  c: ReturnType<typeof asAlice>,
+  exchangeId: Id<"exchanges">,
+) => (await listedExchanges(c)).find((row) => row._id === exchangeId) ?? null;
+
+describe("the exchange lists: one exchange", () => {
   test("returns the exchange with parties and the owned copies", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
-    const view = await asAlice(t).query(
-      api.exchange.getExchangeById.getExchangeById,
-      {
-        exchangeId: older,
-      },
-    );
+    const view = await rowOf(asAlice(t), older);
     expect(view?.requester?.name).toBe("Alice");
     expect(view?.owner?.name).toBe("Bob");
-    // Legacy naming: ownerPuzzle = requested owned copy, requesterPuzzle = offered owned copy.
-    expect(view?.ownerPuzzle?.condition).toBe("good");
-    expect(view?.requesterPuzzle?.condition).toBe("like_new");
+    expect(view?.requestedOwnedPuzzle?.condition).toBe("good");
+    expect(view?.offeredOwnedPuzzle?.condition).toBe("like_new");
   });
 
-  test("returns null for a non-party caller", async () => {
+  test("a non-party caller does not get it", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
     // Carol is neither initiator nor recipient.
@@ -149,25 +149,15 @@ describe("exchange.getExchangeById", () => {
         updatedAt: now,
       });
     });
-    const view = await t
-      .withIdentity({ subject: "clerk_carol" })
-      .query(api.exchange.getExchangeById.getExchangeById, {
-        exchangeId: older,
-      });
+    const view = await rowOf(t.withIdentity({ subject: "clerk_carol" }), older);
     expect(view).toBeNull();
   });
 
-  test("returns null for a missing exchange", async () => {
+  test("a missing exchange is not listed", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
     await t.run(async (ctx) => ctx.db.delete(older));
-    const view = await asAlice(t).query(
-      api.exchange.getExchangeById.getExchangeById,
-      {
-        exchangeId: older,
-      },
-    );
-    expect(view).toBeNull();
+    expect(await rowOf(asAlice(t), older)).toBeNull();
   });
 });
 
@@ -181,41 +171,41 @@ describe("exchange owner-only field gating (counterparty must not see private co
   const BOB_SECRETS = ["bob-private-note-mountain", "bought_used"] as const;
   const ALICE_SECRETS = ["alice-private-note-ocean", "gift"] as const;
 
-  test("getExchangeById: each party sees only their own copy's owner-only fields", async () => {
+  test("the exchange lists (one exchange): each party sees only their own copy's owner-only fields", async () => {
     const t = convexTest(schema, modules);
     const { older } = await seed(t);
 
-    // Alice is the initiator: ownerPuzzle = Bob's requested copy, requesterPuzzle = Alice's offered.
-    const aliceView = await asAlice(t).query(
-      api.exchange.getExchangeById.getExchangeById,
-      { exchangeId: older },
+    // Alice is the initiator: requestedOwnedPuzzle = Bob's copy, offeredOwnedPuzzle = Alice's.
+    const aliceView = await rowOf(asAlice(t), older);
+    expect(aliceView?.offeredOwnedPuzzle?.notes).toBe(
+      "alice-private-note-ocean",
     );
-    expect(aliceView?.requesterPuzzle?.notes).toBe("alice-private-note-ocean");
-    expect(aliceView?.requesterPuzzle?.acquisitionSource).toBe("gift");
-    expect(aliceView?.requesterPuzzle?.acquisitionPrice?.amount).toBe(1234);
-    expect(aliceView?.requesterPuzzle?.acquisitionDate).toBeDefined();
+    expect(aliceView?.offeredOwnedPuzzle?.acquisitionSource).toBe("gift");
+    expect(aliceView?.offeredOwnedPuzzle?.acquisitionPrice?.amount).toBe(1234);
+    expect(aliceView?.offeredOwnedPuzzle?.acquisitionDate).toBeDefined();
     // Bob's copy (the counterparty's) must be stripped of every owner-only field.
-    expect(aliceView?.ownerPuzzle?.notes).toBeUndefined();
-    expect(aliceView?.ownerPuzzle?.acquisitionSource).toBeUndefined();
-    expect(aliceView?.ownerPuzzle?.acquisitionPrice).toBeUndefined();
-    expect(aliceView?.ownerPuzzle?.acquisitionDate).toBeUndefined();
+    expect(aliceView?.requestedOwnedPuzzle?.notes).toBeUndefined();
+    expect(aliceView?.requestedOwnedPuzzle?.acquisitionSource).toBeUndefined();
+    expect(aliceView?.requestedOwnedPuzzle?.acquisitionPrice).toBeUndefined();
+    expect(aliceView?.requestedOwnedPuzzle?.acquisitionDate).toBeUndefined();
     const aliceJson = JSON.stringify(aliceView);
     for (const secret of BOB_SECRETS) {
       expect(aliceJson).not.toContain(secret);
     }
 
     // Bob is the recipient: he must see his own copy's fields and none of Alice's.
-    const bobView = await asBob(t).query(
-      api.exchange.getExchangeById.getExchangeById,
-      { exchangeId: older },
+    const bobView = await rowOf(asBob(t), older);
+    expect(bobView?.requestedOwnedPuzzle?.notes).toBe(
+      "bob-private-note-mountain",
     );
-    expect(bobView?.ownerPuzzle?.notes).toBe("bob-private-note-mountain");
-    expect(bobView?.ownerPuzzle?.acquisitionSource).toBe("bought_used");
-    expect(bobView?.ownerPuzzle?.acquisitionPrice?.amount).toBe(4321);
-    expect(bobView?.requesterPuzzle?.notes).toBeUndefined();
-    expect(bobView?.requesterPuzzle?.acquisitionSource).toBeUndefined();
-    expect(bobView?.requesterPuzzle?.acquisitionPrice).toBeUndefined();
-    expect(bobView?.requesterPuzzle?.acquisitionDate).toBeUndefined();
+    expect(bobView?.requestedOwnedPuzzle?.acquisitionSource).toBe(
+      "bought_used",
+    );
+    expect(bobView?.requestedOwnedPuzzle?.acquisitionPrice?.amount).toBe(4321);
+    expect(bobView?.offeredOwnedPuzzle?.notes).toBeUndefined();
+    expect(bobView?.offeredOwnedPuzzle?.acquisitionSource).toBeUndefined();
+    expect(bobView?.offeredOwnedPuzzle?.acquisitionPrice).toBeUndefined();
+    expect(bobView?.offeredOwnedPuzzle?.acquisitionDate).toBeUndefined();
     const bobJson = JSON.stringify(bobView);
     for (const secret of ALICE_SECRETS) {
       expect(bobJson).not.toContain(secret);

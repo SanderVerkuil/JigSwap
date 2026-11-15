@@ -133,19 +133,6 @@ describe("catalog reads by status (PERF-B8)", () => {
     );
   });
 
-  test("listAllPuzzles pages through approved rows only, oldest first as before", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-
-    const { rows, pages } = await walk((cursor) =>
-      t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
-        paginationOpts: { numItems: 2, cursor },
-      }),
-    );
-    expect(pages).toBeGreaterThan(1);
-    expect(rows.map((p) => p.title)).toEqual(APPROVED_OLDEST_FIRST);
-  });
-
   test("searchCatalog's empty-term browse pages through approved rows only, oldest first as before", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
@@ -303,17 +290,11 @@ describe("catalog page sizes are clamped server-side (SEC-49)", () => {
     expect(nan).toHaveLength(8);
   });
 
-  test("listAllPuzzles and searchCatalog return at most 50 rows per page", async () => {
+  test("searchCatalog returns at most 50 rows per page", async () => {
     const t = convexTest(schema, modules);
     await seedApproved(t, 60);
     await mkMember(t, "clerk_alice");
     const huge = { numItems: 1e6, cursor: null };
-
-    const all = await t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
-      paginationOpts: huge,
-    });
-    expect(all.page).toHaveLength(50);
-    expect(all.isDone).toBe(false);
 
     const browse = await asAlice(t).query(
       api.catalog.searchCatalog.searchCatalog,

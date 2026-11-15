@@ -88,7 +88,6 @@ import type * as catalog_getPuzzleSuggestions from "../catalog/getPuzzleSuggesti
 import type * as catalog_getRecentPuzzles from "../catalog/getRecentPuzzles.js";
 import type * as catalog_importCache from "../catalog/importCache.js";
 import type * as catalog_importPuzzleImage from "../catalog/importPuzzleImage.js";
-import type * as catalog_listAllPuzzles from "../catalog/listAllPuzzles.js";
 import type * as catalog_listMyChangeProposals from "../catalog/listMyChangeProposals.js";
 import type * as catalog_listMyContributedPuzzles from "../catalog/listMyContributedPuzzles.js";
 import type * as catalog_listMyFavorites from "../catalog/listMyFavorites.js";
@@ -212,7 +211,6 @@ import type * as exchange_cancel from "../exchange/cancel.js";
 import type * as exchange_confirmCompletion from "../exchange/confirmCompletion.js";
 import type * as exchange_decline from "../exchange/decline.js";
 import type * as exchange_errors from "../exchange/errors.js";
-import type * as exchange_getExchangeById from "../exchange/getExchangeById.js";
 import type * as exchange_getMyExchangeSummary from "../exchange/getMyExchangeSummary.js";
 import type * as exchange_getMyPendingRequestCount from "../exchange/getMyPendingRequestCount.js";
 import type * as exchange_getOfferableCopies from "../exchange/getOfferableCopies.js";
@@ -556,7 +554,6 @@ import type * as social_getPublicMemberTeaser from "../social/getPublicMemberTea
 import type * as social_getPublicProfile from "../social/getPublicProfile.js";
 import type * as social_householdLinkInvite from "../social/householdLinkInvite.js";
 import type * as social_inviteLinkRules from "../social/inviteLinkRules.js";
-import type * as social_isFollowing from "../social/isFollowing.js";
 import type * as social_knownFollowers from "../social/knownFollowers.js";
 import type * as social_listFollowees from "../social/listFollowees.js";
 import type * as social_listFollowers from "../social/listFollowers.js";
@@ -627,7 +624,6 @@ import type * as solving_updateGoal from "../solving/updateGoal.js";
 import type * as users from "../users.js";
 import type * as whatsNew_getWhatsNewState from "../whatsNew/getWhatsNewState.js";
 import type * as whatsNew_manifest from "../whatsNew/manifest.js";
-import type * as whatsNew_markAllSeen from "../whatsNew/markAllSeen.js";
 import type * as whatsNew_markWhatsNewSeen from "../whatsNew/markWhatsNewSeen.js";
 import type * as whatsNew_notifyBatch from "../whatsNew/notifyBatch.js";
 import type * as whatsNew_publications from "../whatsNew/publications.js";
@@ -711,7 +707,6 @@ declare const fullApi: ApiFromModules<{
   "catalog/getRecentPuzzles": typeof catalog_getRecentPuzzles;
   "catalog/importCache": typeof catalog_importCache;
   "catalog/importPuzzleImage": typeof catalog_importPuzzleImage;
-  "catalog/listAllPuzzles": typeof catalog_listAllPuzzles;
   "catalog/listMyChangeProposals": typeof catalog_listMyChangeProposals;
   "catalog/listMyContributedPuzzles": typeof catalog_listMyContributedPuzzles;
   "catalog/listMyFavorites": typeof catalog_listMyFavorites;
@@ -835,7 +830,6 @@ declare const fullApi: ApiFromModules<{
   "exchange/confirmCompletion": typeof exchange_confirmCompletion;
   "exchange/decline": typeof exchange_decline;
   "exchange/errors": typeof exchange_errors;
-  "exchange/getExchangeById": typeof exchange_getExchangeById;
   "exchange/getMyExchangeSummary": typeof exchange_getMyExchangeSummary;
   "exchange/getMyPendingRequestCount": typeof exchange_getMyPendingRequestCount;
   "exchange/getOfferableCopies": typeof exchange_getOfferableCopies;
@@ -1179,7 +1173,6 @@ declare const fullApi: ApiFromModules<{
   "social/getPublicProfile": typeof social_getPublicProfile;
   "social/householdLinkInvite": typeof social_householdLinkInvite;
   "social/inviteLinkRules": typeof social_inviteLinkRules;
-  "social/isFollowing": typeof social_isFollowing;
   "social/knownFollowers": typeof social_knownFollowers;
   "social/listFollowees": typeof social_listFollowees;
   "social/listFollowers": typeof social_listFollowers;
@@ -1250,7 +1243,6 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   "whatsNew/getWhatsNewState": typeof whatsNew_getWhatsNewState;
   "whatsNew/manifest": typeof whatsNew_manifest;
-  "whatsNew/markAllSeen": typeof whatsNew_markAllSeen;
   "whatsNew/markWhatsNewSeen": typeof whatsNew_markWhatsNewSeen;
   "whatsNew/notifyBatch": typeof whatsNew_notifyBatch;
   "whatsNew/publications": typeof whatsNew_publications;

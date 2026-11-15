@@ -23,7 +23,7 @@ export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
     // A block either way revokes every clause below, including the pair-thread one (spec 2.6).
     if (await isBlockedEitherWay(ctx, a, b)) return false;
 
-    // Mutual follow. `.first()` keeps the check duplicate-tolerant (same as isFollowing).
+    // Mutual follow. `.first()` keeps the check duplicate-tolerant.
     const follows = async (x: Id<"users">, y: Id<"users">) =>
       (await ctx.db
         .query("follows")

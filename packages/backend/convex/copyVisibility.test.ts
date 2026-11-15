@@ -858,11 +858,13 @@ describe("an offer keeps the owner's private choice (UX-20)", () => {
         .unique(),
     );
     if (!exchange) throw new Error("setup: exchange row missing");
-    const view = await as(t, "frank").query(
-      api.exchange.getExchangeById.getExchangeById,
-      { exchangeId: exchange._id },
-    );
-    expect(view?.ownerPuzzle?._id).toBe(rowId);
-    expect(view?.ownerPuzzle?.visibility).toBe("visible");
+    const view = (
+      await as(t, "frank").query(
+        api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+        {},
+      )
+    ).find((row) => row._id === exchange._id);
+    expect(view?.requestedOwnedPuzzle?._id).toBe(rowId);
+    expect(view?.requestedOwnedPuzzle?.visibility).toBe("visible");
   });
 });

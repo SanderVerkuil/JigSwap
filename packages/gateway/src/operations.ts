@@ -41,7 +41,6 @@ export const gateway = {
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row. Public
     // lists/suggestions already filter to approved definitions only.
     puzzleById: api.catalog.getPuzzleById.getPuzzleById,
-    listAll: api.catalog.listAllPuzzles.listAllPuzzles,
     recentPuzzles: api.catalog.getRecentPuzzles.getRecentPuzzles,
     pending:
       api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
@@ -226,9 +225,8 @@ export const gateway = {
   exchange: {
     create: api.exchange.propose.propose,
     // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
-    // (ExchangeView / ExchangeSummaryView) rather than raw rows;
+    // (ExchangeSummaryView) rather than raw rows;
     // party-visibility, ordering and the joins are preserved so the UI is unchanged.
-    byId: api.exchange.getExchangeById.getExchangeById,
     // The Exchanges page and the dashboard: everything still in play, finished exchanges a page at a
     // time, one exchange a deep link names, and the phone chrome's count of waiting requests.
     myLive: api.exchange.listMyLiveExchanges.listMyLiveExchanges,
@@ -516,7 +514,6 @@ export const gateway = {
     myNetwork: api.social.listMyNetwork.listMyNetwork,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
-    isFollowing: api.social.isFollowing.isFollowing,
     // "Followers you know" social proof for a member's profile — the viewer's own following
     // intersected with the target's followers (see social/knownFollowers.ts). Personalized.
     followersYouKnow: api.social.followersYouKnow.followersYouKnow,
@@ -745,8 +742,6 @@ export const gateway = {
   // domain-driven catalog module; identifiers are CatalogCategoryId aggregateIds.
   adminCatalog: {
     listAll: api.adminCategories.getAllAdminCategories,
-    listActive: api.adminCategories.getActiveAdminCategories,
-    byId: api.adminCategories.getAdminCategoryById,
     create: api.catalog.createCatalogCategory.createCatalogCategory,
     update: api.catalog.updateCatalogCategory.updateCatalogCategory,
     reorder: api.catalog.reorderCatalogCategories.reorderCatalogCategories,

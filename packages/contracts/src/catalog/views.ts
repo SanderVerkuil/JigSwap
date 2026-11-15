@@ -45,7 +45,7 @@ export interface PuzzleDefinitionView {
 }
 
 /**
- * A lighter Catalog puzzle row for browsable lists/rails (`catalog.listAll`, `catalog.recentPuzzles`)
+ * A lighter Catalog puzzle row for browsable lists/rails (`catalog.recentPuzzles`)
  * and the add-copy picker suggestions (`catalog.puzzleSuggestions`). Carries the resolved box-art URL
  * and the fields the PuzzleCard / picker render.
  */

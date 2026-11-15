@@ -26,4 +26,13 @@ describe("removed public reads", () => {
       "insights/sampling",
     ]);
   });
+
+  test("the reads and the write nothing calls are gone", () => {
+    expectRemoved([
+      "catalog/listAllPuzzles",
+      "exchange/getExchangeById",
+      "social/isFollowing",
+      "whatsNew/markAllSeen",
+    ]);
+  });
 });

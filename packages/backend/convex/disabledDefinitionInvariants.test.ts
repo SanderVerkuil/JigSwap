@@ -67,9 +67,10 @@ const reenable = (t: TestConvex<typeof schema>, id: string) =>
   );
 
 const browseTitles = async (t: TestConvex<typeof schema>) => {
-  const result = await t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
-    paginationOpts: { numItems: 10, cursor: null },
-  });
+  const result = await t.query(
+    api.catalog.browsePublicCatalog.browsePublicCatalog,
+    { paginationOpts: { numItems: 10, cursor: null } },
+  );
   return result.page.map((p) => p.title);
 };
 
@@ -89,7 +90,7 @@ const expectConvexCode = async (p: Promise<unknown>, code: string) => {
 };
 
 describe("disabled definitions leave every public surface", () => {
-  test("browse (listAllPuzzles) hides a disabled definition and shows it again after re-enable", async () => {
+  test("browse (browsePublicCatalog) hides a disabled definition and shows it again after re-enable", async () => {
     const t = convexTest(schema, modules);
     await seedMembers(t);
     const id = await seedApprovedDefinition(t);

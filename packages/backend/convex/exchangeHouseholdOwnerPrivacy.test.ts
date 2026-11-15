@@ -90,14 +90,13 @@ const docIdOf = (t: T, aggregateId: string) =>
 
 const views = async (t: T, who: string, exchangeId: Id<"exchanges">) => {
   const reader = as(t, who);
+  const list = await reader.query(
+    api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+    {},
+  );
   return {
-    detail: await reader.query(api.exchange.getExchangeById.getExchangeById, {
-      exchangeId,
-    }),
-    list: await reader.query(
-      api.exchange.listMyLiveExchanges.listMyLiveExchanges,
-      {},
-    ),
+    detail: list.find((row) => row._id === exchangeId),
+    list,
   };
 };
 
@@ -119,9 +118,11 @@ describe("an offered household-mate copy never discloses the mate", () => {
     const check = async () => {
       const ownerViews = await views(t, "owner", exchangeId);
       // Sanity: the owner does see the offered copy itself.
-      expect(ownerViews.detail?.requesterPuzzle?._id).toBe(w.mateCopy);
+      expect(ownerViews.detail?.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
       expect(ownerViews.list[0]!.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
-      expect(ownerViews.detail?.requesterPuzzle).not.toHaveProperty("ownerId");
+      expect(ownerViews.detail?.offeredOwnedPuzzle).not.toHaveProperty(
+        "ownerId",
+      );
       expect(ownerViews.list[0]!.offeredOwnedPuzzle).not.toHaveProperty(
         "ownerId",
       );
@@ -130,11 +131,11 @@ describe("an offered household-mate copy never discloses the mate", () => {
       expect(json).not.toContain("Mia Mate");
       // The owner still sees the requester (owner always sees the requester) and their own copy.
       expect(ownerViews.detail?.initiatorId).toBe(w.requester);
-      expect(ownerViews.detail?.ownerPuzzle?.ownerId).toBe(w.owner);
+      expect(ownerViews.detail?.requestedOwnedPuzzle?.ownerId).toBe(w.owner);
 
       const requesterViews = await views(t, "requester", exchangeId);
       expect(requesterViews.detail?.initiatorId).toBe(w.requester);
-      expect(requesterViews.detail?.requesterPuzzle?._id).toBe(w.mateCopy);
+      expect(requesterViews.detail?.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
       expect(requesterViews.list[0]!.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
       expect(requesterViews.list[0]!.requestedOwnedPuzzle?._id).toBe(
         w.ownerCopy,

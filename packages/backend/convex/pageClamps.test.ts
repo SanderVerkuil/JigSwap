@@ -154,22 +154,18 @@ describe("a far endCursor can't read past a page's bound", () => {
     expect(page).toHaveLength(1);
   });
 
-  test("the sitemap feed and the anonymous list drop it too", async () => {
+  test("the sitemap feed drops it too", async () => {
     await addDefinitions(t, me, 12);
-    for (const list of [
-      api.catalog.listSitemapEntries.listSitemapEntries,
-      api.catalog.listAllPuzzles.listAllPuzzles,
-    ]) {
-      const far = await farCursorOf(
-        (paginationOpts) => t.query(list, { paginationOpts }),
-        10,
-        1,
-      );
-      const { page } = await t.query(list, {
-        paginationOpts: { numItems: 1, cursor: null, endCursor: far },
-      });
-      expect(page).toHaveLength(1);
-    }
+    const list = api.catalog.listSitemapEntries.listSitemapEntries;
+    const far = await farCursorOf(
+      (paginationOpts) => t.query(list, { paginationOpts }),
+      10,
+      1,
+    );
+    const { page } = await t.query(list, {
+      paginationOpts: { numItems: 1, cursor: null, endCursor: far },
+    });
+    expect(page).toHaveLength(1);
   });
 
   test("the anonymous reviews page keeps its pin, within the bound", async () => {

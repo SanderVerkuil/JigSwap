@@ -108,9 +108,6 @@ const allReadModels = async (
 ) => {
   const reader = as(t, who);
   return {
-    detail: await reader.query(api.exchange.getExchangeById.getExchangeById, {
-      exchangeId,
-    }),
     list: await reader.query(
       api.exchange.listMyLiveExchanges.listMyLiveExchanges,
       {},

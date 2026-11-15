@@ -125,18 +125,6 @@ describe("catalog reads", () => {
     expect(asAdmin?.title).toBe("Secret Ocean");
   });
 
-  test("listAllPuzzles returns only approved definitions", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-
-    const page = await t.query(api.catalog.listAllPuzzles.listAllPuzzles, {
-      paginationOpts: { numItems: 10, cursor: null },
-    });
-    expect(page.page).toHaveLength(1);
-    expect(page.page[0].title).toBe("Mountain Vista");
-    expect(page.page[0].image).toBeNull();
-  });
-
   test("getRecentPuzzles returns approved-only, newest-first, capped by limit", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
@@ -201,12 +189,7 @@ describe("catalog reads", () => {
       api.catalog.getPuzzleCategories.getPuzzleCategories,
       {},
     );
-    const legacy = await t.query(
-      api.adminCategories.getActiveAdminCategories,
-      {},
-    );
     expect(catalog.map((c) => c.name.en)).toEqual(["Alpha", "beta", "Zebra"]);
-    expect(legacy.map((c) => c.name.en)).toEqual(["Alpha", "beta", "Zebra"]);
   });
 
   test("getAllBrands returns approved brands only (pending brand excluded)", async () => {

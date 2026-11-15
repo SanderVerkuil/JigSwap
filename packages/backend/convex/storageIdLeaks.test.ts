@@ -244,9 +244,6 @@ const copyReads = (t: T, s: Seeded, who: "alice" | "bob") => {
       api.exchange.listMyLiveExchanges.listMyLiveExchanges,
       {},
     ),
-    exchangeById: viewer.query(api.exchange.getExchangeById.getExchangeById, {
-      exchangeId: s.exchange,
-    }),
   };
 };
 

@@ -16,8 +16,8 @@ import {
 } from "./puzzle-card-shell";
 import { PUZZLE_GRID_COVER_SIZES } from "./puzzle-view-provider";
 
-// Catalog summary view DTO this card renders, derived from the recent-puzzles read it is fed by
-// (the same shape `catalog.listAll` paginates). Ids surface as opaque strings.
+// Catalog summary view DTO this card renders, derived from the recent-puzzles read it is fed by.
+// Ids surface as opaque strings.
 type Puzzle = FunctionReturnType<typeof gateway.catalog.recentPuzzles>[number];
 
 interface PuzzleCardProps {
