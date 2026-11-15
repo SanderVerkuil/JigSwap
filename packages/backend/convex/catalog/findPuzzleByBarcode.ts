@@ -11,20 +11,25 @@ const findApprovedByBarcode = async (
   ctx: QueryCtx,
   { ean, upc }: { ean?: string; upc?: string },
 ) => {
-  if (ean) {
+  // A UPC-A and its 0-prefixed EAN-13 are one barcode, stored under either field.
+  const eans = new Set([ean, upc && `0${upc}`]);
+  const upcs = new Set([upc, ean && /^0\d{12}$/.test(ean) ? ean.slice(1) : ""]);
+  for (const code of eans) {
+    if (!code) continue;
     const row = await ctx.db
       .query("puzzles")
       .withIndex("by_ean_status", (q) =>
-        q.eq("ean", ean).eq("status", "approved"),
+        q.eq("ean", code).eq("status", "approved"),
       )
       .first();
     if (row) return row;
   }
-  if (upc) {
+  for (const code of upcs) {
+    if (!code) continue;
     const row = await ctx.db
       .query("puzzles")
       .withIndex("by_upc_status", (q) =>
-        q.eq("upc", upc).eq("status", "approved"),
+        q.eq("upc", code).eq("status", "approved"),
       )
       .first();
     if (row) return row;
@@ -60,17 +65,16 @@ export const findPuzzleByBarcode = internalQuery({
 // client's detection is a convenience, not trusted): only a 12/13-digit code is looked up (the
 // catalogue stores no EAN-8). It
 // returns the same summary DTO the picker's search rows use, so the match renders as a card.
-// A 12-digit code is a UPC-A, which may also have been stored as its 0-prefixed EAN-13.
 export const lookupPuzzleByBarcode = query({
   args: { code: v.string() },
   handler: async (ctx, { code }): Promise<PuzzleSummaryView | null> => {
     await requireMember(ctx);
     const digits = code.replace(/[\s-]/g, "");
     if (!/^(\d{12}|\d{13})$/.test(digits)) return null;
-    const match =
-      digits.length === 12
-        ? await findApprovedByBarcode(ctx, { upc: digits, ean: `0${digits}` })
-        : await findApprovedByBarcode(ctx, { ean: digits });
+    const match = await findApprovedByBarcode(
+      ctx,
+      digits.length === 12 ? { upc: digits } : { ean: digits },
+    );
     if (!match) return null;
     return toPuzzleSummaryView(
       match,

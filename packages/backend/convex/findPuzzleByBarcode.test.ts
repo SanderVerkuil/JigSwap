@@ -166,3 +166,39 @@ describe("catalog.findPuzzleByBarcode", () => {
     },
   );
 });
+
+describe("catalog.findPuzzleByBarcode UPC-A / EAN-13 twins", () => {
+  const seed = async (fields: { ean?: string; upc?: string }) => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const submittedBy = await ctx.db.insert("users", {
+        clerkId: "twin",
+        email: "t@w.in",
+        name: "T",
+        isActive: true,
+        createdAt: 0,
+        updatedAt: 0,
+      });
+      await ctx.db.insert("puzzles", seedPuzzle({ ...fields, submittedBy }));
+    });
+    return t;
+  };
+
+  test("a 0-prefixed EAN-13 finds a row stored by its UPC-A", async () => {
+    const t = await seed({ upc: "036000291452" });
+    const match = await t.query(
+      internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+      { ean: "0036000291452" },
+    );
+    expect(match?.title).toBe("Mountain Vista");
+  });
+
+  test("a UPC-A finds a row stored by its 0-prefixed EAN-13", async () => {
+    const t = await seed({ ean: "0036000291452" });
+    const match = await t.query(
+      internal.catalog.findPuzzleByBarcode.findPuzzleByBarcode,
+      { upc: "036000291452" },
+    );
+    expect(match?.title).toBe("Mountain Vista");
+  });
+});
