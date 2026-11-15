@@ -201,23 +201,16 @@ const aliceReads = async (
     api.library.getCopyInstanceView.getCopyInstanceView,
     { copyId: copy },
   );
-  const managementView = await asAlice(t).query(
-    api.library.getOwnedPuzzleWithCollectionStatus
-      .getOwnedPuzzleWithCollectionStatus,
-    { ownedPuzzleId: copy },
-  );
   return {
     collection,
     userCollections,
     containing,
     copyPage,
-    managementView,
     json: JSON.stringify({
       collection,
       userCollections,
       containing,
       copyPage,
-      managementView,
     }),
   };
 };
@@ -262,7 +255,6 @@ describe("collections on ownership transfer", () => {
       after.userCollections.find((c) => c._id === aliceCollection)?.puzzleCount,
     ).toBe(0);
     expect(after.containing).toEqual([]);
-    expect(after.managementView).toBeNull();
     expect(after.json).not.toContain(NOAH_NOTE);
     expect(after.json).not.toContain(String(NOAH_PRICE));
 

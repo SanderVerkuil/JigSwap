@@ -745,14 +745,7 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
     // Her photo of it is gone.
     expect(view!.gallery).toEqual([]);
 
-    const timeline = await as(t, "bob").query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: s.sold },
-    );
-    expect(timeline!.originalOwner).toMatchObject(DEPARTED);
-    expect(timeline!.originalOwner).not.toHaveProperty("member");
-    expect(timeline!.transfers).toHaveLength(1);
-    expect(timeline!.currentOwner).toMatchObject({ anonymous: false });
+    expect(view!.owner).toMatchObject({ anonymous: false });
 
     // The settled trade still opens for Bob.
     const exchange = await as(t, "bob").query(

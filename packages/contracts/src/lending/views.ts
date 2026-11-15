@@ -41,7 +41,7 @@ export interface LoanView {
 }
 
 /**
- * A loan as surfaced on a Copy's public lending history (`lending.copyHistory`). Identical to
+ * A loan as surfaced on a Copy's lending history in the data export. Identical to
  * {@link LoanView} except both parties are privacy-projected ({@link ProjectedMember}) so a hidden
  * member's real identity never crosses the wire — mirroring getCopyInstanceView's loan projection.
  */

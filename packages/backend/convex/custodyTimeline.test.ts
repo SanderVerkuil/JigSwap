@@ -164,12 +164,16 @@ const settleSaleToBob = async (
   return id;
 };
 
-describe("custody.getCopyCustodyTimeline", () => {
+const viewCopy = (c: ReturnType<typeof asAlice>, copyId: Id<"ownedPuzzles">) =>
+  c.query(api.library.getCopyInstanceView.getCopyInstanceView, { copyId });
+
+// The custody projection (copyCustodyEntries) surfaces through the copy page's read.
+describe("library.getCopyInstanceView custody transfers", () => {
   test("rejects an unauthenticated caller", async () => {
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
     await expect(
-      t.query(api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline, {
+      t.query(api.library.getCopyInstanceView.getCopyInstanceView, {
         copyId: copy,
       }),
     ).rejects.toBeInstanceOf(ConvexError);
@@ -179,62 +183,46 @@ describe("custody.getCopyCustodyTimeline", () => {
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
     await t.run(async (ctx) => ctx.db.delete(copy));
-    const timeline = await asAlice(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
-    expect(timeline).toBeNull();
+    expect(await viewCopy(asAlice(t), copy)).toBeNull();
   });
 
-  test("a never-transferred copy has the owner as both original and current owner", async () => {
+  test("a never-transferred copy has no transfers and the creator as owner", async () => {
     const t = convexTest(schema, modules);
     const { copy } = await seed(t);
-    const timeline = await asAlice(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
-    expect(timeline).not.toBeNull();
-    expect(timeline!.transfers).toEqual([]);
-    expect(projectedName(timeline!.originalOwner)).toBe("clerk_owner");
-    expect(projectedName(timeline!.currentOwner)).toBe("clerk_owner");
+    const view = await viewCopy(asAlice(t), copy);
+    expect(view).not.toBeNull();
+    expect(view!.transfers).toEqual([]);
+    expect(projectedName(view!.owner)).toBe("clerk_owner");
   });
 
-  test("projects two settled transfers in chronological order with exchange + owner", async () => {
+  test("projects two settled transfers newest first with exchange flag + owner", async () => {
     const t = convexTest(schema, modules);
     const { copy, owner, alice } = await seed(t);
 
-    const firstExchange = await settleSaleToAlice(t, copy, owner);
+    await settleSaleToAlice(t, copy, owner);
     await flushScheduled(t);
     await reopenForSale(t, copy);
     // After the first sale the copy belongs to Alice; Bob now buys it FROM Alice.
-    const secondExchange = await settleSaleToBob(t, copy, alice, "clerk_alice");
+    await settleSaleToBob(t, copy, alice, "clerk_alice");
     await flushScheduled(t);
     // Settlement closes the copy; re-open it so the (public-owner) reachability gate lets a third
-    // party reach the copy-detail timeline.
+    // party reach the copy page.
     await reopenForSale(t, copy);
 
-    const timeline = await asCarol(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
+    const view = await viewCopy(asCarol(t), copy);
 
-    expect(timeline).not.toBeNull();
-    // Original owner is the copy creator; current owner is the LAST transfer's recipient.
-    expect(projectedName(timeline!.originalOwner)).toBe("clerk_owner");
-    expect(projectedName(timeline!.currentOwner)).toBe("clerk_bob");
-
-    expect(timeline!.transfers).toHaveLength(2);
-    expect(timeline!.transfers.map((x) => projectedName(x.newOwner))).toEqual([
-      "clerk_alice",
+    expect(view).not.toBeNull();
+    // The current owner is the LAST transfer's recipient.
+    expect(projectedName(view!.owner)).toBe("clerk_bob");
+    // `transfers` is newest first; the oldest transfer's `from` is the original owner.
+    expect(view!.transfers.map((x) => projectedName(x.to))).toEqual([
       "clerk_bob",
+      "clerk_alice",
     ]);
-    expect(timeline!.transfers.map((x) => x.exchangeId)).toEqual([
-      firstExchange,
-      secondExchange,
-    ]);
-    // Ascending by time.
-    expect(timeline!.transfers[0].occurredAt).toBeLessThanOrEqual(
-      timeline!.transfers[1].occurredAt,
+    expect(projectedName(view!.transfers[1].from)).toBe("clerk_owner");
+    expect(view!.transfers.every((x) => x.viaExchange)).toBe(true);
+    expect(view!.transfers[0].occurredAt).toBeGreaterThanOrEqual(
+      view!.transfers[1].occurredAt,
     );
   });
 
@@ -254,11 +242,7 @@ describe("custody.getCopyCustodyTimeline", () => {
       });
     });
 
-    const timeline = await asCarol(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
-    expect(timeline).toBeNull();
+    expect(await viewCopy(asCarol(t), copy)).toBeNull();
   });
 
   test("anonymises a private member the viewer is not connected to", async () => {
@@ -277,22 +261,20 @@ describe("custody.getCopyCustodyTimeline", () => {
         updatedAt: Date.now(),
       }),
     );
-    // The CURRENT owner (Alice) is public; re-open the copy so Carol can reach the copy-detail
-    // timeline (the gate keys on the current owner's profile + the copy being open).
+    // The CURRENT owner (Alice) is public; re-open the copy so Carol can reach the copy page
+    // (the gate keys on the current owner's profile + the copy being open).
     await reopenForSale(t, copy);
 
-    const timeline = await asCarol(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: copy },
-    );
+    const view = await viewCopy(asCarol(t), copy);
 
     // The private original owner is anonymised — no real name crosses the wire.
-    expect(timeline!.originalOwner.anonymous).toBe(true);
-    if (timeline!.originalOwner.anonymous) {
-      expect(timeline!.originalOwner.anonRef).toBeTruthy();
+    const originalOwner = view!.transfers[0].from;
+    expect(originalOwner.anonymous).toBe(true);
+    if (originalOwner.anonymous) {
+      expect(originalOwner.anonRef).toBeTruthy();
     }
     // Alice (public) is still revealed as the recipient/current owner.
-    expect(projectedName(timeline!.currentOwner)).toBe("clerk_alice");
+    expect(projectedName(view!.owner)).toBe("clerk_alice");
   });
 });
 
@@ -324,12 +306,11 @@ describe("ownership move on settlement", () => {
     expect(row?.ownerId).toBe(owner); // a loan is possession only — ownership stays with the lender
 
     // The copy is reset to closed after settlement; the owner can always view their own timeline.
-    const timeline = await t
-      .withIdentity({ subject: "clerk_owner" })
-      .query(api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline, {
-        copyId: copy,
-      });
-    expect(timeline!.transfers).toEqual([]);
-    expect(projectedName(timeline!.currentOwner)).toBe("clerk_owner");
+    const view = await viewCopy(
+      t.withIdentity({ subject: "clerk_owner" }),
+      copy,
+    );
+    expect(view!.transfers).toEqual([]);
+    expect(projectedName(view!.owner)).toBe("clerk_owner");
   });
 });

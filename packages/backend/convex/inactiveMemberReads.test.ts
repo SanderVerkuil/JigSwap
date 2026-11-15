@@ -103,15 +103,10 @@ describe("reads that resolve the caller from Clerk", () => {
       await as.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toHaveLength(2);
     expect(
-      await as.query(
-        api.library.getOwnedPuzzleWithCollectionStatus
-          .getOwnedPuzzleWithCollectionStatus,
-        { ownedPuzzleId: danaCopy },
-      ),
-    ).toMatchObject({
-      _id: danaCopy,
-      collectionStatus: { isInCollection: true },
-    });
+      await as.query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: danaCopy,
+      }),
+    ).toMatchObject({ copyId: danaCopy, viewerIsOwner: true });
     expect(
       await as.query(
         api.library.getCollectionsForOwnedPuzzle.getCollectionsForOwnedPuzzle,
@@ -138,13 +133,11 @@ describe("reads that resolve the caller from Clerk", () => {
     expect(
       await as.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toEqual([]);
-    expect(
-      await as.query(
-        api.library.getOwnedPuzzleWithCollectionStatus
-          .getOwnedPuzzleWithCollectionStatus,
-        { ownedPuzzleId: danaCopy },
-      ),
-    ).toBeNull();
+    await expect(
+      as.query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: danaCopy,
+      }),
+    ).rejects.toThrow();
     await expect(
       as.query(
         api.library.getCollectionsForOwnedPuzzle.getCollectionsForOwnedPuzzle,
@@ -175,13 +168,11 @@ describe("reads that resolve the caller from Clerk", () => {
     expect(
       await t.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toEqual([]);
-    expect(
-      await t.query(
-        api.library.getOwnedPuzzleWithCollectionStatus
-          .getOwnedPuzzleWithCollectionStatus,
-        { ownedPuzzleId: danaCopy },
-      ),
-    ).toBeNull();
+    await expect(
+      t.query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: danaCopy,
+      }),
+    ).rejects.toThrow();
     await expect(
       t.query(
         api.library.getCollectionsForOwnedPuzzle.getCollectionsForOwnedPuzzle,

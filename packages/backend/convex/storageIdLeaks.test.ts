@@ -268,25 +268,23 @@ describe("no raw storage ids in read responses", () => {
     }
   });
 
-  test("the owner's copy management read gives photo URLs, never storage ids", async () => {
+  test("the owner's copy page gives photo URLs, never storage ids", async () => {
     const t = convexTest(schema, modules);
     const s = await seed(t);
     const blobs = await allBlobs(t);
 
     const view = await as(t, "alice").query(
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
-      { ownedPuzzleId: s.copy },
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: s.copy },
     );
 
     expect(idsIn(view, blobs)).toEqual([]);
-    // The approved photo is served; the pending one is listed without a URL.
-    expect(view?.images.map((image) => typeof image.url)).toEqual([
+    // Both photos are the uploader's own: the approved and the pending one are served by URL.
+    expect(view?.gallery.map((photo) => typeof photo.url)).toEqual([
       "string",
-      "object",
+      "string",
     ]);
-    expect(view?.images[1].url).toBeNull();
-    expect(view?.completionHistory).toHaveLength(1);
+    expect(view?.completions).toHaveLength(1);
   });
 
   test("a member's own completion reads give photo URLs, never storage ids", async () => {

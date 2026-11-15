@@ -138,15 +138,15 @@ describe("viewer blocked a public member: identity only", () => {
     expectIdentityOnly(projected, u.bob);
   });
 
-  test("a caller (custody timeline) ships no profile details", async () => {
+  test("a caller (copy page transfers) ships no profile details", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t, "public");
     await block(t, u.alice, u.bob);
-    const timeline = await asAlice(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: u.aliceCopy },
     );
-    expectIdentityOnly(timeline?.originalOwner, u.bob);
+    expectIdentityOnly(view?.transfers[0]?.from, u.bob);
   });
 });
 
@@ -168,16 +168,16 @@ describe("viewer blocked a private member they can't see: still anonymous", () =
     expect(after).toEqual(before);
   });
 
-  test("the custody timeline keeps the original owner anonymous", async () => {
+  test("the copy page keeps the original owner anonymous", async () => {
     const t = convexTest(schema, modules);
     const u = await seed(t, "private");
     await block(t, u.alice, u.bob);
-    const timeline = await asAlice(t).query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+    const view = await asAlice(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: u.aliceCopy },
     );
-    expect(timeline?.originalOwner.anonymous).toBe(true);
-    expect(JSON.stringify(timeline)).not.toContain(u.bob);
+    expect(view?.transfers[0]?.from.anonymous).toBe(true);
+    expect(JSON.stringify(view)).not.toContain(u.bob);
   });
 
   test("an anonymous transfer entry on the copy page keeps its anonRef after the block", async () => {
@@ -284,11 +284,11 @@ describe("target blocked the viewer: anonymous / not found", () => {
       expect(Object.keys(projected).sort()).toEqual(["anonRef", "anonymous"]);
       expect(projected.anonymous).toBe(true);
 
-      const timeline = await asAlice(t).query(
-        api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
+      const view = await asAlice(t).query(
+        api.library.getCopyInstanceView.getCopyInstanceView,
         { copyId: u.aliceCopy },
       );
-      expect(timeline?.originalOwner.anonymous).toBe(true);
+      expect(view?.transfers[0]?.from.anonymous).toBe(true);
     },
   );
 

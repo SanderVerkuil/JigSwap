@@ -127,9 +127,6 @@ export const gateway = {
       api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
-    ownedWithCollectionStatus:
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
     // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
     // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
     getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
@@ -161,7 +158,6 @@ export const gateway = {
     recallLoan: api.library.recallLoan.recallLoan,
     borrowed: api.library.getBorrowedLoans.getBorrowedLoans,
     lentOut: api.library.getLentOutLoans.getLentOutLoans,
-    copyHistory: api.library.getCopyLoanHistory.getCopyLoanHistory,
   },
 
   // Households: members who pool their libraries. Copies stay owned by whoever added them; every
@@ -308,12 +304,6 @@ export const gateway = {
     searchPlaces: api.conversation.searchPlaces.searchPlaces,
     renderPickerMap: api.conversation.renderPickerMap.renderPickerMap,
     sendLocation: api.conversation.sendLocation.sendLocation,
-  },
-
-  // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
-  // owner), read from the custody projection folded off Exchange's OwnershipTransferred events.
-  custody: {
-    timeline: api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
   },
 
   // Identity & Access: the wrapper over Clerk members and their profiles.
