@@ -4,7 +4,6 @@ import {
   CollectionCreated,
   CommentPosted,
   CopyDetailsUpdated,
-  MemberRegistered,
   PersonalCategoryCreated,
   PhotoCommentPosted,
   ProfileUpdated,
@@ -63,6 +62,17 @@ const seedMember = (t: T) =>
 // Records `events` the way every publisher does, and returns the stored payloads by event name.
 // Their dispatch is cancelled: the subscribers would run on made-up ids, and only the stored
 // payload matters here.
+// The member domain no longer ships this event class; the stored shape is what matters.
+const memberRegistered = (
+  memberId: string,
+): DomainEvent & Record<string, unknown> => ({
+  name: "MemberRegistered",
+  memberId,
+  clerkId: "clerk_m1",
+  email: "m1@example.com",
+  occurredAt: AT,
+});
+
 const record = async (t: T, events: DomainEvent[]) => {
   await t.run(async (ctx) => {
     await recordAndSchedule(ctx, "test", events);
@@ -78,7 +88,7 @@ describe("recordAndSchedule", () => {
     const t = convexTest(schema, modules);
     const member = toMemberId("m1");
     const payloads = await record(t, [
-      new MemberRegistered(member, "clerk_m1", "m1@example.com", AT),
+      memberRegistered(member),
       new ProfileUpdated(toProfileId("p1"), member, "Em", AT),
       new CommentPosted(
         toCommentId("c1"),

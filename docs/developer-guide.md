@@ -111,7 +111,7 @@ packages/domain/src/{context}/
 ```
 
 **Core transactional contexts** (own aggregates with state machines, emit/consume events):
-`catalog`, `library`, `exchange`, `conversation`, `identity`.
+`catalog`, `library`, `exchange`, `conversation`.
 
 **Supporting contexts** (derived aggregates reacting to events, or pure projections):
 `reputation`, `social`, `sharing`, `solving`, `notifications`, `insights`. The `insights`
