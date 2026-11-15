@@ -20,8 +20,12 @@ available on every Convex plan, including Free/Starter (they expire faster there
 Vercel's daily deployment quota counts every deployment, including builds cancelled by an
 Ignored Build Step, so skipping builds there would not save anything.
 [`apps/web/vercel.json`](../../apps/web/vercel.json) instead sets
-`git.deploymentEnabled` to `{"**": false, "main": true}`: the Git integration deploys
-only `main` (production, unchanged) and no longer creates a preview for each PR push. The
+`git.deploymentEnabled` to `{"**": false}`: the Git integration deploys nothing, neither
+a preview for each PR push nor `main`. Web production is deployed by the last step of the
+`production` job in `convex-deploy.yml` (`vercel deploy --prod --yes` with the
+lockfile-pinned CLI), so it goes live only after CI and the Convex prod deploy, from the
+CI'd commit and behind the same stale-commit guard. That job needs the three `VERCEL_*`
+secrets (see below) in the `convex-production` environment or the repo. The
 setting is read from the pushed commit, so a branch created before this change still gets
 Git previews until it is rebased onto main.
 
@@ -59,8 +63,8 @@ Without the Vercel secrets (or on a fork PR) the job does nothing and emits a no
 3. Add **`VERCEL_ORG_ID`** (team ID, Team Settings → General) and
    **`VERCEL_PROJECT_ID`** (Project Settings → General) as GitHub Actions secrets.
 4. Optional: in Vercel project Settings → Git, turn off the PR comments of the Vercel bot
-   if they become noise. Production deploys from `main` keep working through the Git
-   integration with no change.
+   if they become noise. Production no longer goes through the Git integration (see
+   above).
 
 ## One-time owner setup
 
