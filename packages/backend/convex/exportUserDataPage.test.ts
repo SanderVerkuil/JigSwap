@@ -662,6 +662,19 @@ describe("insights.exportUserDataPage", () => {
           updatedAt: now,
         });
       }
+      // Not stopped, but the CSAM hash check has not passed yet: no image until it does.
+      for (const moderationStatus of ["pending", "approved"] as const) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy._id,
+          uploaderId: alice.me,
+          fileId: await blob(ctx, `unchecked-${moderationStatus}`),
+          description: "unchecked",
+          moderationStatus,
+          hashCheckPendingSince: now,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
     });
     const data = await exportAll(t, "alice");
     const stopped = (rows: ExportRow[]) =>
@@ -674,6 +687,15 @@ describe("insights.exportUserDataPage", () => {
     expect(photos[0]).toEqual(photos[1]);
     expect(photos[0]).toMatchObject({ status: "notShown" });
     expect(photos[0]).not.toHaveProperty("url");
+
+    const unchecked = data.copyPhotos.filter(
+      (r) => r.description === "unchecked",
+    );
+    expect(unchecked.map((r) => r.status).sort()).toEqual([
+      "approved",
+      "pending",
+    ]);
+    for (const row of unchecked) expect(row).not.toHaveProperty("url");
 
     const attachments = stopped(data.attachmentsSent);
     expect(attachments).toHaveLength(2);
