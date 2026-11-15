@@ -513,6 +513,44 @@ describe("leaving", () => {
   });
 });
 
+// Spec 2.6: a block either way between housemates ends what the household grants between them,
+// co-management included.
+describe("a block between housemates", () => {
+  test.each([
+    ["ann", "bob"],
+    ["bob", "ann"],
+  ] as const)(
+    "once %s blocks %s, Bob may no longer edit or offer Ann's copies",
+    async (blocker, blocked) => {
+      await as(t, blocker).mutation(api.social.blockMember.blockMember, {
+        memberId: w[blocked],
+      });
+
+      await expectConvexCode(
+        as(t, "bob").mutation(api.library.updateCopyDetails.updateCopyDetails, {
+          copyId: "copy-manage",
+          notes: "mine now",
+        }),
+        "NotOwner",
+      );
+      expect((await copyRow(t, w.manageCopy))?.notes).toBeUndefined();
+      const offerable = await as(t, "bob").query(
+        api.exchange.getOfferableCopies.getOfferableCopies,
+        { requestedPuzzleId: w.catCopy },
+      );
+      expect(offerable.map((c) => c._id)).toEqual([w.bobCopy]);
+      await expectConvexCode(
+        as(t, "bob").mutation(api.exchange.propose.propose, {
+          type: "trade",
+          requestedPuzzleId: w.catCopy,
+          offeredPuzzleId: w.manageCopy,
+        }),
+        "OfferedCopyNotOwned",
+      );
+    },
+  );
+});
+
 describe("completions stay personal", () => {
   const logSolve = (who: Who, copyId: string) =>
     as(t, who).mutation(api.solving.recordCompletion.recordCompletion, {
