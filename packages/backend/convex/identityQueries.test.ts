@@ -108,15 +108,10 @@ describe("identity.getCurrentUser", () => {
   });
 });
 
-describe("identity.getUserByClerkId / getUserById", () => {
-  test("resolve the same member by clerk id and _id", async () => {
+describe("identity.getUserById", () => {
+  test("resolves a member by _id", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
-    const byClerk = await asAlice(t).query(
-      api.identity.getUserByClerkId.getUserByClerkId,
-      { clerkId: "clerk_alice" },
-    );
-    expect(byClerk?._id).toBe(alice);
     const byId = await asAlice(t).query(api.identity.getUserById.getUserById, {
       userId: alice,
     });
@@ -124,16 +119,6 @@ describe("identity.getUserByClerkId / getUserById", () => {
     expect(byId?.name).toBe("Alice Anderson");
     expect(byId && "email" in byId).toBe(false);
     expect(byId && "clerkId" in byId).toBe(false);
-  });
-
-  test("return null for an unknown clerk id", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    expect(
-      await asAlice(t).query(api.identity.getUserByClerkId.getUserByClerkId, {
-        clerkId: "nope",
-      }),
-    ).toBeNull();
   });
 });
 

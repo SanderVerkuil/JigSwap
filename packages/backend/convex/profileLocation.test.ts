@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
-// identity.setLocation (quick start step 5, spec 2026-10-17 §2.4, §4): the caller's own
+// users.updateUserProfile location (quick start step 5, spec 2026-10-17 §2.4, §4): the caller's own
 // users.location only; trimmed, empty clears it, at most 80 characters (`invalid_location`).
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
@@ -26,7 +26,7 @@ const insertUser = (t: T, name: string, location?: string) =>
 const setLocation = (t: T, who: string, location: string) =>
   t
     .withIdentity({ subject: `clerk_${who}` })
-    .mutation(api.identity.setLocation.setLocation, { location });
+    .mutation(api.users.updateUserProfile, { location });
 
 const locationOf = (t: T, id: Awaited<ReturnType<typeof insertUser>>) =>
   t.run(async (ctx) => (await ctx.db.get(id))?.location);
@@ -45,13 +45,13 @@ const errorDataOf = async (promise: Promise<unknown>): Promise<unknown> => {
   throw new Error("expected the call to reject");
 };
 
-describe("identity.setLocation", () => {
+describe("users.updateUserProfile location", () => {
   test("rejects an unauthenticated caller", async () => {
     const t = convexTest(schema, modules);
     await insertUser(t, "ann");
     expect(
       await errorDataOf(
-        t.mutation(api.identity.setLocation.setLocation, {
+        t.mutation(api.users.updateUserProfile, {
           location: "Utrecht",
         }),
       ),
@@ -62,7 +62,7 @@ describe("identity.setLocation", () => {
     const t = convexTest(schema, modules);
     const ann = await insertUser(t, "ann");
     const bob = await insertUser(t, "bob", "Leiden");
-    expect(await setLocation(t, "ann", "  Utrecht  ")).toBeNull();
+    await setLocation(t, "ann", "  Utrecht  ");
     expect(await locationOf(t, ann)).toBe("Utrecht");
     expect(await locationOf(t, bob)).toBe("Leiden");
     const updatedAt = await t.run(

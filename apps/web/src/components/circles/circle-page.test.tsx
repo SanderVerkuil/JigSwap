@@ -177,11 +177,8 @@ const renderPage = ({
       .queryKey,
     copies,
   );
-  // The manage dialog resolves the viewer's member id from their Clerk id ("clerk_me" above).
-  set(
-    convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
-    { _id: "me" },
-  );
+  // The manage dialog resolves the viewer's member id via identity.currentUser.
+  set(convexQuery(gateway.identity.currentUser, {}).queryKey, { _id: "me" });
   render(
     <QueryClientProvider client={queryClient}>
       <IntlProvider

@@ -18,7 +18,7 @@ vi.mock("@/compat/clerk", () => ({
 }));
 vi.mock("@/gateway", () => ({
   gateway: {
-    identity: { byClerkId: "byClerkId" },
+    identity: { currentUser: "currentUser" },
     solving: { myGoals: "myGoals", createGoal: "createGoal" },
   },
 }));
@@ -29,7 +29,7 @@ vi.mock("@convex-dev/react-query", () => ({
 // A signed-in member with no goals yet: the empty state's Create button opens the dialog.
 vi.mock("@tanstack/react-query", () => ({
   useQuery: ({ name }: { name: string }) => ({
-    data: name === "byClerkId" ? { _id: "member_1" } : [],
+    data: name === "currentUser" ? { _id: "member_1" } : [],
   }),
   useMutation: ({ mutationFn }: { mutationFn: unknown }) => ({
     mutateAsync: mutationFn,

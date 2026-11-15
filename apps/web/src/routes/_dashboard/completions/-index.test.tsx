@@ -134,7 +134,7 @@ const log = () => (
 // `rows` null: the join hasn't answered yet.
 const renderLog = (index: unknown[], rows: unknown[] | null = index) => {
   mocks.queries = {
-    [getFunctionName(gateway.identity.byClerkId)]: { _id: "me" },
+    [getFunctionName(gateway.identity.currentUser)]: { _id: "me" },
     [INDEX]: index,
     [BY_IDS]: rows ?? undefined,
   };

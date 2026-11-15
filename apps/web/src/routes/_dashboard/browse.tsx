@@ -110,10 +110,7 @@ function BrowsePage() {
   };
 
   const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   // Every condition (availability included) and the free-text searchTerm (matched over title /

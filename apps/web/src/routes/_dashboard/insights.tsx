@@ -44,10 +44,7 @@ function InsightsPage() {
   // requireMember-backed queries take no args; gate on the Clerk → Convex member resolving so we
   // don't fire them while signed out (they would throw), mirroring the other dashboard pages.
   const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
   const ready = convexUser?._id ? {} : "skip";
 

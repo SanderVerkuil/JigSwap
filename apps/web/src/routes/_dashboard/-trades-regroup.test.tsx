@@ -198,7 +198,7 @@ const renderPage = (
       })),
     ] as never);
   queryClient.setQueryData(
-    convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
+    convexQuery(gateway.identity.currentUser, {}).queryKey,
     { _id: "u_me" },
   );
   setLive();

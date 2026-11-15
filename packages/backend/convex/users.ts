@@ -1,7 +1,7 @@
 import type { EmailAddressJSON, UserJSON } from "@clerk/backend";
 import { normalizeMemberName } from "@jigswap/contracts";
 import { paginationOptsValidator } from "convex/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import {
@@ -11,7 +11,6 @@ import {
   QueryCtx,
 } from "./_generated/server";
 import { requireMember } from "./identity/requireMember";
-import { normalizeLocation } from "./identity/setLocation";
 
 // The lowercased text backing the `by_searchable_name` people-search index. Kept in sync on every
 // user write so member search is an index lookup, not a full-table scan + in-memory filter.
@@ -40,6 +39,24 @@ type ClerkUserSync = Pick<
   })[];
 };
 
+// Matches the profile field's limit (a city, not an address).
+const MAX_LOCATION_LENGTH = 80;
+
+// The users.location a write leaves, shared by every path that writes it (users.updateUserProfile): trimmed; empty clears it (undefined); longer than 80 characters is
+// `invalid_location`, unless it is the location already stored: a value saved before the cap
+// stays as it is when an editor sends it back unchanged.
+export const normalizeLocation = (
+  location: string,
+  current: string | undefined,
+): string | undefined => {
+  const trimmed = location.trim();
+  if (trimmed === "") return undefined;
+  if (trimmed.length > MAX_LOCATION_LENGTH && trimmed !== current?.trim()) {
+    throw new ConvexError({ code: "invalid_location" });
+  }
+  return trimmed;
+};
+
 // The Clerk publicMetadata.role, mirrored onto the users row for display (admin users page).
 // Display-only: authorization stays JWT-based (identity/isAdmin) and never reads this field.
 // UserPublicMetadata is an open record, so read the claim defensively.
@@ -50,63 +67,12 @@ const roleOf = (clerkUser: ClerkUserSync): string | undefined => {
   return typeof role === "string" ? role : undefined;
 };
 
-// Create or update user from Clerk. Internal only: the canonical user sync happens via the Clerk
-// webhook (updateOrCreateUser). Exposing this publicly would let any client upsert a `users` row
-// keyed by a client-supplied clerkId (account takeover).
-export const createOrUpdateUser = internalMutation({
-  args: {
-    clerkId: v.string(),
-    email: v.string(),
-    name: v.optional(v.string()),
-    username: v.optional(v.string()),
-    avatar: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    const now = Date.now();
-
-    if (existingUser) {
-      // Update existing user
-      await ctx.db.patch(existingUser._id, {
-        email: args.email,
-        name: args.name,
-        username: args.username,
-        avatar: args.avatar,
-        searchableName: toSearchableName(args.name, args.username),
-        updatedAt: now,
-      });
-      return existingUser._id;
-    } else {
-      // Create new user
-      const userId = await ctx.db.insert("users", {
-        clerkId: args.clerkId,
-        email: args.email,
-        name: args.name,
-        username: args.username,
-        avatar: args.avatar,
-        searchableName: toSearchableName(args.name, args.username),
-        bio: undefined,
-        location: undefined,
-        preferredLanguage: "en",
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      });
-      return userId;
-    }
-  },
-});
-
-// Reads (getUserByClerkId, getCurrentUser, getGlobalStats, getUserById, getUserStats, searchUsers)
+// Reads (getCurrentUser, getGlobalStats, getUserById, getUserStats, searchUsers)
 // were cut over to thin driving adapters under convex/identity/* and convex/insights/getGlobalStats
 // (returning typed view DTOs from @jigswap/contracts). Only writes + internal helpers remain here.
 
 // Update the Convex-only account fields the profile editor and the language sync write: location
-// (same rules as identity/setLocation, via normalizeLocation) and preferredLanguage (a supported
+// (trimmed, at most 80 characters, via normalizeLocation) and preferredLanguage (a supported
 // locale only). An omitted field is left as it is. users.bio is not writable: the public bio is
 // profiles.bio (social/editProfile). Username is intentionally NOT writable here either: Clerk is
 // its source of truth (uniqueness + validation), mirrored into this `users` row by the

@@ -309,7 +309,6 @@ export const gateway = {
     // Reads go through thin Convex adapters returning typed view DTOs (MemberView / MemberStatsView)
     // from @jigswap/contracts; auth gating and lookups are preserved so the UI is unchanged.
     currentUser: api.identity.getCurrentUser.getCurrentUser,
-    byClerkId: api.identity.getUserByClerkId.getUserByClerkId,
     byId: api.identity.getUserById.getUserById,
     // The write mutation stays on the legacy module (only reads are being cut over).
     updateProfile: api.users.updateUserProfile,
@@ -323,8 +322,6 @@ export const gateway = {
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
     // Set (or clear, via null) the caller's Convex-owned profile handle.
     setSlug: api.identity.setSlug.setSlug,
-    // Set (or clear, with "") the caller's own location: trimmed, at most 80 characters.
-    setLocation: api.identity.setLocation.setLocation,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are

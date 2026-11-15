@@ -45,10 +45,7 @@ function CollectionsPage() {
     useState<EditableCollection | null>(null);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   const { data: collections, isPending: collectionsPending } = useQuery(

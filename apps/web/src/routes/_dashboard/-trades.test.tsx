@@ -31,7 +31,7 @@ const data = vi.hoisted(() => ({
 
 vi.mock("@/gateway", () => ({
   gateway: {
-    identity: { byClerkId: "identity.byClerkId" },
+    identity: { currentUser: "identity.currentUser" },
     exchange: {
       myLive: "exchange.myLive",
       myHistory: "exchange.myHistory",
@@ -61,7 +61,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQueries: () => [],
   useQuery: ({ fn }: { fn: string }) => ({
     data:
-      fn === "identity.byClerkId"
+      fn === "identity.currentUser"
         ? { _id: "me" }
         : fn === "exchange.myLive"
           ? [

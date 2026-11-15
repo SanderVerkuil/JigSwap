@@ -47,7 +47,7 @@ vi.mock("@convex-dev/react-query", () => ({
 }));
 vi.mock("@/gateway", () => ({
   gateway: {
-    identity: { byClerkId: "member" },
+    identity: { currentUser: "member" },
     catalog: { puzzleCategories: "categories", puzzleById: "puzzle" },
   },
 }));

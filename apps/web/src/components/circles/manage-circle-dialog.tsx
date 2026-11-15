@@ -44,13 +44,11 @@ const PERMISSIONS: CirclePermissionLevel[] = ["ViewOnly", "Exchange", "Admin"];
 
 export function ManageCircleDialog({
   circleId,
-  viewerId,
   focusInvite = false,
   onClose,
   onDeleted = onClose,
 }: {
   circleId: string;
-  viewerId: string;
   // Open at the invite section (the page's "Invite people"), not at the top of the dialog.
   focusInvite?: boolean;
   onClose: () => void;
@@ -64,10 +62,7 @@ export function ManageCircleDialog({
     convexQuery(gateway.sharing.circle, { circleId }),
   );
   const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      viewerId ? { clerkId: viewerId } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   const removeMember = useMutation({

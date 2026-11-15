@@ -20,7 +20,6 @@ const ALLOWED: Record<string, string> = {
     "returns null unless self, public, or a mutual follower, and null when blocked by the target",
   "identity/searchUsers.ts":
     "surfaces only self, public profiles and mutual followers, never across a block",
-  "identity/getUserByClerkId.ts": "the caller's own record only",
   "identity/listRecentPublicMembers.ts":
     "public, active profiles only, never across a block",
   "exchange/tradeParty.ts":
