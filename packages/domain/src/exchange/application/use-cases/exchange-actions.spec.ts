@@ -13,7 +13,6 @@ import { makeAcceptExchange } from "./accept-exchange";
 import { makeCancelExchange } from "./cancel-exchange";
 import { makeConfirmCompletion } from "./confirm-completion";
 import { makeDeclineExchange } from "./decline-exchange";
-import { makeRaiseDispute } from "./raise-dispute";
 
 const alice = toMemberId("alice"); // initiator
 const bob = toMemberId("bob"); // recipient
@@ -472,32 +471,6 @@ describe("makeCancelExchange", () => {
     expect(result.isOk).toBe(true);
     expect(h.events.names()).toEqual(["ExchangeCancelled"]);
     expect((await h.repo.findById(exId))?.status).toBe("cancelled");
-  });
-});
-
-describe("makeRaiseDispute", () => {
-  let h: ReturnType<typeof harness>;
-  beforeEach(() => (h = harness()));
-
-  it("lets a party dispute an accepted exchange, publishing DisputeRaised", async () => {
-    await seedAccepted(h.repo);
-    const result = await makeRaiseDispute(h)({
-      exchangeId: exId,
-      actingMemberId: alice,
-    });
-    expect(result.isOk).toBe(true);
-    expect(h.events.names()).toEqual(["DisputeRaised"]);
-    expect((await h.repo.findById(exId))?.status).toBe("disputed");
-  });
-
-  it("delegates wrong-party rejection to the aggregate", async () => {
-    await seedAccepted(h.repo);
-    const result = await makeRaiseDispute(h)({
-      exchangeId: exId,
-      actingMemberId: eve,
-    });
-    expect(result.isErr).toBe(true);
-    if (result.isErr) expect(result.error.code).toBe("WrongParty");
   });
 });
 

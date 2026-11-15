@@ -226,7 +226,6 @@ import type * as exchange_getUserExchanges from "../exchange/getUserExchanges.js
 import type * as exchange_listMyExchangeHistory from "../exchange/listMyExchangeHistory.js";
 import type * as exchange_listMyLiveExchanges from "../exchange/listMyLiveExchanges.js";
 import type * as exchange_propose from "../exchange/propose.js";
-import type * as exchange_raiseDispute from "../exchange/raiseDispute.js";
 import type * as exchange_readViews from "../exchange/readViews.js";
 import type * as exchange_runAction from "../exchange/runAction.js";
 import type * as exchange_setContactSharing from "../exchange/setContactSharing.js";
@@ -860,7 +859,6 @@ declare const fullApi: ApiFromModules<{
   "exchange/listMyExchangeHistory": typeof exchange_listMyExchangeHistory;
   "exchange/listMyLiveExchanges": typeof exchange_listMyLiveExchanges;
   "exchange/propose": typeof exchange_propose;
-  "exchange/raiseDispute": typeof exchange_raiseDispute;
   "exchange/readViews": typeof exchange_readViews;
   "exchange/runAction": typeof exchange_runAction;
   "exchange/setContactSharing": typeof exchange_setContactSharing;

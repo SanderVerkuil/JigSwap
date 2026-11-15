@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -474,18 +475,10 @@ describe("exchange.confirmCompletion", () => {
   });
 });
 
-describe("exchange.raiseDispute", () => {
-  test("can be raised from accepted", async () => {
-    const t = convexTest(schema, modules);
-    const { id } = await proposeSale(t);
-    await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
-    await asAlice(t).mutation(api.exchange.raiseDispute.raiseDispute, {
-      exchangeId: id,
-    });
-    expect((await exchangeRow(t, id))?.status).toBe("disputed");
-  });
-
-  test("can be raised from completed", async () => {
+describe("exchange disputes", () => {
+  // A dispute had no way back out (nothing resolves it), so a party could freeze a finished trade
+  // and stop the partner's review. The public mutation is gone until disputes get a resolve path.
+  test("a party cannot move a completed exchange to disputed", async () => {
     const t = convexTest(schema, modules);
     const { id } = await proposeSale(t);
     await asBob(t).mutation(api.exchange.accept.accept, { exchangeId: id });
@@ -496,9 +489,13 @@ describe("exchange.raiseDispute", () => {
     await asBob(t).mutation(api.exchange.confirmCompletion.confirmCompletion, {
       exchangeId: id,
     });
-    await asBob(t).mutation(api.exchange.raiseDispute.raiseDispute, {
-      exchangeId: id,
-    });
-    expect((await exchangeRow(t, id))?.status).toBe("disputed");
+    const raiseDispute = makeFunctionReference<
+      "mutation",
+      { exchangeId: string }
+    >("exchange/raiseDispute:raiseDispute");
+    await expect(
+      asBob(t).mutation(raiseDispute, { exchangeId: id }),
+    ).rejects.toThrow('Could not find module for: "exchange/raiseDispute"');
+    expect((await exchangeRow(t, id))?.status).toBe("completed");
   });
 });

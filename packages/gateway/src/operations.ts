@@ -244,7 +244,6 @@ export const gateway = {
     decline: api.exchange.decline.decline,
     complete: api.exchange.confirmCompletion.confirmCompletion,
     cancel: api.exchange.cancel.cancel,
-    dispute: api.exchange.raiseDispute.raiseDispute,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
     // The request-flow notice: whether the caller's own profile is private (the owner always gets
