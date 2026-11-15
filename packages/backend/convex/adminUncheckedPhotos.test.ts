@@ -356,6 +356,29 @@ describe("decideUncheckedPhoto", () => {
     ).rejects.toThrow("has not passed the hash check");
   });
 
+  test("an unscored photo whose hash re-check is still running cannot be rejected", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { unscoredCopy } = await seed(t);
+    // The hash service was unavailable (hashes stored, re-checks armed), then the classifier gave
+    // up: a late match must still find the bytes, so a reject waits for the re-check or timeout.
+    await t.run((ctx) =>
+      ctx.db.patch(unscoredCopy, {
+        hashCheckPendingSince: Date.now(),
+        pendingHashes: [{ md5: "m", sha1: "s" }],
+      }),
+    );
+    await expect(
+      asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source: "copy",
+        imageId: unscoredCopy,
+        decision: "reject",
+      }),
+    ).rejects.toThrow("has not passed the hash check");
+    expect(
+      (await t.run((ctx) => ctx.db.get(unscoredCopy)))?.moderationStatus,
+    ).toBe("unscored");
+  });
+
   test("an already decided or unknown photo is refused", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { unscoredCopy } = await seed(t);

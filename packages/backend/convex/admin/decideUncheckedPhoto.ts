@@ -33,6 +33,7 @@ type DecidableRow = {
   hashCheckedAt?: number;
   hashCheckPendingSince?: number;
   hashCheckTimedOutAt?: number;
+  pendingHashes?: unknown;
 };
 
 // Whether the row waits on an admin because its hash check timed out (and nothing else decided it).
@@ -72,11 +73,17 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
     throw new ConvexError("Photo is already decided");
   }
   // Never publish a photo before its CSAM hash check has passed. A reject publishes nothing, so an
-  // unscored photo (its checks gave up, maybe before the hash step) may be rejected without one, as
-  // a message photo may; a pending one is left to the check it is waiting for.
+  // unscored photo with no stored hashes (its checks gave up before the hash step, so nothing will
+  // ever re-check it) may be rejected without one. A pending photo, or one whose stored hashes are
+  // still re-checked (hashRecheckPool, until the timeout), is left to that check: a reject could
+  // delete the bytes a late match must preserve.
   if (
     !isHashCleared(row) &&
-    !(decision === "reject" && row.moderationStatus === "unscored")
+    !(
+      decision === "reject" &&
+      row.moderationStatus === "unscored" &&
+      row.pendingHashes === undefined
+    )
   ) {
     throw new ConvexError("Photo has not passed the hash check yet");
   }
