@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -188,6 +189,7 @@ const pairs = (t: T) =>
 describe("account deletion: follow edges and follow requests", () => {
   test("the seed holds edges and requests both ways, each notified", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
 
     // alice->bob, alice->carol, carol->alice, dave->alice.
@@ -242,6 +244,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("the people she followed and who followed her are no longer linked to her", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -250,6 +253,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("the follow requests she sent and received are deleted, whatever their status", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -266,6 +270,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("the other party's follower and following counts drop", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     await seed(t);
     await deleteAlice(t);
 
@@ -285,6 +290,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("she no longer appears in followers you know", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -297,6 +303,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("no follow notification in anyone else's inbox names her", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -308,6 +315,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("a grouped new_follower row keeps the other followers", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -319,6 +327,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("a grouped new_follower row she was newest on no longer carries her name", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     // Alice unfollows Bob and follows him again, so she is the newest actor on his group.
     await as(t, "alice").mutation(api.social.unfollowMember.unfollowMember, {
@@ -343,6 +352,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("other members' edges, requests and notifications are untouched", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -373,6 +383,7 @@ describe("account deletion: follow edges and follow requests", () => {
 
   test("the purge completes with a batch size of 1", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s: Seeded = await seed(t);
     await t.mutation(
       internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,

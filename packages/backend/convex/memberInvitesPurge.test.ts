@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -217,6 +218,7 @@ const allIds = (s: Seeded) => [
 describe("account deletion: circle invites and connection offers", () => {
   test("the seed holds one invite and one offer each way, each notified", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
 
     expect(await invitesOf(t, s.alice)).toHaveLength(2);
@@ -243,6 +245,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("the circle invites she sent and received are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -251,6 +254,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("the connection offers she made and was made are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -259,6 +263,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("decided invites and offers go too", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await as(t, "carol").mutation(
       api.sharing.declineCircleInvite.declineCircleInvite,
@@ -276,6 +281,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("every notification pointing at them is deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -284,6 +290,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("the invitee of her invite has no invite and no notification left", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     await seed(t);
     await deleteAlice(t);
 
@@ -293,6 +300,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("circle Admins no longer see a pending invite from or to her", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -302,6 +310,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("the recipient of her offer has no offer and no notification left", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     await seed(t);
     await deleteAlice(t);
 
@@ -313,6 +322,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("an email or push still due for her offer is not sent", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     const deliver = () =>
       t.query(internal.notifications.resolveForDelivery.resolveForDelivery, {
@@ -331,6 +341,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("other members' invites and offers are untouched", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await mutualFollow(t, s.bob, s.newbie);
     const bobToNewbie = await as(t, "bob").mutation(
@@ -348,6 +359,7 @@ describe("account deletion: circle invites and connection offers", () => {
 
   test("the purge runs in batches", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.mutation(
       internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
@@ -399,6 +411,7 @@ describe("account deletion: email invitations", () => {
 
   test("her rows are deleted and their Clerk invitations revoked; Bob's stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await seedEmailInvites(t, s);
 
@@ -411,6 +424,7 @@ describe("account deletion: email invitations", () => {
 
   test("in batches too", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await seedEmailInvites(t, s);
 
@@ -427,6 +441,7 @@ describe("account deletion: email invitations", () => {
 
   test("the pending in-app invite an email invitation made is withdrawn", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.run(async (ctx) => {
       const now = Date.now();
@@ -459,6 +474,7 @@ describe("account deletion: email invitations", () => {
 
   test("her emailInvite rate-limit counter goes with the others", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.run((ctx) =>
       ctx.db.insert("rateLimits", {
@@ -484,6 +500,7 @@ describe("account deletion: email invitations", () => {
 describe("account deletion: household invites", () => {
   test("every household invite she sent or received goes, with the invitee's notification; others stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.run(async (ctx) => {
       const now = Date.now();
@@ -538,6 +555,7 @@ describe("account deletion: household invites", () => {
 describe("account deletion: household join requests", () => {
   test("every request to join she sent goes, with the admin's notification; others stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.run(async (ctx) => {
       const now = Date.now();

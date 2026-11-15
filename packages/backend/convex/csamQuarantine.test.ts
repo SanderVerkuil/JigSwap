@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { Jimp } from "jimp";
@@ -161,6 +162,7 @@ describe("hash match on a copy photo", () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
 
     const { row, upload } = await addCopyPhoto(t, copy);
@@ -214,6 +216,7 @@ describe("hash match on a copy photo", () => {
   test("the photo is never served to anyone: not the uploader, not other members, not admins", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     await t.run((ctx) => ctx.db.patch(copy, { coverImageId: row._id }));
@@ -288,6 +291,7 @@ describe("hash match on a copy photo", () => {
   test("the uploader removing it succeeds silently and destroys nothing", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const { row, upload } = await addCopyPhoto(t, copy);
 
@@ -308,6 +312,7 @@ describe("hash check outcomes that continue", () => {
     const fetchMock = routedFetch(503);
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
 
     const { row } = await addCopyPhoto(t, copy);
@@ -322,6 +327,7 @@ describe("hash check outcomes that continue", () => {
     const fetchMock = routedFetch("no_match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
 
     const { row, upload } = await addCopyPhoto(t, copy);
@@ -352,6 +358,7 @@ describe("hash check outcomes that continue", () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
 
     const { row } = await addCopyPhoto(t, copy);
@@ -366,6 +373,7 @@ describe("hash match on a completion photo", () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -432,6 +440,7 @@ describe("admin escalation functions", () => {
   test("list and mark are admin-only", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -451,6 +460,7 @@ describe("admin escalation functions", () => {
   test("open -> reported -> closed only; notes are append-only; every update is stamped with the admin (L1)", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { bob, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -537,6 +547,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
   test("hash service unreachable: classified and approved, but served to nobody, the uploader included", async () => {
     vi.stubGlobal("fetch", routedFetch(503));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.moderationStatus).toBe("approved");
@@ -562,6 +573,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
   test("no_match opens the gate: hashCheckedAt is set and other members see the photo", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.hashCheckedAt).toBeGreaterThan(0);
@@ -575,6 +587,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
 
   test("admins get no URL for an unchecked photo and cannot decide it", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice, {
       moderationStatus: "unscored",
@@ -601,6 +614,7 @@ describe("publication gate: no URL before the hash check has passed (C1)", () =>
   test("an unchecked completion photo is not served to its uploader", async () => {
     vi.stubGlobal("fetch", routedFetch(503));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copyAggregateId } = await seed(t);
     const { completionId } = await asAlice(t).mutation(
       api.solving.recordCompletion.recordCompletion,
@@ -648,6 +662,7 @@ describe("a match is never lost when the row changed meanwhile (H2)", () => {
 
   test("a row an admin already approved is forced to quarantined, and its cover cleared (L4)", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice, {
       moderationStatus: "approved",
@@ -667,6 +682,7 @@ describe("a match is never lost when the row changed meanwhile (H2)", () => {
 
   test("a row the uploader removed meanwhile still gets its escalation", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const { imageId } = await seedUncheckedRow(t, copy, alice);
     await t.run((ctx) => ctx.db.delete(imageId));
@@ -689,6 +705,7 @@ describe("refused uploads are hash-checked first (M2)", () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const fileId = (await t.run((ctx) =>
       ctx.storage.store(new Blob(["<svg></svg>"], { type: "image/svg+xml" })),
@@ -714,6 +731,7 @@ describe("refused uploads are hash-checked first (M2)", () => {
   test("without a match the refusal stands", async () => {
     vi.stubGlobal("fetch", routedFetch("no_match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const fileId = (await t.run((ctx) =>
       ctx.storage.store(new Blob(["<svg></svg>"], { type: "image/svg+xml" })),
@@ -739,6 +757,7 @@ describe("logging on a match (L2)", () => {
   test("the wide event carries the escalation id and nothing that identifies the row or uploader", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -772,6 +791,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
 
   test("addCopyPhoto and attachCompletionPhotos refuse a preserved storage id with the generic InvalidUpload", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy, copyAggregateId, preservedId } = await quarantineOne(t);
 
     await expect(
@@ -800,6 +820,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
 
   test("a row that already points at a preserved blob is quarantined at once and joins its escalation", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy, preservedId } = await quarantineOne(t);
     const now = Date.now();
     const imageId = await t.run((ctx) =>
@@ -825,6 +846,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
 
   test("the owner's copy-detail read never lists a quarantined photo's storage id", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy, preservedId } = await quarantineOne(t);
     const detail = await asAlice(t).query(
       api.library.getOwnedPuzzleWithCollectionStatus
@@ -846,6 +868,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
 
   test("the hashes of the original and the re-encode are stored and a re-check is armed in ~15 min", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { row, upload } = await unavailableUpload(t);
 
     expect(row.hashCheckedAt).toBeUndefined();
@@ -871,6 +894,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
 
   test("a later match quarantines the re-encode, records the discarded original, and stops waiting", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { row } = await unavailableUpload(t);
     vi.stubGlobal("fetch", routedFetch("match"));
 
@@ -899,6 +923,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
 
   test("a later no_match publishes the photo", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { row, copy } = await unavailableUpload(t);
     vi.stubGlobal("fetch", routedFetch("no_match"));
 
@@ -920,6 +945,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
 
   test("still unavailable: backs off (doubling, capped at 24 h)", async () => {
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { row } = await unavailableUpload(t);
     await t.run((ctx) => ctx.db.patch(row._id, { hashRecheckAttempt: 9 }));
 
@@ -943,6 +969,7 @@ describe("unavailable hash check: stored hashes, re-checks, held unpublished (M1
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { copy } = await seed(t);
     const { row } = await addCopyPhoto(t, copy);
     expect(row.hashCheckedAt).toBeGreaterThan(0);
@@ -958,6 +985,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
     const fetchMock = routedFetch("match");
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const upload = await storeJpeg(t);
     const now = Date.now();
@@ -991,6 +1019,7 @@ describe("re-screen hash-checks legacy and unscored photos (M6)", () => {
     const fetchMock = routedFetch(503);
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     const upload = await storeJpeg(t);
     const now = Date.now();
@@ -1016,6 +1045,7 @@ describe("uploader identity survives account deletion (M5)", () => {
   test("the escalation snapshots the uploader; deleting the account tombstones it while the escalation is open", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
@@ -1043,6 +1073,7 @@ describe("uploader identity survives account deletion (M5)", () => {
   test("once every escalation is closed the account is deleted as usual", async () => {
     vi.stubGlobal("fetch", routedFetch("match"));
     const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
     const { alice, copy } = await seed(t);
     await addCopyPhoto(t, copy);
     const [escalation] = await escalations(t);
