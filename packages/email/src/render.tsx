@@ -55,18 +55,24 @@ const hasValues = (
 ): boolean =>
   tokensOf(template).every((key) => key === ignore || !!params[key]);
 
-// The actor's name is member-chosen text that reaches the subject, heading and body. It follows
-// the rule invitation emails apply to the inviter's name (domain inviterNameForEmail): line breaks
-// and control characters flattened, bidi and other invisible format characters dropped, words that
-// look like a link or an email address dropped, at most INVITER_NAME_MAX_LENGTH characters. A name
-// with nothing left is dropped, so the localized default ("Someone") stands in.
-const withSafeActorName = (
+// The actor's name and the circle's name are member-chosen text that reaches the subject, heading
+// and body. Both follow the rule invitation emails apply to the inviter's name (domain
+// inviterNameForEmail): line breaks and control characters flattened, bidi and other invisible
+// format characters dropped, words that look like a link or an email address dropped, at most
+// INVITER_NAME_MAX_LENGTH characters. A name with nothing left is dropped, so the localized default
+// ("Someone", the generic circle sentence) stands in.
+const withSafeNames = (
   params: Readonly<Record<string, string>>,
 ): Readonly<Record<string, string>> => {
-  const { actorName, ...rest } = params;
-  if (actorName === undefined) return params;
-  const name = inviterNameForEmail(actorName);
-  return name === undefined ? rest : { ...rest, actorName: name };
+  const safe = { ...params };
+  for (const key of ["actorName", "circleName"]) {
+    const raw = params[key];
+    if (raw === undefined) continue;
+    const name = inviterNameForEmail(raw);
+    if (name === undefined) delete safe[key];
+    else safe[key] = name;
+  }
+  return safe;
 };
 
 // Only a root-relative path that stays on the base URL's origin may become the CTA. The origin is
@@ -90,8 +96,8 @@ export const renderEmail = async (
 ): Promise<RenderedEmail> => {
   const copy = EMAIL_COPY[input.type][input.locale];
   const params = input.actorAnonymous
-    ? { ...input.params, actorName: FORMER_MEMBER[input.locale] }
-    : withSafeActorName(input.params);
+    ? withSafeNames({ ...input.params, actorName: FORMER_MEMBER[input.locale] })
+    : withSafeNames(input.params);
   const values = { ...DEFAULT_PARAMS[input.locale], ...params };
   const footer = FOOTER[input.locale];
   const messageKind = params["messageKind"];
