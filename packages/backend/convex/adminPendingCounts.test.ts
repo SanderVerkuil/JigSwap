@@ -89,6 +89,7 @@ const copyPhoto = (
   t: TestConvex<typeof schema>,
   { alice, copyId }: World,
   moderationStatus: "pending" | "approved" | "rejected",
+  moderationLabel?: string,
 ) =>
   t.run(async (ctx) => {
     const fileId = await ctx.storage.store(new Blob([new Uint8Array(4)]));
@@ -97,6 +98,7 @@ const copyPhoto = (
       uploaderId: alice,
       fileId,
       moderationStatus,
+      moderationLabel,
       createdAt: 1,
       updatedAt: 1,
     });
@@ -234,6 +236,8 @@ describe("admin/getPendingCounts", () => {
     await copyPhoto(t, world, "rejected");
     await copyPhoto(t, world, "approved");
     await copyPhoto(t, world, "pending");
+    // An upload the input guards refused has no file left to judge (admin.listRejectedPhotos).
+    await copyPhoto(t, world, "rejected", "invalid_image");
     // Review requests: only a rejected photo whose review was asked and not yet decided.
     await messagePhoto(t, world, {
       moderationStatus: "rejected",
