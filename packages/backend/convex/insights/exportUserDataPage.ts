@@ -32,7 +32,10 @@ import {
   quickStartStateOf,
 } from "../onboarding/memberOnboarding";
 import { blockedEitherWaySet } from "../social/blocks";
-import { projectMemberIdentity } from "../social/privacy";
+import {
+  memberTeaserIdentityOf,
+  projectMemberIdentity,
+} from "../social/privacy";
 import { toFollowEdgeView } from "../social/readViews";
 import { resolvePhotoItems } from "../solving/listMyCompletions";
 
@@ -48,7 +51,8 @@ import { resolvePhotoItems } from "../solving/listMyCompletions";
 //   Photos and box art are URLs, issued under the same gates as the app's own reads; a photo the
 //   app does not show its uploader (rejected or quarantined, which read exactly alike) has none;
 // - other members only as the app shows them to the caller: projectMemberIdentity, the per-trade
-//   projectTradeParty, or the follow lists' toFollowEdgeView, never their raw users fields.
+//   projectTradeParty, the follow lists' toFollowEdgeView, or the Blocked members list's
+//   memberTeaserIdentityOf, never their raw users fields.
 
 /** Rows per page: one page reads at most this many rows of its section (plus their joins). */
 export const EXPORT_PAGE_SIZE = 200;
@@ -787,16 +791,30 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
     );
   },
 
+  // Named as listMyBlocks names them, whatever their profile says: the block deleted the follows
+  // that would have revealed a private member, so the privacy chokepoint would hide them here.
   blocks: async (ctx, me, page) =>
     pageOf(
       await ctx.db
         .query("blocks")
         .withIndex("by_blocker", (q) => q.eq("blockerId", me))
         .paginate(page),
-      async (b) => ({
-        member: await projectedPerson(ctx, me, b.blockedId),
-        blockedAt: b.createdAt,
-      }),
+      async (b) => {
+        const user = await ctx.db.get(b.blockedId);
+        const profile =
+          user &&
+          (await ctx.db
+            .query("profiles")
+            .withIndex("by_member", (q) => q.eq("memberId", b.blockedId))
+            .unique());
+        const member: ExportPerson = user
+          ? {
+              memberId: user._id,
+              name: memberTeaserIdentityOf(user, profile, true).displayName,
+            }
+          : { departed: true };
+        return { member, blockedAt: b.createdAt };
+      },
     ),
 
   circles: async (ctx, me, page) =>

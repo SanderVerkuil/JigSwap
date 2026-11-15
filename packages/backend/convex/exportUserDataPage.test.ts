@@ -725,6 +725,43 @@ describe("insights.exportUserDataPage", () => {
     });
   });
 
+  // Erin is private and shares no follow or circle with Alice (a block deletes their follows).
+  const insertPrivateErin = async (ctx: MutationCtx) => {
+    const erin = await insertUser(ctx, "erin");
+    await ctx.db.insert("profiles", {
+      memberId: erin,
+      visibility: "private",
+      updatedAt: Date.now(),
+    });
+    return erin;
+  };
+
+  test("a blocked private member is named, as the Blocked members list names them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const { erin, gone } = await t.run(async (ctx) => {
+      const erin = await insertPrivateErin(ctx);
+      const gone = await insertUser(ctx, "gone");
+      for (const blockedId of [erin, gone]) {
+        await ctx.db.insert("blocks", {
+          blockerId: alice.me,
+          blockedId,
+          createdAt: Date.now(),
+        });
+      }
+      await ctx.db.delete(gone);
+      return { erin, gone };
+    });
+    const { rows } = await exportSection(t, "alice", "blocks");
+    expect(rows.map((b) => b.member)).toEqual(
+      expect.arrayContaining([
+        { memberId: erin, name: "Erin" },
+        { departed: true },
+      ]),
+    );
+    expect(JSON.stringify(rows)).not.toContain(gone);
+  });
+
   // Art. 15: a member's consent to show their email on one trade is theirs to read. Only their own:
   // the other party's consent stays out of this member's row.
   test("each party's exchange row carries their own email-sharing consent, and only theirs", async () => {
