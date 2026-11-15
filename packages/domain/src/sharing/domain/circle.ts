@@ -226,23 +226,14 @@ export class Circle {
     return ok(undefined);
   }
 
-  // Share a copy into this circle, making it visible to the circle's members. A member whose seat
-  // may exchange (Exchange or Admin) may share; ViewOnly may not. That the copy is the actor's own
-  // is checked by the caller (the aggregate never loads copies). The level counts only at the
-  // moment of sharing: a member later moved to ViewOnly keeps the shares they made, and a share
-  // ends only when its owner takes it back, leaves the circle or the copy changes hands. Emits
-  // CopySharedToCircle; the aggregate holds no copy state (the link lives in a read model fed by
-  // the event), so this is a pure authorisation + announcement.
-  shareCopy(
-    actor: MemberId,
-    copyId: CopyId,
-    now: Date,
-  ): Result<void, SharingError> {
-    return this.shareCopies(actor, [copyId], now);
-  }
-
-  // shareCopy for several copies at once, under the same seat gate: one CopySharedToCircle per
-  // copy, or none at all when the seat may not share (checked even for an empty batch).
+  // Share copies into this circle, making them visible to the circle's members. A member whose
+  // seat may exchange (Exchange or Admin) may share; ViewOnly may not. That each copy is the
+  // actor's own is checked by the caller (the aggregate never loads copies). The level counts only
+  // at the moment of sharing: a member later moved to ViewOnly keeps the shares they made, and a
+  // share ends only when its owner takes it back, leaves the circle or the copy changes hands.
+  // Emits one CopySharedToCircle per copy, or none at all when the seat may not share (checked
+  // even for an empty batch); the aggregate holds no copy state (the link lives in a read model
+  // fed by the event), so this is a pure authorisation + announcement.
   shareCopies(
     actor: MemberId,
     copyIds: readonly CopyId[],

@@ -111,8 +111,8 @@ const shareAlicesCopy = async (t: T, circleId: string) => {
     });
   });
   await as(t, "alice").mutation(
-    api.sharing.shareCopyToCircle.shareCopyToCircle,
-    { circleId, copyId },
+    api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+    { circleId, copyIds: [copyId] },
   );
   return copyId;
 };

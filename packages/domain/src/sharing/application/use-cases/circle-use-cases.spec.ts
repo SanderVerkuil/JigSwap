@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { toCircleId, toCopyId, toMemberId } from "../../../shared-kernel";
+import { toCircleId, toMemberId } from "../../../shared-kernel";
 import { CircleId } from "../../domain";
 import {
   FixedClock,
@@ -14,13 +14,11 @@ import { makeCreateCircle } from "./create-circle";
 import { makeDeleteCircle } from "./delete-circle";
 import { makeLeaveCircle } from "./leave-circle";
 import { makeRemoveMember } from "./remove-member";
-import { makeShareCopyToCircle } from "./share-copy-to-circle";
 
 const owner = toMemberId("owner");
 const alice = toMemberId("alice");
 const bob = toMemberId("bob");
 const missingCircle = toCircleId("nope");
-const copyId = toCopyId("copy-1");
 const NOW = new Date("2026-06-08T10:00:00Z");
 
 describe("Sharing circle use cases", () => {
@@ -35,7 +33,6 @@ describe("Sharing circle use cases", () => {
   let leaveCircle: ReturnType<typeof makeLeaveCircle>;
   let deleteCircle: ReturnType<typeof makeDeleteCircle>;
   let changePermission: ReturnType<typeof makeChangePermission>;
-  let shareCopy: ReturnType<typeof makeShareCopyToCircle>;
 
   beforeEach(() => {
     circles = new InMemoryCircleRepository();
@@ -55,7 +52,6 @@ describe("Sharing circle use cases", () => {
     leaveCircle = makeLeaveCircle({ circles, events, clock });
     deleteCircle = makeDeleteCircle({ circles, events, clock });
     changePermission = makeChangePermission({ circles, events });
-    shareCopy = makeShareCopyToCircle({ circles, events, clock });
   });
 
   // Helper: create a circle and return its id.
@@ -388,61 +384,6 @@ describe("Sharing circle use cases", () => {
         actorId: owner,
         memberId: alice,
         permission: "Admin",
-      });
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CircleNotFound");
-    });
-  });
-
-  describe("makeShareCopyToCircle", () => {
-    it("shares a copy by an admin and publishes CopySharedToCircle", async () => {
-      const circleId = await openCircle();
-      events.published.length = 0;
-
-      const result = await shareCopy({ circleId, actorId: owner, copyId });
-
-      expect(result.isOk).toBe(true);
-      expect(events.names()).toEqual(["CopySharedToCircle"]);
-    });
-
-    it("shares a copy by an Exchange member", async () => {
-      const circleId = await openCircle();
-      await addMember({
-        circleId,
-        actorId: owner,
-        memberId: alice,
-        permission: "Exchange",
-      });
-      events.published.length = 0;
-
-      const result = await shareCopy({ circleId, actorId: alice, copyId });
-
-      expect(result.isOk).toBe(true);
-      expect(events.names()).toEqual(["CopySharedToCircle"]);
-    });
-
-    it("rejects a ViewOnly actor", async () => {
-      const circleId = await openCircle();
-      await addMember({
-        circleId,
-        actorId: owner,
-        memberId: alice,
-        permission: "ViewOnly",
-      });
-      events.published.length = 0;
-
-      const result = await shareCopy({ circleId, actorId: alice, copyId });
-
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
-      expect(events.published).toHaveLength(0);
-    });
-
-    it("returns CircleNotFound for an unknown circle", async () => {
-      const result = await shareCopy({
-        circleId: missingCircle,
-        actorId: owner,
-        copyId,
       });
       expect(result.isErr).toBe(true);
       if (result.isErr) expect(result.error.code).toBe("CircleNotFound");

@@ -30,7 +30,7 @@ type ShareRef = { shareId: string; circleId: string; copyId: string };
 type Verdict = "stale" | "dangling" | "kept" | "undetermined";
 
 // The rows this is for store no sharer (they predate circleCopyShares.ownerId), so it is derived:
-// shareCopyToCircle only lets the copy's OWNER share, so the sharer is whoever owned the copy at
+// shareCopiesToCircle only lets the copy's OWNER share, so the sharer is whoever owned the copy at
 // `sharedAt`. Ownership only changes through
 // exchange settlement, and the custody subscriber records each change (previous + new owner) in
 // `copyCustodyEntries`, keyed by the copy's `_id`. So:

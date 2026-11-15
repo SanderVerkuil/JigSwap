@@ -677,52 +677,6 @@ describe("Circle", () => {
     });
   });
 
-  describe("shareCopy", () => {
-    const copyId = toCopyId("copy-1");
-
-    it("lets an admin share a copy and records CopySharedToCircle", () => {
-      const circle = newCircle();
-      circle.pullEvents();
-
-      const result = circle.shareCopy(owner, copyId, NOW);
-      expect(result.isOk).toBe(true);
-      const events = circle.pullEvents();
-      expect(events.map((e) => e.name)).toEqual(["CopySharedToCircle"]);
-    });
-
-    it("lets an Exchange member share", () => {
-      const circle = newCircle();
-      circle.addMember(owner, membershipId(), alice, "Exchange", NOW);
-      circle.pullEvents();
-
-      const result = circle.shareCopy(alice, copyId, NOW);
-      expect(result.isOk).toBe(true);
-      expect(circle.pullEvents().map((e) => e.name)).toEqual([
-        "CopySharedToCircle",
-      ]);
-    });
-
-    it("rejects a ViewOnly member", () => {
-      const circle = newCircle();
-      circle.addMember(owner, membershipId(), alice, "ViewOnly", NOW);
-      circle.pullEvents();
-
-      const result = circle.shareCopy(alice, copyId, NOW);
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
-      expect(circle.pullEvents()).toHaveLength(0);
-    });
-
-    it("rejects a non-member", () => {
-      const circle = newCircle();
-      circle.pullEvents();
-
-      const result = circle.shareCopy(stranger, copyId, NOW);
-      expect(result.isErr).toBe(true);
-      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
-    });
-  });
-
   describe("shareCopies", () => {
     const copies = [toCopyId("copy-1"), toCopyId("copy-2")];
 
@@ -738,6 +692,25 @@ describe("Circle", () => {
         ["CopySharedToCircle", "copy-1"],
         ["CopySharedToCircle", "copy-2"],
       ]);
+    });
+
+    it("lets an admin share", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.shareCopies(owner, copies, NOW);
+      expect(result.isOk).toBe(true);
+      expect(circle.pullEvents()).toHaveLength(2);
+    });
+
+    it("rejects a non-member", () => {
+      const circle = newCircle();
+      circle.pullEvents();
+
+      const result = circle.shareCopies(stranger, copies, NOW);
+      expect(result.isErr).toBe(true);
+      if (result.isErr) expect(result.error.code).toBe("CannotShareCopy");
+      expect(circle.pullEvents()).toHaveLength(0);
     });
 
     it("shares none for a ViewOnly member, even with nothing to share", () => {

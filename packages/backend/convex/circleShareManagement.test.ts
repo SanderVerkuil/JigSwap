@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -211,6 +212,23 @@ describe("shareCopiesToCircle", () => {
       share(t, "bob", circleId, [mine, "copy-nope"]),
       "CopyNotFound",
     );
+    expect(await sharesOf(t, circleId)).toEqual([]);
+  });
+
+  // The old one-copy share told a missing copy from someone else's and charged a re-share against
+  // the daily budget. This batch is the only way to share now.
+  test("is the only way to share a copy (the one-copy share is gone)", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, circleId } = await seed(t);
+    const copyId = await mkCopy(t, bob, "Lighthouse");
+    const shareOne = makeFunctionReference<
+      "mutation",
+      { circleId: string; copyId: string }
+    >("sharing/shareCopyToCircle:shareCopyToCircle");
+
+    await expect(
+      as(t, "bob").mutation(shareOne, { circleId, copyId }),
+    ).rejects.toThrow('Could not find module for: "sharing/shareCopyToCircle"');
     expect(await sharesOf(t, circleId)).toEqual([]);
   });
 

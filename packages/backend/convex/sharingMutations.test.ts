@@ -354,10 +354,13 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
       memberId: bob,
       permission: "ViewOnly",
     });
-    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId,
-    });
+    await asAlice(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [copyId],
+      },
+    );
 
     // Bob browses: the private-but-circle-shared copy surfaces for him.
     const view = await asBob(t).query(
@@ -379,9 +382,9 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
     // Alice (the circle Admin) tries to share BOB's copy into her circle -> rejected.
     const circleId = await createCircleForAlice(t);
     await expect(
-      asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      asAlice(t).mutation(api.sharing.shareCopiesToCircle.shareCopiesToCircle, {
         circleId,
-        copyId: bobsCopyId,
+        copyIds: [bobsCopyId],
       }),
     ).rejects.toBeInstanceOf(ConvexError);
 
@@ -397,10 +400,13 @@ describe("library.browseOwnedPuzzles circle-aware visibility", () => {
     const { puzzleAggregateId } = await seed(t);
     const copyId = await acquirePrivateForAlice(t, puzzleAggregateId);
     const circleId = await createCircleForAlice(t);
-    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId,
-    });
+    await asAlice(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [copyId],
+      },
+    );
 
     // Carol is in no circle: she sees no circle-shared private copies.
     const view = await asCarol(t).query(

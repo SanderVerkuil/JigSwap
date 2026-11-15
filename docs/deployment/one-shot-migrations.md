@@ -374,7 +374,7 @@ Logs, and keep the real run's lines: they are the only record of what was delete
 
 **Rollback:** none needed and none possible from the backfill itself. A wrongly removed share
 is found in the real run's `deletedRows` (its `circleId` and `copyId`) and restored by the
-copy's owner sharing it into that circle again (`sharing/shareCopyToCircle` recreates the
+copy's owner sharing it into that circle again (`sharing/shareCopiesToCircle` recreates the
 row), or by re-inserting a `circleCopyShares` row with that `circleId` and `copyId` in the
 dashboard (`sharedAt` = now).
 

@@ -518,7 +518,6 @@ import type * as sharing_removeMember from "../sharing/removeMember.js";
 import type * as sharing_revokeCircleInvite from "../sharing/revokeCircleInvite.js";
 import type * as sharing_setCircleIcon from "../sharing/setCircleIcon.js";
 import type * as sharing_shareCopiesToCircle from "../sharing/shareCopiesToCircle.js";
-import type * as sharing_shareCopyToCircle from "../sharing/shareCopyToCircle.js";
 import type * as sharing_unshareCopyFromCircle from "../sharing/unshareCopyFromCircle.js";
 import type * as social_acceptConnection from "../social/acceptConnection.js";
 import type * as social_acceptHouseholdLinkInvite from "../social/acceptHouseholdLinkInvite.js";
@@ -1151,7 +1150,6 @@ declare const fullApi: ApiFromModules<{
   "sharing/revokeCircleInvite": typeof sharing_revokeCircleInvite;
   "sharing/setCircleIcon": typeof sharing_setCircleIcon;
   "sharing/shareCopiesToCircle": typeof sharing_shareCopiesToCircle;
-  "sharing/shareCopyToCircle": typeof sharing_shareCopyToCircle;
   "sharing/unshareCopyFromCircle": typeof sharing_unshareCopyFromCircle;
   "social/acceptConnection": typeof social_acceptConnection;
   "social/acceptHouseholdLinkInvite": typeof social_acceptHouseholdLinkInvite;
