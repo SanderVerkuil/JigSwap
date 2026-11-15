@@ -4,6 +4,7 @@ import {
   toMemberId,
   toPartnerReviewId,
 } from "../../shared-kernel";
+import { COMMENT_TEXT_MAX_LENGTH } from "../../social/domain/comment-text";
 import { MemberId } from "./ids";
 import { PartnerReview, SubmitProps } from "./partner-review";
 
@@ -43,6 +44,23 @@ describe("PartnerReview.submit", () => {
     expect(submitted.reviewerId).toBe(reviewer);
     expect(submitted.revieweeId).toBe(reviewee);
     expect(submitted.rating).toBe(4);
+  });
+
+  it("rejects a comment longer than the cap once trimmed", () => {
+    const result = PartnerReview.submit(
+      props({ comment: "a".repeat(COMMENT_TEXT_MAX_LENGTH + 1) }),
+    );
+    expect(result.isErr).toBe(true);
+    if (!result.isErr) return;
+    expect(result.error.code).toBe("CommentTooLong");
+  });
+
+  it("trims the comment and drops a blank one", () => {
+    const trimmed = PartnerReview.submit(props({ comment: "  Nice  " }));
+    const blank = PartnerReview.submit(props({ comment: "   " }));
+    if (!trimmed.isOk || !blank.isOk) throw new Error("setup");
+    expect(trimmed.value.comment).toBe("Nice");
+    expect(blank.value.comment).toBeUndefined();
   });
 
   it("drains events only once", () => {

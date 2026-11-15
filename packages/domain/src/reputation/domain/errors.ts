@@ -6,7 +6,7 @@ import { DomainError } from "../../shared-kernel";
 // Result interchangeably. Cross-aggregate failures (e.g. exchange-not-completed) are
 // orchestration concerns and live in the application layer, not here.
 export type ReputationErrorCode =
-  "SelfReview" | "InvalidRating" | "NotReviewAuthor";
+  "SelfReview" | "InvalidRating" | "NotReviewAuthor" | "CommentTooLong";
 
 export class ReputationError extends DomainError {
   override readonly name = "ReputationError";
@@ -39,6 +39,14 @@ export class ReputationError extends DomainError {
     return new ReputationError(
       "NotReviewAuthor",
       "Only the reviewer can change this review",
+    );
+  }
+
+  // The written comment was longer than the cap once trimmed.
+  static commentTooLong(max: number): ReputationError {
+    return new ReputationError(
+      "CommentTooLong",
+      `Comment must be at most ${max} characters`,
     );
   }
 }

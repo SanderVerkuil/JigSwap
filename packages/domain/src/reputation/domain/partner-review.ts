@@ -1,4 +1,5 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
+import { COMMENT_TEXT_MAX_LENGTH } from "../../social/domain/comment-text";
 import { ReputationError } from "./errors";
 import { PartnerReviewSubmitted } from "./events";
 import { ExchangeId, MemberId, PartnerReviewId } from "./ids";
@@ -73,6 +74,11 @@ export class PartnerReview {
       return err(ReputationError.selfReview());
     }
 
+    const comment = props.comment?.trim() || undefined;
+    if (comment && comment.length > COMMENT_TEXT_MAX_LENGTH) {
+      return err(ReputationError.commentTooLong(COMMENT_TEXT_MAX_LENGTH));
+    }
+
     const rating = StarRating.create(props.rating);
     if (rating.isErr) return err(rating.error);
 
@@ -85,7 +91,7 @@ export class PartnerReview {
       reviewerId: props.reviewerId,
       revieweeId: props.revieweeId,
       rating: rating.value,
-      comment: props.comment,
+      comment,
       scores: scores.value,
       createdAt: props.now,
     });
