@@ -454,6 +454,7 @@ function PuzzleDefinitionDetail({
         {/* Right: reviews */}
         <div>
           <ReviewsSection
+            key={puzzleId}
             puzzleId={puzzleId}
             composerRef={composerRef}
             canReview={canReview}

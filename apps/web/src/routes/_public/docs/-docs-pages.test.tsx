@@ -60,7 +60,20 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Its feedback mutation needs a Convex client, and it plays no part in what's tested here.
-vi.mock("@/components/docs/doc-helpful", () => ({ DocHelpful: () => null }));
+// It keeps a vote in state, like the real one, so a test can see whether a page change resets it.
+vi.mock("@/components/docs/doc-helpful", async () => {
+  const { useState } = await import("react");
+  return {
+    DocHelpful: ({ slug }: { slug: string }) => {
+      const [voted, setVoted] = useState(false);
+      return voted ? (
+        <p>voted</p>
+      ) : (
+        <button onClick={() => setVoted(true)}>vote on {slug}</button>
+      );
+    },
+  };
+});
 
 vi.mock("virtual:docs", () => {
   const page = (
@@ -327,6 +340,26 @@ describe("docs page landmarks", () => {
 
 // A search result can open a page at a FAQ question; the router navigates with pushState, which
 // leaves a <details> closed.
+describe("docs page feedback", () => {
+  it("asks again on the next page after a vote on the last", async () => {
+    const load = (slug: string) =>
+      docPage.loader({
+        params: { _splat: slug },
+        context: { intl: { locale: "en" } },
+      });
+    loaderData.current = await load("getting-started/first");
+    const { rerender } = render(withIntl(<docPage.component />));
+    fireEvent.click(screen.getByRole("button", { name: /vote on/ }));
+    expect(screen.getByText("voted")).toBeTruthy();
+
+    loaderData.current = await load("getting-started/next");
+    rerender(withIntl(<docPage.component />));
+    expect(
+      screen.getByRole("button", { name: "vote on getting-started/next" }),
+    ).toBeTruthy();
+  });
+});
+
 describe("docs page opens the FAQ question in the hash", () => {
   const FAQ_HTML =
     '<details id="why-is-a-photo-blurred"><summary>Why is a photo blurred?</summary><p>The check.</p></details>';

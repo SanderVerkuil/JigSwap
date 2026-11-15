@@ -114,7 +114,7 @@ function DocPageView() {
         {/* A group's page leads on to its articles, so its crumb on every article isn't a dead end. */}
         {page.isIndex && group && <DocGroupArticles links={group.links} />}
         <DocPager pager={pager} />
-        <DocHelpful slug={slug} />
+        <DocHelpful key={slug} slug={slug} />
       </article>
       {/* Scrolls on its own when a long article's list is taller than the window, ending above
           the cookie banner while that is open. */}

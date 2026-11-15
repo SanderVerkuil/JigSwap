@@ -23,6 +23,8 @@ type View = NonNullable<
 const PUZZLE_ID = "puzzle_1";
 
 const mocks = vi.hoisted(() => ({
+  // The puzzle the route is on; a test changes it to move to another puzzle.
+  id: "puzzle_1",
   // Query results keyed by Convex function name.
   data: new Map<string, unknown>(),
   // The paged review list.
@@ -38,7 +40,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute:
     () =>
-    <T,>(options: T) => ({ options, useParams: () => ({ id: PUZZLE_ID }) }),
+    <T,>(options: T) => ({ options, useParams: () => ({ id: mocks.id }) }),
   Link: ({
     to,
     search,
@@ -183,6 +185,7 @@ const renderPage = (locale: "en" | "nl" = "en") => {
 };
 
 beforeEach(() => {
+  mocks.id = PUZZLE_ID;
   mocks.data.clear();
   mocks.favorited = false;
   mocks.postReview.mockReset().mockResolvedValue(null);
@@ -488,6 +491,23 @@ describe("puzzle detail page: review composer", () => {
     expect(
       text.compareDocumentPosition(post()) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it("starts the next puzzle's review form empty, not with the last one's draft", () => {
+    setView(emptyView());
+    const { rerender } = renderPage();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Lovely" },
+    });
+
+    mocks.id = "puzzle_2";
+    const Page = Route.options.component!;
+    rerender(
+      <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
+        <Page />
+      </IntlProvider>,
+    );
+    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe("");
   });
 
   it("writes a review in a multi-line field where Enter is a new line, not Post", () => {
