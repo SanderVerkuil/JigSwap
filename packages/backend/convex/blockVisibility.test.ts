@@ -917,6 +917,85 @@ describe("households and circles", () => {
     },
   );
 
+  // A block with ANY member keeps bob out of the household, not only one with alice, the admin
+  // who invites him; he gets the same generic refusals.
+  const HOUSEMATE_DIRECTIONS = [
+    ["carol blocked bob", (u: Users) => [u.carol, u.bob] as const],
+    ["bob blocked carol", (u: Users) => [u.bob, u.carol] as const],
+  ] as const;
+
+  // alice's household, with carol as a member.
+  const householdWithCarol = async (t: T, u: Users) => {
+    await as(t, "alice").mutation(
+      api.household.createHousehold.createHousehold,
+      {},
+    );
+    const inviteId = await as(t, "alice").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: u.carol },
+    );
+    await as(t, "carol").mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
+    );
+  };
+
+  test.each(HOUSEMATE_DIRECTIONS)(
+    "%s: alice's invite to bob is hidden from him and Accept is refused",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await householdWithCarol(t, u);
+      const inviteId = await as(t, "alice").mutation(
+        api.household.inviteToHousehold.inviteToHousehold,
+        { inviteeId: u.bob },
+      );
+      const bobsInvites = () =>
+        as(t, "bob").query(
+          api.household.listMyHouseholdInvites.listMyHouseholdInvites,
+          {},
+        );
+      expect(await bobsInvites()).toHaveLength(1);
+      await insertBlock(t, ...pair(u));
+      expect(await bobsInvites()).toEqual([]);
+      await expectCode(
+        as(t, "bob").mutation(
+          api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+          { inviteId },
+        ),
+        "InviteNotFound",
+      );
+    },
+  );
+
+  test.each(HOUSEMATE_DIRECTIONS)(
+    "%s: alice's household link reads as invalid to bob and Accept is refused",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await householdWithCarol(t, u);
+      const { token } = await as(t, "alice").mutation(
+        api.social.createHouseholdInviteLink.createHouseholdInviteLink,
+        {},
+      );
+      const landing = () =>
+        as(t, "bob").query(
+          api.social.getHouseholdLinkInvite.getHouseholdLinkInvite,
+          { token },
+        );
+      expect((await landing()).state).toBe("can-accept");
+      await insertBlock(t, ...pair(u));
+      expect(await landing()).toEqual({ state: "invalid" });
+      await expectCode(
+        as(t, "bob").mutation(
+          api.social.acceptHouseholdLinkInvite.acceptHouseholdLinkInvite,
+          { token },
+        ),
+        "InviteLinkInvalid",
+      );
+    },
+  );
+
   test.each(DIRECTIONS)(
     "%s: adding the other member to a circle is refused",
     async (_, pair) => {

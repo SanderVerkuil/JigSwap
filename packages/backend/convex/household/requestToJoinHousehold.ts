@@ -8,18 +8,18 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
-import { isBlockedEitherWay } from "../social/blocks";
 import { requireRequestableHouseholdLink } from "../social/householdLinkInvite";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
+import { blockedWithHousehold } from "./memberships";
 
 // Composition root: ask to join the household an EXPIRED or USED household invite link was minted
 // for (the signed-in landing's "Ask to join"). The token is resolved server-side; every other link
 // state refuses with the same codes as Accept (a live link with InviteLinkLive). A member in a
 // household must pass leaveCurrentHousehold (else AlreadyInHousehold). The answer is the same
 // { requestId } whether or not the request reaches anyone: when the household is gone, its owner is
-// no longer its admin, or the pair is blocked either way, it is stored as dropped and nobody is
-// told. Rate-limited (householdJoinRequest) before any lookup.
+// no longer its admin, or the requester and anyone in the household are blocked either way, it is
+// stored as dropped and nobody is told. Rate-limited (householdJoinRequest) before any lookup.
 export const requestToJoinHousehold = mutation({
   args: { token: v.string(), leaveCurrentHousehold: v.optional(v.boolean()) },
   handler: async (
@@ -42,7 +42,11 @@ export const requestToJoinHousehold = mutation({
       householdId: toHouseholdId(link.context.householdId),
       adminId: toMemberId(link.ownerId),
       linkId: link._id,
-      blocked: await isBlockedEitherWay(ctx, link.ownerId, memberId),
+      blocked: await blockedWithHousehold(
+        ctx,
+        memberId,
+        link.context.householdId,
+      ),
       leaveCurrentHousehold,
     });
     if (result.isErr) throw toConvexError(result.error);
