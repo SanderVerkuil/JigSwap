@@ -213,14 +213,17 @@ const exchangeViews = async (t: T, name: Name, exchangeId: string) => {
     api.exchange.getExchangeById.getExchangeById,
     { exchangeId: await exchangeRowId(t, exchangeId) },
   );
-  const listed = await reader.query(
-    api.exchange.getUserExchanges.getUserExchanges,
-    {},
-  );
+  const [live, history] = await Promise.all([
+    reader.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
+    reader.query(api.exchange.listMyExchangeHistory.listMyExchangeHistory, {
+      paginationOpts: { numItems: 50, cursor: null },
+    }),
+  ]);
   return {
     detail: detail?.ownerPuzzle,
-    summary: listed.find((row) => row.aggregateId === exchangeId)
-      ?.requestedOwnedPuzzle,
+    summary: [...live, ...history.page].find(
+      (row) => row.aggregateId === exchangeId,
+    )?.requestedOwnedPuzzle,
   };
 };
 

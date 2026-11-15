@@ -300,7 +300,10 @@ describe("exchange views of a copy of a non-approved definition (SEC-34)", () =>
     });
     const requestedPuzzleFor = async (caller: ReturnType<typeof asOther>) =>
       (
-        await caller.query(api.exchange.getUserExchanges.getUserExchanges, {})
+        await caller.query(
+          api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+          {},
+        )
       )[0]?.requestedPuzzle;
 
     const seen = await requestedPuzzleFor(asOther(t));
@@ -423,7 +426,10 @@ describe("a copy's owner who did not submit its definition (SEC-34)", () => {
     );
 
     const seen = (
-      await asOther(t).query(api.exchange.getUserExchanges.getUserExchanges, {})
+      await asOther(t).query(
+        api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+        {},
+      )
     )[0]?.requestedPuzzle;
     expect(seen).toMatchObject({ title: "Snapshot title pending" });
     expect(JSON.stringify(seen)).not.toContain("secretword");

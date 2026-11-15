@@ -240,7 +240,10 @@ const copyReads = (t: T, s: Seeded, who: "alice" | "bob") => {
     publicProfile: viewer.query(api.social.getPublicProfile.getPublicProfile, {
       handle: s.alice,
     }),
-    exchanges: viewer.query(api.exchange.getUserExchanges.getUserExchanges, {}),
+    exchanges: viewer.query(
+      api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+      {},
+    ),
     exchangeById: viewer.query(api.exchange.getExchangeById.getExchangeById, {
       exchangeId: s.exchange,
     }),

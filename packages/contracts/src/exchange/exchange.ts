@@ -65,9 +65,9 @@ export interface ExchangeView extends ExchangeFields {
 }
 
 /**
- * A list-item exchange (legacy `getUserExchanges` / `getExchangesByOwner` / `getExchangesByRequester`).
- * Carries both the owned copies and their catalog definitions the legacy reads joined. `userRole`
- * is present only on the `getUserExchanges` variant (owner/requester lists omit it).
+ * A list-item exchange, as the Exchanges page lists it (`listMyLiveExchanges`,
+ * `listMyExchangeHistory`, `getMyExchangeSummary`). Carries both the owned copies and their catalog
+ * definitions. `userRole` is the viewer's side of the exchange.
  */
 export interface ExchangeSummaryView extends ExchangeFields {
   userRole?: "requester" | "owner";

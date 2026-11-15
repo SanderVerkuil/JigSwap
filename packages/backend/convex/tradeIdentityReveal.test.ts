@@ -223,15 +223,7 @@ const exchangeViews = async (t: T, who: string, exchangeId: string) => {
   return {
     detail: await detail(t, who, exchangeId),
     list: await reader.query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    ),
-    asRequester: await reader.query(
-      api.exchange.getExchangesByRequester.getExchangesByRequester,
-      {},
-    ),
-    asOwner: await reader.query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      api.exchange.listMyLiveExchanges.listMyLiveExchanges,
       {},
     ),
   };
@@ -278,8 +270,8 @@ describe("per-trade reveal: the owner sees the requester", () => {
     expect(Object.keys(views.detail!.requester!).sort()).toEqual(TRIMMED_KEYS);
     expect(views.detail?.requester?.name).toBe("Rita Requester");
     expect(views.detail?.initiatorId).toBe(w.requester);
-    expect(views.asOwner[0]!.requester?._id).toBe(w.requester);
-    expect(views.asOwner[0]!.requesterState).toBe("tradeRevealed");
+    expect(views.list[0]!.requester?._id).toBe(w.requester);
+    expect(views.list[0]!.requesterState).toBe("tradeRevealed");
     expect(views.list[0]!.requester?.username).toBe("requester");
     const json = JSON.stringify(views);
     for (const leak of [
@@ -373,7 +365,7 @@ describe("per-trade reveal: the requester sees the owner only after the owner ac
     expect(views.detail).not.toHaveProperty("recipientId");
     expect(views.detail?.ownerPuzzle).not.toHaveProperty("ownerId");
     expect(views.list[0]!.owner).toBeNull();
-    expect(views.asRequester[0]!.ownerState).toBe("hidden");
+    expect(views.list[0]!.ownerState).toBe("hidden");
     const json = JSON.stringify(views);
     expect(json).not.toContain(w.owner);
     expect(json).not.toContain("Olivia");

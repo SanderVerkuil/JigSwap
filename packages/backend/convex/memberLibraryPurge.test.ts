@@ -907,11 +907,11 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
     );
     expect(view?.status).toBe("cancelled");
     expect(view?.ownerPuzzle).toBeNull();
-    const list = await as(t, "bob").query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
+    const history = await as(t, "bob").query(
+      api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+      { paginationOpts: { numItems: 10, cursor: null } },
     );
-    expect(list.length).toBeGreaterThan(0);
+    expect(history.page.map((e) => e.aggregateId)).toContain(exchangeId);
   });
 });
 

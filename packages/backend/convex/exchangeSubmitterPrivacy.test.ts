@@ -112,15 +112,7 @@ const allReadModels = async (
       exchangeId,
     }),
     list: await reader.query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    ),
-    asRequester: await reader.query(
-      api.exchange.getExchangesByRequester.getExchangesByRequester,
-      {},
-    ),
-    asOwner: await reader.query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
+      api.exchange.listMyLiveExchanges.listMyLiveExchanges,
       {},
     ),
     partner: await reader.query(api.exchange.getTradePartner.getTradePartner, {

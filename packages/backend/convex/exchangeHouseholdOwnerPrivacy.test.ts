@@ -95,15 +95,7 @@ const views = async (t: T, who: string, exchangeId: Id<"exchanges">) => {
       exchangeId,
     }),
     list: await reader.query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    ),
-    asOwner: await reader.query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
-      {},
-    ),
-    asRequester: await reader.query(
-      api.exchange.getExchangesByRequester.getExchangesByRequester,
+      api.exchange.listMyLiveExchanges.listMyLiveExchanges,
       {},
     ),
   };
@@ -128,7 +120,7 @@ describe("an offered household-mate copy never discloses the mate", () => {
       const ownerViews = await views(t, "owner", exchangeId);
       // Sanity: the owner does see the offered copy itself.
       expect(ownerViews.detail?.requesterPuzzle?._id).toBe(w.mateCopy);
-      expect(ownerViews.asOwner[0]!.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
+      expect(ownerViews.list[0]!.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
       expect(ownerViews.detail?.requesterPuzzle).not.toHaveProperty("ownerId");
       expect(ownerViews.list[0]!.offeredOwnedPuzzle).not.toHaveProperty(
         "ownerId",
@@ -143,10 +135,8 @@ describe("an offered household-mate copy never discloses the mate", () => {
       const requesterViews = await views(t, "requester", exchangeId);
       expect(requesterViews.detail?.initiatorId).toBe(w.requester);
       expect(requesterViews.detail?.requesterPuzzle?._id).toBe(w.mateCopy);
-      expect(requesterViews.asRequester[0]!.offeredOwnedPuzzle?._id).toBe(
-        w.mateCopy,
-      );
-      expect(requesterViews.asRequester[0]!.requestedOwnedPuzzle?._id).toBe(
+      expect(requesterViews.list[0]!.offeredOwnedPuzzle?._id).toBe(w.mateCopy);
+      expect(requesterViews.list[0]!.requestedOwnedPuzzle?._id).toBe(
         w.ownerCopy,
       );
     };
