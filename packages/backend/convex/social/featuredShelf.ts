@@ -6,26 +6,25 @@ import { requireMember } from "../identity/requireMember";
 import { canViewCopy } from "../library/canViewCopy";
 import { toOwnedCopyView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
-import { isBlockedEitherWay } from "./blocks";
+import { canSeeProfileContent } from "./privacy";
 
 // Social read: the curated, ordered set of owned copies a member has featured on their profile
 // shelf. Auth-gated. Returns them in the stored order and skips any entry that no longer exists or
 // is no longer owned by `userId` (defensive; ownership could have changed since curation).
 //
-// SECURITY: this is a public profile shelf, so a NON-owner viewer only sees copies they may
-// actually reach (canViewCopy: owner public + open, or circle-shared) and never the owner-only
-// fields (notes / acquisition provenance) — those are gated by the mapper's includeOwnerOnly
-// default. The OWNER sees their full curated shelf with all owner-only fields. Returns [] when the
+// SECURITY: the shelf is profile content, so it needs the profile unlock (canSeeProfileContent:
+// self, public profile or mutual follower, never across a block); otherwise [], else a locked viewer
+// could probe member ids to learn who owns a copy they can open. A NON-owner viewer then only sees
+// copies they may actually reach (canViewCopy: owner public + open, or circle-shared) and never the
+// owner-only fields (notes / acquisition provenance) — those are gated by the mapper's
+// includeOwnerOnly default. The OWNER sees their full curated shelf with all owner-only fields. Returns [] when the
 // member has no profile or has not curated their shelf (caller falls back to recent-6).
 export const featuredShelf = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args): Promise<OwnedCopyView[]> => {
     const viewerId = (await requireMember(ctx)) as unknown as Id<"users">;
     const isOwner = viewerId === args.userId;
-    // Blocked either way (spec 2.6): no shelf, even for a copy the viewer happens to hold.
-    if (!isOwner && (await isBlockedEitherWay(ctx, viewerId, args.userId))) {
-      return [];
-    }
+    if (!(await canSeeProfileContent(ctx, viewerId, args.userId))) return [];
 
     const profile = await ctx.db
       .query("profiles")
