@@ -16,6 +16,7 @@ import { canViewCopy } from "../library/canViewCopy";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
 import { toCopySnapshotView } from "../library/mappers";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { isBlockedEitherWay } from "../social/blocks";
 import {
   projectTradeParty,
   tradePartyMemberView,
@@ -226,10 +227,10 @@ export const toExchangeFields = (
  * Whether the exchange may show `viewerId` the copy as it is now. A copy keeps its id through every
  * sale and its owner keeps changing it, so an exchange row outlives what it shows. While the trade
  * is in play and the copy still belongs to it (a party owns it, or a household mate's copy is still
- * on offer, as canViewCopy's rule P decides that), the trade is about the copy itself and its facts
- * are the party's to read, even with the owner's profile and the copy closed. Otherwise only the
- * ordinary gate decides (canViewCopy, the copy page's own), so a party who has lost the copy page
- * has lost its live facts too.
+ * on offer, as canViewCopy's rule P decides that, its block veto included), the trade is about the
+ * copy itself and its facts are the party's to read, even with the owner's profile and the copy
+ * closed. Otherwise only the ordinary gate decides (canViewCopy, the copy page's own), so a party
+ * who has lost the copy page has lost its live facts too.
  */
 const showsCopyAsItIsNow = async (
   ctx: QueryCtx,
@@ -243,7 +244,8 @@ const showsCopyAsItIsNow = async (
       c.ownerId === e.recipientId ||
       (c._id === e.offeredPuzzleId &&
         (e.offeredPuzzleOwnerId ?? c.ownerId) === c.ownerId &&
-        (await canManageCopy(ctx, e.initiatorId, c))))
+        (await canManageCopy(ctx, e.initiatorId, c)) &&
+        !(await isBlockedEitherWay(ctx, viewerId, c.ownerId))))
   ) {
     return true;
   }

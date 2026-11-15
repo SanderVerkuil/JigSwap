@@ -548,4 +548,16 @@ describe("rule P for a copy a household co-manager offered", () => {
     );
     expectSnapshotOnly(await offeredCopyView(t, swap));
   });
+
+  test("the recipient reads only the snapshot once the owner blocks them, though the swap stays open", async () => {
+    const t = convexTest(schema, modules);
+    const { ids, swap } = await seedHousehold(t);
+    expect(await offeredCopyView(t, swap)).toMatchObject({ condition: "good" });
+
+    await asMember(t, "mara").mutation(api.social.blockMember.blockMember, {
+      memberId: ids.rex,
+    });
+    expect(await exchangeStatus(t, swap)).toBe("proposed");
+    expectSnapshotOnly(await offeredCopyView(t, swap));
+  });
 });

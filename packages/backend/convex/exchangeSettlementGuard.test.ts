@@ -294,21 +294,21 @@ describe("a stale exchange never settles once a copy changed hands", () => {
   });
 });
 
-describe("a housemate's swap stops once they leave the household", () => {
-  const setUp = async () => {
-    const t = convexTest(schema, modules);
-    const { ids, puzzleAggregateId } = await seed(t);
-    await formHousehold(t, ids);
-    const x = await acquire(t, "mara", puzzleAggregateId);
-    const r = await acquire(t, "rex", puzzleAggregateId);
-    await offer(t, "rex", r, { forTrade: true });
-    // Hugo offers Mara's copy X for Rex's R.
-    const swap = await proposeSwap(t, "hugo", r, x);
-    return { t, ids, x, r, swap };
-  };
+const setUpHousemateSwap = async () => {
+  const t = convexTest(schema, modules);
+  const { ids, puzzleAggregateId } = await seed(t);
+  await formHousehold(t, ids);
+  const x = await acquire(t, "mara", puzzleAggregateId);
+  const r = await acquire(t, "rex", puzzleAggregateId);
+  await offer(t, "rex", r, { forTrade: true });
+  // Hugo offers Mara's copy X for Rex's R.
+  const swap = await proposeSwap(t, "hugo", r, x);
+  return { t, ids, x, r, swap };
+};
 
+describe("a housemate's swap stops once they leave the household", () => {
   test("removed before Rex accepts: the accept is refused and X stays Mara's", async () => {
-    const { t, ids, x, r, swap } = await setUp();
+    const { t, ids, x, r, swap } = await setUpHousemateSwap();
     await removeHugo(t, ids);
 
     expect(await codeOf(accept(t, "rex", swap))).toBe("OfferedCopyNotOwned");
@@ -318,7 +318,7 @@ describe("a housemate's swap stops once they leave the household", () => {
   });
 
   test("removed after Rex accepted: both confirmations are refused and X stays Mara's", async () => {
-    const { t, ids, x, r, swap } = await setUp();
+    const { t, ids, x, r, swap } = await setUpHousemateSwap();
     await accept(t, "rex", swap);
     await removeHugo(t, ids);
 
@@ -329,6 +329,48 @@ describe("a housemate's swap stops once they leave the household", () => {
     expect((await copyRow(t, x)).ownerId).toBe(ids.mara);
     expect((await copyRow(t, r)).ownerId).toBe(ids.rex);
     expect(await custodyOf(t, x)).toHaveLength(0);
+  });
+});
+
+// A block keeps the owner's puzzles from going to the blocked member, through a housemate too. The
+// copy is refused like any copy the housemate may not offer, so neither of them is told of a block.
+describe("a housemate's swap of Mara's copy stops once Mara blocks its recipient", () => {
+  const blockRex = (t: T, ids: Ids) =>
+    as(t, "mara").mutation(api.social.blockMember.blockMember, {
+      memberId: ids.rex,
+    });
+
+  test("blocked before Rex accepts: the accept is refused, Hugo can't offer X to Rex again and X stays Mara's", async () => {
+    const { t, ids, x, r, swap } = await setUpHousemateSwap();
+    await blockRex(t, ids);
+
+    expect(await codeOf(accept(t, "rex", swap))).toBe("OfferedCopyNotOwned");
+    expect(await statusOf(t, swap)).toBe("proposed");
+    await as(t, "hugo").mutation(api.exchange.cancel.cancel, {
+      exchangeId: swap,
+    });
+    const offerable = await as(t, "hugo").query(
+      api.exchange.getOfferableCopies.getOfferableCopies,
+      { requestedPuzzleId: r.id },
+    );
+    expect(offerable.map((c) => c._id)).not.toContain(x.id);
+    expect(await codeOf(proposeSwap(t, "hugo", r, x))).toBe(
+      "OfferedCopyNotOwned",
+    );
+    expect((await copyRow(t, x)).ownerId).toBe(ids.mara);
+  });
+
+  test("blocked after Rex accepted: both confirmations are refused and X stays Mara's", async () => {
+    const { t, ids, x, r, swap } = await setUpHousemateSwap();
+    await accept(t, "rex", swap);
+    await blockRex(t, ids);
+
+    expect(await codeOf(confirm(t, "hugo", swap))).toBe("OfferedCopyNotOwned");
+    expect(await codeOf(confirm(t, "rex", swap))).toBe("OfferedCopyNotOwned");
+    await flush(t);
+    expect(await statusOf(t, swap)).toBe("accepted");
+    expect((await copyRow(t, x)).ownerId).toBe(ids.mara);
+    expect((await copyRow(t, r)).ownerId).toBe(ids.rex);
   });
 });
 

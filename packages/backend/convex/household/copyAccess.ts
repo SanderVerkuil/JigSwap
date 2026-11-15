@@ -73,12 +73,14 @@ export const canManageCopy = async (
   canManageHouseholdCopy(await copyAccessOf(ctx, actorId, copy));
 
 // The household facts co-management of an OWNER's copies depends on: their household's default
-// copy permission and the other members not blocked either way with the owner. Null when the
-// owner is in no household. A bulk reader resolves it once per owner and decides each copy with
-// coManagerIdsFrom.
+// copy permission, the other members not blocked either way with the owner, and every member
+// blocked either way with the owner (a co-manager may not offer the owner's copy to them). Null
+// when the owner is in no household. A bulk reader resolves it once per owner and decides each
+// copy with coManagerIdsFrom.
 export interface OwnerHousehold {
   readonly defaultCopyPermission: HouseholdCopyPermission | undefined;
   readonly mateIds: ReadonlySet<Id<"users">>;
+  readonly blockedIds: ReadonlySet<Id<"users">>;
 }
 
 export const ownerHouseholdOf = async (
@@ -99,6 +101,7 @@ export const ownerHouseholdOf = async (
         .map((m) => m.memberId)
         .filter((id) => id !== ownerId && !blockedIds.has(id)),
     ),
+    blockedIds,
   };
 };
 
@@ -117,13 +120,6 @@ export const coManagerIdsFrom = (
   if (permission !== "manage") return [];
   return [...ownerHousehold.mateIds].map((id) => toMemberId(id));
 };
-
-// Single-copy form of coManagerIdsFrom.
-export const coManagerIdsOf = async (
-  ctx: QueryCtx,
-  copy: Doc<"ownedPuzzles">,
-): Promise<MemberId[]> =>
-  coManagerIdsFrom(copy, await ownerHouseholdOf(ctx, copy.ownerId));
 
 // Driven adapter for Library's CopyManagerPolicy port. Library hands over the domain CopyId (the
 // row's aggregateId); the permission is read from the row.
