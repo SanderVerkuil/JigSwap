@@ -46,8 +46,9 @@ export const profileToDomain = (row: Doc<"profiles">): Profile => {
         ? undefined
         : DisplayName.fromState(row.displayName),
     bio: row.bio,
-    // Legacy rows written before visibility existed are treated as public.
-    visibility: row.visibility ?? "public",
+    // Absent (never chosen, or written before visibility existed) stays absent, so a save never
+    // turns it into an explicit "public" the member did not pick.
+    visibility: row.visibility,
     // Legacy rows written before shelf curation existed are treated as uncurated (empty list).
     featuredCopyIds: (row.featuredCopyIds ?? []) as string[],
     updatedAt: new Date(row.updatedAt),

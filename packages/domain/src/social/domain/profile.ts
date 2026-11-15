@@ -38,7 +38,9 @@ export interface ProfileState {
   readonly memberId: MemberId;
   readonly displayName?: DisplayName;
   readonly bio?: string;
-  readonly visibility: ProfileVisibility;
+  // Absent until the member chooses (changeVisibility): logged-out pages read that as private
+  // (SEC-44), in-app rules as public.
+  readonly visibility?: ProfileVisibility;
   // Ordered, curated set of owned copies featured on the profile shelf (sub-project ④).
   // Empty means uncurated (the plank falls back to recent-6).
   readonly featuredCopyIds: readonly string[];
@@ -70,7 +72,7 @@ export class Profile {
   }
 
   get visibility(): ProfileVisibility {
-    return this.state.visibility;
+    return this.state.visibility ?? "public";
   }
 
   get featuredCopyIds(): readonly string[] {
@@ -95,7 +97,6 @@ export class Profile {
       memberId,
       displayName: displayName.value,
       bio: bio.value,
-      visibility: "public",
       featuredCopyIds: [],
       updatedAt: props.now,
     });
