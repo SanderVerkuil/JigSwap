@@ -18,4 +18,12 @@ describe("removed public reads", () => {
       "custody/getCopyCustodyTimeline",
     ]);
   });
+
+  test("the unused marketing queries are gone", () => {
+    expectRemoved([
+      "insights/getPlankPuzzles",
+      "insights/getCommunityAvatars",
+      "insights/sampling",
+    ]);
+  });
 });

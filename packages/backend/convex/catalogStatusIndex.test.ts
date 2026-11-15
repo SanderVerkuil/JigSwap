@@ -271,17 +271,9 @@ describe("catalog reads by status (PERF-B8)", () => {
     expect(rows[0]).toEqual({ id: ids.a1, updatedAt: NOW + 100 });
   });
 
-  test("the landing plank and recommendations draw from approved rows only", async () => {
+  test("recommendations draw from approved rows only", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-
-    const plank = await t.query(api.insights.getPlankPuzzles.getPlankPuzzles, {
-      limit: 12,
-      seed: 7,
-    });
-    expect(plank.map((p) => p.title).sort()).toEqual(
-      [...APPROVED_OLDEST_FIRST].sort(),
-    );
 
     // With no taste signals every approved candidate is ranked (the card shows up to 12).
     const recs = await asAlice(t).query(

@@ -288,36 +288,6 @@ describe("splitting a pinned page that hit the bound keeps every row", () => {
 });
 
 describe("a non-finite size asks for the default", () => {
-  test("getCommunityAvatars and getPlankPuzzles keep their caps", async () => {
-    await addDefinitions(t, me, 20);
-    await t.run(async (ctx) => {
-      for (let i = 0; i < 12; i++) {
-        const memberId = await ctx.db.insert("users", memberRow(`public${i}`));
-        await ctx.db.insert("profiles", {
-          aggregateId: `profile_${i}`,
-          memberId,
-          visibility: "public",
-          updatedAt: 1,
-        });
-      }
-    });
-
-    for (const limit of [Number.NaN, Number.POSITIVE_INFINITY]) {
-      expect(
-        await t.query(api.insights.getCommunityAvatars.getCommunityAvatars, {
-          limit,
-          seed: 1,
-        }),
-      ).toHaveLength(8);
-      expect(
-        await t.query(api.insights.getPlankPuzzles.getPlankPuzzles, {
-          limit,
-          seed: 1,
-        }),
-      ).toHaveLength(12);
-    }
-  });
-
   test("the notification feed reads a full page", async () => {
     await t.run(async (ctx) => {
       for (let i = 0; i < MAX_NOTIFICATION_PAGE_SIZE + 5; i++) {
