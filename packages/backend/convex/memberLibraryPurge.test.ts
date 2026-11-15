@@ -1010,6 +1010,139 @@ describe("account deletion: batching", () => {
   });
 });
 
+describe("account deletion: photo-heavy accounts stay inside Convex's per-run limits", () => {
+  type Members = Awaited<ReturnType<typeof seedMembers>>;
+
+  // Convex's real per-function limits (4,096 index ranges), which a plain convexTest skips.
+  const limitedT = (): T => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    presenceTest.register(t);
+    return t;
+  };
+
+  // A stored photo with its three renditions (480/640/960 WebP), as the generation records them.
+  const storeRenditionedPhoto = (t: T): Promise<Id<"_storage">> =>
+    t.run(async (ctx) => {
+      const webp = (body: string) =>
+        ctx.storage.store(new Blob([body], { type: "image/webp" }));
+      const sourceId = await webp("photo");
+      await ctx.db.insert("imageRenditions", {
+        sourceId,
+        width: 1600,
+        height: 1200,
+        small: { fileId: await webp("small"), width: 480, height: 360 },
+        medium: { fileId: await webp("medium"), width: 640, height: 480 },
+        large: { fileId: await webp("large"), width: 960, height: 720 },
+        createdAt: Date.now(),
+      });
+      return sourceId;
+    });
+
+  // `copies` copies owned by `ownerId`, each with `photos` approved photos Alice uploaded.
+  const seedCopies = async (
+    t: T,
+    s: Members,
+    ownerId: Id<"users">,
+    copies: number,
+    photos: number,
+  ) => {
+    for (let i = 0; i < copies; i++) {
+      const copy = await insertCopy(t, s.puzzleId, ownerId);
+      for (let j = 0; j < photos; j++) {
+        const fileId = await storeRenditionedPhoto(t);
+        await t.run((ctx) =>
+          ctx.db.insert("ownedPuzzleImages", {
+            ownedPuzzleId: copy,
+            uploaderId: s.alice,
+            fileId,
+            moderationStatus: "approved",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          }),
+        );
+      }
+    }
+  };
+
+  // `solves` finished solves of Alice's on no copy, each with MAX_PHOTOS (5) approved photos.
+  const seedSolves = async (t: T, s: Members, solves: number) => {
+    for (let i = 0; i < solves; i++) {
+      const photos: Id<"_storage">[] = [];
+      for (let j = 0; j < 5; j++) photos.push(await storeRenditionedPhoto(t));
+      completionSeq += 1;
+      const aggregateId = `completion-${completionSeq}`;
+      await t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("completions", {
+          aggregateId,
+          userId: s.alice,
+          puzzleId: s.puzzleId,
+          startDate: now - 3_600_000,
+          endDate: now - 60_000,
+          photos,
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+        for (const fileId of photos) {
+          await ctx.db.insert("completionImages", {
+            completionId: aggregateId,
+            uploaderId: s.alice,
+            fileId,
+            moderationStatus: "approved",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      });
+    }
+  };
+
+  test.each<[string, (t: T, s: Members) => Promise<void>]>([
+    ["60 copies, one photo each", (t, s) => seedCopies(t, s, s.alice, 60, 1)],
+    ["5 copies, 20 photos each", (t, s) => seedCopies(t, s, s.alice, 5, 20)],
+    ["80 photos on copies Bob owns", (t, s) => seedCopies(t, s, s.bob, 4, 20)],
+    ["15 solves, 5 photos each", (t, s) => seedSolves(t, s, 15)],
+  ])(
+    "%s: every row and blob goes and the purge reaches its last phase",
+    async (_, seed) => {
+      const t = limitedT();
+      const s = await seedMembers(t);
+      await seed(t, s);
+
+      await deleteMember(t, "alice");
+
+      const left = await t.run(async (ctx) => ({
+        copies: await ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_owner", (q) => q.eq("ownerId", s.alice))
+          .collect(),
+        photos: await ctx.db.query("ownedPuzzleImages").collect(),
+        solves: await ctx.db.query("completions").collect(),
+        renditions: await ctx.db.query("imageRenditions").collect(),
+        blobs: await ctx.db.system.query("_storage").collect(),
+        pendingPhases: (
+          await ctx.db.system.query("_scheduled_functions").collect()
+        )
+          .filter(
+            (job) =>
+              job.state.kind === "pending" &&
+              job.name.includes("purgeMemberMessagingData"),
+          )
+          .map((job) => job.args[0].phase),
+      }));
+      expect(left).toEqual({
+        copies: [],
+        photos: [],
+        solves: [],
+        renditions: [],
+        blobs: [],
+        pendingPhases: ["domainEvents"],
+      });
+    },
+  );
+});
+
 describe("account deletion: goals, collections, categories", () => {
   test("hers are deleted, Bob's stay", async () => {
     const t = newT();

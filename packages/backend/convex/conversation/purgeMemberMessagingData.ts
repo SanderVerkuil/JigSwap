@@ -147,10 +147,10 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
 //                A moderation audit row names a member by users id only (targetMemberId,
 //                SEC-57), so it needs no scrub: it reads "Deleted member" once the row is gone.
-// One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
-// schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
-// limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
-// stay in the index; the cursor walks past them.
+// One phase at a time, PURGE_BATCH_SIZE rows per run (PHASE_BATCH_SIZE in the photo phases and
+// domainEvents): a run that did not finish its phase schedules the next run with the page cursor,
+// so each run stays well inside Convex's per-mutation limits whatever the member's history. Rows a
+// phase keeps (a quarantined or evidence-held photo) stay in the index; the cursor walks past them.
 
 /** Rows handled per run. */
 export const PURGE_BATCH_SIZE = 100;
@@ -273,6 +273,21 @@ const phaseValidator = v.union(
   v.literal("activityEntries"),
   v.literal("domainEvents"),
 );
+
+// Rows per run where PURGE_BATCH_SIZE does not fit. Convex allows 4,096 index ranges per function,
+// and deleting one photo with its three renditions reads about 63 (each of its four blobs is
+// checked by blobReferences.isReferenced's 14 lookups first; purgeMemberLibrary deleteCopyPhoto).
+//   copies       1: a copy at MAX_COPY_IMAGES (20) photos reads about 1,270, and their own solves
+//                   on it go with it, about 310 each at MAX_PHOTOS (5). Solves per copy have no
+//                   cap, so a whole run is left to one copy: room for about 9 photographed solves.
+//   copyPhotos  50: about 63 each, 3,150.
+//   completions 10: up to MAX_PHOTOS (5) photos each, about 310, 3,100.
+const PHASE_BATCH_SIZE: Partial<Record<Phase, number>> = {
+  copies: 1,
+  copyPhotos: 50,
+  completions: 10,
+  domainEvents: EVENT_SCRUB_BATCH_SIZE,
+};
 
 type Page = { isDone: boolean; continueCursor: string };
 
@@ -902,9 +917,7 @@ export const purgeMemberMessagingData = internalMutation({
   },
   handler: async (ctx, { memberId, phase, cursor, batchSize }) => {
     const current = phase ?? PHASES[0];
-    const numItems =
-      batchSize ??
-      (current === "domainEvents" ? EVENT_SCRUB_BATCH_SIZE : PURGE_BATCH_SIZE);
+    const numItems = batchSize ?? PHASE_BATCH_SIZE[current] ?? PURGE_BATCH_SIZE;
     const page = await runPhase(ctx, memberId, current, {
       cursor: cursor ?? null,
       numItems,
