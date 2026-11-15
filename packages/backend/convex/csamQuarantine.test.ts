@@ -751,6 +751,43 @@ describe("refused uploads are hash-checked first (M2)", () => {
     expect(row.moderationStatus).toBe("rejected");
     expect(await escalations(t)).toEqual([]);
   });
+
+  test("refused while the hash service is down: a later match escalates on its kept hashes", async () => {
+    vi.stubGlobal("fetch", routedFetch(503));
+    const t = withModerationPool(convexTest(schema, modules));
+    presenceTest.register(t);
+    const { copy } = await seed(t);
+    const fileId = (await t.run((ctx) =>
+      ctx.storage.store(new Blob(["<svg></svg>"], { type: "image/svg+xml" })),
+    )) as Id<"_storage">;
+    await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+      copyId: copy,
+      fileId,
+      tag: "box_front",
+    });
+    await settleDueJobs(t);
+    const [row] = await t.run((ctx) =>
+      ctx.db
+        .query("ownedPuzzleImages")
+        .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy))
+        .collect(),
+    );
+    expect(row.moderationStatus).toBe("rejected");
+    expect(await blobExists(t, fileId)).toBe(false);
+
+    vi.stubGlobal("fetch", routedFetch("match"));
+    await t.action(internal.library.moderatePhoto.recheckHashes, {
+      imageId: row._id,
+      attempt: 1,
+      pooled: true,
+    });
+
+    const after = await t.run((ctx) => ctx.db.get(row._id));
+    expect(after?.moderationStatus).toBe("quarantined");
+    expect(await escalations(t)).toEqual([
+      expect.objectContaining({ originalDiscarded: true }),
+    ]);
+  });
 });
 
 describe("logging on a match (L2)", () => {

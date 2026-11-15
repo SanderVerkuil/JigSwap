@@ -11,8 +11,9 @@ import { isHashCleared } from "./lib/imageModeration/hashCheckFields";
 import schema from "./schema";
 
 // SEC-55: the `by_hash_check_pending` index holds the photos whose CSAM hash check has not
-// passed. A refused upload (rejected as "invalid_image", its blob deleted) is never published and
-// never re-checked, so it must leave the index; and the admin's "N photos waiting" count must not
+// passed. A refused upload (rejected as "invalid_image", its blob deleted) is never published, so
+// once the hash service has answered it must leave the index (while the service is down it keeps
+// its hashes and waits on their re-check); and the admin's "N photos waiting" count must not
 // be hidden behind rows it does not count (refused rows from before this fix, quarantined rows,
 // timed-out rows an admin rejected). The classifier (Hugging Face) and the hash service
 // (Offlimits HCS) are a routed fake `fetch`.
@@ -141,30 +142,45 @@ const uploadGarbage = async (t: T, copy: Id<"ownedPuzzles">) => {
 };
 
 describe("a refused upload leaves the hash-pending index", () => {
-  test.each([
-    ["the hash service answers no match", "no_match" as const],
-    ["the hash service is down", 503],
-  ])(
-    "%s: rejected as an invalid image, its blob deleted, out of the index",
-    async (_label, hcs) => {
-      fakes.hcs = hcs;
-      const t = withModerationPool(convexTest(schema, modules));
-      const { copy } = await seed(t);
+  test("the hash service answers no match: rejected as an invalid image, its blob deleted, out of the index", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
 
-      const { row, fileId } = await uploadGarbage(t, copy);
+    const { row, fileId } = await uploadGarbage(t, copy);
 
-      expect(row).toMatchObject({
-        moderationStatus: "rejected",
-        moderationLabel: "invalid_image",
-      });
-      expect(await blobExists(t, fileId)).toBe(false);
-      // Never published, never re-checked: nothing waits on its hash check.
-      expect(row.hashCheckPendingSince).toBeUndefined();
-      expect(row.hashCheckedAt).toBeUndefined();
-      expect(row.pendingHashes).toBeUndefined();
-      expect(await pendingIndexIds(t)).toEqual([]);
-    },
-  );
+    expect(row).toMatchObject({
+      moderationStatus: "rejected",
+      moderationLabel: "invalid_image",
+    });
+    expect(await blobExists(t, fileId)).toBe(false);
+    // Never published, and the service answered: nothing waits on its hash check.
+    expect(row.hashCheckPendingSince).toBeUndefined();
+    expect(row.hashCheckedAt).toBeUndefined();
+    expect(row.pendingHashes).toBeUndefined();
+    expect(await pendingIndexIds(t)).toEqual([]);
+  });
+});
+
+// With the service up, the same bytes are checked and a match escalates (csamQuarantine.test.ts),
+// so an outage must not let a refused upload escape the check: its hashes wait for a re-check.
+describe("a refused upload while the hash service is down", () => {
+  test("is rejected and its blob deleted, but keeps its hashes, its re-check armed, in the index", async () => {
+    fakes.hcs = 503;
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+
+    const { row, fileId } = await uploadGarbage(t, copy);
+
+    expect(row).toMatchObject({
+      moderationStatus: "rejected",
+      moderationLabel: "invalid_image",
+    });
+    expect(await blobExists(t, fileId)).toBe(false);
+    expect(row.hashCheckedAt).toBeUndefined();
+    expect(row.pendingHashes).toHaveLength(1);
+    expect(row.hashRecheckAttempt).toBe(1);
+    expect(await pendingIndexIds(t)).toEqual([row._id]);
+  });
 });
 
 // A row written before the claim rule may hold another row's blob (SEC-01). Refusing it can't delete

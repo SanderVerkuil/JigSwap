@@ -502,7 +502,8 @@ const runAttempt = async <R extends ModerationRow>(
     // concurrent attempt already decided on is never touched. A store's own reject side effects
     // may have deleted it already (completion photos): the delete then reports "missing". Once the
     // blob is gone, the row owes no hash check and leaves the hash-pending index (setHashCheck
-    // "refused"), so refused uploads never pile up in front of the photos that do wait (SEC-55).
+    // "refused"), so refused uploads never pile up in front of the photos that do wait (SEC-55),
+    // unless the hash service was down: then its stored hashes keep it waiting on their re-check.
     // A blob that survives (another row holds it, an escalation preserves it, or its delete
     // failed) keeps the row in the index, its gate closed.
     const refuse = async (reason: ImageGuardFailure) => {
@@ -668,23 +669,22 @@ const runAttempt = async <R extends ModerationRow>(
         }
         openGate = hashCheck.status === "no_match" && refusal === null;
         // Unavailable: the gate stays closed. Keep the hashes (of the original AND the re-encode,
-        // since the original is deleted after the swap below) and re-check them later. Surface it
-        // at error level for alerting.
+        // since the original is deleted after the swap below) and re-check them later, also for
+        // an upload refused below: a match escalates it on the hashes alone once its blob is
+        // gone. Surface it at error level for alerting.
         if (hashCheck.status === "unavailable") {
           event.outcome = "error";
-          if (refusal === null) {
-            await ctx.runMutation(steps.setHashCheck, {
-              imageId,
-              status: "unavailable",
-              hashes: variants,
-            });
-            // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
-            await ctx.runMutation(
-              internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
-              { table: steps.table, imageId },
-            );
-            event.hash_recheck_in_ms = hashRecheckDelayMs(1);
-          }
+          await ctx.runMutation(steps.setHashCheck, {
+            imageId,
+            status: "unavailable",
+            hashes: variants,
+          });
+          // A crash before this lands is caught by the daily sweep (sweepLostHashRechecks).
+          await ctx.runMutation(
+            internal.lib.imageModeration.hashRecheckPool.startHashRecheck,
+            { table: steps.table, imageId },
+          );
+          event.hash_recheck_in_ms = hashRecheckDelayMs(1);
         }
       }
     }
