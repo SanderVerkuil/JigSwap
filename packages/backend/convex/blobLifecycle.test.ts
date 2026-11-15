@@ -373,3 +373,46 @@ describe("delete paths keep a blob another row holds", () => {
     expect(await blobExists(t, ownSolvePhoto)).toBe(false);
   });
 });
+
+describe("the pipeline's swap onto a row deleted meanwhile", () => {
+  test("deletes the re-encode: nothing will ever hold it", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const s = await seed(t);
+    const copyPhoto = await legacyCopyPhoto(t, s, await storeJunk(t));
+    const {
+      sidecars: [sidecar],
+    } = await legacyCompletion(t, s, [await storeJunk(t)]);
+    const boxArt = await t.run(async (ctx) =>
+      ctx.db.insert("boxArtUploads", {
+        storageId: await ctx.storage.store(new Blob(["box art"])),
+        uploaderId: s.mallory,
+        createdAt: Date.now(),
+      }),
+    );
+    await t.run(async (ctx) => {
+      for (const id of [copyPhoto, sidecar, boxArt]) await ctx.db.delete(id);
+    });
+    const reencodes = [
+      await storeJunk(t),
+      await storeJunk(t),
+      await storeJunk(t),
+    ];
+
+    await t.mutation(internal.library.moderationStore.setModerationFile, {
+      imageId: copyPhoto,
+      fileId: reencodes[0],
+    });
+    await t.mutation(
+      internal.solving.completionModerationStore.setModerationFile,
+      { imageId: sidecar, fileId: reencodes[1] },
+    );
+    await t.mutation(internal.catalog.boxArtModerationStore.setFile, {
+      imageId: boxArt,
+      fileId: reencodes[2],
+    });
+
+    for (const fileId of reencodes) {
+      expect(await blobExists(t, fileId)).toBe(false);
+    }
+  });
+});

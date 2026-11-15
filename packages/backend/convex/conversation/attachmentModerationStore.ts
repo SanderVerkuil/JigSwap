@@ -58,6 +58,8 @@ export const getImageForModeration = internalQuery({
 
 // Point the row at the re-encoded (EXIF-free) blob, store its blurhash and mark it re-encoded
 // (the pipeline stops re-encoding; with a passed hash check the blurhash may now be shown).
+// When the row went or was removed meanwhile (an account deletion, a moderator), the new blob
+// is deleted instead: a removed photo never takes a derivative of an image never classified.
 export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("messageAttachments"),
@@ -65,7 +67,11 @@ export const setModerationFile = internalMutation({
     blurhash: v.optional(v.string()),
   },
   handler: async (ctx, { imageId, fileId, blurhash }) => {
-    if (!(await ctx.db.get(imageId))) return;
+    const row = asImage(await ctx.db.get(imageId));
+    if (!row || row.moderationStatus === "removed") {
+      await ctx.storage.delete(fileId);
+      return;
+    }
     const now = Date.now();
     await ctx.db.patch(imageId, {
       fileId,

@@ -84,7 +84,8 @@ export const getForModeration = internalQuery({
 });
 
 // Swap the row to the re-encoded blob, and every definition or proposal already holding the
-// upload with it (a retry may swap after the id was handed out).
+// upload with it (a retry may swap after the id was handed out). When the row went meanwhile, the
+// new blob is referenced by nothing, so it is deleted here.
 export const setFile = internalMutation({
   args: {
     imageId: v.id("boxArtUploads"),
@@ -93,7 +94,10 @@ export const setFile = internalMutation({
   },
   handler: async (ctx, { imageId, fileId }) => {
     const row = await ctx.db.get(imageId);
-    if (!row) return;
+    if (!row) {
+      await ctx.storage.delete(fileId);
+      return;
+    }
     await ctx.db.patch(imageId, { storageId: fileId, reencodedAt: Date.now() });
     const holders = await boxArtHolders(ctx, row.storageId);
     await repointBoxArt(ctx, holders, row.storageId, fileId);

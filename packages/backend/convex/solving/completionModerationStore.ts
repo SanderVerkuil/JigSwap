@@ -56,7 +56,8 @@ export const getImageForModeration = internalQuery({
 // the parent completions row's `photos` array in the same mutation, so the two references never
 // diverge. Separate from the verdict patch so the re-encode is durable even if classification is
 // retried. Decode-failure approvals never come through here (the action classifies the original;
-// verdict-only). The old blob's deletion stays in the action, like the library pipeline.
+// verdict-only). The old blob's deletion stays in the action, like the library pipeline. When the
+// sidecar went meanwhile, the new blob is referenced by nothing, so it is deleted here.
 export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("completionImages"),
@@ -66,7 +67,10 @@ export const setModerationFile = internalMutation({
   },
   handler: async (ctx, { imageId, fileId, blurhash }) => {
     const row = await ctx.db.get(imageId);
-    if (!row) return;
+    if (!row) {
+      await ctx.storage.delete(fileId);
+      return;
+    }
     const oldFileId = row.fileId;
     const now = Date.now();
     await ctx.db.patch(imageId, {
