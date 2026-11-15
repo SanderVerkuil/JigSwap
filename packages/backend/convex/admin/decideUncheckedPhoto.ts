@@ -71,8 +71,13 @@ const assertDecidable = (row: DecidableRow, decision: Decision): void => {
   ) {
     throw new ConvexError("Photo is already decided");
   }
-  // Never decide (and so never publish) a photo before its CSAM hash check has passed.
-  if (!isHashCleared(row)) {
+  // Never publish a photo before its CSAM hash check has passed. A reject publishes nothing, so an
+  // unscored photo (its checks gave up, maybe before the hash step) may be rejected without one, as
+  // a message photo may; a pending one is left to the check it is waiting for.
+  if (
+    !isHashCleared(row) &&
+    !(decision === "reject" && row.moderationStatus === "unscored")
+  ) {
     throw new ConvexError("Photo has not passed the hash check yet");
   }
   assertDecisionFits(row, decision);
