@@ -35,4 +35,11 @@ describe("removed public reads", () => {
       "whatsNew/markAllSeen",
     ]);
   });
+
+  test("the write-only personal categories feature is gone", () => {
+    expectRemoved([
+      "library/createPersonalCategory",
+      "library/adapters/convexPersonalCategoryRepository",
+    ]);
+  });
 });

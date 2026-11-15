@@ -3,7 +3,6 @@ export * from "./change-copy-condition.port";
 export * from "./close-loan.port";
 export * from "./collection-membership.port";
 export * from "./create-collection.port";
-export * from "./create-personal-category.port";
 export * from "./delete-collection.port";
 export * from "./delete-copy.port";
 export * from "./open-loan.port";

@@ -37,8 +37,6 @@ export const toNotificationPreferenceId = (
 ): Id<"NotificationPreferenceId"> => toId<"NotificationPreferenceId">(value);
 export const toProfileId = (value: string): Id<"ProfileId"> =>
   toId<"ProfileId">(value);
-export const toPersonalCategoryId = (value: string): Id<"PersonalCategoryId"> =>
-  toId<"PersonalCategoryId">(value);
 export const toPartnerReviewId = (value: string): Id<"PartnerReviewId"> =>
   toId<"PartnerReviewId">(value);
 export const toReputationProfileId = (

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   toCollectionId,
   toCopyId,
-  toPersonalCategoryId,
   toPuzzleDefinitionId,
 } from "../../shared-kernel";
 import { LibraryApplicationError } from "./errors";
@@ -22,13 +21,6 @@ describe("LibraryApplicationError factories", () => {
     const e = LibraryApplicationError.collectionNotFound(id);
     expect(e.code).toBe("CollectionNotFound");
     expect(e.message).toBe("Collection col1 could not be found");
-  });
-
-  it("personalCategoryNotFound", () => {
-    const id = toPersonalCategoryId("cat1");
-    const e = LibraryApplicationError.personalCategoryNotFound(id);
-    expect(e.code).toBe("PersonalCategoryNotFound");
-    expect(e.message).toBe("Personal category cat1 could not be found");
   });
 
   it("duplicateCollectionName", () => {

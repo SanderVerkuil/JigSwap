@@ -70,22 +70,6 @@ describe("createCollection", () => {
   });
 });
 
-describe("createPersonalCategory", () => {
-  test("allows a day's worth and refuses the next one", async () => {
-    const create = (name: string) =>
-      asMe().mutation(
-        api.library.createPersonalCategory.createPersonalCategory,
-        { name },
-      );
-    for (let i = 0; i < RATE_LIMITS.categoryCreate.max; i++) {
-      await create(`Category ${i}`);
-    }
-    await expectRateLimited(create("One more"));
-    const rows = await t.run((ctx) => ctx.db.query("categories").collect());
-    expect(rows).toHaveLength(RATE_LIMITS.categoryCreate.max);
-  });
-});
-
 describe("updateCopySharing", () => {
   // The auditor's repro: Mallory's 200 close and reopen cycles put her copies ahead of Alice's.
   test("a close and reopen loop neither runs free nor climbs Browse", async () => {

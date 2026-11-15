@@ -123,5 +123,5 @@ were intentionally **not** changed):
   - `library/domain/collection.ts` (82.89%, 10 survived).
   - `library/application/use-cases/update-collection.ts` (74.07%, 7 survived).
 - **Error/value-object files** (`errors.ts` across contexts, `acquisition.ts`,
-  `personal-category.ts`, shared-kernel `domain-error.ts` / `identifier.ts`) — many
+  shared-kernel `domain-error.ts` / `identifier.ts`) — many
   survivors are in error-message construction and rarely-asserted branches.

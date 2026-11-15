@@ -2,7 +2,6 @@ export * from "./acquire-copy";
 export * from "./add-copy-to-collection";
 export * from "./change-copy-condition";
 export * from "./create-collection";
-export * from "./create-personal-category";
 export * from "./delete-collection";
 export * from "./delete-copy";
 export * from "./open-loan";

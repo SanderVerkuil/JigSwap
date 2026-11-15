@@ -1,11 +1,5 @@
 import { DomainError } from "../../shared-kernel";
-import {
-  CollectionId,
-  CopyId,
-  LoanId,
-  PersonalCategoryId,
-  PuzzleDefinitionId,
-} from "../domain";
+import { CollectionId, CopyId, LoanId, PuzzleDefinitionId } from "../domain";
 
 // Orchestration-level failures the aggregates cannot express because they depend on the world
 // (other aggregates' state, repository lookups) rather than their own data. Like LibraryError,
@@ -14,7 +8,6 @@ import {
 export type LibraryApplicationErrorCode =
   | "CopyNotFound"
   | "CollectionNotFound"
-  | "PersonalCategoryNotFound"
   | "DuplicateCollectionName"
   | "NotCopyOwner"
   | "CopyReserved"
@@ -46,15 +39,6 @@ export class LibraryApplicationError extends DomainError {
     return new LibraryApplicationError(
       "CollectionNotFound",
       `Collection ${collectionId} could not be found`,
-    );
-  }
-
-  static personalCategoryNotFound(
-    id: PersonalCategoryId,
-  ): LibraryApplicationError {
-    return new LibraryApplicationError(
-      "PersonalCategoryNotFound",
-      `Personal category ${id} could not be found`,
     );
   }
 

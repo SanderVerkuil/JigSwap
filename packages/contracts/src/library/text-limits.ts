@@ -6,8 +6,6 @@ export const LIBRARY_TEXT_LIMITS = {
   collectionName: 100,
   collectionDescription: 1_000,
   collectionNotes: 2_000,
-  categoryName: 100,
-  categoryDescription: 1_000,
   color: 32,
   icon: 32,
   copyNotes: 5_000,

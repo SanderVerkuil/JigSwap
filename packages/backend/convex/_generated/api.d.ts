@@ -326,7 +326,6 @@ import type * as library_adapters_convexCollectionRepository from "../library/ad
 import type * as library_adapters_convexCopyRepository from "../library/adapters/convexCopyRepository.js";
 import type * as library_adapters_convexCopyReservationPort from "../library/adapters/convexCopyReservationPort.js";
 import type * as library_adapters_convexLoanRepository from "../library/adapters/convexLoanRepository.js";
-import type * as library_adapters_convexPersonalCategoryRepository from "../library/adapters/convexPersonalCategoryRepository.js";
 import type * as library_adapters_copyMapper from "../library/adapters/copyMapper.js";
 import type * as library_adapters_eventPublisher from "../library/adapters/eventPublisher.js";
 import type * as library_adapters_idGenerators from "../library/adapters/idGenerators.js";
@@ -346,7 +345,6 @@ import type * as library_changeCopyCondition from "../library/changeCopyConditio
 import type * as library_circleSharedCopies from "../library/circleSharedCopies.js";
 import type * as library_copyVisibility from "../library/copyVisibility.js";
 import type * as library_createCollection from "../library/createCollection.js";
-import type * as library_createPersonalCategory from "../library/createPersonalCategory.js";
 import type * as library_definitionAggregates from "../library/definitionAggregates.js";
 import type * as library_definitionStats from "../library/definitionStats.js";
 import type * as library_deleteCollection from "../library/deleteCollection.js";
@@ -945,7 +943,6 @@ declare const fullApi: ApiFromModules<{
   "library/adapters/convexCopyRepository": typeof library_adapters_convexCopyRepository;
   "library/adapters/convexCopyReservationPort": typeof library_adapters_convexCopyReservationPort;
   "library/adapters/convexLoanRepository": typeof library_adapters_convexLoanRepository;
-  "library/adapters/convexPersonalCategoryRepository": typeof library_adapters_convexPersonalCategoryRepository;
   "library/adapters/copyMapper": typeof library_adapters_copyMapper;
   "library/adapters/eventPublisher": typeof library_adapters_eventPublisher;
   "library/adapters/idGenerators": typeof library_adapters_idGenerators;
@@ -965,7 +962,6 @@ declare const fullApi: ApiFromModules<{
   "library/circleSharedCopies": typeof library_circleSharedCopies;
   "library/copyVisibility": typeof library_copyVisibility;
   "library/createCollection": typeof library_createCollection;
-  "library/createPersonalCategory": typeof library_createPersonalCategory;
   "library/definitionAggregates": typeof library_definitionAggregates;
   "library/definitionStats": typeof library_definitionStats;
   "library/deleteCollection": typeof library_deleteCollection;

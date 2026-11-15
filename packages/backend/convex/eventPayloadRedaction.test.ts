@@ -4,7 +4,6 @@ import {
   CollectionCreated,
   CommentPosted,
   CopyDetailsUpdated,
-  PersonalCategoryCreated,
   PhotoCommentPosted,
   ProfileUpdated,
   toChangeProposalId,
@@ -14,7 +13,6 @@ import {
   toCopyId,
   toMemberId,
   toOwnerId,
-  toPersonalCategoryId,
   toPhotoCommentId,
   toPhotoId,
   toProfileId,
@@ -113,12 +111,6 @@ describe("recordAndSchedule", () => {
         false,
         AT,
       ),
-      new PersonalCategoryCreated(
-        toPersonalCategoryId("cat1"),
-        toOwnerId("m1"),
-        "Hospital stay",
-        AT,
-      ),
     ]);
 
     expect(Object.fromEntries(payloads)).toEqual({
@@ -141,7 +133,6 @@ describe("recordAndSchedule", () => {
         ownerId: "m1",
         isWishlist: false,
       },
-      PersonalCategoryCreated: { categoryId: "cat1", ownerId: "m1" },
     });
   });
 

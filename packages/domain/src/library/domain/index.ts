@@ -10,7 +10,6 @@ export * from "./events";
 export * from "./ids";
 export * from "./loan";
 export * from "./offers-batch";
-export * from "./personal-category";
 export * from "./price";
 export * from "./sharing-setting";
 export * from "./text-limits";
