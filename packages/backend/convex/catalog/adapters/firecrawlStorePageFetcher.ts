@@ -78,7 +78,7 @@ export const firecrawlStorePageFetcher: StorePageFetcher = {
 
     let result: ReturnType<typeof extractFromHtml>;
     try {
-      result = extractFromHtml(json.data.html);
+      result = extractFromHtml(json.data.html, { baseUrl: url });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       const detail = e instanceof Error && e.stack ? e.stack : message;

@@ -57,6 +57,7 @@ const unusableResponse = (
 export const browserStorePageFetcher: StorePageFetcher = {
   async fetch(url) {
     let html: string;
+    let finalUrl: string;
     try {
       const outcome = await fetchPublic(url, {
         headers: {
@@ -89,6 +90,7 @@ export const browserStorePageFetcher: StorePageFetcher = {
       // (metadata lives in <head>, which is typically well within the first 5 MB).
       const { bytes } = await readBodyCapped(outcome.response, MAX_BODY_BYTES);
       html = new TextDecoder().decode(bytes);
+      finalUrl = outcome.finalUrl;
     } catch (e) {
       // Catches AbortSignal timeout, network errors, etc.
       if (e instanceof Error && e.name === "TimeoutError") {
@@ -105,7 +107,7 @@ export const browserStorePageFetcher: StorePageFetcher = {
 
     let ogieResult: ReturnType<typeof extractFromHtml>;
     try {
-      ogieResult = extractFromHtml(html);
+      ogieResult = extractFromHtml(html, { baseUrl: finalUrl });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       const detail = e instanceof Error && e.stack ? e.stack : message;
@@ -130,7 +132,11 @@ export const browserStorePageFetcher: StorePageFetcher = {
     }
 
     return ok({
-      ...enrichWithHtmlFallback(toRawProductPage(ogieResult.data), html, url),
+      ...enrichWithHtmlFallback(
+        toRawProductPage(ogieResult.data),
+        html,
+        finalUrl,
+      ),
       source: "browser-ua",
     });
   },

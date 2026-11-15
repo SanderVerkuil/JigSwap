@@ -125,6 +125,35 @@ describe("ogieStorePageFetcher parses the page as ogie's own fetch did", () => {
     }
   });
 
+  test("projects the JSON-LD Product (name, brand, gtin13, image) from an @graph", async () => {
+    const ld = {
+      "@graph": [
+        { "@type": "WebPage" },
+        {
+          "@type": "Product",
+          name: "Mountain Vista",
+          brand: { name: "Ravensburger" },
+          gtin13: "4005556123456",
+          image: [{ url: "https://store.example.com/a.jpg" }],
+        },
+      ],
+    };
+    serve(() =>
+      html(
+        `<html><head><title>x</title><script type="application/ld+json">${JSON.stringify(ld)}</script></head></html>`,
+      ),
+    );
+
+    const result = await ogieStorePageFetcher.fetch(URL);
+
+    expect(result.isOk && result.value.jsonLdProducts?.[0]).toMatchObject({
+      name: "Mountain Vista",
+      brand: "Ravensburger",
+      gtin13: "4005556123456",
+      image: ["https://store.example.com/a.jpg"],
+    });
+  });
+
   test("a non-2xx or non-HTML answer is a retryable FetchFailed", async () => {
     serve(() => html("gone", { status: 404 }));
     const missing = await ogieStorePageFetcher.fetch(URL);
