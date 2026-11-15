@@ -3,7 +3,11 @@
 // getPuzzleDefinitionView.ts so the two views can't drift on the shared math.
 
 import type { CopyOfferSwapType } from "@jigswap/contracts";
-import { isPlausibleSolveMinutes, MAX_SOLVE_MINUTES } from "@jigswap/domain";
+import {
+  isPlausibleSolveMinutes,
+  MAX_SOLVE_MINUTES,
+  typedSolveMinutes,
+} from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { logEvent } from "../lib/logEvent";
@@ -19,19 +23,29 @@ export const round1 = (n: number): number => Math.round(n * 10) / 10;
 /** The longest solve an average counts, in days: MAX_SOLVE_MINUTES. */
 const MAX_FINISH_DAYS = MAX_SOLVE_MINUTES / 1440;
 
-/** Whole-day solve duration: the stored, explicit `completionTimeMinutes` ALWAYS wins (it's the
- * domain's resolved duration — mirrors `Completion.resolveDuration`, which already picked
- * explicit-vs-derived and applies the same-day => 1 day floor), converted to whole days. The
- * (endDate - startDate) diff is only a FALLBACK for legacy rows that predate persisting a duration,
- * and for dates too far apart to have a duration. A fallback result that isn't positive means the
- * span is unusable as a duration (e.g. a legacy same-day row) and returns null (unknown) rather than
- * a misleading 0. So does a number no solve can have taken, stored before the domain bounded it:
- * one row must not swamp a definition's public average. Null when neither is recorded. */
+/** Whole-day solve duration. A time the member typed (`typedSolveMinutes`) is hands-on time, not
+ * days on the table, so its days come from the dates, a same-day span counting 1 day. Otherwise the
+ * stored `completionTimeMinutes` wins (the domain's resolved duration — mirrors
+ * `Completion.resolveDuration`, which derived it from the dates with the same-day => 1 day floor),
+ * converted to whole days. The (endDate - startDate) diff is only a FALLBACK for legacy rows that
+ * predate persisting a duration, and for dates too far apart to have a duration. A fallback result
+ * that isn't positive means the span is unusable as a duration (e.g. a legacy same-day row) and
+ * returns null (unknown) rather than a misleading 0. So does a number no solve can have taken,
+ * stored before the domain bounded it: one row must not swamp a definition's public average. Null
+ * when neither is recorded. */
 export const finishDaysOf = (c: {
   startDate: number;
   endDate?: number;
   completionTimeMinutes?: number;
+  datePrecision?: Doc<"completions">["datePrecision"];
 }): number | null => {
+  if (c.endDate != null && typedSolveMinutes(c) !== undefined) {
+    const days = Math.max(
+      1,
+      Math.round((c.endDate - c.startDate) / MS_PER_DAY),
+    );
+    return days <= MAX_FINISH_DAYS ? days : null;
+  }
   if (c.completionTimeMinutes != null) {
     return isPlausibleSolveMinutes(c.completionTimeMinutes)
       ? Math.round(c.completionTimeMinutes / 1440)

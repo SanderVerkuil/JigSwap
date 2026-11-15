@@ -227,6 +227,7 @@ type CompletionStatsFields = Pick<
   | "startDate"
   | "endDate"
   | "completionTimeMinutes"
+  | "datePrecision"
 >;
 
 const completionStatsKey = (c: CompletionStatsFields): string =>
