@@ -56,10 +56,10 @@ const fetchClerkUserId = createServerFn({ method: "GET" }).handler(async () => {
 // beforeLoad re-runs on EVERY navigation (root always matches), which used to
 // fire a fetchClerkUserId round-trip per click. On the client, Clerk's SDK owns
 // live session state, so fetch once per page load and reuse across client-side
-// navigations — sign-in/out flows end in a full-page redirect, which naturally
-// resets this cache. The cache is seeded at hydration from the SSR-dehydrated
-// beforeLoad context (see RootComponent), so the first client navigation is
-// request-free too.
+// navigations. Sign-in and sign-out run inside the app, so AuthCacheSync resets
+// this cache when Clerk's session changes. The cache is seeded at hydration
+// from the SSR-dehydrated beforeLoad context (see RootComponent), so the first
+// client navigation is request-free too.
 type AuthPayload = { userId: string | null };
 let clientAuthCache: AuthPayload | null = null;
 
@@ -281,8 +281,11 @@ function RootComponent() {
   );
 }
 
-// If Clerk's client-side session diverges from the cached beforeLoad auth
-// (e.g. a sign-out that doesn't hard-reload), drop the cache and re-run the
+// If Clerk's client-side session diverges from the cached beforeLoad auth (Clerk
+// signs in and out inside the app, without a page load), drop the cache. When a
+// member's session ends, here or in another tab, load the page afresh: that
+// drops what memory still holds of them (Browse's loaded lists, the query
+// cache) before the next member signs in on this tab. A sign-in re-runs the
 // root beforeLoad so route guards see the new state.
 function AuthCacheSync() {
   const { isSignedIn } = useAuth();
@@ -290,8 +293,10 @@ function AuthCacheSync() {
   React.useEffect(() => {
     if (isSignedIn === undefined || !clientAuthCache) return;
     if (isSignedIn !== !!clientAuthCache.userId) {
+      const hadMember = !!clientAuthCache.userId;
       clientAuthCache = null;
-      void router.invalidate();
+      if (hadMember) window.location.assign("/");
+      else void router.invalidate();
     }
   }, [isSignedIn, router]);
   return null;
