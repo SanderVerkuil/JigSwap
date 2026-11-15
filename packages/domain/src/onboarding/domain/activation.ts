@@ -20,8 +20,8 @@ export const ACTIVATION_WINDOW_MS = 7 * DAY_MS;
 export const ENGAGED_WINDOW_MS = 14 * DAY_MS;
 /** Report cohorts are weekly sign-up buckets. */
 export const ACTIVATION_COHORT_MS = 7 * DAY_MS;
-/** One report covers at most this much sign-up time, so a single query stays within budget. */
-export const ACTIVATION_REPORT_MAX_RANGE_MS = 31 * DAY_MS;
+/** One report covers at most this much sign-up time, (one cohort), so a single query stays within the 4,096 index range limit. */
+export const ACTIVATION_REPORT_MAX_RANGE_MS = ACTIVATION_COHORT_MS;
 
 export interface ActivationFacts {
   /** createdAt of the member's own copies. */
