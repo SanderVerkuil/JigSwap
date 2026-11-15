@@ -539,6 +539,7 @@ import type * as social_backfillActivityEntries from "../social/backfillActivity
 import type * as social_blockMember from "../social/blockMember.js";
 import type * as social_blocks from "../social/blocks.js";
 import type * as social_cancelFollowRequest from "../social/cancelFollowRequest.js";
+import type * as social_clearUnchosenVisibility from "../social/clearUnchosenVisibility.js";
 import type * as social_connectionOffers from "../social/connectionOffers.js";
 import type * as social_createHouseholdInviteLink from "../social/createHouseholdInviteLink.js";
 import type * as social_declineConnection from "../social/declineConnection.js";
@@ -1171,6 +1172,7 @@ declare const fullApi: ApiFromModules<{
   "social/blockMember": typeof social_blockMember;
   "social/blocks": typeof social_blocks;
   "social/cancelFollowRequest": typeof social_cancelFollowRequest;
+  "social/clearUnchosenVisibility": typeof social_clearUnchosenVisibility;
   "social/connectionOffers": typeof social_connectionOffers;
   "social/createHouseholdInviteLink": typeof social_createHouseholdInviteLink;
   "social/declineConnection": typeof social_declineConnection;
