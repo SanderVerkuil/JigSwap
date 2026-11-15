@@ -1,10 +1,9 @@
 import { makeApproveChangeProposal, toChangeProposalId } from "@jigswap/domain";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { convexChangeProposalRepository } from "./adapters/convexChangeProposalRepository";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
@@ -25,8 +24,7 @@ export const approveChangeProposal = mutation({
     expectedUpdatedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const approve = makeApproveChangeProposal({
       proposals: convexChangeProposalRepository(ctx),

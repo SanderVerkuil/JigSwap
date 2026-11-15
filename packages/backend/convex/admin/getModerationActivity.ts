@@ -1,9 +1,8 @@
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { userQuery } from "../users";
@@ -122,8 +121,7 @@ export const getModerationActivity = query({
     ctx,
     { paginationOpts, kind, actorId },
   ): Promise<PaginationResult<ActivityRow>> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const actorFilter =
       actorId === undefined ? undefined : ctx.db.normalizeId("users", actorId);

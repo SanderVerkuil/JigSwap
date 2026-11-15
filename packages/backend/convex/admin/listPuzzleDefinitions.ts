@@ -1,11 +1,10 @@
 import type { AdminPuzzleDefinitionRowView } from "@jigswap/contracts";
 import { puzzleSearchTerm } from "@jigswap/domain";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
 import { definitionTotalsOf } from "../library/definitionStats";
@@ -44,8 +43,7 @@ export const listPuzzleDefinitions = query({
     ctx,
     args,
   ): Promise<PaginationResult<AdminPuzzleDefinitionRowView>> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const { status } = args;
     const term = args.search?.trim().toLowerCase() ?? "";

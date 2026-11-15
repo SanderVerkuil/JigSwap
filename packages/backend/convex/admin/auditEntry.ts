@@ -7,7 +7,7 @@ import {
 } from "./stampModerationAction";
 
 // One moderation audit row as the admin console shows it (the Activity Log, a member's and a
-// definition's trail). Admin-only: callers gate on requireMember + isAdmin.
+// definition's trail). Admin-only: callers gate on requireAdmin.
 
 /** The label of a row whose member's account is gone; the web shows its localized label. */
 export const DELETED_MEMBER_LABEL = "Deleted member";

@@ -1,9 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 
 // The audit label of a contact message: never the sender's name, email or text (personal data the
 // audit trail would otherwise keep after the message itself is gone).
@@ -16,8 +14,7 @@ export const CONTACT_MESSAGE_LABEL = "Contact message";
 export const markContactMessageHandled = mutation({
   args: { id: v.id("contactMessages") },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
     const message = await ctx.db.get(args.id);
     if (!message) throw new ConvexError({ code: "message_not_found" });
     if (message.status === "handled") return;

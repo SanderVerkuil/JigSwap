@@ -2,8 +2,7 @@ import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { deleteCopyPhoto } from "./deleteCopyPhoto";
 import { stampModerationAction } from "./stampModerationAction";
@@ -14,8 +13,7 @@ import { stampModerationAction } from "./stampModerationAction";
 export const confirmPhotoRemoval = mutation({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const row = await ctx.db.get(imageId);
     if (!row) throw new ConvexError("Photo not found");

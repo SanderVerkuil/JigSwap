@@ -1,9 +1,7 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
 import type { ImageAttachment } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 
 // Message photos the automated check rejected AND whose sender asked for a review (spec R.10):
 // the only way an admin ever sees a private message photo that was not reported. Oldest request
@@ -18,8 +16,7 @@ export const IMAGE_REVIEW_QUEUE_LIMIT = 100;
 export const listImageReviewRequests = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const rows = await ctx.db
       .query("messageAttachments")

@@ -1,8 +1,6 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 import { readCsamHashCheckConfig } from "../lib/imageModeration/csamHashCheck";
 import { isHashCheckTimedOut } from "../lib/imageModeration/hashCheckFields";
 
@@ -30,8 +28,7 @@ const IMAGE_TABLES = [
 export const listCsamEscalations = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const statuses = ["open", "reported", "closed"] as const;
     const escalations = [];

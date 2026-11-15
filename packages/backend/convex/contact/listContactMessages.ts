@@ -1,9 +1,8 @@
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { paginateBounded } from "../lib/pageSize";
 
 // Admin-only, but the page size is still the client's request (the inbox asks for 25).
@@ -12,7 +11,7 @@ const MAX_PAGE_SIZE = 50;
 // Admin triage read for the marketing contact form inbox, newest first and
 // paginated. An optional `status` narrows it to new or handled messages through
 // the by_status (status, createdAt) index; without one it pages every message.
-// Admin-only (requireMember + isAdmin), like the sibling catalog admin reads —
+// Admin-only (requireAdmin), like the sibling catalog admin reads —
 // the table holds visitor names/emails.
 export const listContactMessages = query({
   args: {
@@ -23,8 +22,7 @@ export const listContactMessages = query({
     ctx,
     args,
   ): Promise<PaginationResult<Doc<"contactMessages">>> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
     const { status } = args;
     return await paginateBounded(
       status

@@ -1,7 +1,6 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { enrichProposal } from "./proposalReadModel";
 
 // Read side for the proposal review screen: ONE proposal by its aggregate id, any status —
@@ -9,8 +8,7 @@ import { enrichProposal } from "./proposalReadModel";
 export const getChangeProposal = query({
   args: { changeProposalId: v.string() },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const row = await ctx.db
       .query("puzzleChangeProposals")

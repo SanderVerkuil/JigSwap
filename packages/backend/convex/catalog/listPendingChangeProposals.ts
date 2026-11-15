@@ -1,7 +1,5 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { PENDING_QUEUE_LIMIT } from "./pendingQueue";
 import { enrichProposal } from "./proposalReadModel";
 
@@ -10,8 +8,7 @@ import { enrichProposal } from "./proposalReadModel";
 export const listPendingChangeProposals = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const pending = await ctx.db
       .query("puzzleChangeProposals")

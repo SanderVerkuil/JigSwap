@@ -1,6 +1,5 @@
 import { toMemberId } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { detachRejectedBoxArt } from "../catalog/boxArtModerationStore";
 import {
@@ -9,8 +8,7 @@ import {
   MESSAGE_PHOTO_LABEL,
   scheduleMessageThumb,
 } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import {
   isHashCheckTimedOut,
@@ -142,8 +140,7 @@ export const decideUncheckedPhoto = mutation({
     ),
   },
   handler: async (ctx, { source, imageId, decision }) => {
-    const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const now = Date.now();
     const status = decision === "reject" ? "rejected" : "approved";

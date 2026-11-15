@@ -1,10 +1,8 @@
 import { isValidSortOrder, makeCreateCatalogCategory } from "@jigswap/domain";
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { catalogIdGenerator } from "./adapters/catalogIdGenerator";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
@@ -23,8 +21,7 @@ export const createCatalogCategory = mutation({
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
     if (!isValidSortOrder(args.sortOrder)) {
       throw new ConvexError({
         code: "InvalidSortOrder",

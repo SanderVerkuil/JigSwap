@@ -1,10 +1,9 @@
 import { makeReenablePuzzleDefinition } from "@jigswap/domain";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { runDefinitionAction } from "./runDefinitionAction";
 
 // Moderation: re-enable a DISABLED definition, restoring it to approved (publicly listable
@@ -12,8 +11,7 @@ import { runDefinitionAction } from "./runDefinitionAction";
 export const reenablePuzzleDefinition = mutation({
   args: { puzzleDefinitionId: v.string() },
   handler: async (ctx, args) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
     await runDefinitionAction(
       ctx,
       args.puzzleDefinitionId,

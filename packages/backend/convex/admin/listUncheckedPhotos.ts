@@ -3,16 +3,14 @@ import type {
   FilterBuilder,
   GenericTableInfo,
 } from "convex/server";
-import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import {
   asImage,
   MESSAGE_PHOTO_LABEL,
 } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
@@ -180,8 +178,7 @@ const circleIconItem = async (
 export const listUncheckedPhotos = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const statuses = ["unscored", "pending"] as const;
     const items = [];

@@ -1,8 +1,6 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import {
   isHashCheckTimedOut,
@@ -28,8 +26,7 @@ export const REJECTED_PHOTOS_QUEUE_LIMIT = 100;
 export const listRejectedPhotos = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const rows = await ctx.db
       .query("ownedPuzzleImages")

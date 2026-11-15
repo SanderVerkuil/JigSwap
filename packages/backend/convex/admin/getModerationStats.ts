@@ -1,7 +1,5 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 
 const WEEK_MS = 7 * 24 * 3600 * 1000;
 
@@ -10,8 +8,7 @@ const WEEK_MS = 7 * 24 * 3600 * 1000;
 export const getModerationStats = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const since = Date.now() - WEEK_MS;
     const rows = await ctx.db

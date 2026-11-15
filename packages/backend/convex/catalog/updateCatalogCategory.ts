@@ -2,12 +2,10 @@ import {
   makeUpdateCatalogCategory,
   toCatalogCategoryId,
 } from "@jigswap/domain";
-import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -26,8 +24,7 @@ export const updateCatalogCategory = mutation({
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
 
     const update = makeUpdateCatalogCategory({
       categories: convexCatalogCategoryRepository(ctx),

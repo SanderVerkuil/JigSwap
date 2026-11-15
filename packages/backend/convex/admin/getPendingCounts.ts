@@ -1,7 +1,5 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 
 // Each count stops here: the console shows "50+" beyond it.
@@ -31,8 +29,7 @@ const bounded = (rows: readonly unknown[]): QueueCount => ({
 export const getPendingCounts = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const take = PENDING_COUNT_CAP + 1;
     const [

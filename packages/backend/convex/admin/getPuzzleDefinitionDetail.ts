@@ -5,9 +5,8 @@ import type {
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
+import { requireAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
-import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { toAuditEntry } from "./auditEntry";
 
@@ -31,8 +30,7 @@ export const getPuzzleDefinitionDetail = query({
     ctx,
     { puzzleId },
   ): Promise<AdminPuzzleDefinitionDetailView> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const puzzle = await ctx.db.get(puzzleId);
     if (!puzzle) throw new ConvexError("Puzzle definition not found");
