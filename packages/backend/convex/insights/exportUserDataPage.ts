@@ -25,7 +25,7 @@ import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
-import { toProjectedLoanView } from "../library/loanReadViews";
+import { toLoanView } from "../library/loanReadViews";
 import { preferenceOrDefault } from "../notifications/adapters/convexNotificationPreferenceRepository";
 import {
   onboardingRowOf,
@@ -51,8 +51,8 @@ import { resolvePhotoItems } from "../solving/listMyCompletions";
 //   Photos and box art are URLs, issued under the same gates as the app's own reads; a photo the
 //   app does not show its uploader (rejected or quarantined, which read exactly alike) has none;
 // - other members only as the app shows them to the caller: projectMemberIdentity, the per-trade
-//   projectTradeParty, the follow lists' toFollowEdgeView, or the Blocked members list's
-//   memberTeaserIdentityOf, never their raw users fields.
+//   projectTradeParty, the follow lists' toFollowEdgeView, the loans pages' toLoanView, or the
+//   Blocked members list's memberTeaserIdentityOf, never their raw users fields.
 
 /** Rows per page: one page reads at most this many rows of its section (plus their joins). */
 export const EXPORT_PAGE_SIZE = 200;
@@ -200,8 +200,13 @@ const loanRow = async (
   me: Id<"users">,
   loan: Doc<"loans">,
 ): Promise<ExportRow> => {
-  const view = await toProjectedLoanView(ctx, loan, me, SALT);
+  // The member's own loan names the other party whatever their profile says (toLoanView, SEC-11).
+  const view = await toLoanView(ctx, loan);
   const lent = loan.lenderId === me;
+  const other = lent ? view.borrower : view.lender;
+  const party: ExportPerson = other
+    ? { memberId: other._id, name: memberDisplayNameOf(other) }
+    : { departed: true };
   return {
     id: view.loanId,
     copyId: view.copyDocId || undefined,
@@ -210,9 +215,7 @@ const loanRow = async (
     openedAt: view.openedAt,
     expectedReturn: view.expectedReturn,
     closedAt: view.closedAt,
-    ...(lent
-      ? { borrower: personOf(view.borrower) }
-      : { lender: personOf(view.lender) }),
+    ...(lent ? { borrower: party } : { lender: party }),
   };
 };
 

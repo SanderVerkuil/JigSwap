@@ -762,6 +762,44 @@ describe("insights.exportUserDataPage", () => {
     expect(JSON.stringify(rows)).not.toContain(gone);
   });
 
+  test("a private loan party is named, as the loans pages name them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const { erin, gone } = await t.run(async (ctx) => {
+      const erin = await insertPrivateErin(ctx);
+      const gone = await insertUser(ctx, "gone");
+      for (const [aggregateId, lenderId, borrowerId] of [
+        ["loan-to-erin", alice.me, erin],
+        ["loan-from-erin", erin, alice.me],
+        ["loan-to-gone", alice.me, gone],
+      ] as const) {
+        await ctx.db.insert("loans", {
+          aggregateId,
+          copyId: `copy-${aggregateId}`,
+          lenderId,
+          borrowerId,
+          status: "open",
+          openedAt: Date.now(),
+        });
+      }
+      await ctx.db.delete(gone);
+      return { erin, gone };
+    });
+    const named = { memberId: erin, name: "Erin" };
+    const lent = await exportSection(t, "alice", "loansLent");
+    expect(lent.rows.find((l) => l.id === "loan-to-erin")).toMatchObject({
+      borrower: named,
+    });
+    expect(lent.rows.find((l) => l.id === "loan-to-gone")).toMatchObject({
+      borrower: { departed: true },
+    });
+    expect(JSON.stringify(lent.rows)).not.toContain(gone);
+    const borrowed = await exportSection(t, "alice", "loansBorrowed");
+    expect(borrowed.rows.find((l) => l.id === "loan-from-erin")).toMatchObject({
+      lender: named,
+    });
+  });
+
   // Art. 15: a member's consent to show their email on one trade is theirs to read. Only their own:
   // the other party's consent stays out of this member's row.
   test("each party's exchange row carries their own email-sharing consent, and only theirs", async () => {
