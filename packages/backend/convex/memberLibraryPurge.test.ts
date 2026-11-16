@@ -1013,6 +1013,45 @@ describe("account deletion: photos kept for a CSAM escalation", () => {
     expect(await blobExists(t, plain.fileId)).toBe(false);
     expect(await blobExists(t, preserved.fileId)).toBe(true);
   });
+
+  test("a quarantined completion photo stays, row and blob; the plain one goes", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const plain = await insertCompletion(t, s.alice, undefined);
+    // A hash match drops the photo from the completion's `photos`; only its sidecar names it.
+    const quarantinedFileId = await storeBlob(t);
+    const quarantinedRowId = await t.run(async (ctx) => {
+      const rowId = await ctx.db.insert("completionImages", {
+        completionId: plain.aggregateId,
+        uploaderId: s.alice,
+        fileId: quarantinedFileId,
+        moderationStatus: "quarantined",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("csamEscalations", {
+        table: "completionImages",
+        rowId,
+        uploaderId: s.alice,
+        fileId: quarantinedFileId,
+        md5: "m",
+        sha1: "s",
+        provider: "test",
+        originalDiscarded: true,
+        status: "open",
+        matchedAt: Date.now(),
+      });
+      return rowId;
+    });
+
+    await deleteMember(t, "alice");
+
+    expect(await completionImagesOf(t, plain.aggregateId)).toEqual([
+      expect.objectContaining({ _id: quarantinedRowId }),
+    ]);
+    expect(await blobExists(t, quarantinedFileId)).toBe(true);
+    expect(await blobExists(t, plain.fileId)).toBe(false);
+  });
 });
 
 describe("account deletion: batching", () => {
