@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
+import { threadGroupKey } from "../notifications/adapters/channels/inAppChannel";
 import { convexThreadRepository } from "./adapters/convexThreadRepository";
 import { systemClock } from "./adapters/systemClock";
 import { toConvexError } from "./errors";
@@ -24,13 +25,13 @@ export const markThreadRead = mutation({
     });
     if (result.isErr) throw toConvexError(result.error);
 
-    // The thread's grouped bell row (see inAppChannel groupOf) is read along with the thread.
+    // The thread's grouped bell row is read along with the thread.
     const unread = await ctx.db
       .query("notifications")
       .withIndex("by_user_group", (q) =>
         q
           .eq("userId", memberId as unknown as Id<"users">)
-          .eq("groupKey", `thread:${args.threadId}`)
+          .eq("groupKey", threadGroupKey(args.threadId))
           .eq("isRead", false),
       )
       .collect();

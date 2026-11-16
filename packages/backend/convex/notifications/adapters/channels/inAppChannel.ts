@@ -19,6 +19,9 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set([
   "circle_message_received",
 ]);
 
+/** The unread bell row a thread's messages group into (markThreadRead reads it with the thread). */
+export const threadGroupKey = (threadId: string) => `thread:${threadId}`;
+
 // The group a notification joins and how long an unread row stays open to it; null = ungrouped.
 // `countsItems`: the group's copy says how many items arrived, which actorCount can't (one member's
 // twenty submissions are one actor).
@@ -31,7 +34,7 @@ const groupOf = (
   }
   if (MESSAGE_TYPES.has(state.type) && state.subject?.kind === "thread") {
     return {
-      key: `thread:${state.subject.threadId}`,
+      key: threadGroupKey(state.subject.threadId),
       windowMs: Number.POSITIVE_INFINITY,
     };
   }
