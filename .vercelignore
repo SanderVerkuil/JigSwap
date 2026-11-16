@@ -1,6 +1,8 @@
 # Uploaded by `vercel deploy` from the repo root (convex-deploy.yml, vercel-preview.yml).
 # The web build never reads these (it does read docs/user and docs/whats-new, so keep those).
-assets/
-docs/review/
-docs/superpowers/
-spec/
+# Anchored at the repo root: a bare `assets/` also matches
+# apps/web/src/components/marketing/assets/.
+/assets/
+/docs/review/
+/docs/superpowers/
+/spec/
