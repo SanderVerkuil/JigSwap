@@ -270,14 +270,15 @@ const deleteCompletion = async (
 
 /**
  * Delete a copy the member OWNS, with what hangs off it: collection memberships, copy reviews,
- * circle shares, copy-scoped comments, its photos (deleteCopyPhoto's keep rule) and the member's
- * own completions on it. Other members' completions on it (a borrower's solve) are theirs and
- * stay, carrying their copySnapshot, as when an owner deletes a copy. Exchanges, loans and custody
- * entries that name the copy stay as history, as for any deleted copy.
+ * circle shares, copy-scoped comments and its photos (deleteCopyPhoto's keep rule). The member's
+ * own completions on it go in the completions phase (purgeCompletions: their copy is gone), in
+ * pages of their own, because solves per copy have no cap. Other members' completions on it (a
+ * borrower's solve) are theirs and stay, carrying their copySnapshot, as when an owner deletes a
+ * copy. Exchanges, loans and custody entries that name the copy stay as history, as for any
+ * deleted copy.
  */
 const deleteOwnCopy = async (
   ctx: MutationCtx,
-  memberId: Id<"users">,
   copy: Doc<"ownedPuzzles">,
 ): Promise<void> => {
   const memberships = await ctx.db
@@ -307,19 +308,14 @@ const deleteOwnCopy = async (
     .collect();
   for (const row of comments) await ctx.db.delete(row._id);
 
+  // shortcut: one run holds all of a copy's photos, about 63 index ranges each, so a legacy copy
+  // with roughly 65+ approved photos (above MAX_COPY_IMAGES) still exceeds one run; page a copy's
+  // photos when such copies show up.
   const images = await ctx.db
     .query("ownedPuzzleImages")
     .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy._id))
     .collect();
   for (const image of images) await deleteCopyPhoto(ctx, image);
-
-  const completions = await ctx.db
-    .query("completions")
-    .withIndex("by_user_owned_puzzle", (q) =>
-      q.eq("userId", memberId).eq("ownedPuzzleId", copy._id),
-    )
-    .collect();
-  for (const row of completions) await deleteCompletion(ctx, row);
 
   await ctx.db.delete(copy._id);
   await markCopyStatsChange(ctx, copy, null);
@@ -339,7 +335,7 @@ export const deleteOwnCopies = async (
     .query("ownedPuzzles")
     .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
     .paginate(opts);
-  for (const copy of page.page) await deleteOwnCopy(ctx, memberId, copy);
+  for (const copy of page.page) await deleteOwnCopy(ctx, copy);
   // The copies' counters go once the last copy has: deleteOwnCopy doesn't keep them in step, because
   // nothing reads a deleted member's counts and a recount per batch would be wasted.
   if (page.isDone) await deleteMemberLibraryCounts(ctx, memberId);
@@ -363,8 +359,8 @@ export const deleteUploadedCopyPhotos = async (
 /**
  * Their remaining completions. One on a copy someone else owns now is part of that copy's History:
  * the row stays (it renders as the departed member) without its photos and without their private
- * notes. Any other (no copy, or the copy is gone) is personal activity and is deleted with its
- * photos.
+ * notes. Any other (no copy, or the copy is gone, such as their own copies the copies phase
+ * deleted) is personal activity and is deleted with its photos.
  */
 export const purgeCompletions = async (
   ctx: MutationCtx,

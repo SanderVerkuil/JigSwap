@@ -112,12 +112,12 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                loan_closed_member_deleted notification (no actor): the puzzle may still be
 //                with them.
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
-//                copy reviews, circle shares, copy-scoped comments, photos (blobs included) and
-//                their own completions on it. Exchanges, loans and custody entries naming it stay.
+//                copy reviews, circle shares, copy-scoped comments and photos (blobs included).
+//                Exchanges, loans and custody entries naming it stay.
 //   copyPhotos   their photos on copies other members own: row, blob and the photo's comments
-//   completions  their remaining completions: one on a copy someone else owns stays (that copy's
-//                History) without its photos and their private notes; any other goes, photos and
-//                blobs included
+//   completions  their completions: one on a copy someone else owns stays (that copy's History)
+//                without its photos and their private notes; any other (their solves on the
+//                copies just deleted included) goes, photos and blobs included
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
 //   goals, collections (with their memberships, wishlists included), categories (personal)
@@ -227,9 +227,9 @@ const phaseValidator = v.union(...PHASES.map((phase) => v.literal(phase)));
 // Rows per run where PURGE_BATCH_SIZE does not fit. Convex allows 4,096 index ranges per function,
 // and deleting one photo with its three renditions reads about 63 (each of its four blobs is
 // checked by blobReferences.isReferenced's 14 lookups first; purgeMemberLibrary deleteCopyPhoto).
-//   copies       1: a copy at MAX_COPY_IMAGES (20) photos reads about 1,270, and their own solves
-//                   on it go with it, about 310 each at MAX_PHOTOS (5). Solves per copy have no
-//                   cap, so a whole run is left to one copy: room for about 9 photographed solves.
+//   copies       1: a copy at MAX_COPY_IMAGES (20) photos reads about 1,270, but photos uploaded
+//                   before that cap are not capped, so a whole run is left to one copy: room for
+//                   about 64 photos.
 //   copyPhotos  50: about 63 each, 3,150.
 //   completions 10: up to MAX_PHOTOS (5) photos each, about 310, 3,100.
 const PHASE_BATCH_SIZE: Partial<Record<Phase, number>> = {

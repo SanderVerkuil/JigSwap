@@ -1139,8 +1139,10 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
     copies: number,
     photos: number,
   ) => {
+    const copyIds: Id<"ownedPuzzles">[] = [];
     for (let i = 0; i < copies; i++) {
       const copy = await insertCopy(t, s.puzzleId, ownerId);
+      copyIds.push(copy);
       for (let j = 0; j < photos; j++) {
         const fileId = await storeRenditionedPhoto(t);
         await t.run((ctx) =>
@@ -1155,10 +1157,17 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
         );
       }
     }
+    return copyIds;
   };
 
-  // `solves` finished solves of Alice's on no copy, each with MAX_PHOTOS (5) approved photos.
-  const seedSolves = async (t: T, s: Members, solves: number) => {
+  // `solves` finished solves of Alice's, on `ownedPuzzleId` or on no copy, each with MAX_PHOTOS
+  // (5) approved photos.
+  const seedSolves = async (
+    t: T,
+    s: Members,
+    solves: number,
+    ownedPuzzleId?: Id<"ownedPuzzles">,
+  ) => {
     for (let i = 0; i < solves; i++) {
       const photos: Id<"_storage">[] = [];
       for (let j = 0; j < 5; j++) photos.push(await storeRenditionedPhoto(t));
@@ -1170,6 +1179,7 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
           aggregateId,
           userId: s.alice,
           puzzleId: s.puzzleId,
+          ownedPuzzleId,
           startDate: now - 3_600_000,
           endDate: now - 60_000,
           photos,
@@ -1191,11 +1201,18 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
     }
   };
 
-  test.each<[string, (t: T, s: Members) => Promise<void>]>([
+  test.each<[string, (t: T, s: Members) => Promise<unknown>]>([
     ["60 copies, one photo each", (t, s) => seedCopies(t, s, s.alice, 60, 1)],
     ["5 copies, 20 photos each", (t, s) => seedCopies(t, s, s.alice, 5, 20)],
     ["80 photos on copies Bob owns", (t, s) => seedCopies(t, s, s.bob, 4, 20)],
     ["15 solves, 5 photos each", (t, s) => seedSolves(t, s, 15)],
+    [
+      "one copy at 20 photos with 15 of her solves on it, 5 photos each",
+      async (t, s) => {
+        const [copy] = await seedCopies(t, s, s.alice, 1, 20);
+        await seedSolves(t, s, 15, copy);
+      },
+    ],
   ])(
     "%s: every row and blob goes and the purge reaches its last phase",
     async (_, seed) => {
@@ -1212,6 +1229,7 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
           .collect(),
         photos: await ctx.db.query("ownedPuzzleImages").collect(),
         solves: await ctx.db.query("completions").collect(),
+        solvePhotos: await ctx.db.query("completionImages").collect(),
         renditions: await ctx.db.query("imageRenditions").collect(),
         blobs: await ctx.db.system.query("_storage").collect(),
         pendingPhases: (
@@ -1228,6 +1246,7 @@ describe("account deletion: photo-heavy accounts stay inside Convex's per-run li
         copies: [],
         photos: [],
         solves: [],
+        solvePhotos: [],
         renditions: [],
         blobs: [],
         pendingPhases: ["domainEvents"],
