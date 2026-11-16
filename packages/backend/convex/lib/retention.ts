@@ -13,7 +13,12 @@ import { logEvent } from "./logEvent";
 
 /** The sweeps RETENTION_ENFORCE can name. */
 export type RetentionSweep =
-  "reports" | "sentPhotos" | "copyPhotos" | "domainEvents" | "notifications";
+  | "reports"
+  | "sentPhotos"
+  | "copyPhotos"
+  | "domainEvents"
+  | "notifications"
+  | "contactMessages";
 
 /** Rows a sweep reads per run; it re-schedules itself for the next page. */
 export const RETENTION_SWEEP_PAGE = 100;

@@ -98,6 +98,15 @@ crons.daily(
   {},
 );
 
+// Handled contact messages (a visitor's name, email and text) sent more than 12 months ago are
+// deleted; a dry run unless RETENTION_ENFORCE names "contactMessages" (contact/retention).
+crons.daily(
+  "contact message retention",
+  { hourUTC: 4, minuteUTC: 40 },
+  internal.contact.retention.sweepContactMessageRetention,
+  {},
+);
+
 // Old notifications (read after 180 days, any after 365): DRY RUN only, weekly, logging a capped
 // sample of what would be deleted (notifications/retention). Switching to "delete" waits for the
 // owner to approve the periods and add the retention line to the privacy policy, and only deletes

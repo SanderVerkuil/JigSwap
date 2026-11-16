@@ -121,6 +121,7 @@ import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeP
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
 import type * as contact_reopenContactMessage from "../contact/reopenContactMessage.js";
+import type * as contact_retention from "../contact/retention.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as conversation_adapters_circleRoster from "../conversation/adapters/circleRoster.js";
 import type * as conversation_adapters_connectionPolicy from "../conversation/adapters/connectionPolicy.js";
@@ -754,6 +755,7 @@ declare const fullApi: ApiFromModules<{
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
   "contact/reopenContactMessage": typeof contact_reopenContactMessage;
+  "contact/retention": typeof contact_retention;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
   "conversation/adapters/circleRoster": typeof conversation_adapters_circleRoster;
   "conversation/adapters/connectionPolicy": typeof conversation_adapters_connectionPolicy;
