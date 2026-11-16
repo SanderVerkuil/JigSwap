@@ -1,3 +1,4 @@
+import { LIVE_EXCHANGES_PER_READ } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
@@ -185,14 +186,17 @@ describe("exchange.myLive", () => {
       }
     });
     const seen: (string | undefined)[] = [];
-    for (let page = 0; ; page++) {
+    let pages = 0;
+    for (let page = 0; page < 20; page++) {
       const rows = await as(t, "alice").query(
         api.exchange.listMyLiveExchanges.listMyLiveExchanges,
         { page },
       );
       if (rows.length === 0) break;
+      pages += 1;
       seen.push(...rows.map((row) => row.aggregateId));
     }
+    expect(pages).toBe(EXCHANGE_LIST_CAP / LIVE_EXCHANGES_PER_READ);
     expect(seen).toHaveLength(EXCHANGE_LIST_CAP);
     expect(seen).not.toContain("open-0");
   });
