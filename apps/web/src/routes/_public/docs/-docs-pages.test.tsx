@@ -338,8 +338,6 @@ describe("docs page landmarks", () => {
   });
 });
 
-// A search result can open a page at a FAQ question; the router navigates with pushState, which
-// leaves a <details> closed.
 describe("docs page feedback", () => {
   it("asks again on the next page after a vote on the last", async () => {
     const load = (slug: string) =>
@@ -360,6 +358,8 @@ describe("docs page feedback", () => {
   });
 });
 
+// A search result can open a page at a FAQ question; the router navigates with pushState, which
+// leaves a <details> closed.
 describe("docs page opens the FAQ question in the hash", () => {
   const FAQ_HTML =
     '<details id="why-is-a-photo-blurred"><summary>Why is a photo blurred?</summary><p>The check.</p></details>';
