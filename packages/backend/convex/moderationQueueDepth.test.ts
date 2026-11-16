@@ -2,7 +2,11 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import { HASH_RECHECK_POOL_PARALLELISM } from "./lib/imageModeration/hashRecheckPool";
-import { MODERATION_POOL_PARALLELISM } from "./lib/imageModeration/moderationPool";
+import {
+  MODERATION_POOL_PARALLELISM,
+  MODERATION_TABLES,
+  TABLE_NAME,
+} from "./lib/imageModeration/moderationPool";
 import { QUEUE_DEPTH_SCAN_CAP } from "./lib/imageModeration/queueDepthStore";
 import schema from "./schema";
 
@@ -179,6 +183,10 @@ const readDepth = (t: T) =>
 
 const byTable = (depths: Awaited<ReturnType<typeof readDepth>>) =>
   Object.fromEntries(depths.map((depth) => [depth.table, depth]));
+
+test("every sweep walks the one MODERATION_TABLES list, which covers every moderated table", () => {
+  expect([...MODERATION_TABLES].sort()).toEqual(Object.keys(TABLE_NAME).sort());
+});
 
 describe("readModerationQueueDepth", () => {
   test("counts the rows still pending a verdict in every table, decided rows excluded", async () => {

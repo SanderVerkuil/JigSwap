@@ -11,6 +11,7 @@ import {
 import { logEvent } from "../logEvent";
 import { isWaivedHashRecheckCandidate } from "./hashCheckFields";
 import {
+  MODERATION_TABLES,
   moderationTableValidator,
   TABLE_NAME,
   type ModerationTable,
@@ -372,14 +373,6 @@ export const onHashRecheckComplete = internalMutation({
   },
 });
 
-const TABLES: readonly ModerationTable[] = [
-  "copy",
-  "completion",
-  "boxArt",
-  "message",
-  "circleIcon",
-];
-
 type WaitingRow = { id: string } & RecheckState;
 
 type Page = {
@@ -395,45 +388,10 @@ const waitingPage = async (
   cursor: string | null,
 ): Promise<Page> => {
   const paginationOpts = { numItems: HASH_RECHECK_SWEEP_PAGE, cursor };
-  const page = await (() => {
-    switch (table) {
-      case "copy":
-        return ctx.db
-          .query("ownedPuzzleImages")
-          .withIndex("by_hash_check_pending", (q) =>
-            q.gt("hashCheckPendingSince", 0),
-          )
-          .paginate(paginationOpts);
-      case "completion":
-        return ctx.db
-          .query("completionImages")
-          .withIndex("by_hash_check_pending", (q) =>
-            q.gt("hashCheckPendingSince", 0),
-          )
-          .paginate(paginationOpts);
-      case "boxArt":
-        return ctx.db
-          .query("boxArtUploads")
-          .withIndex("by_hash_check_pending", (q) =>
-            q.gt("hashCheckPendingSince", 0),
-          )
-          .paginate(paginationOpts);
-      case "message":
-        return ctx.db
-          .query("messageAttachments")
-          .withIndex("by_hash_check_pending", (q) =>
-            q.gt("hashCheckPendingSince", 0),
-          )
-          .paginate(paginationOpts);
-      case "circleIcon":
-        return ctx.db
-          .query("circleIcons")
-          .withIndex("by_hash_check_pending", (q) =>
-            q.gt("hashCheckPendingSince", 0),
-          )
-          .paginate(paginationOpts);
-    }
-  })();
+  const page = await ctx.db
+    .query(TABLE_NAME[table])
+    .withIndex("by_hash_check_pending", (q) => q.gt("hashCheckPendingSince", 0))
+    .paginate(paginationOpts);
   const rows: WaitingRow[] = [];
   for (const row of page.page) {
     if (!("pendingHashes" in row) || !("moderationStatus" in row)) continue;
@@ -458,7 +416,7 @@ export const sweepLostHashRechecks = internalMutation({
     now: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const table = args.table ?? TABLES[0];
+    const table = args.table ?? MODERATION_TABLES[0];
     const now = args.now ?? Date.now();
     const page = await waitingPage(ctx, table, args.cursor ?? null);
     const rearmedIds: string[] = [];
@@ -479,7 +437,7 @@ export const sweepLostHashRechecks = internalMutation({
       if (armed) rearmedIds.push(row.id);
     }
 
-    const nextTable = TABLES[TABLES.indexOf(table) + 1];
+    const nextTable = MODERATION_TABLES[MODERATION_TABLES.indexOf(table) + 1];
     if (!page.isDone) {
       await ctx.scheduler.runAfter(
         0,

@@ -49,6 +49,9 @@ export const TABLE_NAME = {
   circleIcon: "circleIcons",
 } as const;
 
+/** Every moderated table: the sweeps loop over this, so a new table is added in one place. */
+export const MODERATION_TABLES = Object.keys(TABLE_NAME) as ModerationTable[];
+
 /**
  * The pool's retry schedule: 1, 5 and 25 minutes after a failed attempt (initialBackoffMs ×
  * base^(n-1), each with ±50% jitter). The pool allows one attempt more than the pipeline uses
