@@ -17,8 +17,8 @@ import { quickStartFactsOf } from "./quickStartFacts";
 const READ_CAP = 51;
 
 // The activation report (spec 2026-10-17 §1.2, decisions 5 and 10). INTERNAL ONLY: it is never in
-// the gateway and no client can call it. An operator runs it against a sign-up range of at most 31
-// days; it returns aggregates only (no member ids) per weekly sign-up cohort and in total.
+// the gateway and no client can call it. An operator runs it against a sign-up range of at most 7
+// days (one cohort); it returns aggregates only (no member ids) per weekly sign-up cohort and in total.
 //
 // Activated = within 7 days of sign-up (users.createdAt, inclusive): ≥ 3 own copies AND (≥ 1
 // finished solve at any date precision OR ≥ 1 mutual connection OR a household link). Household

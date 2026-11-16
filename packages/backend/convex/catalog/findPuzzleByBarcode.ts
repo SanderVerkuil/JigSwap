@@ -1,4 +1,5 @@
 import type { PuzzleSummaryView } from "@jigswap/contracts";
+import { barcodeTwin } from "@jigswap/domain";
 import { v } from "convex/values";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
@@ -12,8 +13,8 @@ const findApprovedByBarcode = async (
   { ean, upc }: { ean?: string; upc?: string },
 ) => {
   // A UPC-A and its 0-prefixed EAN-13 are one barcode, stored under either field.
-  const eans = new Set([ean, upc && `0${upc}`]);
-  const upcs = new Set([upc, ean && /^0\d{12}$/.test(ean) ? ean.slice(1) : ""]);
+  const eans = [ean, upc && barcodeTwin(upc)];
+  const upcs = [upc, ean && barcodeTwin(ean)];
   for (const code of eans) {
     if (!code) continue;
     const row = await ctx.db

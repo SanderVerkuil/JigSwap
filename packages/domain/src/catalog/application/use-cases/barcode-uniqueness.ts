@@ -1,6 +1,7 @@
 import {
   BARCODE_HOLDING_STATUSES,
   BarcodesInput,
+  barcodeTwin,
   PuzzleDefinitionId,
 } from "../../domain";
 import { PuzzleDefinitionRepository } from "../ports/out/puzzle-definition.repository";
@@ -21,12 +22,7 @@ export const firstDuplicateBarcode = async (
   ].filter((value): value is string => value !== undefined && value.length > 0);
 
   for (const barcode of candidates) {
-    // A UPC-A and its 0-prefixed EAN-13 are the same barcode: probe the twin too.
-    const twin = /^0\d{12}$/.test(barcode)
-      ? barcode.slice(1)
-      : /^\d{12}$/.test(barcode)
-        ? `0${barcode}`
-        : undefined;
+    const twin = barcodeTwin(barcode);
     for (const probe of twin ? [barcode, twin] : [barcode]) {
       const holder = await definitions.findByBarcode(probe, {
         statuses: BARCODE_HOLDING_STATUSES,

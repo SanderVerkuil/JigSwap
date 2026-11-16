@@ -23,6 +23,10 @@ export const round1 = (n: number): number => Math.round(n * 10) / 10;
 /** The longest solve an average counts, in days: MAX_SOLVE_MINUTES. */
 const MAX_FINISH_DAYS = MAX_SOLVE_MINUTES / 1440;
 
+// The one cap on a finish time: days within (0, MAX_FINISH_DAYS], else null.
+const cappedDays = (days: number): number | null =>
+  days > 0 && days <= MAX_FINISH_DAYS ? days : null;
+
 /** Whole-day solve duration. A time the member typed (`typedSolveMinutes`) is hands-on time, not
  * days on the table, so its days come from the dates, a same-day span counting 1 day. Otherwise the
  * stored `completionTimeMinutes` wins (the domain's resolved duration — mirrors
@@ -40,11 +44,9 @@ export const finishDaysOf = (c: {
   datePrecision?: Doc<"completions">["datePrecision"];
 }): number | null => {
   if (c.endDate != null && typedSolveMinutes(c) !== undefined) {
-    const days = Math.max(
-      1,
-      Math.round((c.endDate - c.startDate) / MS_PER_DAY),
+    return cappedDays(
+      Math.max(1, Math.round((c.endDate - c.startDate) / MS_PER_DAY)),
     );
-    return days <= MAX_FINISH_DAYS ? days : null;
   }
   if (c.completionTimeMinutes != null) {
     return isPlausibleSolveMinutes(c.completionTimeMinutes)
@@ -52,8 +54,7 @@ export const finishDaysOf = (c: {
       : null;
   }
   if (c.endDate != null) {
-    const days = Math.round((c.endDate - c.startDate) / MS_PER_DAY);
-    return days > 0 && days <= MAX_FINISH_DAYS ? days : null;
+    return cappedDays(Math.round((c.endDate - c.startDate) / MS_PER_DAY));
   }
   return null;
 };

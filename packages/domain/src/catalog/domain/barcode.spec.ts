@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { Ean, ModelNumber, Upc, validateBarcodes } from "./barcode";
+import {
+  barcodeTwin,
+  Ean,
+  ModelNumber,
+  Upc,
+  validateBarcodes,
+} from "./barcode";
 
 describe("Ean", () => {
   it("accepts a valid EAN-13 with a correct check digit", () => {
@@ -138,5 +144,17 @@ describe("validateBarcodes", () => {
       expect(r.value.upc).toBeUndefined();
       expect(r.value.modelNumber).toBeUndefined();
     }
+  });
+});
+
+describe("barcodeTwin", () => {
+  it("pairs a UPC-A with its 0-prefixed EAN-13 and back", () => {
+    expect(barcodeTwin("036000291452")).toBe("0036000291452");
+    expect(barcodeTwin("0036000291452")).toBe("036000291452");
+  });
+
+  it("has no twin for an EAN that does not start with 0, or for other codes", () => {
+    expect(barcodeTwin("4006381333931")).toBeUndefined();
+    expect(barcodeTwin("ABC-123")).toBeUndefined();
   });
 });
