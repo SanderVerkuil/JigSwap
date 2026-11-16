@@ -99,6 +99,24 @@ describe("contactMessages retention", () => {
     ]);
   });
 
+  // Calendar months, not 365 days: 12 months before 1 March 2028 is 1 March 2027, a 366-day span
+  // across 29 February 2028. A message sent half a day after that cutoff is still inside.
+  test("counts calendar months: across 29 February a message just inside 12 months stays", async () => {
+    vi.setSystemTime(Date.UTC(2028, 2, 1, 4, 40));
+    vi.stubEnv("RETENTION_ENFORCE", "contactMessages");
+    const t = convexTest(schema, modules);
+    await insertMessage(t, Date.UTC(2027, 1, 28, 16, 40), "handled");
+    const inside = await insertMessage(
+      t,
+      Date.UTC(2027, 2, 1, 16, 40),
+      "handled",
+    );
+
+    await sweep(t);
+
+    expect(await messageIds(t)).toEqual([inside]);
+  });
+
   test('RETENTION_ENFORCE "all" enforces it; another sweep\'s name does not', async () => {
     vi.stubEnv("RETENTION_ENFORCE", "reports, domainEvents");
     const t = convexTest(schema, modules);

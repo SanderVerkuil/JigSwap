@@ -782,11 +782,13 @@ describe("insights.exportUserDataPage", () => {
     });
   });
 
-  // Erin is private and shares no follow or circle with Alice (a block deletes their follows).
+  // Erin is private and shares no follow or circle with Alice (a block deletes their follows). Her
+  // profile name differs from her account name ("Erin"), so each section shows which one it uses.
   const insertPrivateErin = async (ctx: MutationCtx) => {
     const erin = await insertUser(ctx, "erin");
     await ctx.db.insert("profiles", {
       memberId: erin,
+      displayName: "Erin Puzzles",
       visibility: "private",
       updatedAt: Date.now(),
     });
@@ -812,7 +814,7 @@ describe("insights.exportUserDataPage", () => {
     const { rows } = await exportSection(t, "alice", "blocks");
     expect(rows.map((b) => b.member)).toEqual(
       expect.arrayContaining([
-        { memberId: erin, name: "Erin" },
+        { memberId: erin, name: "Erin Puzzles" },
         { departed: true },
       ]),
     );

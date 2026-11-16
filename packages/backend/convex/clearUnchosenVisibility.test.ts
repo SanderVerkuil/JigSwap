@@ -102,6 +102,38 @@ describe("social.clearUnchosenVisibility", () => {
     expect(await rowsOf(t, ids)).toEqual(before);
   });
 
+  // What the owner reads before applying: the last batch logs the whole run's totals.
+  test("a dry run over several batches logs the whole run's totals and writes nothing", async () => {
+    const t = convexTest(schema, modules);
+    const total = CLEAR_UNCHOSEN_VISIBILITY_BATCH * 2 + 7;
+    const ids = await seed(
+      t,
+      Array.from({ length: total }, (_, i) => MIXED[i % MIXED.length]!),
+    );
+    const before = await rowsOf(t, ids);
+
+    await runAll(t);
+
+    expect(await rowsOf(t, ids)).toEqual(before);
+    const totals = vi
+      .mocked(console.log)
+      .mock.calls.map((call) => JSON.parse(String(call[0])) as unknown)
+      .filter(
+        (line) =>
+          (line as { event?: string }).event ===
+          "social.clearUnchosenVisibility",
+      );
+    // 207 rows of MIXED: 42 unchosen public rows, 83 public rows with a recorded choice.
+    expect(totals).toEqual([
+      expect.objectContaining({
+        dry_run: true,
+        scanned: total,
+        cleared: 42,
+        kept: 83,
+      }),
+    ]);
+  });
+
   test("apply: clears only a public row without a recorded choice, then nothing on a rerun", async () => {
     const t = convexTest(schema, modules);
     const ids = await seed(t, MIXED);
