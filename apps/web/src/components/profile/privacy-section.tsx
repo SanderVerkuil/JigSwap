@@ -47,11 +47,14 @@ export function PrivacySection({ memberId }: { memberId: string }) {
   const setVisibility = useConvexMutation(gateway.social.setProfileVisibility);
   const change = useMutation({ mutationFn: setVisibility });
 
-  // No Social profile yet (null) means the public default.
-  const stored: Visibility = socialProfile?.visibility ?? "public";
+  // No Social profile yet (null), or one with no choice, reads as the public
+  // default; logged-out visitors still see a locked page until "Everyone" is
+  // chosen (SEC-44), so choosing it then saves it.
+  const stored = socialProfile?.visibility;
   // The choice shows at once; the live profile takes over when the write lands
   // (and on a failed write, the stored value simply comes back).
-  const shown = change.isPending ? change.variables.visibility : stored;
+  const chosen = change.isPending ? change.variables.visibility : stored;
+  const shown: Visibility = chosen ?? "public";
   const savedMessage = (visibility: Visibility) =>
     visibility === "private" ? t("nowPrivate") : t("nowPublic");
   // More changes in an hour than the server takes (backend lib/rateLimits profileVisibility).
@@ -68,7 +71,7 @@ export function PrivacySection({ memberId }: { memberId: string }) {
   };
 
   const choose = async (next: Visibility) => {
-    if (next === shown) return;
+    if (next === chosen) return;
     const previous = shown;
     try {
       await change.mutateAsync({ visibility: next });

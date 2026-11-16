@@ -33,7 +33,7 @@ const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
 
 describe("setProfileVisibility", () => {
-  test("a freshly created profile defaults to public", async () => {
+  test("a freshly created profile has no visibility chosen yet", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
 
@@ -44,7 +44,8 @@ describe("setProfileVisibility", () => {
       api.social.getProfile.getProfile,
       {},
     );
-    expect(profile?.visibility).toBe("public");
+    expect(profile).not.toBeNull();
+    expect(profile?.visibility).toBeUndefined();
   });
 
   test("setting visibility to private persists and getProfile reflects it", async () => {

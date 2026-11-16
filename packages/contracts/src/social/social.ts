@@ -14,9 +14,10 @@ export interface ProfileView extends ConvexSystemFields {
   bio?: string;
   /**
    * Who can see this profile. "public" reveals the member's identity to anyone; "private" hides
-   * it from members they are not connected with. Absent on legacy rows, derived as "public".
+   * it from members they are not connected with. Absent until the member chooses: in-app reads
+   * derive "public", logged-out pages "private".
    */
-  visibility: "public" | "private";
+  visibility?: "public" | "private";
   updatedAt: number;
 }
 

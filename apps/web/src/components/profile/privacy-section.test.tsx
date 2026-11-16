@@ -48,7 +48,8 @@ const MY_INVITE_LINK = getFunctionName(gateway.social.myInviteLink);
 const writes = (name: string) =>
   mocks.mutation.mock.calls.filter(([called]) => called === name);
 
-const renderSection = (visibility: "public" | "private" | null) => {
+// "unset": a profile row opened lazily (a shelf or name edit), with no visibility chosen yet.
+const renderSection = (visibility: "public" | "private" | "unset" | null) => {
   const convexQueryClient = new ConvexQueryClient(
     new ConvexReactClient("https://example.convex.cloud"),
   );
@@ -71,7 +72,7 @@ const renderSection = (visibility: "public" | "private" | null) => {
           _id: "profile_henk",
           _creationTime: 0,
           memberId: "member_henk",
-          visibility,
+          ...(visibility !== "unset" && { visibility }),
           updatedAt: 0,
         },
   );
@@ -227,11 +228,36 @@ describe("PrivacySection", () => {
     );
   });
 
-  it("does nothing when the current choice is picked again", () => {
-    renderSection("private");
-    fireEvent.click(radio("Only people you approve"));
-    expect(writes(SET_VISIBILITY)).toHaveLength(0);
-  });
+  it.each([
+    ["private", "Only people you approve"],
+    ["public", "Everyone"],
+  ] as const)(
+    "does nothing when the stored %s choice is picked again",
+    (visibility, label) => {
+      renderSection(visibility);
+      fireEvent.click(radio(label));
+      expect(writes(SET_VISIBILITY)).toHaveLength(0);
+    },
+  );
+
+  // Never chosen reads as Everyone in the app, but the logged-out page stays locked until the
+  // member chooses (SEC-44), so picking the selected Everyone saves that choice.
+  it.each([
+    ["no profile", null],
+    ["a profile without a choice", "unset"],
+  ] as const)(
+    "saves Everyone as an explicit choice for %s",
+    async (_, visibility) => {
+      renderSection(visibility);
+      expect(radio("Everyone").getAttribute("aria-checked")).toBe("true");
+      fireEvent.click(radio("Everyone"));
+
+      await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalled());
+      expect(writes(SET_VISIBILITY)).toEqual([
+        [SET_VISIBILITY, { visibility: "public" }],
+      ]);
+    },
+  );
 
   it("copies the invite link, for a member with no username too", async () => {
     const writeText = vi.fn<(text: string) => Promise<void>>();
