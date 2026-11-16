@@ -84,8 +84,8 @@ describe("AuthCacheSync", () => {
 
   // A page load as the site does one: SSR hands over the member, then Clerk's client loads
   // and reports no session (a __session cookie it did not clear keeps SSR signed in).
-  const loadWithStaleServerSession = () => {
-    context.userId = "user_parent";
+  const loadWithStaleServerSession = (userId = "user_parent") => {
+    context.userId = userId;
     clerk.isSignedIn = undefined;
     const { rerender } = renderRoot();
     clerk.isSignedIn = false;
@@ -107,6 +107,18 @@ describe("AuthCacheSync", () => {
     now.mockReturnValue(1_031_000);
     loadWithStaleServerSession();
     expect(assign).toHaveBeenCalledTimes(2);
+  });
+
+  // The guard stops only a loop, which always repeats the same stale member: another member's
+  // sign-out on the tab inside the window still drops what memory holds of them (web-1).
+  it("still loads the page afresh when a different member signs out inside the 30 seconds", () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    loadWithStaleServerSession("user_parent");
+    now.mockReturnValue(1_010_000);
+    loadWithStaleServerSession("user_child");
+
+    expect(assign).toHaveBeenCalledTimes(2);
+    expect(router.invalidate).not.toHaveBeenCalled();
   });
 
   it("still loads the page afresh when storage is blocked", () => {

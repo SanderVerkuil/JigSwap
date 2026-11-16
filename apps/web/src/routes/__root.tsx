@@ -293,25 +293,33 @@ function AuthCacheSync() {
   React.useEffect(() => {
     if (isSignedIn === undefined || !clientAuthCache) return;
     if (isSignedIn !== !!clientAuthCache.userId) {
-      const hadMember = !!clientAuthCache.userId;
+      const signedOut = clientAuthCache.userId;
       clientAuthCache = null;
-      if (hadMember && claimSignOutReload()) window.location.assign("/");
+      if (signedOut && claimSignOutReload(signedOut))
+        window.location.assign("/");
       else void router.invalidate();
     }
   }, [isSignedIn, router]);
   return null;
 }
 
-// At most one sign-out load per 30 seconds per tab: if SSR still sees a session
-// Clerk's client dropped (a __session cookie it did not clear), each load would
-// diverge again and loop. Blocked storage still allows the load, so a member's
-// data is dropped rather than kept.
+// At most one sign-out load per 30 seconds per member per tab: if SSR still sees
+// a session Clerk's client dropped (a __session cookie it did not clear), each
+// load would diverge again and loop, always for the same member. Another
+// member's sign-out still loads. Blocked storage still allows the load, so a
+// member's data is dropped rather than kept.
 const SIGN_OUT_RELOAD_KEY = "jigswap.signOutReloadAt";
-function claimSignOutReload() {
-  const since =
-    Date.now() - Number(safeStorage.getItem("session", SIGN_OUT_RELOAD_KEY));
-  if (since >= 0 && since < 30_000) return false;
-  safeStorage.setItem("session", SIGN_OUT_RELOAD_KEY, String(Date.now()));
+function claimSignOutReload(userId: string) {
+  const [at, lastUserId] = (
+    safeStorage.getItem("session", SIGN_OUT_RELOAD_KEY) ?? ""
+  ).split(" ");
+  const since = Date.now() - Number(at);
+  if (lastUserId === userId && since >= 0 && since < 30_000) return false;
+  safeStorage.setItem(
+    "session",
+    SIGN_OUT_RELOAD_KEY,
+    `${Date.now()} ${userId}`,
+  );
   return true;
 }
 
