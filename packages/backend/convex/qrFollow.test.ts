@@ -588,6 +588,51 @@ describe("acceptQrFollow on a private owner (SEC-42)", () => {
   });
 });
 
+// A scan right after the owner's account was deleted or deactivated: the endpoint's normal quiet
+// result on both the public and the private path, and no row naming the departed owner.
+describe("acceptQrFollow on a departed owner", () => {
+  test.each([
+    ["public", "deleted"],
+    ["public", "deactivated"],
+    ["private", "deleted"],
+    ["private", "deactivated"],
+  ] as const)(
+    "a %s owner who was %s: nothing happens",
+    async (visibility, how) => {
+      const t = convexTest(schema, modules);
+      const { alice } = await seedUsers(t);
+      await t.run((ctx) =>
+        ctx.db.insert("profiles", {
+          aggregateId: crypto.randomUUID(),
+          memberId: alice,
+          visibility,
+          updatedAt: Date.now(),
+        }),
+      );
+      const { token } = await asAlice(t).mutation(
+        api.social.getMyInviteLink.getMyInviteLink,
+        {},
+      );
+      await t.run(async (ctx) => {
+        if (how === "deleted") await ctx.db.delete(alice);
+        else await ctx.db.patch(alice, { isActive: false });
+      });
+
+      expect(
+        await asBob(t).mutation(api.social.acceptQrFollow.acceptQrFollow, {
+          token,
+        }),
+      ).toEqual({ established: false });
+      expect(
+        await t.run(async (ctx) => ({
+          follows: await ctx.db.query("follows").collect(),
+          requests: await ctx.db.query("followRequests").collect(),
+        })),
+      ).toEqual({ follows: [], requests: [] });
+    },
+  );
+});
+
 describe("establishMutualFollow", () => {
   test("refuses with established:false / edgesCreated:0 when a decline is inside the cooldown", async () => {
     const t = convexTest(schema, modules);
