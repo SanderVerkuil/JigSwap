@@ -428,7 +428,8 @@ export const deleteUser = internalMutation({
     );
     // A member referenced by a CSAM escalation that is not closed yet is TOMBSTONED instead of
     // hard-deleted: the row stays (deactivated, profile and contact fields cleared) so the
-    // escalation's uploader reference stays valid while the operator reports it. The escalation
+    // escalation's uploader reference stays valid while the operator reports it;
+    // admin/markCsamEscalation deletes it when the last one closes. The escalation
     // keeps its own identity snapshot. [LAWYER] A lawyer should confirm this retention against
     // the GDPR erasure request and the Dutch preservation rules.
     const escalations = await ctx.db

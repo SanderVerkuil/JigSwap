@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
@@ -20,7 +21,8 @@ const NEXT: Record<EscalationStatus, EscalationStatus | null> = {
 // open -> reported (stamps reportedAt) -> closed (only once reported); repeating the current
 // status just adds a note. Notes are append-only ({ at, actorId, text }), never edited or
 // removed. Every call is stamped on the audit trail with the admin as actor. Never touches the
-// quarantined image or its blob.
+// quarantined image or its blob. Closing an uploader's last escalation finishes the account
+// deletion users.deleteUser held back as a tombstone.
 export const markCsamEscalation = mutation({
   args: {
     id: v.id("csamEscalations"),
@@ -66,5 +68,23 @@ export const markCsamEscalation = mutation({
       targetLabel: moving ? status : "note",
       targetId: id,
     });
+
+    if (status !== "closed" || !moving) return;
+    // isActive false marks only the tombstone users.deleteUser leaves while an escalation is not closed.
+    const uploader = await ctx.db.get(row.uploaderId);
+    if (uploader?.isActive !== false) return;
+    const escalations = await ctx.db
+      .query("csamEscalations")
+      .withIndex("by_uploader", (q) => q.eq("uploaderId", uploader._id))
+      .collect();
+    if (escalations.some((e) => e.status !== "closed")) return;
+    await ctx.db.delete(uploader._id);
+    // The purge already ran while the row kept their threads alive; from pairThreads on it now
+    // purges the threads nobody is left in. Every phase is idempotent.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,
+      { memberId: uploader._id, phase: "pairThreads" },
+    );
   },
 });
