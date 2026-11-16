@@ -4,9 +4,12 @@ import {
   toMemberId,
   toPartnerReviewId,
 } from "../../shared-kernel";
-import { COMMENT_TEXT_MAX_LENGTH } from "../../social/domain/comment-text";
 import { MemberId } from "./ids";
-import { PartnerReview, SubmitProps } from "./partner-review";
+import {
+  PARTNER_REVIEW_COMMENT_MAX_LENGTH,
+  PartnerReview,
+  SubmitProps,
+} from "./partner-review";
 
 const reviewer = toMemberId("alice");
 const reviewee = toMemberId("bob");
@@ -48,11 +51,13 @@ describe("PartnerReview.submit", () => {
 
   it("rejects a comment longer than the cap once trimmed", () => {
     const result = PartnerReview.submit(
-      props({ comment: "a".repeat(COMMENT_TEXT_MAX_LENGTH + 1) }),
+      props({ comment: "a".repeat(PARTNER_REVIEW_COMMENT_MAX_LENGTH + 1) }),
     );
     expect(result.isErr).toBe(true);
     if (!result.isErr) return;
     expect(result.error.code).toBe("CommentTooLong");
+    // The web's comment fields mirror 1000 (apps/web lib/text-limits).
+    expect(PARTNER_REVIEW_COMMENT_MAX_LENGTH).toBe(1000);
   });
 
   it("trims the comment and drops a blank one", () => {
