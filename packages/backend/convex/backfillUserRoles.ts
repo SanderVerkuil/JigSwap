@@ -18,6 +18,8 @@ const roleOf = (clerkUser: { publicMetadata: unknown }): string | undefined => {
 // More active members missing from Clerk's list than this means the list is wrong, not that they
 // left: a CLERK_SECRET_KEY for another Clerk instance makes every member look gone.
 const MAX_GONE = 5;
+// The most of those clerkIds one log line names.
+const MAX_GONE_LOGGED = 50;
 
 // What Clerk says about ONE user: their role, "gone" (404), or null when Clerk could not answer.
 async function clerkRoleOf(
@@ -48,7 +50,8 @@ async function clerkRoleOf(
 // members the pages did not return: one whose user.deleted webhook was lost for good is gone from
 // Clerk (404) and is erased as that webhook would have (users.deleteUser); one the offset paging
 // skipped is reconciled like the rest; and one Clerk could not answer for is left for the next run.
-// More than MAX_GONE of them changes nothing and logs an error instead. Runs from crons.ts; to run
+// More than MAX_GONE of them changes nothing and logs an error naming them instead. Runs from
+// crons.ts; to run
 // it now:
 //   npx convex run backfillUserRoles:run '{}'
 // A deployment without CLERK_SECRET_KEY (a preview) skips it with a warning.
@@ -112,9 +115,11 @@ export const run = internalAction({
 
     let deleted = 0;
     if (missing.length > MAX_GONE) {
+      // Named, so the owner can erase the ones that really left by hand (users:deleteUser).
       console.error(
         "role mirror: too many active members missing from Clerk's user list; none checked. Is CLERK_SECRET_KEY for this Clerk instance?",
         missing.length,
+        missing.slice(0, MAX_GONE_LOGGED),
       );
     } else {
       for (const clerkId of missing) {
