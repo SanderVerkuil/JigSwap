@@ -1,7 +1,11 @@
 import { HOUSEHOLD_INVITE_TTL_MS } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
+import {
+  blockedEitherWaySet,
+  isBlockedEitherWay,
+  type Member,
+} from "../social/blocks";
 
 // Read-side helpers over `householdMembers` shared by the household queries and the copy-access
 // gate. Kept tiny: membership is the only fact the read side needs.
@@ -55,7 +59,7 @@ export const householdMateIds = async (
 // away from every housemate, not only from the admin who let them in (spec 2.6).
 export const blockedWithHousehold = async (
   ctx: QueryCtx,
-  memberId: Id<"users">,
+  memberId: Member,
   householdId: string,
 ): Promise<boolean> => {
   const blocked = await blockedEitherWaySet(ctx, memberId);

@@ -5,7 +5,6 @@ import {
   type MemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
 import { householdDeps } from "./adapters/deps";
@@ -29,11 +28,7 @@ export const acceptHouseholdInviteUseCase = async (
     .unique();
   if (
     invite &&
-    (await blockedWithHousehold(
-      ctx,
-      actorId as unknown as Id<"users">,
-      invite.householdId,
-    ))
+    (await blockedWithHousehold(ctx, actorId, invite.householdId))
   ) {
     throw toConvexError(HouseholdApplicationError.inviteNotFound());
   }
