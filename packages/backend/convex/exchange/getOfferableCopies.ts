@@ -14,6 +14,7 @@ import {
   newestCopiesOf,
 } from "../library/myLibraryRows";
 import { resolveCopyCoverUrl } from "../library/resolveCoverUrl";
+import { blockedEitherWaySet } from "../social/blocks";
 import { toCopyView } from "./adapters/convexCopyPort";
 
 // Exchange read: the copies the viewer could offer in a swap for `requestedPuzzleId`. Candidates
@@ -36,7 +37,15 @@ export const getOfferableCopies = query({
     }
     const recipient = toMemberId(requested.ownerId);
 
-    const ownerIds = [viewerId, ...(await householdMateIds(ctx, viewerId))];
+    // A housemate blocked either way with the viewer has no copy they may offer: leave their rows
+    // out of the LIBRARY_INDEX_CAP read.
+    const blocked = await blockedEitherWaySet(ctx, viewerId);
+    const ownerIds = [
+      viewerId,
+      ...[...(await householdMateIds(ctx, viewerId))].filter(
+        (id) => !blocked.has(id),
+      ),
+    ];
     // The household facts are per OWNER: resolved once here, not per copy. Each copy's CopyView
     // carries the co-managers and owner blocks the CopyPort would report for it.
     const households = new Map(

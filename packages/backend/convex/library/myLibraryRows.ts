@@ -14,6 +14,7 @@ import {
   membershipOf,
 } from "../household/memberships";
 import schema from "../schema";
+import { blockedEitherWaySet } from "../social/blocks";
 import { toOwnedCopyView } from "./mappers";
 import { resolveCopyCoverFields } from "./resolveCoverUrl";
 
@@ -41,11 +42,15 @@ export const libraryScopeOf = async (
   ctx: QueryCtx,
   viewerId: Id<"users">,
 ): Promise<LibraryScope> => {
-  const mates = await householdMateIds(ctx, viewerId);
+  const [mates, blocked] = await Promise.all([
+    householdMateIds(ctx, viewerId),
+    blockedEitherWaySet(ctx, viewerId),
+  ]);
   const membership = await membershipOf(ctx, viewerId);
   return {
     viewerId,
-    mates,
+    // A block either way ends what the household grants between the pair (ownerHouseholdOf).
+    mates: new Set([...mates].filter((id) => !blocked.has(id))),
     // Every mate shares the viewer's household, so one default applies to all their copies.
     householdDefault: membership
       ? await householdDefaultOf(ctx, membership.householdId)
