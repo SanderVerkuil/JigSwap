@@ -289,6 +289,27 @@ describe("rate limits", () => {
     await expectConvexCode(mintAsAnn(t), "invite_rate_limited");
   });
 
+  test("open links of a household the admin left don't count; the 24h limit still spans both", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    await annCreatesHousehold(t);
+    for (let i = 0; i < 5; i++) await mintAsAnn(t);
+    // Ann leaves (the household dissolves) and founds a new one: her pending list is empty, so
+    // the old household's links must not block her.
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    await annCreatesHousehold(t);
+    for (let i = 0; i < 5; i++) await mintAsAnn(t);
+
+    await as(t, "ann").mutation(
+      api.social.revokeHouseholdInviteLinks.revokeHouseholdInviteLinks,
+      {},
+    );
+    await expectConvexCode(mintAsAnn(t), "invite_rate_limited");
+  });
+
   test("revokeHouseholdInviteLinks only touches the actor's own household links", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
