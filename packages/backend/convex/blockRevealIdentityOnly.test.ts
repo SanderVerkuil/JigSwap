@@ -252,12 +252,6 @@ describe.each(["private", "public"] as const)(
       for (const field of ["story", "stats", "records", "currentlySolving"]) {
         expect(profile).not.toHaveProperty(field);
       }
-
-      const social = await alice.query(api.social.getProfile.getProfile, {
-        memberId: u.bob,
-      });
-      expect(social).toMatchObject({ displayName: "Bobby", blockedByMe: true });
-      expect(social).not.toHaveProperty("bio");
     });
   },
 );
@@ -313,9 +307,6 @@ describe("target blocked the viewer: anonymous / not found", () => {
       await alice.query(api.social.getPublicProfile.getPublicProfile, {
         handle: "bob",
       }),
-    ).toBeNull();
-    expect(
-      await alice.query(api.social.getProfile.getProfile, { memberId: u.bob }),
     ).toBeNull();
     expect(
       await alice.query(api.identity.getUserById.getUserById, {

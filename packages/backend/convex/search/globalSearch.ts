@@ -23,8 +23,8 @@ import { areMutualFollowers, profileVisibilityOf } from "../social/privacy";
 //   - People       -> the `by_searchable_name` search index over users.searchableName. REAL index.
 //                     Results are then routed through the profile-visibility chokepoint so a member
 //                     with a private profile is never surfaced by name/username/avatar to a searcher
-//                     who is neither them nor a mutual follower (consistent with getProfile and the
-//                     custody-timeline projectMemberIdentity chokepoint).
+//                     who is neither them nor a mutual follower (consistent with getPublicProfile
+//                     and the custody-timeline projectMemberIdentity chokepoint).
 //   - Circles      -> the signed-in member's circles only (small set), in-memory name filter.
 //   - Collections  -> the signed-in member's collections only (small set), in-memory name filter.
 //
@@ -133,7 +133,7 @@ export const global = query({
       if (people.length >= limit) break;
       if (u._id === memberId || blockedIds.has(u._id)) continue;
       // Privacy chokepoint: only surface a member if their profile is public, or
-      // they are a mutual follower of the searcher. Mirrors getProfile and the
+      // they are a mutual follower of the searcher. Mirrors getPublicProfile and the
       // custody-timeline projectMemberIdentity rules so a private member is not
       // identifiable by name/username/avatar via ⌘K.
       const visible =

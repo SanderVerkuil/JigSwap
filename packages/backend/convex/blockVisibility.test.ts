@@ -326,9 +326,6 @@ describe("profiles", () => {
         },
       ),
     ).toBeNull();
-    expect(
-      await alice.query(api.social.getProfile.getProfile, { memberId: u.bob }),
-    ).toBeNull();
     // The relation a missing member reads as: nothing, and no blockedByMe flag.
     expect(
       await alice.query(api.social.getFollowRelation.getFollowRelation, {
@@ -482,12 +479,6 @@ describe("profiles", () => {
       puzzleCount: null,
       blockedByMe: true,
     });
-
-    const social = await alice.query(api.social.getProfile.getProfile, {
-      memberId: u.bob,
-    });
-    expect(social).toMatchObject({ displayName: "Bobby", blockedByMe: true });
-    expect(social?.bio).toBeUndefined();
 
     expect(
       await alice.query(api.social.getFollowRelation.getFollowRelation, {

@@ -84,7 +84,7 @@ export const searchUsers = query({
       if (blockedIds.has(u._id)) continue;
       // Privacy chokepoint: surface a member only if they are the searcher, their
       // profile is public, or they and the searcher are mutual followers. Mirrors
-      // globalSearch and getProfile so a private member is not identifiable here.
+      // globalSearch and getPublicProfile so a private member is not identifiable here.
       const isVisible =
         u._id === viewerId ||
         (await profileVisibilityOf(ctx, u._id)) === "public" ||

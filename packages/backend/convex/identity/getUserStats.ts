@@ -76,7 +76,8 @@ export const computeMemberStats = async (
 // the puzzlesAvailable == puzzlesOwned quirk match legacy users.getUserStats exactly.
 // Authenticated members only. Honours the profile-visibility chokepoint (see social/privacy.ts): a
 // member who went "private" has their stats hidden (returns null) from everyone except themselves
-// and their mutual followers — same rule as getUserById/getProfile. Default visibility is public.
+// and their mutual followers — same rule as getUserById/getPublicProfile. Default visibility is
+// public.
 // A member who blocked the viewer has their stats hidden too (null), as getUserById.
 export const getUserStats = query({
   args: { userId: v.id("users") },
