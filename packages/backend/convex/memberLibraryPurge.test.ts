@@ -471,8 +471,9 @@ describe("account deletion: open loans", () => {
     });
   });
 
-  // SEC-36: closing a loan gives the copy back only while that loan's borrower holds it.
-  test("an older loan she borrowed is returned, and the copy stays with Dave who holds it now", async () => {
+  // SEC-36: closing a loan gives the copy back only while that loan's borrower holds it. Carol is
+  // not told: her copy is with Dave, not with the deleted member.
+  test("an older loan she borrowed is returned, the copy stays with Dave who holds it now, and nobody is told", async () => {
     const t = newT();
     const s = await seedMembers(t);
     const carolCopy = await insertCopy(t, s.puzzleId, s.carol, {
@@ -502,6 +503,12 @@ describe("account deletion: open loans", () => {
     expect((await t.run((ctx) => ctx.db.get(hers)))?.status).toBe("returned");
     expect((await t.run((ctx) => ctx.db.get(daves)))?.status).toBe("open");
     expect((await t.run((ctx) => ctx.db.get(carolCopy)))?.heldBy).toBe(s.dave);
+    const notices = await t.run(async (ctx) =>
+      (await ctx.db.query("notifications").collect()).filter(
+        (row) => row.type === "loan_closed_member_deleted",
+      ),
+    );
+    expect(notices).toEqual([]);
   });
 });
 
