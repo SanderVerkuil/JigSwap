@@ -30,21 +30,7 @@ const TABLES = [
   "domainEvents",
 ] as const;
 type Table = (typeof TABLES)[number];
-const tableValidator = v.union(
-  v.literal("exchanges"),
-  v.literal("loans"),
-  v.literal("ownedPuzzles"),
-  v.literal("ownedPuzzleImages"),
-  v.literal("completions"),
-  v.literal("goals"),
-  v.literal("collections"),
-  v.literal("categories"),
-  v.literal("circles"),
-  v.literal("householdMembers"),
-  v.literal("threadParticipants"),
-  v.literal("messages"),
-  v.literal("domainEvents"),
-);
+const tableValidator = v.union(...TABLES.map((table) => v.literal(table)));
 
 type PageOpts = { cursor: string | null; numItems: number };
 type MemberPage = {
