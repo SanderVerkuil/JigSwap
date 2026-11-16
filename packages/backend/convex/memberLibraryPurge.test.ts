@@ -417,6 +417,60 @@ describe("account deletion: open loans", () => {
     expect(carolCopy?.heldBy).toBeUndefined();
   });
 
+  // The closed loan reads as back home while the puzzle may still be with her: its lender is told,
+  // without naming her. A loan she lent has nobody left to tell.
+  test("Carol, who lent her a copy, gets one notice; nobody is told about the loan she lent", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const lentByHer = await insertCopy(t, s.puzzleId, s.alice, {
+      heldBy: s.bob,
+    });
+    const borrowedByHer = await insertCopy(t, s.puzzleId, s.carol, {
+      heldBy: s.alice,
+    });
+    await insertLoan(t, {
+      copyId: await aggregateIdOf(t, lentByHer),
+      lenderId: s.alice,
+      borrowerId: s.bob,
+      status: "open",
+    });
+    await insertLoan(t, {
+      copyId: await aggregateIdOf(t, borrowedByHer),
+      lenderId: s.carol,
+      borrowerId: s.alice,
+      status: "open",
+    });
+
+    await deleteMember(t, "alice");
+
+    const notices = await t.run(async (ctx) =>
+      (await ctx.db.query("notifications").collect()).filter(
+        (row) => row.type === "loan_closed_member_deleted",
+      ),
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toMatchObject({
+      userId: s.carol,
+      channel: "inApp",
+      relatedId: borrowedByHer,
+      subject: { kind: "copy", copyId: borrowedByHer },
+    });
+    expect(notices[0].actorIds).toBeUndefined();
+
+    const views = (
+      await as(t, "carol").query(
+        api.notifications.listMyNotificationViews.listMyNotificationViews,
+        { paginationOpts: { numItems: 20, cursor: null } },
+      )
+    ).page.filter((view) => view.type === "loan_closed_member_deleted");
+    expect(views).toHaveLength(1);
+    expect(views[0]).toMatchObject({
+      actors: [],
+      href: `/my-puzzles/${borrowedByHer}`,
+      context: { puzzleTitle: "Lighthouse" },
+    });
+  });
+
   // SEC-36: closing a loan gives the copy back only while that loan's borrower holds it.
   test("an older loan she borrowed is returned, and the copy stays with Dave who holds it now", async () => {
     const t = newT();

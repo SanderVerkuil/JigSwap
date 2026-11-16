@@ -107,7 +107,10 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                escalation) still has a users row, so their threads stay. Runs after the legacy
 //                phases, which need the thread's copies to tell a copied legacy row.
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
-//   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
+//   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history.
+//                The lender of a copy they borrowed, if still active, gets a
+//                loan_closed_member_deleted notification (no actor): the puzzle may still be
+//                with them.
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
 //                copy reviews, circle shares, copy-scoped comments, photos (blobs included) and
 //                their own completions on it. Exchanges, loans and custody entries naming it stay.

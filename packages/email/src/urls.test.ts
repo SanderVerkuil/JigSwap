@@ -9,6 +9,7 @@ const EXPECTED: Record<EmailType, string> = {
   trade_completed: "/trades",
   trade_cancelled: "/trades",
   trade_cancelled_member_deleted: "/trades",
+  loan_closed_member_deleted: "/my-puzzles",
   message_received: "/messages",
   review_received: "/profile",
   puzzle_favorited: "/puzzles",
@@ -25,6 +26,7 @@ const EXPECTED_WITH_RELATED_ID: Record<EmailType, string> = {
   message_received: "/messages/rel-1",
   circle_message_received: "/messages/rel-1",
   puzzle_favorited: "/puzzles/rel-1",
+  loan_closed_member_deleted: "/my-puzzles/rel-1",
 };
 
 describe("ctaPath", () => {

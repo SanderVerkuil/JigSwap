@@ -10,6 +10,7 @@ export type NotificationViewType =
   | "trade_completed"
   | "trade_cancelled"
   | "trade_cancelled_member_deleted"
+  | "loan_closed_member_deleted"
   | "message_received"
   | "review_received"
   | "puzzle_favorited"

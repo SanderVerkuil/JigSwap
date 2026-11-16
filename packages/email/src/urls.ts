@@ -12,6 +12,9 @@ export const ctaPath = (type: EmailType, relatedId?: string): string => {
     case "trade_cancelled":
     case "trade_cancelled_member_deleted":
       return "/trades";
+    // relatedId is the lent copy's `_id`.
+    case "loan_closed_member_deleted":
+      return relatedId ? `/my-puzzles/${relatedId}` : "/my-puzzles";
     case "message_received":
     case "circle_message_received":
       return relatedId ? `/messages/${relatedId}` : "/messages";

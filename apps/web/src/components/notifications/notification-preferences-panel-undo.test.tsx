@@ -70,6 +70,7 @@ const TRADE_EMAIL_TYPES = [
   "trade_completed",
   "trade_cancelled",
   "trade_cancelled_member_deleted",
+  "loan_closed_member_deleted",
 ];
 
 const renderPanel = (locale: "en" | "nl" = "en") =>
@@ -129,9 +130,9 @@ describe("NotificationPreferencesPanel bulk category toggle", () => {
       })),
     );
 
-    // …and says what changed: five were off, one was already on.
+    // …and says what changed: six were off, one was already on.
     const { message, undo } = lastSuccess();
-    expect(message).toBe("Email turned on for 5 notifications");
+    expect(message).toBe("Email turned on for 6 notifications");
     expect(undo.label).toBe("Undo");
 
     undo.onClick();
@@ -156,7 +157,7 @@ describe("NotificationPreferencesPanel bulk category toggle", () => {
     await settle();
 
     const { message, undo } = lastSuccess();
-    expect(message).toBe("E-mail uitgezet voor 6 meldingen");
+    expect(message).toBe("E-mail uitgezet voor 7 meldingen");
     expect(undo.label).toBe("Ongedaan maken");
     undo.onClick();
     await settle();
