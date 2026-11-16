@@ -20,6 +20,7 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MAX_IMAGE_UPLOAD_BYTES } from "./lib/imageModeration/guards";
 import { MAX_REENCODE_EDGE } from "./lib/imageModeration/normaliseImage";
+import { HASH_MAX_BYTES } from "./lib/imageModeration/pipeline";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import schema from "./schema";
 
@@ -363,7 +364,7 @@ describe("input guards (copy photos)", () => {
     expect(stored).toEqual([]);
   });
 
-  test("more than 10 MB is refused from the storage metadata", async () => {
+  test("more than 10 MB is refused after download", async () => {
     const fetchMock = cleanReply();
     vi.stubGlobal("fetch", fetchMock);
     const t = withModerationPool(convexTest(schema, modules));
@@ -371,6 +372,28 @@ describe("input guards (copy photos)", () => {
     const big = new Uint8Array(MAX_IMAGE_UPLOAD_BYTES + 1);
     big.set([0xff, 0xd8, 0xff]);
     const fileId = await store(t, big, "image/jpeg");
+
+    const row = await addCopyPhoto(t, copy, fileId);
+
+    expect(row.moderationStatus).toBe("rejected");
+    expect(row.moderationReason).toBe("too_large");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await blobExists(t, fileId)).toBe(false);
+  });
+
+  test("more than HASH_MAX_BYTES is refused from the storage metadata, unread", async () => {
+    // With a hash service configured, an upload that is read gets hash-checked: a fetch.
+    vi.stubEnv("CSAM_HASHCHECK_PROVIDER", "offlimits");
+    vi.stubEnv("OFFLIMITS_HCS_BASE_URL", "https://hcs.example.test/api/check");
+    vi.stubEnv("OFFLIMITS_HCS_USERNAME", "jigswap");
+    vi.stubEnv("OFFLIMITS_HCS_PASSWORD", "s3cret-pass");
+    const fetchMock = cleanReply();
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    const { copy } = await seed(t);
+    const huge = new Uint8Array(HASH_MAX_BYTES + 1);
+    huge.set([0xff, 0xd8, 0xff]);
+    const fileId = await store(t, huge, "image/jpeg");
 
     const row = await addCopyPhoto(t, copy, fileId);
 
