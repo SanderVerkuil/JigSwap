@@ -524,7 +524,8 @@ const subjectOf = (
 //   completion/started -> the solve's copy when the viewer may reach it (canViewCopy), else the
 //                       puzzle definition when the viewer may open it (canViewDefinition, the
 //                       definition page's gate), exactly like the profile's solves list
-//                       (listProfileCompletions), behind its profile unlock rule.
+//                       (listProfileCompletions), behind its profile unlock rule, which the
+//                       entry's actor already passed in gateCandidates.
 //   exchange         -> the viewer's trades page, only when the viewer is a party; a follower who is
 //                       not a party gets no target (the actor link still goes to the profile).
 // The subject mirrors the page the row stands in for:
@@ -569,9 +570,6 @@ const resolveTarget = async (
         : {};
     case "completion":
     case "started": {
-      if (!(await canSeeProfileContent(ctx, viewerId, actorId))) {
-        return {};
-      }
       const completion = await ctx.db
         .query("completions")
         .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", entry.ref))
