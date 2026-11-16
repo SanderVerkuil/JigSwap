@@ -257,6 +257,7 @@ import type * as household_setDefaultCopyPermission from "../household/setDefaul
 import type * as household_withdrawJoinRequest from "../household/withdrawJoinRequest.js";
 import type * as http from "../http.js";
 import type * as identity_getCurrentUser from "../identity/getCurrentUser.js";
+import type * as identity_getUserByClerkId from "../identity/getUserByClerkId.js";
 import type * as identity_getUserById from "../identity/getUserById.js";
 import type * as identity_getUserStats from "../identity/getUserStats.js";
 import type * as identity_isAdmin from "../identity/isAdmin.js";
@@ -268,6 +269,7 @@ import type * as identity_requireActiveMember from "../identity/requireActiveMem
 import type * as identity_requireMember from "../identity/requireMember.js";
 import type * as identity_resolveMemberByHandle from "../identity/resolveMemberByHandle.js";
 import type * as identity_searchUsers from "../identity/searchUsers.js";
+import type * as identity_setLocation from "../identity/setLocation.js";
 import type * as identity_setSlug from "../identity/setSlug.js";
 import type * as identity_toMemberView from "../identity/toMemberView.js";
 import type * as insights_exportUserDataPage from "../insights/exportUserDataPage.js";
@@ -872,6 +874,7 @@ declare const fullApi: ApiFromModules<{
   "household/withdrawJoinRequest": typeof household_withdrawJoinRequest;
   http: typeof http;
   "identity/getCurrentUser": typeof identity_getCurrentUser;
+  "identity/getUserByClerkId": typeof identity_getUserByClerkId;
   "identity/getUserById": typeof identity_getUserById;
   "identity/getUserStats": typeof identity_getUserStats;
   "identity/isAdmin": typeof identity_isAdmin;
@@ -883,6 +886,7 @@ declare const fullApi: ApiFromModules<{
   "identity/requireMember": typeof identity_requireMember;
   "identity/resolveMemberByHandle": typeof identity_resolveMemberByHandle;
   "identity/searchUsers": typeof identity_searchUsers;
+  "identity/setLocation": typeof identity_setLocation;
   "identity/setSlug": typeof identity_setSlug;
   "identity/toMemberView": typeof identity_toMemberView;
   "insights/exportUserDataPage": typeof insights_exportUserDataPage;
