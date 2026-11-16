@@ -108,6 +108,9 @@ catalogus gaan deze meldingen over nieuwere functies:
 - **Ruil geannuleerd (account verwijderd)**: een lopende ruil is geannuleerd
   omdat het account van het andere lid is verwijderd. Dat lid staat er als
   **Verwijderd lid**.
+- **Lening afgesloten (account verwijderd)**: het lid dat jouw puzzel leende heeft
+  het account verwijderd, dus de lening is afgesloten. Heb je de puzzel nog
+  niet terug? Dan is hij misschien nog bij de lener.
 - **Kringberichten**: iemand schreef in de groepschat van een van je kringen.
   Berichten in één gesprek worden samengevoegd tot één melding. Zie
   [Berichten](/docs/staying-informed/messages#meldingen-van-kringchats).

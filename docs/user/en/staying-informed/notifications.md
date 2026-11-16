@@ -102,6 +102,9 @@ notifications cover newer features:
 - **Trade cancelled (account deleted)**: a trade you had under way was
   cancelled because the other member deleted their account. They show as
   **Deleted member**.
+- **Loan closed (account deleted)**: the member who borrowed your puzzle deleted
+  their account, so the loan was closed. If you don't have the puzzle back
+  yet, it may still be with them.
 - **Circle messages**: someone wrote in the group chat of one of your circles.
   Messages in one conversation are combined into one notification. See
   [Messages](/docs/staying-informed/messages#notifications-from-circle-chats).
