@@ -63,8 +63,6 @@ const copyView = (fields: Partial<CopyView>): CopyView => ({
     tags: [],
   },
   acquiredByViewerAt: null,
-  since: [],
-  before: [],
   completions: [],
   loans: [],
   transfers: [],

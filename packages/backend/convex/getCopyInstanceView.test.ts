@@ -11,30 +11,6 @@ const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 const asViewer = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_viewer" });
 
-type AnyEntry = {
-  type: string;
-  from?: unknown;
-  to?: unknown;
-  solver?: unknown;
-  lender?: unknown;
-  borrower?: unknown;
-};
-
-// Collect every ProjectedMember object out of a timeline entry.
-const participants = (e: AnyEntry): unknown[] =>
-  [e.from, e.to, e.solver, e.lender, e.borrower].filter((p) => p != null);
-
-type View = {
-  before: AnyEntry[];
-  since: AnyEntry[];
-} | null;
-
-// Find a transfer entry anywhere in the timeline (since OR before).
-const findTransfer = (view: View): AnyEntry | undefined =>
-  [...(view?.before ?? []), ...(view?.since ?? [])].find(
-    (e) => e.type === "transfer",
-  );
-
 const mkUser = (ctx: MutationCtx, clerkId: string, name: string, now: number) =>
   ctx.db.insert("users", {
     clerkId,
@@ -145,7 +121,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    const transfer = findTransfer(view as View);
+    const transfer = view?.transfers[0];
     expect(transfer).toBeDefined();
     expect(transfer?.from).toEqual({
       anonymous: false,
@@ -162,7 +138,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    const transfer = findTransfer(view as View) as {
+    const transfer = view?.transfers[0] as {
       from: { anonymous: boolean; anonRef?: string };
     };
     expect(transfer.from.anonymous).toBe(true);
@@ -189,9 +165,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: s1.copy },
     );
-    const t1from = (
-      findTransfer(v1 as View) as { from: { anonymous: boolean } }
-    ).from;
+    const t1from = (v1?.transfers[0] as { from: { anonymous: boolean } }).from;
     expect(t1from.anonymous).toBe(true);
 
     // prevOwner -> viewer only.
@@ -203,9 +177,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: s2.copy },
     );
-    const t2from = (
-      findTransfer(v2 as View) as { from: { anonymous: boolean } }
-    ).from;
+    const t2from = (v2?.transfers[0] as { from: { anonymous: boolean } }).from;
     expect(t2from.anonymous).toBe(true);
   });
 
@@ -220,7 +192,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    const transfer = findTransfer(view as View) as {
+    const transfer = view?.transfers[0] as {
       from: { anonymous: boolean; member?: { name: string } };
     };
     expect(transfer.from.anonymous).toBe(false);
@@ -276,13 +248,10 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    // Every anonymous reference to prevOwner within this one timeline must be identical.
+    // Every anonymous reference to prevOwner within this one copy's transfers must be identical.
     const refs = new Set<string>();
-    for (const e of [...(v1?.before ?? []), ...(v1?.since ?? [])]) {
-      for (const p of participants(e as AnyEntry)) {
-        const proj = p as { anonymous: boolean; anonRef?: string };
-        if (proj.anonymous && proj.anonRef) refs.add(proj.anonRef);
-      }
+    for (const p of (v1?.transfers ?? []).flatMap((e) => [e.from, e.to])) {
+      if (p.anonymous) refs.add(p.anonRef);
     }
     expect(refs.size).toBe(1);
     const ref1 = [...refs][0];
@@ -291,7 +260,7 @@ describe("getCopyInstanceView privacy gating", () => {
       api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: otherCopy },
     );
-    const transfer2 = findTransfer(v2 as View) as {
+    const transfer2 = v2?.transfers[0] as {
       from: { anonymous: boolean; anonRef?: string };
     };
     expect(transfer2.from.anonymous).toBe(true);
@@ -394,7 +363,7 @@ describe("getCopyInstanceView privacy gating", () => {
     expect(ownerView?.snapshot.acquisitionSource).toBe("bought_used");
   });
 
-  test("owner sees since/before split around acquiredByViewerAt; non-owner gets all in before", async () => {
+  test("owner and non-owner get every transfer, solve and loan in the grouped lists; no since/before timeline", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, prevOwner, solver, copy } = await seedCopy(t);
     await setVisibility(t, prevOwner, "public");
@@ -430,14 +399,14 @@ describe("getCopyInstanceView privacy gating", () => {
     );
     expect(owned?.viewerIsOwner).toBe(true);
     expect(owned?.acquiredByViewerAt).toBe(now + 100);
-    // before: the loan (now+10) and the transfer (now+100 >= boundary goes to since).
-    // The transfer occurredAt === boundary, so it lands in `since`.
-    const sinceTypes = owned?.since.map((e) => e.type).sort();
-    const beforeTypes = owned?.before.map((e) => e.type).sort();
-    expect(beforeTypes).toEqual(["loan"]);
-    expect(sinceTypes).toEqual(["completion", "transfer"]);
+    // The copy page reads only the grouped lists, so no second, merged history is sent.
+    expect(owned).not.toHaveProperty("since");
+    expect(owned).not.toHaveProperty("before");
+    expect(owned?.transfers).toHaveLength(1);
+    expect(owned?.completions).toHaveLength(1);
+    expect(owned?.loans).toHaveLength(1);
 
-    // A NON-owner viewer sees everything in `before` and an empty `since`.
+    // A NON-owner viewer gets the same lists, and no acquisition time.
     const stranger = await t.run(async (ctx) =>
       mkUser(ctx, "clerk_stranger", "Stranger", now),
     );
@@ -455,14 +424,19 @@ describe("getCopyInstanceView privacy gating", () => {
       { copyId: copy },
     );
     expect(notOwner?.viewerIsOwner).toBe(false);
-    expect(notOwner?.since).toEqual([]);
-    expect(notOwner?.before).toHaveLength(3); // transfer + completion + loan
+    expect(notOwner?.acquiredByViewerAt).toBeNull();
+    expect(notOwner).not.toHaveProperty("since");
+    expect(notOwner).not.toHaveProperty("before");
+    expect(notOwner?.transfers).toHaveLength(1);
+    expect(notOwner?.completions).toHaveLength(1);
+    expect(notOwner?.loans).toHaveLength(1);
   });
 });
 
-// SEC-35 / LIB-7: an unfinished solve is live activity ("is solving this right now"). It follows
-// the same opt-in, friends-only rule as the feed's "started" entry and the profile's "Currently
-// solving": the solver themself, or a mutual follower when the solver turned shareInProgress on.
+// SEC-35 / LIB-7: an unfinished solve is live activity ("is solving this right now"), shown only by
+// the feed's "started" entry and the profile's "Currently solving" under their opt-in,
+// friends-only rule. The copy page lists finished solves only, so an unfinished one stays out of
+// its payload for every viewer, opted-in mutual followers and the solver included.
 describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
   // The copy belongs to prevOwner (public, open copy) so any signed-in member can open the page.
   // The PUBLIC solver has one finished and one unfinished solve on it.
@@ -510,17 +484,15 @@ describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
     return seeded;
   };
 
-  // The start dates of every completion entry in the timeline (since + before).
+  // The start dates of the solves the copy page lists.
   const completionStarts = (
-    view: {
-      before: { type: string; startDate?: number }[];
-      since: { type: string; startDate?: number }[];
-    } | null,
+    view: { completions: { startedAt: number }[] } | null,
   ): number[] =>
-    [...(view?.before ?? []), ...(view?.since ?? [])]
-      .filter((e) => e.type === "completion")
-      .map((e) => e.startDate ?? -1)
-      .sort((a, b) => a - b);
+    (view?.completions ?? []).map((c) => c.startedAt).sort((a, b) => a - b);
+
+  // The unfinished solve's start date appears nowhere in the payload.
+  const expectNoUnfinishedSolve = (view: unknown, now: number) =>
+    expect(JSON.stringify(view)).not.toContain(String(now + 500));
 
   const viewAs = (
     t: TestConvex<typeof schema>,
@@ -540,8 +512,7 @@ describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
     const view = await viewAs(t, "clerk_viewer", copy);
     expect(view).not.toBeNull();
     expect(completionStarts(view)).toEqual([now + 200]);
-    // The in-progress start date appears nowhere in the payload.
-    expect(JSON.stringify(view)).not.toContain(String(now + 500));
+    expectNoUnfinishedSolve(view, now);
   });
 
   test("a one-way follower of an opted-in solver does not see the unfinished solve", async () => {
@@ -551,32 +522,28 @@ describe("getCopyInstanceView in-progress solves (SEC-35)", () => {
 
     const view = await viewAs(t, "clerk_viewer", copy);
     expect(completionStarts(view)).toEqual([now + 200]);
+    expectNoUnfinishedSolve(view, now);
   });
 
-  test("a mutual follower sees it only when the solver opted in", async () => {
-    for (const share of [undefined, false] as const) {
+  test("a mutual follower does not get it on the copy page, opted in or not", async () => {
+    for (const share of [undefined, false, true] as const) {
       const t = convexTest(schema, modules);
       const { now, viewer, solver, copy } = await seedInProgress(t, share);
       await follow(t, viewer, solver);
       await follow(t, solver, viewer);
       const view = await viewAs(t, "clerk_viewer", copy);
       expect(completionStarts(view)).toEqual([now + 200]);
+      expectNoUnfinishedSolve(view, now);
     }
-
-    const t = convexTest(schema, modules);
-    const { now, viewer, solver, copy } = await seedInProgress(t, true);
-    await follow(t, viewer, solver);
-    await follow(t, solver, viewer);
-    const view = await viewAs(t, "clerk_viewer", copy);
-    expect(completionStarts(view)).toEqual([now + 200, now + 500]);
   });
 
-  test("the solver always sees their own unfinished solve, opt-in or not", async () => {
+  test("the solver's own unfinished solve is not listed on the copy page either", async () => {
     const t = convexTest(schema, modules);
     const { now, copy } = await seedInProgress(t);
 
     const view = await viewAs(t, "clerk_solver", copy);
-    expect(completionStarts(view)).toEqual([now + 200, now + 500]);
+    expect(completionStarts(view)).toEqual([now + 200]);
+    expectNoUnfinishedSolve(view, now);
   });
 });
 
@@ -1314,7 +1281,7 @@ describe("getCopyInstanceView copyReviews", () => {
     });
   });
 
-  test("a HIDDEN author is anonymised exactly like the timeline (same memoised anonRef)", async () => {
+  test("a HIDDEN author is anonymised exactly like the transfers (same memoised anonRef)", async () => {
     const t = convexTest(schema, modules);
     const { now, prevOwner, copy } = await seedCopy(t);
     await setVisibility(t, prevOwner, "private");
@@ -1341,9 +1308,9 @@ describe("getCopyInstanceView copyReviews", () => {
     expect(review.author.anonRef).toEqual(expect.any(String));
     // The projected object has exactly the two anon keys, nothing else.
     expect(Object.keys(review.author).sort()).toEqual(["anonRef", "anonymous"]);
-    // Same memo + same salt as the timeline: prevOwner also appears in the custody transfer, and
+    // Same memo + same salt as the transfers: prevOwner also appears in the custody transfer, and
     // both anonymous projections must carry the IDENTICAL anonRef.
-    const transfer = findTransfer(view as View) as {
+    const transfer = view?.transfers[0] as {
       from: { anonymous: boolean; anonRef?: string };
     };
     expect(transfer.from.anonymous).toBe(true);
