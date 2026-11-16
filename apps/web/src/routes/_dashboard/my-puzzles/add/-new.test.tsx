@@ -468,6 +468,38 @@ describe("the box photo", () => {
     });
   });
 
+  it("files a second puzzle, not the first again, on a second Save & Add Another", async () => {
+    let filed = 0;
+    mocks.call.mockImplementation(async (name: string) =>
+      name === CREATE_PUZZLE
+        ? `puzzle_agg_${++filed}`
+        : name === ACQUIRE
+          ? "copy_agg_1"
+          : null,
+    );
+    renderPage();
+    for (const title of ["Café", "Bistro"]) {
+      fireEvent.change(screen.getByLabelText(en.puzzles.fieldTitle), {
+        target: { value: title },
+      });
+      fireEvent.change(screen.getByLabelText(en.puzzles.fieldPieceCount), {
+        target: { value: "1000" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Save & Add Another" }),
+      );
+      await waitFor(() =>
+        expect(callsTo(ACQUIRE)).toHaveLength(title === "Café" ? 1 : 2),
+      );
+      await waitFor(() => expect(toast.success).toHaveBeenCalledTimes(filed));
+    }
+
+    expect(callsTo(CREATE_PUZZLE)).toHaveLength(2);
+    expect(callsTo(ACQUIRE)[1]).toMatchObject({
+      puzzleDefinitionId: "puzzle_agg_2",
+    });
+  });
+
   it("sends no photo once the member deselects it", async () => {
     renderPage();
     fillRequired();

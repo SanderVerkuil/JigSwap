@@ -433,6 +433,8 @@ function AddPuzzlePage() {
       }).catch((error: unknown) => {
         throw new CopyStepError(error);
       })) as string;
+      // The puzzle is now owned: a later submit must file its own, not reuse this one.
+      created.current = null;
 
       // 3. Apply availability if any chip is on. The copy exists by now: a failed offer must not
       // read as a failed add, or a retry adds a second copy. It stays unoffered, and the toast says
