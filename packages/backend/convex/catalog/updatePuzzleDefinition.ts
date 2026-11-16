@@ -8,8 +8,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { convexPuzzleDefinitionRepository } from "./adapters/convexPuzzleDefinitionRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -60,13 +59,11 @@ export const updatePuzzleDefinition = mutation({
     image: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const actingMember = await requireMember(ctx);
-
     // ACL: admins only, checked before the definition is read so a member learns nothing about
     // an id. A member, its submitter included, changes a definition only through a change
     // proposal (proposeDefinitionChange) that an admin reviews: not after moderation, and not
     // while it is pending either, so what an admin approves is exactly what was submitted.
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const actingMember = await requireAdmin(ctx);
 
     const definitions = convexPuzzleDefinitionRepository(ctx);
     const existing = await definitions.findById(

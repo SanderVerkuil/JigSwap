@@ -32,7 +32,7 @@ import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
-import { rateLimitedRetryAt } from "@/lib/convex-error-code";
+import { convexErrorCode, rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -53,13 +53,7 @@ export const Route = createFileRoute("/_dashboard/puzzles/$id/suggest-edit")({
 
 // Map a thrown ConvexError's stable domain code to a user-facing i18n key.
 const errorKeyFor = (error: unknown): string => {
-  const code =
-    error instanceof ConvexError &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "code" in error.data
-      ? (error.data as { code: string }).code
-      : undefined;
+  const code = convexErrorCode(error);
   switch (code) {
     case "OpenProposalAlreadyExists":
       return "errors.openExists";
