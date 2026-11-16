@@ -996,6 +996,41 @@ describe("households and circles", () => {
     },
   );
 
+  // alice must not learn of carol's block: her invite reads as pending to her, as a re-invite's
+  // DuplicateInvite says, while bob is never notified of an invite he can't accept.
+  test.each(HOUSEMATE_DIRECTIONS)(
+    "%s before alice invites bob: alice still sees it pending, bob is not notified",
+    async (_, pair) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t);
+      await householdWithCarol(t, u);
+      await insertBlock(t, ...pair(u));
+      const invite = () =>
+        as(t, "alice").mutation(
+          api.household.inviteToHousehold.inviteToHousehold,
+          { inviteeId: u.bob },
+        );
+      const inviteId = await invite();
+      await flushScheduled(t);
+
+      const household = await as(t, "alice").query(
+        api.household.getMyHousehold.getMyHousehold,
+        {},
+      );
+      expect(household?.pendingInvites.map((i) => i.inviteId)).toEqual([
+        inviteId,
+      ]);
+      await expectCode(invite(), "DuplicateInvite");
+      const bobsRows = await t.run((ctx) =>
+        ctx.db
+          .query("notifications")
+          .withIndex("by_user", (q) => q.eq("userId", u.bob))
+          .collect(),
+      );
+      expect(bobsRows).toEqual([]);
+    },
+  );
+
   test.each(DIRECTIONS)(
     "%s: adding the other member to a circle is refused",
     async (_, pair) => {

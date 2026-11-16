@@ -1,7 +1,7 @@
 import { HOUSEHOLD_INVITE_TTL_MS } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { blockedEitherWaySet } from "../social/blocks";
+import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
 
 // Read-side helpers over `householdMembers` shared by the household queries and the copy-access
 // gate. Kept tiny: membership is the only fact the read side needs.
@@ -64,18 +64,20 @@ export const blockedWithHousehold = async (
   );
 };
 
-// Whether a pending household invite can still be accepted, as acceptHouseholdInvite decides: not
-// lapsed (HOUSEHOLD_INVITE_TTL_MS after it was sent, the domain's HouseholdInvite.isExpired), its
-// inviter still the household's admin (an invite speaks for the household only while the admin who
-// sent it runs it), and no block either way between the invitee and any member
-// (blockedWithHousehold). Every read of pending invites hides the rest, so nobody is shown an
-// invite that no longer works, and a refused Accept can't single out a block (spec 2.6).
-export const isOpenHouseholdInvite = async (
+type InviteFacts = Pick<
+  Doc<"householdInvites">,
+  "status" | "createdAt" | "householdId" | "inviterId" | "inviteeId"
+>;
+
+// Whether the admin's sent invite still reads as pending to them (getMyHousehold): not lapsed
+// (HOUSEHOLD_INVITE_TTL_MS after it was sent, the domain's HouseholdInvite.isExpired), its inviter
+// still the household's admin (an invite speaks for the household only while the admin who sent it
+// runs it), and no block either way between inviter and invitee. A block with another member is
+// left out on purpose: it would hide the invite while a re-invite still answers DuplicateInvite,
+// which tells the admin about a housemate's block (spec 2.6).
+export const isOpenSentHouseholdInvite = async (
   ctx: QueryCtx,
-  invite: Pick<
-    Doc<"householdInvites">,
-    "status" | "createdAt" | "householdId" | "inviterId" | "inviteeId"
-  >,
+  invite: InviteFacts,
   now: number,
 ): Promise<boolean> => {
   if (invite.status !== "pending") return false;
@@ -84,9 +86,18 @@ export const isOpenHouseholdInvite = async (
   if (inviter?.householdId !== invite.householdId || inviter.role !== "admin") {
     return false;
   }
-  return !(await blockedWithHousehold(
-    ctx,
-    invite.inviteeId,
-    invite.householdId,
-  ));
+  return !(await isBlockedEitherWay(ctx, invite.inviterId, invite.inviteeId));
 };
+
+// Whether a pending household invite can still be accepted, as acceptHouseholdInvite decides: open
+// to its sender (isOpenSentHouseholdInvite) and no block either way between the invitee and any
+// member (blockedWithHousehold). Every surface that shows the invite to its invitee (their list,
+// the notification, and whether the subscriber creates it at all) hides the rest, so nobody is
+// shown an invite that no longer works, and a refused Accept can't single out a block (spec 2.6).
+export const isOpenHouseholdInvite = async (
+  ctx: QueryCtx,
+  invite: InviteFacts,
+  now: number,
+): Promise<boolean> =>
+  (await isOpenSentHouseholdInvite(ctx, invite, now)) &&
+  !(await blockedWithHousehold(ctx, invite.inviteeId, invite.householdId));

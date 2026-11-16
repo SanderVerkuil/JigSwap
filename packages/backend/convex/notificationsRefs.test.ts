@@ -364,6 +364,21 @@ describe("subscriber refs: social and household", () => {
 
   test("household_invite_received: the inviter is the actor, the invite the subject", async () => {
     const { row, w } = await onlyRow(async (ctx, w) => {
+      // An invite still on offer: alice runs the household (the subscriber checks).
+      await ctx.db.insert("householdMembers", {
+        householdId: "household-agg-1",
+        memberId: w.alice,
+        role: "admin",
+        joinedAt: Date.now(),
+      });
+      await ctx.db.insert("householdInvites", {
+        aggregateId: "invite-agg-1",
+        householdId: "household-agg-1",
+        inviterId: w.alice,
+        inviteeId: w.bob,
+        status: "pending",
+        createdAt: Date.now(),
+      });
       await dispatch(ctx, "HouseholdInviteSent", {
         inviteId: "invite-agg-1",
         householdId: "household-agg-1",

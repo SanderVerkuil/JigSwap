@@ -13,7 +13,7 @@ import { requireMember } from "../identity/requireMember";
 import {
   blockedWithHousehold,
   householdDefaultOf,
-  isOpenHouseholdInvite,
+  isOpenSentHouseholdInvite,
   membershipOf,
   membersOfHousehold,
 } from "./memberships";
@@ -41,8 +41,9 @@ export const personView = async (
 
 // The acting member's household (members + roles), or null. Pending sent invites and requests to
 // join are returned to the admin only — they are the one who chose those people and who answers
-// the requests. A sent invite is listed while it can still be accepted (isOpenHouseholdInvite: not
-// lapsed, its inviter still the admin, no block either way with a member). A request to join is
+// the requests. A sent invite is listed while it reads as pending to its sender
+// (isOpenSentHouseholdInvite: not lapsed, its inviter still the admin, no block either way between
+// them), so the list agrees with a re-invite's DuplicateInvite. A request to join is
 // listed while pending, not lapsed and its requester not blocked either way with a member (as
 // approveJoinRequest decides); a dropped one (asked through a link the household's admin did not
 // mint, or across a block) never is. Also the household-wide default copy permission (resolved).
@@ -83,7 +84,7 @@ export const getMyHousehold = query({
         // An email invitation's in-app invite (viaEmail) is listed only as that invitation
         // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
         if (invite.viaEmail === true) continue;
-        if (!(await isOpenHouseholdInvite(ctx, invite, now))) continue;
+        if (!(await isOpenSentHouseholdInvite(ctx, invite, now))) continue;
         pendingInvites.push({
           inviteId: invite.aggregateId,
           invitee: await personView(ctx, invite.inviteeId),
