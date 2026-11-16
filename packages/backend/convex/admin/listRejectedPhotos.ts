@@ -18,9 +18,12 @@ import {
 // it: it turns "approved" but unchecked again, and so returns to Unchecked photos as "Hash check
 // timed out", where only "Approve without hash check" publishes it.
 //
-// A bounded read: the oldest REJECTED_PHOTOS_QUEUE_LIMIT rejected photos. Every decision takes a
-// photo out of "rejected" (restored, or deleted on confirm), so the next ones appear as the admin
-// works through the queue.
+// It returns the oldest REJECTED_PHOTOS_QUEUE_LIMIT rejected photos. Every decision takes a photo
+// out of "rejected" (restored, or deleted on confirm), so the next ones appear as the admin works
+// through the queue.
+// shortcut: only the result is bounded; the filter runs after the index, so the read also scans
+// past every refused upload (invalid_image), and nothing deletes those unless RETENTION_ENFORCE
+// names copyPhotos ("all" leaves it out); give them their own index if they pile up.
 export const REJECTED_PHOTOS_QUEUE_LIMIT = 100;
 
 export const listRejectedPhotos = query({

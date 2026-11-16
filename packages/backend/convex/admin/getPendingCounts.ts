@@ -14,8 +14,8 @@ const bounded = (rows: readonly unknown[]): QueueCount => ({
 });
 
 // How much work waits in each admin queue, for the moderation tab pills, the admin sidebar badges
-// and the /admin hub tiles. Every queue is one indexed read of at most CAP + 1 rows, so the query
-// stays cheap however long a queue grows, and each counts exactly what its admin list shows:
+// and the /admin hub tiles. Every queue is one indexed read that stops after CAP + 1 counted rows,
+// and each counts exactly what its admin list shows:
 // - submissions: pending catalog definitions (catalog.pending);
 // - flagged: auto-rejected copy photos, refused uploads left out (admin.listRejectedPhotos);
 // - appeals: message photos whose sender asked for a review not yet decided
@@ -26,6 +26,9 @@ const bounded = (rows: readonly unknown[]): QueueCount => ({
 // - proposals: pending community change proposals (admin.listPendingChangeProposals).
 // Unchecked photos are not counted here: that queue's own per-source caps already bound it, and
 // the console derives its count from the list. Admin-only.
+// shortcut: flagged filters refused uploads (invalid_image) after its index, so it also reads past
+// every one of them, and nothing deletes them unless RETENTION_ENFORCE names copyPhotos ("all"
+// leaves it out); give them their own index if they pile up.
 export const getPendingCounts = query({
   args: {},
   handler: async (ctx) => {

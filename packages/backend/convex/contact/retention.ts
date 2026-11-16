@@ -17,7 +17,8 @@ export const CONTACT_MESSAGE_RETENTION_MONTHS = 12;
  * The daily contactMessages retention sweep (crons.ts; ops-3, SEC-22): deletes every handled
  * contact message sent more than CONTACT_MESSAGE_RETENTION_MONTHS ago, one page per run over
  * by_status, re-scheduling itself until the backlog is done. A dry run, counting only, unless
- * RETENTION_ENFORCE names "contactMessages" (lib/retention). A message still "new" is never read.
+ * RETENTION_ENFORCE is "all" or names "contactMessages" (lib/retention: "all" leaves out only
+ * copyPhotos). A message still "new" is never read.
  */
 export const sweepContactMessageRetention = internalMutation({
   args: {

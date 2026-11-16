@@ -58,7 +58,8 @@ crons.daily(
   {},
 );
 
-// Retention backstops (lib/retention): dry-run unless RETENTION_ENFORCE names the sweep.
+// Retention backstops (lib/retention): dry-run unless RETENTION_ENFORCE is "all" or names the
+// sweep ("all" leaves out only copyPhotos).
 // Reports past their 12 months and evidence copies past their 6 months whose purge job was lost
 // get it re-armed; reports left open over 30 days are logged at error level
 // (reports/retention).
@@ -99,7 +100,8 @@ crons.daily(
 );
 
 // Handled contact messages (a visitor's name, email and text) sent more than 12 months ago are
-// deleted; a dry run unless RETENTION_ENFORCE names "contactMessages" (contact/retention).
+// deleted; a dry run unless RETENTION_ENFORCE is "all" or names "contactMessages", so a prod value
+// of "all" deletes them at the next run (contact/retention).
 crons.daily(
   "contact message retention",
   { hourUTC: 4, minuteUTC: 40 },

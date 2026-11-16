@@ -7,7 +7,8 @@ import { RETENTION_SWEEP_PAGE } from "./lib/retention";
 import schema from "./schema";
 
 // ops-3: a handled contact message (the visitor's name, email and text) is deleted 12 months after
-// it was sent, by a daily sweep that is a dry run unless RETENTION_ENFORCE names "contactMessages".
+// it was sent, by a daily sweep that is a dry run unless RETENTION_ENFORCE is "all" or names
+// "contactMessages".
 // A message nobody handled yet is never touched.
 
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
