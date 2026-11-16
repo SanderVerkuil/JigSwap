@@ -12,13 +12,14 @@ import { canSeeProfileContent } from "./privacy";
 // shelf. Auth-gated. Returns them in the stored order and skips any entry that no longer exists or
 // is no longer owned by `userId` (defensive; ownership could have changed since curation).
 //
-// SECURITY: the shelf is profile content, so it needs the profile unlock (canSeeProfileContent:
-// self, public profile or mutual follower, never across a block); otherwise [], else a locked viewer
-// could probe member ids to learn who owns a copy they can open. A NON-owner viewer then only sees
-// copies they may actually reach (canViewCopy: owner public + open, or circle-shared) and never the
-// owner-only fields (notes / acquisition provenance) — those are gated by the mapper's
-// includeOwnerOnly default. The OWNER sees their full curated shelf with all owner-only fields. Returns [] when the
-// member has no profile or has not curated their shelf (caller falls back to recent-6).
+// SECURITY: the shelf is profile content, so a viewer without the profile unlock
+// (canSeeProfileContent: self, public profile or mutual follower, never across a block) gets [];
+// otherwise a locked viewer could probe member ids to learn who owns a copy they can open. A
+// NON-owner viewer then sees only copies they may actually reach (canViewCopy: owner public + open,
+// or circle-shared) and never the owner-only fields (notes / acquisition provenance), which the
+// mapper's includeOwnerOnly default withholds. The OWNER sees their full curated shelf with all
+// owner-only fields. Returns [] when the member has no profile or has not curated their shelf
+// (caller falls back to recent-6).
 export const featuredShelf = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args): Promise<OwnedCopyView[]> => {

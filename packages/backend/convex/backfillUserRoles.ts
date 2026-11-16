@@ -51,8 +51,7 @@ async function clerkRoleOf(
 // Clerk (404) and is erased as that webhook would have (users.deleteUser); one the offset paging
 // skipped is reconciled like the rest; and one Clerk could not answer for is left for the next run.
 // More than MAX_GONE of them changes nothing and logs an error naming them instead. Runs from
-// crons.ts; to run
-// it now:
+// crons.ts; to run it now:
 //   npx convex run backfillUserRoles:run '{}'
 // A deployment without CLERK_SECRET_KEY (a preview) skips it with a warning.
 export const run = internalAction({
