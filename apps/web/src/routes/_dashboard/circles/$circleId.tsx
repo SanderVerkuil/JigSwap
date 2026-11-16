@@ -1,22 +1,19 @@
 import { CirclePage } from "@/components/circles/circle-page";
 import { AppNotFound } from "@/components/NotFound";
 import { PageLoading } from "@/components/ui/loading";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import {
   createFileRoute,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { ConvexError } from "convex/values";
 import { useTranslations } from "use-intl";
 
 // A circle's member-gated reads refuse a non-member with CircleNotFound (getCircle returns null,
 // which the page renders as the same 404). Render the refusal as the in-shell 404 too and rethrow
 // anything else to the default catch boundary.
 function CircleError({ error }: ErrorComponentProps) {
-  if (error instanceof ConvexError) {
-    const code = (error.data as { code?: unknown } | undefined)?.code;
-    if (code === "CircleNotFound") return <AppNotFound />;
-  }
+  if (convexErrorCode(error) === "CircleNotFound") return <AppNotFound />;
   throw error;
 }
 

@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   DATE_ONLY_TIME_ZONE,
   dateInputToMs,
@@ -39,7 +40,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
-import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey } from "./solving-error";
 
 interface FinishSolveDialogProps {
   open: boolean;
@@ -124,7 +125,7 @@ export function FinishSolveDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      const fieldErrors = solveFormErrorsFromCode(solvingErrorCode(error));
+      const fieldErrors = solveFormErrorsFromCode(convexErrorCode(error));
       if (fieldErrors) {
         show(fieldErrors);
         return;

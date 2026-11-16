@@ -1,7 +1,6 @@
 "use client";
 
 import { PhotoZoom } from "@/components/copies/photo-zoom";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { DeleteOwnContentButton } from "@/components/social/delete-own-content-button";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { gateway, Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   authorMemberIdOf,
   projectedAuthorOf,

@@ -1,4 +1,4 @@
-import { convexErrorCode } from "@/components/exchange/request-trade";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // The copyInstance message for a refused change to a copy. The Library refuses a sharing change
 // while an exchange in progress reserves the copy or it is out on loan, and any change after too many

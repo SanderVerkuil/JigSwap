@@ -6,8 +6,8 @@
 // then claim it with stageMessageImage. State lives in stagingReducer; this hook only runs the
 // steps. There is no cheap "are photos available" query, so the first
 // ImagesUnavailable refusal hides Photo for the rest of the session.
-import { conversationErrorCode } from "@/components/messaging/format";
 import { gateway, type Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { preparePhoto, uploadWithProgress } from "@/lib/prepare-photo";
 import { useConvexMutation } from "@convex-dev/react-query";
 import {
@@ -116,7 +116,7 @@ export function usePhotoStaging(threadId: string) {
           dispatch({ type: "ready", key, attachmentId: result.attachmentId });
         }
       } catch (error) {
-        const code = conversationErrorCode(error);
+        const code = convexErrorCode(error);
         if (code === "ImagesUnavailable") {
           // Not this photo's fault: drop it and stop offering Photo.
           dispatch({ type: "remove", key });

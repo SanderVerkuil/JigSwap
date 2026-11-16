@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useUserSettings } from "@/hooks/use-user-settings";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { dateInputToMs, localTodayInput } from "@/lib/date-input";
 import {
   hasSolveFormErrors,
@@ -38,7 +39,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey } from "./solving-error";
 
 // Whether the member is logging a finished solve or one they are still working on.
 type SolveStatus = "finished" | "inProgress";
@@ -190,7 +191,7 @@ export function LogSolveDialog({
       };
       offerOrFollowUp();
     } catch (error) {
-      const fieldErrors = solveFormErrorsFromCode(solvingErrorCode(error));
+      const fieldErrors = solveFormErrorsFromCode(convexErrorCode(error));
       if (fieldErrors) {
         show(fieldErrors);
         return;

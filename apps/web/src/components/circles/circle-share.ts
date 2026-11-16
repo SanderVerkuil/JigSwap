@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // Shared logic of the two places a member manages their circle shares: the circle page's share
 // picker (many copies, one circle) and a copy's "Share with circles" dialog (one copy, many
@@ -19,11 +19,8 @@ const KNOWN_CODES = new Set([
 
 /** The `circles` namespace i18n key describing why sharing or unsharing failed. */
 export function circleShareErrorKey(error: unknown): string {
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: unknown } | undefined;
-    const code = typeof data?.code === "string" ? data.code : undefined;
-    if (code && KNOWN_CODES.has(code)) return `shareErrors.${code}`;
-  }
+  const code = convexErrorCode(error);
+  if (code && KNOWN_CODES.has(code)) return `shareErrors.${code}`;
   return "shareErrors.generic";
 }
 

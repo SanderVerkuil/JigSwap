@@ -16,9 +16,9 @@ import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ConvexError } from "convex/values";
 import { CheckCircle, Star } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -125,15 +125,7 @@ export function LeaveReviewDialog({
       reset();
       setOpen(false);
     } catch (error) {
-      const code =
-        error instanceof ConvexError &&
-        typeof error.data === "object" &&
-        error.data !== null &&
-        "code" in error.data
-          ? (error.data as { code: string }).code
-          : undefined;
-
-      switch (code) {
+      switch (convexErrorCode(error)) {
         case "ExchangeNotCompleted":
           toast.error(t("errors.exchangeNotCompleted"));
           break;

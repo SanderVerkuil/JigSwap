@@ -7,13 +7,13 @@ import {
 import { ThreadList } from "@/components/messaging/thread-list";
 import { ThreadView } from "@/components/messaging/thread-view";
 import { AppNotFound } from "@/components/NotFound";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import {
   createFileRoute,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { ConvexError } from "convex/values";
 import { useEffect, useState } from "react";
 
 // This route is deep-linked (message notifications carry thread ids), so a
@@ -21,11 +21,9 @@ import { useEffect, useState } from "react";
 // Render those as the in-shell 404 and rethrow anything else to the default
 // catch boundary.
 function ThreadError({ error }: ErrorComponentProps) {
-  if (error instanceof ConvexError) {
-    const code = (error.data as { code?: unknown } | undefined)?.code;
-    if (code === "ThreadNotFound" || code === "NotParticipant") {
-      return <AppNotFound />;
-    }
+  const code = convexErrorCode(error);
+  if (code === "ThreadNotFound" || code === "NotParticipant") {
+    return <AppNotFound />;
   }
   throw error;
 }

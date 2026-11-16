@@ -5,12 +5,12 @@
 // navigate into it. Used by the inbox's member picker; mirrors
 // useOpenCircleChat.
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { conversationErrorCode } from "./format";
 
 export function useOpenDm() {
   const t = useTranslations("messages");
@@ -27,7 +27,7 @@ export function useOpenDm() {
       return true;
     } catch (error) {
       toast.error(
-        conversationErrorCode(error) === "NotConnected"
+        convexErrorCode(error) === "NotConnected"
           ? t("notConnected")
           : t("openError"),
       );

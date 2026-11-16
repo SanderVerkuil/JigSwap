@@ -12,7 +12,6 @@
 // page, and every admin function re-checks isAdmin.
 import { AdminQueryError } from "@/components/admin/admin-query-error";
 import { QueueEmpty } from "@/components/admin/queue-empty";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import {
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
 import { useQuery } from "@tanstack/react-query";

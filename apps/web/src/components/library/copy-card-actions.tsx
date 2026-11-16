@@ -4,7 +4,6 @@ import {
   type ShareWithCirclesCopy,
 } from "@/components/circles/share-with-circles-dialog";
 import { useCopyOfferToggle } from "@/components/copies/use-copy-offer-toggle";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { FinishSolveDialog } from "@/components/solving/finish-solve-dialog";
 import { LogSolveDialog } from "@/components/solving/log-solve-dialog";
 import { StartSolveDialog } from "@/components/solving/start-solve-dialog";
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { gateway, Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import type { HouseholdCopyPermission } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";

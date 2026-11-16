@@ -32,3 +32,13 @@ describe("circle name", () => {
     }
   });
 });
+
+describe("isInvalidCircleName with JSON-encoded refusal data", () => {
+  it("reads the code like the shared helper does", () => {
+    expect(
+      isInvalidCircleName(
+        new ConvexError(JSON.stringify({ code: "InvalidCircleName" })),
+      ),
+    ).toBe(true);
+  });
+});

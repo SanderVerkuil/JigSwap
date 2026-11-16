@@ -41,11 +41,11 @@ import {
 } from "@/components/admin/moderation/use-pinned-selection";
 import { uncheckedQueueCount } from "@/components/admin/pending-counts";
 import { QueueEmpty } from "@/components/admin/queue-empty";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { PageLoading } from "@/components/ui/loading";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";

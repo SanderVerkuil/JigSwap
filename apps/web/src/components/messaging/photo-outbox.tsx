@@ -12,6 +12,7 @@
 import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder";
 import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -20,7 +21,6 @@ import { Clock, ImageOff } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { conversationErrorCode } from "./format";
 import { photoAspect } from "./photo-staging";
 
 type PendingPhoto = FunctionReturnType<
@@ -124,7 +124,7 @@ export function StoppedPhoto({
         attachmentId: photo.attachmentId as Id<"messageAttachments">,
       });
     } catch (error) {
-      if (conversationErrorCode(error) === "AttachmentNotFound") onGone();
+      if (convexErrorCode(error) === "AttachmentNotFound") onGone();
       else toast.error(t("reviewFailed"));
     }
   };

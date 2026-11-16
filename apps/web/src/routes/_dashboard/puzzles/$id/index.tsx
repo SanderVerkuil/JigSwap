@@ -2,7 +2,6 @@ import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { ImageZoom } from "@/components/common/image-zoom";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { useConditionLabel } from "@/components/library/condition";
 import { ShellNotFound } from "@/components/NotFound";
 import {
@@ -29,6 +28,7 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtInCheck } from "@/hooks/use-box-art-check";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useFavorites } from "@/hooks/use-favorites";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   authorMemberIdOf,
   projectedAuthorOf,

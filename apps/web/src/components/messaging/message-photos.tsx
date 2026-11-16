@@ -24,6 +24,7 @@ import { blurhashToDataUrl } from "@/components/photos/pending-photo-placeholder
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { cn } from "@/lib/utils";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { stripFormatting } from "@jigswap/contracts";
@@ -33,7 +34,6 @@ import { Clock, EyeOff, Flag, ImageOff } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { conversationErrorCode } from "./format";
 import {
   MessagePhotoLightbox,
   type LightboxPhoto,
@@ -139,7 +139,7 @@ export function MessagePhotos({
     } catch (error) {
       // AttachmentNotFound (e.g. the reader has an open report on it, or it
       // is gone): it simply stays blurred.
-      if (conversationErrorCode(error) !== "AttachmentNotFound") {
+      if (convexErrorCode(error) !== "AttachmentNotFound") {
         toast.error(t("revealFailed"));
       }
     }
