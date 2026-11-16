@@ -6,10 +6,11 @@ permissions:
 # Label-gated Vercel web previews (docs/deployment/convex-preview-deployments.md).
 #
 # apps/web/vercel.json turns off Vercel's Git-integration deploys for every branch (main
-# included; prod web deploys from convex-deploy.yml's production job), so a PR push no longer spends a deployment from the daily quota by itself. (Builds
-# cancelled by an Ignored Build Step still count toward that quota, which is why the gate
-# lives here and not in an ignoreCommand.) Instead this workflow deploys a preview with the
-# Vercel CLI, but only for a PR that carries the `preview` label and is not a draft:
+# included; prod web deploys from convex-deploy.yml's production job), so a PR push no longer
+# spends a deployment from the daily quota by itself. (Builds cancelled by an Ignored Build Step
+# still count toward that quota, which is why the gate lives here and not in an ignoreCommand.)
+# Instead this workflow deploys a preview with the Vercel CLI, but only for a PR that carries the
+# `preview` label and is not a draft:
 #   - adding the `preview` label deploys the current head,
 #   - every later push (synchronize) redeploys it while the label stays on,
 #   - marking a labeled draft ready for review deploys it,

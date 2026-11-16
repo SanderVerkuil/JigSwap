@@ -9,11 +9,12 @@ name: Convex Deploy
 #     never deploys code that failed lint/type-check/test/build. The CI run must also come
 #     from a push to this repository: `branches: [main]` matches only the head branch NAME,
 #     so a pull request whose head branch is called `main` (e.g. from a fork) would match too.
-# Web production: apps/web/vercel.json turns Vercel's Git deploys off for main, so the step right after
-# the Convex prod deploy deploys the web with the lockfile-pinned Vercel CLI (installed the way
-# vercel-preview.yml does). The web therefore goes live only after CI and the Convex prod deploy,
-# from the CI'd commit, behind the same stale-commit guard. Needs the VERCEL_TOKEN, VERCEL_ORG_ID
-# and VERCEL_PROJECT_ID secrets in the convex-production environment (or the repo).
+# Web production: apps/web/vercel.json turns Vercel's Git deploys off for every branch (main
+# included), so the step right after the Convex prod deploy deploys the web with the
+# lockfile-pinned Vercel CLI (installed the way vercel-preview.yml does). The web therefore goes
+# live only after CI and the Convex prod deploy, from the CI'd commit, behind the same stale-commit
+# guard. Needs the VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID secrets in the
+# convex-production environment (or the repo).
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
 # After each push, `whatsNew/publishPending` starts the What's new notification fan-out (idempotent).
 # Preview deployments (convex-preview.yml) deliberately skip it: they are seeded from a dev snapshot

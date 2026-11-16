@@ -102,7 +102,7 @@ export const Route = createRootRouteWithContext<{
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
-      // Favicon set generated from the JigSwap puzzle-piece mark (served from apps/web/public.
+      // Favicon set generated from the JigSwap puzzle-piece mark (served from apps/web/public).
       { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
       {
         rel: "icon",

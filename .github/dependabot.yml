@@ -25,10 +25,10 @@ updates:
     commit-message:
       prefix: ci
 
-  # The Vercel CLI that vercel-preview.yml and convex-deploy.yml's production job run with VERCEL_TOKEN, installed with
-  # `npm ci --ignore-scripts` from .github/vercel-cli/package-lock.json (outside the pnpm
-  # workspace). A bump rewrites that lockfile; a major bump can change the deploy flags, so
-  # run one labelled preview before merging it. A bump also changes the prod web deploy.
+  # The Vercel CLI that vercel-preview.yml and convex-deploy.yml's production job run with
+  # VERCEL_TOKEN, installed with `npm ci --ignore-scripts` from .github/vercel-cli/package-lock.json
+  # (outside the pnpm workspace). A bump rewrites that lockfile; a major bump can change the deploy
+  # flags, so run one labelled preview before merging it. A bump also changes the prod web deploy.
   #
   # This entry only bumps `vercel` itself. Because the lockfile is committed, GitHub also
   # raises Dependabot alerts for the CLI's transitive packages (when it landed, npm audit
