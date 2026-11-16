@@ -194,14 +194,6 @@ export const closeOpenLoans = async (
   return page;
 };
 
-// Delete a stored blob unless anything else still holds it: a CSAM escalation preserves it, or a
-// row written before the claim rule holds the same id, such as catalogue box art (SEC-01;
-// lib/storage/blobLifecycle). Tolerates a blob that is already gone (a rejected photo's, or a
-// re-encode swap's original).
-const deleteBlob = async (ctx: MutationCtx, fileId: Id<"_storage">) => {
-  await deleteBlobUnlessReferenced(ctx, fileId);
-};
-
 /**
  * Delete one copy photo of a deleted member with its blob and its discussion comments. The keep
  * rule mirrors library/removeCopyPhoto and message attachments (messageAttachments
@@ -225,7 +217,11 @@ const deleteCopyPhoto = async (
   for (const comment of comments) await ctx.db.delete(comment._id);
   await ctx.db.delete(image._id);
   await deleteRenditions(ctx, image.fileId);
-  await deleteBlob(ctx, image.fileId);
+  // Delete the blob unless anything else still holds it: a CSAM escalation preserves it, or a row
+  // written before the claim rule holds the same id, such as catalogue box art (SEC-01;
+  // lib/storage/blobLifecycle). Tolerates a blob that is already gone (a rejected photo's, or a
+  // re-encode swap's original).
+  await deleteBlobUnlessReferenced(ctx, image.fileId);
 };
 
 /**
@@ -259,7 +255,7 @@ const deleteCompletionPhotos = async (
   for (const fileId of fileIds) {
     if (kept.has(fileId)) continue;
     await deleteRenditions(ctx, fileId);
-    await deleteBlob(ctx, fileId);
+    await deleteBlobUnlessReferenced(ctx, fileId);
   }
 };
 

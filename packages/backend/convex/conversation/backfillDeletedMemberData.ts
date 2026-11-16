@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
+import { memberIdsIn } from "../events/eventMembers";
 import { scrubDeletedCopyEvent, type CopyExists } from "./purgeMemberEvents";
 
 // Rows per batch: each costs at most one users point read (memoised per batch), so a batch stays
@@ -54,16 +55,6 @@ const idsOf = async <R>(
       .flatMap(members)
       .filter((id): id is Id<"users"> => id !== undefined),
   };
-};
-
-// Every string anywhere in an event payload.
-const stringsIn = (value: unknown): string[] => {
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.flatMap(stringsIn);
-  if (typeof value === "object" && value !== null) {
-    return Object.values(value).flatMap(stringsIn);
-  }
-  return [];
 };
 
 // One page of `table`, as the member ids its rows belong to.
@@ -131,10 +122,7 @@ const pageOf = async (
       return {
         isDone: page.isDone,
         continueCursor: page.continueCursor,
-        memberIds: page.page
-          .flatMap((row) => stringsIn(row.payload))
-          .map((s) => ctx.db.normalizeId("users", s))
-          .filter((id): id is Id<"users"> => id !== null),
+        memberIds: page.page.flatMap((row) => memberIdsIn(ctx, row.payload)),
         deletedCopyEvents,
       };
     }
