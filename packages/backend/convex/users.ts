@@ -1,5 +1,6 @@
 import type { EmailAddressJSON, UserJSON } from "@clerk/backend";
 import { normalizeMemberName } from "@jigswap/contracts";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
@@ -358,8 +359,8 @@ export const patchUserRole = internalMutation({
 const ROLE_HOLDER_LIMIT = 500;
 
 // For backfillUserRoles: the clerkIds of the active members whose mirror carries a role (a
-// handful, read through by_role), so the reconcile can check the ones Clerk's user list did not
-// return. Internal-only.
+// handful, read through by_role), so the reconcile can skip members with no role on either side.
+// Internal-only.
 export const listRoleHolderClerkIds = internalQuery({
   args: {},
   async handler(ctx): Promise<string[]> {
@@ -368,6 +369,22 @@ export const listRoleHolderClerkIds = internalQuery({
       .withIndex("by_role", (q) => q.gte("role", ""))
       .take(ROLE_HOLDER_LIMIT);
     return rows.filter((row) => row.isActive).map((row) => row.clerkId);
+  },
+});
+
+// For backfillUserRoles: one page of the active members' clerkIds, so the reconcile can find the
+// ones Clerk's user list did not return. Internal-only.
+export const listActiveClerkIds = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  async handler(ctx, { paginationOpts }) {
+    const page = await ctx.db.query("users").paginate(paginationOpts);
+    return {
+      clerkIds: page.page
+        .filter((row) => row.isActive)
+        .map((row) => row.clerkId),
+      isDone: page.isDone,
+      continueCursor: page.continueCursor,
+    };
   },
 });
 

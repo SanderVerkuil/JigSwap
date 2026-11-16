@@ -1,4 +1,5 @@
 import { ClerkAPIResponseError } from "@clerk/backend/errors";
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
@@ -218,7 +219,7 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 4, patched: 2, cleared: 0 });
+    expect(result).toEqual({ scanned: 4, patched: 2, deleted: 0 });
     expect(clerk.getUser).not.toHaveBeenCalled();
     const roles = await t.run(async (ctx) =>
       Promise.all(
@@ -242,8 +243,6 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
       Promise.all(ids.map(async (id) => (await ctx.db.get(id))?.role ?? null)),
     );
 
-  // A user.deleted webhook lost for good leaves an active row Clerk no longer lists; its role
-  // mirror would keep it on admin-only email and push (SEC-32). Only the role is cleared.
   test("spends no mutation on a member with no role on either side", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
@@ -285,28 +284,57 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
     ]);
   });
 
-  test("clears the role of a member Clerk no longer has, and nothing else", async () => {
+  // A user.deleted webhook lost for good (SEC-32) leaves an active row Clerk no longer lists, with
+  // or without a role: Clerk's 404 for it runs the erasure the webhook would have.
+  test("erases every member Clerk no longer has", async () => {
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_reconcile");
     const t = convexTest(schema, modules);
-    const gone = await seedMember(t, "clerk_gone", { role: "admin" });
+    // deleteUser schedules the member purge, whose presence phase needs the component.
+    presenceTest.register(t);
+    await seedMember(t, "clerk_gone", { role: "admin" });
     const kept = await seedMember(t, "clerk_kept", { role: "admin" });
-    // Also gone from Clerk, but with no role there is nothing to clear: never looked up.
     await seedMember(t, "clerk_plain");
-    const before = await t.run((ctx) => ctx.db.get(gone));
     clerk.getUserList.mockResolvedValue({
       data: [{ id: "clerk_kept", publicMetadata: { role: "admin" } }],
       totalCount: 1,
     });
     clerk.getUser.mockRejectedValue(clerkError(404));
 
+    // Pages of one: the users rows Clerk did not list are found past the first page too.
+    const result = await t.action(internal.backfillUserRoles.run, {
+      pageSize: 1,
+    });
+
+    expect(result).toEqual({ scanned: 1, patched: 0, deleted: 2 });
+    expect(clerk.getUser.mock.calls).toEqual([["clerk_gone"], ["clerk_plain"]]);
+    const { users, tombstones } = await t.run(async (ctx) => ({
+      users: await ctx.db.query("users").collect(),
+      tombstones: await ctx.db.query("deletedClerkUsers").collect(),
+    }));
+    expect(users.map((row) => row._id)).toEqual([kept]);
+    expect(tombstones).toHaveLength(2);
+  });
+
+  // A CLERK_SECRET_KEY for another Clerk instance lists none of our members, and that instance
+  // answers 404 for every one of them: that must never erase the membership.
+  test("checks and erases nobody when more than five members look gone", async () => {
+    vi.stubEnv("CLERK_SECRET_KEY", "sk_test_other_instance");
+    const t = convexTest(schema, modules);
+    const ids: Id<"users">[] = [];
+    for (let i = 0; i < 6; i++) {
+      ids.push(await seedMember(t, `clerk_member_${i}`, { role: "admin" }));
+    }
+    clerk.getUserList.mockResolvedValue({ data: [], totalCount: 0 });
+    clerk.getUser.mockRejectedValue(clerkError(404));
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 1, patched: 0, cleared: 1 });
-    expect(clerk.getUser.mock.calls).toEqual([["clerk_gone"]]);
-    expect(await rolesOf(t, [gone, kept])).toEqual([null, "admin"]);
-    const after = await t.run((ctx) => ctx.db.get(gone));
-    const { role: _role, ...rest } = before!;
-    expect(after).toEqual(rest);
+    expect(result).toEqual({ scanned: 0, patched: 0, deleted: 0 });
+    expect(error).toHaveBeenCalledOnce();
+    error.mockRestore();
+    expect(clerk.getUser).not.toHaveBeenCalled();
+    expect(await rolesOf(t, ids)).toEqual(Array(6).fill("admin"));
   });
 
   // Offset paging can skip a user when Clerk's list shifts mid-scan: a role-holder missing from
@@ -328,7 +356,7 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 0, patched: 1, cleared: 0 });
+    expect(result).toEqual({ scanned: 0, patched: 1, deleted: 0 });
     expect(await rolesOf(t, [skipped, revoked, flaky])).toEqual([
       "admin",
       null,
@@ -347,7 +375,7 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 0, patched: 0, cleared: 0 });
+    expect(result).toEqual({ scanned: 0, patched: 0, deleted: 0 });
     expect(clerk.getUser).not.toHaveBeenCalled();
     expect(await rolesOf(t, [inactive])).toEqual(["admin"]);
   });
@@ -358,7 +386,7 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     const result = await t.action(internal.backfillUserRoles.run, {});
 
-    expect(result).toEqual({ scanned: 0, patched: 0, cleared: 0 });
+    expect(result).toEqual({ scanned: 0, patched: 0, deleted: 0 });
     expect(clerk.createClerkClient).not.toHaveBeenCalled();
   });
 });
