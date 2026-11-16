@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { ConvexSystemFields } from "../shared/convex";
 
 /**
@@ -49,25 +48,21 @@ export interface CurrentMemberView extends MemberView {
  * The member-stats card (legacy `getUserStats`). `puzzlesAvailable` mirrors `puzzlesOwned` exactly
  * as the legacy query did; preserved so the dashboard/profile read identical fields.
  */
-export const memberStatsView = z.object({
-  puzzlesOwned: z.number(),
-  puzzlesAvailable: z.number(),
-  tradesCompleted: z.number(),
-  averageRating: z.number(),
-  totalReviews: z.number(),
-});
-
-export type MemberStatsView = z.infer<typeof memberStatsView>;
+export interface MemberStatsView {
+  puzzlesOwned: number;
+  puzzlesAvailable: number;
+  tradesCompleted: number;
+  averageRating: number;
+  totalReviews: number;
+}
 
 /**
  * Platform-wide counters surfaced on the public landing page (legacy `getGlobalStats`). Kept under
  * identity because it counts members alongside catalog/library totals; the gateway exposes it via
  * `insights.globalStats`.
  */
-export const globalStatsView = z.object({
-  totalUsers: z.number(),
-  totalPuzzles: z.number(),
-  totalOwnedPuzzles: z.number(),
-});
-
-export type GlobalStatsView = z.infer<typeof globalStatsView>;
+export interface GlobalStatsView {
+  totalUsers: number;
+  totalPuzzles: number;
+  totalOwnedPuzzles: number;
+}
