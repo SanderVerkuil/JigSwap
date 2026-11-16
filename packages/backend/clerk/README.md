@@ -12,7 +12,7 @@ dashboard must match them.
 The `convex` template is the one that grants admin. Every admin Convex function checks
 `identity/isAdmin`, and the web `/admin` guard (`apps/web/src/lib/require-admin.ts`) asks the same
 check through `identity/isCurrentUserAdmin` with a `convex` token. The session-token claim is read
-only by `checkRole` in `apps/web/src/lib/roles.ts`, which nothing calls today. It is versioned so
+by no code today. It is versioned so
 that any future use of `sessionClaims` stays safe.
 
 Both map the `metadata` claim to `{{user.public_metadata}}`. Only the Clerk Backend API can write

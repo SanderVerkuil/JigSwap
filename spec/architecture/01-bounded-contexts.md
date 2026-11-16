@@ -238,7 +238,9 @@ Each context lists: **purpose**, **ubiquitous language** (and any homonym disamb
 - **Language:** `Member` (internal identity; wraps `clerkId`), `Account`, `Role` (`admin | moderator`),
   `Session`.
 - **Aggregate:** `Member` (root). Invariants: one `Member` per Clerk subject; role changes audited.
-  **Consumes:** Clerk webhooks. **Publishes:** `MemberRegistered`, `MemberDeactivated`.
+  **Consumes:** Clerk webhooks. In code this context is reduced to the `MemberId` value type
+  (`packages/domain/src/identity`); users are written by the backend's `users.ts`, and no
+  `MemberRegistered`/`MemberDeactivated` events are published.
 
 ### Notifications _(Generic)_
 
