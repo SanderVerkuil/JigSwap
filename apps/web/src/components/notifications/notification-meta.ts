@@ -124,10 +124,10 @@ export interface NotificationCategory {
 }
 
 // Types nothing emits any more (a proposal notifies as trade_request, whatever its kind; favouriting
-// notifies nobody). Old rows still render, so the types stay; a preference row for them would be a
+// notifies nobody; raiseDispute is gone). Old rows still render, so the types stay; a preference row for them would be a
 // switch that controls nothing.
 export const UNSENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set(
-  ["exchange_proposed", "puzzle_favorited"],
+  ["exchange_proposed", "puzzle_favorited", "exchange_disputed"],
 );
 
 // Display grouping for the preferences matrix. Every NotificationType that can still be sent appears
@@ -144,7 +144,6 @@ export const NOTIFICATION_CATEGORIES: readonly NotificationCategory[] = [
       "trade_cancelled",
       "trade_cancelled_member_deleted",
       "loan_closed_member_deleted",
-      "exchange_disputed",
     ],
   },
   { key: "messages", types: ["message_received", "circle_message_received"] },
