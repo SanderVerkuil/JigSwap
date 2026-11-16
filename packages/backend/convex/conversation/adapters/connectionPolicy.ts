@@ -1,6 +1,7 @@
 import type { ConnectionPolicy, MemberId } from "@jigswap/domain";
 import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
+import { isActiveMember } from "../../identity/requireActiveMember";
 import { isBlockedEitherWay } from "../../social/blocks";
 import { projectMemberIdentity } from "../../social/privacy";
 import { participantsKeyOf } from "./threadMapper";
@@ -22,6 +23,9 @@ export const convexConnectionPolicy = (ctx: QueryCtx): ConnectionPolicy => ({
 
     // A block either way revokes every clause below, including the pair-thread one (spec 2.6).
     if (await isBlockedEitherWay(ctx, a, b)) return false;
+    // A deleted or deactivated recipient answers like a stranger, whatever is left of their follows
+    // or circle seats until the purge reaches them: no DM may name them.
+    if (!(await isActiveMember(ctx, b))) return false;
 
     // Mutual follow. `.first()` keeps the check duplicate-tolerant.
     const follows = async (x: Id<"users">, y: Id<"users">) =>
