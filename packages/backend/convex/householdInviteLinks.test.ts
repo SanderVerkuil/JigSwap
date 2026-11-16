@@ -770,6 +770,50 @@ describe("other token readers", () => {
       kind: "household",
     });
   });
+
+  test("getInviteContext calls a household link invalid once its owner is no longer that household's admin", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, bob } = await seed(t);
+    await annCreatesHousehold(t);
+    const inviteId = await as(t, "ann").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: bob },
+    );
+    await as(t, "bob").mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId },
+    );
+    const { token: rejoined } = await mintAsAnn(t);
+    const ctxOf = (token: string) =>
+      t.query(api.social.getInviteContext.getInviteContext, {
+        token,
+        memberId: ann,
+      });
+
+    // Ann leaves (Bob becomes admin) and rejoins as a plain member: same household, not admin.
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    const backId = await as(t, "bob").mutation(
+      api.household.inviteToHousehold.inviteToHousehold,
+      { inviteeId: ann },
+    );
+    await as(t, "ann").mutation(
+      api.household.acceptHouseholdInvite.acceptHouseholdInvite,
+      { inviteId: backId },
+    );
+    expect(await ctxOf(rejoined)).toEqual({ valid: false, kind: "household" });
+
+    // Ann leaves again and founds her own household: the old link doesn't follow her there.
+    await as(t, "ann").mutation(
+      api.household.leaveHousehold.leaveHousehold,
+      {},
+    );
+    expect(await ctxOf(rejoined)).toEqual({ valid: false, kind: "household" });
+    await annCreatesHousehold(t);
+    expect(await ctxOf(rejoined)).toEqual({ valid: false, kind: "household" });
+  });
 });
 
 // An EXISTING member opening a household link (spec addendum to §3.4): the landing shows
