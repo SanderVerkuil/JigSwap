@@ -113,11 +113,15 @@ describe("AuthCacheSync", () => {
     const blocked = () => {
       throw new DOMException("blocked", "SecurityError");
     };
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(blocked);
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(blocked);
+    // Block the property read itself, as Safari and in-app browsers do; happy-dom
+    // binds Storage methods onto the instance, so prototype spies would not fire here.
+    const storage = vi
+      .spyOn(window, "sessionStorage", "get")
+      .mockImplementation(blocked);
 
     loadWithStaleServerSession();
 
+    expect(storage).toHaveBeenCalled();
     expect(assign).toHaveBeenCalledExactlyOnceWith("/");
     expect(router.invalidate).not.toHaveBeenCalled();
   });
