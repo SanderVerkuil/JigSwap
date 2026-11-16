@@ -245,6 +245,24 @@ describe("box art: hash match at upload", () => {
   });
 });
 
+describe("box art: the claim window", () => {
+  test("an upload older than 15 minutes can't be claimed again and lists nothing", async () => {
+    const fetchMock = routedFetch("no_match");
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    await seed(t);
+    const upload = await uploadJpeg(t);
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 16 * 60_000);
+
+    expect(await errorData(sanitize(t, upload.fileId))).toMatchObject({
+      code: "InvalidUpload",
+    });
+    expect(await listings(t)).toEqual([]);
+    expect(await blobExists(t, upload.fileId)).toBe(true);
+    expect(callsTo(fetchMock, HF_HOST)).toHaveLength(0);
+  });
+});
+
 describe("box art: hash check unavailable, then a match on re-check", () => {
   // The upload is accepted (the classifier approves it) but its hash check could not run, so the
   // box art is attached yet never served; the re-check then matches.
