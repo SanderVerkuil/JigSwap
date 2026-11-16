@@ -8,6 +8,7 @@ import {
 } from "../test-fixtures/moderationPool";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { uploadClaimState } from "./lib/storage/claimFreshUpload";
 import schema from "./schema";
 
 // SEC-01 / SEC-18: a copy or completion photo may only claim a FRESH upload that nothing holds
@@ -458,5 +459,23 @@ describe("SEC-18: a blob that was used once cannot be attached again", () => {
         )
       ).code,
     ).toBe("InvalidUpload");
+  });
+});
+
+describe("uploadClaimState, the one claim rule behind every claim path", () => {
+  test("ok when fresh and unheld, invalid when missing or held, expired when stale", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { boxArt } = await seed(t);
+    const fresh = await storeBytes(t);
+    const gone = await storeBytes(t);
+    await t.run((ctx) => ctx.storage.delete(gone));
+    const state = (id: Id<"_storage">) =>
+      t.run((ctx) => uploadClaimState(ctx, id));
+
+    expect(await state(fresh)).toBe("ok");
+    expect(await state(gone)).toBe("invalid");
+    expect(await state(boxArt)).toBe("invalid");
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 16 * 60_000);
+    expect(await state(fresh)).toBe("expired");
   });
 });

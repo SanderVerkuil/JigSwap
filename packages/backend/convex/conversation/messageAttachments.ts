@@ -41,8 +41,6 @@ export { isServable };
 
 /** Largest upload accepted for a message photo. */
 export const MESSAGE_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
-/** An upload must be claimed (staged) within this long of its creation. */
-export const MESSAGE_IMAGE_CLAIM_WINDOW_MS = 15 * 60_000;
 /** The client-reported pixel size must lie within 1..this on each side. */
 export const MESSAGE_IMAGE_MAX_DIMENSION = 10_000;
 /**
