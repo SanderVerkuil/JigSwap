@@ -7,11 +7,7 @@ import {
   withdrawFallback,
 } from "../invitations/fallbacks";
 import { logEvent } from "../lib/logEvent";
-import {
-  inviteLandingBudget,
-  RATE_LIMITS,
-  type RateLimitName,
-} from "../lib/rateLimits";
+import { inviteLandingBudget, RATE_LIMITS } from "../lib/rateLimits";
 import { presence } from "../presence";
 import { isCopiedLegacyMessage } from "./backfill";
 import { removeForDeletedMember } from "./messageAttachments";
@@ -696,7 +692,9 @@ const runPhase = async (
     }
     case "rateLimits": {
       // Their own counters, one row per limit name at most: a fixed handful of point lookups.
-      for (const name of Object.keys(RATE_LIMITS) as RateLimitName[]) {
+      // Retired names stay listed so rows written before a limit was removed are still erased.
+      const names: string[] = [...Object.keys(RATE_LIMITS), "categoryCreate"];
+      for (const name of names) {
         const row = await ctx.db
           .query("rateLimits")
           .withIndex("by_key", (q) => q.eq("key", `${name}:${memberId}`))
