@@ -28,6 +28,7 @@ import {
 } from "../lib/i18n-catalog";
 import { defaultDocumentTitle } from "../lib/page-title";
 import { preconnectLinks } from "../lib/preconnect";
+import { safeStorage } from "../lib/safe-storage";
 import { ZOD_JITLESS_SCRIPT } from "../lib/zod-jitless";
 // Side effect: start listening for beforeinstallprompt before any route chunk loads.
 import "../lib/install-prompt";
@@ -295,11 +296,24 @@ function AuthCacheSync() {
     if (isSignedIn !== !!clientAuthCache.userId) {
       const hadMember = !!clientAuthCache.userId;
       clientAuthCache = null;
-      if (hadMember) window.location.assign("/");
+      if (hadMember && claimSignOutReload()) window.location.assign("/");
       else void router.invalidate();
     }
   }, [isSignedIn, router]);
   return null;
+}
+
+// At most one sign-out load per 30 seconds per tab: if SSR still sees a session
+// Clerk's client dropped (a __session cookie it did not clear), each load would
+// diverge again and loop. Blocked storage still allows the load, so a member's
+// data is dropped rather than kept.
+const SIGN_OUT_RELOAD_KEY = "jigswap.signOutReloadAt";
+function claimSignOutReload() {
+  const since =
+    Date.now() - Number(safeStorage.getItem("session", SIGN_OUT_RELOAD_KEY));
+  if (since >= 0 && since < 30_000) return false;
+  safeStorage.setItem("session", SIGN_OUT_RELOAD_KEY, String(Date.now()));
+  return true;
 }
 
 // `locale` is threaded from the resolved intl context so <html lang> matches the

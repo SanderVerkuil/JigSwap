@@ -55,6 +55,7 @@ const renderRoot = () => render(<Root />, { container: document });
 const assign = vi.fn();
 
 beforeEach(() => {
+  sessionStorage.clear();
   vi.spyOn(window.location, "assign").mockImplementation(assign);
   // React warns that RootDocument's inline script never runs when the client
   // renders it; on the site the server renders it.
@@ -78,6 +79,46 @@ describe("AuthCacheSync", () => {
     rerender(<Root />);
 
     expect(assign).toHaveBeenCalledWith("/");
+    expect(router.invalidate).not.toHaveBeenCalled();
+  });
+
+  // A page load as the site does one: SSR hands over the member, then Clerk's client loads
+  // and reports no session (a __session cookie it did not clear keeps SSR signed in).
+  const loadWithStaleServerSession = () => {
+    context.userId = "user_parent";
+    clerk.isSignedIn = undefined;
+    const { rerender } = renderRoot();
+    clerk.isSignedIn = false;
+    rerender(<Root />);
+    cleanup();
+  };
+
+  it("loads the page afresh at most once per 30 seconds when the session keeps diverging", () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    loadWithStaleServerSession();
+    expect(assign).toHaveBeenCalledOnce();
+
+    // The load SSR'd the member again: drop the cache in place instead of looping.
+    now.mockReturnValue(1_029_000);
+    loadWithStaleServerSession();
+    expect(assign).toHaveBeenCalledOnce();
+    expect(router.invalidate).toHaveBeenCalledOnce();
+
+    now.mockReturnValue(1_031_000);
+    loadWithStaleServerSession();
+    expect(assign).toHaveBeenCalledTimes(2);
+  });
+
+  it("still loads the page afresh when storage is blocked", () => {
+    const blocked = () => {
+      throw new DOMException("blocked", "SecurityError");
+    };
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(blocked);
+
+    loadWithStaleServerSession();
+
+    expect(assign).toHaveBeenCalledExactlyOnceWith("/");
     expect(router.invalidate).not.toHaveBeenCalled();
   });
 
