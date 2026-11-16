@@ -21,6 +21,7 @@ type RedeemResult = {
   connection?: "pending" | "skipped";
   // Household links only: "pending" when a household invite now waits for the new member to
   // accept, "skipped" when the household side was refused (the offer and attribution stand).
+  // Also set with redeemed: false for a member already attributed through another link.
   householdInvite?: "pending" | "skipped";
 };
 
@@ -45,12 +46,6 @@ export const redeemInvite = mutation({
       return { redeemed: false };
     }
 
-    const prior = await ctx.db
-      .query("inviteRedemptions")
-      .withIndex("by_new_member", (q) => q.eq("newMemberId", memberId))
-      .unique();
-    if (prior !== null) return { redeemed: false };
-
     const link = await ctx.db
       .query("inviteLinks")
       .withIndex("by_token", (q) => q.eq("token", token))
@@ -61,6 +56,24 @@ export const redeemInvite = mutation({
       link.ownerId === memberId
     ) {
       return { redeemed: false };
+    }
+
+    const prior = await ctx.db
+      .query("inviteRedemptions")
+      .withIndex("by_new_member", (q) => q.eq("newMemberId", memberId))
+      .unique();
+    if (prior !== null) {
+      if (isNetworkLink(link)) return { redeemed: false };
+      // Already attributed through another link (e.g. signed up by a QR, then sent a partner's
+      // household link): no second ledger row, offer or attribution, but the invite still stands.
+      await ctx.db.patch(link._id, {
+        consumedAt: Date.now(),
+        consumedBy: memberId,
+      });
+      return {
+        redeemed: false,
+        householdInvite: await inviteIntoLinkHousehold(ctx, link, memberId),
+      };
     }
 
     await ctx.db.insert("inviteRedemptions", {

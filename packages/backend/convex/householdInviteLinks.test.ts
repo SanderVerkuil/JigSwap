@@ -597,6 +597,46 @@ describe("redeeming a household link", () => {
     expect(await pendingOffersTo(t, newbie)).toHaveLength(1);
   });
 
+  test("a new member who already redeemed another link still gets the pending invite, without a second attribution", async () => {
+    const t = convexTest(schema, modules);
+    const { ann, bob, newbie } = await seed(t);
+    const householdId = await annCreatesHousehold(t);
+    // The newcomer signed up through Bob's network link, then Ann sends a household link.
+    const { token: bobs } = await as(t, "bob").mutation(
+      api.social.getMyInviteLink.getMyInviteLink,
+      {},
+    );
+    expect((await redeem(t, "newbie", bobs)).redeemed).toBe(true);
+    const { token } = await mintAsAnn(t);
+
+    expect(await redeem(t, "newbie", token)).toEqual({
+      redeemed: false,
+      householdInvite: "pending",
+    });
+    expect(
+      (await householdInvitesFor(t, newbie)).map((i) => [
+        i.householdId,
+        i.status,
+      ]),
+    ).toEqual([[householdId, "pending"]]);
+    // Still attributed to Bob only: no second ledger row, offer or signup count for Ann.
+    const ledger = await t.run((ctx) =>
+      ctx.db
+        .query("inviteRedemptions")
+        .withIndex("by_new_member", (q) => q.eq("newMemberId", newbie))
+        .collect(),
+    );
+    expect(ledger.map((r) => r.inviterId)).toEqual([bob]);
+    expect((await pendingOffersTo(t, newbie)).map((o) => o.fromId)).toEqual([
+      bob,
+    ]);
+    expect(await mutualEdges(t, ann, newbie)).toEqual({ ab: false, ba: false });
+    const link = await linkFor(t, token);
+    expect(link?.signupsAttributed).toBe(0);
+    expect(link?.consumedBy).toBe(newbie);
+    expect(link?.consumedAt).toBeDefined();
+  });
+
   test("no email address is stored anywhere along the way", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
