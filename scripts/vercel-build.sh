@@ -7,17 +7,18 @@
 # docs/deployment/convex-preview-deployments.md.
 #
 # Previews are created by the Vercel Preview workflow (`vercel deploy` from CI, since
-# apps/web/vercel.json turns off Git-integration deploys for every branch but main). It
+# apps/web/vercel.json turns off Git-integration deploys for every branch). It
 # passes the PR branch as the build env JIGSWAP_PREVIEW_BRANCH, because per the Vercel docs
 # a CLI deployment can lack the Git branch association (VERCEL_GIT_COMMIT_REF) that
-# Git-triggered builds always have. Git-triggered builds use that variable as the fallback.
+# Git-triggered builds always have. Builds that do carry that variable use it as the fallback.
 #
 # EMAIL_BASE_URL: email CTA/preferences links need the web app's own origin, which is
 # only known here, after Vercel assigns it. VERCEL_BRANCH_URL is the stable per-branch
 # alias (survives repeated pushes), so the preview backend always links back to the
 # branch's latest web preview. If a CLI deployment gets no branch alias, VERCEL_URL (this
 # deployment's own URL) is used instead; every preview build re-sets it.
-# Production is NOT handled here: prod Convex deploys are CI-gated (convex-deploy.yml) and
+# Production is NOT handled here: prod Convex deploys are CI-gated (convex-deploy.yml), the prod
+# web deploys from that workflow's production job, and
 # prod's EMAIL_BASE_URL is a stable one-time `npx convex env set` (with a code default of
 # https://jigswap.site).
 set -euo pipefail

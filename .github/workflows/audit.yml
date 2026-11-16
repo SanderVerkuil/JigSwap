@@ -11,7 +11,7 @@ name: Dependency audit
 # warning: a lint plugin runs on every developer machine and CI job, though it never ships.
 # Production findings show up in both passes.
 #
-# A third step audits the Vercel CLI that vercel-preview.yml runs with VERCEL_TOKEN, read from
+# A third step audits the Vercel CLI that vercel-preview.yml and convex-deploy.yml (prod web deploy) run with VERCEL_TOKEN, read from
 # .github/vercel-cli/package-lock.json (also no install). Most of its advisories sit behind
 # exact pins inside Vercel's own packages, so the fix is a CLI release that moves them
 # (Dependabot proposes one monthly), not an override that the CLI was never tested against.
