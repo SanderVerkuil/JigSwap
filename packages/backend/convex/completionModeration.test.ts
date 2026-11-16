@@ -179,7 +179,7 @@ describe("completionModerationStore.setModerationFile (approve-with-swap)", () =
     expect(row?.photos).toEqual([cleanFileId, otherFileId]);
   });
 
-  test("a vanished sidecar is a no-op", async () => {
+  test("a vanished sidecar takes no swap and its re-encode is deleted", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     const { copyAggregateId } = await seed(t);
     const completionId = await recordForAlice(t, copyAggregateId);
@@ -194,6 +194,10 @@ describe("completionModerationStore.setModerationFile (approve-with-swap)", () =
 
     const row = await completionRow(t, completionId);
     expect(row?.photos).toEqual([fileId]);
+    const cleanKept = await t.run(
+      async (ctx) => (await ctx.storage.get(cleanFileId)) !== null,
+    );
+    expect(cleanKept).toBe(false);
   });
 });
 
