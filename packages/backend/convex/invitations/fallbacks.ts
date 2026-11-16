@@ -112,6 +112,7 @@ export const deleteNotificationsAbout = async (
   ctx: MutationCtx,
   recipientId: Id<"users">,
   type:
+    | "circle_invite_received"
     | "connection_offer_received"
     | "household_invite_received"
     | "household_join_request_received",
@@ -126,13 +127,15 @@ export const deleteNotificationsAbout = async (
   for (const row of rows) {
     const subject = row.subject;
     const id =
-      subject?.kind === "connectionOffer"
-        ? subject.offerId
-        : subject?.kind === "householdInvite"
-          ? subject.inviteId
-          : subject?.kind === "householdJoinRequest"
-            ? subject.requestId
-            : undefined;
+      subject?.kind === "circleInvite"
+        ? subject.inviteId
+        : subject?.kind === "connectionOffer"
+          ? subject.offerId
+          : subject?.kind === "householdInvite"
+            ? subject.inviteId
+            : subject?.kind === "householdJoinRequest"
+              ? subject.requestId
+              : undefined;
     if (id === subjectId) await ctx.db.delete(row._id);
   }
 };

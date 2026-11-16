@@ -309,34 +309,8 @@ const isOrphanedPairThread = async (
   return true;
 };
 
-// Delete the recipient's notifications of `type` whose subject is `subjectId`. A member holds few
-// of one invite type, so the by_user_type read stays small.
-const deleteNotificationsAbout = async (
-  ctx: MutationCtx,
-  recipientId: Id<"users">,
-  type: "circle_invite_received" | "connection_offer_received",
-  subjectId: string,
-): Promise<void> => {
-  const rows = await ctx.db
-    .query("notifications")
-    .withIndex("by_user_type", (q) =>
-      q.eq("userId", recipientId).eq("type", type),
-    )
-    .collect();
-  for (const row of rows) {
-    const subject = row.subject;
-    const id =
-      subject?.kind === "circleInvite"
-        ? subject.inviteId
-        : subject?.kind === "connectionOffer"
-          ? subject.offerId
-          : undefined;
-    if (id === subjectId) await ctx.db.delete(row._id);
-  }
-};
-
 const deleteInvite = async (ctx: MutationCtx, row: Doc<"circleInvites">) => {
-  await deleteNotificationsAbout(
+  await deleteInviteNotificationsAbout(
     ctx,
     row.inviteeId,
     "circle_invite_received",
@@ -346,7 +320,7 @@ const deleteInvite = async (ctx: MutationCtx, row: Doc<"circleInvites">) => {
 };
 
 const deleteOffer = async (ctx: MutationCtx, row: Doc<"connectionOffers">) => {
-  await deleteNotificationsAbout(
+  await deleteInviteNotificationsAbout(
     ctx,
     row.toId,
     "connection_offer_received",
