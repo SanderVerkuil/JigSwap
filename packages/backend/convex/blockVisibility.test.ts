@@ -1157,3 +1157,11 @@ describe("notifications", () => {
     },
   );
 });
+
+// Drain the async event dispatcher (lifecycle notifications come from a scheduled subscriber).
+const flushScheduled = async (t: T) => {
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await t.finishInProgressScheduledFunctions();
+  }
+};
