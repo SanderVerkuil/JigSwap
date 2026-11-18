@@ -6,6 +6,7 @@ import type {
 } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { isRunningOrDue } from "../test-fixtures/scheduledJobs";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { PURGE_BATCH_SIZE } from "./conversation/purgeMemberMessagingData";
@@ -44,11 +45,7 @@ const settleDueJobs = async (t: T) => {
     const jobs = await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
     );
-    const busy = jobs.some(
-      (job) =>
-        job.state.kind === "inProgress" ||
-        (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-    );
+    const busy = jobs.some(isRunningOrDue);
     if (!busy) return;
     await new Promise((resolve) => setTimeout(resolve, 5));
   }

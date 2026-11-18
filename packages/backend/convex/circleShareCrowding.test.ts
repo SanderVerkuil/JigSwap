@@ -1,6 +1,7 @@
 import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
+import { isRunningOrDue } from "../test-fixtures/scheduledJobs";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
@@ -403,11 +404,7 @@ describe("a deleted copy's shares go with it", () => {
       const jobs = await t.run((ctx) =>
         ctx.db.system.query("_scheduled_functions").collect(),
       );
-      const busy = jobs.some(
-        (job) =>
-          job.state.kind === "inProgress" ||
-          (job.state.kind === "pending" && job.scheduledTime <= Date.now()),
-      );
+      const busy = jobs.some(isRunningOrDue);
       if (!busy) return;
       await new Promise((resolve) => setTimeout(resolve, 5));
     }

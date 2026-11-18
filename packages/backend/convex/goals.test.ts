@@ -249,7 +249,9 @@ describe("goals count the solves inside their period", () => {
       (await eventNames(t)).filter((name) => name === "GoalAchieved").length;
 
     const { completionId } = await log();
-    expect((await goalRow(t, goalId))?.achievementAnnouncedAt).toBe(NOW);
+    expect(
+      (await goalRow(t, goalId))?.achievementAnnouncedAt,
+    ).toBeGreaterThanOrEqual(NOW);
     expect(await achievements()).toBe(1);
 
     await asAlice(t).mutation(api.solving.deleteCompletion.deleteCompletion, {

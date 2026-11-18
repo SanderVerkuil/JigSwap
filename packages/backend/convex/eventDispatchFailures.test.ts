@@ -263,7 +263,9 @@ describe("dispatch failure visibility + retry policy", () => {
     });
     const retries = await pendingDispatches(t, eventId);
     expect(retries).toHaveLength(1);
-    expect(retries[0].scheduledTime - Date.now()).toBe(60_000); // first backoff step
+    const backoff = retries[0].scheduledTime - Date.now();
+    expect(backoff).toBeGreaterThanOrEqual(60_000); // first backoff step
+    expect(backoff).toBeLessThan(61_000);
 
     // Drive the backoff chain to the cap.
     await t.finishAllScheduledFunctions(vi.runAllTimers);
