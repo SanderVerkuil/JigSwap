@@ -276,6 +276,7 @@ function ContactForm() {
             ref={nameRef}
             id="contact-name"
             autoComplete="name"
+            maxLength={200}
             placeholder={t("formNamePlaceholder")}
             value={form.name}
             onChange={set("name")}
@@ -350,6 +351,7 @@ function ContactForm() {
           ref={messageRef}
           id="contact-message"
           rows={6}
+          maxLength={5000}
           value={form.message}
           onChange={set("message")}
           placeholder={t("formMessagePlaceholder")}

@@ -106,6 +106,14 @@ describe("contact form validation", () => {
   });
 });
 
+describe("contact form limits", () => {
+  it("caps name and message at the server's limits", () => {
+    renderPage();
+    expect(field(copy.formName).maxLength).toBe(200);
+    expect(field(copy.formMessage).maxLength).toBe(5000);
+  });
+});
+
 describe("contact form subject", () => {
   it("is a labelled radio group whose checked state follows the selection", async () => {
     backend.submit.mockResolvedValue(null);
