@@ -15,7 +15,7 @@ export const canManageCircle = (viewerPermission: CirclePermissionLevel) =>
   viewerPermission === "Admin";
 
 // Whether the viewer may share their own copies into the circle: Exchange or Admin (the domain's
-// Circle.shareCopy rule). ViewOnly may not.
+// Circle.shareCopies rule). ViewOnly may not.
 export const canShareInCircle = (viewerPermission: CirclePermissionLevel) =>
   viewerPermission === "Exchange" || viewerPermission === "Admin";
 

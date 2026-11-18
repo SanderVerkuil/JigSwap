@@ -90,11 +90,16 @@ const rowFor = async (
   as: (t: T) => ReturnType<T["withIdentity"]>,
   aggregateId: string,
 ) => {
-  const list = await as(t).query(
-    api.exchange.getUserExchanges.getUserExchanges,
-    {},
+  // Live or finished: a pending lend is in play, a settled one is history.
+  const [live, history] = await Promise.all([
+    as(t).query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
+    as(t).query(api.exchange.listMyExchangeHistory.listMyExchangeHistory, {
+      paginationOpts: { numItems: 50, cursor: null },
+    }),
+  ]);
+  const row = [...live, ...history.page].find(
+    (e) => e.aggregateId === aggregateId,
   );
-  const row = list.find((e) => e.aggregateId === aggregateId);
   if (!row) throw new Error(`exchange ${aggregateId} not in the list`);
   return row;
 };

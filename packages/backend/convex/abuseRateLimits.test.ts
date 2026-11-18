@@ -483,14 +483,14 @@ describe("sharing copies into a circle", () => {
     ).toHaveLength(BATCH - 1);
   });
 
-  test("sharing one copy at a time draws on the same budget", async () => {
+  test("one copy is refused once the day's budget is spent", async () => {
     const [copyId] = await seedCopies(1);
     const circleId = await newCircle();
     await spend(RATE_LIMITS.circleShare.max);
     await expectRateLimited(
-      asMe().mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+      asMe().mutation(api.sharing.shareCopiesToCircle.shareCopiesToCircle, {
         circleId,
-        copyId,
+        copyIds: [copyId],
       }),
     );
   });

@@ -244,7 +244,6 @@ export const gateway = {
     decline: api.exchange.decline.decline,
     complete: api.exchange.confirmCompletion.confirmCompletion,
     cancel: api.exchange.cancel.cancel,
-    dispute: api.exchange.raiseDispute.raiseDispute,
     // The viewer's copies they may offer in a swap for a requested copy (propose's offer rule).
     offerableCopies: api.exchange.getOfferableCopies.getOfferableCopies,
     // The request-flow notice: whether the caller's own profile is private (the owner always gets
@@ -635,7 +634,6 @@ export const gateway = {
     // Owner only, confirmed by typing the circle's exact name.
     deleteCircle: api.sharing.deleteCircle.deleteCircle,
     changePermission: api.sharing.changePermission.changePermission,
-    shareCopyToCircle: api.sharing.shareCopyToCircle.shareCopyToCircle,
     // Managing your own shares: share a selection of your copies at once (all or nothing, at most
     // 100), take one back (owner only, whatever the seat), which of your copies are shared in a
     // circle (members only), and where one of your copies is shared (owner only, else null).

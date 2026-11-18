@@ -179,10 +179,13 @@ describe("circle shares on ownership transfer", () => {
     )) as string;
     const copy = (await rowOf(t, copyAggregateId))._id;
     await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
-    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId: copyAggregateId,
-    });
+    await asAlice(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [copyAggregateId],
+      },
+    );
 
     // Control: while Alice owns it, Mia reaches it (Alice is public + open, and it's circle-shared).
     const before = await miaReach(t, copy, puzzleId);
@@ -225,10 +228,13 @@ describe("circle shares on ownership transfer", () => {
     )) as string;
     const copy = (await rowOf(t, copyAggregateId))._id;
     await t.run(async (ctx) => ctx.db.patch(copy, OPENED));
-    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId: copyAggregateId,
-    });
+    await asAlice(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [copyAggregateId],
+      },
+    );
     expect(await sharesOf(t, copyAggregateId)).toHaveLength(1);
     expect(await miaCircleShared()).toContain(copy);
 

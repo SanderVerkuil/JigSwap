@@ -1,4 +1,5 @@
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,7 +9,7 @@ import schema from "./schema";
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 // Alice (initiator) proposes a trade to Bob (recipient): she offers her copy of "Ocean Calm" for
-// his copy of "Mountain Vista". A second, newer exchange exercises ordering.
+// his copy of "Mountain Vista". A second, finished exchange offers nothing in return.
 const seed = async (t: TestConvex<typeof schema>) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -104,6 +105,17 @@ const asAlice = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_alice" });
 const asBob = (t: TestConvex<typeof schema>) =>
   t.withIdentity({ subject: "clerk_bob" });
+
+// Every row the member's Exchanges page lists: what is still in play, then the finished ones.
+const listedExchanges = async (reader: ReturnType<typeof asAlice>) => {
+  const [live, history] = await Promise.all([
+    reader.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
+    reader.query(api.exchange.listMyExchangeHistory.listMyExchangeHistory, {
+      paginationOpts: { numItems: 50, cursor: null },
+    }),
+  ]);
+  return [...live, ...history.page];
+};
 
 describe("exchange.getExchangeById", () => {
   test("returns the exchange with parties and the owned copies", async () => {
@@ -210,13 +222,10 @@ describe("exchange owner-only field gating (counterparty must not see private co
     }
   });
 
-  test("getUserExchanges: initiator never receives the recipient's owner-only fields", async () => {
+  test("the exchange lists: initiator never receives the recipient's owner-only fields", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const list = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    );
+    const list = await listedExchanges(asAlice(t));
     const older = list.find((e) => e.aggregateId === "exch-1");
     // Alice owns the offered copy; she sees its owner-only fields.
     expect(older?.offeredOwnedPuzzle?.notes).toBe("alice-private-note-ocean");
@@ -230,13 +239,10 @@ describe("exchange owner-only field gating (counterparty must not see private co
     }
   });
 
-  test("getExchangesByOwner: recipient never receives the initiator's owner-only fields", async () => {
+  test("the exchange lists: recipient never receives the initiator's owner-only fields", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const incoming = await asBob(t).query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
-      {},
-    );
+    const incoming = await listedExchanges(asBob(t));
     const older = incoming.find((e) => e.aggregateId === "exch-1");
     // Bob owns the requested copy; he sees its owner-only fields.
     expect(older?.requestedOwnedPuzzle?.notes).toBe(
@@ -253,111 +259,18 @@ describe("exchange owner-only field gating (counterparty must not see private co
   });
 });
 
-describe("exchange.getUserExchanges", () => {
-  test("tags roles, joins puzzles and sorts newest-first", async () => {
+describe("the legacy exchange lists", () => {
+  // listMyLiveExchanges and listMyExchangeHistory replaced them; no client calls them any more.
+  test.each([
+    "exchange/getUserExchanges:getUserExchanges",
+    "exchange/getExchangesByOwner:getExchangesByOwner",
+    "exchange/getExchangesByRequester:getExchangesByRequester",
+  ])("%s is gone", async (name) => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const list = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    );
-    // Alice is initiator on both (asRequester + asOwner default true; she is recipient on neither).
-    expect(list).toHaveLength(2);
-    expect(list[0].createdAt).toBeGreaterThanOrEqual(list[1].createdAt);
-    const older = list.find((e) => e.aggregateId === "exch-1");
-    expect(older?.userRole).toBe("requester");
-    expect(older?.requestedPuzzle?.title).toBe("Mountain Vista");
-    expect(older?.offeredPuzzle?.title).toBe("Ocean Calm");
-  });
-
-  test("filters by status", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const completed = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      { status: "completed" },
-    );
-    expect(completed).toHaveLength(1);
-    expect(completed[0].aggregateId).toBe("exch-2");
-  });
-
-  test("filters by the schema status 'rejected' (not the legacy 'declined')", async () => {
-    const t = convexTest(schema, modules);
-    const { alice, bob } = await seed(t);
-    // A rejected exchange that the legacy `declined` literal could never match.
-    await t.run(async (ctx) => {
-      const now = Date.now();
-      const puzzle = await ctx.db.insert("puzzles", {
-        title: "Forest",
-        pieceCount: 250,
-        status: "approved",
-        submittedBy: bob,
-        createdAt: now,
-        updatedAt: now,
-      });
-      const copy = await ctx.db.insert("ownedPuzzles", {
-        puzzleId: puzzle,
-        ownerId: bob,
-        condition: "good",
-        availability: { forTrade: true, forSale: false, forLend: false },
-        createdAt: now,
-        updatedAt: now,
-      });
-      await ctx.db.insert("exchanges", {
-        aggregateId: "exch-3",
-        initiatorId: alice,
-        recipientId: bob,
-        type: "trade",
-        requestedPuzzleId: copy,
-        status: "rejected",
-        createdAt: now + 1000,
-        updatedAt: now + 1000,
-      });
-    });
-    const rejected = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      { status: "rejected" },
-    );
-    expect(rejected).toHaveLength(1);
-    expect(rejected[0].aggregateId).toBe("exch-3");
-  });
-});
-
-describe("exchange.getExchangesByOwner / getExchangesByRequester", () => {
-  test("incoming returns the recipient's exchanges, newest-first", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const incoming = await asBob(t).query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
-      {},
-    );
-    expect(incoming).toHaveLength(2);
-    expect(incoming[0].aggregateId).toBe("exch-2"); // newer first
-  });
-
-  test("outgoing returns the initiator's exchanges, newest-first", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const outgoing = await asAlice(t).query(
-      api.exchange.getExchangesByRequester.getExchangesByRequester,
-      {},
-    );
-    expect(outgoing).toHaveLength(2);
-    expect(outgoing[0].aggregateId).toBe("exch-2");
-  });
-
-  test("return [] when unauthenticated", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    expect(
-      await t.query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
-    ).toEqual([]);
-    expect(
-      await t.query(
-        api.exchange.getExchangesByRequester.getExchangesByRequester,
-        {},
-      ),
-    ).toEqual([]);
+    await expect(
+      asAlice(t).query(makeFunctionReference<"query">(name), {}),
+    ).rejects.toThrow(`Could not find module for: "${name.split(":")[0]}"`);
   });
 });
 
@@ -386,14 +299,8 @@ describe("exchange summary covers", () => {
       return { boxArt, photoBlob };
     });
 
-    const asRequester = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    );
-    const asRecipient = await asBob(t).query(
-      api.exchange.getExchangesByOwner.getExchangesByOwner,
-      {},
-    );
+    const asRequester = await listedExchanges(asAlice(t));
+    const asRecipient = await listedExchanges(asBob(t));
     for (const list of [asRequester, asRecipient]) {
       const row = list.find((e) => e.aggregateId === "exch-1");
       expect(row?.requestedCoverUrl).toMatch(/^https?:\/\//);
@@ -407,10 +314,7 @@ describe("exchange summary covers", () => {
   test("a copy without cover photo or box art, and a missing offered copy, give null", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    const list = await asAlice(t).query(
-      api.exchange.getUserExchanges.getUserExchanges,
-      {},
-    );
+    const list = await listedExchanges(asAlice(t));
     const swap = list.find((e) => e.aggregateId === "exch-1");
     expect(swap?.requestedCoverUrl).toBeNull();
     expect(swap?.offeredCoverUrl).toBeNull();
@@ -461,25 +365,12 @@ describe("exchange summary covers respect who may see the copy", () => {
       return { photoUrl, boxArtUrl };
     });
 
-  // Bob's incoming row for the swap in which Alice offers her copy, under every incoming read.
-  const bobsRow = async (t: TestConvex<typeof schema>) => {
-    const [byOwner, all] = await Promise.all([
-      asBob(t).query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
-      asBob(t).query(api.exchange.getUserExchanges.getUserExchanges, {}),
-    ]);
-    const row = byOwner.find((e) => e.aggregateId === "exch-1");
-    const sameRow = all.find((e) => e.aggregateId === "exch-1");
-    expect(sameRow?.offeredCoverUrl).toBe(row?.offeredCoverUrl);
-    return row;
-  };
+  // Bob's incoming row for the swap in which Alice offers her copy.
+  const bobsRow = async (t: TestConvex<typeof schema>) =>
+    (await listedExchanges(asBob(t))).find((e) => e.aggregateId === "exch-1");
 
   const alicesOutgoingRow = async (t: TestConvex<typeof schema>) =>
-    (
-      await asAlice(t).query(
-        api.exchange.getExchangesByRequester.getExchangesByRequester,
-        {},
-      )
-    ).find((e) => e.aggregateId === "exch-1");
+    (await listedExchanges(asAlice(t))).find((e) => e.aggregateId === "exch-1");
 
   const seedPrivateCopy = (
     t: TestConvex<typeof schema>,

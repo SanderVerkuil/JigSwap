@@ -2,7 +2,7 @@ import { Result } from "../../../../shared-kernel";
 import { ExchangeError, ExchangeId, MemberId } from "../../../domain";
 import { ApplicationError } from "../../errors";
 
-// Every state-transition use case (accept/decline/cancel/confirm/dispute) acts on an existing
+// Every state-transition use case (accept/decline/cancel/confirm) acts on an existing
 // exchange on behalf of an authenticated member. `now` is supplied by the Clock port, not the
 // command, so commands are deterministic. The aggregate enforces party-auth + legal transitions.
 export interface ExchangeActionCommand {

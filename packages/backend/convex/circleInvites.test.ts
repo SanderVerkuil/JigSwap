@@ -1042,10 +1042,10 @@ describe("a pending invite is not membership", () => {
       });
     });
     await as(t, "bob").mutation(
-      api.sharing.shareCopyToCircle.shareCopyToCircle,
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
       {
         circleId,
-        copyId,
+        copyIds: [copyId],
       },
     );
     const browse = async (who: Who) =>

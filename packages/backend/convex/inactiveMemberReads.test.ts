@@ -100,16 +100,7 @@ describe("reads that resolve the caller from Clerk", () => {
     const as = asDana(t);
 
     expect(
-      await as.query(
-        api.exchange.getExchangesByRequester.getExchangesByRequester,
-        {},
-      ),
-    ).toHaveLength(1);
-    expect(
-      await as.query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
-    ).toHaveLength(1);
-    expect(
-      await as.query(api.exchange.getUserExchanges.getUserExchanges, {}),
+      await as.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toHaveLength(2);
     expect(
       await as.query(
@@ -145,16 +136,7 @@ describe("reads that resolve the caller from Clerk", () => {
     const as = asDana(t);
 
     expect(
-      await as.query(
-        api.exchange.getExchangesByRequester.getExchangesByRequester,
-        {},
-      ),
-    ).toEqual([]);
-    expect(
-      await as.query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
-    ).toEqual([]);
-    expect(
-      await as.query(api.exchange.getUserExchanges.getUserExchanges, {}),
+      await as.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toEqual([]);
     expect(
       await as.query(
@@ -191,16 +173,7 @@ describe("reads that resolve the caller from Clerk", () => {
     const { danaCopy } = await seed(t, true);
 
     expect(
-      await t.query(
-        api.exchange.getExchangesByRequester.getExchangesByRequester,
-        {},
-      ),
-    ).toEqual([]);
-    expect(
-      await t.query(api.exchange.getExchangesByOwner.getExchangesByOwner, {}),
-    ).toEqual([]);
-    expect(
-      await t.query(api.exchange.getUserExchanges.getUserExchanges, {}),
+      await t.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
     ).toEqual([]);
     expect(
       await t.query(

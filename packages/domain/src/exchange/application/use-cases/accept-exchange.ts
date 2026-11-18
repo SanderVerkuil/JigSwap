@@ -13,7 +13,7 @@ export interface AcceptExchangeDeps extends ExchangeActionDeps {
 
 // The recipient accepts. Only the initiator's own circle standing is checked again, and only when
 // the request rested on it: what the owner changed since (profile, follows, household) never stops
-// them accepting a request they received. Confirm, cancel, decline and dispute don't re-check it, so
+// them accepting a request they received. Confirm, cancel and decline don't re-check it, so
 // a trade already under way can finish. Separately, accept (after eligibility) and confirm refuse
 // once a copy the deal names is no longer where the deal found it, or while it is out on loan
 // (settlement-guard): such a deal can't settle. Last, accepting sets the deal's copies aside for it:

@@ -296,14 +296,20 @@ describe("a departed member's circle shares are withdrawn", () => {
       "clerk_alice",
       puzzleAggregateId,
     );
-    await asBob(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId: bobsCopy,
-    });
-    await asAlice(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId,
-      copyId: alicesCopy,
-    });
+    await asBob(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [bobsCopy],
+      },
+    );
+    await asAlice(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId,
+        copyIds: [alicesCopy],
+      },
+    );
     // Precondition: Carol reaches both copies through the circle only.
     const before = (await carolBrowses(t)).map((c) => c.aggregateId);
     expect(before).toContain(bobsCopy);
@@ -401,10 +407,13 @@ describe("a departed member's circle shares are withdrawn", () => {
       api.sharing.createCircle.createCircle,
       { name: "Bob's circle" },
     )) as string;
-    await asBob(t).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-      circleId: bobsCircle,
-      copyId: bobsCopy,
-    });
+    await asBob(t).mutation(
+      api.sharing.shareCopiesToCircle.shareCopiesToCircle,
+      {
+        circleId: bobsCircle,
+        copyIds: [bobsCopy],
+      },
+    );
 
     await asBob(t).mutation(api.sharing.leaveCircle.leaveCircle, { circleId });
 

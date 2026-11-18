@@ -16,7 +16,7 @@ export interface ExchangeActionDeps {
   readonly clock: Clock;
 }
 
-// An aggregate state-transition method (accept/decline/cancel/confirm/dispute) — they all
+// An aggregate state-transition method (accept/decline/cancel/confirm) — they all
 // share the (actingMember, now) → Result shape.
 type AggregateAction = (
   exchange: Exchange,

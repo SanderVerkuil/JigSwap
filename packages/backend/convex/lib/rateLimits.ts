@@ -137,7 +137,7 @@ export const RATE_LIMITS = {
   // counted per solve: the quick start's past-solves batch is up to 25. Bounds how fast one account
   // can flood the activity feed's solve events (SEC-30).
   solveLog: { windowMs: DAY, max: 300 },
-  // Copies shared into circles, counted per copy (sharing/shareCopiesToCircle, shareCopyToCircle): a
+  // Copies shared into circles, counted per copy (sharing/shareCopiesToCircle): a
   // call writes a share row and an event and schedules a dispatch per copy, and a circle's page reads
   // only its newest shares. Circles created alongside it (sharing/createCircle).
   circleShare: { windowMs: DAY, max: 1000 },

@@ -2,6 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
+import { EXCHANGE_LIST_CAP } from "./exchange/readViews";
 import schema from "./schema";
 
 // The Exchanges page's reads (PERF-B13): everything still in play in one bounded read, finished
@@ -166,6 +167,34 @@ describe("exchange.myLive", () => {
       }
     });
     expect((await live(t)).map((row) => row.aggregateId)).toEqual(["old-open"]);
+  });
+
+  test("each live status is capped at EXCHANGE_LIST_CAP per role, the newest kept", async () => {
+    await t.run(async (ctx) => {
+      for (let i = 0; i <= EXCHANGE_LIST_CAP; i++) {
+        await ctx.db.insert("exchanges", {
+          aggregateId: `open-${i}`,
+          initiatorId: w.alice,
+          recipientId: w.bob,
+          type: "loan",
+          requestedPuzzleId: w.bobsCopy,
+          status: "proposed",
+          createdAt: BASE + i,
+          updatedAt: BASE + i,
+        });
+      }
+    });
+    const seen: (string | undefined)[] = [];
+    for (let page = 0; ; page++) {
+      const rows = await as(t, "alice").query(
+        api.exchange.listMyLiveExchanges.listMyLiveExchanges,
+        { page },
+      );
+      if (rows.length === 0) break;
+      seen.push(...rows.map((row) => row.aggregateId));
+    }
+    expect(seen).toHaveLength(EXCHANGE_LIST_CAP);
+    expect(seen).not.toContain("open-0");
   });
 
   test("a stranger's exchanges stay out", async () => {

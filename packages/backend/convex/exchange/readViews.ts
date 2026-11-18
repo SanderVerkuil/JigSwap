@@ -26,11 +26,9 @@ import {
 // Shared row->DTO mapping for the exchange reads, so every exchange adapter emits typed view DTOs
 // (faithful supersets of the joined rows) rather than leaking raw documents.
 
-// Bound for a member's exchange lists (getUserExchanges, getExchangesByOwner,
-// getExchangesByRequester): the newest this many by createdAt, plus the newest this many LIVE ones
-// (see readMemberExchanges), so a heavy trader's history (each row joins both parties and both
-// copies) can never push the read past Convex's per-function limits. Past the cap the oldest
-// FINISHED exchanges are dropped; an open one stays listed until more than the cap are open.
+// Bound for the live reads behind listMyLiveExchanges: each live status's newest this many per role
+// (readLiveExchanges), so a member with very many open exchanges can never push the read past
+// Convex's per-function limits. Finished exchanges are listMyExchangeHistory's, a page at a time.
 export const EXCHANGE_LIST_CAP = 500;
 
 type ExchangeStatus = Doc<"exchanges">["status"];
@@ -54,26 +52,6 @@ export const LIVE_EXCHANGE_STATUSES: readonly ExchangeStatus[] = (
 
 export const isLiveExchangeStatus = (status: ExchangeStatus): boolean =>
   EXCHANGE_STATUS_IS_LIVE[status];
-
-/**
- * The bounded window over a member's exchanges, newest first: the newest EXCHANGE_LIST_CAP overall
- * plus the newest EXCHANGE_LIST_CAP live ones, so at most twice the cap. Rows are kept by identity,
- * so a row in both halves is listed once.
- */
-export const boundedExchangeWindow = <
-  R extends Pick<Doc<"exchanges">, "status" | "createdAt">,
->(
-  rows: R[],
-): R[] => {
-  const newestFirst = [...rows].sort((a, b) => b.createdAt - a.createdAt);
-  const kept = new Set<R>([
-    ...newestFirst.slice(0, EXCHANGE_LIST_CAP),
-    ...newestFirst
-      .filter((row) => isLiveExchangeStatus(row.status))
-      .slice(0, EXCHANGE_LIST_CAP),
-  ]);
-  return newestFirst.filter((row) => kept.has(row));
-};
 
 const exchangesInStatus = (
   ctx: QueryCtx,
@@ -110,46 +88,6 @@ export const readLiveExchanges = async (
       ),
     )
   ).flat();
-
-/**
- * One role's exchanges for the member (initiator = outgoing, recipient = incoming), newest first,
- * read only through bounded index ranges. With a `status`: that status's newest EXCHANGE_LIST_CAP,
- * however old. Without: the newest EXCHANGE_LIST_CAP overall plus each live status's newest
- * EXCHANGE_LIST_CAP, cut down by boundedExchangeWindow, so an old open exchange is never pushed out
- * by newer finished ones.
- */
-export const readMemberExchanges = async (
-  ctx: QueryCtx,
-  memberId: Id<"users">,
-  role: "initiator" | "recipient",
-  status?: ExchangeStatus,
-): Promise<Doc<"exchanges">[]> => {
-  if (status) return exchangesInStatus(ctx, memberId, role, status);
-
-  const newest =
-    role === "initiator"
-      ? ctx.db
-          .query("exchanges")
-          .withIndex("by_initiator_created", (q) =>
-            q.eq("initiatorId", memberId),
-          )
-          .order("desc")
-          .take(EXCHANGE_LIST_CAP)
-      : ctx.db
-          .query("exchanges")
-          .withIndex("by_recipient_created", (q) =>
-            q.eq("recipientId", memberId),
-          )
-          .order("desc")
-          .take(EXCHANGE_LIST_CAP);
-  const [history, live] = await Promise.all([
-    newest,
-    readLiveExchanges(ctx, memberId, role),
-  ]);
-  const byId = new Map<Id<"exchanges">, Doc<"exchanges">>();
-  for (const row of [...history, ...live]) byId.set(row._id, row);
-  return boundedExchangeWindow([...byId.values()]);
-};
 
 /**
  * Both parties as the viewer may see them inside THIS exchange, via the per-trade chokepoint
@@ -438,8 +376,7 @@ const coverUrlForViewer = async (
 
 // Enrich one exchange row into a list-item view: project both parties (projectExchangeParties), the
 // requested/offered owned copies, their catalog definitions (copy.puzzleId -> puzzles), their card
-// covers and, for a completed lend, the loan it opened. Mirrors the legacy two-step join in
-// getUserExchanges/getExchangesByOwner/getExchangesByRequester. `userRole` is set by the caller.
+// covers and, for a completed lend, the loan it opened. `userRole` is set by the caller.
 export const enrichExchangeSummary = async (
   ctx: QueryCtx,
   e: Doc<"exchanges">,

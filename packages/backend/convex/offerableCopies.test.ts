@@ -2,7 +2,7 @@ import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError } from "convex/values";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -23,6 +23,7 @@ interface World {
   bob: Id<"users">;
   cat: Id<"users">;
   dan: Id<"users">;
+  puzzleId: Id<"puzzles">;
   annManage: Id<"ownedPuzzles">; // Ann's household copy at "manage" (default)
   annView: Id<"ownedPuzzles">; // Ann's household copy at "view"
   annOpen: Id<"ownedPuzzles">; // Ann's tradeable copy
@@ -84,6 +85,7 @@ const seed = async (t: T): Promise<World> => {
       bob,
       cat,
       dan,
+      puzzleId,
       annManage: await mkCopy("ann-manage", ann),
       annView: await mkCopy("ann-view", ann, { householdPermission: "view" }),
       annOpen: await mkCopy("ann-open", ann, { availability: open }),
@@ -179,6 +181,40 @@ describe("getOfferableCopies", () => {
     );
     expect(idsOf(await offerable(t, "bob", w.catOpen))).toEqual(
       [w.annOpen, w.bobOwn].sort(),
+    );
+  });
+
+  test("a housemate's newer copies the viewer may not offer don't push their own older ones out", async () => {
+    // 150 copies of Bob's, then 300 newer ones of Ann's at "view": together past the picker's
+    // 400-row cap, and only Bob's may be offered.
+    const insertCopies = (
+      ownerId: Id<"users">,
+      count: number,
+      extra: Partial<Doc<"ownedPuzzles">> = {},
+    ) =>
+      t.run(async (ctx) => {
+        const ids: Id<"ownedPuzzles">[] = [];
+        for (let i = 0; i < count; i++) {
+          ids.push(
+            await ctx.db.insert("ownedPuzzles", {
+              puzzleId: w.puzzleId,
+              ownerId,
+              condition: "good",
+              availability: { forTrade: false, forSale: false, forLend: false },
+              createdAt: i,
+              updatedAt: i,
+              ...extra,
+            }),
+          );
+        }
+        return ids;
+      });
+    const bobOlder = await insertCopies(w.bob, 150);
+    await insertCopies(w.ann, 300, { householdPermission: "view" });
+
+    const rows = await offerable(t, "bob", w.catOpen);
+    expect(idsOf(rows)).toEqual(
+      [...bobOlder, w.annManage, w.annOpen, w.bobOwn].sort(),
     );
   });
 

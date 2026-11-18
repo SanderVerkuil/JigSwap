@@ -378,17 +378,11 @@ describe("what a circle's bounded share read holds", () => {
     expect(after.some((c) => c.owner === alice)).toBe(true);
   });
 
-  test("a share names its owner, through either way of sharing", async () => {
+  test("a share names its owner", async () => {
     const t = convexTest(schema, modules);
     const { alice, puzzleId } = await seedCircle(t);
     const copies = await addCopies(t, alice, puzzleId, "alice", 2);
-    await shareAs(t, "alice", copies.slice(0, 1));
-    await t
-      .withIdentity({ subject: "clerk_alice" })
-      .mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
-        circleId: "friends",
-        copyId: copies[1],
-      });
+    await shareAs(t, "alice", copies);
 
     const owners = await t.run(async (ctx) =>
       (await ctx.db.query("circleCopyShares").collect()).map((s) => s.ownerId),

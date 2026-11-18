@@ -94,9 +94,9 @@ const openCopyFor = async (t: T, s: Seeded, who: string) => {
 };
 
 const share = (t: T, who: string, circleId: string, copyId: string) =>
-  as(t, who).mutation(api.sharing.shareCopyToCircle.shareCopyToCircle, {
+  as(t, who).mutation(api.sharing.shareCopiesToCircle.shareCopiesToCircle, {
     circleId,
-    copyId,
+    copyIds: [copyId],
   });
 
 const carolSees = async (t: T, copyId: string) =>
