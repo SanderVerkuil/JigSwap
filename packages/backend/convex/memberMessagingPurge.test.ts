@@ -220,6 +220,7 @@ const bobThread = async (t: T, threadId: string) =>
 describe("account deletion: messages and read models", () => {
   test("text stays, authored by a member the inbox shows as deleted; notifications still resolve", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     await asAlice(t).mutation(api.conversation.postMessage.postMessage, {
       threadId,
@@ -256,6 +257,7 @@ describe("account deletion: messages and read models", () => {
 
   test("a tombstoned member (open CSAM escalation) is a deleted member too", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     await t.run((ctx) =>
       ctx.db.insert("csamEscalations", {
@@ -285,6 +287,7 @@ describe("account deletion: messages and read models", () => {
 describe("account deletion: attachments", () => {
   test("a delivered photo loses its blobs and reveals but keeps a blurhash placeholder", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, threadId } = await seed(t);
     const photo = await deliveredPhoto(t, threadId, alice);
     await t.run((ctx) =>
@@ -320,6 +323,7 @@ describe("account deletion: attachments", () => {
 
   test("a photo message that was never servable keeps no blurhash", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     const pending = await deliveredPhoto(t, threadId, alice, {
       moderationStatus: "unscored",
@@ -343,6 +347,7 @@ describe("account deletion: attachments", () => {
 
   test("a rejected photo message stays removed by moderation with its caption withheld; a servable one keeps its caption", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     await deliveredPhoto(t, threadId, alice, { moderationStatus: "rejected" });
     await deliveredPhoto(t, threadId, alice);
@@ -369,6 +374,7 @@ describe("account deletion: attachments", () => {
 
   test("held and quarantined photos are untouched; staged photos are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     const held = await deliveredPhoto(t, threadId, alice, {
       evidenceHold: true,
@@ -402,6 +408,7 @@ describe("account deletion: attachments", () => {
 
   test("a held photo's purge finishes once its report is decided", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     const photo = await deliveredPhoto(t, threadId, alice);
     await asBob(t).mutation(api.reports.fileReport.fileReport, {
@@ -429,6 +436,7 @@ describe("account deletion: attachments", () => {
 
   test("a delivered location loses its map, coordinates and label", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, threadId } = await seed(t);
     const location = await deliveredLocation(t, threadId, alice);
     await deleteAlice(t);
@@ -451,6 +459,7 @@ describe("account deletion: attachments", () => {
 
   test("the other participant's photos are untouched", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, threadId } = await seed(t);
     const photo = await deliveredPhoto(t, threadId, bob);
     await deleteAlice(t);
@@ -464,6 +473,7 @@ describe("account deletion: attachments", () => {
 describe("account deletion: blocks, reveals, reports, rate limits", () => {
   test("blocks both ways and the member's own reveals, GPS views and counters are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, carol, threadId } = await seed(t);
     const bobPhoto = await deliveredPhoto(t, threadId, bob);
     await t.run(async (ctx) => {
@@ -527,6 +537,7 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
 
   test("per-pair counters naming them on either side are deleted; other members' stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, carol } = await seed(t);
     const follow = (subject: string, followeeId: Id<"users">) =>
       t
@@ -558,6 +569,7 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
 
   test("per-pair counters past one batch are deleted over several runs", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob } = await seed(t);
     await t.run(async (ctx) => {
       for (let i = 0; i < 5; i++) {
@@ -590,6 +602,7 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
 
   test("reports they filed are anonymised; reports about them are kept", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, carol } = await seed(t);
     const [filed, about] = await t.run(async (ctx) => [
       await ctx.db.insert("reports", {
@@ -657,6 +670,7 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
 
   test("the purge runs in batches", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, carol, threadId } = await seed(t);
     const staged = [];
     for (let i = 0; i < 5; i++) {

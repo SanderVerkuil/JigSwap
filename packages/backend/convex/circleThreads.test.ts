@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { describe, expect, test } from "vitest";
@@ -126,6 +127,7 @@ const storedMessagesOf = (t: T, threadId: string) =>
 describe("openCircleThread", () => {
   test("a member opens the circle's one thread, seeded with every member; re-opening is idempotent", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, carol, circleId } = await seed(t);
 
     const threadId = await open(t, "bob", circleId);
@@ -162,6 +164,7 @@ describe("openCircleThread", () => {
 
   test("a non-member, an ex-member and an unknown circle all get the same CircleNotFound", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     await expectCode(open(t, "dave", circleId), "CircleNotFound");
     await expectCode(open(t, "dave", "no-such-circle"), "CircleNotFound");
@@ -178,6 +181,7 @@ describe("openCircleThread", () => {
 describe("circle membership sync", () => {
   test("a join adds the member with a 'joined' row; a leave and a removal drop their participant row with a 'left' row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
 
@@ -218,6 +222,7 @@ describe("circle membership sync", () => {
 
   test("accepting an invite joins the circle's thread", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     // Inviting needs a mutual follow (the contact gate).
@@ -250,6 +255,7 @@ describe("circle membership sync", () => {
 
   test("a stale or replayed membership event changes nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
 
@@ -288,6 +294,7 @@ describe("circle membership sync", () => {
 
   test("no thread yet: membership changes create nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dave, circleId } = await seed(t);
     await join(t, circleId, dave);
     await flush(t);
@@ -327,6 +334,7 @@ describe("circle deletion", () => {
 
   test("deleting the circle purges its thread, messages, participant rows and attachments, keeping evidence-held and quarantined ones", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "hello");
@@ -373,6 +381,7 @@ describe("circle deletion", () => {
 
   test("a thread larger than one batch is purged across batches", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await t.run(async (ctx) => {
@@ -439,6 +448,7 @@ const leave = async (t: T, clerkId: string, circleId: string) => {
 describe("the joinedAt history floor", () => {
   test("a new member sees only messages sent strictly after they joined, plus their own 'joined' row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "before dave");
@@ -483,6 +493,7 @@ describe("the joinedAt history floor", () => {
 
   test("the join-row exemption is only the viewer's own join row at their floor", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, carol, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await join(t, circleId, dave);
@@ -516,6 +527,7 @@ describe("the joinedAt history floor", () => {
 
   test("a removed member loses the thread: reads are refused and it leaves their inbox", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "hello");
@@ -553,6 +565,7 @@ describe("the joinedAt history floor", () => {
 
   test("re-joining gives a fresh floor: what was said while away stays hidden", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "while bob was in");
@@ -570,6 +583,7 @@ describe("the joinedAt history floor", () => {
 describe("join/leave rows and projection", () => {
   test("a co-member is named; a former member who isn't otherwise visible is 'a member'; the remover never appears", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await join(t, circleId, dave);
@@ -601,6 +615,7 @@ describe("join/leave rows and projection", () => {
 
   test("a former member the viewer can see by the ordinary rules stays named", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await t.run(async (ctx) => {
@@ -626,6 +641,7 @@ describe("join/leave rows and projection", () => {
 
   test("authors carry `author`; the viewer's own messages keep isMine", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "mine");
@@ -644,6 +660,7 @@ describe("join/leave rows and projection", () => {
 describe("blocking inside a circle", () => {
   test("the blocker sees the blocked member's messages flagged; the blocked member sees the blocker named and normal", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
@@ -678,6 +695,7 @@ describe("blocking inside a circle", () => {
 
   test("a blocked author's messages are not unread for the blocker, nor notified to them", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
@@ -704,6 +722,7 @@ describe("blocking inside a circle", () => {
 describe("inbox, unread and mute", () => {
   test("a circle thread appears in the inbox only once it has a message for the viewer, or they opened it", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     // Opened but empty: not listed for anyone yet (Alice never read it).
@@ -743,6 +762,7 @@ describe("inbox, unread and mute", () => {
 
   test("a new member never sees a pre-join snippet as the inbox's last message", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "secret from before");
@@ -778,6 +798,7 @@ describe("inbox, unread and mute", () => {
 
   test("a muted thread is left out of the badge and flagged in the inbox; setThreadMuted touches only the caller's row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "one");
@@ -832,6 +853,7 @@ describe("inbox, unread and mute", () => {
 
   test("setThreadMuted is participants only", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await expectCode(
@@ -854,6 +876,7 @@ describe("inbox, unread and mute", () => {
 describe("posting", () => {
   test("a removed member can't post, even before the sync has run", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
@@ -868,6 +891,7 @@ describe("posting", () => {
 
   test("markThreadRead works for a circle thread and clears only the caller's unread", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "one");
@@ -884,6 +908,7 @@ describe("posting", () => {
 
   test("the 50-member cap still holds for circles, so a circle thread never passes 50 participants", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { circleId } = await seed(t);
     // Alice, Bob and Carol hold 3 seats; fill to 50.
     for (let i = 0; i < 47; i++) {
@@ -906,6 +931,7 @@ describe("posting", () => {
 describe("message notifications", () => {
   test("the blocker's messages still notify the member they blocked; never by email", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
@@ -943,6 +969,7 @@ describe("message notifications", () => {
 
   test("an ex-member whose sync never ran is not notified", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, carol, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     // Bob loses his seat with no membership event (the thread still lists him).
@@ -980,6 +1007,7 @@ describe("message notifications", () => {
 
   test("a circle notification never previews a message from a member the viewer blocked", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
@@ -1003,6 +1031,7 @@ describe("message notifications", () => {
 
   test("a member who joined after a message was posted is not notified about it", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "before dave");
@@ -1042,6 +1071,7 @@ describe("message notifications", () => {
 describe("account deletion", () => {
   test("a deleted member's circle participant rows go; their DM rows stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "bob", threadId, "hello");
@@ -1092,6 +1122,7 @@ describe("account deletion", () => {
 describe("reports", () => {
   test("a member can only report, and the evidence only holds, messages sent after they joined", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const before = (await post(t, "alice", threadId, "before dave")) as string;
@@ -1152,6 +1183,7 @@ describe("media in circle threads", () => {
 
   test("a blocked member's photo and location reach the blocker and everyone else", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await block(t, alice, bob);
@@ -1169,6 +1201,7 @@ describe("media in circle threads", () => {
 
   test("a photo still pending review reaches the circle as a message, with no URL for anyone but its sender", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const photo = await seedPhoto(t, threadId, alice);
@@ -1189,6 +1222,7 @@ describe("media in circle threads", () => {
 
   test("a stopped photo's caption is withheld from every other member, in the thread and the inbox; its sender keeps it", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const photo = await seedPhoto(t, threadId, alice);
@@ -1217,6 +1251,7 @@ describe("media in circle threads", () => {
 
   test("Show on a photo: the uploader's block on the viewer is never told; the viewer's own block, a non-member and the floor refuse", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, dave, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const photo = await seedPhoto(t, threadId, alice);
@@ -1252,6 +1287,7 @@ describe("media in circle threads", () => {
 
   test("the shared attachment gate refuses a removed member before the sync has run", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await as(t, "alice").mutation(api.sharing.removeMember.removeMember, {
@@ -1272,6 +1308,7 @@ describe("media in circle threads", () => {
 describe("the floor fails closed", () => {
   test("a circle participant row without a joinedAt reads nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     await post(t, "alice", threadId, "hello");
@@ -1290,6 +1327,7 @@ describe("the floor fails closed", () => {
 
   test("the seat's newer join time wins over a stale participant row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const old = await floorOf(t, threadId, bob);
@@ -1316,6 +1354,7 @@ describe("the floor fails closed", () => {
 describe("re-join sync races", () => {
   test("a re-join whose 'left' never synced refreshes the row: fresh floor, 'left' then 'joined'", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const old = await floorOf(t, threadId, bob);
@@ -1364,6 +1403,7 @@ describe("re-join sync races", () => {
 
   test("a deactivated member is never seeded into, or re-added to, the thread", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { carol, circleId } = await seed(t);
     await t.run((ctx) => ctx.db.patch(carol, { isActive: false }));
     const threadId = await open(t, "alice", circleId);
@@ -1389,6 +1429,7 @@ describe("re-join sync races", () => {
 describe("reports and evidence after deletion", () => {
   test("a current circle co-member can be reported; an outsider can't", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, circleId } = await seed(t);
     void circleId;
     const reportAlice = (clerkId: string) =>
@@ -1405,6 +1446,7 @@ describe("reports and evidence after deletion", () => {
 
   test("recording a report's evidence deletes a deleted circle's kept location, row included", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const messageId = (await post(t, "bob", threadId, "rude")) as string;
@@ -1442,6 +1484,7 @@ describe("reports and evidence after deletion", () => {
 
   test("a deleted circle's quarantined photo only loses its hold, never its row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const photo = await t.run(async (ctx) => {
@@ -1472,6 +1515,7 @@ describe("reports and evidence after deletion", () => {
 
   test("releasing the hold on a deleted circle's kept attachment deletes it", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, circleId } = await seed(t);
     const threadId = await open(t, "alice", circleId);
     const held = await t.run(async (ctx) => {

@@ -1,4 +1,16 @@
-import { afterEach } from "vitest";
+import { afterEach, expect } from "vitest";
+
+// convex-test only console.errors a crashing scheduled function and marks it failed, so the test
+// would pass. A plain wrapper (not vi.spyOn: per-file restoreAllMocks would undo it) records those
+// lines; afterEach fails the test. Known gap: files that mock console.error themselves hide crashes.
+const scheduledCrashes: string[] = [];
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  if (String(args[0]).startsWith("Error when running scheduled function")) {
+    scheduledCrashes.push(String(args[0]));
+  }
+  originalConsoleError(...args);
+};
 
 // convex-test runs `ctx.scheduler.runAfter` jobs on real `setTimeout(0)` callbacks. Our mutations
 // now schedule the event dispatcher, so a test that returns before those jobs run would let them
@@ -11,6 +23,8 @@ afterEach(async () => {
   for (let i = 0; i < 50; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
+  const crashes = scheduledCrashes.splice(0);
+  expect(crashes, "a scheduled function crashed during this test").toEqual([]);
 });
 
 // #178: anonRef is an HMAC keyed by the server-only ANON_REF_SECRET. A dummy, NON-SECRET value for

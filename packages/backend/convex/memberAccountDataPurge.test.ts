@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -281,6 +282,7 @@ const NONE_OWN = Object.fromEntries(
 describe("account deletion: own data, invite redemptions, stale follow notifications", () => {
   test("the seed holds her own rows, redemptions both ways and stale follow notifications", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
 
     expect(await ownRowCounts(t, s.alice)).toMatchObject(ALL_OWN);
@@ -315,6 +317,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("her notification inbox is deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -330,6 +333,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("an email or push still due for her is not sent", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     const deliver = () =>
       t.query(internal.notifications.resolveForDelivery.resolveForDelivery, {
@@ -354,6 +358,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("a tombstoned member gets no email or push either", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.run((ctx) =>
       ctx.db.patch(s.alice, { isActive: false, email: undefined }),
@@ -374,6 +379,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("her settings and state rows are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -382,6 +388,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("her invite redemptions both ways and her invite links are deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -391,6 +398,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("her invite links' landing counters go with the links; others' stay", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     const [alices] = await linksOf(t, s.alice);
     const [bobs] = await linksOf(t, s.bob);
@@ -417,6 +425,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("the inviter's counters are historic totals and do not drop", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     const [before] = await linksOf(t, s.bob);
     expect(before.signupsAttributed).toBe(2);
@@ -431,6 +440,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("a household link she used no longer names her, and stays used", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     // A household link of Carol's that Alice redeemed (her network-link redemption is replaced,
     // since a member redeems one invite at most).
@@ -466,6 +476,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("a new_follower row for someone she unfollowed is deleted", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -474,6 +485,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("a grouped new_follower row she was on after unfollowing keeps the others", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -487,6 +499,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("a follow request she cancelled leaves no notification naming her", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await deleteAlice(t);
 
@@ -500,6 +513,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("other members' rows, redemptions, links and notifications are untouched", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     const bobInbox = await t.run((ctx) =>
       ctx.db
@@ -526,6 +540,7 @@ describe("account deletion: own data, invite redemptions, stale follow notificat
 
   test("the purge completes with a batch size of 1", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const s = await seed(t);
     await t.mutation(
       internal.conversation.purgeMemberMessagingData.purgeMemberMessagingData,

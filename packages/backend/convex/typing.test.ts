@@ -1,3 +1,4 @@
+import presenceTest from "@convex-dev/presence/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { ConvexError, type Value } from "convex/values";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -164,6 +165,7 @@ const typerNames = (views: Awaited<ReturnType<typeof getTyping>>) =>
 describe("setTyping / getTyping: who may", () => {
   test("a participant's typing shows to the others, with ageMs, never to themselves", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId } = await seed(t);
 
     expect(await setTyping(t, "alice", dmId)).toBeNull();
@@ -179,6 +181,7 @@ describe("setTyping / getTyping: who may", () => {
 
   test("a non-participant gets the thread read's own generic errors, and writes nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dmId, circleThreadId } = await seed(t);
 
     for (const threadId of [dmId, circleThreadId]) {
@@ -209,6 +212,7 @@ describe("setTyping / getTyping: who may", () => {
 
   test("a circle ex-member is refused at once, before the participant sync runs", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { circleId, circleThreadId } = await seed(t);
 
     await as(t, "carol").mutation(api.sharing.leaveCircle.leaveCircle, {
@@ -226,6 +230,7 @@ describe("setTyping / getTyping: who may", () => {
 
   test("unauthenticated callers are refused", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dmId } = await seed(t);
     await expect(
       t.mutation(api.conversation.setTyping.setTyping, { threadId: dmId }),
@@ -242,6 +247,7 @@ describe("setTyping / getTyping: who may", () => {
 describe("setTyping: silent no-ops", () => {
   test("within the 2 s throttle nothing is written; after it the row is refreshed in place", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId } = await seed(t);
     await setTyping(t, "alice", dmId);
 
@@ -261,6 +267,7 @@ describe("setTyping: silent no-ops", () => {
 
   test("one write per 2 s per member across threads", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId, circleThreadId } = await seed(t);
     await setTyping(t, "alice", dmId);
 
@@ -282,6 +289,7 @@ describe("setTyping: silent no-ops", () => {
 
   test("a DM pair blocked either way: no row, and an earlier row stays hidden", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, dmId } = await seed(t);
     await setTyping(t, "alice", dmId); // before the block
 
@@ -299,6 +307,7 @@ describe("setTyping: silent no-ops", () => {
 
   test("a member appearing offline emits nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId, circleThreadId } = await seed(t);
     offline.members.add(alice);
 
@@ -311,6 +320,7 @@ describe("setTyping: silent no-ops", () => {
 describe("getTyping", () => {
   test("in a circle, a blocked pair never sees each other type; everyone else sees both", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, carol, circleThreadId } = await seed(t);
     await block(t, alice, carol);
 
@@ -328,6 +338,7 @@ describe("getTyping", () => {
 
   test("ageMs is measured from the row; a row 6 s old has expired", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, carol, circleThreadId } = await seed(t);
     await setTyping(t, "alice", circleThreadId);
     await setTyping(t, "carol", circleThreadId);
@@ -344,6 +355,7 @@ describe("getTyping", () => {
 describe("clearing", () => {
   test("clearTyping stops only the caller's own signal and keeps the row; a stranger's call touches nothing", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleThreadId } = await seed(t);
     await setTyping(t, "alice", circleThreadId);
     await setTyping(t, "bob", circleThreadId);
@@ -366,6 +378,7 @@ describe("clearing", () => {
 
   test("a set, clear, set loop within 2 s writes the signal once and ends cleared", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId } = await seed(t);
 
     await setTyping(t, "alice", dmId);
@@ -395,6 +408,7 @@ describe("clearing", () => {
 
   test("posting a message clears the author's row in the same transaction", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { bob, dmId } = await seed(t);
     await setTyping(t, "alice", dmId);
     await setTyping(t, "bob", dmId);
@@ -410,6 +424,7 @@ describe("clearing", () => {
 
   test("sharing a location clears the sender's row too (they typed its caption)", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { dmId } = await seed(t);
     vi.stubEnv("MAPTILER_API_KEY", "test-key");
     await setTyping(t, "alice", dmId);
@@ -429,6 +444,7 @@ describe("clearing", () => {
 describe("the bandwidth wide event", () => {
   test("one sampled line per actual write, with no member or thread id", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, dmId } = await seed(t);
     const log = vi.mocked(console.log);
     const typingLines = () =>
@@ -484,6 +500,7 @@ const settleDueJobs = async (t: T) => {
 describe("cleanup", () => {
   test("leaving or being removed from the circle deletes the member's typing row", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, circleId, circleThreadId } = await seed(t);
     for (const who of ["alice", "bob", "carol"] as const) {
       await setTyping(t, who, circleThreadId);
@@ -504,6 +521,7 @@ describe("cleanup", () => {
 
   test("deleting the circle purges its thread's typing rows", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { circleId, circleThreadId } = await seed(t);
     for (const who of ["alice", "bob", "carol"] as const) {
       await setTyping(t, who, circleThreadId);
@@ -519,6 +537,7 @@ describe("cleanup", () => {
 
   test("account deletion purges the member's typing rows in every thread, and only theirs", async () => {
     const t = convexTest(schema, modules);
+    presenceTest.register(t);
     const { alice, bob, dmId, circleThreadId } = await seed(t);
     await setTyping(t, "alice", dmId);
     await backdate(t, dmId, alice, TYPING_THROTTLE_MS + 500);

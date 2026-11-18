@@ -20,6 +20,7 @@
       "env": ["VITE_*", "VERCEL_PROJECT_PRODUCTION_URL"]
     },
     "@jigswap/web#test": {
+      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/docs/whats-new/**",
@@ -31,6 +32,7 @@
       "outputs": []
     },
     "lint": {
+      "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/.oxlintrc.json",
@@ -38,9 +40,12 @@
       ]
     },
     "type-check": {
+      "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.base.json"]
     },
-    "test": {},
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "coverage": {
       "cache": false
     },
