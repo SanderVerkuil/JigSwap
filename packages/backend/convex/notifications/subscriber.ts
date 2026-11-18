@@ -7,6 +7,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { isOpenHouseholdInvite } from "../household/memberships";
 import { isActiveMember } from "../identity/requireActiveMember";
 import { circleOfOpenInvite } from "../sharing/circleAccess";
 import { blockStateBetween, isBlockedEitherWay } from "../social/blocks";
@@ -638,7 +639,19 @@ const translate = async (
     }
 
     // --- Household ---
+    // Nothing is sent for an invite that can't be accepted by the time the event is dispatched
+    // (household/memberships isOpenHouseholdInvite: answered, revoked, lapsed, its inviter no
+    // longer the admin, or a block either way between the invitee and any member).
     case "HouseholdInviteSent": {
+      const invite = await ctx.db
+        .query("householdInvites")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", p.inviteId as string),
+        )
+        .unique();
+      if (!invite || !(await isOpenHouseholdInvite(ctx, invite, Date.now()))) {
+        return [];
+      }
       return [
         cmd(
           p.inviteeId as string,

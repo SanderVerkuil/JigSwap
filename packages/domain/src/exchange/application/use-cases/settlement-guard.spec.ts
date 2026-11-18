@@ -127,6 +127,14 @@ describe("settlementGuard: a swap's offered copy", () => {
     expect(refusal?.message).toContain(offeredId);
   });
 
+  it("refuses with OfferedCopyNotOwned once the owner and the recipient are blocked either way", async () => {
+    const copies = withRequested().seed({
+      ...view(offeredId, carol, [alice]),
+      ownerBlockedIds: [bob],
+    });
+    expect(await codeOf(copies, swap(carol))).toBe("OfferedCopyNotOwned");
+  });
+
   it("refuses with OfferedCopyNotOwned once it has another owner than recorded, even one the initiator may offer for", async () => {
     // Carol sold it to Dave, whose copies Alice also co-manages: still not the copy that was offered.
     const copies = withRequested().seed(view(offeredId, dave, [alice]));

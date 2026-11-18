@@ -10,10 +10,10 @@ import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { memberDisplayNameOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
-import { isBlockedEitherWay } from "../social/blocks";
 import {
+  blockedWithHousehold,
   householdDefaultOf,
-  isOpenHouseholdInvite,
+  isOpenSentHouseholdInvite,
   membershipOf,
   membersOfHousehold,
 } from "./memberships";
@@ -41,10 +41,12 @@ export const personView = async (
 
 // The acting member's household (members + roles), or null. Pending sent invites and requests to
 // join are returned to the admin only — they are the one who chose those people and who answers
-// the requests. A sent invite is listed while it can still be accepted (isOpenHouseholdInvite: not
-// lapsed, its inviter still the admin, no block either way). A request to join is listed while
-// pending and not lapsed; a dropped one (asked through a link the household's admin did not mint,
-// or across a block) never is. Also the household-wide default copy permission (resolved).
+// the requests. A sent invite is listed while it reads as pending to its sender
+// (isOpenSentHouseholdInvite: not lapsed, its inviter still the admin, no block either way between
+// them), so the list agrees with a re-invite's DuplicateInvite. A request to join is
+// listed while pending, not lapsed and its requester not blocked either way with a member (as
+// approveJoinRequest decides); a dropped one (asked through a link the household's admin did not
+// mint, or across a block) never is. Also the household-wide default copy permission (resolved).
 //
 // My Puzzles subscribes to this and SSR prefetches it for every household member, so it reads no
 // copies: an open list must not pay for the household's whole library. How many copies follow the
@@ -82,7 +84,7 @@ export const getMyHousehold = query({
         // An email invitation's in-app invite (viaEmail) is listed only as that invitation
         // (invitations/listMyEmailInvites), never by name: see householdInvites.viaEmail.
         if (invite.viaEmail === true) continue;
-        if (!(await isOpenHouseholdInvite(ctx, invite, now))) continue;
+        if (!(await isOpenSentHouseholdInvite(ctx, invite, now))) continue;
         pendingInvites.push({
           inviteId: invite.aggregateId,
           invitee: await personView(ctx, invite.inviteeId),
@@ -102,7 +104,15 @@ export const getMyHousehold = query({
         .collect();
       for (const row of rows.sort((a, b) => a.createdAt - b.createdAt)) {
         if (row.dropped || row.expiresAt <= now) continue;
-        if (await isBlockedEitherWay(ctx, viewerId, row.requesterId)) continue;
+        if (
+          await blockedWithHousehold(
+            ctx,
+            row.requesterId,
+            membership.householdId,
+          )
+        ) {
+          continue;
+        }
         joinRequests.push({
           requestId: row.aggregateId,
           requester: await personView(ctx, row.requesterId),

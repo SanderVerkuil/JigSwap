@@ -116,14 +116,18 @@ export const makeProposeExchange =
 
 // The swap offer rule, shared with the read side that lists a requester's offerable copies: the
 // initiator may offer a copy they own or co-manage through their household — but never the
-// recipient's own copy (a co-manager "swapping" the owner's copy with the owner).
+// recipient's own copy (a co-manager "swapping" the owner's copy with the owner), and a co-manager
+// never to a member blocked either way with the owner (a block keeps the owner's puzzles from going
+// to the blocked member; refused like any copy they may not offer, so nobody learns of the block).
+// The owner's own offer to a member they are blocked with is left to the block gates around it.
 export const mayOfferCopy = (
   offered: CopyView,
   initiatorId: MemberId,
   recipientId: MemberId,
 ): boolean =>
   (offered.ownerId === initiatorId ||
-    (offered.coManagerIds ?? []).includes(initiatorId)) &&
+    ((offered.coManagerIds ?? []).includes(initiatorId) &&
+      !(offered.ownerBlockedIds ?? []).includes(recipientId))) &&
   offered.ownerId !== recipientId;
 
 // Is the copy out on loan, i.e. held by anyone but its owner? Such a copy is at the borrower's: it

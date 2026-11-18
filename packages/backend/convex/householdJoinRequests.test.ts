@@ -338,6 +338,19 @@ describe("requestToJoinHousehold", () => {
 
       await expectDropped(t, "bob", token, ["ann"]);
     });
+
+    test("when the requester and a housemate of the admin are blocked", async () => {
+      const t = convexTest(schema, modules);
+      const { bob, cat } = await seed(t);
+      await createHousehold(t, "ann");
+      await invite(t, "ann", "cat", cat);
+      const token = await expiredLink(t);
+      await as(t, "cat").mutation(api.social.blockMember.blockMember, {
+        memberId: bob,
+      });
+
+      await expectDropped(t, "bob", token, ["ann"]);
+    });
   });
 
   test("one request per link, ever", async () => {
@@ -575,6 +588,22 @@ describe("approveJoinRequest", () => {
     expect((await landing(t, "bob", token)).joinRequest).toEqual({
       status: "closed",
     });
+  });
+
+  test("closes, unlisted, once the requester and a housemate are blocked", async () => {
+    const t = convexTest(schema, modules);
+    const { bob, cat } = await seed(t);
+    await createHousehold(t, "ann");
+    await invite(t, "ann", "cat", cat);
+    const { requestId } = await ask(t, "bob", await expiredLink(t));
+    expect((await mine(t, "ann"))?.joinRequests).toHaveLength(1);
+    await as(t, "bob").mutation(api.social.blockMember.blockMember, {
+      memberId: cat,
+    });
+
+    expect((await mine(t, "ann"))?.joinRequests).toEqual([]);
+    expect(await approve(t, "ann", requestId)).toEqual({ outcome: "closed" });
+    expect(await householdOf(t, bob)).toEqual([]);
   });
 
   test("refuses anyone but the household's admin", async () => {

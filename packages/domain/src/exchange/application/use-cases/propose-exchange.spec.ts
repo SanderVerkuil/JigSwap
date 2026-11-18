@@ -541,6 +541,21 @@ describe("mayOfferCopy", () => {
     const c = copy({ id: offeredId, ownerId: bob, coManagerIds: [alice] });
     expect(mayOfferCopy(c, alice, bob)).toBe(false);
   });
+
+  it("rejects a co-managed copy offered to a member blocked either way with its owner", () => {
+    const c = copy({
+      id: offeredId,
+      ownerId: carol,
+      coManagerIds: [alice],
+      ownerBlockedIds: [bob],
+    });
+    expect(mayOfferCopy(c, alice, bob)).toBe(false);
+  });
+
+  it("leaves the owner's own offer to the block gates outside it", () => {
+    const c = copy({ id: offeredId, ownerId: alice, ownerBlockedIds: [bob] });
+    expect(mayOfferCopy(c, alice, bob)).toBe(true);
+  });
 });
 
 describe("isLentOut", () => {

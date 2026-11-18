@@ -11,6 +11,7 @@ import {
 } from "@jigswap/domain";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { blockedEitherWaySet, isBlockedEitherWay } from "../social/blocks";
 import {
   householdDefaultOf,
   membershipOf,
@@ -20,9 +21,12 @@ import {
 // Server-side household authorization over copies, built on the domain's single rule
 // (`householdCopyAccess`): owner → "owner"; a member of the owner's household → the copy's
 // effective permission (explicit value, else the household default, else "manage"); anyone else →
-// "none". Every effective-permission read goes through resolveHouseholdCopyPermission.
+// "none". Every effective-permission read goes through resolveHouseholdCopyPermission. A block
+// either way ends what the household grants between the pair (spec 2.6), so a blocked housemate
+// counts as anyone else.
 
-// The household the two members share (with its default), or null when they share none.
+// The household the two members share (with its default), or null when they share none or are
+// blocked either way.
 const sharedHouseholdOf = async (
   ctx: QueryCtx,
   a: Id<"users">,
@@ -33,7 +37,12 @@ const sharedHouseholdOf = async (
     membershipOf(ctx, a),
     membershipOf(ctx, b),
   ]);
-  if (ma === null || mb === null || ma.householdId !== mb.householdId) {
+  if (
+    ma === null ||
+    mb === null ||
+    ma.householdId !== mb.householdId ||
+    (await isBlockedEitherWay(ctx, a, b))
+  ) {
     return null;
   }
   return {
@@ -64,11 +73,14 @@ export const canManageCopy = async (
   canManageHouseholdCopy(await copyAccessOf(ctx, actorId, copy));
 
 // The household facts co-management of an OWNER's copies depends on: their household's default
-// copy permission and the other members. Null when the owner is in no household. A bulk reader
-// resolves it once per owner and decides each copy with coManagerIdsFrom.
+// copy permission, the other members not blocked either way with the owner, and every member
+// blocked either way with the owner (a co-manager may not offer the owner's copy to them). Null
+// when the owner is in no household. A bulk reader resolves it once per owner and decides each
+// copy with coManagerIdsFrom.
 export interface OwnerHousehold {
   readonly defaultCopyPermission: HouseholdCopyPermission | undefined;
   readonly mateIds: ReadonlySet<Id<"users">>;
+  readonly blockedIds: ReadonlySet<Id<"users">>;
 }
 
 export const ownerHouseholdOf = async (
@@ -77,15 +89,19 @@ export const ownerHouseholdOf = async (
 ): Promise<OwnerHousehold | null> => {
   const membership = await membershipOf(ctx, ownerId);
   if (!membership) return null;
-  const [defaultCopyPermission, members] = await Promise.all([
+  const [defaultCopyPermission, members, blockedIds] = await Promise.all([
     householdDefaultOf(ctx, membership.householdId),
     membersOfHousehold(ctx, membership.householdId),
+    blockedEitherWaySet(ctx, ownerId),
   ]);
   return {
     defaultCopyPermission,
     mateIds: new Set(
-      members.map((m) => m.memberId).filter((id) => id !== ownerId),
+      members
+        .map((m) => m.memberId)
+        .filter((id) => id !== ownerId && !blockedIds.has(id)),
     ),
+    blockedIds,
   };
 };
 
@@ -104,13 +120,6 @@ export const coManagerIdsFrom = (
   if (permission !== "manage") return [];
   return [...ownerHousehold.mateIds].map((id) => toMemberId(id));
 };
-
-// Single-copy form of coManagerIdsFrom.
-export const coManagerIdsOf = async (
-  ctx: QueryCtx,
-  copy: Doc<"ownedPuzzles">,
-): Promise<MemberId[]> =>
-  coManagerIdsFrom(copy, await ownerHouseholdOf(ctx, copy.ownerId));
 
 // Driven adapter for Library's CopyManagerPolicy port. Library hands over the domain CopyId (the
 // row's aggregateId); the permission is read from the row.

@@ -5,11 +5,12 @@ import {
   type MemberId,
 } from "@jigswap/domain";
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isBlockedEitherWay } from "../social/blocks";
 import { householdDeps } from "./adapters/deps";
 import { toConvexError } from "./errors";
+import { blockedWithHousehold } from "./memberships";
 
 // Composition root: the invitee accepts and joins the household. The use case is the authoritative
 // at-most-one-household check: an invitee in another household joins only with
@@ -20,12 +21,20 @@ export const acceptHouseholdInviteUseCase = async (
   actorId: MemberId,
   args: { inviteId: string; leaveCurrentHousehold?: boolean },
 ): Promise<string> => {
-  // An invite between a pair blocked either way reads as missing (spec 2.6: generic refusal).
+  // An invite to a member blocked either way with anyone in the household reads as missing
+  // (spec 2.6: generic refusal).
   const invite = await ctx.db
     .query("householdInvites")
     .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", args.inviteId))
     .unique();
-  if (invite && (await isBlockedEitherWay(ctx, actorId, invite.inviterId))) {
+  if (
+    invite &&
+    (await blockedWithHousehold(
+      ctx,
+      actorId as unknown as Id<"users">,
+      invite.householdId,
+    ))
+  ) {
     throw toConvexError(HouseholdApplicationError.inviteNotFound());
   }
   const result = await makeAcceptHouseholdInvite(householdDeps(ctx))({

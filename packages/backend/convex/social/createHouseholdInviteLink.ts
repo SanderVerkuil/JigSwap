@@ -36,7 +36,13 @@ export const createHouseholdInviteLink = mutation({
 
     const now = Date.now();
     const recent = await recentHouseholdLinks(ctx, ownerId, now);
-    const open = recent.filter((row) => isLiveLink(row, now)).length;
+    // Only this household's links are open (the pending list shows no others); links minted for a
+    // household the admin has left can no longer invite anyone. The 24h count spans all of them.
+    const open = recent.filter(
+      (row) =>
+        isLiveLink(row, now) &&
+        row.context?.householdId === (household.id as string),
+    ).length;
     const createdToday = recent.filter(
       (row) => row.createdAt > now - HOUSEHOLD_LINK_WINDOW_MS,
     ).length;
