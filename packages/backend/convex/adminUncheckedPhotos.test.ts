@@ -10,7 +10,10 @@ import {
   vi,
   type MockInstance,
 } from "vitest";
-import { withModerationPool } from "../test-fixtures/moderationPool";
+import {
+  settleDueScheduled,
+  withModerationPool,
+} from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import { asImage } from "./conversation/messageAttachments";
 import { moderationPool } from "./lib/imageModeration/moderationPool";
@@ -289,6 +292,91 @@ describe("decideUncheckedPhoto", () => {
       completionId,
       "Mountain Vista",
     ]);
+  });
+
+  test("an unscored photo whose hash check never ran can be rejected, never approved", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { admin, copy, pendingCopy } = await seed(t);
+    // The blob is gone before the pipeline runs: every attempt stops at the download, before the
+    // hash check, so the photo ends unscored with its gate closed and no hashes to re-check.
+    const fileId = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["photo"], { type: "image/jpeg" })),
+    );
+    await asAlice(t).mutation(api.library.addCopyPhoto.addCopyPhoto, {
+      copyId: copy,
+      fileId,
+    });
+    await t.run((ctx) => ctx.storage.delete(fileId));
+    await settleDueScheduled(t);
+    const row = await t.run(async (ctx) =>
+      (
+        await ctx.db
+          .query("ownedPuzzleImages")
+          .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy))
+          .collect()
+      ).find((r) => r.fileId === fileId),
+    );
+    expect(row).toMatchObject({
+      moderationStatus: "unscored",
+      moderationReason: "missing_file",
+    });
+    expect(row?.hashCheckPendingSince).toBeDefined();
+    expect(row?.pendingHashes).toBeUndefined();
+    const decide = (decision: "approve" | "reject") =>
+      asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source: "copy",
+        imageId: row!._id,
+        decision,
+      });
+
+    await expect(decide("approve")).rejects.toThrow(
+      "has not passed the hash check",
+    );
+    await decide("reject");
+
+    const after = await t.run((ctx) => ctx.db.get(row!._id));
+    expect(after?.moderationStatus).toBe("rejected");
+    expect(after?.moderatedBy).toBe(admin);
+    const unchecked = await asAdmin(t).query(
+      api.admin.listUncheckedPhotos.listUncheckedPhotos,
+      {},
+    );
+    expect(unchecked.map((i) => i.imageId)).not.toContain(row!._id);
+
+    // A pending photo is still left to the hash check it is waiting for.
+    await t.run((ctx) =>
+      ctx.db.patch(pendingCopy, { hashCheckPendingSince: Date.now() }),
+    );
+    await expect(
+      asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source: "copy",
+        imageId: pendingCopy,
+        decision: "reject",
+      }),
+    ).rejects.toThrow("has not passed the hash check");
+  });
+
+  test("an unscored photo whose hash re-check is still running cannot be rejected", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { unscoredCopy } = await seed(t);
+    // The hash service was unavailable (hashes stored, re-checks armed), then the classifier gave
+    // up: a late match must still find the bytes, so a reject waits for the re-check or timeout.
+    await t.run((ctx) =>
+      ctx.db.patch(unscoredCopy, {
+        hashCheckPendingSince: Date.now(),
+        pendingHashes: [{ md5: "m", sha1: "s" }],
+      }),
+    );
+    await expect(
+      asAdmin(t).mutation(api.admin.decideUncheckedPhoto.decideUncheckedPhoto, {
+        source: "copy",
+        imageId: unscoredCopy,
+        decision: "reject",
+      }),
+    ).rejects.toThrow("has not passed the hash check");
+    expect(
+      (await t.run((ctx) => ctx.db.get(unscoredCopy)))?.moderationStatus,
+    ).toBe("unscored");
   });
 
   test("an already decided or unknown photo is refused", async () => {

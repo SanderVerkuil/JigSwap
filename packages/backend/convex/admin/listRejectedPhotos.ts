@@ -3,6 +3,7 @@ import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { adminMemberLabelOf } from "../identity/memberDisplayName";
 import { requireMember } from "../identity/requireMember";
+import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import {
   isHashCheckTimedOut,
   isHashCleared,
@@ -10,7 +11,8 @@ import {
 
 // The flagged-photos review queue: every auto-rejected copy photo, with enough context (image url,
 // classifier verdict, uploader, puzzle title) for an admin to restore or confirm removal.
-// Admin-only, gated exactly like getModerationStats.
+// Admin-only, gated exactly like getModerationStats. An upload the input guards refused
+// (invalid_image) is left out: its blob is gone, so there is nothing to judge or restore.
 //
 // A photo an admin rejected after its CSAM hash check TIMED OUT (admin/decideUncheckedPhoto) is
 // listed here too, with its image for the admin (as in Unchecked photos; the console blurs it
@@ -34,6 +36,7 @@ export const listRejectedPhotos = query({
       .withIndex("by_moderation_status", (q) =>
         q.eq("moderationStatus", "rejected"),
       )
+      .filter((q) => q.neq(q.field("moderationLabel"), INVALID_IMAGE_LABEL))
       .take(REJECTED_PHOTOS_QUEUE_LIMIT);
 
     return Promise.all(

@@ -3,6 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -11,7 +12,8 @@ import { stampModerationAction } from "./stampModerationAction";
 // for any approval). Only a rejected row can be restored. A photo whose
 // hash check timed out is NOT published by this: its hash gate stays closed (no hashCheckedAt), so
 // it goes back to the Unchecked photos queue as "Hash check timed out", where only the explicit
-// "Approve without hash check" (decideUncheckedPhoto, waive_hash_check) publishes it.
+// "Approve without hash check" (decideUncheckedPhoto, waive_hash_check) publishes it. An upload the
+// input guards refused (invalid_image) is never restored: its blob was deleted.
 export const restorePhoto = mutation({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {
@@ -22,6 +24,9 @@ export const restorePhoto = mutation({
     if (!row) throw new ConvexError("Photo not found");
     if (row.moderationStatus !== "rejected") {
       throw new ConvexError("Photo is not rejected");
+    }
+    if (row.moderationLabel === INVALID_IMAGE_LABEL) {
+      throw new ConvexError("Photo was refused as an invalid image");
     }
 
     await ctx.db.patch(imageId, {

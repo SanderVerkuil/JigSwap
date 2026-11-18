@@ -862,6 +862,27 @@ describe("revokeEmailInvite", () => {
     expect(gateway.deleted).toEqual([]);
   });
 
+  test("revoked while the send still waits on Clerk: the invitation is retired and no email goes out", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+    // The row is listed, with no Clerk id yet, while the send action waits on Clerk.
+    const create = gateway.create.bind(gateway);
+    gateway.create = async (input) => {
+      const [view] = await list(t, "alice");
+      await as(t, "alice").action(
+        api.invitations.revokeEmailInvite.revokeEmailInvite,
+        { inviteRef: view.inviteRef },
+      );
+      return create(input);
+    };
+
+    expect(await send(t, "alice", NEW_ADDRESS)).toEqual({ status: "sent" });
+    expect(gateway.revoked).toEqual(["inv_fake_1"]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await sendLog(t)).toEqual([]);
+    expect(await rowsOf(t)).toEqual([]);
+  });
+
   test("someone else's ref, an unknown ref and a revoked ref get the same generic error", async () => {
     const t = convexTest(schema, modules);
     await seed(t);

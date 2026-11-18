@@ -6,7 +6,8 @@ import { logEvent } from "./logEvent";
 // names): a dry run reads and counts what is due and logs it, and changes nothing. Switching a
 // sweep on is the operator's decision, taken after reading the dry-run counts. The "notifications"
 // sweep also needs its cron to ask for deleting, so "all" alone can't start it before the owner has
-// approved its periods (notifications/retention).
+// approved its periods (notifications/retention). "copyPhotos" is left out of "all" and runs only
+// when named, until the SEC-67 owner decision (library/moderationStore).
 //
 // Every page of every sweep emits one `retention.sweep` wide event: the sweep, how many rows in
 // the page were due, how many it acted on (always 0 in a dry run) and whether it was a dry run.
@@ -25,7 +26,7 @@ export const RETENTION_SWEEP_PAGE = 100;
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Whether `sweep` may change data: RETENTION_ENFORCE is "all" or lists it. */
+/** Whether `sweep` may change data: RETENTION_ENFORCE lists it, or is "all" (not for copyPhotos). */
 export const retentionEnforced = (
   sweep: RetentionSweep,
   enforce: string | undefined = process.env.RETENTION_ENFORCE,
@@ -34,7 +35,10 @@ export const retentionEnforced = (
     .split(",")
     .map((name) => name.trim())
     .filter((name) => name.length > 0);
-  return names.includes("all") || names.includes(sweep);
+  // copyPhotos must be named explicitly: the SEC-67 owner decision (library/moderationStore) is open.
+  return (
+    (names.includes("all") && sweep !== "copyPhotos") || names.includes(sweep)
+  );
 };
 
 /** The one wide event per sweep page. `outcome` "error" makes it alertable. */

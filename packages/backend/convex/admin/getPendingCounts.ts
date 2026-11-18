@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
 import { isAdmin } from "../identity/isAdmin";
 import { requireMember } from "../identity/requireMember";
+import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 
 // Each count stops here: the console shows "50+" beyond it.
 export const PENDING_COUNT_CAP = 50;
@@ -18,7 +19,7 @@ const bounded = (rows: readonly unknown[]): QueueCount => ({
 // and the /admin hub tiles. Every queue is one indexed read of at most CAP + 1 rows, so the query
 // stays cheap however long a queue grows, and each counts exactly what its admin list shows:
 // - submissions: pending catalog definitions (catalog.pending);
-// - flagged: auto-rejected copy photos (admin.listRejectedPhotos);
+// - flagged: auto-rejected copy photos, refused uploads left out (admin.listRejectedPhotos);
 // - appeals: message photos whose sender asked for a review not yet decided
 //   (admin.listImageReviewRequests; a quarantined photo never reaches an admin);
 // - reports: open reports (admin.listReports, status open);
@@ -52,6 +53,7 @@ export const getPendingCounts = query({
         .withIndex("by_moderation_status", (q) =>
           q.eq("moderationStatus", "rejected"),
         )
+        .filter((q) => q.neq(q.field("moderationLabel"), INVALID_IMAGE_LABEL))
         .take(take),
       ctx.db
         .query("messageAttachments")

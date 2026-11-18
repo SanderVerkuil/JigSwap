@@ -472,6 +472,21 @@ describe("copy photos the automated check rejected, 30 days on", () => {
     ).toEqual([[1, 0, true]]);
   });
 
+  test("RETENTION_ENFORCE=all leaves it a dry run: only naming copyPhotos turns it on (SEC-67)", async () => {
+    vi.stubEnv("RETENTION_ENFORCE", "all");
+    const t = convexTest(schema, modules);
+    const world = await seedCopy(t);
+    const { imageId, fileId } = await seedPhoto(t, world);
+
+    await sweep(t);
+
+    expect(await t.run((ctx) => ctx.db.get(imageId))).not.toBeNull();
+    expect(await blobExists(t, fileId)).toBe(true);
+    expect(
+      sweepEvents("copyPhotos").map((e) => [e.due, e.acted, e.dry_run]),
+    ).toEqual([[1, 0, true]]);
+  });
+
   test("enforced: the row and its blob go, and the copy loses it as its cover", async () => {
     vi.stubEnv("RETENTION_ENFORCE", "copyPhotos");
     const t = convexTest(schema, modules);

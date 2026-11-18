@@ -312,6 +312,100 @@ describe("catalogue categories", () => {
     ).rejects.toThrow();
     expect(await stamps(t)).toEqual([]);
   });
+
+  // A pending proposal on an approved definition, and a category, for a member to try.
+  const seedTargets = async (t: TestConvex<typeof schema>) => {
+    await seedUsers(t);
+    const catalogCategoryId = await create(t, "Animals");
+    const puzzleDefinitionId = (await asMember(t).mutation(
+      api.catalog.submitPuzzleDefinition.submitPuzzleDefinition,
+      { title: "Mountain Vista", pieceCount: 1000 },
+    )) as string;
+    await asAdmin(t).mutation(
+      api.catalog.approvePuzzleDefinition.approvePuzzleDefinition,
+      { puzzleDefinitionId },
+    );
+    const changeProposalId = (await asMember(t).mutation(
+      api.catalog.proposeDefinitionChange.proposeDefinitionChange,
+      { puzzleDefinitionId, title: "Mountain Vista (Panorama)" },
+    )) as string;
+    return { catalogCategoryId, puzzleDefinitionId, changeProposalId };
+  };
+  type Targets = Awaited<ReturnType<typeof seedTargets>>;
+
+  const stateOf = (t: TestConvex<typeof schema>, ids: Targets) =>
+    t.run(async (ctx) => ({
+      category: await ctx.db
+        .query("adminCategories")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", ids.catalogCategoryId),
+        )
+        .unique(),
+      proposal: await ctx.db
+        .query("puzzleChangeProposals")
+        .withIndex("by_aggregate_id", (q) =>
+          q.eq("aggregateId", ids.changeProposalId),
+        )
+        .unique(),
+      stamps: await ctx.db.query("moderationActions").collect(),
+    }));
+
+  test.each([
+    {
+      name: "rejectChangeProposal",
+      call: (t: TestConvex<typeof schema>, ids: Targets) =>
+        asMember(t).mutation(
+          api.catalog.rejectChangeProposal.rejectChangeProposal,
+          { changeProposalId: ids.changeProposalId },
+        ),
+    },
+    {
+      name: "updateCatalogCategory",
+      call: (t: TestConvex<typeof schema>, ids: Targets) =>
+        asMember(t).mutation(
+          api.catalog.updateCatalogCategory.updateCatalogCategory,
+          {
+            catalogCategoryId: ids.catalogCategoryId,
+            name: { en: "Wildlife", nl: "Wilde dieren" },
+          },
+        ),
+    },
+    {
+      name: "setCatalogCategoryActive",
+      call: (t: TestConvex<typeof schema>, ids: Targets) =>
+        asMember(t).mutation(
+          api.catalog.setCatalogCategoryActive.setCatalogCategoryActive,
+          { catalogCategoryId: ids.catalogCategoryId, isActive: false },
+        ),
+    },
+    {
+      name: "reorderCatalogCategories",
+      call: (t: TestConvex<typeof schema>, ids: Targets) =>
+        asMember(t).mutation(
+          api.catalog.reorderCatalogCategories.reorderCatalogCategories,
+          {
+            order: [{ catalogCategoryId: ids.catalogCategoryId, sortOrder: 2 }],
+          },
+        ),
+    },
+    {
+      name: "listProposalsForDefinition",
+      call: (t: TestConvex<typeof schema>, ids: Targets) =>
+        asMember(t).query(
+          api.catalog.listProposalsForDefinition.listProposalsForDefinition,
+          { puzzleDefinitionId: ids.puzzleDefinitionId },
+        ),
+    },
+  ])("a member is refused $name, and nothing changes", async ({ call }) => {
+    const t = convexTest(schema, modules);
+    const ids = await seedTargets(t);
+    const before = await stateOf(t, ids);
+    expect(before.proposal?.status).toBe("pending");
+
+    await expect(call(t, ids)).rejects.toThrow(/Forbidden/);
+
+    expect(await stateOf(t, ids)).toEqual(before);
+  });
 });
 
 describe("contact/markContactMessageHandled", () => {

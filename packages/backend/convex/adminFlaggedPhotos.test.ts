@@ -110,6 +110,23 @@ describe("listRejectedPhotos", () => {
     expect(typeof rows[0].url).toBe("string");
     expect(typeof rows[0].uploadedAt).toBe("number");
   });
+
+  test("leaves out uploads the input guards refused (invalid_image): there is nothing to judge", async () => {
+    const t = convexTest(schema, modules);
+    const { userId, copyId } = await seedWorld(t);
+    await seedPhoto(t, copyId, userId, "rejected", {
+      moderationLabel: "invalid_image",
+    });
+    const flagged = await seedPhoto(t, copyId, userId, "rejected", {
+      moderationLabel: "nsfw",
+    });
+
+    const rows = await asAdmin(t).query(
+      api.admin.listRejectedPhotos.listRejectedPhotos,
+      {},
+    );
+    expect(rows.map((r) => r.imageId)).toEqual([flagged.imageId]);
+  });
 });
 
 describe("restorePhoto", () => {
@@ -149,6 +166,22 @@ describe("restorePhoto", () => {
 
     const row = await t.run((ctx) => ctx.db.get(imageId));
     expect(row?.moderationStatus).toBe("pending");
+    expect(await allActions(t)).toHaveLength(0);
+  });
+
+  test("a refused upload (invalid_image) is never restored: its file is gone", async () => {
+    const t = convexTest(schema, modules);
+    const { userId, copyId } = await seedWorld(t);
+    const { imageId } = await seedPhoto(t, copyId, userId, "rejected", {
+      moderationLabel: "invalid_image",
+    });
+
+    await expect(
+      asAdmin(t).mutation(api.admin.restorePhoto.restorePhoto, { imageId }),
+    ).rejects.toThrow("Photo was refused as an invalid image");
+
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row?.moderationStatus).toBe("rejected");
     expect(await allActions(t)).toHaveLength(0);
   });
 });
