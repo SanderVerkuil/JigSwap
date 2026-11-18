@@ -22,7 +22,10 @@ export const firstDuplicateBarcode = async (
   ].filter((value): value is string => value !== undefined && value.length > 0);
 
   for (const barcode of candidates) {
-    const twin = barcodeTwin(barcode);
+    // A model number is an opaque identifier: a numeric one is not a UPC-A.
+    const twin = [barcodes?.ean, barcodes?.upc].includes(barcode)
+      ? barcodeTwin(barcode)
+      : undefined;
     for (const probe of twin ? [barcode, twin] : [barcode]) {
       const holder = await definitions.findByBarcode(probe, {
         statuses: BARCODE_HOLDING_STATUSES,

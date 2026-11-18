@@ -25,4 +25,12 @@ describe("firstDuplicateBarcode UPC-A / EAN-13 equivalence", () => {
       }),
     ).toBe("036000291452");
   });
+
+  it("gives a numeric model number no twin: it is not a UPC-A", async () => {
+    expect(
+      await firstDuplicateBarcode(repoHolding("0036000291452"), {
+        modelNumber: "036000291452",
+      }),
+    ).toBeNull();
+  });
 });
