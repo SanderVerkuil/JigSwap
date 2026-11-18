@@ -217,7 +217,10 @@ export interface ImageModerationSteps<R extends ModerationRow> {
   load: FunctionReference<"query", "internal", { imageId: string }, R | null>;
   /** Business context of the row for the wide event (ids, kind of photo), never image data. */
   describe: (row: R) => Record<string, unknown>;
-  /** Point the row at the re-encoded blob and store its blurhash. */
+  /**
+   * Point the row at the re-encoded blob and store its blurhash. A row that went (or was removed)
+   * meanwhile declines the swap and deletes the blob: nothing else ever would.
+   */
   setFile: FunctionReference<
     "mutation",
     "internal",
@@ -421,18 +424,20 @@ const runAttempt = async <R extends ModerationRow>(
     });
   };
 
-  // Delete an original blob unless anything but this row holds it: a CSAM escalation preserves
-  // it, or another row holds the same id (a row written before the claim rule may hold
-  // catalogue box art; SEC-01). Checked and deleted in one transaction (lib/storage/
-  // blobLifecycle); `original_delete` records the outcome: "deleted", "referenced" or "missing".
-  // Returns whether the blob is gone: false when something still holds it or the delete failed.
+  // Delete an original blob unless anything but `except` (this row, when it still holds it)
+  // holds it: a CSAM escalation preserves it, or another row holds the same id (a row written
+  // before the claim rule may hold catalogue box art; SEC-01). Checked and deleted in one
+  // transaction (lib/storage/blobLifecycle); `original_delete` records the outcome: "deleted",
+  // "referenced" or "missing". Returns whether the blob is gone: false when something still holds
+  // it or the delete failed.
   const deleteUnlessReferenced = async (
     fileId: Id<"_storage">,
+    except?: string,
   ): Promise<boolean> => {
     try {
       const outcome = await ctx.runMutation(
         internal.lib.storage.blobLifecycle.deleteUnlessReferenced,
-        { storageId: fileId, except: imageId },
+        { storageId: fileId, except },
       );
       event.original_delete = outcome;
       return outcome !== "referenced";
@@ -517,7 +522,7 @@ const runAttempt = async <R extends ModerationRow>(
       ) {
         return;
       }
-      if (await deleteUnlessReferenced(row.fileId)) {
+      if (await deleteUnlessReferenced(row.fileId, imageId)) {
         await ctx.runMutation(steps.setHashCheck, {
           imageId,
           status: "refused",
@@ -710,8 +715,10 @@ const runAttempt = async <R extends ModerationRow>(
           fileId: newFileId,
           blurhash: replacement.blurhash,
         });
-        // Swap succeeded: the row now points at the new blob, so it is no longer the one to
-        // clean up on failure; drop the original instead (best-effort).
+        // The row now points at the new blob (or declined it and deleted it), so it is no longer
+        // the one to clean up on failure; drop the original instead (best-effort). The row is not
+        // excepted: one removed meanwhile declined the swap and may still hold the original as
+        // evidence.
         storedFileId = null;
         cleanBytes = replacement.bytes;
         mime = replacement.mime;

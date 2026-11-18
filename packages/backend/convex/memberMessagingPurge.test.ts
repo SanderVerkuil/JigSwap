@@ -1043,6 +1043,81 @@ describe("account deletion: a DM or exchange thread nobody is left in", () => {
     },
   );
 
+  const escalate = (
+    t: T,
+    uploaderId: Id<"users">,
+    status: "open" | "reported",
+  ) =>
+    t.run((ctx) =>
+      ctx.db.insert("csamEscalations", {
+        table: "messageAttachments",
+        rowId: "x",
+        uploaderId,
+        md5: "m",
+        sha1: "s",
+        provider: "offlimits",
+        matchedAt: 1,
+        status,
+        ...(status === "reported" && { reportedAt: 2 }),
+      }),
+    );
+
+  const closeEscalation = async (t: T, id: Id<"csamEscalations">) => {
+    await asAdmin(t).mutation(api.admin.markCsamEscalation.markCsamEscalation, {
+      id,
+      status: "closed",
+    });
+    await settleDueJobs(t);
+  };
+
+  test("closing a tombstoned member's last escalation deletes their row and the thread nobody is left in", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    await post(t, "bob", s.threadId, "Hello");
+    const escalation = await escalate(t, s.alice, "reported");
+    await deleteAlice(t);
+    await deleteMember(t, "clerk_bob");
+    expect((await threadData(t, s.threadId)).thread).not.toBeNull();
+
+    await closeEscalation(t, escalation);
+
+    expect(await t.run((ctx) => ctx.db.get(s.alice))).toBeNull();
+    expect(await threadData(t, s.threadId)).toEqual({
+      thread: null,
+      messages: [],
+      attachments: [],
+      participants: [],
+      typing: [],
+    });
+  });
+
+  test("a tombstone stays while another of the member's escalations is not closed", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    await post(t, "bob", s.threadId, "Hello");
+    await escalate(t, s.alice, "open");
+    const reported = await escalate(t, s.alice, "reported");
+    await deleteAlice(t);
+    await deleteMember(t, "clerk_bob");
+
+    await closeEscalation(t, reported);
+
+    expect((await t.run((ctx) => ctx.db.get(s.alice)))?.isActive).toBe(false);
+    expect(
+      (await threadData(t, s.threadId)).messages.map((m) => m.body),
+    ).toEqual(["Hello"]);
+  });
+
+  test("closing the last escalation of a member who never deleted their account leaves them be", async () => {
+    const t = newPurgeT();
+    const s = await seed(t);
+    const escalation = await escalate(t, s.alice, "reported");
+
+    await closeEscalation(t, escalation);
+
+    expect((await t.run((ctx) => ctx.db.get(s.alice)))?.isActive).toBe(true);
+  });
+
   test("a photo an open report holds survives the thread, blobs included", async () => {
     const t = newPurgeT();
     const s = await seed(t);

@@ -2817,6 +2817,7 @@
       "trade_completed": "Ruil voltooid",
       "trade_cancelled": "Ruil geannuleerd",
       "trade_cancelled_member_deleted": "Ruil geannuleerd (account verwijderd)",
+      "loan_closed_member_deleted": "Lening afgesloten (account verwijderd)",
       "exchange_disputed": "Ruilgeschil",
       "message_received": "Nieuwe berichten",
       "circle_message_received": "Kringberichten",
@@ -2900,6 +2901,10 @@
       "trade_cancelled_member_deleted": {
         "title": "Ruil geannuleerd",
         "message": "Een ruil is geannuleerd omdat het account van het andere lid is verwijderd."
+      },
+      "loan_closed_member_deleted": {
+        "title": "Lening afgesloten",
+        "message": "Het account van iemand die een puzzel van je leende is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener."
       },
       "exchange_proposed": {
         "title": "Ruil voorgesteld",
@@ -3046,6 +3051,7 @@
       "trade_completed": "Wanneer een ruil is voltooid.",
       "trade_cancelled": "Wanneer een ruil is geannuleerd.",
       "trade_cancelled_member_deleted": "Wanneer een ruil wordt geannuleerd omdat het account van het andere lid is verwijderd.",
+      "loan_closed_member_deleted": "Wanneer een lening wordt afgesloten omdat het account van het lid dat je puzzel leende is verwijderd.",
       "exchange_disputed": "Wanneer een uitwisseling waaraan je deelneemt wordt betwist.",
       "message_received": "Wanneer je een nieuw bericht ontvangt.",
       "circle_message_received": "Wanneer iemand schrijft in de groepschat van een van je kringen. E-mail komt als korte samenvatting, nooit per bericht.",
@@ -3129,6 +3135,9 @@
       },
       "trade_cancelled_member_deleted": {
         "sentence": "{hasPuzzle, select, yes {Een ruil met <b>{actor}</b> voor <b>{puzzle}</b> is geannuleerd omdat het account van het andere lid is verwijderd.} other {Een ruil met <b>{actor}</b> is geannuleerd omdat het account van het andere lid is verwijderd.}}"
+      },
+      "loan_closed_member_deleted": {
+        "sentence": "{hasPuzzle, select, yes {Het account van de lener van <b>{puzzle}</b> is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.} other {Het account van iemand die een puzzel van je leende is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.}}"
       },
       "trade_completed": {
         "sentence": "Je ruil met <b>{actor}</b> is voltooid."

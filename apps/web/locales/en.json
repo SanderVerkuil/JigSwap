@@ -2817,6 +2817,7 @@
       "trade_completed": "Trade completed",
       "trade_cancelled": "Trade cancelled",
       "trade_cancelled_member_deleted": "Trade cancelled (account deleted)",
+      "loan_closed_member_deleted": "Loan closed (account deleted)",
       "exchange_disputed": "Exchange disputed",
       "message_received": "New messages",
       "circle_message_received": "Circle messages",
@@ -2900,6 +2901,10 @@
       "trade_cancelled_member_deleted": {
         "title": "Exchange cancelled",
         "message": "A trade was cancelled because the other member deleted their account."
+      },
+      "loan_closed_member_deleted": {
+        "title": "Loan closed",
+        "message": "The borrower of a puzzle you lent out deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them."
       },
       "exchange_proposed": {
         "title": "Exchange proposed",
@@ -3046,6 +3051,7 @@
       "trade_completed": "When a trade is completed.",
       "trade_cancelled": "When a trade is cancelled.",
       "trade_cancelled_member_deleted": "When a trade is cancelled because the other member deleted their account.",
+      "loan_closed_member_deleted": "When a loan is closed because the member who borrowed your puzzle deleted their account.",
       "exchange_disputed": "When an exchange you're part of is disputed.",
       "message_received": "When you receive a new message.",
       "circle_message_received": "When someone writes in the group chat of one of your circles. Email comes as a short digest, never per message.",
@@ -3129,6 +3135,9 @@
       },
       "trade_cancelled_member_deleted": {
         "sentence": "{hasPuzzle, select, yes {A trade with <b>{actor}</b> for <b>{puzzle}</b> was cancelled because the other member deleted their account.} other {A trade with <b>{actor}</b> was cancelled because the other member deleted their account.}}"
+      },
+      "loan_closed_member_deleted": {
+        "sentence": "{hasPuzzle, select, yes {The borrower of <b>{puzzle}</b> deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them.} other {The borrower of a puzzle you lent out deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them.}}"
       },
       "trade_completed": {
         "sentence": "Your trade with <b>{actor}</b> is complete."

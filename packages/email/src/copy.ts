@@ -8,6 +8,7 @@ export const EMAIL_TYPES = [
   "trade_completed",
   "trade_cancelled",
   "trade_cancelled_member_deleted",
+  "loan_closed_member_deleted",
   "message_received",
   "review_received",
   "puzzle_favorited",
@@ -185,6 +186,27 @@ export const EMAIL_COPY: Record<EmailType, Record<EmailLocale, EmailCopy>> = {
       richBody:
         "De ruil voor “{puzzleTitle}” is geannuleerd omdat het account van het andere lid is verwijderd.",
       deepCta: "Bekijk ruil",
+    },
+  },
+  // Its borrower deleted their account: nobody to name, so no {actorName}.
+  loan_closed_member_deleted: {
+    en: {
+      subject: "A loan was closed",
+      heading: "Loan closed",
+      body: "The borrower of a puzzle you lent out deleted their account, so the loan was closed. If you don't have the puzzle back yet, it may still be with them.",
+      cta: "View your puzzles",
+      richBody:
+        "The borrower of “{puzzleTitle}” deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them.",
+      deepCta: "View puzzle",
+    },
+    nl: {
+      subject: "Een lening is afgesloten",
+      heading: "Lening afgesloten",
+      body: "Het account van iemand die een puzzel van je leende is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.",
+      cta: "Bekijk je puzzels",
+      richBody:
+        "Het account van de lener van “{puzzleTitle}” is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.",
+      deepCta: "Bekijk puzzel",
     },
   },
   message_received: {

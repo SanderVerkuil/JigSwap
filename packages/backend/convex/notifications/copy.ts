@@ -88,6 +88,13 @@ const COPY: Record<NotificationType, (p: Params) => NotificationText> = {
     message:
       "A trade was cancelled because the other member deleted their account",
   }),
+  // Its borrower deleted their account: nobody to name.
+  loan_closed_member_deleted: (p) => ({
+    title: "Loan closed",
+    message: p["puzzleTitle"]
+      ? `The borrower of "${p["puzzleTitle"]}" deleted their account, so the loan was closed`
+      : "The borrower of a puzzle you lent out deleted their account, so the loan was closed",
+  }),
   message_received: (p) => {
     const actor = p["actorName"];
     const preview = p["messagePreview"];

@@ -4,9 +4,10 @@ import {
   toMemberId,
   type MemberId,
 } from "@jigswap/domain";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
+import { isActiveMember } from "../identity/requireActiveMember";
 import { requireMember } from "../identity/requireMember";
 import { enforceRateLimit } from "../lib/rateLimits";
 import { convexFollowRepository } from "./adapters/convexFollowRepository";
@@ -37,6 +38,14 @@ export const followMemberUseCase = async (
   args: { followeeId: Id<"users"> },
 ): Promise<{ kind: "followed" | "requested"; id: string }> => {
   await enforceRateLimit(ctx, "followToggle", followerId);
+  // v.id only checks the id's format: a follow to a deleted id would leave rows naming them that
+  // no purge phase clears. Before the followPair charge, so no pair row names them either.
+  if (!(await isActiveMember(ctx, args.followeeId))) {
+    throw new ConvexError({
+      code: "MemberNotFound",
+      message: "Member not found",
+    });
+  }
   await assertPairNotBlocked(ctx, followerId, args.followeeId);
   await enforceRateLimit(
     ctx,

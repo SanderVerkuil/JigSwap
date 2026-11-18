@@ -417,6 +417,60 @@ describe("account deletion: open loans", () => {
     expect(carolCopy?.heldBy).toBeUndefined();
   });
 
+  // The closed loan reads as back home while the puzzle may still be with her: its lender is told,
+  // without naming her. A loan she lent has nobody left to tell.
+  test("Carol, who lent her a copy, gets one notice; nobody is told about the loan she lent", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const lentByHer = await insertCopy(t, s.puzzleId, s.alice, {
+      heldBy: s.bob,
+    });
+    const borrowedByHer = await insertCopy(t, s.puzzleId, s.carol, {
+      heldBy: s.alice,
+    });
+    await insertLoan(t, {
+      copyId: await aggregateIdOf(t, lentByHer),
+      lenderId: s.alice,
+      borrowerId: s.bob,
+      status: "open",
+    });
+    await insertLoan(t, {
+      copyId: await aggregateIdOf(t, borrowedByHer),
+      lenderId: s.carol,
+      borrowerId: s.alice,
+      status: "open",
+    });
+
+    await deleteMember(t, "alice");
+
+    const notices = await t.run(async (ctx) =>
+      (await ctx.db.query("notifications").collect()).filter(
+        (row) => row.type === "loan_closed_member_deleted",
+      ),
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toMatchObject({
+      userId: s.carol,
+      channel: "inApp",
+      relatedId: borrowedByHer,
+      subject: { kind: "copy", copyId: borrowedByHer },
+    });
+    expect(notices[0].actorIds).toBeUndefined();
+
+    const views = (
+      await as(t, "carol").query(
+        api.notifications.listMyNotificationViews.listMyNotificationViews,
+        { paginationOpts: { numItems: 20, cursor: null } },
+      )
+    ).page.filter((view) => view.type === "loan_closed_member_deleted");
+    expect(views).toHaveLength(1);
+    expect(views[0]).toMatchObject({
+      actors: [],
+      href: `/my-puzzles/${borrowedByHer}`,
+      context: { puzzleTitle: "Lighthouse" },
+    });
+  });
+
   // SEC-36: closing a loan gives the copy back only while that loan's borrower holds it.
   test("an older loan she borrowed is returned, and the copy stays with Dave who holds it now", async () => {
     const t = newT();
@@ -959,6 +1013,45 @@ describe("account deletion: photos kept for a CSAM escalation", () => {
     expect(await blobExists(t, plain.fileId)).toBe(false);
     expect(await blobExists(t, preserved.fileId)).toBe(true);
   });
+
+  test("a quarantined completion photo stays, row and blob; the plain one goes", async () => {
+    const t = newT();
+    const s = await seedMembers(t);
+    const plain = await insertCompletion(t, s.alice, undefined);
+    // A hash match drops the photo from the completion's `photos`; only its sidecar names it.
+    const quarantinedFileId = await storeBlob(t);
+    const quarantinedRowId = await t.run(async (ctx) => {
+      const rowId = await ctx.db.insert("completionImages", {
+        completionId: plain.aggregateId,
+        uploaderId: s.alice,
+        fileId: quarantinedFileId,
+        moderationStatus: "quarantined",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("csamEscalations", {
+        table: "completionImages",
+        rowId,
+        uploaderId: s.alice,
+        fileId: quarantinedFileId,
+        md5: "m",
+        sha1: "s",
+        provider: "test",
+        originalDiscarded: true,
+        status: "open",
+        matchedAt: Date.now(),
+      });
+      return rowId;
+    });
+
+    await deleteMember(t, "alice");
+
+    expect(await completionImagesOf(t, plain.aggregateId)).toEqual([
+      expect.objectContaining({ _id: quarantinedRowId }),
+    ]);
+    expect(await blobExists(t, quarantinedFileId)).toBe(true);
+    expect(await blobExists(t, plain.fileId)).toBe(false);
+  });
 });
 
 describe("account deletion: batching", () => {
@@ -1008,6 +1101,158 @@ describe("account deletion: batching", () => {
     expect(rest.images).toEqual([]);
     expect(rest.bobs).not.toBeNull();
   });
+});
+
+describe("account deletion: photo-heavy accounts stay inside Convex's per-run limits", () => {
+  type Members = Awaited<ReturnType<typeof seedMembers>>;
+
+  // Convex's real per-function limits (4,096 index ranges), which a plain convexTest skips.
+  const limitedT = (): T => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    presenceTest.register(t);
+    return t;
+  };
+
+  // A stored photo with its three renditions (480/640/960 WebP), as the generation records them.
+  const storeRenditionedPhoto = (t: T): Promise<Id<"_storage">> =>
+    t.run(async (ctx) => {
+      const webp = (body: string) =>
+        ctx.storage.store(new Blob([body], { type: "image/webp" }));
+      const sourceId = await webp("photo");
+      await ctx.db.insert("imageRenditions", {
+        sourceId,
+        width: 1600,
+        height: 1200,
+        small: { fileId: await webp("small"), width: 480, height: 360 },
+        medium: { fileId: await webp("medium"), width: 640, height: 480 },
+        large: { fileId: await webp("large"), width: 960, height: 720 },
+        createdAt: Date.now(),
+      });
+      return sourceId;
+    });
+
+  // `copies` copies owned by `ownerId`, each with `photos` approved photos Alice uploaded.
+  const seedCopies = async (
+    t: T,
+    s: Members,
+    ownerId: Id<"users">,
+    copies: number,
+    photos: number,
+  ) => {
+    const copyIds: Id<"ownedPuzzles">[] = [];
+    for (let i = 0; i < copies; i++) {
+      const copy = await insertCopy(t, s.puzzleId, ownerId);
+      copyIds.push(copy);
+      for (let j = 0; j < photos; j++) {
+        const fileId = await storeRenditionedPhoto(t);
+        await t.run((ctx) =>
+          ctx.db.insert("ownedPuzzleImages", {
+            ownedPuzzleId: copy,
+            uploaderId: s.alice,
+            fileId,
+            moderationStatus: "approved",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          }),
+        );
+      }
+    }
+    return copyIds;
+  };
+
+  // `solves` finished solves of Alice's, on `ownedPuzzleId` or on no copy, each with MAX_PHOTOS
+  // (5) approved photos.
+  const seedSolves = async (
+    t: T,
+    s: Members,
+    solves: number,
+    ownedPuzzleId?: Id<"ownedPuzzles">,
+  ) => {
+    for (let i = 0; i < solves; i++) {
+      const photos: Id<"_storage">[] = [];
+      for (let j = 0; j < 5; j++) photos.push(await storeRenditionedPhoto(t));
+      completionSeq += 1;
+      const aggregateId = `completion-${completionSeq}`;
+      await t.run(async (ctx) => {
+        const now = Date.now();
+        await ctx.db.insert("completions", {
+          aggregateId,
+          userId: s.alice,
+          puzzleId: s.puzzleId,
+          ownedPuzzleId,
+          startDate: now - 3_600_000,
+          endDate: now - 60_000,
+          photos,
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+        for (const fileId of photos) {
+          await ctx.db.insert("completionImages", {
+            completionId: aggregateId,
+            uploaderId: s.alice,
+            fileId,
+            moderationStatus: "approved",
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      });
+    }
+  };
+
+  test.each<[string, (t: T, s: Members) => Promise<unknown>]>([
+    ["60 copies, one photo each", (t, s) => seedCopies(t, s, s.alice, 60, 1)],
+    ["5 copies, 20 photos each", (t, s) => seedCopies(t, s, s.alice, 5, 20)],
+    ["80 photos on copies Bob owns", (t, s) => seedCopies(t, s, s.bob, 4, 20)],
+    ["15 solves, 5 photos each", (t, s) => seedSolves(t, s, 15)],
+    [
+      "one copy at 20 photos with 15 of her solves on it, 5 photos each",
+      async (t, s) => {
+        const [copy] = await seedCopies(t, s, s.alice, 1, 20);
+        await seedSolves(t, s, 15, copy);
+      },
+    ],
+  ])(
+    "%s: every row and blob goes and the purge reaches its last phase",
+    async (_, seed) => {
+      const t = limitedT();
+      const s = await seedMembers(t);
+      await seed(t, s);
+
+      await deleteMember(t, "alice");
+
+      const left = await t.run(async (ctx) => ({
+        copies: await ctx.db
+          .query("ownedPuzzles")
+          .withIndex("by_owner", (q) => q.eq("ownerId", s.alice))
+          .collect(),
+        photos: await ctx.db.query("ownedPuzzleImages").collect(),
+        solves: await ctx.db.query("completions").collect(),
+        solvePhotos: await ctx.db.query("completionImages").collect(),
+        renditions: await ctx.db.query("imageRenditions").collect(),
+        blobs: await ctx.db.system.query("_storage").collect(),
+        pendingPhases: (
+          await ctx.db.system.query("_scheduled_functions").collect()
+        )
+          .filter(
+            (job) =>
+              job.state.kind === "pending" &&
+              job.name.includes("purgeMemberMessagingData"),
+          )
+          .map((job) => job.args[0].phase),
+      }));
+      expect(left).toEqual({
+        copies: [],
+        photos: [],
+        solves: [],
+        solvePhotos: [],
+        renditions: [],
+        blobs: [],
+        pendingPhases: ["domainEvents"],
+      });
+    },
+  );
 });
 
 describe("account deletion: goals, collections, categories", () => {

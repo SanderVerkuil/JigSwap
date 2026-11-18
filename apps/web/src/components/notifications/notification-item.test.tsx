@@ -455,6 +455,34 @@ describe("NotificationItem rendering", () => {
     },
   );
 
+  it.each([
+    [
+      "en",
+      "The borrower of Sky deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them.",
+    ],
+    [
+      "nl",
+      "Het account van de lener van Sky is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.",
+    ],
+  ] as const)(
+    "%s: loan_closed_member_deleted tells the lender without naming the borrower",
+    (locale, text) => {
+      const { container } = renderItem(
+        base({
+          type: "loan_closed_member_deleted",
+          actors: [],
+          actorCount: 0,
+          href: "/my-puzzles/copy-1",
+          context: { puzzleTitle: "Sky" },
+        }),
+        { locale },
+      );
+      const sentence = rowLink(container)!.textContent;
+      expect(sentence).toContain(text);
+      expect(sentence).not.toMatch(/Deleted member|Verwijderd lid/);
+    },
+  );
+
   it("falls back to a nameless circle_deleted sentence", () => {
     const { container } = renderItem(
       base({

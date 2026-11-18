@@ -107,14 +107,17 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                escalation) still has a users row, so their threads stay. Runs after the legacy
 //                phases, which need the thread's copies to tell a copied legacy row.
 //   loansOpen    the open loans of copies they lent  } returned (closedAt now), the copy back with
-//   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history
+//   loansOpenIn  the open loans of copies they borrow } its owner; loan rows stay as history.
+//                The lender of a copy they borrowed, if still active, gets a
+//                loan_closed_member_deleted notification (no actor): the puzzle may still be
+//                with them.
 //   copies       the copies they own now (by_owner only), each with its collection memberships,
-//                copy reviews, circle shares, copy-scoped comments, photos (blobs included) and
-//                their own completions on it. Exchanges, loans and custody entries naming it stay.
+//                copy reviews, circle shares, copy-scoped comments and photos (blobs included).
+//                Exchanges, loans and custody entries naming it stay.
 //   copyPhotos   their photos on copies other members own: row, blob and the photo's comments
-//   completions  their remaining completions: one on a copy someone else owns stays (that copy's
-//                History) without its photos and their private notes; any other goes, photos and
-//                blobs included
+//   completions  their completions: one on a copy someone else owns stays (that copy's History)
+//                without its photos and their private notes; any other (their solves on the
+//                copies just deleted included) goes, photos and blobs included
 //                Photos keep the attachments' rule: a quarantined one (CSAM hash match) stays whole
 //                and a blob a CSAM escalation preserves is never deleted.
 //   goals, collections (with their memberships, wishlists included), categories (personal)
@@ -147,10 +150,10 @@ import { threadRowByAggregateId } from "./readModelHelpers";
 //                Admin, CSAM and moderation records are separate tables and stay unchanged.
 //                A moderation audit row names a member by users id only (targetMemberId,
 //                SEC-57), so it needs no scrub: it reads "Deleted member" once the row is gone.
-// One phase at a time, PURGE_BATCH_SIZE rows per run: a run that did not finish its phase
-// schedules the next run with the page cursor, so each run stays well inside Convex's per-mutation
-// limits whatever the member's history. Rows a phase keeps (a quarantined or evidence-held photo)
-// stay in the index; the cursor walks past them.
+// One phase at a time, PURGE_BATCH_SIZE rows per run (PHASE_BATCH_SIZE in the photo phases and
+// domainEvents): a run that did not finish its phase schedules the next run with the page cursor,
+// so each run stays well inside Convex's per-mutation limits whatever the member's history. Rows a
+// phase keeps (a quarantined or evidence-held photo) stay in the index; the cursor walks past them.
 
 /** Rows handled per run. */
 export const PURGE_BATCH_SIZE = 100;
@@ -219,60 +222,22 @@ export const PHASES = [
 ] as const;
 type Phase = (typeof PHASES)[number];
 
-const phaseValidator = v.union(
-  v.literal("attachments"),
-  v.literal("reveals"),
-  v.literal("gpsViews"),
-  v.literal("circleParticipants"),
-  v.literal("typing"),
-  v.literal("blocksOut"),
-  v.literal("blocksIn"),
-  v.literal("reports"),
-  v.literal("invitesOut"),
-  v.literal("invitesIn"),
-  v.literal("offersOut"),
-  v.literal("offersIn"),
-  v.literal("householdInvitesOut"),
-  v.literal("householdInvitesIn"),
-  v.literal("householdJoinRequestsOut"),
-  v.literal("followsOut"),
-  v.literal("followsIn"),
-  v.literal("requestsOut"),
-  v.literal("requestsIn"),
-  v.literal("staleNewFollower"),
-  v.literal("staleRequestReceived"),
-  v.literal("staleRequestApproved"),
-  v.literal("redemptionsOut"),
-  v.literal("redemptionsIn"),
-  v.literal("inviteLinks"),
-  v.literal("pushSubscriptions"),
-  v.literal("favorites"),
-  v.literal("tourProgress"),
-  v.literal("settings"),
-  v.literal("notifications"),
-  v.literal("emailInvitesOut"),
-  v.literal("rateLimits"),
-  v.literal("presence"),
-  v.literal("exchangesOpen"),
-  v.literal("exchangesOpenIn"),
-  v.literal("contactShares"),
-  v.literal("contactSharesIn"),
-  v.literal("legacyMessagesSent"),
-  v.literal("legacyMessagesReceived"),
-  v.literal("pairThreads"),
-  v.literal("loansOpen"),
-  v.literal("loansOpenIn"),
-  v.literal("copies"),
-  v.literal("copyPhotos"),
-  v.literal("completions"),
-  v.literal("goals"),
-  v.literal("collections"),
-  v.literal("categories"),
-  v.literal("circlesOwned"),
-  v.literal("household"),
-  v.literal("activityEntries"),
-  v.literal("domainEvents"),
-);
+const phaseValidator = v.union(...PHASES.map((phase) => v.literal(phase)));
+
+// Rows per run where PURGE_BATCH_SIZE does not fit. Convex allows 4,096 index ranges per function,
+// and deleting one photo with its three renditions reads about 63 (each of its four blobs is
+// checked by blobReferences.isReferenced's 14 lookups first; purgeMemberLibrary deleteCopyPhoto).
+//   copies       1: a copy at MAX_COPY_IMAGES (20) photos reads about 1,270, but photos uploaded
+//                   before that cap are not capped, so a whole run is left to one copy: room for
+//                   about 64 photos.
+//   copyPhotos  50: about 63 each, 3,150.
+//   completions 10: up to MAX_PHOTOS (5) photos each, about 310, 3,100.
+const PHASE_BATCH_SIZE: Partial<Record<Phase, number>> = {
+  copies: 1,
+  copyPhotos: 50,
+  completions: 10,
+  domainEvents: EVENT_SCRUB_BATCH_SIZE,
+};
 
 type Page = { isDone: boolean; continueCursor: string };
 
@@ -291,34 +256,8 @@ const isOrphanedPairThread = async (
   return true;
 };
 
-// Delete the recipient's notifications of `type` whose subject is `subjectId`. A member holds few
-// of one invite type, so the by_user_type read stays small.
-const deleteNotificationsAbout = async (
-  ctx: MutationCtx,
-  recipientId: Id<"users">,
-  type: "circle_invite_received" | "connection_offer_received",
-  subjectId: string,
-): Promise<void> => {
-  const rows = await ctx.db
-    .query("notifications")
-    .withIndex("by_user_type", (q) =>
-      q.eq("userId", recipientId).eq("type", type),
-    )
-    .collect();
-  for (const row of rows) {
-    const subject = row.subject;
-    const id =
-      subject?.kind === "circleInvite"
-        ? subject.inviteId
-        : subject?.kind === "connectionOffer"
-          ? subject.offerId
-          : undefined;
-    if (id === subjectId) await ctx.db.delete(row._id);
-  }
-};
-
 const deleteInvite = async (ctx: MutationCtx, row: Doc<"circleInvites">) => {
-  await deleteNotificationsAbout(
+  await deleteInviteNotificationsAbout(
     ctx,
     row.inviteeId,
     "circle_invite_received",
@@ -328,7 +267,7 @@ const deleteInvite = async (ctx: MutationCtx, row: Doc<"circleInvites">) => {
 };
 
 const deleteOffer = async (ctx: MutationCtx, row: Doc<"connectionOffers">) => {
-  await deleteNotificationsAbout(
+  await deleteInviteNotificationsAbout(
     ctx,
     row.toId,
     "connection_offer_received",
@@ -902,9 +841,7 @@ export const purgeMemberMessagingData = internalMutation({
   },
   handler: async (ctx, { memberId, phase, cursor, batchSize }) => {
     const current = phase ?? PHASES[0];
-    const numItems =
-      batchSize ??
-      (current === "domainEvents" ? EVENT_SCRUB_BATCH_SIZE : PURGE_BATCH_SIZE);
+    const numItems = batchSize ?? PHASE_BATCH_SIZE[current] ?? PURGE_BATCH_SIZE;
     const page = await runPhase(ctx, memberId, current, {
       cursor: cursor ?? null,
       numItems,

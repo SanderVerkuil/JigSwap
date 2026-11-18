@@ -148,7 +148,10 @@ export const deleteOwnContactShares = async (
  * borrower still holds it: closing an older loan never takes the copy away from whoever holds it
  * now (the rule return-loan and recall-loan follow). Written directly: the Loan aggregate's
  * returnByBorrower/recallByOwner are the parties' own moves. The loan row stays as the copy's
- * history. A copy the member lent is deleted by the copies phase.
+ * history. A copy the member lent is deleted by the copies phase. When they borrowed it, the
+ * lender, if still active, gets a loan_closed_member_deleted notification about the copy (in-app,
+ * and push or email when their preferences turn those on), with no actor: the copy can now read as
+ * back home while the puzzle is still with the deleted member.
  */
 export const closeOpenLoans = async (
   ctx: MutationCtx,
@@ -179,16 +182,16 @@ export const closeOpenLoans = async (
     if (copy && copy.heldBy === loan.borrowerId) {
       await ctx.db.patch(copy._id, { heldBy: undefined, updatedAt: now });
     }
+    if (side === "borrower" && copy) {
+      await makeNotify(ctx)({
+        memberId: toMemberId(loan.lenderId),
+        type: "loan_closed_member_deleted",
+        relatedId: copy._id,
+        subject: { kind: "copy", copyId: copy._id },
+      });
+    }
   }
   return page;
-};
-
-// Delete a stored blob unless anything else still holds it: a CSAM escalation preserves it, or a
-// row written before the claim rule holds the same id, such as catalogue box art (SEC-01;
-// lib/storage/blobLifecycle). Tolerates a blob that is already gone (a rejected photo's, or a
-// re-encode swap's original).
-const deleteBlob = async (ctx: MutationCtx, fileId: Id<"_storage">) => {
-  await deleteBlobUnlessReferenced(ctx, fileId);
 };
 
 /**
@@ -214,7 +217,11 @@ const deleteCopyPhoto = async (
   for (const comment of comments) await ctx.db.delete(comment._id);
   await ctx.db.delete(image._id);
   await deleteRenditions(ctx, image.fileId);
-  await deleteBlob(ctx, image.fileId);
+  // Delete the blob unless anything else still holds it: a CSAM escalation preserves it, or a row
+  // written before the claim rule holds the same id, such as catalogue box art (SEC-01;
+  // lib/storage/blobLifecycle). Tolerates a blob that is already gone (a rejected photo's, or a
+  // re-encode swap's original).
+  await deleteBlobUnlessReferenced(ctx, image.fileId);
 };
 
 /**
@@ -248,7 +255,7 @@ const deleteCompletionPhotos = async (
   for (const fileId of fileIds) {
     if (kept.has(fileId)) continue;
     await deleteRenditions(ctx, fileId);
-    await deleteBlob(ctx, fileId);
+    await deleteBlobUnlessReferenced(ctx, fileId);
   }
 };
 
@@ -263,14 +270,15 @@ const deleteCompletion = async (
 
 /**
  * Delete a copy the member OWNS, with what hangs off it: collection memberships, copy reviews,
- * circle shares, copy-scoped comments, its photos (deleteCopyPhoto's keep rule) and the member's
- * own completions on it. Other members' completions on it (a borrower's solve) are theirs and
- * stay, carrying their copySnapshot, as when an owner deletes a copy. Exchanges, loans and custody
- * entries that name the copy stay as history, as for any deleted copy.
+ * circle shares, copy-scoped comments and its photos (deleteCopyPhoto's keep rule). The member's
+ * own completions on it go in the completions phase (purgeCompletions: their copy is gone), in
+ * pages of their own, because solves per copy have no cap. Other members' completions on it (a
+ * borrower's solve) are theirs and stay, carrying their copySnapshot, as when an owner deletes a
+ * copy. Exchanges, loans and custody entries that name the copy stay as history, as for any
+ * deleted copy.
  */
 const deleteOwnCopy = async (
   ctx: MutationCtx,
-  memberId: Id<"users">,
   copy: Doc<"ownedPuzzles">,
 ): Promise<void> => {
   const memberships = await ctx.db
@@ -300,19 +308,14 @@ const deleteOwnCopy = async (
     .collect();
   for (const row of comments) await ctx.db.delete(row._id);
 
+  // shortcut: one run holds all of a copy's photos, about 63 index ranges each, so a legacy copy
+  // with roughly 65+ approved photos (above MAX_COPY_IMAGES) still exceeds one run; page a copy's
+  // photos when such copies show up.
   const images = await ctx.db
     .query("ownedPuzzleImages")
     .withIndex("by_owned_puzzle", (q) => q.eq("ownedPuzzleId", copy._id))
     .collect();
   for (const image of images) await deleteCopyPhoto(ctx, image);
-
-  const completions = await ctx.db
-    .query("completions")
-    .withIndex("by_user_owned_puzzle", (q) =>
-      q.eq("userId", memberId).eq("ownedPuzzleId", copy._id),
-    )
-    .collect();
-  for (const row of completions) await deleteCompletion(ctx, row);
 
   await ctx.db.delete(copy._id);
   await markCopyStatsChange(ctx, copy, null);
@@ -332,7 +335,7 @@ export const deleteOwnCopies = async (
     .query("ownedPuzzles")
     .withIndex("by_owner", (q) => q.eq("ownerId", memberId))
     .paginate(opts);
-  for (const copy of page.page) await deleteOwnCopy(ctx, memberId, copy);
+  for (const copy of page.page) await deleteOwnCopy(ctx, copy);
   // The copies' counters go once the last copy has: deleteOwnCopy doesn't keep them in step, because
   // nothing reads a deleted member's counts and a recount per batch would be wasted.
   if (page.isDone) await deleteMemberLibraryCounts(ctx, memberId);
@@ -356,8 +359,8 @@ export const deleteUploadedCopyPhotos = async (
 /**
  * Their remaining completions. One on a copy someone else owns now is part of that copy's History:
  * the row stays (it renders as the departed member) without its photos and without their private
- * notes. Any other (no copy, or the copy is gone) is personal activity and is deleted with its
- * photos.
+ * notes. Any other (no copy, or the copy is gone, such as their own copies the copies phase
+ * deleted) is personal activity and is deleted with its photos.
  */
 export const purgeCompletions = async (
   ctx: MutationCtx,

@@ -2,6 +2,7 @@
 
 import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { isClerkAPIResponseError } from "@clerk/backend/errors";
+import type { FunctionReturnType } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
@@ -14,6 +15,10 @@ const roleOf = (clerkUser: { publicMetadata: unknown }): string | undefined => {
   return typeof role === "string" ? role : undefined;
 };
 
+// More active members missing from Clerk's list than this means the list is wrong, not that they
+// left: a CLERK_SECRET_KEY for another Clerk instance makes every member look gone.
+const MAX_GONE = 5;
+
 // What Clerk says about ONE user: their role, "gone" (404), or null when Clerk could not answer.
 async function clerkRoleOf(
   clerkClient: ClerkClient,
@@ -24,7 +29,7 @@ async function clerkRoleOf(
   } catch (error) {
     if (isClerkAPIResponseError(error) && error.status === 404) return "gone";
     console.warn(
-      "role mirror: could not check a role holder",
+      "role mirror: could not check a member Clerk did not list",
       isClerkAPIResponseError(error)
         ? error.status
         : error instanceof Error
@@ -39,10 +44,12 @@ async function clerkRoleOf(
 // targeting) with Clerk, its source of truth. The user webhook (users.updateOrCreateUser) keeps
 // the mirror current, but a lost or dropped webhook would leave it stale, so this pages the Clerk
 // Backend API and patches, by clerkId, every member who has or should have a role, including clearing
-// rows whose Clerk role was removed. Unchanged rows are not written. Then it checks the role holders
-// the pages did not return: a member whose user.deleted webhook was lost for good is gone from Clerk
-// (404), so only its role is cleared; one the offset paging skipped is reconciled like the rest; and
-// one Clerk could not answer for is left for the next run. Runs from crons.ts; to run it now:
+// rows whose Clerk role was removed. Unchanged rows are not written. Then it checks the active
+// members the pages did not return: one whose user.deleted webhook was lost for good is gone from
+// Clerk (404) and is erased as that webhook would have (users.deleteUser); one the offset paging
+// skipped is reconciled like the rest; and one Clerk could not answer for is left for the next run.
+// More than MAX_GONE of them changes nothing and logs an error instead. Runs from crons.ts; to run
+// it now:
 //   npx convex run backfillUserRoles:run '{}'
 // A deployment without CLERK_SECRET_KEY (a preview) skips it with a warning.
 export const run = internalAction({
@@ -50,13 +57,13 @@ export const run = internalAction({
   handler: async (
     ctx,
     { pageSize },
-  ): Promise<{ scanned: number; patched: number; cleared: number }> => {
+  ): Promise<{ scanned: number; patched: number; deleted: number }> => {
     const secretKey = process.env.CLERK_SECRET_KEY;
     if (!secretKey) {
       console.warn(
         "CLERK_SECRET_KEY not set — role mirror not reconciled (expected on preview deployments)",
       );
-      return { scanned: 0, patched: 0, cleared: 0 };
+      return { scanned: 0, patched: 0, deleted: 0 };
     }
     const clerkClient = createClerkClient({ secretKey });
 
@@ -91,21 +98,43 @@ export const run = internalAction({
       if (page.data.length < limit || scanned >= page.totalCount) break;
     }
 
-    let cleared = 0;
-    for (const clerkId of holders) {
-      if (seen.has(clerkId)) continue;
-      const answer = await clerkRoleOf(clerkClient, clerkId);
-      if (answer === null) continue;
-      const changed = await ctx.runMutation(internal.users.patchUserRole, {
-        clerkId,
-        role: answer === "gone" ? undefined : answer.role,
-      });
-      if (!changed) continue;
-      if (answer === "gone") cleared += 1;
-      else patched += 1;
+    const missing: string[] = [];
+    let cursor: string | null = null;
+    for (;;) {
+      const page: FunctionReturnType<typeof internal.users.listActiveClerkIds> =
+        await ctx.runQuery(internal.users.listActiveClerkIds, {
+          paginationOpts: { numItems: limit, cursor },
+        });
+      missing.push(...page.clerkIds.filter((clerkId) => !seen.has(clerkId)));
+      if (page.isDone) break;
+      cursor = page.continueCursor;
     }
 
-    console.log("role mirror reconciled", { scanned, patched, cleared });
-    return { scanned, patched, cleared };
+    let deleted = 0;
+    if (missing.length > MAX_GONE) {
+      console.error(
+        "role mirror: too many active members missing from Clerk's user list; none checked. Is CLERK_SECRET_KEY for this Clerk instance?",
+        missing.length,
+      );
+    } else {
+      for (const clerkId of missing) {
+        const answer = await clerkRoleOf(clerkClient, clerkId);
+        if (answer === null) continue;
+        if (answer === "gone") {
+          await ctx.runMutation(internal.users.deleteUser, { id: clerkId });
+          deleted += 1;
+        } else if (
+          await ctx.runMutation(internal.users.patchUserRole, {
+            clerkId,
+            role: answer.role,
+          })
+        ) {
+          patched += 1;
+        }
+      }
+    }
+
+    console.log("role mirror reconciled", { scanned, patched, deleted });
+    return { scanned, patched, deleted };
   },
 });

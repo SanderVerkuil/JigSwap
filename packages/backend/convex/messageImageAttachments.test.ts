@@ -12,7 +12,10 @@ import {
 } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { asImage } from "./conversation/messageAttachments";
+import {
+  asImage,
+  removeForDeletedMember,
+} from "./conversation/messageAttachments";
 import { findMetadata } from "./lib/imageModeration/stripMetadata";
 import { RATE_LIMITS } from "./lib/rateLimits";
 import { EVIDENCE_MAX_ATTEMPTS } from "./reports/attachmentEvidence";
@@ -2296,6 +2299,74 @@ describe("removal evidence", () => {
     expect(report).toMatchObject({ evidenceMissing: true });
     expect(report.evidencePendingSince).toBeUndefined();
     expect((await attachment(t, id))!.evidenceHold).toBeUndefined();
+  });
+});
+
+describe("the sender's account deleted while the photo is checked", () => {
+  // A photo Alice sent while it was still being checked; the pipeline then runs on it, and her
+  // account deletion's attachments phase lands during its hash check (between download and swap).
+  const checkWhileDeleting = async (t: T, extra: { evidenceHold?: true }) => {
+    const { alice, threadId } = await openThread(t);
+    const fileId = await storeJpeg(t);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("messageAttachments", {
+        kind: "image",
+        threadAggregateId: threadId,
+        uploaderId: alice,
+        fileId,
+        byteSize: 1,
+        contentType: "image/jpeg",
+        moderationStatus: "pending",
+        messageId: "msg-photo",
+        createdAt: 1,
+        updatedAt: 1,
+        ...extra,
+      }),
+    );
+    const answer = globalThis.fetch;
+    let deleted = false;
+    vi.stubGlobal(
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) => {
+        if (!deleted && String(input) === HCS_URL) {
+          deleted = true;
+          await t.run(async (ctx) =>
+            removeForDeletedMember(ctx, (await ctx.db.get(id))!),
+          );
+        }
+        return answer(input, init);
+      },
+    );
+    await t.action(
+      internal.conversation.moderateMessageImage.moderateMessageImage,
+      { imageId: id },
+    );
+    const blobs = await t.run((ctx) =>
+      ctx.db.system.query("_storage").collect(),
+    );
+    return { row: await attachment(t, id), fileId, blobs };
+  };
+
+  test("the re-encode is deleted and the removed row keeps no derivative of it", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { row, fileId, blobs } = await checkWhileDeleting(t, {});
+    expect(row).toMatchObject({
+      moderationStatus: "removed",
+      removedReason: "account_deleted",
+      fileId,
+    });
+    expect(row).not.toHaveProperty("blurhash");
+    expect(blobs).toEqual([]);
+  });
+
+  test("a photo an open report holds keeps its original as evidence", async () => {
+    const t = withModerationPool(convexTest(schema, modules));
+    const { row, fileId, blobs } = await checkWhileDeleting(t, {
+      evidenceHold: true,
+    });
+    expect(row).toMatchObject({ moderationStatus: "removed", fileId });
+    expect(row).not.toHaveProperty("blurhash");
+    expect(blobs.map((blob) => blob._id)).toEqual([fileId]);
   });
 });
 

@@ -58,7 +58,8 @@ export const getImageForModeration = internalQuery({
 });
 
 // Swap the row's stored file to the re-encoded blob (EXIF stripped). Separate from the verdict
-// patch so the re-encode is durable even if classification is retried.
+// patch so the re-encode is durable even if classification is retried. When the row went
+// meanwhile, the new blob is referenced by nothing, so it is deleted here.
 export const setModerationFile = internalMutation({
   args: {
     imageId: v.id("ownedPuzzleImages"),
@@ -67,8 +68,10 @@ export const setModerationFile = internalMutation({
     blurhash: v.optional(v.string()),
   },
   handler: async (ctx, { imageId, fileId, blurhash }) => {
-    const exists = await ctx.db.get(imageId);
-    if (!exists) return;
+    if (!(await ctx.db.get(imageId))) {
+      await ctx.storage.delete(fileId);
+      return;
+    }
     const now = Date.now();
     await ctx.db.patch(imageId, {
       fileId,

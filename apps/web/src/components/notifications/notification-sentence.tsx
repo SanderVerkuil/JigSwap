@@ -15,8 +15,8 @@ const LEGACY_ONLY: ReadonlySet<NotificationViewType> = new Set([
   "whats_new",
 ]);
 
-// Rich sentences that name no actor (the moderator is never shown on moderation outcomes, and a
-// circle's deletion is told neutrally).
+// Rich sentences that name no actor (the moderator is never shown on moderation outcomes, a
+// circle's deletion is told neutrally, and a loan's deleted borrower is not named).
 const ACTORLESS: ReadonlySet<NotificationViewType> = new Set([
   "goal_achieved",
   "puzzle_approved",
@@ -29,6 +29,7 @@ const ACTORLESS: ReadonlySet<NotificationViewType> = new Set([
   "member_warned",
   "circle_deleted",
   "message_image_rejected",
+  "loan_closed_member_deleted",
 ]);
 
 /**

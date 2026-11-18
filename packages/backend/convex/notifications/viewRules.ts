@@ -361,6 +361,7 @@ export const notificationHref = (input: HrefInput): string | null => {
         ? `/puzzles/${seg(subject.puzzleId)}`
         : "/puzzles";
     case "photo_removed":
+    case "loan_closed_member_deleted":
       return subject?.kind === "copy" && input.subjectAvailable
         ? `/my-puzzles/${seg(subject.copyId)}`
         : "/my-puzzles";

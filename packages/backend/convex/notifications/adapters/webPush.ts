@@ -199,6 +199,9 @@ export const notificationUrl = (type: string, relatedId?: string): string => {
     case "exchange_proposed":
     case "exchange_disputed":
       return "/trades";
+    // relatedId is the lent copy's `_id`.
+    case "loan_closed_member_deleted":
+      return relatedId ? `/my-puzzles/${relatedId}` : "/my-puzzles";
     case "message_received":
     case "circle_message_received":
       return "/messages";

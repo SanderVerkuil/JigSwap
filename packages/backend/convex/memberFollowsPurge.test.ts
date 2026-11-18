@@ -381,6 +381,36 @@ describe("account deletion: follow edges and follow requests", () => {
     ).toEqual([[s.bob]]);
   });
 
+  // ponytail account-erasure-cascade-5: v.id("users") checks only the id's format, and no purge
+  // phase runs again to clear a follow written after it.
+  test("a follow aimed at her after the purge is refused and adds no edge or request", async () => {
+    const t = convexTest(schema, modules);
+    presenceTest.register(t);
+    const s = await seed(t);
+    await deleteAlice(t);
+
+    await expect(
+      as(t, "bob").mutation(api.social.followMember.followMember, {
+        followeeId: s.alice,
+      }),
+    ).rejects.toThrow(/MemberNotFound/);
+    expect(await edgesOf(t, s.alice)).toEqual([]);
+    expect(await requestsOf(t, s.alice)).toEqual([]);
+  });
+
+  test("a follow aimed at a deactivated member is refused", async () => {
+    const t = convexTest(schema, modules);
+    presenceTest.register(t);
+    const s = await seed(t);
+    await t.run((ctx) => ctx.db.patch(s.bob, { isActive: false }));
+
+    await expect(
+      as(t, "erin").mutation(api.social.followMember.followMember, {
+        followeeId: s.bob,
+      }),
+    ).rejects.toThrow(/MemberNotFound/);
+  });
+
   test("the purge completes with a batch size of 1", async () => {
     const t = convexTest(schema, modules);
     presenceTest.register(t);

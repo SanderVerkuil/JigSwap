@@ -121,7 +121,7 @@ const MANIFEST: Record<string, Disposition> = {
   "ownedPuzzles.ownerId": {
     erasure: {
       deleted:
-        "the copies they own now, with memberships, copy reviews, circle shares, copy comments, photos and their own completions on them",
+        "the copies they own now, with memberships, copy reviews, circle shares, copy comments and photos",
     },
     phases: ["copies"],
     export: { exported: ["copies"] },
@@ -157,7 +157,7 @@ const MANIFEST: Record<string, Disposition> = {
     erasure: {
       kept: "a solve on a copy another member owns stays in that copy's History without its photos and notes (SEC-69), shown as a deleted member; every other completion is deleted with its photos",
     },
-    phases: ["copies", "completions"],
+    phases: ["completions"],
     export: { exported: ["completions"] },
   },
   "completions.copySnapshot.ownerId": {
@@ -175,7 +175,7 @@ const MANIFEST: Record<string, Disposition> = {
       deleted:
         "with their completions' photos, blobs included; a quarantined photo stays whole",
     },
-    phases: ["copies", "completions"],
+    phases: ["completions"],
     export: { exported: ["completions"] },
   },
   "completionImages.moderatedBy": ADMIN_ATTRIBUTION,

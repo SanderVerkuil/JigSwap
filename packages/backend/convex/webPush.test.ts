@@ -74,6 +74,13 @@ describe("notificationUrl", () => {
     expect(notificationUrl("puzzle_approved")).toBe("/puzzles");
   });
 
+  test("deep-links a loan closed by its borrower's deletion to the lent copy, else My puzzles", () => {
+    expect(notificationUrl("loan_closed_member_deleted", "c-1")).toBe(
+      "/my-puzzles/c-1",
+    );
+    expect(notificationUrl("loan_closed_member_deleted")).toBe("/my-puzzles");
+  });
+
   test("falls back to the in-app feed for unknown types", () => {
     expect(notificationUrl("totally_unknown")).toBe("/notifications");
   });

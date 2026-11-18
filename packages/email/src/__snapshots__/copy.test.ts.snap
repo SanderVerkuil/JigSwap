@@ -93,6 +93,24 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
         "subject": "Doel behaald op JigSwap",
       },
     },
+    "loan_closed_member_deleted": {
+      "en": {
+        "body": "The borrower of a puzzle you lent out deleted their account, so the loan was closed. If you don't have the puzzle back yet, it may still be with them.",
+        "cta": "View your puzzles",
+        "deepCta": "View puzzle",
+        "heading": "Loan closed",
+        "richBody": "The borrower of “{puzzleTitle}” deleted their account, so the loan was closed. If you don't have it back yet, it may still be with them.",
+        "subject": "A loan was closed",
+      },
+      "nl": {
+        "body": "Het account van iemand die een puzzel van je leende is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.",
+        "cta": "Bekijk je puzzels",
+        "deepCta": "Bekijk puzzel",
+        "heading": "Lening afgesloten",
+        "richBody": "Het account van de lener van “{puzzleTitle}” is verwijderd, dus de lening is afgesloten. Heb je de puzzel nog niet terug? Dan is hij misschien nog bij de lener.",
+        "subject": "Een lening is afgesloten",
+      },
+    },
     "message_received": {
       "en": {
         "body": "{actorName} sent you a message on JigSwap.",
@@ -281,6 +299,7 @@ exports[`copy catalog > pins the copy catalog verbatim (mutation guard + copy ch
     "trade_completed",
     "trade_cancelled",
     "trade_cancelled_member_deleted",
+    "loan_closed_member_deleted",
     "message_received",
     "review_received",
     "puzzle_favorited",
