@@ -8,6 +8,7 @@ import { Route } from "./__root";
 // the SSR'd root context dehydrated into the page.
 const clerk = vi.hoisted(() => ({
   isSignedIn: undefined as boolean | undefined,
+  sessionId: undefined as string | null | undefined,
 }));
 const router = vi.hoisted(() => ({ invalidate: vi.fn(), options: {} }));
 const context = vi.hoisted(() => ({
@@ -37,7 +38,10 @@ vi.mock("@tanstack/react-start", () => ({
 }));
 vi.mock("@clerk/tanstack-react-start", () => ({
   ClerkProvider: Pass,
-  useAuth: () => ({ isSignedIn: clerk.isSignedIn }),
+  useAuth: () => ({
+    isSignedIn: clerk.isSignedIn,
+    sessionId: clerk.sessionId,
+  }),
 }));
 vi.mock("@clerk/tanstack-react-start/server", () => ({ auth: vi.fn() }));
 vi.mock("convex/react-clerk", () => ({ ConvexProviderWithClerk: Pass }));
@@ -56,6 +60,7 @@ const assign = vi.fn();
 
 beforeEach(() => {
   sessionStorage.clear();
+  clerk.sessionId = undefined;
   vi.spyOn(window.location, "assign").mockImplementation(assign);
   // React warns that RootDocument's inline script never runs when the client
   // renders it; on the site the server renders it.
@@ -119,6 +124,39 @@ describe("AuthCacheSync", () => {
 
     expect(assign).toHaveBeenCalledTimes(2);
     expect(router.invalidate).not.toHaveBeenCalled();
+  });
+
+  // A live session on the tab ends: Clerk reported it, then reports none.
+  const endSession = (sessionId: string) => {
+    context.userId = "user_parent";
+    clerk.isSignedIn = true;
+    clerk.sessionId = sessionId;
+    const { rerender } = renderRoot();
+    clerk.isSignedIn = false;
+    clerk.sessionId = null;
+    rerender(<Root />);
+    cleanup();
+  };
+
+  // Signing in again starts a new session, whose lists must not reach the next member (web-1).
+  it("still loads the page afresh when the member signed in again inside the 30 seconds", () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    endSession("sess_first");
+    now.mockReturnValue(1_010_000);
+    endSession("sess_second");
+
+    expect(assign).toHaveBeenCalledTimes(2);
+    expect(router.invalidate).not.toHaveBeenCalled();
+  });
+
+  it("loads the page afresh once when the same session keeps ending", () => {
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    endSession("sess_first");
+    now.mockReturnValue(1_010_000);
+    endSession("sess_first");
+
+    expect(assign).toHaveBeenCalledOnce();
+    expect(router.invalidate).toHaveBeenCalledOnce();
   });
 
   it("still loads the page afresh when storage is blocked", () => {

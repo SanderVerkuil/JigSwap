@@ -288,37 +288,41 @@ function RootComponent() {
 // cache) before the next member signs in on this tab. A sign-in re-runs the
 // root beforeLoad so route guards see the new state.
 function AuthCacheSync() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, sessionId } = useAuth();
   const router = useRouter();
+  const lastSessionId = React.useRef<string | null>(null);
   React.useEffect(() => {
+    if (sessionId) lastSessionId.current = sessionId;
     if (isSignedIn === undefined || !clientAuthCache) return;
     if (isSignedIn !== !!clientAuthCache.userId) {
       const signedOut = clientAuthCache.userId;
       clientAuthCache = null;
-      if (signedOut && claimSignOutReload(signedOut))
+      if (signedOut && claimSignOutReload(lastSessionId.current ?? signedOut))
         window.location.assign("/");
       else void router.invalidate();
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn, sessionId, router]);
   return null;
 }
 
-// At most one sign-out load per 30 seconds per member per tab: if SSR still sees
-// a session Clerk's client dropped (a __session cookie it did not clear), each
-// load would diverge again and loop, always for the same member. Another
-// member's sign-out still loads. Blocked storage still allows the load, so a
-// member's data is dropped rather than kept.
+// At most one sign-out load per 30 seconds per session per tab: if SSR still
+// sees a session Clerk's client dropped (a __session cookie it did not clear),
+// each load would diverge again and loop, always for the same session (or, when
+// Clerk never reported one, the same member). Any other sign-out still loads,
+// including the same member's next session. Blocked storage still allows the
+// load, so a member's data is dropped rather than kept.
 const SIGN_OUT_RELOAD_KEY = "jigswap.signOutReloadAt";
-function claimSignOutReload(userId: string) {
-  const [at, lastUserId] = (
+function claimSignOutReload(sessionKey: string) {
+  const [at, lastSessionKey] = (
     safeStorage.getItem("session", SIGN_OUT_RELOAD_KEY) ?? ""
   ).split(" ");
   const since = Date.now() - Number(at);
-  if (lastUserId === userId && since >= 0 && since < 30_000) return false;
+  if (lastSessionKey === sessionKey && since >= 0 && since < 30_000)
+    return false;
   safeStorage.setItem(
     "session",
     SIGN_OUT_RELOAD_KEY,
-    `${Date.now()} ${userId}`,
+    `${Date.now()} ${sessionKey}`,
   );
   return true;
 }
