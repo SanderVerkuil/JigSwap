@@ -284,6 +284,66 @@ describe("arrangeShelf", () => {
     });
   });
 
+  // ponytail viewing-another-member-3: the shelf obeys the profile unlock rule (canSeeProfileContent),
+  // so a private member's choice of featured copy never leaks to a viewer the profile is locked for,
+  // even one who may open that copy (here: Bob holds it).
+  test("featuredShelf returns [] on a profile locked for the viewer, even for a copy they hold", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, bob } = await seedUsers(t);
+
+    const copy = await t.run(async (ctx) => {
+      const puzzleId = await ctx.db.insert("puzzles", {
+        title: "Held Puzzle",
+        pieceCount: 500,
+        status: "approved",
+        submittedBy: alice,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      const copyId = await ctx.db.insert("ownedPuzzles", {
+        puzzleId,
+        ownerId: alice,
+        heldBy: bob,
+        condition: "good",
+        availability: { forTrade: false, forSale: false, forLend: false },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("profiles", {
+        memberId: alice,
+        visibility: "private",
+        featuredCopyIds: [copyId],
+        updatedAt: Date.now(),
+      });
+      return copyId;
+    });
+
+    expect(
+      await asBob(t).query(api.social.featuredShelf.featuredShelf, {
+        userId: alice,
+      }),
+    ).toEqual([]);
+
+    // Mutual followers unlock the profile, and with it the shelf.
+    await t.run(async (ctx) => {
+      await ctx.db.insert("follows", {
+        followerId: alice,
+        followeeId: bob,
+        createdAt: Date.now(),
+      });
+      await ctx.db.insert("follows", {
+        followerId: bob,
+        followeeId: alice,
+        createdAt: Date.now(),
+      });
+    });
+    const unlocked = await asBob(t).query(
+      api.social.featuredShelf.featuredShelf,
+      { userId: alice },
+    );
+    expect(unlocked.map((c) => c._id)).toEqual([copy]);
+  });
+
   test("arrangeShelf records a ProfileShelfArranged domain event", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seedUsers(t);

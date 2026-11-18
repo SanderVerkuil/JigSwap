@@ -5,7 +5,7 @@ import {
   type ExportSection,
   type ProjectedMember,
 } from "@jigswap/contracts";
-import { COOLDOWN_MS } from "@jigswap/domain";
+import { readsAsPendingToRequester } from "@jigswap/domain";
 import type { PaginationOptions, PaginationResult } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
@@ -25,14 +25,17 @@ import { requireMember } from "../identity/requireMember";
 import { boxArtUrl } from "../lib/imageModeration/boxArtUrl";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { effectiveCopyVisibility } from "../library/copyVisibility";
-import { toProjectedLoanView } from "../library/loanReadViews";
+import { toLoanView } from "../library/loanReadViews";
 import { preferenceOrDefault } from "../notifications/adapters/convexNotificationPreferenceRepository";
 import {
   onboardingRowOf,
   quickStartStateOf,
 } from "../onboarding/memberOnboarding";
 import { blockedEitherWaySet } from "../social/blocks";
-import { projectMemberIdentity } from "../social/privacy";
+import {
+  memberTeaserIdentityOf,
+  projectMemberIdentity,
+} from "../social/privacy";
 import { toFollowEdgeView } from "../social/readViews";
 import { resolvePhotoItems } from "../solving/listMyCompletions";
 
@@ -48,7 +51,8 @@ import { resolvePhotoItems } from "../solving/listMyCompletions";
 //   Photos and box art are URLs, issued under the same gates as the app's own reads; a photo the
 //   app does not show its uploader (rejected or quarantined, which read exactly alike) has none;
 // - other members only as the app shows them to the caller: projectMemberIdentity, the per-trade
-//   projectTradeParty, or the follow lists' toFollowEdgeView, never their raw users fields.
+//   projectTradeParty, the follow lists' toFollowEdgeView, the loans pages' toLoanView, or the
+//   Blocked members list's memberTeaserIdentityOf, never their raw users fields.
 
 /** Rows per page: one page reads at most this many rows of its section (plus their joins). */
 export const EXPORT_PAGE_SIZE = 200;
@@ -196,8 +200,13 @@ const loanRow = async (
   me: Id<"users">,
   loan: Doc<"loans">,
 ): Promise<ExportRow> => {
-  const view = await toProjectedLoanView(ctx, loan, me, SALT);
+  // The member's own loan names the other party whatever their profile says (toLoanView, SEC-11).
+  const view = await toLoanView(ctx, loan);
   const lent = loan.lenderId === me;
+  const other = lent ? view.borrower : view.lender;
+  const party: ExportPerson = other
+    ? { memberId: other._id, name: memberDisplayNameOf(other) }
+    : { departed: true };
   return {
     id: view.loanId,
     copyId: view.copyDocId || undefined,
@@ -206,9 +215,7 @@ const loanRow = async (
     openedAt: view.openedAt,
     expectedReturn: view.expectedReturn,
     closedAt: view.closedAt,
-    ...(lent
-      ? { borrower: personOf(view.borrower) }
-      : { lender: personOf(view.lender) }),
+    ...(lent ? { borrower: party } : { lender: party }),
   };
 };
 
@@ -221,21 +228,6 @@ const proposalFieldsOf = async (
   return image === undefined
     ? rest
     : { ...rest, imageUrl: await boxArtUrl(ctx, image) };
-};
-
-/** The follow request statuses the requester sees: a decline never shows (getFollowRelation). */
-const requesterStatusOf = (
-  request: Doc<"followRequests">,
-  now: number,
-): "pending" | "approved" | null => {
-  if (request.status === "approved") return "approved";
-  if (request.status === "pending") return "pending";
-  // Declined: masked as pending in its cooldown unless the requester cancelled, then no request.
-  return request.cancelledAt === undefined &&
-    request.respondedAt !== undefined &&
-    now - request.respondedAt < COOLDOWN_MS
-    ? "pending"
-    : null;
 };
 
 const pushServiceOf = (endpoint: string): string | undefined => {
@@ -757,7 +749,12 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
         .withIndex("by_requester", (q) => q.eq("requesterId", me))
         .paginate(page),
       async (r) => {
-        const status = requesterStatusOf(r, now);
+        const status =
+          r.status === "approved"
+            ? "approved"
+            : readsAsPendingToRequester(r, now)
+              ? "pending"
+              : null;
         if (status === null || blocked.has(r.targetId)) return null;
         return {
           to: await followPerson(ctx, r.targetId, r.createdAt),
@@ -787,16 +784,30 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
     );
   },
 
+  // Named as listMyBlocks names them, whatever their profile says: the block deleted the follows
+  // that would have revealed a private member, so the privacy chokepoint would hide them here.
   blocks: async (ctx, me, page) =>
     pageOf(
       await ctx.db
         .query("blocks")
         .withIndex("by_blocker", (q) => q.eq("blockerId", me))
         .paginate(page),
-      async (b) => ({
-        member: await projectedPerson(ctx, me, b.blockedId),
-        blockedAt: b.createdAt,
-      }),
+      async (b) => {
+        const user = await ctx.db.get(b.blockedId);
+        const profile =
+          user &&
+          (await ctx.db
+            .query("profiles")
+            .withIndex("by_member", (q) => q.eq("memberId", b.blockedId))
+            .unique());
+        const member: ExportPerson = user
+          ? {
+              memberId: user._id,
+              name: memberTeaserIdentityOf(user, profile, true).displayName,
+            }
+          : { departed: true };
+        return { member, blockedAt: b.createdAt };
+      },
     ),
 
   circles: async (ctx, me, page) =>

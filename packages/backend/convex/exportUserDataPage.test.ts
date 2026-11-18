@@ -662,6 +662,19 @@ describe("insights.exportUserDataPage", () => {
           updatedAt: now,
         });
       }
+      // Not stopped, but the CSAM hash check has not passed yet: no image until it does.
+      for (const moderationStatus of ["pending", "approved"] as const) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy._id,
+          uploaderId: alice.me,
+          fileId: await blob(ctx, `unchecked-${moderationStatus}`),
+          description: "unchecked",
+          moderationStatus,
+          hashCheckPendingSince: now,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
     });
     const data = await exportAll(t, "alice");
     const stopped = (rows: ExportRow[]) =>
@@ -674,6 +687,15 @@ describe("insights.exportUserDataPage", () => {
     expect(photos[0]).toEqual(photos[1]);
     expect(photos[0]).toMatchObject({ status: "notShown" });
     expect(photos[0]).not.toHaveProperty("url");
+
+    const unchecked = data.copyPhotos.filter(
+      (r) => r.description === "unchecked",
+    );
+    expect(unchecked.map((r) => r.status).sort()).toEqual([
+      "approved",
+      "pending",
+    ]);
+    for (const row of unchecked) expect(row).not.toHaveProperty("url");
 
     const attachments = stopped(data.attachmentsSent);
     expect(attachments).toHaveLength(2);
@@ -722,6 +744,81 @@ describe("insights.exportUserDataPage", () => {
     expect(rows.map((r) => r.status).sort()).toEqual(["approved", "pending"]);
     expect(rows.find((r) => r.status === "pending")).toMatchObject({
       to: { name: "Erin" },
+    });
+  });
+
+  // Erin is private and shares no follow or circle with Alice (a block deletes their follows).
+  const insertPrivateErin = async (ctx: MutationCtx) => {
+    const erin = await insertUser(ctx, "erin");
+    await ctx.db.insert("profiles", {
+      memberId: erin,
+      visibility: "private",
+      updatedAt: Date.now(),
+    });
+    return erin;
+  };
+
+  test("a blocked private member is named, as the Blocked members list names them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const { erin, gone } = await t.run(async (ctx) => {
+      const erin = await insertPrivateErin(ctx);
+      const gone = await insertUser(ctx, "gone");
+      for (const blockedId of [erin, gone]) {
+        await ctx.db.insert("blocks", {
+          blockerId: alice.me,
+          blockedId,
+          createdAt: Date.now(),
+        });
+      }
+      await ctx.db.delete(gone);
+      return { erin, gone };
+    });
+    const { rows } = await exportSection(t, "alice", "blocks");
+    expect(rows.map((b) => b.member)).toEqual(
+      expect.arrayContaining([
+        { memberId: erin, name: "Erin" },
+        { departed: true },
+      ]),
+    );
+    expect(JSON.stringify(rows)).not.toContain(gone);
+  });
+
+  test("a private loan party is named, as the loans pages name them", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    const { erin, gone } = await t.run(async (ctx) => {
+      const erin = await insertPrivateErin(ctx);
+      const gone = await insertUser(ctx, "gone");
+      for (const [aggregateId, lenderId, borrowerId] of [
+        ["loan-to-erin", alice.me, erin],
+        ["loan-from-erin", erin, alice.me],
+        ["loan-to-gone", alice.me, gone],
+      ] as const) {
+        await ctx.db.insert("loans", {
+          aggregateId,
+          copyId: `copy-${aggregateId}`,
+          lenderId,
+          borrowerId,
+          status: "open",
+          openedAt: Date.now(),
+        });
+      }
+      await ctx.db.delete(gone);
+      return { erin, gone };
+    });
+    const named = { memberId: erin, name: "Erin" };
+    const lent = await exportSection(t, "alice", "loansLent");
+    expect(lent.rows.find((l) => l.id === "loan-to-erin")).toMatchObject({
+      borrower: named,
+    });
+    expect(lent.rows.find((l) => l.id === "loan-to-gone")).toMatchObject({
+      borrower: { departed: true },
+    });
+    expect(JSON.stringify(lent.rows)).not.toContain(gone);
+    const borrowed = await exportSection(t, "alice", "loansBorrowed");
+    expect(borrowed.rows.find((l) => l.id === "loan-from-erin")).toMatchObject({
+      lender: named,
     });
   });
 

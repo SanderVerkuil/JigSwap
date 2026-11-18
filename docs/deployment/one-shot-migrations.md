@@ -1246,3 +1246,52 @@ run as scheduled functions. Each batch logs one JSON line with
 2. Run the dry run again: its final totals show `"set":0`. `noCopy` stays what it was.
 3. In the dashboard data view, every `circleCopyShares` row but those has `ownerId`, and it is the
    `ownerId` of the `ownedPuzzles` row whose `aggregateId` is its `copyId`.
+
+---
+
+## `social/clearUnchosenVisibility` — a profile edit stops counting as a public choice
+
+**When:** once per deployment, after the fix that stops `Profile.create` from storing
+`visibility: "public"` is deployed there. Until it has run, members whose profile row was opened
+by a bio/name edit or a shelf arrangement (or whose legacy row was saved again) still show their
+profile, location and stats to logged-out visitors and search engines without ever choosing to.
+
+**What it does:** pages through `profiles` (100 rows per batch, each batch its own transaction,
+rescheduling itself until the table is exhausted) and unsets `visibility` on every row that says
+`"public"` while its member has no `ProfileVisibilityChanged` event in `domainEvents`. Such a row
+then reads as never chosen: private on logged-out pages, public in the app, exactly as for a
+member without a row. Rows with a recorded choice are counted `kept`. It writes only that field
+(not `updatedAt`), and deletes nothing.
+
+**Before applying:** only events still in the log count. If the domainEvents retention sweep
+already deletes in this deployment (`RETENTION_ENFORCE` is `all` or names `domainEvents`), an
+older explicit public choice may have lost its event and is cleared too. That fails closed (the
+member looks private to logged-out visitors until they toggle again), but check the dry run's
+`cleared` count against what you expect before applying.
+
+**Safe to re-run:** yes. A second run finds nothing to clear.
+
+**Commands:**
+
+```bash
+cd packages/backend
+
+# dev: dry run (the default: counts only, writes nothing), then the real run
+npx convex run social/clearUnchosenVisibility:clearUnchosenVisibility '{}'
+npx convex run social/clearUnchosenVisibility:clearUnchosenVisibility '{"apply":true}'
+
+# prod: same, after dev looks right
+npx convex run --prod social/clearUnchosenVisibility:clearUnchosenVisibility '{}'
+npx convex run --prod social/clearUnchosenVisibility:clearUnchosenVisibility '{"apply":true}'
+```
+
+The command returns the FIRST batch's `{ scanned, cleared, kept }`; the remaining batches run as
+scheduled functions. The last batch logs one JSON line with
+`"event":"social.clearUnchosenVisibility"`, `dry_run` and the whole run's counts.
+
+**Verify:**
+
+1. The real run's final `cleared` matches the dry run's.
+2. Run the dry run again: it reports `"cleared":0`.
+3. Logged out, `/members/<handle>` of a cleared member is locked and sends `noindex`; signed in,
+   it is unchanged.

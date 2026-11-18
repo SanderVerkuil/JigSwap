@@ -1764,7 +1764,8 @@ export default defineSchema({
     // curation) carry none, and readers fall back to the live account name.
     displayName: v.optional(v.string()),
     bio: v.optional(v.string()),
-    // Who can see this profile. Optional so existing rows stay valid; absent means "public".
+    // Who can see this profile. Absent until the member chooses: in-app reads treat that as
+    // "public", logged-out pages as "private" (social/privacy explicitVisibilityOf, SEC-44).
     visibility: v.optional(v.union(v.literal("public"), v.literal("private"))),
     // Ordered, curated set of the member's owned copies featured on their profile shelf
     // (sub-project ④). Optional so existing rows validate; absent/empty = uncurated (recent-6 fallback).

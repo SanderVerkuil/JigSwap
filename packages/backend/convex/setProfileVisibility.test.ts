@@ -1,7 +1,10 @@
+import type { ProfileView } from "@jigswap/contracts";
 import { convexTest, type TestConvex } from "convex-test";
+import { makeFunctionReference } from "convex/server";
 import { ConvexError } from "convex/values";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
@@ -112,8 +115,26 @@ describe("setProfileVisibility", () => {
   });
 });
 
-describe("getProfile visibility", () => {
-  test("getProfile requires authentication even when a memberId is supplied", async () => {
+// Another member's profile is read through getPublicProfile (publicProfile.test.ts covers its
+// public, private, mutual and self cases); getProfile reads the caller's own row only.
+describe("getProfile: the caller's own profile only", () => {
+  // A stale or hostile client still calling with the old `memberId` argument.
+  const profileOf = makeFunctionReference<
+    "query",
+    { memberId: Id<"users"> },
+    ProfileView | null
+  >("social/getProfile:getProfile");
+
+  test("requires authentication", async () => {
+    const t = convexTest(schema, modules);
+    await seed(t);
+
+    await expect(t.query(api.social.getProfile.getProfile, {})).rejects.toThrow(
+      ConvexError,
+    );
+  });
+
+  test("another member's profile can't be asked for: a memberId is refused by the validator", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
 
@@ -121,77 +142,12 @@ describe("getProfile visibility", () => {
       displayName: "Alice A.",
     });
 
-    // Passing memberId must NOT bypass requireMember: an unauthenticated caller is rejected.
     await expect(
-      t.query(api.social.getProfile.getProfile, { memberId: alice }),
-    ).rejects.toThrow(ConvexError);
-  });
-
-  test("a public profile is visible to a non-connected viewer", async () => {
-    const t = convexTest(schema, modules);
-    const { alice } = await seed(t);
-
-    await asAlice(t).mutation(api.social.editProfile.editProfile, {
-      displayName: "Alice A.",
-    });
-
-    const seenByBob = await asBob(t).query(api.social.getProfile.getProfile, {
-      memberId: alice,
-    });
-    expect(seenByBob?.displayName).toBe("Alice A.");
-    expect(seenByBob?.visibility).toBe("public");
-  });
-
-  test("a private profile is hidden from a non-connected viewer but visible to its owner", async () => {
-    const t = convexTest(schema, modules);
-    const { alice } = await seed(t);
-
-    await asAlice(t).mutation(api.social.editProfile.editProfile, {
-      displayName: "Alice A.",
-    });
-    await asAlice(t).mutation(
-      api.social.setProfileVisibility.setProfileVisibility,
-      { visibility: "private" },
-    );
-
-    // Non-connected Bob gets null for Alice's private profile.
-    const seenByBob = await asBob(t).query(api.social.getProfile.getProfile, {
-      memberId: alice,
-    });
-    expect(seenByBob).toBeNull();
-
-    // The owner still sees their own private profile.
-    const seenBySelf = await asAlice(t).query(
-      api.social.getProfile.getProfile,
-      { memberId: alice },
-    );
-    expect(seenBySelf?.visibility).toBe("private");
-  });
-
-  test("mutual followers can see each other's private profiles", async () => {
-    const t = convexTest(schema, modules);
-    const { alice, bob } = await seed(t);
-
-    await asAlice(t).mutation(api.social.editProfile.editProfile, {
-      displayName: "Alice A.",
-    });
-    await asAlice(t).mutation(
-      api.social.setProfileVisibility.setProfileVisibility,
-      { visibility: "private" },
-    );
-
-    // Establish the mutual follow edge (both directions).
-    await asAlice(t).mutation(api.social.followMember.followMember, {
-      followeeId: bob,
-    });
-    await asBob(t).mutation(api.social.followMember.followMember, {
-      followeeId: alice,
-    });
-
-    const seenByBob = await asBob(t).query(api.social.getProfile.getProfile, {
-      memberId: alice,
-    });
-    expect(seenByBob?.displayName).toBe("Alice A.");
-    expect(seenByBob?.visibility).toBe("private");
+      asBob(t).query(profileOf, { memberId: alice }),
+    ).rejects.toThrow(/Validator/);
+    // Not even for the caller's own id.
+    await expect(
+      asAlice(t).query(profileOf, { memberId: alice }),
+    ).rejects.toThrow(/Validator/);
   });
 });

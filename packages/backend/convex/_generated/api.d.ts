@@ -121,6 +121,7 @@ import type * as catalog_withdrawChangeProposal from "../catalog/withdrawChangeP
 import type * as contact_listContactMessages from "../contact/listContactMessages.js";
 import type * as contact_markContactMessageHandled from "../contact/markContactMessageHandled.js";
 import type * as contact_reopenContactMessage from "../contact/reopenContactMessage.js";
+import type * as contact_retention from "../contact/retention.js";
 import type * as contact_submitContactMessage from "../contact/submitContactMessage.js";
 import type * as conversation_adapters_circleRoster from "../conversation/adapters/circleRoster.js";
 import type * as conversation_adapters_connectionPolicy from "../conversation/adapters/connectionPolicy.js";
@@ -539,6 +540,7 @@ import type * as social_backfillActivityEntries from "../social/backfillActivity
 import type * as social_blockMember from "../social/blockMember.js";
 import type * as social_blocks from "../social/blocks.js";
 import type * as social_cancelFollowRequest from "../social/cancelFollowRequest.js";
+import type * as social_clearUnchosenVisibility from "../social/clearUnchosenVisibility.js";
 import type * as social_connectionOffers from "../social/connectionOffers.js";
 import type * as social_createHouseholdInviteLink from "../social/createHouseholdInviteLink.js";
 import type * as social_declineConnection from "../social/declineConnection.js";
@@ -753,6 +755,7 @@ declare const fullApi: ApiFromModules<{
   "contact/listContactMessages": typeof contact_listContactMessages;
   "contact/markContactMessageHandled": typeof contact_markContactMessageHandled;
   "contact/reopenContactMessage": typeof contact_reopenContactMessage;
+  "contact/retention": typeof contact_retention;
   "contact/submitContactMessage": typeof contact_submitContactMessage;
   "conversation/adapters/circleRoster": typeof conversation_adapters_circleRoster;
   "conversation/adapters/connectionPolicy": typeof conversation_adapters_connectionPolicy;
@@ -1171,6 +1174,7 @@ declare const fullApi: ApiFromModules<{
   "social/blockMember": typeof social_blockMember;
   "social/blocks": typeof social_blocks;
   "social/cancelFollowRequest": typeof social_cancelFollowRequest;
+  "social/clearUnchosenVisibility": typeof social_clearUnchosenVisibility;
   "social/connectionOffers": typeof social_connectionOffers;
   "social/createHouseholdInviteLink": typeof social_createHouseholdInviteLink;
   "social/declineConnection": typeof social_declineConnection;

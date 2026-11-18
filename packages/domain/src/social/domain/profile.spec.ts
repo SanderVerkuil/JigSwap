@@ -242,9 +242,11 @@ describe("Profile.changeVisibility", () => {
     return result.value;
   };
 
-  it("defaults to public on a freshly created profile", () => {
+  it("reads as public on a freshly created profile but stores no choice", () => {
     const profile = open();
     expect(profile.visibility).toBe("public");
+    // Logged-out pages treat an unset visibility as private (SEC-44); creating is not choosing.
+    expect(profile.toState().visibility).toBeUndefined();
   });
 
   it("changes public -> private, sets updatedAt, and emits ProfileVisibilityChanged", () => {

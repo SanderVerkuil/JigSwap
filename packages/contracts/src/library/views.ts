@@ -295,69 +295,11 @@ export interface CollectionDetailView {
   hasMorePuzzles: boolean;
 }
 
-// --- Copy instance (owned-copy) timeline -------------------------------------------------------
-// The privacy-gated provenance of a single owned copy: its catalog snapshot, the (projected) owner,
-// and one merged chronological event stream (ownership transfers, completions, loans). Every member
-// surfaced in the stream is a ProjectedMember, anonymised server-side per the viewer's connection so
-// private identities never cross the wire. The stream is split into `since` (events while the viewer
-// has held the copy) and `before` (its history before they acquired it); non-owners see everything
-// in `before`. Returned by `library.getCopyInstanceView`.
-
-/** An ownership transfer in a copy's history (from the custody projection). */
-export interface CopyInstanceTransferEntry {
-  type: "transfer";
-  /** The member the copy moved FROM (projected). */
-  from: ProjectedMember;
-  /** The member the copy moved TO (projected). */
-  to: ProjectedMember;
-  /** Whether the transfer settled via an exchange (true when an exchange id is recorded). */
-  viaExchange: boolean;
-  /** Epoch millis the transfer occurred. */
-  occurredAt: number;
-}
-
-/**
- * A completion of the copy (from the solving projection). An unfinished solve (no `endDate`) is
- * included only for the solver themself, or for a mutual follower when the solver shares
- * in-progress solves; everyone else sees finished solves only.
- */
-export interface CopyInstanceCompletionEntry {
-  type: "completion";
-  /** The member who solved it (projected). */
-  solver: ProjectedMember;
-  startDate: number;
-  endDate?: number;
-  timeMinutes?: number;
-  /** Absent = "day"; for "year"/"unknown" the dates are sentinels, not facts. */
-  datePrecision?: CompletionDatePrecision;
-  /** Sort key: the completion's `endDate` if finished, else its `startDate`. */
-  occurredAt: number;
-}
-
-/** A loan of the copy's possession (from the lending projection). */
-export interface CopyInstanceLoanEntry {
-  type: "loan";
-  /** The lender (projected). */
-  lender: ProjectedMember;
-  /** The borrower (projected). */
-  borrower: ProjectedMember;
-  openedAt: number;
-  closedAt?: number;
-  status: "open" | "returned" | "recalled";
-  /** Sort key: when the loan opened. */
-  occurredAt: number;
-}
-
-/** One entry in a copy's merged timeline. Discriminated on `type`. */
-export type CopyInstanceTimelineEntry =
-  | CopyInstanceTransferEntry
-  | CopyInstanceCompletionEntry
-  | CopyInstanceLoanEntry;
-
 // --- Type-grouped history (richer detail page) -------------------------------------------------
-// The same three history sources as the merged timeline, but grouped by type and carrying the extra
-// per-record facts the detail page renders (finish duration). Every member is still
-// privacy-projected (salt = copyId). Each list is descending by `occurredAt` (newest first).
+// A single owned copy's history (ownership transfers, completions, loans), grouped by type and
+// carrying the per-record facts the detail page renders (finish duration). Every member is a
+// ProjectedMember, anonymised server-side (salt = copyId) per the viewer's connection so private
+// identities never cross the wire. Each list is descending by `occurredAt` (newest first).
 
 /** A finished completion of this copy, for the grouped completions list. */
 export interface CopyCompletionEntry {
@@ -512,8 +454,8 @@ export interface PendingPhotoPlaceholder {
 
 /**
  * The privacy-gated detail view of a single owned copy, as returned by
- * `library.getCopyInstanceView`. `owner` and every participant in `since`/`before` are projected
- * server-side. `since`/`before` are each ascending by `occurredAt`.
+ * `library.getCopyInstanceView`. `owner` and every member in its history lists are projected
+ * server-side.
  */
 export interface CopyInstanceView {
   /** The copy's `ownedPuzzles` _id. */
@@ -615,10 +557,6 @@ export interface CopyInstanceView {
    * creation time, which batch-added copies share and which would tie them to one owner.
    */
   acquiredByViewerAt: number | null;
-  /** Events at/after `acquiredByViewerAt` (the viewer's own tenure). Empty for non-owners. */
-  since: CopyInstanceTimelineEntry[];
-  /** Events before `acquiredByViewerAt` (gated history). All events for non-owners. */
-  before: CopyInstanceTimelineEntry[];
   /** Every completed completion of this copy, newest first. Members privacy-projected. */
   completions: CopyCompletionEntry[];
   /** Every loan of this copy, newest first. Members privacy-projected. */

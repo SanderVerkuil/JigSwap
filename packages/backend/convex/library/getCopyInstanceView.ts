@@ -1,6 +1,5 @@
 import type {
   CopyCompletionEntry,
-  CopyInstanceTimelineEntry,
   CopyInstanceView,
   CopyLoanEntry,
   CopyPhoto,
@@ -31,11 +30,7 @@ import {
   renditionSources,
   type ImageSources,
 } from "../lib/imageModeration/imageSources";
-import {
-  areMutualFollowers,
-  profileVisibilityOf,
-  projectMemberIdentity,
-} from "../social/privacy";
+import { profileVisibilityOf, projectMemberIdentity } from "../social/privacy";
 import { canViewCopy } from "./canViewCopy";
 import {
   copyVisibilityPreference,
@@ -45,15 +40,14 @@ import { definitionRatingOf } from "./definitionStats";
 import { viewerMayRequestCopy } from "./exchangeRoutes";
 
 // Privacy-gated detail read for a single owned COPY (instance). Auth-gated; the acting member is the
-// viewer. Assembles the copy's catalog/condition snapshot, its (projected) current owner, and one
-// merged chronological event stream drawn from three sources that key the copy DIFFERENTLY:
+// viewer. Assembles the copy's catalog/condition snapshot, its (projected) current owner, and its
+// history grouped by type, drawn from three sources that key the copy DIFFERENTLY:
 //   - copyCustodyEntries.copyId   = the copy's ownedPuzzles _id      (ownership transfers)
 //   - completions.ownedPuzzleId   = the copy's ownedPuzzles _id      (completions)
 //   - loans.copyId                = the copy's ownedPuzzles aggregateId (loans)
 // So the copy row is resolved FIRST, then each source is queried with its own key form. Every member
 // surfaced is run through `projectMemberIdentity` (salt = copyId), which anonymises hidden members
-// server-side — their real identity never enters the returned DTO. The stream is split into `since`
-// (the viewer's own tenure) and `before` (gated history); non-owners get everything in `before`.
+// server-side — their real identity never enters the returned DTO. Only finished solves are listed.
 export const getCopyInstanceView = query({
   args: { copyId: v.id("ownedPuzzles") },
   handler: async (ctx, args): Promise<CopyInstanceView | null> => {
@@ -69,7 +63,7 @@ export const getCopyInstanceView = query({
 
     const viewerIsOwner = copy.ownerId === viewerId;
     // Household access: a member the owner left at "manage" acts as co-owner (edit controls +
-    // owner-only fields); "view" only sees the copy. Since/before tenure stays owner-only.
+    // owner-only fields); "view" only sees the copy. acquiredByViewerAt stays owner-only.
     // `owner` is the household person view (name/avatar, never email), the same one behind the
     // library's "Household · {owner}" badge, so the copy page names a housemate's copy's owner even
     // when the profile projection anonymises them.
@@ -104,7 +98,7 @@ export const getCopyInstanceView = query({
     const salt = args.copyId as string;
 
     // Memoise the projection per target member so a hidden member yields one stable anonRef across
-    // every entry in this timeline (same target + same salt -> same token).
+    // every entry on this page (same target + same salt -> same token).
     const projections = new Map<string, Promise<ProjectedMember>>();
     const project = (targetId: string): Promise<ProjectedMember> => {
       const existing = projections.get(targetId);
@@ -143,77 +137,6 @@ export const getCopyInstanceView = query({
           .collect()
       : [];
 
-    // Build each event, projecting every participant. Done with Promise.all so the memoised
-    // projections are shared across entries.
-    const transferEntries: CopyInstanceTimelineEntry[] = await Promise.all(
-      custodyEntries.map(async (e) => ({
-        type: "transfer" as const,
-        from: await project(e.previousOwner),
-        to: await project(e.newOwner),
-        viaExchange: e.exchangeId !== "" && e.exchangeId != null,
-        occurredAt: e.occurredAt,
-      })),
-    );
-
-    // An UNFINISHED solve is live activity ("is solving this now"), so it follows the opt-in,
-    // friends-only rule of the feed's "started" entry and the profile's "Currently solving" (SEC-35):
-    // shown to the solver themself, or to a mutual follower when the solver set
-    // shareInProgress === true (tri-state; absent = off). Being able to open the copy is not enough.
-    // Finished solves stay visible to every copy viewer. Memoised per solver.
-    const inProgressShared = new Map<string, Promise<boolean>>();
-    const sharesInProgress = (solverId: Id<"users">): Promise<boolean> => {
-      if (solverId === viewerId) return Promise.resolve(true);
-      const existing = inProgressShared.get(solverId);
-      if (existing) return existing;
-      const p = (async () => {
-        const prefs = await ctx.db
-          .query("solvingPreferences")
-          .withIndex("by_member", (q) => q.eq("memberId", solverId))
-          .unique();
-        if (prefs?.shareInProgress !== true) return false;
-        return areMutualFollowers(ctx, viewerId, solverId);
-      })();
-      inProgressShared.set(solverId, p);
-      return p;
-    };
-    const timelineCompletions = (
-      await Promise.all(
-        completions.map(async (c) =>
-          c.isCompleted || (await sharesInProgress(c.userId)) ? c : null,
-        ),
-      )
-    ).filter((c) => c !== null);
-
-    const completionEntries: CopyInstanceTimelineEntry[] = await Promise.all(
-      timelineCompletions.map(async (c) => ({
-        type: "completion" as const,
-        solver: await project(c.userId),
-        startDate: c.startDate,
-        endDate: c.endDate,
-        timeMinutes: c.completionTimeMinutes,
-        datePrecision: c.datePrecision,
-        occurredAt: c.endDate ?? c.startDate,
-      })),
-    );
-
-    const loanEntries: CopyInstanceTimelineEntry[] = await Promise.all(
-      loans.map(async (l) => ({
-        type: "loan" as const,
-        lender: await project(l.lenderId),
-        borrower: await project(l.borrowerId),
-        openedAt: l.openedAt,
-        closedAt: l.closedAt,
-        status: l.status,
-        occurredAt: l.openedAt,
-      })),
-    );
-
-    const timeline = [
-      ...transferEntries,
-      ...completionEntries,
-      ...loanEntries,
-    ].sort((a, b) => a.occurredAt - b.occurredAt);
-
     // The acquisition boundary: the latest custody transfer that handed the copy TO the viewer,
     // else the copy's creation time. Only meaningful when the viewer owns the copy.
     const viewerTransfers = custodyEntries.filter(
@@ -224,20 +147,9 @@ export const getCopyInstanceView = query({
         ? Math.max(...viewerTransfers.map((e) => e.occurredAt))
         : copy.createdAt;
 
-    const since: CopyInstanceTimelineEntry[] = [];
-    const before: CopyInstanceTimelineEntry[] = [];
-    if (viewerIsOwner) {
-      for (const entry of timeline) {
-        if (entry.occurredAt >= acquiredByViewerAt) since.push(entry);
-        else before.push(entry);
-      }
-    } else {
-      before.push(...timeline);
-    }
-
     const owner = await project(copy.ownerId);
 
-    // --- Type-grouped history (in addition to before/since), newest first. ---------------------
+    // --- Type-grouped history, newest first. -------------------------------------------------
     const completedCompletions = completions.filter((c) => c.isCompleted);
 
     const completionsGrouped: CopyCompletionEntry[] = await Promise.all(
@@ -489,8 +401,6 @@ export const getCopyInstanceView = query({
         tags: showCatalogFacts ? (puzzle?.tags ?? []) : [],
       },
       acquiredByViewerAt: viewerIsOwner ? acquiredByViewerAt : null,
-      since,
-      before,
       completions: completionsGrouped,
       loans: loansGrouped,
       transfers: transfersGrouped,

@@ -354,11 +354,6 @@ describe("per-trade reveal: the owner sees the requester", () => {
         userId: w.requester,
       }),
     ).toBeNull();
-    expect(
-      await asOwner.query(api.social.getProfile.getProfile, {
-        memberId: w.requester,
-      }),
-    ).toBeNull();
     expect(await seesElsewhere(t, w.owner, w.requester)).toBe(false);
   });
 });
