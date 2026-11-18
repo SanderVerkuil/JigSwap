@@ -212,6 +212,7 @@ export function LeaveReviewDialog({
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("commentPlaceholder")}
               rows={3}
+              maxLength={1000}
             />
           </div>
         </div>

@@ -404,6 +404,35 @@ describe("renderEmail with resolved delivery content", () => {
     },
   );
 
+  it("a circle name holding a link is filtered, and one with nothing left uses the generic sentence", async () => {
+    const filtered = await renderEmail({
+      type: "circle_invite_received",
+      params: {
+        actorName: "Mara",
+        circleName: "Account check: https://jigswap-verify.example",
+      },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(filtered.text).toContain("Mara invited you to join Account check:");
+    expect(filtered.text).not.toContain("jigswap-verify.example");
+    expect(filtered.html).not.toContain("jigswap-verify.example");
+
+    const generic = await renderEmail({
+      type: "circle_invite_received",
+      params: {
+        actorName: "Mara",
+        circleName: "https://jigswap-verify.example",
+      },
+      locale: "en",
+      baseUrl: BASE,
+    });
+    expect(generic.text).toContain(
+      "Mara invited you to join a circle on JigSwap.",
+    );
+    expect(generic.text).not.toContain("jigswap-verify.example");
+  });
+
   it("a circle invite without a visible circle name uses the generic sentence", async () => {
     const email = await renderEmail({
       type: "circle_invite_received",

@@ -45,20 +45,6 @@ export const convexNotificationRepository = (
       } else await ctx.db.insert("notifications", row);
     },
 
-    async listByUser(userId: MemberId): Promise<Notification[]> {
-      const rows = await ctx.db
-        .query("notifications")
-        .withIndex("by_user", (q) =>
-          q.eq("userId", userId as unknown as Id<"users">),
-        )
-        .order("desc")
-        .collect();
-      // Only domain-written/backfilled rows (carrying an aggregateId) participate in the new path.
-      return rows
-        .filter((row) => row.aggregateId !== undefined)
-        .map((row) => toDomain(row));
-    },
-
     async markAllReadForUser(
       userId: MemberId,
       now: Date,
