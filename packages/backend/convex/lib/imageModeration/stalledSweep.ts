@@ -3,8 +3,10 @@ import { internal } from "../../_generated/api";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
 import { logEvent } from "../logEvent";
 import {
+  MODERATION_TABLES,
   moderationTableValidator,
   stampUnscored,
+  TABLE_NAME,
   type ModerationTable,
 } from "./moderationPool";
 
@@ -28,14 +30,6 @@ export const STALLED_AFTER_MS = 24 * 60 * 60 * 1000;
 /** Rows read per run. */
 export const STALLED_SWEEP_PAGE = 100;
 
-const TABLES: readonly ModerationTable[] = [
-  "copy",
-  "completion",
-  "boxArt",
-  "message",
-  "circleIcon",
-];
-
 type Page = {
   rows: { id: string; pendingSince: number }[];
   isDone: boolean;
@@ -50,58 +44,21 @@ const pendingPage = async (
   cursor: string | null,
 ): Promise<Page> => {
   const paginationOpts = { numItems: STALLED_SWEEP_PAGE, cursor };
-  switch (table) {
-    case "copy":
-    case "completion": {
-      const page = await ctx.db
-        .query(table === "copy" ? "ownedPuzzleImages" : "completionImages")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending").lt("_creationTime", cutoff),
-        )
-        .paginate(paginationOpts);
-      return {
-        rows: page.page.map((row) => ({
-          id: row._id,
-          pendingSince: row.updatedAt,
-        })),
-        isDone: page.isDone,
-        continueCursor: page.continueCursor,
-      };
-    }
-    case "boxArt": {
-      const page = await ctx.db
-        .query("boxArtUploads")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending").lt("_creationTime", cutoff),
-        )
-        .paginate(paginationOpts);
-      return {
-        rows: page.page.map((row) => ({
-          id: row._id,
-          pendingSince: row.recheckedAt ?? row.createdAt,
-        })),
-        isDone: page.isDone,
-        continueCursor: page.continueCursor,
-      };
-    }
-    case "message":
-    case "circleIcon": {
-      const page = await ctx.db
-        .query(table === "message" ? "messageAttachments" : "circleIcons")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending").lt("_creationTime", cutoff),
-        )
-        .paginate(paginationOpts);
-      return {
-        rows: page.page.map((row) => ({
-          id: row._id,
-          pendingSince: row.updatedAt,
-        })),
-        isDone: page.isDone,
-        continueCursor: page.continueCursor,
-      };
-    }
-  }
+  const page = await ctx.db
+    .query(TABLE_NAME[table])
+    .withIndex("by_moderation_status", (q) =>
+      q.eq("moderationStatus", "pending").lt("_creationTime", cutoff),
+    )
+    .paginate(paginationOpts);
+  return {
+    rows: page.page.map((row) => ({
+      id: row._id,
+      pendingSince:
+        "updatedAt" in row ? row.updatedAt : (row.recheckedAt ?? row.createdAt),
+    })),
+    isDone: page.isDone,
+    continueCursor: page.continueCursor,
+  };
 };
 
 /**
@@ -116,7 +73,7 @@ export const sweepStalledModeration = internalMutation({
     cutoff: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const table = args.table ?? TABLES[0];
+    const table = args.table ?? MODERATION_TABLES[0];
     const cutoff = args.cutoff ?? Date.now() - STALLED_AFTER_MS;
     const page = await pendingPage(ctx, table, cutoff, args.cursor ?? null);
     const stampedIds: string[] = [];
@@ -127,7 +84,7 @@ export const sweepStalledModeration = internalMutation({
       }
     }
 
-    const nextTable = TABLES[TABLES.indexOf(table) + 1];
+    const nextTable = MODERATION_TABLES[MODERATION_TABLES.indexOf(table) + 1];
     if (!page.isDone) {
       await ctx.scheduler.runAfter(
         0,

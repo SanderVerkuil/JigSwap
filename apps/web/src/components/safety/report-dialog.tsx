@@ -14,7 +14,6 @@
 // account server-side (reports/fileReport). After filing, an optional block
 // runs, then a confirmation screen replaces the form. The server is the real
 // gate; the UI only maps its refusal codes to copy.
-import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -33,6 +32,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { CheckCircle2 } from "lucide-react";
 import { useId, useState, type ReactNode, type RefObject } from "react";
@@ -202,7 +202,7 @@ function ReportForm({
         ...(reason === "illegal" ? { illegalNotice: { goodFaith: true } } : {}),
       });
     } catch (err) {
-      const code = conversationErrorCode(err);
+      const code = convexErrorCode(err);
       const key =
         code && code in ERROR_KEYS
           ? ERROR_KEYS[code as keyof typeof ERROR_KEYS]

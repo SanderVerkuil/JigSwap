@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // The shared upload URL (gateway.library.generateUploadUrl, behind copy photos, completion photos
 // and box art) is rate limited per member (backend lib/rateLimits: uploadUrl per hour,
@@ -12,10 +12,7 @@ import { ConvexError } from "convex/values";
 // false for them and they keep their own message.
 
 const isRateLimited = (error: unknown): boolean =>
-  error instanceof ConvexError &&
-  typeof error.data === "object" &&
-  error.data !== null &&
-  (error.data as { code?: unknown }).code === "RateLimited";
+  convexErrorCode(error) === "RateLimited";
 
 /** The upload URL itself was refused by the member's upload limit. */
 export class UploadRateLimitedError extends Error {

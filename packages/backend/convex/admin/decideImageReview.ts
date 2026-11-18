@@ -1,5 +1,4 @@
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import {
   asImage,
@@ -8,8 +7,7 @@ import {
   scheduleMessageThumb,
   settleSendBatch,
 } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -25,8 +23,7 @@ export const decideImageReview = mutation({
     decision: v.union(v.literal("restore"), v.literal("uphold")),
   },
   handler: async (ctx, { attachmentId, decision }): Promise<void> => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
 
     const row = asImage(await ctx.db.get(attachmentId));
     if (

@@ -1,10 +1,9 @@
 import { makeRejectChangeProposal, toChangeProposalId } from "@jigswap/domain";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { convexChangeProposalRepository } from "./adapters/convexChangeProposalRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -15,8 +14,7 @@ import { toConvexError } from "./errors";
 export const rejectChangeProposal = mutation({
   args: { changeProposalId: v.string(), reason: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const reject = makeRejectChangeProposal({
       proposals: convexChangeProposalRepository(ctx),

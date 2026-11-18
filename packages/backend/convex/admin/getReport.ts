@@ -1,8 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { isHashCleared } from "../lib/imageModeration/hashCheckFields";
 import { isPreservedBlob } from "../lib/imageModeration/quarantine";
 import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
@@ -29,8 +28,7 @@ const urlUnlessPreserved = async (
 export const getReport = query({
   args: { reportId: v.string() },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const reportId = ctx.db.normalizeId("reports", args.reportId);
     const report = reportId ? await ctx.db.get(reportId) : null;

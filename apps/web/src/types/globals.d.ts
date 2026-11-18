@@ -1,7 +1,7 @@
 export {};
 
 // Create a type for the roles
-export type Roles = "admin" | "moderator";
+export type Roles = "admin";
 
 declare global {
   /** The build id, baked in at build time by vite-plugin-app-version.ts. */

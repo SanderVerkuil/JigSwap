@@ -1,7 +1,6 @@
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { enrichProposal } from "./proposalReadModel";
 
 // The most proposals the admin definition page shows. Withdrawing keeps the row and filing again adds
@@ -15,8 +14,7 @@ export const MAX_DEFINITION_PROPOSALS = 100;
 export const listProposalsForDefinition = query({
   args: { puzzleDefinitionId: v.string() },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const rows = await ctx.db
       .query("puzzleChangeProposals")

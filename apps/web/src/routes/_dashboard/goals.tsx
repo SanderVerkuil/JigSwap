@@ -55,10 +55,7 @@ function GoalsPage() {
   const dialogOpenerRef = useReturnFocus(formOpen || deleteOpen);
 
   const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   const { data: goals } = useQuery(

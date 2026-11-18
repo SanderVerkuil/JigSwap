@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // An invite that was accepted, declined, revoked or expired in the meantime: every such refusal
 // reads as the same neutral "no longer available".
@@ -24,11 +24,8 @@ export const INVITE_UNAVAILABLE_KEY = "invitations.unavailable";
 
 // The `circles` namespace i18n key describing why a circle invite mutation failed.
 export function circleInviteErrorKey(error: unknown): string {
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: unknown } | undefined;
-    const code = typeof data?.code === "string" ? data.code : undefined;
-    if (code && UNAVAILABLE_CODES.has(code)) return INVITE_UNAVAILABLE_KEY;
-    if (code && KNOWN_CODES.has(code)) return `inviteErrors.${code}`;
-  }
+  const code = convexErrorCode(error);
+  if (code && UNAVAILABLE_CODES.has(code)) return INVITE_UNAVAILABLE_KEY;
+  if (code && KNOWN_CODES.has(code)) return `inviteErrors.${code}`;
   return "inviteErrors.generic";
 }

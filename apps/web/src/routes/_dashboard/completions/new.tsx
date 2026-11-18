@@ -41,10 +41,7 @@ function NewCompletionPage() {
   const pickedFromRef = useReturnFocus(picked !== null);
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
   const signedIn = !!convexUser?._id;
 

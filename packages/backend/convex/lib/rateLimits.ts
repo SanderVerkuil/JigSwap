@@ -145,10 +145,9 @@ export const RATE_LIMITS = {
   // Profile visibility changes (social/setProfileVisibility), Undo included: each one re-stamps every
   // copy and re-counts every definition with an open one (library/ownerListingVisibility).
   profileVisibility: { windowMs: HOUR, max: 10 },
-  // Collections and personal categories created (library/createCollection, createPersonalCategory).
+  // Collections created (library/createCollection).
   // Their text is bounded, but not how many a member has, and a profile's collections are read whole.
   collectionCreate: { windowMs: DAY, max: 30 },
-  categoryCreate: { windowMs: DAY, max: 30 },
 } as const satisfies Record<string, { windowMs: number; max: number }>;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

@@ -1,4 +1,3 @@
-import { solvingErrorCode } from "@/components/solving/solving-error";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   GOAL_DESCRIPTION_MAX_LENGTH,
   GOAL_TITLE_MAX_LENGTH,
@@ -167,7 +167,7 @@ function GoalForm({
       }
       onDone();
     } catch (error) {
-      const fieldErrors = goalFormErrorsFromCode(solvingErrorCode(error));
+      const fieldErrors = goalFormErrorsFromCode(convexErrorCode(error));
       if (fieldErrors) {
         showErrors(fieldErrors);
         return;

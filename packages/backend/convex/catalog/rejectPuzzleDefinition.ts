@@ -3,8 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { runDefinitionAction } from "./runDefinitionAction";
 
 // The longest reason the submitter is sent (the admin console composes a preset plus a note).
@@ -16,8 +15,7 @@ export const MAX_REJECTION_REASON = 1000;
 export const rejectPuzzleDefinition = mutation({
   args: { puzzleDefinitionId: v.string(), reason: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const reason = args.reason?.trim() || undefined;
     if (reason !== undefined && reason.length > MAX_REJECTION_REASON) {

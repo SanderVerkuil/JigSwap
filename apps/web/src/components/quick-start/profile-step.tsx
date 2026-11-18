@@ -20,11 +20,11 @@ import { useStepCommitRegistration } from "./step-commit";
 
 type Visibility = "public" | "private";
 
-// Matches identity.setLocation's limit.
+// Matches the server's location limit (users.updateUserProfile).
 const MAX_LOCATION_LENGTH = 80;
 
 // Step 5, Make it yours (spec §2.4): the avatar with "Change photo" (Clerk owns the image, so it
-// opens Clerk's profile UI), the location saved with identity.setLocation, and profile
+// opens Clerk's profile UI), the location saved with identity.updateProfile, and profile
 // visibility saved with social.setProfileVisibility. Choosing either visibility writes it
 // explicitly, which marks the step done; the current value (public by default) is preselected.
 export function ProfileStep() {
@@ -56,7 +56,7 @@ function ProfileStepLoaded({
   // Seeded once from the loaded member, so typing is never overwritten by a live update.
   const [location, setLocation] = useState(savedLocation);
   const saveLocation = useMutation({
-    mutationFn: useConvexMutation(gateway.identity.setLocation),
+    mutationFn: useConvexMutation(gateway.identity.updateProfile),
     onSuccess: () => toast.success(t("saved")),
     onError: () => toast.error(t("saveError")),
   });

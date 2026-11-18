@@ -1,4 +1,4 @@
-import { ConvexError } from "convex/values";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // Pure helpers behind InviteShareActions (decision 2: invites are shared from the member's own
 // device). Every URL leaves the recipient blank, so the member picks who gets it in their own
@@ -38,9 +38,7 @@ export const canWebShare = (
 export const inviteLinkErrorKey = (
   error: unknown,
 ): "rateLimited" | "createFailed" => {
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: unknown } | undefined;
-    if (data && data.code === "invite_rate_limited") return "rateLimited";
-  }
-  return "createFailed";
+  return convexErrorCode(error) === "invite_rate_limited"
+    ? "rateLimited"
+    : "createFailed";
 };

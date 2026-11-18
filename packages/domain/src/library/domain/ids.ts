@@ -3,7 +3,6 @@ import { Id } from "../../shared-kernel";
 // The Library aggregates' own identities.
 export type CopyId = Id<"CopyId">;
 export type CollectionId = Id<"CollectionId">;
-export type PersonalCategoryId = Id<"PersonalCategoryId">;
 export type LoanId = Id<"LoanId">;
 
 // Foreign-aggregate references held as branded strings. The Library context never loads

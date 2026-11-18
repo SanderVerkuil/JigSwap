@@ -1,4 +1,4 @@
-import type { PuzzleFormData } from "@/components/forms/puzzle-form";
+import type { PuzzleFormData } from "@/components/forms/puzzle-form/puzzle-form-schema";
 
 // The draft fields returned by the extractFromUrl action (mirrors domain PuzzleImportDraft).
 export interface ImportedDraft {

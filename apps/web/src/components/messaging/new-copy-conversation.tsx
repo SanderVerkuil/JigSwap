@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { cn } from "@/lib/utils";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
@@ -22,7 +23,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "use-intl";
 import { EmojiButton } from "./emoji-button";
 import { enterKeyHintFor, shouldSendOnEnter } from "./enter-to-send";
-import { conversationErrorCode, threadSubjectTitle } from "./format";
+import { threadSubjectTitle } from "./format";
 import { NO_SPLIT_ONLY_CLASS } from "./frame";
 import { handleMarkupShortcut, MARKUP_KEYSHORTCUTS } from "./markup-shortcuts";
 import { StagedCopyChip } from "./staged-copy-chip";
@@ -99,7 +100,7 @@ export function NewCopyConversation({ copyId }: { copyId: string }) {
         replace: true,
       });
     } catch (err) {
-      const code = conversationErrorCode(err);
+      const code = convexErrorCode(err);
       setError(
         code === "MessageTooLong"
           ? tMessages("tooLong")

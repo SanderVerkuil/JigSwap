@@ -41,7 +41,6 @@ export const gateway = {
     // Convex query returning a typed @jigswap/contracts view DTO, not a raw row. Public
     // lists/suggestions already filter to approved definitions only.
     puzzleById: api.catalog.getPuzzleById.getPuzzleById,
-    listAll: api.catalog.listAllPuzzles.listAllPuzzles,
     recentPuzzles: api.catalog.getRecentPuzzles.getRecentPuzzles,
     pending:
       api.catalog.listPendingPuzzleDefinitions.listPendingPuzzleDefinitions,
@@ -127,9 +126,6 @@ export const gateway = {
       api.library.listMyOwnedDefinitionIds.listMyOwnedDefinitionIds,
     // Browse reads from the Library inventory (owned copies), not the Catalog.
     browseOwned: api.library.browseOwnedPuzzles.browseOwnedPuzzles,
-    ownedWithCollectionStatus:
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
     // Privacy-gated detail of a single owned copy: snapshot + projected owner + merged, anonymised
     // history timeline (transfers/completions/loans) split into the viewer's tenure vs gated history.
     getCopyInstanceView: api.library.getCopyInstanceView.getCopyInstanceView,
@@ -161,7 +157,6 @@ export const gateway = {
     recallLoan: api.library.recallLoan.recallLoan,
     borrowed: api.library.getBorrowedLoans.getBorrowedLoans,
     lentOut: api.library.getLentOutLoans.getLentOutLoans,
-    copyHistory: api.library.getCopyLoanHistory.getCopyLoanHistory,
   },
 
   // Households: members who pool their libraries. Copies stay owned by whoever added them; every
@@ -230,9 +225,8 @@ export const gateway = {
   exchange: {
     create: api.exchange.propose.propose,
     // Reads go through thin Convex adapters that return typed view DTOs from @jigswap/contracts
-    // (ExchangeView / ExchangeSummaryView) rather than raw rows;
+    // (ExchangeSummaryView) rather than raw rows;
     // party-visibility, ordering and the joins are preserved so the UI is unchanged.
-    byId: api.exchange.getExchangeById.getExchangeById,
     // The Exchanges page and the dashboard: everything still in play, finished exchanges a page at a
     // time, one exchange a deep link names, and the phone chrome's count of waiting requests.
     myLive: api.exchange.listMyLiveExchanges.listMyLiveExchanges,
@@ -310,18 +304,11 @@ export const gateway = {
     sendLocation: api.conversation.sendLocation.sendLocation,
   },
 
-  // Chain-of-Custody: a Copy's provenance (original owner -> each settled transfer -> current
-  // owner), read from the custody projection folded off Exchange's OwnershipTransferred events.
-  custody: {
-    timeline: api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-  },
-
   // Identity & Access: the wrapper over Clerk members and their profiles.
   identity: {
     // Reads go through thin Convex adapters returning typed view DTOs (MemberView / MemberStatsView)
     // from @jigswap/contracts; auth gating and lookups are preserved so the UI is unchanged.
     currentUser: api.identity.getCurrentUser.getCurrentUser,
-    byClerkId: api.identity.getUserByClerkId.getUserByClerkId,
     byId: api.identity.getUserById.getUserById,
     // The write mutation stays on the legacy module (only reads are being cut over).
     updateProfile: api.users.updateUserProfile,
@@ -335,8 +322,6 @@ export const gateway = {
     isAdmin: api.identity.isCurrentUserAdmin.isCurrentUserAdmin,
     // Set (or clear, via null) the caller's Convex-owned profile handle.
     setSlug: api.identity.setSlug.setSlug,
-    // Set (or clear, with "") the caller's own location: trimmed, at most 80 characters.
-    setLocation: api.identity.setLocation.setLocation,
   },
 
   // Solving: solve tracking, puzzle reviews, goals. Ownership / 24h edit window / rating are
@@ -526,7 +511,6 @@ export const gateway = {
     myNetwork: api.social.listMyNetwork.listMyNetwork,
     followers: api.social.listFollowers.listFollowers,
     following: api.social.listFollowees.listFollowees,
-    isFollowing: api.social.isFollowing.isFollowing,
     // "Followers you know" social proof for a member's profile — the viewer's own following
     // intersected with the target's followers (see social/knownFollowers.ts). Personalized.
     followersYouKnow: api.social.followersYouKnow.followersYouKnow,
@@ -590,17 +574,9 @@ export const gateway = {
     collectionBreakdown:
       api.insights.getCollectionBreakdown.getCollectionBreakdown,
     tradeActivity: api.insights.getTradeActivity.getTradeActivity,
-    // Downstream read-model: ranks approved catalog puzzles the member doesn't own from their taste.
-    recommendations: api.insights.getRecommendations.getRecommendations,
     // The member's data export, one page of one section (@jigswap/contracts EXPORT_SECTIONS) at a
     // time: walk every section from cursor null until isDone.
     exportUserDataPage: api.insights.exportUserDataPage.exportUserDataPage,
-    // Public query — returns a random seed-stable sample of catalog puzzles for
-    // the marketing hero plank. Args: { limit: number; seed: number }.
-    plankPuzzles: api.insights.getPlankPuzzles.getPlankPuzzles,
-    // Public query — returns a seed-stable sample of active members (initials +
-    // opt-in avatar URL) for the marketing trust-row avatar cluster.
-    communityAvatars: api.insights.getCommunityAvatars.getCommunityAvatars,
   },
 
   // Reports (DSA notices) about a member or their content: a message, copy, photo or exchange the
@@ -763,8 +739,6 @@ export const gateway = {
   // domain-driven catalog module; identifiers are CatalogCategoryId aggregateIds.
   adminCatalog: {
     listAll: api.adminCategories.getAllAdminCategories,
-    listActive: api.adminCategories.getActiveAdminCategories,
-    byId: api.adminCategories.getAdminCategoryById,
     create: api.catalog.createCatalogCategory.createCatalogCategory,
     update: api.catalog.updateCatalogCategory.updateCatalogCategory,
     reorder: api.catalog.reorderCatalogCategories.reorderCatalogCategories,

@@ -91,7 +91,7 @@ const BIO_MAX_LENGTH = 500;
 // Mirrors the domain's DISPLAY_NAME_MAX_LENGTH; the server refuses a longer name.
 const DISPLAY_NAME_MAX_LENGTH = 50;
 
-// Mirrors identity/setLocation's cap; the server refuses a longer location (invalid_location).
+// Mirrors users.updateUserProfile's cap; the server refuses a longer location (invalid_location).
 const LOCATION_MAX_LENGTH = 80;
 
 // The inline editor behind the header's Edit Profile toggle: display name,

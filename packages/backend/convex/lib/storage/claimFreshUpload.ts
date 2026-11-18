@@ -3,10 +3,25 @@ import type { Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { isReferenced } from "../imageModeration/blobReferences";
 
-// How long after its upload a blob can still be claimed as a copy or completion photo. Same as
-// the box-art, message-photo and circle-icon claim windows: the client attaches right after the
-// upload POST.
+// How long after its upload a blob can still be claimed (copy, completion, box art, message and
+// circle-icon photos): the client attaches right after the upload POST. Keep it far below the
+// storage sweep's orphan age.
 export const UPLOAD_CLAIM_WINDOW_MS = 15 * 60_000;
+
+/**
+ * The claim rule as a verdict, for callers that fail their own way (throw, null, `{ refused }`):
+ * "invalid" is a missing or held blob, "expired" one older than UPLOAD_CLAIM_WINDOW_MS.
+ */
+export const uploadClaimState = async (
+  ctx: QueryCtx,
+  storageId: Id<"_storage">,
+): Promise<"ok" | "invalid" | "expired"> => {
+  const blob = await ctx.db.system.get(storageId);
+  if (!blob || (await isReferenced(ctx, storageId))) return "invalid";
+  return Date.now() - blob._creationTime > UPLOAD_CLAIM_WINDOW_MS
+    ? "expired"
+    : "ok";
+};
 
 /**
  * The claim rule for a member-supplied storage id (SEC-01): the blob exists, nothing holds it yet
@@ -25,14 +40,14 @@ export const assertClaimableUpload = async (
   ctx: QueryCtx,
   storageId: Id<"_storage">,
 ): Promise<void> => {
-  const blob = await ctx.db.system.get(storageId);
-  if (!blob || (await isReferenced(ctx, storageId))) {
+  const state = await uploadClaimState(ctx, storageId);
+  if (state === "invalid") {
     throw new ConvexError({
       code: "InvalidUpload",
       message: "This upload can't be used",
     });
   }
-  if (Date.now() - blob._creationTime > UPLOAD_CLAIM_WINDOW_MS) {
+  if (state === "expired") {
     throw new ConvexError({
       code: "UploadExpired",
       message: "This upload has expired; upload the photo again",

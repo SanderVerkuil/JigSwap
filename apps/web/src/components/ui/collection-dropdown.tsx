@@ -1,6 +1,5 @@
 "use client";
 
-import { useUser } from "@/compat/clerk";
 import Link from "@/compat/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,14 +29,10 @@ export function CollectionMenuItems({
   ownedPuzzleId,
   copyAggregateId,
 }: CollectionTargetProps) {
-  const { user } = useUser();
   const t = useTranslations("collections");
 
   const { data: convexUser } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   const { data: collections } = useQuery(

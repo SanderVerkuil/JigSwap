@@ -881,17 +881,19 @@ describe("preserved blobs can never be re-used (H1)", () => {
     expect(await escalations(t)).toHaveLength(1);
   });
 
-  test("the owner's copy-detail read never lists a quarantined photo's storage id", async () => {
+  test("the owner's copy page never lists a quarantined photo: no storage id, no gallery row, no placeholder", async () => {
     const t = withModerationPool(convexTest(schema, modules));
     presenceTest.register(t);
     const { copy, preservedId } = await quarantineOne(t);
     const detail = await asAlice(t).query(
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
-      { ownedPuzzleId: copy },
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: copy },
     );
     expect(detail).not.toBeNull();
     expect(JSON.stringify(detail)).not.toContain(preservedId);
+    // Rejected and quarantined photos are both absent, so the page cannot tell them apart.
+    expect(detail?.gallery).toEqual([]);
+    expect(detail?.pendingPhotos).toEqual([]);
   });
 });
 

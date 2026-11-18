@@ -1,10 +1,9 @@
 import type { AdminUserView } from "@jigswap/contracts";
 import { paginationOptsValidator, type PaginationResult } from "convex/server";
-import { ConvexError, v } from "convex/values";
+import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { clampUnpinnedPaginationOpts, paginateBounded } from "../lib/pageSize";
 import { readMemberLibraryCounts } from "../library/memberLibraryCounts";
 
@@ -50,8 +49,7 @@ export const listUsers = query({
     search: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<PaginationResult<AdminUserView>> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const term = args.search?.trim() ?? "";
     if (EMAIL_SHAPED.test(term)) {

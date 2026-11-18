@@ -10,7 +10,6 @@
 // Blocking toasts "Blocked {name}" with an Undo that unblocks straight away.
 // The server is the real gate (requireMember, rate limit); the UI only maps its
 // refusals to copy: RateLimited gets "Try again later", the rest a generic error.
-import { conversationErrorCode } from "@/components/messaging/format";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useConvexMutation } from "@convex-dev/react-query";
 import type { RefObject } from "react";
 import { toast } from "sonner";
@@ -58,9 +58,7 @@ export function BlockMemberDialog({
 
   const errorToast = (error: unknown, fallback: string) =>
     toast.error(
-      conversationErrorCode(error) === "RateLimited"
-        ? t("rateLimited")
-        : fallback,
+      convexErrorCode(error) === "RateLimited" ? t("rateLimited") : fallback,
     );
 
   const undoBlock = async () => {

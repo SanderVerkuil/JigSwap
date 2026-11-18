@@ -1,4 +1,4 @@
-import { convexErrorCode } from "./request-trade";
+import { convexErrorCode } from "@/lib/convex-error-code";
 
 // The exchange lifecycle mutations (accept, decline, cancel, confirm completion) and the loan
 // mutations (return, recall) reject with `ConvexError<{ code, message }>`. These are the codes the

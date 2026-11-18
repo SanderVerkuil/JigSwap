@@ -1,9 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { stampModerationAction } from "./stampModerationAction";
 
 export const CSAM_ESCALATION_NOTE_MAX = 2000;
@@ -34,8 +32,7 @@ export const markCsamEscalation = mutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, { id, status, note }) => {
-    const memberId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const row = await ctx.db.get(id);
     if (!row) throw new ConvexError("Escalation not found");

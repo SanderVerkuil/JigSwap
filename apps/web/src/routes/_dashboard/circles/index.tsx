@@ -255,7 +255,6 @@ function CirclesPage() {
       {manageCircleId && (
         <ManageCircleDialog
           circleId={manageCircleId}
-          viewerId={user.id}
           onClose={() => setManageCircleId(null)}
         />
       )}

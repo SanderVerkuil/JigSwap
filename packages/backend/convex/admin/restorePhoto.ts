@@ -1,8 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
 import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { stampModerationAction } from "./stampModerationAction";
@@ -17,8 +16,7 @@ import { stampModerationAction } from "./stampModerationAction";
 export const restorePhoto = mutation({
   args: { imageId: v.id("ownedPuzzleImages") },
   handler: async (ctx, { imageId }) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const row = await ctx.db.get(imageId);
     if (!row) throw new ConvexError("Photo not found");

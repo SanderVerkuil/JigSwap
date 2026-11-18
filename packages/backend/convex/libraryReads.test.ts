@@ -282,79 +282,28 @@ describe("library reads", () => {
     expect(result.ownedPuzzles[0].puzzle?.title).toBe("Mountain Vista");
   });
 
-  test("getOwnedPuzzleWithCollectionStatus enriches images, owner, status and history", async () => {
+  test("getCopyInstanceView enriches images, owner and completion history", async () => {
     const t = convexTest(schema, modules);
     const { available } = await seed(t);
 
-    const nullForAnon = await t.query(
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
-      { ownedPuzzleId: available },
-    );
-    expect(nullForAnon).toBeNull();
+    await expect(
+      t.query(api.library.getCopyInstanceView.getCopyInstanceView, {
+        copyId: available,
+      }),
+    ).rejects.toBeInstanceOf(ConvexError);
 
     const view = await asAlice(t).query(
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
-      { ownedPuzzleId: available },
+      api.library.getCopyInstanceView.getCopyInstanceView,
+      { copyId: available },
     );
     expect(view).not.toBeNull();
-    expect(view?.puzzle.title).toBe("Mountain Vista");
-    expect(view?.images).toHaveLength(1);
-    // Consumers read images[0].url (a served URL, never the storage id).
-    expect(view?.images[0].url).toMatch(/^https:/);
-    expect(view?.owner?.name).toBe("Alice");
-    // The copy IS a member of Alice's "Favourites" collection -> in-collection with its visibility.
-    expect(view?.collectionStatus.isInCollection).toBe(true);
-    if (view?.collectionStatus.isInCollection) {
-      expect(view.collectionStatus.visibility).toBe("private");
-    }
-    expect(view?.completionHistory).toHaveLength(1);
-  });
-
-  test("getOwnedPuzzleWithCollectionStatus is gated to the copy owner", async () => {
-    const t = convexTest(schema, modules);
-    const { available } = await seed(t);
-
-    // Bob is authenticated but does NOT own the copy: the owner-only management view (financials,
-    // private notes, unmoderated photos) must not leak — he gets null.
-    const bobClerk = "clerk_bob";
-    await t.run(async (ctx) => {
-      const now = Date.now();
-      await ctx.db.insert("users", {
-        clerkId: bobClerk,
-        email: "bob@example.com",
-        name: "Bob",
-        username: "bob",
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      });
-    });
-
-    const seenByBob = await t
-      .withIdentity({ subject: bobClerk })
-      .query(
-        api.library.getOwnedPuzzleWithCollectionStatus
-          .getOwnedPuzzleWithCollectionStatus,
-        { ownedPuzzleId: available },
-      );
-    expect(seenByBob).toBeNull();
-  });
-
-  test("getOwnedPuzzleWithCollectionStatus reports not-in-collection for an uncollected copy", async () => {
-    const t = convexTest(schema, modules);
-    const { unavailable } = await seed(t);
-
-    // `unavailable` (copy-b) is in NONE of Alice's collections; despite Alice owning >=2 collections
-    // (which would break a `.unique()` on by_user), status must be exactly { isInCollection: false }.
-    const view = await asAlice(t).query(
-      api.library.getOwnedPuzzleWithCollectionStatus
-        .getOwnedPuzzleWithCollectionStatus,
-      { ownedPuzzleId: unavailable },
-    );
-    expect(view).not.toBeNull();
-    expect(view?.collectionStatus.isInCollection).toBe(false);
+    expect(view?.snapshot.title).toBe("Mountain Vista");
+    expect(view?.gallery).toHaveLength(1);
+    // Consumers read gallery[0].url (a served URL, never the storage id).
+    expect(view?.gallery[0].url).toMatch(/^https:/);
+    const owner = view?.owner;
+    expect(owner?.anonymous ? null : owner?.member.name).toBe("Alice");
+    expect(view?.completions).toHaveLength(1);
   });
 });
 

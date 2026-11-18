@@ -83,3 +83,13 @@ describe("staged shares", () => {
     expect(chunked([], 2)).toEqual([]);
   });
 });
+
+describe("circleShareErrorKey with JSON-encoded refusal data", () => {
+  it("reads the code like the shared helper does", () => {
+    expect(
+      circleShareErrorKey(
+        new ConvexError(JSON.stringify({ code: "RateLimited" })),
+      ),
+    ).toBe("shareErrors.RateLimited");
+  });
+});

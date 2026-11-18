@@ -15,7 +15,6 @@ import { SendCopyLinkDialog } from "@/components/copies/send-copy-link-dialog";
 import { type NavContext } from "@/components/dashboard-layout/nav-context";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import {
-  convexErrorCode,
   REQUEST_ACTION_ICONS,
   requestActionKey,
 } from "@/components/exchange/request-trade";
@@ -54,6 +53,7 @@ import {
   formatSolveTime,
   solveDurationText,
 } from "@/lib/completion-format";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { DATE_ONLY_TIME_ZONE } from "@/lib/date-input";
 import {
   projectedAuthorOf,

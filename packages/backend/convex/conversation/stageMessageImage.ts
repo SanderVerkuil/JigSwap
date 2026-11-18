@@ -3,13 +3,12 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isReferenced } from "../lib/imageModeration/blobReferences";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { enforceRateLimit } from "../lib/rateLimits";
+import { uploadClaimState } from "../lib/storage/claimFreshUpload";
 import { assertThreadNotBlocked } from "../social/blocks";
 import {
   assertImagesAvailable,
-  MESSAGE_IMAGE_CLAIM_WINDOW_MS,
   MESSAGE_IMAGE_MAX_BYTES,
   MESSAGE_IMAGE_MAX_DIMENSION,
   MESSAGE_IMAGE_TYPES,
@@ -32,7 +31,7 @@ export type StageResult =
 // and nothing references it yet (not a copy, completion or message photo, not box art, not
 // CSAM-preserved; else the generic InvalidUpload, and it is left alone). The CONTENT checks
 // (at most MESSAGE_IMAGE_MAX_BYTES, an allowed type, uploaded within
-// MESSAGE_IMAGE_CLAIM_WINDOW_MS) return `{ refused }` instead of throwing, so that a refused
+// UPLOAD_CLAIM_WINDOW_MS) return `{ refused }` instead of throwing, so that a refused
 // fresh upload is deleted for good (a throw would roll the delete back). A stale blob is refused
 // but NOT deleted: it may be referenced where no index can tell (legacy completion photos), and
 // deleting on request would let anyone destroy it. Magic bytes are checked by the pipeline (a
@@ -58,14 +57,13 @@ export const stageMessageImage = mutation({
     if (!isDimension(args.width) || !isDimension(args.height)) {
       throw refuse("InvalidImageSize", "The photo's size is not valid");
     }
-    const blob = await ctx.db.system.get(args.storageId);
-    if (!blob || (await isReferenced(ctx, args.storageId))) {
+    const claim = await uploadClaimState(ctx, args.storageId);
+    if (claim === "invalid") {
       throw refuse("InvalidUpload", "This upload can't be used");
     }
+    if (claim === "expired") return { refused: "UploadExpired" };
+    const blob = (await ctx.db.system.get(args.storageId))!;
     const now = Date.now();
-    if (now - blob._creationTime > MESSAGE_IMAGE_CLAIM_WINDOW_MS) {
-      return { refused: "UploadExpired" };
-    }
     const contentType = blob.contentType ?? "";
     const refusal =
       blob.size > MESSAGE_IMAGE_MAX_BYTES

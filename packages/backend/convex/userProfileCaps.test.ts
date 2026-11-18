@@ -6,10 +6,10 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 // SEC-27 (review repro IDENT-1): users.updateUserProfile patched bio, location and
-// preferredLanguage straight onto the caller's row with no limits, bypassing setLocation's
-// 80-character cap. A 500 KB bio and a 450 KB location were stored and then served to other
+// preferredLanguage straight onto the caller's row with no limits, with no 80-character
+// cap. A 500 KB bio and a 450 KB location were stored and then served to other
 // members. The bio argument is gone (profiles.bio is the public bio), location follows
-// setLocation's rules, and preferredLanguage is one of the supported locales.
+// that cap, and preferredLanguage is one of the supported locales.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
 
 type T = TestConvex<typeof schema>;
@@ -131,14 +131,14 @@ describe("users.updateUserProfile caps what it writes (SEC-27)", () => {
 describe("a location stored before the cap stays editable", () => {
   const LEGACY = "L".repeat(200);
 
-  test("resending it unchanged is accepted, by both write paths", async () => {
+  test("resending it unchanged is accepted, with or without surrounding spaces", async () => {
     const t = convexTest(schema, modules);
     const ann = await insertUser(t, "ann", LEGACY);
 
     await asMember(t, "ann").mutation(api.users.updateUserProfile, {
       location: LEGACY,
     });
-    await asMember(t, "ann").mutation(api.identity.setLocation.setLocation, {
+    await asMember(t, "ann").mutation(api.users.updateUserProfile, {
       location: ` ${LEGACY} `,
     });
     expect((await rowOf(t, ann))?.location).toBe(LEGACY);

@@ -1,9 +1,4 @@
-import {
-  CollectionId,
-  CopyId,
-  LoanId,
-  PersonalCategoryId,
-} from "../../../domain";
+import { CollectionId, CopyId, LoanId } from "../../../domain";
 
 // Outbound ports: minting new aggregate ids. The aggregates' factories take their id as input
 // (they are pure and do no I/O), so the use cases obtain one here. The 2c-convex adapters can
@@ -14,10 +9,6 @@ export interface CopyIdGenerator {
 
 export interface CollectionIdGenerator {
   next(): CollectionId;
-}
-
-export interface PersonalCategoryIdGenerator {
-  next(): PersonalCategoryId;
 }
 
 export interface LoanIdGenerator {

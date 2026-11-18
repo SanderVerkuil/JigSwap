@@ -5,7 +5,6 @@ import type { gateway } from "@/gateway";
 import { foldForSearch } from "@/lib/catalogue-search";
 import { stripFormatting, type MemberNameSource } from "@jigswap/contracts";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
 // Every getMyInbox row: an exchange, DM or circle (group) thread.
@@ -103,16 +102,6 @@ export type Translator = (
   key: string,
   values?: Record<string, string | number>,
 ) => string;
-
-// Pull the stable domain error code (e.g. "MessageTooLong", "NotConnected")
-// out of a conversation mutation rejection; undefined for anything else.
-export function conversationErrorCode(error: unknown): string | undefined {
-  if (error instanceof ConvexError) {
-    const data = error.data as { code?: unknown } | undefined;
-    if (data && typeof data.code === "string") return data.code;
-  }
-  return undefined;
-}
 
 // Unread badge text. The backend caps counts at 50 (both per-thread and the
 // nav total), so a value of 50 genuinely means "50 or more" and reads "50+".

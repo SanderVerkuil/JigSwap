@@ -7,7 +7,6 @@ import {
 } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
 import { requireMember } from "../identity/requireMember";
-import { isReferenced } from "../lib/imageModeration/blobReferences";
 import {
   boxArtHolders,
   repointBoxArt,
@@ -23,8 +22,8 @@ import {
   deleteRenditions,
   scheduleRenditions,
 } from "../lib/imageModeration/renditionsStore";
+import { uploadClaimState } from "../lib/storage/claimFreshUpload";
 import { needsRescreen } from "../library/adapters/photoModeration";
-import { BOX_ART_CLAIM_WINDOW_MS } from "./boxArtUploads";
 
 // DB-facing steps of the shared image-moderation pipeline (lib/imageModeration/pipeline) for box
 // art, typed to `boxArtUploads` (catalog/moderateBoxArt runs the pipeline). Mirrors
@@ -46,11 +45,7 @@ export const claimUpload = internalMutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
     const uploaderId = (await requireMember(ctx)) as unknown as Id<"users">;
-    const blob = await ctx.db.system.get(storageId);
-    if (!blob || Date.now() - blob._creationTime > BOX_ART_CLAIM_WINDOW_MS) {
-      return null;
-    }
-    if (await isReferenced(ctx, storageId)) return null;
+    if ((await uploadClaimState(ctx, storageId)) !== "ok") return null;
     const now = Date.now();
     return ctx.db.insert("boxArtUploads", {
       storageId,

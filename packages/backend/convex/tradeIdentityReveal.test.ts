@@ -212,11 +212,18 @@ const docIdOf = (t: T, aggregateId: string) =>
 const tradeReveals = (t: T) =>
   t.run(async (ctx) => ctx.db.query("tradeReveals").collect());
 
-/** The single-exchange detail view as `who` sees it. */
-const detail = async (t: T, who: string, exchangeId: string) =>
-  as(t, who).query(api.exchange.getExchangeById.getExchangeById, {
-    exchangeId: await docIdOf(t, exchangeId),
-  });
+/** One exchange as `who` sees it in their own lists; null when they are no party to it. */
+const detail = async (t: T, who: string, exchangeId: string) => {
+  const id = await docIdOf(t, exchangeId);
+  const reader = as(t, who);
+  const [live, history] = await Promise.all([
+    reader.query(api.exchange.listMyLiveExchanges.listMyLiveExchanges, {}),
+    reader.query(api.exchange.listMyExchangeHistory.listMyExchangeHistory, {
+      paginationOpts: { numItems: 50, cursor: null },
+    }),
+  ]);
+  return [...live, ...history.page].find((row) => row._id === id) ?? null;
+};
 
 const exchangeViews = async (t: T, who: string, exchangeId: string) => {
   const reader = as(t, who);
@@ -363,7 +370,7 @@ describe("per-trade reveal: the requester sees the owner only after the owner ac
     expect(views.detail?.requesterState).toBe("visible");
     expect(views.detail?.requester?._id).toBe(w.requester);
     expect(views.detail).not.toHaveProperty("recipientId");
-    expect(views.detail?.ownerPuzzle).not.toHaveProperty("ownerId");
+    expect(views.detail?.requestedOwnedPuzzle).not.toHaveProperty("ownerId");
     expect(views.list[0]!.owner).toBeNull();
     expect(views.list[0]!.ownerState).toBe("hidden");
     const json = JSON.stringify(views);
@@ -381,7 +388,7 @@ describe("per-trade reveal: the requester sees the owner only after the owner ac
     expect(view?.ownerState).toBe("tradeRevealed");
     expect(Object.keys(view!.owner!).sort()).toEqual(TRIMMED_KEYS);
     expect(view?.recipientId).toBe(w.owner);
-    expect(view?.ownerPuzzle?.ownerId).toBe(w.owner);
+    expect(view?.requestedOwnedPuzzle?.ownerId).toBe(w.owner);
     expect(await tradeReveals(t)).toMatchObject([{ reason: "accepted" }]);
     const accepted = await notificationOf(t, "requester", "trade_accepted");
     expect(accepted?.actors[0]).toMatchObject({

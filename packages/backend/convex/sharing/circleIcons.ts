@@ -42,8 +42,6 @@ export const CIRCLE_ICON_TYPES: readonly string[] = [
 ];
 /** The largest icon upload accepted. */
 export const CIRCLE_ICON_MAX_BYTES = 10 * 1024 * 1024;
-/** An upload must be claimed within this long of its creation. */
-export const CIRCLE_ICON_CLAIM_WINDOW_MS = 15 * 60_000;
 
 // Rows read per circle: the current icon, a newer upload in check, and kept quarantined rows.
 const ICON_ROWS_READ = 20;

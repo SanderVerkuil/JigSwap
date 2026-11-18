@@ -8,8 +8,7 @@ import {
   asImage,
   releaseEvidenceHold,
 } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { makeNotify } from "../notifications/adapters/makeNotify";
 import { photoCommentByTargetId } from "../reports/fileReport";
 import { scheduleReportRetention } from "../reports/retention";
@@ -62,8 +61,7 @@ export const decideReport = mutation({
     statementOfReasons: v.string(),
   },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
 
     const report = await ctx.db.get(args.reportId);
     if (!report) {

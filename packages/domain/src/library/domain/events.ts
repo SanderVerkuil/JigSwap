@@ -5,7 +5,6 @@ import {
   CopyId,
   LoanId,
   OwnerId,
-  PersonalCategoryId,
   PuzzleDefinitionId,
 } from "./ids";
 
@@ -213,16 +212,6 @@ export class CollectionDeleted implements DomainEvent {
   ) {}
 }
 
-export class PersonalCategoryCreated implements DomainEvent {
-  readonly name = "PersonalCategoryCreated";
-  constructor(
-    readonly categoryId: PersonalCategoryId,
-    readonly ownerId: OwnerId,
-    readonly categoryName: string,
-    readonly occurredAt: Date,
-  ) {}
-}
-
 export type LibraryDomainEvent =
   | CopyAcquired
   | CopyConditionChanged
@@ -242,5 +231,4 @@ export type LibraryDomainEvent =
   | CopyRemovedFromCollection
   | PuzzleWished
   | PuzzleUnwished
-  | CollectionDeleted
-  | PersonalCategoryCreated;
+  | CollectionDeleted;

@@ -6,7 +6,9 @@ import { readCsamHashCheckConfig } from "./csamHashCheck";
 import { isWaivedHashRecheckCandidate } from "./hashCheckFields";
 import { enqueueWaivedHashRecheck } from "./hashRecheckPool";
 import {
+  MODERATION_TABLES,
   moderationTableValidator,
+  TABLE_NAME,
   type ModerationTable,
 } from "./moderationPool";
 
@@ -40,14 +42,6 @@ import {
 // "imageModeration.recheckWaivedHashes") per page, the last with `done: true`. Each re-check logs
 // its own `<table event>.hashRecheck` event.
 
-const TABLES: readonly ModerationTable[] = [
-  "copy",
-  "completion",
-  "boxArt",
-  "message",
-  "circleIcon",
-];
-
 const totalsValidator = v.object({
   scanned: v.number(),
   waived: v.number(),
@@ -68,20 +62,7 @@ const candidatePage = async (
   table: ModerationTable,
   paginationOpts: { numItems: number; cursor: string | null },
 ): Promise<CandidatePage> => {
-  const page = await (() => {
-    switch (table) {
-      case "copy":
-        return ctx.db.query("ownedPuzzleImages").paginate(paginationOpts);
-      case "completion":
-        return ctx.db.query("completionImages").paginate(paginationOpts);
-      case "boxArt":
-        return ctx.db.query("boxArtUploads").paginate(paginationOpts);
-      case "message":
-        return ctx.db.query("messageAttachments").paginate(paginationOpts);
-      case "circleIcon":
-        return ctx.db.query("circleIcons").paginate(paginationOpts);
-    }
-  })();
+  const page = await ctx.db.query(TABLE_NAME[table]).paginate(paginationOpts);
   const ids: string[] = [];
   for (const row of page.page) {
     // (A shared location is not a photo.)
@@ -117,7 +98,7 @@ export const recheckWaivedHashes = internalMutation({
         `CSAM hash check not configured (${hashConfig.status}): nothing to check against`,
       );
     }
-    const table = args.current ?? args.table ?? TABLES[0];
+    const table = args.current ?? args.table ?? MODERATION_TABLES[0];
     const page = await candidatePage(ctx, table, {
       numItems: batchSize,
       cursor: args.cursor ?? null,
@@ -142,7 +123,9 @@ export const recheckWaivedHashes = internalMutation({
       enqueued: prior.enqueued + batch.enqueued,
     };
     const nextTable =
-      args.table === undefined ? TABLES[TABLES.indexOf(table) + 1] : undefined;
+      args.table === undefined
+        ? MODERATION_TABLES[MODERATION_TABLES.indexOf(table) + 1]
+        : undefined;
     const done = page.isDone && nextTable === undefined;
     logEvent({
       event: "imageModeration.recheckWaivedHashes",

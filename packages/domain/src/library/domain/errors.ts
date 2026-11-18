@@ -178,7 +178,7 @@ export class LibraryError extends DomainError {
     );
   }
 
-  // A collection, category or copy text is longer than its bound (LIBRARY_TEXT_LIMITS).
+  // A collection or copy text is longer than its bound (LIBRARY_TEXT_LIMITS).
   static textTooLong(field: LibraryTextField, max: number): LibraryError {
     return new LibraryError(
       "TextTooLong",

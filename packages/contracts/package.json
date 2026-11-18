@@ -9,8 +9,5 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "lint": "oxlint --type-aware ."
-  },
-  "dependencies": {
-    "zod": "^4.6.7"
   }
 }

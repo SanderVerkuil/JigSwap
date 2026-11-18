@@ -2,8 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { MESSAGE_PHOTO_LABEL } from "../conversation/messageAttachments";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { boxArtTitle } from "../lib/imageModeration/boxArtReferences";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { CIRCLE_ICON_LABEL } from "../sharing/circleIconModerationStore";
@@ -66,8 +65,7 @@ export const recheckPhoto = mutation({
     imageId: v.string(),
   },
   handler: async (ctx, { source, imageId }) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
 
     if (source === "copy") {
       const id = ctx.db.normalizeId("ownedPuzzleImages", imageId);

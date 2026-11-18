@@ -1,9 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
-import { ConvexError } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { paginateBounded } from "../lib/pageSize";
 import schema from "../schema";
 import { adminLabelOf, reportsAgainst, targetSummaryOf } from "./reportViews";
@@ -22,8 +20,7 @@ export const listReports = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const result = await paginateBounded(
       ctx.db

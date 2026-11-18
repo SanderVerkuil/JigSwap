@@ -1,4 +1,3 @@
-import { ConvexError } from "convex/values";
 import { createTranslator } from "use-intl";
 import { describe, expect, it } from "vitest";
 import enMessages from "../../../locales/en.json";
@@ -7,7 +6,6 @@ import sourceMessages from "../../../locales/source.json";
 import type { AnyInboxThread, InboxThread, Translator } from "./format";
 import {
   contextCopyHref,
-  conversationErrorCode,
   copyOwnerHint,
   countOthersAfter,
   coverStackSummary,
@@ -34,18 +32,6 @@ const t = (key: string, values?: Record<string, string | number>) =>
 // Stand-in for useMemberDisplayName: the name, or a marker for the generic label.
 const displayName = (source: { name?: string | null }) =>
   source.name ?? "generic";
-
-describe("conversationErrorCode", () => {
-  it("extracts the code from a ConvexError carrying one", () => {
-    expect(
-      conversationErrorCode(new ConvexError({ code: "MessageTooLong" })),
-    ).toBe("MessageTooLong");
-  });
-
-  it("yields nothing for a non-ConvexError rejection", () => {
-    expect(conversationErrorCode(new Error("boom"))).toBeUndefined();
-  });
-});
 
 describe("formatUnreadCount", () => {
   it("renders counts below the cap verbatim", () => {

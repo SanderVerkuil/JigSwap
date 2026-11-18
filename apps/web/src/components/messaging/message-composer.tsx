@@ -11,12 +11,12 @@
 // pattern — see use-favorites); Convex replaces the local patch when the
 // server result streams back, so pending messages clear themselves. Layout per the message-center redesign spec §7.
 import { useCurrentMember } from "@/components/dashboard-home/use-current-member";
-import { conversationErrorCode } from "@/components/messaging/format";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway, type Id } from "@/gateway";
 import { useCoarsePointer } from "@/hooks/use-coarse-pointer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { PHOTO_ACCEPT } from "@/lib/prepare-photo";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -194,7 +194,7 @@ export function MessageComposer({
       staging.clear();
     } catch (err) {
       setBody((current) => current || caption);
-      const code = conversationErrorCode(err);
+      const code = convexErrorCode(err);
       if (code === "CannotReply" || code === "NotConnected") {
         setClosedThreadId(threadId);
         return;
@@ -234,7 +234,7 @@ export function MessageComposer({
     } catch (err) {
       // Give the text back unless the user already started typing a new one.
       setBody((current) => current || trimmed);
-      const code = conversationErrorCode(err);
+      const code = convexErrorCode(err);
       if (code === "CannotReply" || code === "NotConnected") {
         setClosedThreadId(threadId);
         return;

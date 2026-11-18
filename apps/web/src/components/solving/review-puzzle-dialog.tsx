@@ -13,13 +13,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solvingErrorCode } from "./solving-error";
 
 type MyReviews = FunctionReturnType<typeof gateway.solving.getMyReviews>;
 
@@ -141,7 +141,7 @@ function ReviewForm({
     } catch (error) {
       console.error("Failed to save review:", error);
       // A review stored before the length cap can be longer than the field allows: say why.
-      const code = solvingErrorCode(error);
+      const code = convexErrorCode(error);
       toast.error(
         code === "RateLimited"
           ? t("rateLimited")

@@ -118,15 +118,6 @@ const catalogCard = async (t: T) => {
   return result.page[0];
 };
 
-const plankBox = async (t: T) => {
-  const result = await t.query(api.insights.getPlankPuzzles.getPlankPuzzles, {
-    limit: 12,
-    seed: 1,
-  });
-  expect(result).toHaveLength(1);
-  return result[0];
-};
-
 const SERVED = [
   ["not listed (legacy)", null],
   ["listed before box art was moderated", {}],
@@ -244,60 +235,6 @@ describe("public catalogue cards: imageSrcSet", () => {
       }),
     );
     expect(raw).toContain("480w");
-    for (const id of [image, small!, medium!, large!]) {
-      expect(raw).not.toContain(id);
-    }
-  });
-});
-
-describe("landing plank: thumbUrl", () => {
-  test.each(SERVED)(
-    "served box art with renditions: %s",
-    async (_n, listing) => {
-      const t = convexTest(schema, modules);
-      const { image, small } = await seed(t, listing, "all");
-
-      const box = await plankBox(t);
-      expect(box.image).toBe(await urlOf(t, image));
-      expect(box.thumbUrl).toBe(await urlOf(t, small!));
-    },
-  );
-
-  test.each(NOT_SERVED)(
-    "box art the gate withholds has no image and no thumbUrl, even with renditions: %s",
-    async (_n, listing) => {
-      const t = convexTest(schema, modules);
-      await seed(t, listing, "all");
-
-      const box = await plankBox(t);
-      expect(box.image).toBeNull();
-      expect(box).not.toHaveProperty("thumbUrl");
-    },
-  );
-
-  test("before the backfill the plank box carries the original only", async () => {
-    const t = convexTest(schema, modules);
-    const { image } = await seed(t, null, "none");
-
-    const box = await plankBox(t);
-    expect(box).toEqual({
-      title: "Mountain Vista",
-      pieceCount: 1000,
-      image: await urlOf(t, image),
-    });
-  });
-
-  test("the response carries URLs only, never a source or rendition storage id", async () => {
-    const t = convexTest(schema, modules);
-    const { image, small, medium, large } = await seed(t, null, "all");
-
-    const raw = JSON.stringify(
-      await t.query(api.insights.getPlankPuzzles.getPlankPuzzles, {
-        limit: 12,
-        seed: 1,
-      }),
-    );
-    expect(raw).toContain("thumbUrl");
     for (const id of [image, small!, medium!, large!]) {
       expect(raw).not.toContain(id);
     }

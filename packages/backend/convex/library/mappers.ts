@@ -2,8 +2,6 @@ import type {
   CollectionDetailView,
   CollectionMembershipView,
   CollectionView,
-  OwnedCopyCompletionView,
-  OwnedCopyImageView,
   OwnedCopyOwnerView,
   OwnedCopyPuzzleView,
   OwnedCopyView,
@@ -191,48 +189,6 @@ export const toPublicCopyView = (
   });
   return rest;
 };
-
-/**
- * A stored image row for an owned copy, with the URL the caller resolved for it (null when it may
- * not be served). Never the row's `fileId`: a raw storage id is not a URL and must not reach
- * clients (SEC-01).
- */
-export const toOwnedCopyImageView = (
-  row: Doc<"ownedPuzzleImages">,
-  url: string | null,
-): OwnedCopyImageView => ({
-  _id: row._id,
-  _creationTime: row._creationTime,
-  ownedPuzzleId: row.ownedPuzzleId,
-  uploaderId: row.uploaderId,
-  url,
-  title: row.title,
-  description: row.description,
-  tag: row.tag,
-  takenAt: row.takenAt,
-  createdAt: row.createdAt,
-  updatedAt: row.updatedAt,
-});
-
-/** A completion record joined into the copy-detail view, without its photos' storage ids. */
-export const toOwnedCopyCompletionView = (
-  row: Doc<"completions">,
-): OwnedCopyCompletionView => ({
-  _id: row._id,
-  _creationTime: row._creationTime,
-  aggregateId: row.aggregateId,
-  userId: row.userId,
-  puzzleId: row.puzzleId,
-  ownedPuzzleId: row.ownedPuzzleId,
-  startDate: row.startDate,
-  endDate: row.endDate,
-  completionTimeMinutes: row.completionTimeMinutes,
-  datePrecision: row.datePrecision,
-  notes: row.notes,
-  isCompleted: row.isCompleted,
-  createdAt: row.createdAt,
-  updatedAt: row.updatedAt,
-});
 
 /**
  * The bare collection row (no derived count) for the contains-copy read.

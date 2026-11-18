@@ -10,9 +10,9 @@ import { LazyImageEditorDialog } from "@/components/image-editor/lazy-image-edit
 import { CircleThreadAvatar } from "@/components/messaging/circle-thread-avatar";
 import { Button } from "@/components/ui/button";
 import { gateway, type Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useConvexMutation } from "@convex-dev/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { ConvexError } from "convex/values";
 import { Clock, ImagePlus, Trash2, X } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -28,11 +28,9 @@ const REFUSAL_KEY = {
 } as const;
 
 const errorKey = (error: unknown): string => {
-  if (error instanceof ConvexError) {
-    const code = (error.data as { code?: unknown } | undefined)?.code;
-    if (code === "RateLimited") return "icon.rateLimited";
-  }
-  return "icon.failed";
+  return convexErrorCode(error) === "RateLimited"
+    ? "icon.rateLimited"
+    : "icon.failed";
 };
 
 /**

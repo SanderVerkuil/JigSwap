@@ -149,7 +149,7 @@ const renderPicker = ({
     },
   });
   queryClient.setQueryData(
-    convexQuery(gateway.identity.byClerkId, { clerkId: "clerk_me" }).queryKey,
+    convexQuery(gateway.identity.currentUser, {}).queryKey,
     { _id: ME },
   );
   if (shown !== "unreadable") {

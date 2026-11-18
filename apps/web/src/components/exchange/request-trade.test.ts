@@ -1,4 +1,3 @@
-import { convexErrorCode as sharedConvexErrorCode } from "@/lib/convex-error-code";
 import { ConvexError } from "convex/values";
 import { ArrowLeftRight, Package, Tag } from "lucide-react";
 import { describe, expect, it } from "vitest";
@@ -7,7 +6,6 @@ import nl from "../../../locales/nl.json";
 import {
   allowedProposeTypes,
   canRequestTrade,
-  convexErrorCode,
   parsePriceCents,
   proposeErrorKey,
   REQUEST_ACTION_ICONS,
@@ -163,15 +161,6 @@ describe("parsePriceCents", () => {
     expect(parsePriceCents("-3")).toBeUndefined();
     expect(parsePriceCents("abc")).toBeUndefined();
     expect(parsePriceCents("1.234")).toBeUndefined();
-  });
-});
-
-describe("convexErrorCode re-export", () => {
-  it("is the shared lib helper, so imports from this module keep working", () => {
-    expect(convexErrorCode).toBe(sharedConvexErrorCode);
-    expect(convexErrorCode(new ConvexError({ code: "CopyNotFound" }))).toBe(
-      "CopyNotFound",
-    );
   });
 });
 

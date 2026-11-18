@@ -5,8 +5,7 @@ import {
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { toAuditEntry } from "./auditEntry";
 
 // Admin read model for ONE member: full profile (email + clerkId — admin-only by
@@ -45,8 +44,7 @@ const receivedActions = async (
 export const getUserDetail = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }): Promise<AdminUserDetailView> => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const user = await ctx.db.get(userId);
     if (!user) throw new ConvexError("User not found");

@@ -16,7 +16,7 @@ import { useReportSurfaceBusy } from "@/components/whats-new/surface-busy";
 import { gateway, type Id } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
-import { rateLimitedRetryAt } from "@/lib/convex-error-code";
+import { convexErrorCode, rateLimitedRetryAt } from "@/lib/convex-error-code";
 import { preparePhoto } from "@/lib/prepare-photo";
 import { isUploadRateLimited, mintUploadUrl } from "@/lib/upload-rate-limit";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solvingErrorCode } from "./solving-error";
 import { TwoLevelReviewFields } from "./two-level-review-fields";
 
 // What a solve dialog hands over after a completed save: the domain aggregate id (photo attach
@@ -338,7 +337,7 @@ export function CompletionFollowUpProvider({
       closeAndReset();
     } catch (error) {
       console.error("Failed to save completion follow-up:", error);
-      const code = solvingErrorCode(error);
+      const code = convexErrorCode(error);
       // The server only takes a fresh upload once (expired after 15 minutes, or refused): drop
       // the storageIds and mark the photos failed, so Retry uploads them again.
       if (code === "UploadExpired" || code === "InvalidUpload") {

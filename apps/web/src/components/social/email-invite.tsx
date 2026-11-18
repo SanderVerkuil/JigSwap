@@ -18,10 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gateway } from "@/gateway";
 import { useRelativeTime } from "@/hooks/use-relative-time";
+import { convexErrorCode, convexRetryAfterMs } from "@/lib/convex-error-code";
 import { convexQuery, useConvexAction } from "@convex-dev/react-query";
 import type { EmailInviteKind, EmailInviteView } from "@jigswap/contracts";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ConvexError } from "convex/values";
 import { Mail, Undo2 } from "lucide-react";
 import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -40,19 +40,14 @@ export function emailInviteError(
   error: unknown,
   now: number,
 ): EmailInviteError {
-  if (error instanceof ConvexError) {
-    const data = error.data as
-      { code?: unknown; retryAfterMs?: unknown } | undefined;
-    if (data?.code === "InvalidEmail") return { kind: "invalidEmail" };
-    if (data?.code === "RateLimited" && typeof data.retryAfterMs === "number") {
-      return { kind: "rateLimited", retryAt: now + data.retryAfterMs };
-    }
-    if (
-      data?.code === "EmailInvitesBusy" &&
-      typeof data.retryAfterMs === "number"
-    ) {
-      return { kind: "busy", retryAt: now + data.retryAfterMs };
-    }
+  const code = convexErrorCode(error);
+  const wait = convexRetryAfterMs(error);
+  if (code === "InvalidEmail") return { kind: "invalidEmail" };
+  if (code === "RateLimited" && wait !== undefined) {
+    return { kind: "rateLimited", retryAt: now + wait };
+  }
+  if (code === "EmailInvitesBusy" && wait !== undefined) {
+    return { kind: "busy", retryAt: now + wait };
   }
   return { kind: "generic" };
 }

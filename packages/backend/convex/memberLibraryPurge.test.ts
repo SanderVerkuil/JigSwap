@@ -745,20 +745,15 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
     // Her photo of it is gone.
     expect(view!.gallery).toEqual([]);
 
-    const timeline = await as(t, "bob").query(
-      api.custody.getCopyCustodyTimeline.getCopyCustodyTimeline,
-      { copyId: s.sold },
-    );
-    expect(timeline!.originalOwner).toMatchObject(DEPARTED);
-    expect(timeline!.originalOwner).not.toHaveProperty("member");
-    expect(timeline!.transfers).toHaveLength(1);
-    expect(timeline!.currentOwner).toMatchObject({ anonymous: false });
+    expect(view!.owner).toMatchObject({ anonymous: false });
 
     // The settled trade still opens for Bob.
-    const exchange = await as(t, "bob").query(
-      api.exchange.getExchangeById.getExchangeById,
-      { exchangeId: await exchangeRowId(t, s.exchangeId) },
-    );
+    const exchange = (
+      await as(t, "bob").query(
+        api.exchange.listMyExchangeHistory.listMyExchangeHistory,
+        { paginationOpts: { numItems: 10, cursor: null } },
+      )
+    ).page.find((row) => row.aggregateId === s.exchangeId);
     expect(exchange?.status).toBe("completed");
   });
 
@@ -901,17 +896,14 @@ describe("account deletion: a copy she sold stays whole; her own library goes", 
     );
     await deleteMember(t, "alice");
 
-    const view = await as(t, "bob").query(
-      api.exchange.getExchangeById.getExchangeById,
-      { exchangeId: await exchangeRowId(t, exchangeId) },
-    );
-    expect(view?.status).toBe("cancelled");
-    expect(view?.ownerPuzzle).toBeNull();
     const history = await as(t, "bob").query(
       api.exchange.listMyExchangeHistory.listMyExchangeHistory,
       { paginationOpts: { numItems: 10, cursor: null } },
     );
     expect(history.page.map((e) => e.aggregateId)).toContain(exchangeId);
+    const view = history.page.find((row) => row.aggregateId === exchangeId);
+    expect(view?.status).toBe("cancelled");
+    expect(view?.requestedOwnedPuzzle).toBeNull();
   });
 });
 

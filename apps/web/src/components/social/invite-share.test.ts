@@ -78,3 +78,13 @@ describe("inviteLinkErrorKey", () => {
     expect(inviteLinkErrorKey(new Error("network"))).toBe("createFailed");
   });
 });
+
+describe("inviteLinkErrorKey with JSON-encoded refusal data", () => {
+  it("reads the code like the shared helper does", () => {
+    expect(
+      inviteLinkErrorKey(
+        new ConvexError(JSON.stringify({ code: "invite_rate_limited" })),
+      ),
+    ).toBe("rateLimited");
+  });
+});

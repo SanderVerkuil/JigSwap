@@ -2,12 +2,10 @@ import {
   makeSetCatalogCategoryActive,
   toCatalogCategoryId,
 } from "@jigswap/domain";
-import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { convexCatalogCategoryRepository } from "./adapters/convexCatalogCategoryRepository";
 import { catalogEventPublisher } from "./adapters/eventPublisher";
 import { systemClock } from "./adapters/systemClock";
@@ -19,8 +17,7 @@ import { toConvexError } from "./errors";
 export const setCatalogCategoryActive = mutation({
   args: { catalogCategoryId: v.string(), isActive: v.boolean() },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
     const before = await ctx.db
       .query("adminCategories")
       .withIndex("by_aggregate_id", (q) =>

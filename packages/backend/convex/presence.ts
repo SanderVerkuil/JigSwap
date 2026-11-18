@@ -2,7 +2,7 @@ import { Presence } from "@convex-dev/presence";
 import { ConvexError, v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query, type MutationCtx } from "./_generated/server";
-import { requireActiveMember } from "./identity/requireActiveMember";
+import { requireMember } from "./identity/requireMember";
 import { logEvent } from "./lib/logEvent";
 import { enforceRateLimit } from "./lib/rateLimits";
 
@@ -62,7 +62,7 @@ export const heartbeat = mutation({
     interval: v.number(),
   },
   handler: async (ctx, { roomId, userId, sessionId, interval }) => {
-    const memberId = await requireActiveMember(ctx);
+    const memberId = await requireMember(ctx);
     if (!PRESENCE_ROOMS.includes(roomId))
       throw new ConvexError("Unknown presence room");
     if (userId !== (memberId as string))

@@ -36,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { cn } from "@/lib/utils";
 import { useConvexAction, useConvexMutation } from "@convex-dev/react-query";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
@@ -53,7 +54,6 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslations } from "use-intl";
-import { conversationErrorCode } from "./format";
 import {
   clampZoom,
   coarsen,
@@ -267,9 +267,7 @@ export function LocationPickerBody({
   });
   // The view the shown image was rendered for (a tap maps against it).
   const view = map.data;
-  const mapErrorCode = map.isError
-    ? conversationErrorCode(map.error)
-    : undefined;
+  const mapErrorCode = map.isError ? convexErrorCode(map.error) : undefined;
   const mapUnavailable = mapErrorCode === "LocationUnavailable";
   // Refused by the member's own picker limit: say so rather than "can't be shown".
   const mapError =
@@ -332,7 +330,7 @@ export function LocationPickerBody({
       });
       onSent();
     } catch (err) {
-      const code = conversationErrorCode(err);
+      const code = convexErrorCode(err);
       if (code === "CannotReply" || code === "NotConnected") {
         onCannotReply();
         return;
@@ -380,7 +378,7 @@ export function LocationPickerBody({
             search.length < MIN_QUERY_LENGTH
               ? "idle"
               : results.isError
-                ? conversationErrorCode(results.error) === "RateLimited"
+                ? convexErrorCode(results.error) === "RateLimited"
                   ? "rateLimited"
                   : "error"
                 : results.data

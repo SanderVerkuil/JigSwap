@@ -68,6 +68,12 @@ const as = (t: T, who: "ann" | "bob") =>
 const stateOf = (t: T, who: "ann" | "bob") =>
   as(t, who).query(api.whatsNew.getWhatsNewState.getWhatsNewState, {});
 
+// Marks every entry of the fixture manifest seen (what visiting /whats-new does through the web).
+const markEverything = (t: T, who: "ann" | "bob") =>
+  as(t, who).mutation(api.whatsNew.markWhatsNewSeen.markWhatsNewSeen, {
+    ids: ["new", "mid"],
+  });
+
 const seenRows = (t: T, memberId: Id<"users">) =>
   t.run((ctx) =>
     ctx.db
@@ -101,9 +107,6 @@ describe("whatsNew: authentication", () => {
       t.mutation(api.whatsNew.markWhatsNewSeen.markWhatsNewSeen, {
         ids: ["new"],
       }),
-    ).rejects.toThrow(/Unauthenticated/);
-    await expect(
-      t.mutation(api.whatsNew.markAllSeen.markAllSeen, {}),
     ).rejects.toThrow(/Unauthenticated/);
     await expect(
       t.mutation(api.whatsNew.recordTourProgress.recordTourProgress, {
@@ -142,19 +145,19 @@ describe("whatsNew: unread", () => {
     expect((await stateOf(t, "ann")).unreadIds).toEqual(["new"]);
   });
 
-  test("markAllSeen clears every unread entry", async () => {
+  test("marking every entry clears every unread entry", async () => {
     const t = convexTest(schema, modules);
     const { ann } = await seed(t);
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "ann");
     expect((await stateOf(t, "ann")).unreadIds).toEqual([]);
     // Only entries that were unread are stored; the pre-account OLD is read by definition.
     expect((await seenRows(t, ann))[0].seenEntryIds).toEqual(["new", "mid"]);
   });
 
-  test("a newly published entry is unread after markAllSeen", async () => {
+  test("a newly published entry is unread after marking every entry", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "ann");
     const NEWER = { ...NEW, id: "newer", publishedAt: day("2026-10-25") };
     fixture.manifest = [NEWER, NEW, MID, OLD];
     expect((await stateOf(t, "ann")).unreadIds).toEqual(["newer"]);
@@ -169,8 +172,8 @@ describe("whatsNew: unread", () => {
       });
     await mark(["mid", "mid"]);
     await mark(["mid"]);
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "ann");
+    await markEverything(t, "ann");
     await mark(["new", "mid"]);
     const rows = await seenRows(t, ann);
     expect(rows).toHaveLength(1);
@@ -204,7 +207,7 @@ describe("whatsNew: unread", () => {
   test("ids that left the manifest are pruned on the next write", async () => {
     const t = convexTest(schema, modules);
     const { ann } = await seed(t);
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "ann");
     fixture.manifest = [NEW, OLD]; // MID removed
     await as(t, "ann").mutation(
       api.whatsNew.markWhatsNewSeen.markWhatsNewSeen,
@@ -217,7 +220,7 @@ describe("whatsNew: unread", () => {
     const t = convexTest(schema, modules);
     const { ann, bob } = await seed(t);
     // Bob marks Ann-relevant ids: he has nothing unread, so nothing is stored for anyone.
-    await as(t, "bob").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "bob");
     await as(t, "bob").mutation(
       api.whatsNew.markWhatsNewSeen.markWhatsNewSeen,
       { ids: ["new", "mid"] },
@@ -228,7 +231,7 @@ describe("whatsNew: unread", () => {
     ).toEqual([]);
     expect(await seenRows(t, bob)).toEqual([]);
 
-    await as(t, "ann").mutation(api.whatsNew.markAllSeen.markAllSeen, {});
+    await markEverything(t, "ann");
     const rows = await t.run((ctx) =>
       ctx.db.query("whatsNewReadStates").collect(),
     );

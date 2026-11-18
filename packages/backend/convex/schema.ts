@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { hashCheckFields } from "./lib/imageModeration/hashCheckFields";
+import { notificationTypeValidator } from "./notifications/preferenceValidators";
 
 // A circle thread's join/leave fact (threadMessages.systemEvent and its lastMessage summary).
 // There is deliberately no "removed" kind and no remover: removal and leaving render alike.
@@ -1459,46 +1460,7 @@ export default defineSchema({
     // path sets+uses it (backfill stamps legacy rows). The repository keys saves on it.
     aggregateId: v.optional(v.string()),
     userId: v.id("users"),
-    type: v.union(
-      v.literal("trade_request"),
-      v.literal("trade_accepted"),
-      v.literal("trade_declined"),
-      v.literal("trade_completed"),
-      v.literal("trade_cancelled"),
-      v.literal("trade_cancelled_member_deleted"),
-      v.literal("loan_closed_member_deleted"),
-      v.literal("message_received"),
-      v.literal("review_received"),
-      v.literal("puzzle_favorited"),
-      // New literals the other contexts now emit (see domain NotificationType).
-      v.literal("goal_achieved"),
-      v.literal("puzzle_approved"),
-      v.literal("puzzle_rejected"),
-      v.literal("photo_removed"),
-      v.literal("exchange_proposed"),
-      v.literal("exchange_disputed"),
-      v.literal("proposal_approved"),
-      v.literal("proposal_rejected"),
-      v.literal("admin_proposal_filed"),
-      v.literal("admin_definition_submitted"),
-      v.literal("new_follower"),
-      v.literal("follow_request_received"),
-      v.literal("follow_request_approved"),
-      v.literal("household_invite_received"),
-      v.literal("household_invite_accepted"),
-      v.literal("household_join_request_received"),
-      v.literal("household_join_request_approved"),
-      v.literal("connection_offer_received"),
-      v.literal("circle_invite_received"),
-      v.literal("circle_invite_accepted"),
-      v.literal("circle_deleted"),
-      v.literal("circle_message_received"),
-      v.literal("whats_new"),
-      v.literal("report_decided"),
-      v.literal("content_removed"),
-      v.literal("member_warned"),
-      v.literal("message_image_rejected"),
-    ),
+    type: notificationTypeValidator,
     // Legacy pre-rendered English copy. Optional since notifications went structured: new rows
     // store `params` and the edges render copy (web via i18n keys, email via @jigswap/email).
     title: v.optional(v.string()),

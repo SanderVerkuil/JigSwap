@@ -49,22 +49,6 @@ export type ExchangePartyState =
   "visible" | "tradeRevealed" | "hidden" | "departed";
 
 /**
- * Single-exchange detail (legacy `getExchangeById`). The puzzle joins resolve to the OWNED copies
- * (the legacy names `ownerPuzzle`/`requesterPuzzle` were the requested/offered owned copies, not
- * the catalog definition); preserved verbatim.
- */
-export interface ExchangeView extends ExchangeFields {
-  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
-  requester: MemberView | null;
-  /** null when hidden or departed; trimmed when tradeRevealed (see {@link ExchangePartyState}). */
-  owner: MemberView | null;
-  requesterState: ExchangePartyState;
-  ownerState: ExchangePartyState;
-  ownerPuzzle: ExchangeOwnedPuzzleView | null;
-  requesterPuzzle: ExchangeOwnedPuzzleView | null;
-}
-
-/**
  * A list-item exchange, as the Exchanges page lists it (`listMyLiveExchanges`,
  * `listMyExchangeHistory`, `getMyExchangeSummary`). Carries both the owned copies and their catalog
  * definitions. `userRole` is the viewer's side of the exchange.

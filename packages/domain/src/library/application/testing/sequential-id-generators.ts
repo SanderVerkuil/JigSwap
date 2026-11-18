@@ -1,18 +1,12 @@
-import {
-  toCollectionId,
-  toCopyId,
-  toLoanId,
-  toPersonalCategoryId,
-} from "../../../shared-kernel";
-import { CollectionId, CopyId, LoanId, PersonalCategoryId } from "../../domain";
+import { toCollectionId, toCopyId, toLoanId } from "../../../shared-kernel";
+import { CollectionId, CopyId, LoanId } from "../../domain";
 import {
   CollectionIdGenerator,
   CopyIdGenerator,
   LoanIdGenerator,
-  PersonalCategoryIdGenerator,
 } from "../ports/out/id-generators";
 
-// Deterministic id generators for tests: copy-1, collection-1, category-1, ...
+// Deterministic id generators for tests: copy-1, collection-1, ...
 export class SequentialCopyIdGenerator implements CopyIdGenerator {
   private counter = 0;
 
@@ -28,15 +22,6 @@ export class SequentialCollectionIdGenerator implements CollectionIdGenerator {
   next(): CollectionId {
     this.counter += 1;
     return toCollectionId(`collection-${this.counter}`);
-  }
-}
-
-export class SequentialPersonalCategoryIdGenerator implements PersonalCategoryIdGenerator {
-  private counter = 0;
-
-  next(): PersonalCategoryId {
-    this.counter += 1;
-    return toPersonalCategoryId(`category-${this.counter}`);
   }
 }
 

@@ -1,6 +1,10 @@
 import { internalQuery, type QueryCtx } from "../../_generated/server";
 import { recheckStateOf } from "./hashRecheckPool";
-import type { ModerationTable } from "./moderationPool";
+import {
+  MODERATION_TABLES,
+  TABLE_NAME,
+  type ModerationTable,
+} from "./moderationPool";
 
 // The database side of the moderation queue-depth log (lib/imageModeration/queueDepth, every 15
 // minutes from crons.ts). Per moderated table it reads:
@@ -15,14 +19,6 @@ import type { ModerationTable } from "./moderationPool";
 
 /** Rows read per table and per index; a count that reaches it is reported as capped. */
 export const QUEUE_DEPTH_SCAN_CAP = 500;
-
-const TABLES: readonly ModerationTable[] = [
-  "copy",
-  "completion",
-  "boxArt",
-  "message",
-  "circleIcon",
-];
 
 export type ModerationQueueDepth = {
   table: ModerationTable;
@@ -48,79 +44,26 @@ const readTable = async (
   ctx: QueryCtx,
   table: ModerationTable,
 ): Promise<TableRows> => {
-  switch (table) {
-    case "copy":
-    case "completion": {
-      const name = table === "copy" ? "ownedPuzzleImages" : "completionImages";
-      const pending = await ctx.db
-        .query(name)
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending"),
-        )
-        .take(take);
-      const hashRows = await ctx.db
-        .query(name)
-        .withIndex("by_hash_check_pending", (q) =>
-          q.gt("hashCheckPendingSince", 0),
-        )
-        .take(take);
-      return { pendingSince: pending.map((row) => row.updatedAt), hashRows };
-    }
-    case "boxArt": {
-      const pending = await ctx.db
-        .query("boxArtUploads")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending"),
-        )
-        .take(take);
-      const hashRows = await ctx.db
-        .query("boxArtUploads")
-        .withIndex("by_hash_check_pending", (q) =>
-          q.gt("hashCheckPendingSince", 0),
-        )
-        .take(take);
-      return {
-        pendingSince: pending.map((row) => row.recheckedAt ?? row.createdAt),
-        hashRows,
-      };
-    }
-    case "message": {
-      const pending = await ctx.db
-        .query("messageAttachments")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending"),
-        )
-        .take(take);
-      const hashRows = await ctx.db
-        .query("messageAttachments")
-        .withIndex("by_hash_check_pending", (q) =>
-          q.gt("hashCheckPendingSince", 0),
-        )
-        .take(take);
-      return {
-        pendingSince: pending.map((row) => row.updatedAt),
-        // A shared location has no hash check (never on this index); narrowed for the type.
-        hashRows: hashRows.flatMap((row) =>
-          row.kind === "image" ? [row] : [],
-        ),
-      };
-    }
-    case "circleIcon": {
-      const pending = await ctx.db
-        .query("circleIcons")
-        .withIndex("by_moderation_status", (q) =>
-          q.eq("moderationStatus", "pending"),
-        )
-        .take(take);
-      const hashRows = await ctx.db
-        .query("circleIcons")
-        .withIndex("by_hash_check_pending", (q) =>
-          q.gt("hashCheckPendingSince", 0),
-        )
-        .take(take);
-      return { pendingSince: pending.map((row) => row.updatedAt), hashRows };
-    }
-  }
+  const name = TABLE_NAME[table];
+  const pending = await ctx.db
+    .query(name)
+    .withIndex("by_moderation_status", (q) =>
+      q.eq("moderationStatus", "pending"),
+    )
+    .take(take);
+  const hashRows = await ctx.db
+    .query(name)
+    .withIndex("by_hash_check_pending", (q) => q.gt("hashCheckPendingSince", 0))
+    .take(take);
+  return {
+    pendingSince: pending.map((row) =>
+      "updatedAt" in row ? row.updatedAt : (row.recheckedAt ?? row.createdAt),
+    ),
+    // A shared location has no hash check (never on this index); narrowed for the type.
+    hashRows: hashRows.flatMap((row) =>
+      !("kind" in row) || row.kind === "image" ? [row] : [],
+    ),
+  };
 };
 
 /** The moderation backlog of every moderated table (see the module comment). */
@@ -128,7 +71,7 @@ export const readModerationQueueDepth = internalQuery({
   args: {},
   handler: async (ctx): Promise<ModerationQueueDepth[]> => {
     const depths: ModerationQueueDepth[] = [];
-    for (const table of TABLES) {
+    for (const table of MODERATION_TABLES) {
       const { pendingSince, hashRows } = await readTable(ctx, table);
       const hashWaiting = hashRows.filter(
         (row) => recheckStateOf(row).waiting,

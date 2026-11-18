@@ -405,7 +405,7 @@ describe("profiles", () => {
     const t = convexTest(schema, modules);
     const u = await seed(t);
     await insertBlock(t, u.bob, u.alice);
-    const reads = (who: Who, target: Id<"users">, clerkId: string) =>
+    const reads = (who: Who, target: Id<"users">) =>
       Promise.all([
         as(t, who).query(api.identity.getUserById.getUserById, {
           userId: target,
@@ -413,32 +413,19 @@ describe("profiles", () => {
         as(t, who).query(api.identity.getUserStats.getUserStats, {
           userId: target,
         }),
-        as(t, who).query(api.identity.getUserByClerkId.getUserByClerkId, {
-          clerkId,
-        }),
       ]);
 
     // Alice was blocked by bob: bob reads as not found.
-    expect(await reads("alice", u.bob, "clerk_bob")).toEqual([
-      null,
-      null,
-      null,
-    ]);
+    expect(await reads("alice", u.bob)).toEqual([null, null]);
     // Bob (the blocker) still sees alice; each member still sees themselves.
-    for (const [who, target, clerkId] of [
-      ["bob", u.alice, "clerk_alice"],
-      ["alice", u.alice, "clerk_alice"],
-      ["bob", u.bob, "clerk_bob"],
+    for (const [who, target] of [
+      ["bob", u.alice],
+      ["alice", u.alice],
+      ["bob", u.bob],
     ] as const) {
-      const [member, stats, byClerk] = await reads(who, target, clerkId);
+      const [member, stats] = await reads(who, target);
       expect(member).toMatchObject({ _id: target });
       expect(stats).not.toBeNull();
-      // getUserByClerkId resolves only the caller's own Clerk id (#282).
-      if (clerkId === `clerk_${who}`) {
-        expect(byClerk).toMatchObject({ _id: target });
-      } else {
-        expect(byClerk).toBeNull();
-      }
     }
   });
 

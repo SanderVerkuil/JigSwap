@@ -1,5 +1,5 @@
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   currentSubscriptionEndpoint,
   pushSupported,

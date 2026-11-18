@@ -85,10 +85,7 @@ function CompletionsPage() {
   const isDeleting = deleteCompletion.isPending;
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   // A lean row per solve: what the stats, the order and the year headings need. The full rows are

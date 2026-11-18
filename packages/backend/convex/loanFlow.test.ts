@@ -158,17 +158,17 @@ describe("loan lifecycle", () => {
         {},
       ),
     ).toHaveLength(0);
-    // The history read is auth-gated.
+    // The copy page read is auth-gated.
     await expect(
-      t.query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+      t.query(api.library.getCopyInstanceView.getCopyInstanceView, {
         copyId: copy,
       }),
     ).rejects.toBeInstanceOf(ConvexError);
 
-    const history = await asOwner(t).query(
-      api.library.getCopyLoanHistory.getCopyLoanHistory,
+    const history = (await asOwner(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
-    );
+    ))!.loans;
     expect(history).toHaveLength(1);
     expect(history[0].status).toBe("returned");
     // Both parties are privacy-projected; here both have public (default) profiles so they reveal.
@@ -182,7 +182,7 @@ describe("loan lifecycle", () => {
     }
   });
 
-  test("getCopyLoanHistory returns [] for a non-owner when the copy is unreachable", async () => {
+  test("the copy page (and its loans) is unreachable for a non-owner stranger", async () => {
     const t = convexTest(schema, modules);
     const { copy, owner } = await seed(t);
     await settleLend(t, copy, owner);
@@ -209,19 +209,19 @@ describe("loan lifecycle", () => {
       });
     });
 
-    const history = await t
+    const view = await t
       .withIdentity({ subject: "clerk_stranger" })
-      .query(api.library.getCopyLoanHistory.getCopyLoanHistory, {
+      .query(api.library.getCopyInstanceView.getCopyInstanceView, {
         copyId: copy,
       });
-    expect(history).toEqual([]);
+    expect(view).toBeNull();
 
     // The owner still sees the full history.
-    const ownerHistory = await asOwner(t).query(
-      api.library.getCopyLoanHistory.getCopyLoanHistory,
+    const ownerView = await asOwner(t).query(
+      api.library.getCopyInstanceView.getCopyInstanceView,
       { copyId: copy },
     );
-    expect(ownerHistory).toHaveLength(1);
+    expect(ownerView!.loans).toHaveLength(1);
   });
 
   test("the owner recalls the loan -> possession back to the owner", async () => {

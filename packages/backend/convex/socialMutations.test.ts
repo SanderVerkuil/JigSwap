@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { areMutualFollowers } from "./social/privacy";
 
 // Bundle every Convex module for the in-memory runtime, excluding test files.
 const modules = import.meta.glob(["./**/*.{js,ts}", "!./**/*.test.{js,ts}"]);
@@ -46,12 +47,6 @@ describe("follow / unfollow", () => {
     expect(followResult.kind).toBe("followed");
     expect(typeof followResult.id).toBe("string");
 
-    expect(
-      await asAlice(t).query(api.social.isFollowing.isFollowing, {
-        followeeId: bob,
-      }),
-    ).toBe(true);
-
     const aliceFollowees = await asAlice(t).query(
       api.social.listFollowees.listFollowees,
       {},
@@ -89,30 +84,30 @@ describe("follow / unfollow", () => {
     ).rejects.toThrow(ConvexError);
   });
 
-  test("isFollowing is duplicate-tolerant (compound index + .first, no 500)", async () => {
+  test("the mutual-follow check is duplicate-tolerant (compound index + .first, no 500)", async () => {
     const t = convexTest(schema, modules);
     const { alice, bob } = await seed(t);
 
-    // Two identical (alice -> bob) edges. With the old by_follower scan + .unique()
+    // Two identical (alice -> bob) edges plus bob -> alice. With a by_follower scan + .unique()
     // this would throw; the compound index + .first() must return true cleanly.
     await t.run(async (ctx) => {
+      for (const createdAt of [1, 2]) {
+        await ctx.db.insert("follows", {
+          followerId: alice,
+          followeeId: bob,
+          createdAt,
+        });
+      }
       await ctx.db.insert("follows", {
-        followerId: alice,
-        followeeId: bob,
-        createdAt: 1,
-      });
-      await ctx.db.insert("follows", {
-        followerId: alice,
-        followeeId: bob,
-        createdAt: 2,
+        followerId: bob,
+        followeeId: alice,
+        createdAt: 3,
       });
     });
 
-    expect(
-      await asAlice(t).query(api.social.isFollowing.isFollowing, {
-        followeeId: bob,
-      }),
-    ).toBe(true);
+    expect(await t.run((ctx) => areMutualFollowers(ctx, alice, bob))).toBe(
+      true,
+    );
   });
 
   test("unfollow removes the edge; unfollowing a non-followee is rejected", async () => {
@@ -126,10 +121,10 @@ describe("follow / unfollow", () => {
       followeeId: bob,
     });
     expect(
-      await asAlice(t).query(api.social.isFollowing.isFollowing, {
-        followeeId: bob,
-      }),
-    ).toBe(false);
+      (await asAlice(t).query(api.social.listFollowees.listFollowees, {})).map(
+        (f) => f.memberId,
+      ),
+    ).not.toContain(bob as string);
 
     await expect(
       asAlice(t).mutation(api.social.unfollowMember.unfollowMember, {

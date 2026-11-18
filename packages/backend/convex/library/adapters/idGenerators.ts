@@ -2,15 +2,12 @@ import {
   toCollectionId,
   toCopyId,
   toLoanId,
-  toPersonalCategoryId,
   type CollectionId,
   type CollectionIdGenerator,
   type CopyId,
   type CopyIdGenerator,
   type LoanId,
   type LoanIdGenerator,
-  type PersonalCategoryId,
-  type PersonalCategoryIdGenerator,
 } from "@jigswap/domain";
 
 // Driven adapters for the Library id-generator ports. crypto.randomUUID is available in the
@@ -21,10 +18,6 @@ export const copyIdGenerator: CopyIdGenerator = {
 
 export const collectionIdGenerator: CollectionIdGenerator = {
   next: (): CollectionId => toCollectionId(crypto.randomUUID()),
-};
-
-export const personalCategoryIdGenerator: PersonalCategoryIdGenerator = {
-  next: (): PersonalCategoryId => toPersonalCategoryId(crypto.randomUUID()),
 };
 
 export const loanIdGenerator: LoanIdGenerator = {

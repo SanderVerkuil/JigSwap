@@ -5,6 +5,5 @@ export * from "./fixed-clock";
 export * from "./in-memory-collection.repository";
 export * from "./in-memory-copy.repository";
 export * from "./in-memory-loan.repository";
-export * from "./in-memory-personal-category.repository";
 export * from "./recording-event-publisher";
 export * from "./sequential-id-generators";

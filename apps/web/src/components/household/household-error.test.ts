@@ -28,3 +28,13 @@ describe("householdErrorKey", () => {
     expect(householdErrorKey(new Error("boom"))).toBe("errors.generic");
   });
 });
+
+describe("householdErrorKey with JSON-encoded refusal data", () => {
+  it("reads the code like the shared helper does", () => {
+    expect(
+      householdErrorKey(
+        new ConvexError(JSON.stringify({ code: "AlreadyMember" })),
+      ),
+    ).toBe("errors.AlreadyMember");
+  });
+});

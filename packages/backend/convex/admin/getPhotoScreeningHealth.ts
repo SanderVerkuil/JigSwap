@@ -1,7 +1,5 @@
-import { ConvexError } from "convex/values";
 import { query } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { readScreeningConfig } from "../library/adapters/photoModeration";
 
 // Counts stop here; the indicator renders "100+" — past that the number carries no more signal.
@@ -16,8 +14,7 @@ export const SCREENING_HEALTH_COUNT_CAP = 100;
 export const getPhotoScreeningHealth = query({
   args: {},
   handler: async (ctx) => {
-    await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    await requireAdmin(ctx);
 
     const config = readScreeningConfig(process.env);
     const unscoredCopyPhotos = (

@@ -184,7 +184,6 @@ export function CirclePage({ circleId }: { circleId: string }) {
       {manageView && user && (
         <ManageCircleDialog
           circleId={circleId}
-          viewerId={user.id}
           focusInvite={manageView === "invite"}
           onClose={() => setManageView(null)}
           onDeleted={backToList}

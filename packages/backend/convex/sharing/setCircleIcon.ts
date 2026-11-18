@@ -2,12 +2,11 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireMember } from "../identity/requireMember";
-import { isReferenced } from "../lib/imageModeration/blobReferences";
 import { enqueueImageModeration } from "../lib/imageModeration/moderationPool";
 import { enforceRateLimit } from "../lib/rateLimits";
+import { uploadClaimState } from "../lib/storage/claimFreshUpload";
 import { requireCircleAdmin } from "./circleAccess";
 import {
-  CIRCLE_ICON_CLAIM_WINDOW_MS,
   CIRCLE_ICON_MAX_BYTES,
   CIRCLE_ICON_TYPES,
   circleIconRows,
@@ -37,17 +36,16 @@ export const setCircleIcon = mutation({
     const circle = await requireCircleAdmin(ctx, args.circleId, me);
     await enforceRateLimit(ctx, "circleIcon", me);
 
-    const blob = await ctx.db.system.get(args.storageId);
-    if (!blob || (await isReferenced(ctx, args.storageId))) {
+    const claim = await uploadClaimState(ctx, args.storageId);
+    if (claim === "invalid") {
       throw new ConvexError({
         code: "InvalidUpload",
         message: "This upload can't be used",
       });
     }
+    if (claim === "expired") return { refused: "UploadExpired" };
+    const blob = (await ctx.db.system.get(args.storageId))!;
     const now = Date.now();
-    if (now - blob._creationTime > CIRCLE_ICON_CLAIM_WINDOW_MS) {
-      return { refused: "UploadExpired" };
-    }
     const refusal =
       blob.size > CIRCLE_ICON_MAX_BYTES
         ? ("ImageTooLarge" as const)

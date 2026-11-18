@@ -1,9 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { stampModerationAction } from "../admin/stampModerationAction";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { CONTACT_MESSAGE_LABEL } from "./markContactMessageHandled";
 
 // Admin triage write: put a handled contact-form message back to new — the
@@ -13,8 +11,7 @@ import { CONTACT_MESSAGE_LABEL } from "./markContactMessageHandled";
 export const reopenContactMessage = mutation({
   args: { id: v.id("contactMessages") },
   handler: async (ctx, args) => {
-    const adminId = (await requireMember(ctx)) as unknown as Id<"users">;
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const adminId = await requireAdmin(ctx);
     const message = await ctx.db.get(args.id);
     if (!message) throw new ConvexError({ code: "message_not_found" });
     if (message.status === "new") return;

@@ -125,7 +125,7 @@ describe.each(openers)("a profile row opened by %s", (_, open) => {
     expect(own?.visibility).toBe("public");
   });
 
-  test("public review authors, landing avatars and the quick start treat it as unchosen", async () => {
+  test("public review authors and the quick start treat it as unchosen", async () => {
     const t = convexTest(schema, modules);
     const seeded = await seedFrank(t);
     await open(t, seeded);
@@ -140,12 +140,6 @@ describe.each(openers)("a profile row opened by %s", (_, open) => {
     });
     expect(author).toBeNull();
     expect(facts.visibilitySet).toBe(false);
-
-    const avatars = await t.query(
-      api.insights.getCommunityAvatars.getCommunityAvatars,
-      { limit: 10, seed: 1 },
-    );
-    expect(avatars).toEqual([]);
   });
 });
 

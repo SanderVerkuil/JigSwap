@@ -1,4 +1,7 @@
+import { ConvexError } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import { requireMember } from "./requireMember";
 
 // Whether the acting caller is an admin. The role lives in Clerk publicMetadata.role, surfaced as
 // the `metadata.role` claim by the Clerk "convex" JWT template. The web /admin guard asks this same
@@ -14,4 +17,12 @@ export const isAdmin = async (ctx: QueryCtx): Promise<boolean> => {
   if (!identity) return false;
   const claims = identity as { metadata?: { role?: string } };
   return claims.metadata?.role === "admin";
+};
+
+// The admin gate: an authenticated member (requireMember's errors) who is also an admin, else
+// Forbidden. Returns the admin's user id.
+export const requireAdmin = async (ctx: QueryCtx): Promise<Id<"users">> => {
+  const id = await requireMember(ctx);
+  if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+  return id as unknown as Id<"users">;
 };

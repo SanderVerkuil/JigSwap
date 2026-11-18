@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { gateway } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import {
   dateInputToMs,
   localTodayInput,
@@ -36,7 +37,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
-import { solveSaveErrorKey, solvingErrorCode } from "./solving-error";
+import { solveSaveErrorKey } from "./solving-error";
 
 interface EditCompletionDialogProps {
   open: boolean;
@@ -127,7 +128,7 @@ export function EditCompletionDialog({
       toast.success(tCompletions("updated"));
       onOpenChange(false);
     } catch (error) {
-      const code = solvingErrorCode(error);
+      const code = convexErrorCode(error);
       const fieldErrors = solveFormErrorsFromCode(code);
       // The aggregate rejects edits past 24h; tell the user plainly instead of a generic error.
       if (fieldErrors) {

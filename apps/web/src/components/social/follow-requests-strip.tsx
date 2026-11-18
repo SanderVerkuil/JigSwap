@@ -4,12 +4,12 @@
 // page (Phase 4 moves the count onto a tab badge). Approve creates the edge; the second
 // button also follows back in the same gesture (mutuality is what unlocks content for the
 // requester). Decline is silent for the requester. Renders nothing when there are none.
-import { convexErrorCode } from "@/components/exchange/request-trade";
 import { MemberInitial } from "@/components/members/member-initial";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { gateway, Id } from "@/gateway";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { useMemberDisplayName } from "@/lib/member-display-name";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";

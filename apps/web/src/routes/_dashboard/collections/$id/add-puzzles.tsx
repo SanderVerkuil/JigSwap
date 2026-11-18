@@ -1,4 +1,3 @@
-import { useUser } from "@/compat/clerk";
 import { Link } from "@/compat/link";
 import { useRouter } from "@/compat/navigation";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
@@ -37,7 +36,6 @@ function AddPuzzlesPending() {
 
 function AddPuzzlesToCollectionPage() {
   const { id } = Route.useParams();
-  const { user } = useUser();
   const router = useRouter();
   const t = useTranslations("collections");
   const tCommon = useTranslations("common");
@@ -48,10 +46,7 @@ function AddPuzzlesToCollectionPage() {
   >(new Set());
 
   const { data: convexUser, isPending: convexUserPending } = useQuery(
-    convexQuery(
-      gateway.identity.byClerkId,
-      user?.id ? { clerkId: user.id } : "skip",
-    ),
+    convexQuery(gateway.identity.currentUser, {}),
   );
 
   const {

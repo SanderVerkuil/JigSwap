@@ -1,8 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { isAdmin } from "../identity/isAdmin";
-import { requireMember } from "../identity/requireMember";
+import { requireAdmin } from "../identity/isAdmin";
 import { stampModerationAction } from "./stampModerationAction";
 
 // Transactional halves of the admin/setUserRole "use node" action. They live in
@@ -20,8 +19,7 @@ import { stampModerationAction } from "./stampModerationAction";
 export const gate = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const memberId = await requireMember(ctx);
-    if (!(await isAdmin(ctx))) throw new ConvexError("Forbidden");
+    const memberId = await requireAdmin(ctx);
 
     const target = await ctx.db.get(userId);
     if (!target) throw new ConvexError("User not found");

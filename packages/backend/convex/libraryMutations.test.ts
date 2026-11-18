@@ -91,14 +91,6 @@ const collectionRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
       .unique(),
   );
 
-const categoryRow = (t: TestConvex<typeof schema>, aggregateId: string) =>
-  t.run(async (ctx) =>
-    ctx.db
-      .query("categories")
-      .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", aggregateId))
-      .unique(),
-  );
-
 // convex-test serializes ConvexError.data to a JSON string at the function boundary; normalise.
 const dataOf = (e: unknown): { code?: string } => {
   const data = (e as ConvexError<Value>).data;
@@ -628,28 +620,6 @@ describe("library.updateCopyDetails", () => {
         notes: "hijack",
       }),
       "NotOwner",
-    );
-  });
-});
-
-describe("library.createPersonalCategory", () => {
-  test("creates a category and enforces (owner, name) uniqueness", async () => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    const id = (await asAlice(t).mutation(
-      api.library.createPersonalCategory.createPersonalCategory,
-      { name: "Hard Puzzles", color: "#ff0000" },
-    )) as string;
-    const row = await categoryRow(t, id);
-    expect(row?.name).toBe("Hard Puzzles");
-    expect(row?.color).toBe("#ff0000");
-
-    await expectConvexCode(
-      asAlice(t).mutation(
-        api.library.createPersonalCategory.createPersonalCategory,
-        { name: "Hard Puzzles" },
-      ),
-      "DuplicateCollectionName",
     );
   });
 });

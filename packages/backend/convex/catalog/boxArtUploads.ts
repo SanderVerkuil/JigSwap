@@ -15,9 +15,6 @@ import { enforceRateLimit } from "../lib/rateLimits";
 // (assertBoxArtImage), and no read path serves it until it is approved with its hash check
 // passed (lib/imageModeration/boxArtUrl).
 
-/** An upload must be claimed within this long of its creation. */
-export const BOX_ART_CLAIM_WINDOW_MS = 15 * 60_000;
-
 /** Why box art was refused (the ConvexError code is "InvalidImage"). */
 export type BoxArtRefusal =
   | "too_large"

@@ -69,31 +69,11 @@ describe("adminCategories admin-only reads", () => {
     ]);
   });
 
-  test("getAdminCategoryById rejects a non-admin member", async () => {
-    const t = convexTest(schema, modules);
-    const { inactive } = await seed(t);
-    await expect(
-      asMember(t).query(api.adminCategories.getAdminCategoryById, {
-        id: inactive,
-      }),
-    ).rejects.toThrow(/Forbidden/);
-  });
-
-  test("getAdminCategoryById resolves a hidden row for an admin", async () => {
-    const t = convexTest(schema, modules);
-    const { inactive } = await seed(t);
-    const row = await asAdmin(t).query(
-      api.adminCategories.getAdminCategoryById,
-      { id: inactive },
-    );
-    expect(row?.name.en).toBe("Hidden Cat");
-  });
-
-  test("getActiveAdminCategories stays public", async () => {
+  test("the public taxonomy (getPuzzleCategories) lists active rows only", async () => {
     const t = convexTest(schema, modules);
     await seed(t);
     const active = await t.query(
-      api.adminCategories.getActiveAdminCategories,
+      api.catalog.getPuzzleCategories.getPuzzleCategories,
       {},
     );
     expect(active.map((c) => c.name.en)).toEqual(["Active Cat"]);

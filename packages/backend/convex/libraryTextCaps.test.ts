@@ -87,27 +87,6 @@ describe("a collection's text", () => {
   });
 });
 
-describe("a category's text", () => {
-  test.each([
-    ["name", LIBRARY_TEXT_LIMITS.categoryName],
-    ["description", LIBRARY_TEXT_LIMITS.categoryDescription],
-    ["color", LIBRARY_TEXT_LIMITS.color],
-  ] as const)("a %s over %i characters is refused", async (field, max) => {
-    await expect(
-      asMe().mutation(
-        api.library.createPersonalCategory.createPersonalCategory,
-        {
-          name: "Animals",
-          [field]: tooLongFor(max),
-        },
-      ),
-    ).rejects.toThrow(/TextTooLong/);
-    expect(await t.run((ctx) => ctx.db.query("categories").collect())).toEqual(
-      [],
-    );
-  });
-});
-
 describe("notes", () => {
   const tooLong = tooLongFor(LIBRARY_TEXT_LIMITS.copyNotes);
 
