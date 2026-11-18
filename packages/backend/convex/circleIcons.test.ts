@@ -227,6 +227,22 @@ describe("circle icon: who may set and remove it", () => {
   });
 });
 
+describe("circle icon: the claim window", () => {
+  test("an upload older than 15 minutes is refused as UploadExpired and left alone", async () => {
+    vi.stubGlobal("fetch", routedFetch("no_match"));
+    const t = withModerationPool(convexTest(schema, modules));
+    const { circleId } = await seed(t);
+    const old = await upload(t);
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 16 * 60_000);
+
+    expect(await setIcon(t, "alice", circleId, old)).toEqual({
+      refused: "UploadExpired",
+    });
+    expect(await blobExists(t, old)).toBe(true);
+    expect(await icons(t)).toEqual([]);
+  });
+});
+
 describe("circle icon: served only once approved", () => {
   test("a pending icon is not served; checking shows to the uploader and Admins only", async () => {
     // The classifier is down: the check stays pending (retries on the pool's backoff).

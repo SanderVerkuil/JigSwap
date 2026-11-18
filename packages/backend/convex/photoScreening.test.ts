@@ -8,6 +8,7 @@ import {
 } from "../test-fixtures/moderationPool";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { RESCREEN_MAX_BACKOFFS } from "./library/rescreenPhotos";
 import schema from "./schema";
 
 // End-to-end tests for the photo-screening pipeline (moderatePhoto / moderateCompletionPhoto),
@@ -49,6 +50,7 @@ beforeEach(() => {
   vi.stubEnv("SIGHTENGINE_SECRET_KEY", "");
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -608,6 +610,77 @@ describe("rescreenPhotos", () => {
       ctx.db.system.query("_scheduled_functions").collect(),
     );
     expect(jobs.filter((j) => j.name.includes("rescreenPhotos"))).toEqual([]);
+  });
+
+  // Three legacy copy photos: every one is a candidate.
+  const seedLegacy = async (t: TestConvex<typeof schema>) => {
+    const { alice, copy } = await seed(t);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 3; i++) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy,
+          uploaderId: alice,
+          fileId: await ctx.storage.store(
+            new Blob([crypto.randomUUID()], { type: "image/jpeg" }),
+          ),
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    });
+  };
+  const statuses = (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) =>
+      (await ctx.db.query("ownedPuzzleImages").collect()).map(
+        (row) => row.moderationStatus ?? null,
+      ),
+    );
+  const rescreenJobs = (t: TestConvex<typeof schema>) =>
+    t.run(async (ctx) =>
+      (await ctx.db.system.query("_scheduled_functions").collect()).filter(
+        (job) =>
+          job.name.includes("rescreenPhotos") && job.state.kind === "pending",
+      ),
+    );
+
+  test("pages through the table: each page is classified once, the cursor moves on", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    const fetchMock = hfReplies({ nsfw: 0.01 });
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    await seedLegacy(t);
+    vi.useFakeTimers();
+
+    await t.action(internal.library.rescreenPhotos.rescreenPhotos, {
+      table: "copy",
+      dryRun: false,
+      batchSize: 1,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    expect(await statuses(t)).toEqual(["approved", "approved", "approved"]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(await rescreenJobs(t)).toEqual([]);
+  });
+
+  test("a provider that keeps answering 429 is retried with backoff, then given up on", async () => {
+    vi.stubEnv("HF_MODERATION_TOKEN", "hf_test");
+    const fetchMock = hfReplies({ status: 429 });
+    vi.stubGlobal("fetch", fetchMock);
+    const t = withModerationPool(convexTest(schema, modules));
+    await seedLegacy(t);
+    vi.useFakeTimers();
+
+    await t.action(internal.library.rescreenPhotos.rescreenPhotos, {
+      table: "copy",
+      dryRun: false,
+      batchSize: 1,
+    });
+    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1 + RESCREEN_MAX_BACKOFFS);
+    expect(await statuses(t)).toEqual([null, null, null]);
+    expect(await rescreenJobs(t)).toEqual([]);
   });
 
   test("a real run refuses up front without a token", async () => {

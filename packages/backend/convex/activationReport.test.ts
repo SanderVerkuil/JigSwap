@@ -155,15 +155,34 @@ describe("activationReport: access and shape", () => {
     expect(result.cohorts).toHaveLength(1);
   });
 
-  test("refuses an empty, reversed or longer-than-31-days range", async () => {
+  test("refuses an empty, reversed or longer-than-7-days range", async () => {
     const t = convexTest(schema, modules);
     expect(await codeOf(report(t, { from: T0, to: T0 }))).toBe("invalid_range");
     expect(await codeOf(report(t, { from: T0, to: T0 - 1 }))).toBe(
       "invalid_range",
     );
-    expect(await codeOf(report(t, { from: T0, to: T0 + 31 * DAY + 1 }))).toBe(
+    expect(await codeOf(report(t, { from: T0, to: T0 + 7 * DAY + 1 }))).toBe(
       "invalid_range",
     );
+  });
+
+  test("a full 7-day range with 250 sign-ups stays within the transaction limits", async () => {
+    // ~13 index ranges per member who follows nobody: 250 members is about 3,250 of 4,096.
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 250; i++) {
+        await ctx.db.insert("users", {
+          clerkId: `clerk_u${i}`,
+          email: `u${i}@example.com`,
+          name: `u${i}`,
+          isActive: true,
+          createdAt: T0,
+          updatedAt: T0,
+        });
+      }
+    });
+    const result = await report(t, { from: T0 - DAY, to: T0 - DAY + 7 * DAY });
+    expect(result.total.signedUp).toBe(250);
   });
 
   test("only counts members who signed up inside the range", async () => {

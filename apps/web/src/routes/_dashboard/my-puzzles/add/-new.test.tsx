@@ -440,6 +440,34 @@ describe("the box photo", () => {
     });
   });
 
+  it("reuses the catalogue puzzle it already filed when the copy step fails and Add is tapped again", async () => {
+    let acquireCalls = 0;
+    mocks.call.mockImplementation(async (name: string) => {
+      if (name === ACQUIRE) {
+        if (++acquireCalls === 1) throw new Error("offline");
+        return "copy_agg_1";
+      }
+      return name === CREATE_PUZZLE
+        ? "puzzle_agg_new"
+        : name === COPY_DOC_ID
+          ? "copy_doc_1"
+          : null;
+    });
+    renderPage();
+    fillRequired();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(1));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: "Add Puzzle" }));
+
+    await waitFor(() => expect(callsTo(ACQUIRE)).toHaveLength(2));
+    expect(callsTo(CREATE_PUZZLE)).toHaveLength(1);
+    expect(callsTo(ACQUIRE)[1]).toMatchObject({
+      puzzleDefinitionId: "puzzle_agg_new",
+    });
+  });
+
   it("sends no photo once the member deselects it", async () => {
     renderPage();
     fillRequired();

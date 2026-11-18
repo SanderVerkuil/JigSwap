@@ -57,7 +57,7 @@ const addSolve = (minutes: number) =>
       userId: me,
       puzzleId,
       startDate: Date.now(),
-      endDate: Date.now(),
+      endDate: Date.now() + 2 * 86_400_000, // 2880 minutes is then the dates' own duration
       completionTimeMinutes: minutes,
       photos: [],
       isCompleted: true,
@@ -87,7 +87,7 @@ describe("a member can't state a solve time no solve can have taken", () => {
 
 describe("a stored solve time no solve can have taken doesn't count", () => {
   test("finishDaysOf says unknown for it, and keeps every real one", () => {
-    const row = { startDate: BASE, endDate: BASE };
+    const row = { startDate: BASE, endDate: BASE + 2 * 86_400_000 };
     for (const minutes of [Number.MAX_VALUE, Number.POSITIVE_INFINITY, -5]) {
       expect(
         finishDaysOf({ ...row, completionTimeMinutes: minutes }),
@@ -95,7 +95,11 @@ describe("a stored solve time no solve can have taken doesn't count", () => {
     }
     expect(finishDaysOf({ ...row, completionTimeMinutes: 2880 })).toBe(2);
     expect(
-      finishDaysOf({ ...row, completionTimeMinutes: MAX_SOLVE_MINUTES }),
+      finishDaysOf({
+        startDate: BASE,
+        endDate: BASE + 3650 * 86_400_000,
+        completionTimeMinutes: MAX_SOLVE_MINUTES,
+      }),
     ).toBe(3650);
     // A span too long to be a solve (no duration stored) is left out too, by its dates.
     expect(

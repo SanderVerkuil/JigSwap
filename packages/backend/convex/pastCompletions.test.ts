@@ -525,14 +525,15 @@ describe("profile completions", () => {
       { copyId: a1.copyAggregateId, datePrecision: "unknown" },
     ]);
     await recordPast(t, "alice", [
-      { copyId: a2.copyAggregateId, datePrecision: "year", year: 2023 },
-    ]);
-    await recordPast(t, "alice", [
       {
         copyId: a3.copyAggregateId,
         datePrecision: "day",
         date: Date.now() - DAY,
       },
+    ]);
+    // The older dated solve is logged AFTER the newer one: only sorting by solve date puts it second.
+    await recordPast(t, "alice", [
+      { copyId: a2.copyAggregateId, datePrecision: "year", year: 2023 },
     ]);
     await recordPast(t, "alice", [
       { copyId: extra.copyAggregateId, datePrecision: "unknown" },

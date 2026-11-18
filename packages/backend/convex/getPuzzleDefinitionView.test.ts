@@ -395,6 +395,37 @@ describe("getPuzzleDefinitionView", () => {
     expect(view?.stats.avgCompletionDays).toBe(2);
   });
 
+  test("avgCompletionDays: a typed solve time is hands-on time, so its days come from the dates", async () => {
+    const t = convexTest(schema, modules);
+    const { now, viewer, puzzleId } = await seed(t);
+
+    await t.run(async (ctx) => {
+      // Over four days: a typed 4h30, and none typed (the dates' own 5760). Same day: a typed 3h.
+      for (const { days, minutes } of [
+        { days: 4, minutes: 270 },
+        { days: 4, minutes: 5760 },
+        { days: 0, minutes: 180 },
+      ]) {
+        await ctx.db.insert("completions", {
+          userId: viewer,
+          puzzleId,
+          startDate: now,
+          endDate: now + days * DAY,
+          completionTimeMinutes: minutes,
+          photos: [],
+          isCompleted: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    });
+
+    const view = await get(t, puzzleId);
+    expect(view?.stats.totalCompletions).toBe(3);
+    // (4 + 4 + 1) / 3: the same-day solve counts one day, never 0.
+    expect(view?.stats.avgCompletionDays).toBe(3);
+  });
+
   test("avgCompletionDays: legacy same-day row without a stored duration is excluded (null when it's the only one)", async () => {
     const t = convexTest(schema, modules);
     const { now, viewer, puzzleId } = await seed(t);

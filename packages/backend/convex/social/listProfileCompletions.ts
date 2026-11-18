@@ -147,7 +147,7 @@ const pageDatedThenUndated = async (
 
   const result = await ctx.db
     .query("completions")
-    .withIndex("by_user_completed", (q) =>
+    .withIndex("by_user_completed_end", (q) =>
       q.eq("userId", memberId).eq("isCompleted", true),
     )
     .order("desc")

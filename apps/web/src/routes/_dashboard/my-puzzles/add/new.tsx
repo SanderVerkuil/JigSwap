@@ -63,7 +63,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useConvex } from "convex/react";
 import { Check, ChevronDown, Puzzle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -190,6 +190,8 @@ function AddPuzzlePage() {
   const [selectedDefinitionId, setSelectedDefinitionId] = useState<
     string | null
   >(null);
+  // The definition createPuzzle filed, kept so a retry after a failed copy step doesn't file another.
+  const created = useRef<string | null>(null);
   const [pendingMatch, setPendingMatch] = useState<ImportedMatch | null>(null);
   // Open when a prefilled barcode lives in the advanced fields.
   const [advancedOpen, setAdvancedOpen] = useState(
@@ -322,6 +324,7 @@ function AddPuzzlePage() {
   // Apply a scraped draft onto the form fields
   const applyDraft = (draft: ImportedDraft) => {
     setSelectedDefinitionId(null);
+    created.current = null;
     setPendingMatch(null);
     const imgs: string[] = draft.images?.length
       ? [...draft.images]
@@ -347,6 +350,7 @@ function AddPuzzlePage() {
     setForm(DEFAULT_FORM);
     setBaseline(DEFAULT_FORM);
     setSelectedDefinitionId(null);
+    created.current = null;
     setPendingMatch(null);
   };
 
@@ -411,12 +415,13 @@ function AddPuzzlePage() {
   const submitPuzzle = useMutation({
     mutationFn: async ({ andAnother }: { andAnother: boolean }) => {
       // 1. Resolve the catalog definition id (existing match or create new).
-      let definitionId = selectedDefinitionId;
+      let definitionId = selectedDefinitionId ?? created.current;
       if (!definitionId) {
         const imageId = await buildImageId();
         definitionId = (await createPuzzle(
           buildCreatePuzzleArgs(imageId),
         )) as string;
+        created.current = definitionId;
         await notifyBoxArtCheck(imageId);
       }
 

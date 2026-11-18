@@ -605,7 +605,9 @@ export default defineSchema({
     .index("by_user_puzzle", ["userId", "puzzleId"])
     .index("by_user_owned_puzzle", ["userId", "ownedPuzzleId"])
     .index("by_aggregate_id", ["aggregateId"])
-    .index("by_user_completed", ["userId", "isCompleted"]),
+    .index("by_user_completed", ["userId", "isCompleted"])
+    // Profile solves page newest-first by solve date (finished rows always carry endDate).
+    .index("by_user_completed_end", ["userId", "isCompleted", "endDate"]),
 
   // Moderation sidecars for completion photos (completions.photos storage ids). One row per photo;
   // absent moderationStatus = legacy approved. The moderation pipeline may SWAP fileId (re-encode)

@@ -86,6 +86,24 @@ describe("browserStorePageFetcher", () => {
     expect(json.isErr && json.error.code).toBe("Unparseable");
   });
 
+  test("resolves a relative og:image against the final URL after a redirect", async () => {
+    const page =
+      '<html><head><meta property="og:title" content="Mountain Vista"><meta property="og:image" content="/img/box.jpg"></head></html>';
+    vi.mocked(fetchPublic).mockResolvedValueOnce({
+      ok: true,
+      response: new Response(page, {
+        headers: { "content-type": "text/html" },
+      }) as never,
+      finalUrl: "https://shop.example/nl/puzzle/123",
+    });
+
+    const result = await browserStorePageFetcher.fetch(URL);
+
+    expect(result.isOk && result.value.ogImages).toEqual([
+      "https://shop.example/img/box.jpg",
+    ]);
+  });
+
   test("a huge page is read only up to 5 MB and its head still parsed", async () => {
     // HEAD, then 25 MB of body, produced only as fast as it is read.
     const CHUNK = 64 * 1024;

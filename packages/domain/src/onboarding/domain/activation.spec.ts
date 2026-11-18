@@ -157,12 +157,12 @@ describe("evaluateActivation: engaged (secondary signal)", () => {
 });
 
 describe("isValidActivationRange", () => {
-  it("accepts a non-empty range of at most 31 days", () => {
+  it("accepts a non-empty range of at most 7 days (one cohort)", () => {
     expect(isValidActivationRange(SIGNUP, SIGNUP + 1)).toBe(true);
     expect(
       isValidActivationRange(SIGNUP, SIGNUP + ACTIVATION_REPORT_MAX_RANGE_MS),
     ).toBe(true);
-    expect(ACTIVATION_REPORT_MAX_RANGE_MS).toBe(31 * DAY);
+    expect(ACTIVATION_REPORT_MAX_RANGE_MS).toBe(7 * DAY);
   });
 
   it("refuses an empty, reversed or too long range", () => {

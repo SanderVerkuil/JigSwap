@@ -29,8 +29,8 @@ const READ_CAP = 51;
 //
 // Run it (documentation only; never against a shared deployment from an agent session):
 //   npx convex run --prod onboarding/activationReport:activationReport \
-//     '{"from": 1788220800000, "to": 1790812800000}'
-// `from`/`to` are epoch ms of sign-up time, [from, to): here September 2026 (UTC), 30 days.
+//     '{"from": 1788220800000, "to": 1788825600000}'
+// `from`/`to` are epoch ms of sign-up time, [from, to): here the first week of September 2026 (UTC), 7 days.
 export const activationReport = internalQuery({
   args: { from: v.number(), to: v.number() },
   handler: async (ctx, { from, to }): Promise<ActivationReport> => {

@@ -795,7 +795,7 @@ describe("every write that changes a definition's aggregates marks it", () => {
 
     await asUser(t, "alice").mutation(
       api.solving.editCompletion.editCompletion,
-      { completionId, completionTimeMinutes: 10 * 1440 },
+      { completionId, startDate: now - 10 * DAY },
     );
     const edited = await expectInStep(t, w.vista.id);
     expect(edited.finishDaysSum).toBe(10);
