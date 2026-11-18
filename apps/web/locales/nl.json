@@ -3863,10 +3863,6 @@
         "networkError": "Netwerkfout. Controleer je verbinding."
       }
     },
-    "file-upload": {
-      "error": "Fout bij comprimeren van afbeelding. Selecteer een ander bestand.",
-      "compressing": "Comprimeren…"
-    },
     "translatable-field": {
       "toggleLabel": "Taal voor {field}",
       "locales": {
@@ -3876,16 +3872,6 @@
       "translated": "Vertaald",
       "missing": "Vertaling ontbreekt"
     }
-  },
-  "custody": {
-    "title": "Eigendomsketen",
-    "description": "Hoe dit exemplaar in de loop van de tijd van eigenaar is gewisseld.",
-    "originalOwner": "Oorspronkelijke eigenaar",
-    "currentOwner": "Huidige eigenaar",
-    "anonymous": "Anonieme gebruiker",
-    "transferredVia": "Overgedragen via ruil {exchangeId}",
-    "noTransfers": "Dit exemplaar is nooit overgedragen.",
-    "loading": "Eigendomsketen laden…"
   },
   "lending": {
     "borrowedSubtitle": "Exemplaren die je momenteel in bruikleen hebt.",
@@ -3899,13 +3885,8 @@
     "onLoanTo": "Uitgeleend aan {name}",
     "recallAction": "Terugvragen",
     "recalling": "Terugvragen…",
-    "historyTitle": "Leengeschiedenis",
-    "historyDescription": "Elke keer dat dit exemplaar is uitgeleend.",
-    "noHistory": "Dit exemplaar is nooit uitgeleend.",
-    "statusOpen": "Open",
     "statusReturned": "Teruggegeven",
     "statusRecalled": "Teruggevraagd",
-    "borrowedBy": "Geleend door {name}",
     "deletedMember": "Verwijderd lid",
     "anonymousMember": "Anonieme gebruiker",
     "pieceCount": "{count, plural, one {# stukje} other {# stukjes}}",

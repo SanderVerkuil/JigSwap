@@ -1,10 +1,13 @@
 import { DomainEvent, err, ok, Result } from "../../shared-kernel";
-import { COMMENT_TEXT_MAX_LENGTH } from "../../social/domain/comment-text";
 import { ReputationError } from "./errors";
 import { PartnerReviewSubmitted } from "./events";
 import { ExchangeId, MemberId, PartnerReviewId } from "./ids";
 import { PartnerReviewScores, PartnerReviewScoresInput } from "./review-scores";
 import { StarRating } from "./star-rating";
+
+// The longest partner review comment, in UTF-16 code units after trimming: the same 1000 as photo
+// and copy comments (social COMMENT_TEXT_MAX_LENGTH), kept here so contexts stay independent.
+export const PARTNER_REVIEW_COMMENT_MAX_LENGTH = 1000;
 
 // Input to submit(): the still-unvalidated overall rating and category sub-scores plus the
 // parties and the exchange the review pertains to. Cross-aggregate checks (the exchange is
@@ -75,8 +78,10 @@ export class PartnerReview {
     }
 
     const comment = props.comment?.trim() || undefined;
-    if (comment && comment.length > COMMENT_TEXT_MAX_LENGTH) {
-      return err(ReputationError.commentTooLong(COMMENT_TEXT_MAX_LENGTH));
+    if (comment && comment.length > PARTNER_REVIEW_COMMENT_MAX_LENGTH) {
+      return err(
+        ReputationError.commentTooLong(PARTNER_REVIEW_COMMENT_MAX_LENGTH),
+      );
     }
 
     const rating = StarRating.create(props.rating);

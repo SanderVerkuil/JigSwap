@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Id } from "@/gateway";
 import { gateway } from "@/gateway";
 import { convexErrorCode } from "@/lib/convex-error-code";
+import { COMMENT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle, Star } from "lucide-react";
@@ -204,7 +205,7 @@ export function LeaveReviewDialog({
               onChange={(e) => setComment(e.target.value)}
               placeholder={t("commentPlaceholder")}
               rows={3}
-              maxLength={1000}
+              maxLength={COMMENT_TEXT_MAX_LENGTH}
             />
           </div>
         </div>

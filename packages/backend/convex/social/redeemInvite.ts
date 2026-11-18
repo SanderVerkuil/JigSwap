@@ -20,8 +20,9 @@ type RedeemResult = {
   // cooldown between them, or they already follow each other).
   connection?: "pending" | "skipped";
   // Household links only: "pending" when a household invite now waits for the new member to
-  // accept, "skipped" when the household side was refused (the offer and attribution stand).
-  // Also set with redeemed: false for a member already attributed through another link.
+  // accept, "skipped" when the household side was refused. With redeemed: true the offer and
+  // attribution stand either way; with redeemed: false (a member already attributed through
+  // another link) there is neither.
   householdInvite?: "pending" | "skipped";
 };
 

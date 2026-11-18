@@ -9,11 +9,12 @@ name: Convex Deploy
 #     never deploys code that failed lint/type-check/test/build. The CI run must also come
 #     from a push to this repository: `branches: [main]` matches only the head branch NAME,
 #     so a pull request whose head branch is called `main` (e.g. from a fork) would match too.
-# Web production: apps/web/vercel.json turns Vercel's Git deploys off for main, so the last step
-# of the production job deploys the web with the lockfile-pinned Vercel CLI (installed the way
-# vercel-preview.yml does). The web therefore goes live only after CI and the Convex prod deploy,
-# from the CI'd commit, behind the same stale-commit guard. Needs the VERCEL_TOKEN, VERCEL_ORG_ID
-# and VERCEL_PROJECT_ID secrets in the convex-production environment (or the repo).
+# Web production: apps/web/vercel.json turns Vercel's Git deploys off for every branch (main
+# included), so the step right after the Convex prod deploy deploys the web with the
+# lockfile-pinned Vercel CLI (installed the way vercel-preview.yml does). The web therefore goes
+# live only after CI and the Convex prod deploy, from the CI'd commit, behind the same stale-commit
+# guard. Needs the VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID secrets in the
+# convex-production environment (or the repo).
 # _generated/* is committed, so a deploy only needs the deploy-key secrets.
 # After each push, `whatsNew/publishPending` starts the What's new notification fan-out (idempotent).
 # Preview deployments (convex-preview.yml) deliberately skip it: they are seeded from a dev snapshot
@@ -155,7 +156,7 @@ jobs:
     # Holds CONVEX_DEPLOY_KEY_PROD once the owner moves it there (see the header).
     environment: convex-production
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     # Never cancel an in-flight production deploy; queue instead.
     concurrency:
       group: convex-prod-deploy
@@ -205,6 +206,22 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
         run: pnpm exec convex deploy --typecheck enable
 
+      # After the Convex deploy, so the web never goes live before the functions it calls, and
+      # before the What's new fan-out, so a fan-out failure cannot block the web release. The CLI comes
+      # from .github/vercel-cli/package-lock.json of the CI'd commit (npm ci --ignore-scripts),
+      # outside the workspace so it is never uploaded. Run from the repo root; the project's
+      # Root Directory setting (apps/web) applies remotely, and the build runs on Vercel.
+      - name: Deploy web production to Vercel
+        if: steps.guard.outputs.deploy == 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          cp -r .github/vercel-cli "$RUNNER_TEMP/vercel-cli"
+          (cd "$RUNNER_TEMP/vercel-cli" && npm ci --ignore-scripts --no-audit --no-fund)
+          "$RUNNER_TEMP/vercel-cli/node_modules/.bin/vercel" deploy --prod --yes --logs --token "$VERCEL_TOKEN"
+
       # Start the whats_new notification fan-out for notify:true What's new entries this deploy
       # shipped. Idempotent (one whatsNewPublications row per entry), so it is safe on every
       # deploy and a no-op when nothing is pending. The deploy key selects the same deployment.
@@ -235,18 +252,3 @@ jobs:
           done
           echo "::warning title=publishPending failed::The Convex deploy succeeded, but whatsNew/publishPending failed after 4 attempts. publishPending is idempotent, so re-running this job is safe."
           exit 1
-
-      # Last, so the web never goes live before the Convex functions it calls. The CLI comes
-      # from .github/vercel-cli/package-lock.json of the CI'd commit (npm ci --ignore-scripts),
-      # outside the workspace so it is never uploaded. Run from the repo root; the project's
-      # Root Directory setting (apps/web) applies remotely, and the build runs on Vercel.
-      - name: Deploy web production to Vercel
-        if: steps.guard.outputs.deploy == 'true'
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          cp -r .github/vercel-cli "$RUNNER_TEMP/vercel-cli"
-          (cd "$RUNNER_TEMP/vercel-cli" && npm ci --ignore-scripts --no-audit --no-fund)
-          "$RUNNER_TEMP/vercel-cli/node_modules/.bin/vercel" deploy --prod --yes --token "$VERCEL_TOKEN"

@@ -9,9 +9,9 @@ import { isLentOut, mayOfferCopy } from "./propose-exchange";
 //   - the requested copy still belongs to the recipient (CopyNotFound / RecipientNotOwner);
 //   - for a swap, the offered copy is still one the initiator may offer (their own, or a housemate's
 //     they co-manage while its owner and the recipient are not blocked either way, never the
-//     recipient's) and, when recorded at propose time, still has that
-//     owner (CopyNotFound / OfferedCopyNotOwned). Swaps proposed before the owner was recorded fall
-//     back to the offer rule alone.
+//     recipient's) and, when recorded at propose time, still has that owner (CopyNotFound /
+//     OfferedCopyNotOwned). Swaps proposed before the owner was recorded fall back to the offer
+//     rule alone.
 // Nor may a deal be agreed or settle while a copy it moves is out on loan (isLentOut): it is at the
 // borrower's until it comes back (CopyReserved). A copy that changed hands is answered first.
 // The offered copy counts exactly when settlement transfers it (a swap that names one).

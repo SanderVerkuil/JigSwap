@@ -105,3 +105,12 @@ export const validateBarcodes = (
 
   return ok({ ean, upc, modelNumber });
 };
+
+// A UPC-A and its 0-prefixed EAN-13 are one barcode, stored under either field: the other form of
+// the same code, or undefined when it has none.
+export const barcodeTwin = (code: string): string | undefined =>
+  /^0\d{12}$/.test(code)
+    ? code.slice(1)
+    : /^\d{12}$/.test(code)
+      ? `0${code}`
+      : undefined;

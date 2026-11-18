@@ -725,7 +725,7 @@ const MANIFEST: Record<string, Disposition> = {
       kept: "the public contact form is not linked to an account (no member id), so the purge cannot find it",
     },
     export: { excluded: "not linked to an account" },
-    gap: "ops-3: contact/retention deletes handled contact messages 12 months after they were sent only once RETENTION_ENFORCE names contactMessages (owner decision); the privacy policy has no line for it yet",
+    gap: "ops-3: contact/retention deletes handled contact messages 12 months after they were sent once RETENTION_ENFORCE is all or names contactMessages (all leaves out only copyPhotos), so a prod value of all enforces it at the next run (owner decision); the privacy policy has no line for it yet",
   },
   "docFeedback.userId": {
     erasure: {

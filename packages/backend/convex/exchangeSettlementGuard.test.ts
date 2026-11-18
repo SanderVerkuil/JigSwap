@@ -342,6 +342,11 @@ describe("a housemate's swap of Mara's copy stops once Mara blocks its recipient
 
   test("blocked before Rex accepts: the accept is refused, Hugo can't offer X to Rex again and X stays Mara's", async () => {
     const { t, ids, x, r, swap } = await setUpHousemateSwap();
+    const offerable = () =>
+      as(t, "hugo").query(api.exchange.getOfferableCopies.getOfferableCopies, {
+        requestedPuzzleId: r.id,
+      });
+    expect((await offerable()).map((c) => c._id)).toContain(x.id);
     await blockRex(t, ids);
 
     expect(await codeOf(accept(t, "rex", swap))).toBe("OfferedCopyNotOwned");
@@ -349,11 +354,7 @@ describe("a housemate's swap of Mara's copy stops once Mara blocks its recipient
     await as(t, "hugo").mutation(api.exchange.cancel.cancel, {
       exchangeId: swap,
     });
-    const offerable = await as(t, "hugo").query(
-      api.exchange.getOfferableCopies.getOfferableCopies,
-      { requestedPuzzleId: r.id },
-    );
-    expect(offerable.map((c) => c._id)).not.toContain(x.id);
+    expect((await offerable()).map((c) => c._id)).not.toContain(x.id);
     expect(await codeOf(proposeSwap(t, "hugo", r, x))).toBe(
       "OfferedCopyNotOwned",
     );

@@ -3863,10 +3863,6 @@
         "networkError": "Network error. Please check your connection."
       }
     },
-    "file-upload": {
-      "error": "Error compressing image. Please select a different file.",
-      "compressing": "Compressing…"
-    },
     "translatable-field": {
       "toggleLabel": "Language for {field}",
       "locales": {
@@ -3876,16 +3872,6 @@
       "translated": "Translated",
       "missing": "Missing translation"
     }
-  },
-  "custody": {
-    "title": "Chain of Custody",
-    "description": "How this copy has changed hands over time.",
-    "originalOwner": "Original owner",
-    "currentOwner": "Current owner",
-    "anonymous": "Anonymous user",
-    "transferredVia": "Transferred via exchange {exchangeId}",
-    "noTransfers": "This copy has never been transferred.",
-    "loading": "Loading custody timeline…"
   },
   "lending": {
     "borrowedSubtitle": "Copies you are currently holding on loan.",
@@ -3899,13 +3885,8 @@
     "onLoanTo": "On loan to {name}",
     "recallAction": "Recall",
     "recalling": "Recalling…",
-    "historyTitle": "Loan history",
-    "historyDescription": "Every time this copy has been lent out.",
-    "noHistory": "This copy has never been lent out.",
-    "statusOpen": "Open",
     "statusReturned": "Returned",
     "statusRecalled": "Recalled",
-    "borrowedBy": "Borrowed by {name}",
     "deletedMember": "Deleted member",
     "anonymousMember": "Anonymous user",
     "pieceCount": "{count, plural, one {# piece} other {# pieces}}",

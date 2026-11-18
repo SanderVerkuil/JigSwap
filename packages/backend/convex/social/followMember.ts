@@ -39,7 +39,8 @@ export const followMemberUseCase = async (
 ): Promise<{ kind: "followed" | "requested"; id: string }> => {
   await enforceRateLimit(ctx, "followToggle", followerId);
   // v.id only checks the id's format: a follow to a deleted id would leave rows naming them that
-  // no purge phase clears. Before the followPair charge, so no pair row names them either.
+  // no purge phase clears. A refusal rolls the whole mutation back; the order only decides which
+  // error the caller sees.
   if (!(await isActiveMember(ctx, args.followeeId))) {
     throw new ConvexError({
       code: "MemberNotFound",

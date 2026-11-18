@@ -37,6 +37,7 @@ describe("NOTIFICATION_CATEGORIES", () => {
     const all = NOTIFICATION_CATEGORIES.flatMap((c) => c.types);
     expect(all).not.toContain("exchange_proposed");
     expect(all).not.toContain("puzzle_favorited");
+    expect(all).not.toContain("exchange_disputed");
   });
 });
 

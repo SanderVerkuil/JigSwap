@@ -316,12 +316,13 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
   });
 
   // A CLERK_SECRET_KEY for another Clerk instance lists none of our members, and that instance
-  // answers 404 for every one of them: that must never erase the membership.
-  test("checks and erases nobody when more than five members look gone", async () => {
+  // answers 404 for every one of them: that must never erase the membership. The log names them
+  // (at most 50), so the owner can handle the ones that did leave by hand.
+  test("checks and erases nobody when more than five members look gone, and names them", async () => {
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_other_instance");
     const t = convexTest(schema, modules);
     const ids: Id<"users">[] = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 51; i++) {
       ids.push(await seedMember(t, `clerk_member_${i}`, { role: "admin" }));
     }
     clerk.getUserList.mockResolvedValue({ data: [], totalCount: 0 });
@@ -332,9 +333,15 @@ describe("backfillUserRoles/run (daily role reconcile)", () => {
 
     expect(result).toEqual({ scanned: 0, patched: 0, deleted: 0 });
     expect(error).toHaveBeenCalledOnce();
+    const [, count, named] = error.mock.calls[0]!;
     error.mockRestore();
+    expect(count).toBe(51);
+    expect(named).toHaveLength(50);
+    for (const clerkId of named as string[]) {
+      expect(clerkId).toMatch(/^clerk_member_\d+$/);
+    }
     expect(clerk.getUser).not.toHaveBeenCalled();
-    expect(await rolesOf(t, ids)).toEqual(Array(6).fill("admin"));
+    expect(await rolesOf(t, ids)).toEqual(Array(51).fill("admin"));
   });
 
   // Offset paging can skip a user when Clerk's list shifts mid-scan: a role-holder missing from

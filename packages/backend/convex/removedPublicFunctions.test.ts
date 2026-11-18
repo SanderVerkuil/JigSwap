@@ -36,6 +36,22 @@ describe("removed public reads", () => {
     ]);
   });
 
+  // listMyLiveExchanges and listMyExchangeHistory replaced the legacy lists.
+  test("the legacy exchange lists are gone", () => {
+    expectRemoved([
+      "exchange/getUserExchanges",
+      "exchange/getExchangesByOwner",
+      "exchange/getExchangesByRequester",
+    ]);
+  });
+
+  // A dispute had no way back out, so a party could freeze a finished trade and stop the partner's
+  // review; the one-copy share told a missing copy from someone else's. shareCopiesToCircle is the
+  // only way to share now.
+  test("raiseDispute and the one-copy share are gone", () => {
+    expectRemoved(["exchange/raiseDispute", "sharing/shareCopyToCircle"]);
+  });
+
   test("the write-only personal categories feature is gone", () => {
     expectRemoved([
       "library/createPersonalCategory",

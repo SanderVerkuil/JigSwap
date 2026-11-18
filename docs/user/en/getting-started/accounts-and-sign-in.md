@@ -62,7 +62,8 @@ Deleting your account removes your library and what belongs to it:
 
 - Open trades and loans are cancelled or closed; a puzzle you borrowed goes
   back to its owner. The other member of an open trade gets a notification
-  that it was cancelled.
+  that it was cancelled, and the owner of a puzzle you borrowed gets a
+  notification that the loan was closed.
 - Your puzzles, with their photos, notes and completions, are deleted, and so
   are your other photos and completions, your goals, collections, wishlists
   and personal categories. They no longer show up in Browse or in circles.

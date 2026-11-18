@@ -356,9 +356,9 @@ export type PublicAuthorView = { name?: string; avatar: string | null } | null;
  * FAIL-CLOSED on a missing profile row: unlike `profileVisibilityOf` (which defaults absent rows to
  * "public" — correct for the in-app auth-gated surfaces it gates), this indexable surface reads the
  * profile row directly and reveals ONLY when it exists and is explicitly `visibility: "public"`. A
- * member who never opened profile settings has no row and is anonymized here, so a real display name
- * reaches a Google-indexable page only after an affirmative public choice — not by lazy-creation
- * default. Profiles are created lazily (setProfileVisibility / arrangeShelf), so this matters.
+ * member who never chose has no row, or a row opened lazily (editProfile / arrangeShelf) with no
+ * visibility, and is anonymized here, so a real display name reaches a Google-indexable page only
+ * after an affirmative public choice (setProfileVisibility), never by lazy creation.
  */
 export const projectPublicAuthor = async (
   ctx: QueryCtx,

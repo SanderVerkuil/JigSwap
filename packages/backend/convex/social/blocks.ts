@@ -11,7 +11,7 @@ import { isActiveMember } from "../identity/requireActiveMember";
 // exchange with what the member would get without the block: the CopyNotReachable a copy without a
 // route gets, or for the member holding the copy the lent-out CopyNotAvailable (exchange/propose.ts).
 
-type Member = Id<"users"> | MemberId;
+export type Member = Id<"users"> | MemberId;
 const asUserId = (m: Member) => m as unknown as Id<"users">;
 
 const blocked = async (ctx: QueryCtx, blocker: Member, target: Member) =>

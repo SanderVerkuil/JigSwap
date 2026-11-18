@@ -2,7 +2,8 @@ import { internalMutation } from "../_generated/server";
 
 // One-shot migration: legacy adminCategories rows predate aggregateId, so the domain path
 // (repository keyed on by_aggregate_id) can't load them — the admin UI disables edit/deactivate
-// for them and listActive filters them out of the public taxonomy. Stamp a fresh
+// for them and the repository's listActive skips them (the public taxonomy,
+// getPuzzleCategories, still lists them). Stamp a fresh
 // CatalogCategoryId on every row still missing one. Idempotent: stamped rows are skipped.
 // Run manually: npx convex run catalog/backfillCategories:run
 export const run = internalMutation({

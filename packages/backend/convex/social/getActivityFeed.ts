@@ -532,8 +532,7 @@ const subjectOf = (
 //   acquisition      -> the gated copy's title and cover, as the batch covers (toBatchView).
 //   completion/started -> the solve's snapshot title (else the puzzle's, when the viewer may open
 //                       that definition), with the copy's cover only when the viewer may reach the
-//                       copy, else the box art, like listProfileCompletions' row; nothing when the
-//                       profile is locked.
+//                       copy, else the box art, like listProfileCompletions' row.
 //   acquisitionBatch / exchange -> none (a batch names its puzzles in its covers).
 // An entry's `title` is that subject's title when the entry also links: no target, no title.
 const resolveTarget = async (

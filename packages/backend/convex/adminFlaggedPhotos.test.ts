@@ -59,7 +59,11 @@ const seedPhoto = (
   copyId: Id<"ownedPuzzles">,
   userId: Id<"users">,
   moderationStatus: "pending" | "approved" | "rejected",
-  extra?: { moderationScore?: number; moderationLabel?: string },
+  extra?: {
+    moderationScore?: number;
+    moderationLabel?: string;
+    hashCheckPendingSince?: number;
+  },
 ) =>
   t.run(async (ctx) => {
     const now = Date.now();
@@ -179,6 +183,24 @@ describe("restorePhoto", () => {
     await expect(
       asAdmin(t).mutation(api.admin.restorePhoto.restorePhoto, { imageId }),
     ).rejects.toThrow("Photo was refused as an invalid image");
+
+    const row = await t.run((ctx) => ctx.db.get(imageId));
+    expect(row?.moderationStatus).toBe("rejected");
+    expect(await allActions(t)).toHaveLength(0);
+  });
+});
+
+describe("restorePhoto, never hash-checked", () => {
+  test("a rejected photo whose gate is closed with nothing left to re-check is refused", async () => {
+    const t = convexTest(schema, modules);
+    const { userId, copyId } = await seedWorld(t);
+    const { imageId } = await seedPhoto(t, copyId, userId, "rejected", {
+      hashCheckPendingSince: Date.now(),
+    });
+
+    await expect(
+      asAdmin(t).mutation(api.admin.restorePhoto.restorePhoto, { imageId }),
+    ).rejects.toThrow("Photo was never hash-checked");
 
     const row = await t.run((ctx) => ctx.db.get(imageId));
     expect(row?.moderationStatus).toBe("rejected");

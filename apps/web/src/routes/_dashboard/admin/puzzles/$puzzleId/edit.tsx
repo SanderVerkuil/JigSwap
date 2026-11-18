@@ -19,13 +19,13 @@ import { gateway, Id } from "@/gateway";
 import { useBoxArtCheckNotice } from "@/hooks/use-box-art-check";
 import { useUploadBoxArt } from "@/hooks/use-upload-box-art";
 import { useUploadLimitMessage } from "@/hooks/use-upload-limit-message";
+import { convexErrorCode } from "@/lib/convex-error-code";
 import { pageTitle } from "@/lib/page-title";
 import { isUploadRateLimited } from "@/lib/upload-rate-limit";
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import { ConvexError } from "convex/values";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "use-intl";
@@ -41,13 +41,7 @@ export const Route = createFileRoute(
 
 // Map a thrown ConvexError's stable domain code to a user-facing i18n key.
 const errorKeyFor = (error: unknown): string => {
-  const code =
-    error instanceof ConvexError &&
-    typeof error.data === "object" &&
-    error.data !== null &&
-    "code" in error.data
-      ? (error.data as { code: string }).code
-      : undefined;
+  const code = convexErrorCode(error);
   switch (code) {
     case "EmptyTitle":
       return "edit.errors.emptyTitle";

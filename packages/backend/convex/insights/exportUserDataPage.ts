@@ -365,8 +365,10 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
   },
 
   // Photos the member uploaded to a copy. Served like the copy gallery serves its uploader:
-  // approved, or their own photo still being checked once its hash check has passed. A photo
-  // the check stopped (rejected or quarantined, never told apart) is listed without an image.
+  // approved, or their own photo still being checked once its hash check has passed. A photo the
+  // check stopped (rejected or quarantined) is left out, as getCopyInstanceView and
+  // listMyPhotosOnFormerCopies leave it out: removing one deletes a rejected row but keeps a
+  // quarantined one, so a listed id would show which was the hash match.
   copyPhotos: async (ctx, me, page) =>
     pageOf(
       await ctx.db
@@ -375,16 +377,13 @@ const SECTIONS: Record<ExportSection, SectionReader> = {
         .paginate(page),
       async (img) => {
         const moderation = img.moderationStatus ?? "approved";
-        const status =
-          moderation === "approved"
-            ? "approved"
-            : moderation === "pending" || moderation === "unscored"
-              ? "pending"
-              : "notShown";
-        const url =
-          status !== "notShown" && isHashCleared(img)
-            ? await ctx.storage.getUrl(img.fileId)
-            : null;
+        if (moderation === "rejected" || moderation === "quarantined") {
+          return null;
+        }
+        const status = moderation === "approved" ? "approved" : "pending";
+        const url = isHashCleared(img)
+          ? await ctx.storage.getUrl(img.fileId)
+          : null;
         return {
           id: img._id,
           copyId: img.ownedPuzzleId,

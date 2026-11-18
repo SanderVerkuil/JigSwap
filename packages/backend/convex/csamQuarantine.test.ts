@@ -891,7 +891,7 @@ describe("preserved blobs can never be re-used (H1)", () => {
     );
     expect(detail).not.toBeNull();
     expect(JSON.stringify(detail)).not.toContain(preservedId);
-    // Rejected and quarantined photos are both absent, so the page cannot tell them apart.
+    // The quarantined photo is absent, exactly as a rejected one is, so the two read the same.
     expect(detail?.gallery).toEqual([]);
     expect(detail?.pendingPhotos).toEqual([]);
   });

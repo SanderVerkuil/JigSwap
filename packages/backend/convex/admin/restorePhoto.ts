@@ -3,6 +3,10 @@ import type { Id } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { requireAdmin } from "../identity/isAdmin";
 import { INVALID_IMAGE_LABEL } from "../lib/imageModeration/guards";
+import {
+  isHashCheckTimedOut,
+  isHashCleared,
+} from "../lib/imageModeration/hashCheckFields";
 import { scheduleRenditions } from "../lib/imageModeration/renditionsStore";
 import { stampModerationAction } from "./stampModerationAction";
 
@@ -25,6 +29,17 @@ export const restorePhoto = mutation({
     }
     if (row.moderationLabel === INVALID_IMAGE_LABEL) {
       throw new ConvexError("Photo was refused as an invalid image");
+    }
+    // Rejected without ever being hash-checked (nothing pending, not timed out): restoring would
+    // approve it behind a gate nothing opens, a permanent placeholder.
+    if (
+      !isHashCleared(row) &&
+      !isHashCheckTimedOut(row) &&
+      row.pendingHashes === undefined
+    ) {
+      throw new ConvexError(
+        "Photo was never hash-checked: confirm its removal instead",
+      );
     }
 
     await ctx.db.patch(imageId, {

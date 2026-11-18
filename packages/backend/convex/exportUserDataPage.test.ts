@@ -630,7 +630,7 @@ describe("insights.exportUserDataPage", () => {
     expect(new Set(rows.map((r) => r.id)).size).toBe(EXPORT_PAGE_SIZE + 1);
   });
 
-  test("a stopped photo reads the same whether it was rejected or quarantined", async () => {
+  test("a stopped photo never tells a rejected one from a quarantined one", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);
     await t.run(async (ctx) => {
@@ -682,11 +682,8 @@ describe("insights.exportUserDataPage", () => {
         .filter((r) => r.description === "stopped" || r.caption === "stopped")
         .map(({ id: _id, ...rest }) => rest);
 
-    const photos = stopped(data.copyPhotos);
-    expect(photos).toHaveLength(2);
-    expect(photos[0]).toEqual(photos[1]);
-    expect(photos[0]).toMatchObject({ status: "notShown" });
-    expect(photos[0]).not.toHaveProperty("url");
+    // A stopped copy photo is left out, as the copy page leaves it out.
+    expect(stopped(data.copyPhotos)).toEqual([]);
 
     const unchecked = data.copyPhotos.filter(
       (r) => r.description === "unchecked",
@@ -703,6 +700,44 @@ describe("insights.exportUserDataPage", () => {
     expect(attachments[0]).toMatchObject({ status: "rejected" });
     expect(attachments[0]).not.toHaveProperty("url");
     expect(JSON.stringify(data)).not.toContain("quarantined");
+  });
+
+  // gdpr-export-2: removing a photo deletes a rejected row but keeps a quarantined one, so a photo
+  // still listed after removing every listed one would be the hash match.
+  test("removing every listed copy photo and exporting again reveals no quarantined photo", async () => {
+    const t = convexTest(schema, modules);
+    const { alice } = await seed(t);
+    await t.run(async (ctx) => {
+      const copy = (await ctx.db
+        .query("ownedPuzzles")
+        .withIndex("by_owner", (q) => q.eq("ownerId", alice.me))
+        .first())!;
+      for (const moderationStatus of ["rejected", "quarantined"] as const) {
+        await ctx.db.insert("ownedPuzzleImages", {
+          ownedPuzzleId: copy._id,
+          uploaderId: alice.me,
+          fileId: await blob(ctx, moderationStatus),
+          moderationStatus,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
+      }
+    });
+    const listed = async () =>
+      (await exportSection(t, "alice", "copyPhotos")).rows;
+
+    const before = await listed();
+    for (const row of before) {
+      await as(t, "alice").mutation(
+        api.library.removeCopyPhoto.removeCopyPhoto,
+        {
+          imageId: row.id as Id<"ownedPuzzleImages">,
+        },
+      );
+    }
+
+    expect(before.map((row) => row.status)).not.toContain("notShown");
+    expect(await listed()).toEqual([]);
   });
 
   test("a declined follow request reads as the requester sees it: pending in the cooldown, then gone", async () => {
@@ -747,11 +782,13 @@ describe("insights.exportUserDataPage", () => {
     });
   });
 
-  // Erin is private and shares no follow or circle with Alice (a block deletes their follows).
+  // Erin is private and shares no follow or circle with Alice (a block deletes their follows). Her
+  // profile name differs from her account name ("Erin"), so each section shows which one it uses.
   const insertPrivateErin = async (ctx: MutationCtx) => {
     const erin = await insertUser(ctx, "erin");
     await ctx.db.insert("profiles", {
       memberId: erin,
+      displayName: "Erin Puzzles",
       visibility: "private",
       updatedAt: Date.now(),
     });
@@ -777,7 +814,7 @@ describe("insights.exportUserDataPage", () => {
     const { rows } = await exportSection(t, "alice", "blocks");
     expect(rows.map((b) => b.member)).toEqual(
       expect.arrayContaining([
-        { memberId: erin, name: "Erin" },
+        { memberId: erin, name: "Erin Puzzles" },
         { departed: true },
       ]),
     );

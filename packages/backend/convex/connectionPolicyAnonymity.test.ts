@@ -148,3 +148,33 @@ describe("a pair thread with a partner the initiator may see", () => {
     expect(typeof (await openDm(t, u.bob))).toBe("string");
   });
 });
+
+// A departed member's circle seat can outlive them until the purge reaches it. It must not let a
+// stale tab open a DM, which would write a thread and a participant row naming them.
+describe("a departed member's leftover circle seat", () => {
+  test.each(["deleted", "deactivated"] as const)(
+    "%s: canMessage is false and openDmThread opens nothing",
+    async (how) => {
+      const t = convexTest(schema, modules);
+      const u = await seed(t, "public");
+      await t.run(async (ctx) => {
+        for (const memberId of [u.alice, u.carol]) {
+          await ctx.db.insert("circleMembers", {
+            circleAggregateId: "circle-1",
+            memberId,
+          });
+        }
+      });
+      expect(await canMessage(t, u.carol)).toBe(true);
+
+      await t.run(async (ctx) => {
+        if (how === "deleted") await ctx.db.delete(u.carol);
+        else await ctx.db.patch(u.carol, { isActive: false });
+      });
+
+      expect(await canMessage(t, u.carol)).toBe(false);
+      await expectNotConnected(openDm(t, u.carol));
+      expect(await dmCount(t)).toBe(0);
+    },
+  );
+});

@@ -103,7 +103,7 @@ const openers: Array<
 ];
 
 describe.each(openers)("a profile row opened by %s", (_, open) => {
-  test("stores no visibility: logged out stays locked, in-app still reads public", async () => {
+  test("stores no visibility: logged out stays locked, the member's own read says unchosen", async () => {
     const t = convexTest(schema, modules);
     const seeded = await seedFrank(t);
     await open(t, seeded);
@@ -121,8 +121,10 @@ describe.each(openers)("a profile row opened by %s", (_, open) => {
     expect(anonymous?.hero.location).toBeUndefined();
     expect(JSON.stringify(anonymous)).not.toContain("Rotterdam");
 
+    // Unchosen, not "public": the privacy setting shows Everyone and saves it when picked.
     const own = await asFrank(t).query(api.social.getProfile.getProfile, {});
-    expect(own?.visibility).toBe("public");
+    expect(own).not.toBeNull();
+    expect(own?.visibility).toBeUndefined();
   });
 
   test("public review authors and the quick start treat it as unchosen", async () => {

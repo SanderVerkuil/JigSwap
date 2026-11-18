@@ -2,6 +2,7 @@ import { toMemberId } from "@jigswap/domain";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
+import { isActiveMember } from "../identity/requireActiveMember";
 import { requireMember } from "../identity/requireMember";
 import { isBlockedEitherWay } from "./blocks";
 import { establishMutualFollow } from "./establishMutualFollow";
@@ -14,7 +15,8 @@ import { profileVisibilityOf } from "./privacy";
 type QrFollowResult = { established: boolean; requested?: true };
 
 // A logged-in member scanned someone's QR (or opened their invite link). Own/invalid/revoked
-// tokens are silently ignored — never an error, the landing page just shows nothing special.
+// tokens, and a deleted or deactivated owner's, are silently ignored — never an error, the landing
+// page just shows nothing special.
 // Household links are ignored: their only effect is redeemInvite.
 // A token is forwardable, so holding one is not the owner's consent (SEC-42):
 // - public owner: one tap establishes the mutual follow, as it always has;
@@ -34,7 +36,9 @@ export const acceptQrFollow = mutation({
       link === null ||
       link.revokedAt !== undefined ||
       !isNetworkLink(link) ||
-      link.ownerId === memberId
+      link.ownerId === memberId ||
+      // A deleted or deactivated owner: quiet, and no row may name them.
+      !(await isActiveMember(ctx, link.ownerId))
     ) {
       return { established: false };
     }

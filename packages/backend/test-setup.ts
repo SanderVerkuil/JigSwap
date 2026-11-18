@@ -7,7 +7,7 @@ const scheduledCrashes: string[] = [];
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
   if (String(args[0]).startsWith("Error when running scheduled function")) {
-    scheduledCrashes.push(String(args[0]));
+    scheduledCrashes.push(args.map(String).join(" "));
   }
   originalConsoleError(...args);
 };

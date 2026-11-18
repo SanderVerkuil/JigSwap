@@ -549,6 +549,35 @@ describe("a block between housemates", () => {
       );
     },
   );
+
+  test.each([
+    ["ann", "bob"],
+    ["bob", "ann"],
+  ] as const)(
+    "once %s blocks %s, neither library lists the other's copies",
+    async (blocker, blocked) => {
+      await as(t, blocker).mutation(api.social.blockMember.blockMember, {
+        memberId: w[blocked],
+      });
+
+      for (const [who, own] of [
+        ["ann", [w.manageCopy, w.viewCopy]],
+        ["bob", [w.bobCopy]],
+      ] as const) {
+        const window = await as(t, who).query(
+          api.library.listMyLibraryWindow.listMyLibraryWindow,
+          { limit: 48 },
+        );
+        expect(window.rows.map((c) => c._id).sort()).toEqual([...own].sort());
+        expect(
+          await as(t, who).query(
+            api.household.listHouseholdCopies.listHouseholdCopies,
+            {},
+          ),
+        ).toEqual([]);
+      }
+    },
+  );
 });
 
 describe("completions stay personal", () => {

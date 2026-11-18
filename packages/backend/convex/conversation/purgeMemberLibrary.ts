@@ -148,10 +148,11 @@ export const deleteOwnContactShares = async (
  * borrower still holds it: closing an older loan never takes the copy away from whoever holds it
  * now (the rule return-loan and recall-loan follow). Written directly: the Loan aggregate's
  * returnByBorrower/recallByOwner are the parties' own moves. The loan row stays as the copy's
- * history. A copy the member lent is deleted by the copies phase. When they borrowed it, the
- * lender, if still active, gets a loan_closed_member_deleted notification about the copy (in-app,
- * and push or email when their preferences turn those on), with no actor: the copy can now read as
- * back home while the puzzle is still with the deleted member.
+ * history. A copy the member lent is deleted by the copies phase. When they borrowed it and still
+ * held it, the lender, if still active, gets a loan_closed_member_deleted notification about the
+ * copy (in-app, and push or email when their preferences turn those on), with no actor: the copy
+ * can now read as back home while the puzzle is still with the deleted member. An older loan whose
+ * copy someone else holds now tells nobody: the copy stays with that holder.
  */
 export const closeOpenLoans = async (
   ctx: MutationCtx,
@@ -179,10 +180,9 @@ export const closeOpenLoans = async (
       .query("ownedPuzzles")
       .withIndex("by_aggregate_id", (q) => q.eq("aggregateId", loan.copyId))
       .unique();
-    if (copy && copy.heldBy === loan.borrowerId) {
-      await ctx.db.patch(copy._id, { heldBy: undefined, updatedAt: now });
-    }
-    if (side === "borrower" && copy) {
+    if (!copy || copy.heldBy !== loan.borrowerId) continue;
+    await ctx.db.patch(copy._id, { heldBy: undefined, updatedAt: now });
+    if (side === "borrower") {
       await makeNotify(ctx)({
         memberId: toMemberId(loan.lenderId),
         type: "loan_closed_member_deleted",

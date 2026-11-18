@@ -1,5 +1,4 @@
 import { convexTest, type TestConvex } from "convex-test";
-import { makeFunctionReference } from "convex/server";
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -246,21 +245,6 @@ describe("exchange owner-only field gating (counterparty must not see private co
     for (const secret of ALICE_SECRETS) {
       expect(json).not.toContain(secret);
     }
-  });
-});
-
-describe("the legacy exchange lists", () => {
-  // listMyLiveExchanges and listMyExchangeHistory replaced them; no client calls them any more.
-  test.each([
-    "exchange/getUserExchanges:getUserExchanges",
-    "exchange/getExchangesByOwner:getExchangesByOwner",
-    "exchange/getExchangesByRequester:getExchangesByRequester",
-  ])("%s is gone", async (name) => {
-    const t = convexTest(schema, modules);
-    await seed(t);
-    await expect(
-      asAlice(t).query(makeFunctionReference<"query">(name), {}),
-    ).rejects.toThrow(`Could not find module for: "${name.split(":")[0]}"`);
   });
 });
 

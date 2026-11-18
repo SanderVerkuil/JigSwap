@@ -509,6 +509,8 @@ describe("account deletion: blocks, reveals, reports, rate limits", () => {
       for (const key of [
         `messagePost:${alice}`,
         `reportFile:${alice}`,
+        // A retired bucket (the category-create limit was removed): its old rows still go.
+        `categoryCreate:${alice}`,
         `messagePost:${bob}`,
         "maptiler:global:hour",
       ]) {
