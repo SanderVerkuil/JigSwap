@@ -1478,7 +1478,8 @@ describe("per-thread reads with a photo history", () => {
       await insertImage(t, threadId, alice, { createdAt: 2 }),
       await insertImage(t, threadId, alice, { createdAt: 3 }),
     ];
-    const instant = Date.now();
+    // Past every earlier commit, so the first send gets exactly this instant.
+    const instant = Date.now() + 1000;
     const clock = vi.spyOn(Date, "now").mockReturnValue(instant);
     try {
       await send(t, threadId, [a]);

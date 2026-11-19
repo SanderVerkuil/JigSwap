@@ -212,6 +212,7 @@ describe("the listing fields Browse's candidate index reads", () => {
         forTrade,
       });
     await offer(true);
+    const { listedAt } = await listing(t, copyId);
 
     for (const later of [1000, DAY - 1000]) {
       vi.setSystemTime(NOW + later);
@@ -219,14 +220,16 @@ describe("the listing fields Browse's candidate index reads", () => {
       await offer(true);
       expect(await listing(t, copyId)).toMatchObject({
         isOpen: true,
-        listedAt: NOW,
+        listedAt,
       });
     }
 
-    vi.setSystemTime(NOW + DAY);
+    vi.setSystemTime(listedAt! + DAY);
     await offer(false);
     await offer(true);
-    expect((await listing(t, copyId)).listedAt).toBe(NOW + DAY);
+    expect((await listing(t, copyId)).listedAt).toBeGreaterThanOrEqual(
+      listedAt! + DAY,
+    );
   });
 
   test("the bulk offer path keeps a quick reopen's place too", async () => {
@@ -244,10 +247,11 @@ describe("the listing fields Browse's candidate index reads", () => {
         forTrade,
       });
     await offer(true);
+    const { listedAt } = await listing(t, copyId);
     vi.setSystemTime(NOW + 1000);
     await offer(false);
     await offer(true);
-    expect((await listing(t, copyId)).listedAt).toBe(NOW);
+    expect((await listing(t, copyId)).listedAt).toBe(listedAt);
   });
 
   test("a copy added open is listed when it was added; a private owner's is marked", async () => {

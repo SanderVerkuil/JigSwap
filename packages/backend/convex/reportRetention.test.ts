@@ -171,7 +171,8 @@ describe("report retention", () => {
     );
     vi.setSystemTime(DECIDED_AT);
     for (const reportId of reportIds) await decide(t, reportId);
-    vi.setSystemTime(reportRetainUntil(DECIDED_AT));
+    // Past both decisions: the second one commits just after DECIDED_AT.
+    vi.setSystemTime(reportRetainUntil(DECIDED_AT) + 1000);
     for (const reportId of reportIds) {
       await t.mutation(internal.reports.retention.purgeReport, { reportId });
       const report = await t.run((ctx) => ctx.db.get(reportId));
