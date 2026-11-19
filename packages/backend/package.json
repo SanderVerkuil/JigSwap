@@ -15,7 +15,7 @@
     "@jsquash/webp": "1.5.0",
     "blurhash": "^2.0.5",
     "cheerio": "^1.2.0",
-    "convex": "^1.47.0",
+    "convex": "^1.50.0",
     "convex-helpers": "0.1.128",
     "jimp": "^1.6.1",
     "ogie": "^2.1.0",
