@@ -42,11 +42,10 @@ type ClerkUserSync = Pick<
 // Matches the profile field's limit (a city, not an address).
 const MAX_LOCATION_LENGTH = 80;
 
-// The users.location a write leaves (users.updateUserProfile and the identity/setLocation shim):
-// trimmed; empty clears it (undefined); longer than 80 characters is `invalid_location`, unless it
-// is the location already stored: a value saved before the cap stays as it is when an editor sends
-// it back unchanged.
-export const normalizeLocation = (
+// The users.location updateUserProfile leaves: trimmed; empty clears it (undefined); longer than 80
+// characters is `invalid_location`, unless it is the location already stored: a value saved before
+// the cap stays as it is when an editor sends it back unchanged.
+const normalizeLocation = (
   location: string,
   current: string | undefined,
 ): string | undefined => {
