@@ -1,6 +1,7 @@
 import { Link } from "@/compat/link";
 import { CopyOwnerLine } from "@/components/household/copy-owner-line";
 import type { HouseholdData } from "@/components/household/household-page";
+import { HouseholdShelf } from "@/components/household/household-shelf";
 import {
   useCopyCardActions,
   useSolveStateByCopyId,
@@ -169,6 +170,7 @@ export function HouseholdPuzzles({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
+      <HouseholdShelf viewerId={viewer.memberId} label={t("shelfLabel")} />
       {mates.length === 0 && (
         <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
           {t("solo")}
