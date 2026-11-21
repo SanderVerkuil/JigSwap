@@ -1,16 +1,21 @@
 "use client";
 
 import { Link } from "@/compat/link";
+import { BoxFace, ShelfLedge } from "@/components/shelf/box-face";
+import { boxScale } from "@/components/shelf/box-size";
 import { gateway } from "@/gateway";
 import type { FunctionReturnType } from "convex/server";
-import { Puzzle, Star } from "lucide-react";
+import { Star } from "lucide-react";
+import type * as React from "react";
 import { useFormatter, useTranslations } from "use-intl";
 import type { PuzzleCardShellProps } from "./puzzle-card-shell";
 
-// One box in the public catalogue, derived from the paginated public-browse read it is fed by. It stands
-// on the plank-tan ledge the home page's shelves use, at its own height, with plain facts under it, so
-// the grid reads as shelves and not as cards. Deliberately member-free: no owner identities, no
-// copy-level badges, just catalogue facts and community aggregates.
+// One box in the public catalogue, derived from the paginated public-browse read it is fed by. It is
+// the shelf's own box and ledge (components/shelf): standing on the plank-tan ledge at its own height,
+// a 1,000-piece box the column's width and a smaller puzzle's box narrower, a painted lid when it has
+// no art, with plain facts under it, so the grid reads as shelves and not as cards. Deliberately
+// member-free: no owner identities, no copy-level badges, just catalogue facts and community
+// aggregates.
 type CatalogCard = FunctionReturnType<
   typeof gateway.catalog.publicBrowse
 >["page"][number];
@@ -20,6 +25,7 @@ export function DefinitionCard({
   imageSizes,
   headingLevel,
   priority,
+  index = 0,
 }: {
   card: CatalogCard;
   /** The cover's `sizes` in the caller's grid (see PuzzleCardShell's imageSizes). */
@@ -28,6 +34,8 @@ export function DefinitionCard({
   headingLevel?: PuzzleCardShellProps["headingLevel"];
   /** Above the fold (the grid's first row): fetch the cover eagerly, first. */
   priority?: boolean;
+  /** Its place in the grid: picks a painted lid's colour. */
+  index?: number;
 }) {
   const t = useTranslations("publicCatalog");
   const format = useFormatter();
@@ -46,25 +54,33 @@ export function DefinitionCard({
 
   return (
     <article className="group relative flex h-full flex-col">
-      <div className="flex h-[clamp(140px,17vw,250px)] items-end justify-center px-[clamp(8px,1.4vw,20px)]">
-        {card.image ? (
-          <img
-            src={card.image}
-            srcSet={card.imageSrcSet ?? undefined}
-            sizes={card.imageSrcSet ? imageSizes : undefined}
-            alt=""
-            loading={priority ? "eager" : "lazy"}
-            fetchPriority={priority ? "high" : undefined}
-            decoding="async"
-            className="block h-auto max-h-full w-auto max-w-full rounded-t-[2px]"
-          />
-        ) : (
-          <div className="bg-mk-sky-soft dark:bg-mk-muted text-mk-text-muted flex aspect-[4/3] w-full items-center justify-center rounded-t-[2px]">
-            <Puzzle aria-hidden="true" className="h-1/3 w-1/3" />
-          </div>
-        )}
+      <div
+        className="flex h-[clamp(140px,17vw,250px)] items-end justify-center px-[clamp(8px,1.4vw,20px)]"
+        // The slot is the box's room: a 1,000-piece box (or bigger) the column's width, its height.
+        style={
+          {
+            "--unit": "100%",
+            "--row-h": "100%",
+            "--scale": Math.min(1, boxScale(card.pieceCount ?? undefined)),
+          } as React.CSSProperties
+        }
+      >
+        <BoxFace
+          box={{
+            id: card._id,
+            title: card.title,
+            brand: card.brand ?? undefined,
+            pieceCount: card.pieceCount ?? undefined,
+            cover: card.image ?? undefined,
+          }}
+          index={index}
+          named={false}
+          srcSet={card.imageSrcSet ?? undefined}
+          sizes={imageSizes}
+          priority={priority}
+        />
       </div>
-      <div aria-hidden="true" className="bg-mk-plank h-[9px] shrink-0" />
+      <ShelfLedge className="shrink-0" />
       <div className="text-mk-text-strong flex flex-1 flex-col items-start px-[clamp(8px,1.4vw,20px)] pt-3">
         {/* The columns meet so the planks run on: a long Dutch compound must break inside its own
             card, not run into the next one. It hyphenates at a syllable by <html lang>; anywhere is
