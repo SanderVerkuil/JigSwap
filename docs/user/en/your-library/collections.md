@@ -30,7 +30,7 @@ Until you have a collection, the page explains what one is and offers
 
 ## Add puzzles to a collection
 
-1. Open a collection tile to see its detail.
+1. On **Collections**, open a collection by its name to see its detail.
 2. Use **Add puzzles** (`/collections/<id>/add-puzzles`) to attach copies from
    your library. Every puzzle in your library can go into a collection,
    including ones you keep for yourself, private ones and ones that are lent
@@ -56,8 +56,8 @@ it.
 
 ## Edit or delete a collection
 
-- On **Collections**, each tile opens its collection; the gear button on the
-  tile (**Edit**) opens the editor. On a collection's page, use **Edit**.
+- On **Collections**, each collection's name opens it; the gear button beside
+  it (**Edit**) opens the editor. On a collection's page, use **Edit**.
 - **Delete collection** in the editor deletes the collection after you
   confirm. The puzzles in it stay in your library. Your default collection
   can't be deleted.
@@ -65,4 +65,6 @@ it.
 Only you see **Add Puzzles**, **Edit** and the card **⋯** menu on your
 collections. Others who open a public collection see its puzzles without them.
 
-Each collection tile shows its puzzle count and whether it's the default.
+On **Collections**, each collection is a shelf: its name, its puzzle count and
+whether it's the default, with its newest puzzles standing on it. Each box
+opens that puzzle.

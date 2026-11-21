@@ -16,7 +16,9 @@ Je dashboard is een persoonlijk overzicht dat je puzzelleven in één oogopslag 
 - **Snelle-actie-chips**: _Community verkennen_ en _Voltooiing vastleggen_. Een
   puzzel voeg je toe met **Toevoegen aan mijn puzzels** in de bovenbalk (op een
   telefoon met de snelle-actieknop in het midden).
-- Een **3D-plank** die je echte exemplaren toont als fysieke objecten die je kunt bekijken.
+- **Jouw plank**: je nieuwste puzzels op een plank. Elke doos opent die
+  puzzel, en met **Spelen** wordt de plank 3D (zie
+  [Spelen met je plank](/docs/discovering-and-community/your-profile-and-shelf#spelen-met-je-plank)).
 - **Live statistieken**: hoeveel puzzels je bezit. Afgeronde ruilen, je
   gemiddelde beoordeling en lopende uitwisselingen komen erbij zodra je je eerste
   uitwisseling of beoordeling hebt.

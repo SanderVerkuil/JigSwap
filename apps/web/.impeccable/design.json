@@ -666,6 +666,11 @@
         "name": "dialog-float",
         "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
         "purpose": "Dialogs and sheets."
+      },
+      {
+        "name": "box-lift",
+        "value": "0 7px 8px -5px rgb(0 0 0 / 0.35)",
+        "purpose": "A shelf box while it is lifted off the ledge under a pointer, and only then."
       }
     ],
     "motion": [
@@ -703,6 +708,16 @@
         "name": "entrance-public",
         "value": "500-560ms, rise 16-32px, stagger 60-70ms",
         "purpose": "Public section parts, once."
+      },
+      {
+        "name": "shelf-lift",
+        "value": "translateY(-3px), 150ms",
+        "purpose": "A shelf box under a pointer, with the 0.97 press; motion-safe only."
+      },
+      {
+        "name": "shelf-play",
+        "value": "280ms depth in, 280ms glide home, 200ms flatten",
+        "purpose": "Play and Reset on the shelf, on the strong ease-out; never offered with reduced motion."
       }
     ],
     "breakpoints": [
@@ -824,6 +839,14 @@
       "description": "The signature: flat Dutch facades in one colour, tone on tone at the foot of the sidebar. Path data from the shipped component; the set is shortened here.",
       "html": "<div class=\"ds-skyline\"><svg viewBox=\"0 0 246 120\" width=\"246\" height=\"120\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M0 120V62h6v-8h6v-8h5v-8h10v8h5v8h6v8h6v58z\"/><path d=\"M44 120V62c0-6 6-6 8-12 2-6 0-10 4-14 2-2 4-3 5-6h6c1 3 3 4 5 6 4 4 2 8 4 14 2 6 8 6 8 12v58z\"/><path d=\"M84 120V70l19-26 19 26v50z\"/><path d=\"M122 120V58h8V40l6-6 5-30 5 30 6 6v18h8v62z\"/><path d=\"M160 120V66h6v-6c6 0 8-4 8-10v-6h6V34h6v10h6v6c0 6 2 10 8 10v6h6v54z\"/><path d=\"M206 120V62h6v-8h6v-8h5v-8h6v8h5v8h6v8h6v58z\"/><g fill=\"var(--sidebar-skyline-window)\"><rect x=\"18\" y=\"72\" width=\"7\" height=\"10\"/><rect x=\"60\" y=\"56\" width=\"7\" height=\"10\"/><rect x=\"138\" y=\"72\" width=\"7\" height=\"10\"/><rect x=\"224\" y=\"54\" width=\"7\" height=\"10\"/></g></svg></div>",
       "css": ".ds-skyline{display:flex;padding-top:16px;background:var(--sidebar);color:var(--sidebar-skyline)}"
+    },
+    {
+      "name": "Shelf",
+      "kind": "custom",
+      "refersTo": "plank-ledge",
+      "description": "One row of puzzle boxes standing on the plank ledge, flat at rest, the same object on every page that shows somebody's boxes. Widths follow piece count; a box without a cover is a painted lid.",
+      "html": "<ul class=\"ds-shelf\" aria-label=\"Your shelf\"><li><a class=\"ds-shelf-box\" href=\"#\" aria-label=\"Molen aan de Vecht\" style=\"--scale:.8\"><span class=\"ds-shelf-lid\" style=\"background:#2b7bb9\"><span>Studio Noord</span><span class=\"ds-shelf-lid-title\">Molen aan de Vecht</span><span class=\"ds-shelf-lid-count\">500</span></span></a></li><li><a class=\"ds-shelf-box\" href=\"#\" aria-label=\"Tulpen\" style=\"--scale:1\"><span class=\"ds-shelf-lid\" style=\"background:#146350\"><span>Jumbo</span><span class=\"ds-shelf-lid-title\">Tulpen</span><span class=\"ds-shelf-lid-count\">1,000</span></span></a></li><li><a class=\"ds-shelf-box\" href=\"#\" aria-label=\"Grachten\" style=\"--scale:1.18\"><span class=\"ds-shelf-lid\" style=\"background:#c8321f\"><span>Ravensburger</span><span class=\"ds-shelf-lid-title\">Grachten</span><span class=\"ds-shelf-lid-count\">2,000</span></span></a></li></ul><div class=\"ds-shelf-ledge\" aria-hidden=\"true\"></div>",
+      "css": ".ds-shelf{--unit:120px;display:flex;align-items:flex-end;gap:14px;height:calc(var(--unit) * .944);margin:0;padding:8px 4px 0;list-style:none}.ds-shelf li{display:flex;flex-shrink:0}.ds-shelf-box{display:block;transform-origin:bottom;border-radius:2px 2px 0 0;color:#fff;text-decoration:none;transition:translate 150ms cubic-bezier(0.23,1,0.32,1),scale 150ms cubic-bezier(0.23,1,0.32,1),box-shadow 150ms cubic-bezier(0.23,1,0.32,1)}.ds-shelf-box:focus-visible{outline:3px solid var(--foreground);outline-offset:2px}@media (prefers-reduced-motion:no-preference) and (hover:hover){.ds-shelf-box:hover{translate:0 -3px;box-shadow:0 7px 8px -5px rgb(0 0 0 / 0.35)}}@media (prefers-reduced-motion:no-preference){.ds-shelf-box:active{scale:.97}}.ds-shelf-lid{container-type:inline-size;display:flex;flex-direction:column;justify-content:space-between;gap:4px;box-sizing:border-box;width:calc(var(--unit) * var(--scale));aspect-ratio:4/3;padding:7cqw;overflow:hidden;border-radius:2px 2px 0 0;font-family:'Hanken Grotesk',ui-sans-serif,system-ui,sans-serif;font-size:max(10px,8cqw);line-height:1.25}.ds-shelf-lid-title{font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:max(12px,12cqw);line-height:1.08}.ds-shelf-lid-count{align-self:flex-end;font-variant-numeric:lining-nums tabular-nums;line-height:1}.ds-shelf-ledge{height:9px;background:var(--mk-plank)}"
     }
   ],
   "narrative": {
@@ -879,7 +902,7 @@
       },
       {
         "name": "The Things That Float Rule",
-        "body": "A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row. Nothing at rest in the page carries one.",
+        "body": "A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row, a shelf box lifted under a pointer. Nothing at rest in the page carries one.",
         "section": "elevation"
       },
       {
@@ -908,6 +931,7 @@
       "Don't use tinted pill navigation, frosted page heads, uppercase captions, greeting emoji or glowing action buttons in the shell.",
       "Don't use a centred hero with three feature cards on public pages.",
       "Don't animate keyboard-driven or high-frequency actions.",
+      "Don't stand a shelf in 3D at rest or tilt its boxes to the pointer; depth belongs to Play, loaded when it is pressed.",
       "Don't add decorative gradients; a scrim is for keeping text legible on a photo.",
       "Don't add invented testimonials, press logos or inflated counts as visual proof."
     ]

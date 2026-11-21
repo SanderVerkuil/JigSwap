@@ -29,7 +29,7 @@ en biedt hij **Nieuwe collectie** aan.
 
 ## Puzzels aan een collectie toevoegen
 
-1. Open een collectietegel om de details te zien.
+1. Open op **Collecties** een collectie via haar naam om de details te zien.
 2. Gebruik **Puzzels toevoegen** (`/collections/<id>/add-puzzles`) om exemplaren
    uit je bibliotheek te koppelen. Elke puzzel uit je bibliotheek kan in een
    collectie, ook puzzels die je voor jezelf houdt, privépuzzels en puzzels
@@ -57,8 +57,8 @@ er zo naar teruggaat.
 
 ## Een collectie bewerken of verwijderen
 
-- Op **Collecties** opent elke tegel zijn collectie; de tandwielknop op de
-  tegel (**Bewerken**) opent de editor. Op de pagina van een collectie gebruik
+- Op **Collecties** opent de naam van een collectie die collectie; de
+  tandwielknop ernaast (**Bewerken**) opent de editor. Op de pagina van een collectie gebruik
   je **Bewerken**.
 - **Collectie verwijderen** in de editor verwijdert de collectie nadat je het
   bevestigt. De puzzels erin blijven in je bibliotheek. Je standaardcollectie
@@ -68,4 +68,6 @@ Alleen jij ziet **Puzzels toevoegen**, **Bewerken** en het **⋯**-menu op de
 kaarten van je collecties. Anderen die een openbare collectie openen, zien de
 puzzels zonder die knoppen.
 
-Elke collectietegel toont het aantal puzzels en of het de standaardcollectie is.
+Op **Collecties** is elke collectie een plank: haar naam, het aantal puzzels en
+of het de standaardcollectie is, met haar nieuwste puzzels erop. Elke doos
+opent die puzzel.

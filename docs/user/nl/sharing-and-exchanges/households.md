@@ -178,7 +178,8 @@ tabblad **Leden**. Onder **Wacht op antwoord** staat bij
 
 ## Alle puzzels in het huishouden bekijken
 
-Het tabblad **Puzzels** toont elke puzzel in het huishouden: die van jou en
+Het tabblad **Puzzels** begint met de plank van het huis, met de nieuwste
+puzzels erop, en toont daarna elke puzzel in het huishouden: die van jou en
 die van elke huisgenoot, ook exemplaren die op privé staan. Op elke kaart
 staat van wie hij is: op die van jou staat **Jij**, op die van een huisgenoot
 zijn of haar foto en naam.

@@ -16,7 +16,9 @@ Your dashboard is a personal briefing that summarizes your puzzle life at a glan
 - **Quick-action chips**: _Browse Community_ and _Log a solve_. To add a
   puzzle, use **Add to my puzzles** in the top bar (on a phone, the center
   quick-action button).
-- A **3D shelf** ("plank") showing your real puzzle copies as physical objects you can look at.
+- **Your shelf**: your newest puzzles standing on a plank. Each box opens
+  that puzzle, and **Play** turns the shelf 3D (see
+  [Play with your shelf](/docs/discovering-and-community/your-profile-and-shelf#play-with-your-shelf)).
 - **Live stats**: how many puzzles you own. Trades completed, your average
   rating, and active exchanges join in once you have your first exchange or review.
 - **Solving now**: the puzzles you've started and not finished yet, each with
