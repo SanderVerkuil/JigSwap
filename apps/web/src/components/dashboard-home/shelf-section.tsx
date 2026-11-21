@@ -1,9 +1,8 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import { PuzzlePlankBox } from "@/components/common/puzzle-plank";
-import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
-import { BOX_COLORS } from "@/components/profile/to-plank-box";
+import { copyShelfBox } from "@/components/shelf/copy-box";
+import { Shelf, ShelfLedge } from "@/components/shelf/shelf";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
@@ -15,7 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { BookOpen, ChevronRight } from "lucide-react";
-import { useMemo } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 import { SectionHead } from "./section-head";
 import { useCurrentMember } from "./use-current-member";
@@ -33,17 +31,11 @@ type OwnedCopy = FunctionReturnType<
 >["recent"][number];
 
 // How many copies the dashboard shelf reads: the Fresh section below shows six, so both sections
-// share one library.myShelf subscription; the plank shows the first SHELF_BOX_COUNT of them.
+// share one library.myShelf subscription; the shelf shows the first SHELF_BOX_COUNT of them.
 export const MY_SHELF_SIZE = 6;
 
-// Varied box heights so the shelf reads like a real, lived-in collection.
-const BOX_HEIGHTS = [148, 130, 156, 126, 142];
-
-// Shorter set for the cramped mobile dashboard (see sub-project ②).
-const MOBILE_BOX_HEIGHTS = [118, 104, 124, 100, 114];
-
-// Boxes on the shelf. The shelf is scaled to fit its column, so a phone shows
-// fewer to keep the covers big enough to recognise.
+// Boxes on the shelf. The boxes share the row's width, so a phone shows fewer to keep the covers
+// big enough to recognise.
 const SHELF_BOX_COUNT = 5;
 const PHONE_SHELF_BOX_COUNT = 3;
 
@@ -72,29 +64,9 @@ export function statRowsFor({
     : ["owned"];
 }
 
-function toPlankBox(
-  copy: OwnedCopy,
-  index: number,
-  isMobile: boolean,
-): PuzzlePlankBox {
-  // Prefer the copy's resolved cover (a user-uploaded/pinned photo) over the
-  // catalogue image so a copy with its own cover shows it, not placeholder art.
-  const cover = copy.coverUrl ?? copy.puzzle?.images?.[0];
-  const color = BOX_COLORS[index % BOX_COLORS.length];
-  const heights = isMobile ? MOBILE_BOX_HEIGHTS : BOX_HEIGHTS;
-  return {
-    title: copy.puzzle?.title ?? copy.snapshot?.title,
-    series: copy.puzzle?.brand ?? copy.snapshot?.brand,
-    pieceCount: copy.puzzle?.pieceCount ?? copy.snapshot?.pieceCount,
-    cover,
-    c1: color,
-    c2: color,
-    // Narrower boxes on mobile; PuzzlePlank derives cover-box height from width,
-    // so this shortens the whole shelf. Desktop keeps the component default (116).
-    width: isMobile ? 92 : undefined,
-    height: cover ? undefined : heights[index % heights.length],
-  };
-}
+// A copy on the member's own shelf opens as theirs (My Puzzles › the copy).
+const toShelfBox = (copy: OwnedCopy) =>
+  copyShelfBox(copy, `/my-puzzles/${copy._id}`);
 
 function StatRow({
   href,
@@ -113,7 +85,7 @@ function StatRow({
     <RouterLink
       to={href}
       hash={hash}
-      className="group flex items-center gap-2.5 border-t py-3 sm:gap-3.5 lg:first:border-t-0"
+      className="group flex items-center gap-2.5 border-t py-3 sm:gap-3.5 xl:first:border-t-0"
     >
       <span className="min-w-9 font-sans text-xl leading-none font-semibold tabular-nums sm:min-w-[52px] sm:text-2xl">
         {value}
@@ -127,9 +99,9 @@ function StatRow({
   );
 }
 
-// "Your Shelf": the signature puzzle plank rendering the member's real copies,
-// with the four key numbers as a divided rail beside it — open rows on the
-// ground, no stat cards.
+// "Your Shelf": the member's newest boxes on the shelf (components/shelf), with the four key
+// numbers as a divided rail beside it from xl, standing level with the ledge — open rows on the
+// ground, no stat cards. Narrower, the rows sit under the shelf as a compact 2×2 grid.
 export function ShelfSection() {
   const t = useTranslations("dashboard.shelf");
   const format = useFormatter();
@@ -154,16 +126,6 @@ export function ShelfSection() {
     convexQuery(gateway.exchange.myLive, member?._id ? {} : "skip"),
   );
 
-  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
-  // reactive re-render of this dashboard (only when the copies/viewport change).
-  const plankBoxes = useMemo(
-    () =>
-      (shelf?.recent ?? [])
-        .slice(0, shelfBoxCount(isMobile))
-        .map((copy, i) => toPlankBox(copy, i, isMobile)),
-    [shelf, isMobile],
-  );
-
   const loading =
     isMemberLoading ||
     (member != null &&
@@ -177,8 +139,19 @@ export function ShelfSection() {
           icon={BookOpen}
           headingProps={SHELF_HEADING_PROPS}
         />
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          <Skeleton className="h-44 w-full" />
+        <div className="grid gap-x-10 gap-y-6 xl:grid-cols-[minmax(0,1fr)_252px] xl:items-end">
+          <div>
+            <div className="flex h-32 items-end gap-3.5">
+              {[0.8, 1, 0.9].map((h, i) => (
+                <Skeleton
+                  key={i}
+                  className="w-28 rounded-none rounded-t-[2px]"
+                  style={{ height: `${h * 6}rem` }}
+                />
+              ))}
+            </div>
+            <ShelfLedge />
+          </div>
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
@@ -246,8 +219,9 @@ export function ShelfSection() {
         headingProps={SHELF_HEADING_PROPS}
         meta={
           // Phones drop the meta: it would truncate beside the title and the
-          // owned stat row below repeats both numbers.
-          owned > 0 ? (
+          // owned stat row below repeats both numbers. So does every width
+          // while that row is the only one, standing right under it.
+          owned > 0 && statRows.length > 1 ? (
             <span className="hidden sm:inline">
               {t("meta", { owned, forTrade })}
             </span>
@@ -260,26 +234,31 @@ export function ShelfSection() {
         }
       />
       {owned === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-muted-foreground max-w-md text-sm">{t("empty")}</p>
-          <Button asChild>
-            <Link href="/my-puzzles/add">{t("addFirst")}</Link>
-          </Button>
+        // The empty shelf: the invitation stands where the boxes will.
+        <div>
+          <div className="flex flex-col items-start gap-3 pt-2 pb-5">
+            <p className="text-muted-foreground max-w-md text-sm">
+              {t("empty")}
+            </p>
+            <Button asChild>
+              <Link href="/my-puzzles/add">{t("addFirst")}</Link>
+            </Button>
+          </div>
+          <ShelfLedge />
         </div>
       ) : (
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_252px]">
-          {/* The scene fits the row to the canvas width, so the height follows
-              the width (16:9) instead of leaving a narrow column mostly empty;
-              wide columns keep the 360px desktop shelf. Below md there is no
-              scene, only the CSS plank, and this is as tall as that is. */}
-          <div className="aspect-video max-h-[360px] w-full min-w-0 max-md:aspect-auto">
-            <PuzzlePlank3D boxes={plankBoxes} fitHeightBelowMd />
-          </div>
-          {/* Below lg the rows sit under the plank as a compact 2×2 grid. */}
+        <div className="grid gap-x-10 gap-y-4 xl:grid-cols-[minmax(0,1fr)_252px] xl:items-end">
+          <Shelf
+            boxes={(shelf?.recent ?? [])
+              .slice(0, shelfBoxCount(isMobile))
+              .map(toShelfBox)}
+            label={t("title")}
+            className="min-w-0"
+          />
           <div
             data-testid="shelf-stats"
             className={cn(
-              "grid lg:flex lg:flex-col",
+              "grid xl:flex xl:flex-col",
               statRows.length > 1 && "grid-cols-2 gap-x-4 sm:gap-x-8",
             )}
           >

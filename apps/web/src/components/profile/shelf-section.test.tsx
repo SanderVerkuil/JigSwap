@@ -18,19 +18,18 @@ import { ProfileShelfSection } from "./shelf-section";
 // (PERF-B5q).
 
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
-  ),
-}));
-
-// The WebGL plank is out of scope here: render the box titles it was handed.
-vi.mock("@/components/common/puzzle-plank-3d", () => ({
-  PuzzlePlank3D: ({ boxes }: { boxes: { title?: string }[] }) => (
-    <ul aria-label="plank">
-      {boxes.map((box, i) => (
-        <li key={i}>{box.title}</li>
-      ))}
-    </ul>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+    [prop: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -113,10 +112,12 @@ const renderShelf = ({
     .map((query) => query.queryKey[1]);
 };
 
-const plankTitles = () =>
-  within(screen.getByRole("list", { name: "plank" }))
-    .getAllByRole("listitem")
-    .map((item) => item.textContent);
+// The boxes on the shelf, by the name and target of the link each one is.
+const shelfBoxes = () =>
+  within(screen.getByRole("list", { name: "Ann's Shelf" }))
+    .getAllByRole("link")
+    .map((box) => [box.getAttribute("aria-label"), box.getAttribute("href")]);
+const plankTitles = () => shelfBoxes().map(([title]) => title);
 
 afterEach(cleanup);
 
@@ -140,6 +141,12 @@ describe("ProfileShelfSection", () => {
       featured: ["Picked 1", "Picked 2"].map(copy),
     });
     expect(plankTitles()).toEqual(["Picked 1", "Picked 2"]);
+  });
+
+  it("opens each box as the member's own copy", () => {
+    renderShelf({ recent: ["A"].map(copy) });
+    const [[, href]] = shelfBoxes();
+    expect(href).toMatch(/^\/my-puzzles\/[^/]+$/);
   });
 
   it("invites the first puzzle when the member owns none", () => {
