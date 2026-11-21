@@ -64,7 +64,7 @@ jobs:
     name: Deploy dev deployment
     # Direct trigger only (pushes to main); the workflow_run event is for prod.
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 10
     # One shared dev deployment: serialize deploys and let a newer main push supersede an
     # in-flight one, so dev always converges on the latest main.
@@ -72,7 +72,7 @@ jobs:
       group: convex-dev-deploy
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: useblacksmith/checkout@v1 # v7.0.1
 
       - name: Skip if no longer the tip of main
         id: guard
@@ -155,14 +155,14 @@ jobs:
       github.event.workflow_run.head_repository.full_name == github.repository
     # Holds CONVEX_DEPLOY_KEY_PROD once the owner moves it there (see the header).
     environment: convex-production
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 20
     # Never cancel an in-flight production deploy; queue instead.
     concurrency:
       group: convex-prod-deploy
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: useblacksmith/checkout@v1 # v7.0.1
         with:
           # workflow_run runs detached from the triggering commit; check out the exact SHA CI passed on.
           ref: ${{ github.event.workflow_run.head_sha }}

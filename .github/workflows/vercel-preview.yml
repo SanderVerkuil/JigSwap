@@ -56,7 +56,7 @@ jobs:
       (github.event.pull_request.draft == false &&
       contains(github.event.pull_request.labels.*.name, 'preview') &&
       (github.event.action != 'labeled' || github.event.label.name == 'preview'))
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 30
     # A newer push to the same branch supersedes an in-flight run. Note: cancelling this
     # job does not cancel a Vercel build that already started.
@@ -79,7 +79,7 @@ jobs:
       # commit, or the ref a dispatch ran from). It moves to RUNNER_TEMP before the branch
       # checkout below, which would otherwise wipe it, and stays out of the upload.
       - name: Check out the Vercel CLI project from this workflow's commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: useblacksmith/checkout@v1 # v7.0.1
         if: env.HAS_VERCEL == 'true'
         with:
           ref: ${{ github.sha }}
@@ -94,7 +94,7 @@ jobs:
           mv vercel-cli-src/.github/vercel-cli "$RUNNER_TEMP/vercel-cli"
           rm -rf vercel-cli-src
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: useblacksmith/checkout@v1 # v7.0.1
         if: env.HAS_VERCEL == 'true'
         with:
           # The PR branch itself, not the pull_request merge ref: the CLI reads Git
@@ -143,7 +143,7 @@ jobs:
     name: Post preview URL
     needs: deploy
     if: needs.deploy.outputs.url != ''
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 5
     permissions:
       pull-requests: write

@@ -16,14 +16,14 @@ jobs:
   # Read-only: also runs for fork PRs, whose results land in the artifact.
   generate:
     name: Generate reports
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 20
     permissions:
       contents: read
     outputs:
       artifact-url: ${{ steps.reports-artifact.outputs.artifact-url }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: useblacksmith/checkout@v1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -86,7 +86,7 @@ jobs:
     name: Publish reports + comment
     needs: generate
     if: ${{ !cancelled() && needs.generate.result == 'success' && github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     timeout-minutes: 10
     permissions:
       contents: write
@@ -96,7 +96,7 @@ jobs:
       group: gh-pages-publish
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: useblacksmith/checkout@v1 # v7.0.1
         with:
           persist-credentials: false
 
