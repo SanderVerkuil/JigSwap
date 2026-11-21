@@ -5,18 +5,21 @@ import {
   EditCollectionDialog,
   type EditableCollection,
 } from "@/components/collections/edit-collection-dialog";
+import { SectionHead } from "@/components/dashboard-home/section-head";
 import { usePageHeader } from "@/components/dashboard-layout/page-header-slot";
 import { CoverChip } from "@/components/library/cover-chip";
 import { EmptyState } from "@/components/library/empty-state";
 import { chipColor } from "@/components/library/palette";
+import { copyShelfBox } from "@/components/shelf/copy-box";
+import { Shelf, ShelfLedge } from "@/components/shelf/shelf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
 import { pageTitle } from "@/lib/page-title";
-import { cn } from "@/lib/utils";
 import { convexQuery } from "@convex-dev/react-query";
+import type { CollectionView } from "@jigswap/contracts";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FolderOpen, Globe, Lock, Plus, Settings } from "lucide-react";
@@ -92,13 +95,14 @@ function CollectionsPage() {
     collections === undefined
   ) {
     return (
-      <div className="flex flex-col gap-7">
-        <Skeleton className="h-10 w-full" />
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[104px] rounded-xl" />
-          ))}
-        </div>
+      <div className="flex flex-col gap-10">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i}>
+            <Skeleton className="mb-5 h-8 w-64" />
+            <Skeleton className="h-28 w-full rounded-none" />
+            <ShelfLedge />
+          </div>
+        ))}
       </div>
     );
   }
@@ -112,7 +116,6 @@ function CollectionsPage() {
           onOpenChange={setIsCreateDialogOpen}
         />
 
-        {/* Collections Grid: compact tiles — the sanctioned card use */}
         {collections.length === 0 ? (
           <EmptyState
             title={t("noCollections")}
@@ -125,75 +128,15 @@ function CollectionsPage() {
             }
           />
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-[18px]">
+          // A collection is a shelf with its own name: one shelf a collection, like a bookcase.
+          <div className="flex flex-col gap-10">
             {collections.map((collection, index) => (
-              // The tile is one link to the collection; its Edit button sits beside the link
-              // (positioned over its top-right corner), never nested inside it.
-              <div key={collection._id} className="relative">
-                <Link
-                  href={`/collections/${collection._id}`}
-                  className="bg-card focus-visible:ring-ring flex h-full gap-3.5 rounded-xl border p-3.5 transition-colors outline-none focus-visible:ring-2"
-                >
-                  <CoverChip
-                    color={collection.color || chipColor(index)}
-                    icon={FolderOpen}
-                    emoji={collection.icon || undefined}
-                    size={74}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className={cn(
-                        "flex items-start justify-between gap-2",
-                        // Room for the Edit button over the corner.
-                        !collection.isDefault && "pr-10",
-                      )}
-                    >
-                      <div className="font-heading truncate text-lg font-bold">
-                        {collection.name}
-                      </div>
-                      <div className="flex shrink-0 items-center pt-1.5">
-                        {collection.visibility === "private" ? (
-                          <Lock
-                            className="text-muted-foreground h-4 w-4"
-                            role="img"
-                            aria-label={t("private")}
-                          />
-                        ) : (
-                          <Globe
-                            className="text-muted-foreground h-4 w-4"
-                            role="img"
-                            aria-label={t("public")}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {collection.description && (
-                      <p className="text-muted-foreground mt-0.5 line-clamp-1 text-sm">
-                        {collection.description}
-                      </p>
-                    )}
-                    <div className="mt-2.5 flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {t("puzzleCount", { count: collection.puzzleCount })}
-                      </Badge>
-                      {collection.isDefault && (
-                        <Badge variant="outline">{t("default")}</Badge>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-                {!collection.isDefault && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 size-9"
-                    aria-label={t("editNamed", { name: collection.name })}
-                    onClick={() => openEditDialog(collection)}
-                  >
-                    <Settings className="h-4 w-4" aria-hidden />
-                  </Button>
-                )}
-              </div>
+              <CollectionShelf
+                key={collection._id}
+                collection={collection}
+                color={collection.color || chipColor(index)}
+                onEdit={openEditDialog}
+              />
             ))}
           </div>
         )}
@@ -205,5 +148,102 @@ function CollectionsPage() {
         collection={editingCollection}
       />
     </div>
+  );
+}
+
+// One collection on the Collections page: its name (opening it) with its count and who may see it,
+// then its newest boxes on its shelf, each opening the copy under the collection's breadcrumbs.
+function CollectionShelf({
+  collection,
+  color,
+  onEdit,
+}: {
+  collection: CollectionView;
+  color: string;
+  onEdit: (collection: EditableCollection) => void;
+}) {
+  const t = useTranslations("collections");
+  const tCommon = useTranslations("common");
+  const href = `/collections/${collection._id}`;
+  const boxes = (collection.shelf ?? []).map((copy) =>
+    copyShelfBox(
+      copy,
+      `/my-puzzles/${copy._id}?from=collection:${collection._id}`,
+    ),
+  );
+  const Visibility = collection.visibility === "private" ? Lock : Globe;
+  return (
+    <section>
+      <SectionHead
+        title={
+          <Link
+            href={href}
+            className="flex min-w-0 items-center gap-2.5 underline-offset-4 hover:underline"
+          >
+            <CoverChip
+              color={color}
+              icon={FolderOpen}
+              emoji={collection.icon || undefined}
+              size={28}
+            />
+            <span className="truncate">{collection.name}</span>
+          </Link>
+        }
+        meta={
+          <span className="inline-flex items-center gap-2">
+            {t("puzzleCount", { count: collection.puzzleCount })}
+            <Visibility
+              className="size-4"
+              role="img"
+              aria-label={t(collection.visibility)}
+            />
+            {collection.isDefault && (
+              <Badge variant="outline">{t("default")}</Badge>
+            )}
+          </span>
+        }
+        action={
+          !collection.isDefault && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              aria-label={t("editNamed", { name: collection.name })}
+              onClick={() => onEdit(collection)}
+            >
+              <Settings className="h-4 w-4" aria-hidden />
+            </Button>
+          )
+        }
+      />
+      {collection.description && (
+        <p className="text-muted-foreground -mt-3 mb-2 line-clamp-1 text-sm">
+          {collection.description}
+        </p>
+      )}
+      {boxes.length > 0 ? (
+        <Shelf boxes={boxes} label={collection.name} />
+      ) : (
+        // An empty shelf invites filling it. One whose boxes this read left out (past its budget,
+        // or before the backend sent shelves) opens the collection instead.
+        <div>
+          <div className="flex flex-col items-start gap-3 pt-2 pb-5">
+            {collection.puzzleCount === 0 && (
+              <p className="text-muted-foreground text-sm">
+                {t("noPuzzlesInCollection")}
+              </p>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              {collection.puzzleCount === 0 ? (
+                <Link href={`${href}/add-puzzles`}>{t("addPuzzles")}</Link>
+              ) : (
+                <Link href={href}>{tCommon("view")}</Link>
+              )}
+            </Button>
+          </div>
+          <ShelfLedge />
+        </div>
+      )}
+    </section>
   );
 }
