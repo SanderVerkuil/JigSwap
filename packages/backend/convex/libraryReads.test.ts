@@ -329,6 +329,29 @@ describe("collection reads", () => {
     expect(collections[1].isDefault).toBe(false);
   });
 
+  test("getUserCollections stands each collection's copies on its shelf, with covers and no owner-only fields", async () => {
+    const t = convexTest(schema, modules);
+    const { alice, available, fileId } = await seed(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(available, {
+        coverImageId: fileId,
+        notes: "Behind the sofa",
+      });
+    });
+
+    const [favourites] = await asAlice(t).query(
+      api.library.getUserCollections.getUserCollections,
+      { userId: alice },
+    );
+
+    expect(favourites.shelf?.map((copy) => copy._id)).toEqual([available]);
+    const [box] = favourites.shelf ?? [];
+    expect(box.puzzle?.title).toBe("Mountain Vista");
+    expect(box.coverUrl).toEqual(expect.any(String));
+    // A shelf is for looking at: even the owner's carries no owner-only fields.
+    expect(box.notes).toBeUndefined();
+  });
+
   test("getUserCollections hides another member's private collections", async () => {
     const t = convexTest(schema, modules);
     const { alice } = await seed(t);

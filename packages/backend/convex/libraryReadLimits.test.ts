@@ -6,7 +6,11 @@ import { api } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { COLLECTION_ROWS_MAX } from "./library/getCollectionById";
-import { COLLECTION_MEMBER_VERIFICATIONS } from "./library/getUserCollections";
+import {
+  COLLECTION_MEMBER_VERIFICATIONS,
+  COLLECTION_SHELF_BOXES_MAX,
+  COLLECTION_SHELF_SIZE,
+} from "./library/getUserCollections";
 import schema from "./schema";
 
 // Every library read that joins each copy to its card must hold under Convex's real limit of 4,096
@@ -374,6 +378,31 @@ describe("library.collections.listForUser", () => {
     );
 
     expect(views.map((view) => view.puzzleCount)).toEqual([2100, 2100]);
+  }, 300_000);
+
+  test("each collection's shelf holds its newest six, and the read stops joining boxes at its budget", async () => {
+    // A box resolves its cover like a card: its URLs count against the limit too.
+    const t = limitedToCards(COLLECTION_SHELF_BOXES_MAX);
+    const me = await t.run((ctx) => mkUser(ctx, "me"));
+    const ids = await seedCopies(t, me, COLLECTION_SHELF_SIZE + 2);
+    const collections =
+      Math.ceil(COLLECTION_SHELF_BOXES_MAX / COLLECTION_SHELF_SIZE) + 2;
+    for (let i = 0; i < collections; i++) await seedCollection(t, me, ids);
+
+    const views = await as(t, "me").query(
+      api.library.getUserCollections.getUserCollections,
+      {},
+    );
+
+    expect(views[0].shelf?.map((copy) => copy._id)).toEqual(
+      ids.slice(-COLLECTION_SHELF_SIZE).reverse(),
+    );
+    expect(views[0].shelf![0].coverUrl).toEqual(expect.any(String));
+    const sizes = views.map((view) => view.shelf?.length ?? 0);
+    expect(sizes.reduce((a, b) => a + b, 0)).toBe(COLLECTION_SHELF_BOXES_MAX);
+    expect(sizes[sizes.length - 1]).toBe(0);
+    // Every count is still whole.
+    expect(views.every((view) => view.puzzleCount === ids.length)).toBe(true);
   }, 300_000);
 
   test("past the verification budget another member's count stops instead of guessing", async () => {

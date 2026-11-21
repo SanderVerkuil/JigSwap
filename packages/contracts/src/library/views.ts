@@ -180,6 +180,13 @@ export interface CollectionView {
   createdAt: number;
   updatedAt: number;
   puzzleCount: number;
+  /**
+   * The collection's newest copies the viewer may see, for its shelf on the Collections page, with
+   * their puzzle and thumbnail `coverUrl`, never owner-only fields. Set by
+   * `collections.listForUser` (at most six a collection, and an empty shelf past the read's box
+   * budget); undefined from a backend that predates it.
+   */
+  shelf?: OwnedCopyView[];
 }
 
 /**
