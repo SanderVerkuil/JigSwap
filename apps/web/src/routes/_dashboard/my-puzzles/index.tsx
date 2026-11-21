@@ -472,7 +472,10 @@ function PuzzlesPage() {
           {/* Toolbar: search on the left; whose and sort on the right. On a phone, where these and
             the pills would fill the first screen, the search shares its row with one Filters button
             and the rest moves into its sheet. The Add Puzzle action lives in the shell page head. */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="flex flex-wrap items-center gap-2"
+            data-tour="my-puzzles-toolbar"
+          >
             <LibrarySearchInput
               value={filters.q}
               onCommit={(q) => setSearch({ q: q || undefined })}
@@ -601,6 +604,7 @@ function PuzzlesPage() {
                       size="sm"
                       onClick={toggleSelecting}
                       className="text-foreground pointer-coarse:min-h-11"
+                      data-tour="my-puzzles-select"
                     >
                       {selecting ? (
                         <Check aria-hidden />

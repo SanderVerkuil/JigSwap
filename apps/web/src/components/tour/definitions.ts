@@ -13,6 +13,7 @@ import {
   Compass,
   Eye,
   House,
+  ListChecks,
   PencilLine,
   UserRound,
   UsersRound,
@@ -79,6 +80,18 @@ const tours: readonly TourDefinition[] = [
         route: "/my-puzzles/add/new",
         target: "add-puzzle-import",
       },
+    ],
+  },
+  // From the What's new entry change-many-puzzles.
+  {
+    id: "change-many-puzzles",
+    guide: { area: "puzzles", icon: ListChecks },
+    steps: [
+      { id: "find", route: "/my-puzzles", target: "my-puzzles-toolbar" },
+      // Select only shows once the member has a puzzle they can change.
+      { id: "select", route: "/my-puzzles", target: "my-puzzles-select" },
+      // The bulk bar only exists while selecting: told, not shown.
+      { id: "act", route: "/my-puzzles" },
     ],
   },
   {

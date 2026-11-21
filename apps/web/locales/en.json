@@ -5985,6 +5985,26 @@
           "body": "Each suggestion shows whether it's pending, approved or declined, with the admin's reason. While it's pending, you can edit or withdraw it."
         }
       }
+    },
+    "change-many-puzzles": {
+      "guide": {
+        "title": "Change many puzzles at once",
+        "description": "Find puzzles on a big shelf and offer, withdraw, collect or share several in one go."
+      },
+      "steps": {
+        "find": {
+          "title": "Find any puzzle",
+          "body": "Search your puzzles by title, brand or tag, and filter or sort the list. When you open a puzzle and go back, your search and filters are still there."
+        },
+        "select": {
+          "title": "Select several",
+          "body": "Press Select, then click the puzzles you want, or Select all for everything your search and filters show."
+        },
+        "act": {
+          "title": "Change them in one go",
+          "body": "A bar at the bottom of the list offers them for swap or to lend, withdraws their offers, adds them to a collection or shares them with a circle. Changed your mind about an offer? Press Undo."
+        }
+      }
     }
   },
   "quickStart": {

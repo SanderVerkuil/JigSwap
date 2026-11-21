@@ -5985,6 +5985,26 @@
           "body": "Bij elk voorstel zie je of het in behandeling, goedgekeurd of afgewezen is, met de reden van de beheerder. Zolang het in behandeling is, kun je het bewerken of intrekken."
         }
       }
+    },
+    "change-many-puzzles": {
+      "guide": {
+        "title": "Veel puzzels tegelijk aanpassen",
+        "description": "Vind puzzels op een grote plank en bied er meerdere tegelijk aan, trek ze in, verzamel of deel ze."
+      },
+      "steps": {
+        "find": {
+          "title": "Vind elke puzzel",
+          "body": "Zoek in je puzzels op titel, merk of tag, en filter of sorteer de lijst. Open je een puzzel en ga je terug, dan staan je zoekopdracht en filters er nog."
+        },
+        "select": {
+          "title": "Kies er meerdere",
+          "body": "Druk op Selecteren en klik op de puzzels die je wilt, of op Alles selecteren voor alles wat je zoekopdracht en filters tonen."
+        },
+        "act": {
+          "title": "Pas ze in één keer aan",
+          "body": "Een balk onder aan de lijst biedt ze aan voor ruil of om uit te lenen, trekt hun aanbod in, voegt ze toe aan een collectie of deelt ze met een kring. Toch geen aanbod? Druk op Ongedaan maken."
+        }
+      }
     }
   },
   "quickStart": {

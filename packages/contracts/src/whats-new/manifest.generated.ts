@@ -4,6 +4,79 @@ import type { WhatsNewManifestEntry } from "./types";
 
 export const WHATS_NEW_MANIFEST: readonly WhatsNewManifestEntry[] = [
   {
+    "id": "your-words-your-privacy",
+    "publishedAt": 1794996000000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "fixes-2026-11-18",
+    "publishedAt": 1794992400000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "new-look",
+    "publishedAt": 1794398400000,
+    "highlight": true,
+    "notify": true
+  },
+  {
+    "id": "answers-easier-to-find",
+    "publishedAt": 1794391200000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "change-many-puzzles",
+    "publishedAt": 1793890800000,
+    "highlight": false,
+    "notify": false,
+    "tour": "change-many-puzzles"
+  },
+  {
+    "id": "exchanges-loans-circles",
+    "publishedAt": 1793887200000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "messages-improvements-2026-11-05",
+    "publishedAt": 1793883600000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "goals-and-solves",
+    "publishedAt": 1793880000000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "profile-and-notifications",
+    "publishedAt": 1793876400000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "browse-and-catalogue",
+    "publishedAt": 1793872800000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "smoother-start",
+    "publishedAt": 1793869200000,
+    "highlight": false,
+    "notify": false
+  },
+  {
+    "id": "faster-and-easier-to-use",
+    "publishedAt": 1793865600000,
+    "highlight": false,
+    "notify": false
+  },
+  {
     "id": "new-version-prompt",
     "publishedAt": 1792605600000,
     "highlight": false,
