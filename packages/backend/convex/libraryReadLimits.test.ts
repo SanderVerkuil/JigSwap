@@ -365,7 +365,7 @@ describe("library.collections.byId, at its most expensive", () => {
 });
 
 describe("library.collections.listForUser", () => {
-  test("two collections holding the same 2,100 copies are counted, not a thrown read", async () => {
+  test("two collections holding the same 2,100 copies are counted and shelved, not a thrown read", async () => {
     const t = limited();
     const me = await t.run((ctx) => mkUser(ctx, "me"));
     const ids = await seedCopies(t, me, 2100);
@@ -374,10 +374,14 @@ describe("library.collections.listForUser", () => {
 
     const views = await as(t, "me").query(
       api.library.getUserCollections.getUserCollections,
-      {},
+      { shelves: true },
     );
 
     expect(views.map((view) => view.puzzleCount)).toEqual([2100, 2100]);
+    expect(views.map((view) => view.shelf?.length)).toEqual([
+      COLLECTION_SHELF_SIZE,
+      COLLECTION_SHELF_SIZE,
+    ]);
   }, 300_000);
 
   test("each collection's shelf holds its newest six, and the read stops joining boxes at its budget", async () => {
