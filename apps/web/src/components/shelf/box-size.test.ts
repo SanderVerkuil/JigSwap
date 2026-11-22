@@ -25,6 +25,7 @@ describe("boxScale", () => {
 describe("shelfRowVars", () => {
   it("shares the row between the boxes, less the gaps, within the smallest and largest box", () => {
     expect(shelfRowVars([1, 0.8, 1.18])).toEqual({
+      gap: 14,
       "--unit": "clamp(84px, calc((100cqw - 28px) / 2.98), 164px)",
       "--row-h": "calc(var(--unit) * 0.944)",
     });
@@ -32,6 +33,7 @@ describe("shelfRowVars", () => {
 
   it("is never as low as a 1,000-piece box is tall, and never divides by zero", () => {
     expect(shelfRowVars([0.72])).toEqual({
+      gap: 14,
       "--unit": "clamp(84px, calc((100cqw - 0px) / 0.72), 164px)",
       "--row-h": "calc(var(--unit) * 0.8)",
     });

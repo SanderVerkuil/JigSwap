@@ -185,7 +185,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
             <ul
               aria-label={label}
               style={shelfRowVars(scales)}
-              className="flex h-(--row-h) items-end gap-3.5"
+              className="flex h-(--row-h) items-end"
             >
               {boxes.map((box, i) => (
                 <li

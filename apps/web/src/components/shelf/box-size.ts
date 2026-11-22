@@ -26,13 +26,15 @@ const round = (n: number) => Math.round(n * 1000) / 1000;
 /**
  * A shelf row's sizes as CSS, for its inline style: `--unit` is the width of a 1,000-piece box,
  * the boxes sharing the row's width (its container's 100cqw) between the smallest and largest box,
- * and `--row-h` the row's height. In CSS so the server render is already right. Pure.
+ * and `--row-h` the row's height. The row's `gap` comes from here too, the same one `--unit` leaves
+ * room for. In CSS so the server render is already right. Pure.
  */
 export function shelfRowVars(scales: readonly number[]): React.CSSProperties {
   const sum = round(scales.reduce((a, b) => a + b, 0)) || 1;
   const gaps = Math.max(0, scales.length - 1) * SHELF_GAP;
   const maxScale = Math.max(1, ...scales);
   return {
+    gap: SHELF_GAP,
     "--unit": `clamp(${SHELF_MIN_UNIT}px, calc((100cqw - ${gaps}px) / ${sum}), ${SHELF_MAX_UNIT}px)`,
     "--row-h": `calc(var(--unit) * ${round(maxScale * ROW_HEIGHT_PER_WIDTH)})`,
   } as React.CSSProperties;
