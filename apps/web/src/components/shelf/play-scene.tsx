@@ -208,6 +208,7 @@ function Stage({
   // slide it along the shelf, up and down lift it); its last moves set the throw on release.
   const dragging = React.useRef<{
     index: number;
+    pointerId: number;
     offset: THREE.Vector3;
     plane: THREE.Plane;
     samples: Array<{ p: THREE.Vector3; t: number }>;
@@ -305,9 +306,9 @@ function Stage({
   );
 
   React.useEffect(() => {
-    const release = (throwIt: boolean) => {
+    const release = (e: PointerEvent, throwIt: boolean) => {
       const held = dragging.current;
-      if (!held) return;
+      if (!held || held.pointerId !== e.pointerId) return;
       dragging.current = null;
       canvas.style.removeProperty("touch-action");
       const body = bodies[held.index]?.current;
@@ -327,7 +328,7 @@ function Stage({
     };
     const onMove = (e: PointerEvent) => {
       const held = dragging.current;
-      if (!held) return;
+      if (!held || held.pointerId !== e.pointerId) return;
       const at = hit(e.clientX, e.clientY, held.plane);
       const body = bodies[held.index]?.current;
       if (!at || !body) return;
@@ -339,9 +340,9 @@ function Stage({
       if (held.samples.length > 4) held.samples.shift();
       invalidate();
     };
-    const onUp = () => release(true);
+    const onUp = (e: PointerEvent) => release(e, true);
     // The browser takes the gesture (pinch, OS): drop the box where it is, no throw.
-    const onCancel = () => release(false);
+    const onCancel = (e: PointerEvent) => release(e, false);
     // touch-action is latched at touchstart, before a drag begins, so the page would still claim a
     // vertical drag: cancel the scroll while a box is held.
     const onTouchMove = (e: TouchEvent) => {
@@ -362,8 +363,8 @@ function Stage({
 
   const grab = (e: ThreeEvent<PointerEvent>, index: number) => {
     e.stopPropagation();
-    // Boxes gliding home can't be caught.
-    if (glide.current || motion.current?.done) return;
+    // Boxes gliding home can't be caught, and a held box belongs to its finger: one at a time.
+    if (glide.current || motion.current?.done || dragging.current) return;
     const body = bodies[index]?.current;
     if (!body) return;
     const p = body.translation();
@@ -378,6 +379,7 @@ function Stage({
     canvas.style.setProperty("touch-action", "none");
     dragging.current = {
       index,
+      pointerId: e.nativeEvent.pointerId,
       offset: at.sub(center),
       plane,
       samples: [],
