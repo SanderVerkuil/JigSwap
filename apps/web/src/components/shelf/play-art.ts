@@ -11,7 +11,7 @@ import type { PlayBox, PlayLayout } from "./play-layout";
 // without a cover. Loaded before the scene's first frame, so that frame matches the flat row.
 
 /** Average an RGBA pixel buffer to a #rrggbb hex (alpha ignored). Pure. */
-export function averagePixelColor(data: Uint8ClampedArray): string {
+function averagePixelColor(data: Uint8ClampedArray): string {
   let r = 0,
     g = 0,
     b = 0;

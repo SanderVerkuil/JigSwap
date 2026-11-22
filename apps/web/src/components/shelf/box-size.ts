@@ -14,12 +14,12 @@ export function boxScale(pieceCount?: number): number {
 }
 
 // The gap between two boxes on a row, in px.
-export const SHELF_GAP = 14;
+const SHELF_GAP = 14;
 // A 1,000-piece box is never narrower than this (the row scrolls instead) nor wider than that.
-export const SHELF_MIN_UNIT = 84;
-export const SHELF_MAX_UNIT = 164;
+const SHELF_MIN_UNIT = 84;
+const SHELF_MAX_UNIT = 164;
 // The row is as tall as its biggest box stands when its lid is 5:4; a squarer lid is shrunk to fit.
-export const ROW_HEIGHT_PER_WIDTH = 0.8;
+const ROW_HEIGHT_PER_WIDTH = 0.8;
 
 const round = (n: number) => Math.round(n * 1000) / 1000;
 

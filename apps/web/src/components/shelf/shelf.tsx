@@ -15,14 +15,8 @@ import { BoxFace, lidColor, ShelfLedge, type ShelfBox } from "./box-face";
 import { boxScale, shelfRowVars } from "./box-size";
 import { measurePlayLayout, type PlayLayout } from "./play-layout";
 
-// The shelf's parts, for the pages that import the row from here.
-export {
-  BoxFace,
-  LID_COLORS,
-  lidColor,
-  ShelfLedge,
-  type ShelfBox,
-} from "./box-face";
+// For the pages that stand an empty shelf on the ledge.
+export { ShelfLedge } from "./box-face";
 
 // The shelf: one row of puzzle boxes standing on a plank-tan ledge, the same object wherever
 // JigSwap shows somebody's boxes (DESIGN.md, Shelf). Flat at rest on every device; Play lifts this

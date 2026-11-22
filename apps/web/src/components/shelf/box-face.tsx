@@ -21,7 +21,7 @@ export interface ShelfBox {
 }
 
 // Street colours for a box without a cover. White text is at least 4.5:1 on each.
-export const LID_COLORS = ["#146350", "#a86400", "#2b7bb9", "#c8321f"] as const;
+const LID_COLORS = ["#146350", "#a86400", "#2b7bb9", "#c8321f"] as const;
 
 export function lidColor(index: number): string {
   return LID_COLORS[index % LID_COLORS.length];
