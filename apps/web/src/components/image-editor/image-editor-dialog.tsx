@@ -43,7 +43,7 @@ export interface ImageEditorDialogProps {
 
 // Load an image element for pixel analysis (auto-crop only — the cropper itself loads
 // `src` internally). crossOrigin="anonymous" must be set BEFORE `src` for CORS-served
-// remote images — the box-art precedent in marketing/plank-3d/box-art.ts — drawImage
+// remote images — the same as the shelf's 3D art in components/shelf/play-art.ts — drawImage
 // works on a tainted canvas but getImageData throws SecurityError otherwise.
 const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {

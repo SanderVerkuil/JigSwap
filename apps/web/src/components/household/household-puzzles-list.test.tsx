@@ -48,6 +48,8 @@ vi.mock("@/compat/link", () => ({
   ),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+// The household's shelf above the list reads its own few boxes (household-shelf.test.tsx).
+vi.mock("./household-shelf", () => ({ HouseholdShelf: () => null }));
 
 const WINDOW = getFunctionName(gateway.library.myLibraryWindow);
 const INDEX = getFunctionName(gateway.library.myLibraryIndex);

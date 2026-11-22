@@ -381,8 +381,21 @@ describe("collections, definition aggregates and completion links", () => {
         )
       ).find((c) => c._id === collectionId)?.puzzleCount;
 
+    const shelf = async (viewer: string) =>
+      (
+        await as(t, viewer).query(
+          api.library.getUserCollections.getUserCollections,
+          { userId: cast.alice, shelves: true },
+        )
+      )
+        .find((c) => c._id === collectionId)
+        ?.shelf?.map((p) => p._id);
+
     expect((await detail("bob"))?.puzzles.map((p) => p._id)).toEqual([shown]);
     expect(await count("bob")).toBe(1);
+    // The collection's shelf on the Collections page shows only what its count counts.
+    expect(await shelf("bob")).toEqual([shown]);
+    expect((await shelf("alice"))?.sort()).toEqual([hidden, shown].sort());
     expect((await detail("alice"))?.puzzles.map((p) => p._id).sort()).toEqual(
       [hidden, shown].sort(),
     );

@@ -12,8 +12,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import en from "../../../../locales/en.json";
 import { Route } from "./index";
 
-// Each collection tile is one link to the collection, with its Edit button beside it (not nested
-// inside it) and named after the collection; the default collection has no Edit button.
+// Each collection is a named shelf: its name is one link to the collection, with its Edit button
+// beside it (not nested inside it) and named after the collection; the default collection has no
+// Edit button. Its newest boxes stand on its shelf, each opening the copy under the collection.
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => (options: object) => ({ options }),
@@ -83,7 +84,8 @@ const renderPage = (collections: CollectionView[]) => {
     { _id: ME },
   );
   queryClient.setQueryData(
-    convexQuery(gateway.collections.listForUser, { userId: ME }).queryKey,
+    convexQuery(gateway.collections.listForUser, { userId: ME, shelves: true })
+      .queryKey,
     collections,
   );
   const Page = (Route as unknown as { options: { component: ComponentType } })
@@ -134,5 +136,51 @@ describe("collection tiles", () => {
     expect(
       screen.queryByRole("button", { name: "Edit Favourites" }),
     ).toBeNull();
+  });
+});
+
+describe("collection shelves", () => {
+  const copy = (id: string, title: string) =>
+    ({
+      _id: id,
+      puzzleId: `p_${id}`,
+      ownerId: ME,
+      condition: "good",
+      availability: { forTrade: false, forSale: false, forLend: false },
+      createdAt: 0,
+      updatedAt: 0,
+      puzzle: null,
+      snapshot: { title, pieceCount: 1000 },
+    }) as NonNullable<CollectionView["shelf"]>[number];
+
+  it("stand each collection's boxes on its own shelf, opening the copy under the collection", () => {
+    renderPage([
+      collection("Cats", {
+        shelf: [copy("c1", "Kittens"), copy("c2", "Tabby")],
+      }),
+    ]);
+    const shelf = screen.getByRole("list", { name: "Cats" });
+    const boxes = Array.from(shelf.querySelectorAll("a"), (a) => [
+      a.getAttribute("aria-label"),
+      a.getAttribute("href"),
+    ]);
+    expect(boxes).toEqual([
+      ["Kittens", "/my-puzzles/c1?from=collection:doc_Cats"],
+      ["Tabby", "/my-puzzles/c2?from=collection:doc_Cats"],
+    ]);
+  });
+
+  it("invite filling an empty collection, and open one whose boxes weren't sent", () => {
+    renderPage([
+      collection("Empty", { puzzleCount: 0, shelf: [] }),
+      collection("Older", { puzzleCount: 4 }),
+    ]);
+    expect(
+      screen.getByRole("link", { name: "Add Puzzles" }).getAttribute("href"),
+    ).toBe("/collections/doc_Empty/add-puzzles");
+    expect(
+      screen.getByRole("link", { name: "View" }).getAttribute("href"),
+    ).toBe("/collections/doc_Older");
+    expect(screen.queryByRole("list", { name: "Older" })).toBeNull();
   });
 });

@@ -14,6 +14,8 @@ import {
 } from "@/components/marketing/assets/art/renditions";
 import { ENTER, TEXT_LINK } from "@/components/marketing/home/classes";
 import { useStartLink } from "@/components/marketing/use-start-link";
+import { BoxFace, ShelfLedge } from "@/components/shelf/box-face";
+import { boxScale } from "@/components/shelf/box-size";
 import { Button } from "@/components/ui/button";
 import { globalStatsQuery, hasSocialProof } from "@/lib/marketing-queries";
 import { cn } from "@/lib/utils";
@@ -36,8 +38,10 @@ const PUZZLES = {
   amsterdam: { title: "Amsterdam", pieces: 1000, cover: coverAmsterdam },
 } as const;
 
-// A box's width in the shelf's cover column follows its piece count, so the row reads as real boxes.
-const BOX_WIDTH = { 500: "w-[68%]", 1000: "w-[85%]", 2000: "w-full" } as const;
+// The drawer stands the shelf's own boxes on its ledge (components/shelf): a 1,000-piece box is 85%
+// of the cover column, and a box's width follows its piece count from there (500 at 68%, 2,000 the
+// whole column), so the row reads as real boxes.
+const COVER_UNIT = "85%";
 
 // Everything on the art is measured in these units, which have the shape of house-cut.webp (2400x1578).
 const ART_W = 2000;
@@ -144,20 +148,29 @@ function ShelfRow({
   const format = useFormatter();
   const puzzle = PUZZLES[puzzleKey];
   return (
-    <li className="grid grid-cols-[minmax(0,min(42%,136px))_minmax(0,1fr)] items-end gap-x-3.5 pt-3">
-      <img
-        src={puzzle.cover}
+    <li
+      className="grid grid-cols-[minmax(0,min(42%,136px))_minmax(0,1fr)] items-end gap-x-3.5 pt-3"
+      style={
+        {
+          "--unit": COVER_UNIT,
+          "--row-h": "none",
+          // 2,000 pieces is the whole column, never past it.
+          "--scale": Math.min(boxScale(puzzle.pieces), 100 / 85),
+        } as React.CSSProperties
+      }
+    >
+      <BoxFace
+        box={{
+          id: puzzleKey,
+          title: puzzle.title,
+          pieceCount: puzzle.pieces,
+          cover: puzzle.cover,
+        }}
+        index={0}
+        named={false}
         srcSet={coverSrcSet(puzzle.cover)}
         sizes="136px"
-        alt=""
-        width={480}
-        height={360}
-        loading="lazy"
-        decoding="async"
-        className={cn(
-          "block h-auto self-end rounded-t-[2px] border-b-[6px] border-mk-canal",
-          BOX_WIDTH[puzzle.pieces],
-        )}
+        className="self-end"
       />
       <div className="flex min-w-0 flex-col items-start pb-2.5">
         <b className="text-[18px] leading-[1.2] font-bold">{puzzle.title}</b>
@@ -180,7 +193,7 @@ function ShelfRow({
           </Link>
         </Button>
       </div>
-      <div className="col-span-full -mx-(--ledge) h-[9px] bg-mk-plank" />
+      <ShelfLedge className="col-span-full -mx-(--ledge)" />
     </li>
   );
 }

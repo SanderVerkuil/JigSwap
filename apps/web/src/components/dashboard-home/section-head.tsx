@@ -18,7 +18,8 @@ export function SectionHead({
   className,
   headingProps,
 }: {
-  title: string;
+  /** Usually text; a node when the title itself opens something (a collection's name). */
+  title: ReactNode;
   icon?: LucideIcon;
   meta?: ReactNode;
   action?: ReactNode;

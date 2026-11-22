@@ -17,8 +17,18 @@ import { MY_SHELF_SIZE, ShelfSection } from "./shelf-section";
 // sections share one subscription, and neither subscribes to the whole library (PERF-B5q).
 
 vi.mock("@/compat/link", () => ({
-  Link: ({ href, children }: { href: string; children?: ReactNode }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children?: ReactNode;
+    [prop: string]: unknown;
+  }) => (
+    <a href={href} {...rest}>
+      {children}
+    </a>
   ),
 }));
 
@@ -32,17 +42,6 @@ vi.mock("@tanstack/react-router", async (importOriginal) => ({
 
 vi.mock("@/components/dashboard-home/use-current-member", () => ({
   useCurrentMember: () => ({ member: { _id: "me" }, isMemberLoading: false }),
-}));
-
-// The WebGL plank is out of scope here: render the box titles it was handed.
-vi.mock("@/components/common/puzzle-plank-3d", () => ({
-  PuzzlePlank3D: ({ boxes }: { boxes: { title?: string }[] }) => (
-    <ul aria-label="plank">
-      {boxes.map((box, i) => (
-        <li key={i}>{box.title}</li>
-      ))}
-    </ul>
-  ),
 }));
 
 vi.mock("@/components/ui/puzzle-card", () => ({
@@ -127,19 +126,26 @@ const MY_SHELF = getFunctionName(gateway.library.myShelf);
 afterEach(cleanup);
 
 describe("ShelfSection", () => {
-  it("shows the library-wide counts from the shelf and plants the newest five on the plank", () => {
+  it("shows the library-wide counts from the shelf and stands the newest five on it", () => {
     const subscribed = renderSections(<ShelfSection />, shelfOf(42, 7, 6));
 
-    expect(screen.getByText("42 on the shelf · 7 up for trade")).toBeTruthy();
+    // The owned row is the only figure yet, so the head's meta, which would repeat it, is off.
+    expect(screen.queryByText("42 on the shelf · 7 up for trade")).toBeNull();
     const owned = screen.getByText("Puzzles Owned").closest("a");
     expect(owned?.textContent).toContain("42");
     expect(owned?.textContent).toContain("7 up for trade");
-    const plank = screen.getByRole("list", { name: "plank" });
+    // Each box is a link to the member's own copy, named by its title.
+    const shelf = screen.getByRole("list", { name: "Your Shelf" });
     expect(
-      within(plank)
-        .getAllByRole("listitem")
-        .map((item) => item.textContent),
-    ).toEqual(["Puzzle 1", "Puzzle 2", "Puzzle 3", "Puzzle 4", "Puzzle 5"]);
+      within(shelf)
+        .getAllByRole("link")
+        .map((box) => [
+          box.getAttribute("aria-label"),
+          box.getAttribute("href"),
+        ]),
+    ).toEqual(
+      [1, 2, 3, 4, 5].map((n) => [`Puzzle ${n}`, `/my-puzzles/copy_${n}`]),
+    );
 
     expect(subscribed).toContain(MY_SHELF);
     expect(subscribed).not.toContain(OWNED_BY_OWNER);
@@ -150,7 +156,7 @@ describe("ShelfSection", () => {
     expect(
       screen.getByRole("link", { name: "Add Your First Puzzle" }),
     ).toBeTruthy();
-    expect(screen.queryByRole("list", { name: "plank" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Your Shelf" })).toBeNull();
   });
 });
 

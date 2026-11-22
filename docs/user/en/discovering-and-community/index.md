@@ -6,4 +6,4 @@ summary: "Browse puzzles and people, follow members, curate your profile, build 
 
 # Discovering & Community
 
-Explore available copies and the shared catalogue, connect with other members, and shape your public profile and 3D shelf. If someone bothers you, block or report them.
+Explore available copies and the shared catalogue, connect with other members, and shape your public profile and shelf. If someone bothers you, block or report them.

@@ -11,7 +11,6 @@ import {
   InviteToCircleDialog,
   useCirclesToInviteInto,
 } from "@/components/circles/invite-to-circle-dialog";
-import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { canonicalHandleOf } from "@/components/members/canonical-handle";
 import { MemberInitial } from "@/components/members/member-initial";
@@ -19,7 +18,8 @@ import {
   ProfileCompletionsSection,
   ProfilePuzzlesSection,
 } from "@/components/members/profile-listings";
-import { toPlankBox, type ShelfCopy } from "@/components/profile/to-plank-box";
+import { copyShelfBox, type ShelfCopy } from "@/components/shelf/copy-box";
+import { Shelf } from "@/components/shelf/shelf";
 import { BlockMemberDialog } from "@/components/social/block-member-dialog";
 import { FollowButton } from "@/components/social/follow-button";
 import { MemberActionsMenu } from "@/components/social/member-actions-menu";
@@ -63,7 +63,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useRef, useState, type ComponentProps } from "react";
+import { useRef, useState, type ComponentProps } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
 // The web tier derives Convex view types from the gateway (not @jigswap/contracts directly).
@@ -782,23 +782,22 @@ function ShelfSection({
   shelf?: ShelfCopy[];
 }) {
   const t = useTranslations("profile.shelf");
-  const boxes = useMemo(
-    () => (shelf ?? []).slice(0, 6).map(toPlankBox),
-    [shelf],
-  );
+  // Each box opens that copy as theirs (/copies/<id>; the copy page brings its owner to their own).
+  const boxes = (shelf ?? [])
+    .slice(0, 6)
+    .map((copy) => copyShelfBox(copy, `/copies/${copy._id}`));
 
   if (boxes.length === 0) return null;
 
+  const title = t("title", { name: firstName });
   return (
     <section>
       <SectionHead
-        title={t("title", { name: firstName })}
+        title={title}
         icon={BookOpen}
         meta={t("meta", { count: boxes.length })}
       />
-      <div className="h-[300px] min-w-0 md:h-[360px]">
-        <PuzzlePlank3D boxes={boxes} interactive />
-      </div>
+      <Shelf boxes={boxes} label={title} />
     </section>
   );
 }

@@ -164,8 +164,9 @@ Under **Waiting for a response**, **Requests to join** lists each request:
 
 ## See every puzzle in the household
 
-The **Puzzles** tab shows every puzzle in the household: yours and every
-housemate's, including copies set to private. Each card says whose it is: your
+The **Puzzles** tab opens with the household's shelf, its newest puzzles
+standing on a plank, and then shows every puzzle in the household: yours and
+every housemate's, including copies set to private. Each card says whose it is: your
 own say **You**, a housemate's show their picture and name.
 
 - Click a person above the puzzles to see only theirs, or **Everyone** for all.

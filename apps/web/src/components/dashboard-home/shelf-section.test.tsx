@@ -40,10 +40,6 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("./use-current-member", () => ({
   useCurrentMember: () => ({ member: { _id: ME }, isMemberLoading: false }),
 }));
-// The 3D plank is not what these tests are about (and needs WebGL).
-vi.mock("@/components/common/puzzle-plank-3d", () => ({
-  PuzzlePlank3D: () => <div data-testid="plank" />,
-}));
 vi.mock("@/components/ui/puzzle-card", () => ({
   PuzzleCard: ({ puzzle }: { puzzle: OwnedCopyView }) => (
     <article data-copy={puzzle._id} />
@@ -171,7 +167,7 @@ describe("ShelfSection — stats", () => {
     expect(rows[0][1]).toContain(en.dashboard.shelf.stats.ownedLabel);
   });
 
-  it("lays four rows out as a compact 2×2 grid below lg", () => {
+  it("lays four rows out as a compact 2×2 grid below xl", () => {
     const html = render(<ShelfSection />, {
       copies: copies(3),
       stats: { ...noStats, tradesCompleted: 2 },
@@ -179,28 +175,29 @@ describe("ShelfSection — stats", () => {
     expect(statRows(html)).toHaveLength(4);
     const classes = attr(statRail(html)!, "class")?.split(" ") ?? [];
     expect(classes).toContain("grid-cols-2");
-    expect(classes).toContain("lg:flex-col");
+    expect(classes).toContain("xl:flex-col");
   });
 });
 
-describe("ShelfSection — canvas", () => {
-  // The scene fits the row to the canvas width, so a fixed height on a narrow
-  // column (an 820px tablet, the 1024px lg grid) is mostly empty space. The
-  // canvas follows its width instead, capped at the desktop height.
-  it("sizes the shelf canvas from its width, up to 360px tall", () => {
+describe("ShelfSection — the shelf", () => {
+  // The server render is already the shelf: the boxes stand on it as links to the member's own
+  // copies, sized in CSS, with no canvas and no Play until the client knows the device.
+  it("stands the newest boxes on the shelf, each opening its copy", () => {
     const html = render(<ShelfSection />, { copies: copies(3) });
-    const holder = all(html).find((el) =>
-      el.childNodes.some(
-        (child) => "tagName" in child && attr(child, "data-testid") === "plank",
-      ),
+    const shelf = all(html).find(
+      (el) =>
+        el.tagName === "ul" &&
+        attr(el, "aria-label") === en.dashboard.shelf.title,
     );
-    const classes = attr(holder!, "class")?.split(" ") ?? [];
-    expect(classes).toEqual(
-      expect.arrayContaining(["w-full", "aspect-video", "max-h-[360px]"]),
-    );
-    expect(classes.some((c) => /(^|:)h-\[/.test(c))).toBe(false);
-    // Below md there is no scene to size for: the CSS plank decides.
-    expect(classes).toContain("max-md:aspect-auto");
+    const boxes = elements(shelf!)
+      .filter((el) => el.tagName === "a")
+      .map((a) => [attr(a, "href"), attr(a, "aria-label")]);
+    expect(boxes).toEqual([
+      ["/my-puzzles/copy-0", "Puzzle 0"],
+      ["/my-puzzles/copy-1", "Puzzle 1"],
+      ["/my-puzzles/copy-2", "Puzzle 2"],
+    ]);
+    expect(html).not.toContain("<canvas");
   });
 });
 
@@ -226,11 +223,20 @@ describe("ShelfSection — links", () => {
   });
 
   it("keeps the shelf meta off phones, where the owned row repeats it", () => {
-    const html = render(<ShelfSection />, { copies: copies(3) });
+    const html = render(<ShelfSection />, {
+      copies: copies(3),
+      stats: { ...noStats, tradesCompleted: 2 },
+    });
     const meta = all(html).find(
       (el) => attr(el, "class") === "hidden sm:inline",
     );
     expect(meta && text(meta)).toBe("3 on the shelf · 3 up for trade");
+  });
+
+  it("drops the meta at every width while the owned row is the only one, repeating it", () => {
+    const html = render(<ShelfSection />, { copies: copies(3) });
+    expect(statRows(html)).toHaveLength(1);
+    expect(html).not.toContain("3 on the shelf");
   });
 });
 

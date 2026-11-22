@@ -213,6 +213,22 @@ components:
   plank-ledge:
     backgroundColor: "{colors.plank}"
     height: "9px"
+  shelf-lid-canal:
+    backgroundColor: "{colors.canal-link}"
+    textColor: "{colors.on-canal}"
+    rounded: "{rounded.sm}"
+  shelf-lid-amber:
+    backgroundColor: "{colors.amber}"
+    textColor: "{colors.on-canal}"
+    rounded: "{rounded.sm}"
+  shelf-lid-blue:
+    backgroundColor: "{colors.chart-3}"
+    textColor: "{colors.on-canal}"
+    rounded: "{rounded.sm}"
+  shelf-lid-tulip:
+    backgroundColor: "{colors.tulip}"
+    textColor: "{colors.on-canal}"
+    rounded: "{rounded.sm}"
 ---
 
 # Design System: JigSwap
@@ -255,7 +271,7 @@ Sky blue, canal green and marigold on white, with plank tan as the one warm ledg
 
 ### Tertiary
 
-- **Plank** (#e4c79a): ledges that boxes stand on, the 3D shelf's board (flat, matte, no grain) and the legal footer tile.
+- **Plank** (#e4c79a): the shelf's ledge that boxes stand on, the board under them in Play (the same colour, with a lighter top) and the legal footer tile.
 - **Tulip** (#c8321f): unread dots and counts. An unread notification carries its dot in the row's left gutter, level with the avatar, and its hover is the full Sky Frame accent step, past the unread tint. Chart colours reuse it, Canal Link and three chart-only tones.
 - **Leaf** (#1e7b34), **Amber** (#a86400), **Danger** (#c62828), **Destructive** (`oklch(0.577 0.245 27.325)`): status only.
 
@@ -348,6 +364,7 @@ Flat by default, with tonal layering doing the work: sky behind white behind a s
 
 - **Popover float** (`box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)`): popovers and menus. Turned upward (`0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1)`) on the cookie banner.
 - **Dialog float** (`box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)`): dialogs and sheets.
+- **Box lift** (`box-shadow: 0 7px 8px -5px rgb(0 0 0 / 0.35)`): a shelf box while it is lifted off the ledge under a pointer, and only then.
 
 ### Cookie Banner
 
@@ -355,7 +372,7 @@ A floating bar over the page's foot: a 1px Line top edge (`border-t border-borde
 
 ### Named Rules
 
-**The Things That Float Rule.** A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row, the cookie banner. Nothing at rest in the page carries one.
+**The Things That Float Rule.** A shadow means the thing truly floats over the page: a menu, a dialog, a sheet, a dragged row, the cookie banner, a shelf box lifted under a pointer. Nothing at rest in the page carries one.
 
 **The Solid Head Rule.** The sticky page head and the public header stand on solid colour. Do not frost them. Blur exists only to obscure a flagged image in moderation.
 
@@ -440,9 +457,31 @@ A member without a photo shows their initial, white on Canal Primary, on every s
 
 The signature that signs the app and the public footer, and closes the Features page: twelve flat facades (stepped, bell and neck gables, pitched houses, a church spire, a windmill) in one colour at 480 by 120, with window rectangles painted from `--skyline-window`. At the foot of the sidebar it is tone on tone, its windows invisible by day and lit in dimmed marigold at night, behind the account row; it appears only from 720px of height. In the footer it stands on canal, its windows lit marigold in both themes, and it runs edge to edge: five stretches at drawn size up to 2400px, growing with the band beyond that.
 
+### Shelf
+
+One row of puzzle boxes standing on a plank ledge: the same object wherever JigSwap shows somebody's boxes. It is flat at rest on every device and page.
+
+- **Boxes:** covers stand at their own proportions, bottom-aligned on the ledge, with 2px top corners and square bottoms. A box's width follows its piece count, as a share of a 1,000-piece box: 0.72 up to 300 pieces, 0.8 up to 500, 1 up to 1,000, 1.09 up to 1,500, 1.18 up to 2,000 and 1.26 beyond. An unknown count stands as 1,000.
+- **Row:** the boxes share the row's width with a 14px gap, a 1,000-piece box between 84 and 164px wide. The row scrolls sideways, ledge and all, only when its boxes would be narrower than that. It is as tall as its biggest box stands with a 5:4 lid; a squarer cover is shrunk to fit.
+- **Ledge:** Plank (Night Plank after dark), 9px, square ends, the full width of the row.
+- **Painted lid:** a box without a cover, or whose cover fails to load, is a flat 4:3 lid in a street colour, in turn Canal Link, Amber, Chart 3 and Tulip, each at least 4.5:1 under white text. The brand sits top left with the title under it, in Young Serif on up to three lines, and the piece count in tabular Hanken Grotesk bottom right, all sized in the lid's own container units.
+- **Links:** each box is a link named by its title. Under a pointer it lifts 3px with the Box lift shadow over 150ms on the strong ease-out, and presses at 0.97; all of it only under `motion-safe`. A box with nowhere to open is a picture named by its title.
+- **Play:** a small ghost button under the ledge's right end that becomes Reset in the same place, so focus stays put. It is never offered with reduced motion, Save-Data or under 4GB of device memory. three.js and rapier load only when it is pressed, and WebGL is probed only then; a failed probe or scene leaves the flat row. The scene measures the row, and an off-axis camera keeps every box front on the row's own pixels while depth grows in. The fronts are unlit and drawn at their on-screen size, so their colours match the row. The board is the ledge's colour with a lighter top; at night it is Night Plank under warm lamps. Boxes can be grabbed and thrown, one at a time by the pointer that took them, and fall off the ledge's ends; a box let go after holding still drops where it is. Reset glides every box home, flattens the view and hands back to the row. While the scene shows, the row is inert and faded out; a theme change, a resized row or a scrolled one ends the game at once.
+- **Where it stands:**
+  - the dashboard's **Your shelf**, up to five boxes (three on phones), with the member's figures beside it from xl, level with the ledge, and in a 2×2 grid below that. While the member has no exchange, rating or review yet, only the owned figure shows, and the head drops its meta, which would only repeat it;
+  - the member's own profile, up to six boxes, with **Arrange shelf** for the owner;
+  - members' pages, up to six boxes;
+  - Collections, where each collection is a named shelf: a head of its CoverChip and serif name link, with its count, visibility and edit, over its newest six boxes;
+  - the household's Puzzles tab: **The household's shelf**, the newest six boxes of everyone in the house, under a section head;
+  - the public catalogue grid, where each card's box slot stands on one continuous ledge per row (the columns meet), its box at most the column's width;
+  - the home hero's drawer (see Floor Pins and Shelf Drawer).
+- **Empty:** an empty shelf keeps its ledge, with its invitation standing on it where the boxes will.
+
+The app's shelves offer Play; the catalogue and the hero drawer use the box and ledge alone.
+
 ### Floor Pins and Shelf Drawer
 
-The hero's interaction. Each of three floors of the cutaway house is one button, carrying a name pin with a triangular pointer, Canal Ink at rest and marigold when chosen. The floors meet mid-beam, so no click falls between them. The chosen floor stays clear while a flat canal dim, masked to the art's own edge, falls over the rest; the dim on a floor half lifts while it is pointed at or focused. The chosen floor's shelf docks beside the house in a white drawer. Each box stands on a 9px plank, its width following its piece count.
+The hero's interaction. Each of three floors of the cutaway house is one button, carrying a name pin with a triangular pointer, Canal Ink at rest and marigold when chosen. The floors meet mid-beam, so no click falls between them. The chosen floor stays clear while a flat canal dim, masked to the art's own edge, falls over the rest; the dim on a floor half lifts while it is pointed at or focused. The chosen floor's shelf docks beside the house in a white drawer. Its rows are the Shelf's own box and ledge (see Shelf): one box to a row, a 1,000-piece box at 85% of the cover column (500 pieces at 68%, 2,000 the whole column), on a ledge that runs the drawer's width. The covers have no base of their own.
 
 From 1180px the hero's actions stand in a column that starts right of the main gable (57% of the width), so the roof never reaches them: the marigold action, the catalogue link, then the trust line where the column is wide enough, which wraps above the action where it isn't. From 1180 to 1239px wide, and on screens up to 880px tall, the lead is 18px with a 560px measure, so it ends before the main gable's apex. Below 1180px the shelf sits under the house, and choosing a floor scrolls it into view, but never so far that the chosen name goes under the header.
 
@@ -461,6 +500,7 @@ The back of the street: a board of filled tiles (sky, sky soft, plank), then the
 - **Keyboard:** no animation on keyboard-driven actions. The command palette and its backdrop open and close instantly, the sidebar toggle has no transition, and an instant tooltip does not animate.
 - **Overlays:** popovers, menus, selects and tooltips scale from 95% at their trigger's origin. Dialogs scale from their centre over 200ms; sheets take 280ms in and 200ms out. Everything in the shell stays under 300ms, and overlay animation is removed for reduced motion.
 - **Public entrances:** Reveal runs on section headings and their intro text only, never on cards, art, list rows, FAQ answers, nested rows or a closing call-to-action button: a rise of 16 to 32px over 500 to 560ms, with a stagger of at most 70ms. On the first screen, hero text and the hero action enter with ENTER at 60 and 130ms. No public picture moves on its own: no drift and no art entrance (PageHero's picture is simply there). Content is visible by default, so nothing can get stuck hidden; reduced motion keeps the fade and drops the rise.
+- **Shelf:** a box lifts 3px under a pointer and presses at 0.97, over 150ms. Play's depth grows in over 280ms, Reset's glide home takes 280ms and the flatten 200ms, each on the strong ease-out and under the shell's 300ms. With reduced motion there is no lift and no Play.
 - **The loud moment:** the curtain footer, once per page.
 
 ## Do's and Don'ts
@@ -488,5 +528,6 @@ The back of the street: a board of filled tiles (sky, sky soft, plank), then the
 - **Don't** use tinted pill navigation, frosted page heads, uppercase captions, greeting emoji or glowing action buttons in the shell.
 - **Don't** use a centred hero with three feature cards on public pages.
 - **Don't** animate keyboard-driven or high-frequency actions.
+- **Don't** stand a shelf in 3D at rest or tilt its boxes to the pointer; depth belongs to Play, loaded when it is pressed.
 - **Don't** add decorative gradients; a scrim is for keeping text legible on a photo.
 - **Don't** add invented testimonials, press logos or inflated counts as visual proof.

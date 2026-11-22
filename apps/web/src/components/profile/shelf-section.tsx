@@ -1,10 +1,10 @@
 "use client";
 
 import { Link } from "@/compat/link";
-import { PuzzlePlank3D } from "@/components/common/puzzle-plank-3d";
 import { SectionHead } from "@/components/dashboard-home/section-head";
 import { MY_SHELF_SIZE } from "@/components/dashboard-home/shelf-section";
-import { toPlankBox } from "@/components/profile/to-plank-box";
+import { copyShelfBox } from "@/components/shelf/copy-box";
+import { Shelf, ShelfLedge } from "@/components/shelf/shelf";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { gateway, Id } from "@/gateway";
@@ -17,14 +17,13 @@ import { useTranslations } from "use-intl";
 import { ArrangeShelfDialog } from "./arrange-shelf-dialog";
 import type { Member } from "./member-view";
 
-// "{FirstName}'s Shelf": the signature puzzle plank rendering the member's
-// real copies on their profile, capped at six boxes so the plank stays a
-// display shelf rather than a catalogue (My Puzzles is the catalogue).
-// When the viewer is the owner, an "Arrange shelf" button opens a dialog to
-// curate and reorder up to 6 copies (sub-project ④).
-// Rendered only on the signed-in member's own profile (routes/_dashboard/profile.tsx):
-// the uncurated fallback reads library.myShelf, which is always the caller's own
-// shelf. Another member's profile has its own shelf (members/profile-body.tsx).
+// "{FirstName}'s Shelf": the member's real copies on the shelf (components/shelf) on their profile,
+// capped at six boxes so it stays a display shelf rather than a catalogue (My Puzzles is the
+// catalogue). When the viewer is the owner, an "Arrange shelf" button opens a dialog to curate and
+// reorder up to 6 copies (sub-project ④).
+// Rendered only on the signed-in member's own profile (routes/_dashboard/profile.tsx): the
+// uncurated fallback reads library.myShelf, which is always the caller's own shelf. Another
+// member's profile has its own shelf (members/profile-body.tsx).
 export function ProfileShelfSection({ member }: { member: Member }) {
   const t = useTranslations("profile.shelf");
   const displayName = useMemberDisplayName();
@@ -59,21 +58,22 @@ export function ProfileShelfSection({ member }: { member: Member }) {
     [featuredCopies],
   );
 
-  // Memoized so the 3D plank's color-resolution effect doesn't re-run on every
-  // reactive re-render (only when the copies change). Use curated order when
-  // available; fall back to the most-recent 6.
-  const boxes = useMemo(() => {
-    if (featuredCopies !== undefined && featuredCopies.length > 0) {
-      return featuredCopies.slice(0, 6).map(toPlankBox);
-    }
-    return (shelf?.recent ?? []).slice(0, 6).map(toPlankBox);
-  }, [shelf, featuredCopies]);
+  // The curated order when there is one; else the most recent six. Each box opens as the member's
+  // own copy.
+  const copies =
+    featuredCopies !== undefined && featuredCopies.length > 0
+      ? featuredCopies
+      : (shelf?.recent ?? []);
+  const boxes = copies
+    .slice(0, 6)
+    .map((copy) => copyShelfBox(copy, `/my-puzzles/${copy._id}`));
 
   if (shelf === undefined || featuredCopies === undefined) {
     return (
       <section>
         <SectionHead title={title} icon={BookOpen} />
-        <Skeleton className="h-44 w-full" />
+        <Skeleton className="h-36 w-full" />
+        <ShelfLedge />
       </section>
     );
   }
@@ -99,18 +99,20 @@ export function ProfileShelfSection({ member }: { member: Member }) {
         }
       />
       {boxes.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-muted-foreground max-w-md text-sm">
-            {tDashboardShelf("empty")}
-          </p>
-          <Button asChild>
-            <Link href="/my-puzzles/add">{tDashboardShelf("addFirst")}</Link>
-          </Button>
+        // The empty shelf: the invitation stands where the boxes will.
+        <div>
+          <div className="flex flex-col items-start gap-3 pt-2 pb-5">
+            <p className="text-muted-foreground max-w-md text-sm">
+              {tDashboardShelf("empty")}
+            </p>
+            <Button asChild>
+              <Link href="/my-puzzles/add">{tDashboardShelf("addFirst")}</Link>
+            </Button>
+          </div>
+          <ShelfLedge />
         </div>
       ) : (
-        <div className="h-[300px] min-w-0 md:h-[360px]">
-          <PuzzlePlank3D boxes={boxes} interactive />
-        </div>
+        <Shelf boxes={boxes} label={title} />
       )}
 
       {isOwner && arrangeOpen && (

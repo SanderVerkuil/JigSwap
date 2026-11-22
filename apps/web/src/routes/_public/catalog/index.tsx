@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/library/empty-state";
 import { Container } from "@/components/marketing/container";
 import { PageHero } from "@/components/marketing/page-hero";
 import { DefinitionCard } from "@/components/puzzles/definition-card";
+import { ShelfLedge } from "@/components/shelf/box-face";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -324,7 +325,7 @@ function CatalogListPage() {
                   <div className="h-[clamp(140px,17vw,250px)] px-[clamp(8px,1.4vw,20px)]">
                     <Skeleton className="size-full rounded-sm" />
                   </div>
-                  <div className="bg-mk-plank h-[9px]" />
+                  <ShelfLedge />
                 </div>
               ))}
             </div>
@@ -353,6 +354,7 @@ function CatalogListPage() {
                     card={card}
                     imageSizes={CARD_IMAGE_SIZES}
                     priority={index < ABOVE_THE_FOLD_CARDS}
+                    index={index}
                   />
                 ))}
               </div>
