@@ -135,7 +135,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
     setState("loading");
   };
 
-  // The scene drew what was measured: a new theme or a resized row ends the game at once.
+  // The scene drew what was measured: a new theme, a resized row or a scrolled one ends the game at once.
   const playingTheme = React.useRef(theme);
   React.useEffect(() => {
     if (atRest) playingTheme.current = theme;
@@ -149,6 +149,8 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
       if (el.offsetWidth !== width) stop();
     });
     ro.observe(el);
+    // The row scrolls inside the stage, and scroll doesn't bubble, so listen on the way down.
+    el.addEventListener("scroll", stop, true);
     // No frames and no physics while the shelf is out of view.
     const io = new IntersectionObserver(([entry]) =>
       setVisible(entry.isIntersecting),
@@ -157,6 +159,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
     return () => {
       ro.disconnect();
       io.disconnect();
+      el.removeEventListener("scroll", stop, true);
     };
   }, [atRest, stop]);
 

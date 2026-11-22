@@ -144,6 +144,17 @@ describe("Shelf at rest", () => {
 });
 
 describe("Shelf Play", () => {
+  it("ends the game when the row scrolls while the scene loads, as a resize does", async () => {
+    await render();
+    await act(async () => button()!.click());
+    expect(sceneEl()).not.toBeNull();
+    await act(async () => {
+      row().dispatchEvent(new Event("scroll"));
+    });
+    expect(sceneEl()).toBeNull();
+    expect(button()?.textContent).toBe("Play");
+  });
+
   it("loads the 3D scene only on Play, probing WebGL then, and turns into Reset", async () => {
     await render();
     expect(sceneEl()).toBeNull();
