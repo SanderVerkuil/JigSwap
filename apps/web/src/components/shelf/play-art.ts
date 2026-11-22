@@ -39,8 +39,7 @@ interface CoverEdges {
   body: string;
 }
 
-// The outermost ~3% of each edge, stretched onto a strip, and the border's average colour. Throws
-// on a tainted canvas (a cover served without CORS headers); the caller then skips the strips.
+// The outermost ~3% of each edge, stretched onto a strip, and the border's average colour.
 function extractCoverEdges(img: HTMLImageElement): CoverEdges {
   const PROBE = 64;
   const probe = document.createElement("canvas");
@@ -203,14 +202,7 @@ async function artFor(
     // Drawn 1:1, so no mipmaps: the GPU's linear-light averaging would brighten a busy cover.
     front.generateMipmaps = false;
     front.minFilter = LinearFilter;
-    let edges: CoverEdges | null = null;
-    try {
-      edges = extractCoverEdges(img);
-    } catch {
-      // A tainted canvas: keep the cover, plain sides.
-    }
-    if (!edges)
-      return { front, body: "#8a8f94", dispose: () => front.dispose() };
+    const edges = extractCoverEdges(img);
     const sides = {
       left: srgb(new CanvasTexture(edges.left)),
       right: srgb(new CanvasTexture(edges.right)),

@@ -8,7 +8,6 @@ export interface ShelfCopy {
     title: string;
     brand?: string;
     pieceCount: number;
-    images?: string[];
   } | null;
   snapshot?: { title: string; brand?: string; pieceCount: number };
 }
@@ -16,7 +15,7 @@ export interface ShelfCopy {
 /**
  * A copy as a box on a shelf, opening at `href`: the member's own copy at /my-puzzles/<id>, anyone
  * else's at /copies/<id>. The copy's resolved cover (an uploaded and approved photo, else the
- * catalogue's art) comes before the puzzle's own image. Pure.
+ * catalogue's art). Pure.
  */
 export function copyShelfBox(copy: ShelfCopy, href: string): ShelfBox {
   return {
@@ -24,7 +23,7 @@ export function copyShelfBox(copy: ShelfCopy, href: string): ShelfBox {
     title: copy.puzzle?.title ?? copy.snapshot?.title ?? "",
     brand: copy.puzzle?.brand ?? copy.snapshot?.brand,
     pieceCount: copy.puzzle?.pieceCount ?? copy.snapshot?.pieceCount,
-    cover: copy.coverUrl ?? copy.puzzle?.images?.[0] ?? undefined,
+    cover: copy.coverUrl ?? undefined,
     href,
   };
 }

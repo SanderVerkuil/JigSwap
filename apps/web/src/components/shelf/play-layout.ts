@@ -96,7 +96,8 @@ export function easeOut(t: number): number {
 
 /**
  * Measures the flat row for the scene: every box face (`[data-shelf-box]`) and the ledge
- * (`[data-shelf-ledge]`) relative to the stage, plus the colours and fonts the page resolved.
+ * (`[data-shelf-ledge]`) relative to the stage, plus the colours and fonts the page resolved. The
+ * row always renders one face per box and its ledge.
  * Client only.
  */
 export function measurePlayLayout(
@@ -105,7 +106,7 @@ export function measurePlayLayout(
 ): PlayLayout {
   const frame = stage.getBoundingClientRect();
   const faces = stage.querySelectorAll<HTMLElement>("[data-shelf-box]");
-  const ledgeEl = stage.querySelector<HTMLElement>("[data-shelf-ledge]");
+  const ledgeEl = stage.querySelector<HTMLElement>("[data-shelf-ledge]")!;
   const rel = (r: DOMRect) => ({
     x: r.left - frame.left,
     y: r.top - frame.top,
@@ -121,14 +122,12 @@ export function measurePlayLayout(
       const isCover = face.tagName === "IMG";
       return {
         ...rel(face.getBoundingClientRect()),
-        cover: isCover ? boxes[i]?.cover : undefined,
-        lid: boxes[i]?.lid ?? { color: "#146350", title: "" },
+        cover: isCover ? boxes[i].cover : undefined,
+        lid: boxes[i].lid,
       };
     }),
-    ledge: ledgeEl
-      ? rel(ledgeEl.getBoundingClientRect())
-      : { x: 0, y: frame.height - 9, w: frame.width, h: 9 },
-    plank: ledgeEl ? getComputedStyle(ledgeEl).backgroundColor : "#e4c79a",
+    ledge: rel(ledgeEl.getBoundingClientRect()),
+    plank: getComputedStyle(ledgeEl).backgroundColor,
     fonts: {
       heading:
         root.getPropertyValue("--font-heading").trim() || "Georgia, serif",
