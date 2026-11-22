@@ -15,7 +15,6 @@ import {
 } from "@react-three/rapier";
 import * as React from "react";
 import * as THREE from "three";
-import { reconcileBodyRefs } from "./body-refs";
 import { releaseVelocity } from "./drag-math";
 import { loadArt, type BoxArt } from "./play-art";
 import {
@@ -186,8 +185,11 @@ function Stage({
     [art, materials],
   );
 
+  // Made once per scene: a RigidBody writes a forwarded ref only when it creates its body.
   const [bodies] = React.useState(() =>
-    reconcileBodyRefs<RapierRigidBody>([], layout.boxes.length),
+    Array.from({ length: layout.boxes.length }, () =>
+      React.createRef<RapierRigidBody>(),
+    ),
   );
 
   // The view's depth, 0 (flat) to 1, and the motion driving it.
