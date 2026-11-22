@@ -14,8 +14,8 @@ export interface ShelfCopy {
 
 /**
  * A copy as a box on a shelf, opening at `href`: the member's own copy at /my-puzzles/<id>, anyone
- * else's at /copies/<id>. The copy's resolved cover (an uploaded and approved photo, else the
- * catalogue's art). Pure.
+ * else's at /copies/<id>. Its cover is the copy's resolved one (an uploaded and approved photo,
+ * else the catalogue's art). Pure.
  */
 export function copyShelfBox(copy: ShelfCopy, href: string): ShelfBox {
   return {

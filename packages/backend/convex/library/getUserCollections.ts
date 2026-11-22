@@ -20,9 +20,10 @@ import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 export const COLLECTION_MEMBER_VERIFICATIONS = { own: 3000, other: 500 };
 
 // The boxes each collection's shelf shows on the Collections page: its newest copies the viewer may
-// see, joined to their puzzle and cover, only when the read is asked for shelves. A box costs about as much as a card (a few ranges and four
-// URLs), so one read joins at most COLLECTION_SHELF_BOXES_MAX of them, for the collections in page
-// order; past it a collection lists with an empty shelf and its count.
+// see, joined to their puzzle and cover, only when the read is asked for shelves. A box costs about
+// as much as a card (a few ranges and four URLs), so one read joins at most
+// COLLECTION_SHELF_BOXES_MAX of them, for the collections in page order; past it a collection lists
+// with an empty shelf and its count.
 export const COLLECTION_SHELF_SIZE = 6;
 export const COLLECTION_SHELF_BOXES_MAX = 60;
 

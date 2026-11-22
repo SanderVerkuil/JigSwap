@@ -184,7 +184,8 @@ export interface CollectionView {
    * The collection's newest copies the viewer may see, for its shelf on the Collections page, with
    * their puzzle and thumbnail `coverUrl`, never owner-only fields. Set by
    * `collections.listForUser` when asked for `shelves` (at most six a collection, and an empty
-   * shelf past the read's box budget); undefined otherwise, or from a backend that predates it.
+   * shelf past the read's box budget); undefined otherwise; a backend older than `shelves`
+   * rejects the argument.
    */
   shelf?: OwnedCopyView[];
 }
