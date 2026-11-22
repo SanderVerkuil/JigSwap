@@ -144,6 +144,17 @@ describe("Shelf at rest", () => {
 });
 
 describe("Shelf Play", () => {
+  it("hands focus to Reset when the scene covers the box that had it", async () => {
+    await render();
+    await act(async () => button()!.click());
+    const link = container.querySelector<HTMLAnchorElement>("ul a")!;
+    link.focus();
+    expect(document.activeElement).toBe(link);
+    await act(async () => scene.onFirstFrame!());
+    expect(document.activeElement).toBe(button());
+    expect(button()?.textContent).toBe("Reset");
+  });
+
   it("ends the game when the row scrolls while the scene loads, as a resize does", async () => {
     await render();
     await act(async () => button()!.click());

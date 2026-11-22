@@ -79,6 +79,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
   const t = useTranslations("shell");
   const format = useFormatter();
   const stage = React.useRef<HTMLDivElement>(null);
+  const playButton = React.useRef<HTMLButtonElement>(null);
   const [state, setState] = React.useState<PlayState>("rest");
   const [layout, setLayout] = React.useState<PlayLayout | null>(null);
   const [returnNonce, setReturnNonce] = React.useState(0);
@@ -235,9 +236,12 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
                   theme={theme}
                   visible={visible}
                   returnNonce={returnNonce}
-                  onFirstFrame={() =>
-                    setState((s) => (s === "loading" ? "playing" : s))
-                  }
+                  onFirstFrame={() => {
+                    // The row goes inert now; keep a focused box's focus from dropping to the page.
+                    if (stage.current?.contains(document.activeElement))
+                      playButton.current?.focus();
+                    setState((s) => (s === "loading" ? "playing" : s));
+                  }}
                   onReturned={() => setState("settling")}
                 />
               </div>
@@ -252,6 +256,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
               since the 3D shelf is hidden from assistive tech (and keeps the visible word, for
               voice control). */}
           <Button
+            ref={playButton}
             type="button"
             variant="ghost"
             size="sm"
