@@ -126,8 +126,8 @@ function wrap(
   return kept;
 }
 
-// The painted lid, drawn the way shelf.tsx's PaintedLid lays it out: brand at the top, the title in
-// the display face, the piece count bottom right, all in white on the lid's colour.
+// The painted lid, drawn the way box-face.tsx's PaintedLid lays it out: brand at the top, the title
+// under it in the display face, the piece count bottom right, all in white on the lid's colour.
 function drawLid(box: PlayBox, fonts: PlayLayout["fonts"]): HTMLCanvasElement {
   const SCALE = 3;
   const w = Math.max(1, Math.round(box.w));

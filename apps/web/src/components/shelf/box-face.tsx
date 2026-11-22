@@ -63,7 +63,7 @@ function PaintedLid({
       )}
       style={{ backgroundColor: color }}
     >
-      <span className="flex h-full flex-col justify-between gap-1 p-[7cqw]">
+      <span className="flex h-full flex-col gap-1 p-[7cqw]">
         {box.brand && (
           <span className="truncate text-[max(10px,8cqw)] leading-tight">
             {box.brand}
@@ -73,7 +73,7 @@ function PaintedLid({
           {box.title}
         </span>
         {box.pieceCount != null && (
-          <span className="figures self-end text-[max(10px,8cqw)] leading-none">
+          <span className="figures mt-auto self-end text-[max(10px,8cqw)] leading-none">
             {format.number(box.pieceCount)}
           </span>
         )}
