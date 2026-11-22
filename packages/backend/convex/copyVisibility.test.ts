@@ -385,7 +385,7 @@ describe("collections, definition aggregates and completion links", () => {
       (
         await as(t, viewer).query(
           api.library.getUserCollections.getUserCollections,
-          { userId: cast.alice },
+          { userId: cast.alice, shelves: true },
         )
       )
         .find((c) => c._id === collectionId)

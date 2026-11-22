@@ -20,7 +20,7 @@ import { resolveCopyCoverUrl } from "./resolveCoverUrl";
 export const COLLECTION_MEMBER_VERIFICATIONS = { own: 3000, other: 500 };
 
 // The boxes each collection's shelf shows on the Collections page: its newest copies the viewer may
-// see, joined to their puzzle and cover. A box costs about as much as a card (a few ranges and four
+// see, joined to their puzzle and cover, only when the read is asked for shelves. A box costs about as much as a card (a few ranges and four
 // URLs), so one read joins at most COLLECTION_SHELF_BOXES_MAX of them, for the collections in page
 // order; past it a collection lists with an empty shelf and its count.
 export const COLLECTION_SHELF_SIZE = 6;
@@ -35,6 +35,8 @@ export const COLLECTION_SHELF_BOXES_MAX = 60;
 export const getUserCollections = query({
   args: {
     userId: v.optional(v.id("users")),
+    // Join each collection's newest boxes (its shelf), for the Collections page.
+    shelves: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<CollectionView[]> => {
     // An unknown or deactivated caller is refused (requireMember).
@@ -121,7 +123,7 @@ export const getUserCollections = query({
     // Each shelf, in page order: the newest members first (by_collection ends in _creationTime),
     // with no owner-only copy fields whoever looks.
     let boxes = 0;
-    for (const entry of listed) {
+    for (const entry of args.shelves ? listed : []) {
       const take = Math.min(
         COLLECTION_SHELF_SIZE,
         COLLECTION_SHELF_BOXES_MAX - boxes,

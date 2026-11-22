@@ -54,7 +54,9 @@ function CollectionsPage() {
   const { data: collections, isPending: collectionsPending } = useQuery(
     convexQuery(
       gateway.collections.listForUser,
-      convexUser?._id ? { userId: convexUser._id as Id<"users"> } : "skip",
+      convexUser?._id
+        ? { userId: convexUser._id as Id<"users">, shelves: true }
+        : "skip",
     ),
   );
 

@@ -391,7 +391,7 @@ describe("library.collections.listForUser", () => {
 
     const views = await as(t, "me").query(
       api.library.getUserCollections.getUserCollections,
-      {},
+      { shelves: true },
     );
 
     expect(views[0].shelf?.map((copy) => copy._id)).toEqual(

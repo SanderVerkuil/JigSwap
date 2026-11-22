@@ -84,7 +84,8 @@ const renderPage = (collections: CollectionView[]) => {
     { _id: ME },
   );
   queryClient.setQueryData(
-    convexQuery(gateway.collections.listForUser, { userId: ME }).queryKey,
+    convexQuery(gateway.collections.listForUser, { userId: ME, shelves: true })
+      .queryKey,
     collections,
   );
   const Page = (Route as unknown as { options: { component: ComponentType } })
