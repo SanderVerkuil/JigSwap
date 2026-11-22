@@ -45,6 +45,7 @@ vi.mock("./play-scene", () => ({
 }));
 
 const { Shelf } = await import("./shelf");
+type ShelfBox = import("./box-face").ShelfBox;
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -81,11 +82,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function render(play = true) {
+async function render(play = true, items: ShelfBox[] = boxes) {
   await act(async () => {
     root.render(
       <IntlProvider locale="en" messages={en} timeZone="Europe/Amsterdam">
-        <Shelf boxes={boxes} label="Ann's shelf" play={play} />
+        <Shelf boxes={items} label="Ann's shelf" play={play} />
       </IntlProvider>,
     );
   });
@@ -114,6 +115,19 @@ describe("Shelf at rest", () => {
       .querySelector("[data-shelf-box]")!;
     expect(lid.tagName).toBe("SPAN");
     expect(lid.textContent).toBe("StudioMolen2,000");
+  });
+
+  it("tries a replaced cover after one failed to load", async () => {
+    await render();
+    const img = container.querySelector("img")!;
+    await act(async () => {
+      img.dispatchEvent(new Event("error"));
+    });
+    expect(container.querySelector("img")).toBeNull();
+    await render(true, [{ ...boxes[0], cover: "/art/a-new.webp" }, boxes[1]]);
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "/art/a-new.webp",
+    );
   });
 
   it("turns a cover that fails to load into a lid", async () => {
@@ -171,6 +185,53 @@ describe("Shelf Play", () => {
     expect(row().hasAttribute("inert")).toBe(false);
     expect(button()?.textContent).toBe("Play");
     vi.useRealTimers();
+  });
+
+  it("plays a second game after Reset, which doesn't close itself", async () => {
+    vi.useFakeTimers();
+    await render();
+    await act(async () => button()!.click());
+    await act(async () => scene.onFirstFrame!());
+    await act(async () => button()!.click());
+    await act(async () => scene.onReturned!());
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(sceneEl()).toBeNull();
+
+    await act(async () => button()!.click());
+    // A fresh scene, with no Reset asked of it.
+    expect(sceneEl()?.getAttribute("data-returns")).toBe("0");
+    await act(async () => scene.onFirstFrame!());
+    expect(button()?.textContent).toBe("Reset");
+    vi.useRealTimers();
+  });
+
+  it("goes back to the flat row at once when reduced motion turns on mid-game", async () => {
+    const listeners: Array<() => void> = [];
+    let reduce = false;
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      (query: string) =>
+        ({
+          get matches() {
+            return reduce && query.includes("prefers-reduced-motion");
+          },
+          media: query,
+          addEventListener: (_: string, fn: () => void) => listeners.push(fn),
+          removeEventListener: () => {},
+        }) as unknown as MediaQueryList,
+    );
+    await render();
+    await act(async () => button()!.click());
+    await act(async () => scene.onFirstFrame!());
+    expect(row().hasAttribute("inert")).toBe(true);
+
+    reduce = true;
+    await act(async () => listeners.forEach((fn) => fn()));
+    expect(sceneEl()).toBeNull();
+    expect(row().hasAttribute("inert")).toBe(false);
+    expect(row().style.opacity).toBe("1");
+    expect(button()).toBeNull();
   });
 
   it("keeps the flat row and drops Play when the WebGL probe fails", async () => {

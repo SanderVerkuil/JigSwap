@@ -103,10 +103,16 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
   const scales = boxes.map((box) => boxScale(box.pieceCount));
   const atRest = state === "rest";
 
+  // Back to the flat row. The return count goes back to zero too, or the next game's scene would
+  // read the last Reset as its own and close itself on mount.
   const stop = React.useCallback(() => {
     setState("rest");
     setLayout(null);
+    setReturnNonce(0);
   }, []);
+  // Reduced motion turned on mid-game (or Play otherwise withdrawn) takes Reset away with it: back
+  // to the flat row at once, without the glide. Adjusted during render, not in an effect.
+  if (!canPlay && !atRest) stop();
 
   const start = () => {
     const el = stage.current;

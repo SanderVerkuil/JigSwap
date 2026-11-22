@@ -106,8 +106,9 @@ export function BoxFace({
   priority?: boolean;
   className?: string;
 }) {
-  const [failed, setFailed] = React.useState(false);
-  if (box.cover && !failed) {
+  // The cover that failed, not a flag: a replaced cover gets its own try.
+  const [failedSrc, setFailedSrc] = React.useState<string>();
+  if (box.cover && failedSrc !== box.cover) {
     return (
       // Box art from the catalogue or the member's own photo: a 480px thumbnail covers an app
       // shelf's box at twice its size, so a plain <img>.
@@ -122,7 +123,7 @@ export function BoxFace({
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : undefined}
         decoding="async"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(box.cover)}
         className={cn(
           "bg-muted block h-auto max-h-(--row-h) w-auto max-w-[calc(var(--unit)*var(--scale))] rounded-t-[2px]",
           className,
