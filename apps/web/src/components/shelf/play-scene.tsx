@@ -16,7 +16,7 @@ import {
 import * as React from "react";
 import * as THREE from "three";
 import { reconcileBodyRefs } from "./body-refs";
-import { clampThrowVelocity } from "./drag-math";
+import { releaseVelocity } from "./drag-math";
 import { loadArt, type BoxArt } from "./play-art";
 import {
   BOX_DEPTH_PER_WIDTH,
@@ -314,16 +314,9 @@ function Stage({
       const body = bodies[held.index]?.current;
       if (!body) return;
       body.setBodyType(RB_DYNAMIC, true);
-      const [a, b] = held.samples.slice(-2);
-      const dt = a && b ? (b.t - a.t) / 1000 : 0;
-      const v =
-        throwIt && dt > 0
-          ? clampThrowVelocity([
-              (b.p.x - a.p.x) / dt,
-              (b.p.y - a.p.y) / dt,
-              (b.p.z - a.p.z) / dt,
-            ])
-          : [0, 0, 0];
+      const v = throwIt
+        ? releaseVelocity(held.samples, e.timeStamp)
+        : [0, 0, 0];
       body.setLinvel({ x: v[0], y: v[1], z: v[2] }, true);
     };
     const onMove = (e: PointerEvent) => {

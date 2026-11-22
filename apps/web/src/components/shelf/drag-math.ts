@@ -12,3 +12,32 @@ export function clampThrowVelocity(v: Vec3): Vec3 {
   const k = MAX_THROW_SPEED / speed;
   return [v[0] * k, v[1] * k, v[2] * k];
 }
+
+/** A pointer that stopped longer than this before letting go was putting the box down. */
+export const THROW_MAX_PAUSE_MS = 80;
+
+export interface DragSample {
+  p: { x: number; y: number; z: number };
+  /** The pointer event's timeStamp, in ms. */
+  t: number;
+}
+
+/**
+ * The velocity a held box leaves with when let go at `releasedAt` (the same clock as the
+ * samples): from its last two positions, capped by clampThrowVelocity, if the pointer was
+ * still moving then; else none. Pure.
+ */
+export function releaseVelocity(
+  samples: readonly DragSample[],
+  releasedAt: number,
+): Vec3 {
+  const [a, b] = samples.slice(-2);
+  if (!a || !b || releasedAt - b.t > THROW_MAX_PAUSE_MS) return [0, 0, 0];
+  const dt = (b.t - a.t) / 1000;
+  if (dt <= 0) return [0, 0, 0];
+  return clampThrowVelocity([
+    (b.p.x - a.p.x) / dt,
+    (b.p.y - a.p.y) / dt,
+    (b.p.z - a.p.z) / dt,
+  ]);
+}
