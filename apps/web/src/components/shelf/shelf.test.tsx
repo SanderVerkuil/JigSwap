@@ -187,6 +187,27 @@ describe("Shelf Play", () => {
     vi.useRealTimers();
   });
 
+  it("keeps the row's boxes opening while the scene loads, and again as it hands back", async () => {
+    vi.useFakeTimers();
+    await render();
+    const layer = () => sceneEl()!.parentElement!;
+    await act(async () => button()!.click());
+    // Loading: the row stays live, and its clicks go through the scene's empty canvas.
+    expect(row().hasAttribute("inert")).toBe(false);
+    expect(layer().hasAttribute("inert")).toBe(true);
+
+    await act(async () => scene.onFirstFrame!());
+    expect(row().hasAttribute("inert")).toBe(true);
+    expect(layer().hasAttribute("inert")).toBe(false);
+
+    await act(async () => button()!.click());
+    await act(async () => scene.onReturned!());
+    // Settling: the row is back in charge while the flat scene still covers it.
+    expect(row().hasAttribute("inert")).toBe(false);
+    expect(layer().hasAttribute("inert")).toBe(true);
+    vi.useRealTimers();
+  });
+
   it("plays a second game after Reset, which doesn't close itself", async () => {
     vi.useFakeTimers();
     await render();

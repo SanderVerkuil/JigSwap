@@ -183,7 +183,7 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
             focus rings, which a scroller clips; the ledge scrolls with the boxes, its bar under
             it. */}
         <div
-          inert={!atRest}
+          inert={sceneShown}
           className="@container overflow-x-auto overscroll-x-contain px-1 pt-2 transition-opacity duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]"
           style={{ opacity: sceneShown ? 0 : 1 }}
         >
@@ -225,8 +225,14 @@ export function Shelf({ boxes, label, play = true, className }: ShelfProps) {
             }}
           >
             <React.Suspense fallback={null}>
-              {/* Decorative: the row underneath keeps the boxes' names. */}
-              <div aria-hidden="true" className="absolute inset-0">
+              {/* Decorative: the row underneath keeps the boxes' names. The scene takes no clicks
+                  or focus until it shows: inert, as R3F's canvas wrapper sets its own
+                  pointer-events: auto, which a class on this layer wouldn't beat. */}
+              <div
+                aria-hidden="true"
+                inert={!sceneShown}
+                className="absolute inset-0"
+              >
                 <PlayScene
                   layout={layout}
                   theme={theme}
